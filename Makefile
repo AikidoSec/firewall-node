@@ -1,5 +1,5 @@
-express-mongodb-install:
-	cd apps/express-mongodb && npm install && docker-compose up -d --remove-orphans
+containers:
+	docker-compose up -d --remove-orphans
 
 express-mongodb:
-	cd apps/express-mongodb && node app.js
+	cd lib/apps/express-mongodb && node app.js

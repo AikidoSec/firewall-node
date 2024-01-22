@@ -1,8 +1,13 @@
-import { fill } from "../wrap";
-import { Module } from "./module";
+import { moduleExists } from "../moduleExists";
+import { fill } from "../fill";
+import { Package } from "./package";
 
-export class MongoDB implements Module {
-  setup(): void {
+export class MongoDB implements Package {
+  patch(): void {
+    if (!moduleExists("mongodb")) {
+      return;
+    }
+
     const module = require("mongodb");
 
     fill(module.Collection.prototype, "find", (original) => {

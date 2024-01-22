@@ -1,9 +1,8 @@
-import { MongoDB } from "./modules/mongodb";
+import { Express } from "./packages/express";
+import { MongoDB } from "./packages/mongodb";
 
 export function bootstrap() {
-  const modules = [new MongoDB()];
+  const packages = [new MongoDB(), new Express()];
 
-  modules.forEach((module) => {
-    module.setup();
-  });
+  packages.forEach((p) => p.patch());
 }

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface WrappedFunction extends Function {
   [key: string]: any;
@@ -32,10 +31,6 @@ export function fill(
 
 /**
  * Defines a non-enumerable property on the given object.
- *
- * @param obj The object on which to set the property
- * @param name The name of the property to be set
- * @param value The value to which to set the property
  */
 export function addNonEnumerableProperty(
   obj: object,
@@ -44,26 +39,21 @@ export function addNonEnumerableProperty(
 ): void {
   try {
     Object.defineProperty(obj, name, {
-      // enumerable: false, // the default, so we can save on bundle size by not explicitly setting it
+      enumerable: false,
       value: value,
       writable: true,
       configurable: true,
     });
   } catch (o_O) {
-    /*DEBUG_BUILD &&
-      logger.log(
-        `Failed to add non-enumerable property "${name}" to object`,
-        obj
-      );*/
+    console.error(
+      `Failed to add non-enumerable property "${name}" to object`,
+      obj
+    );
   }
 }
 
 /**
- * Remembers the original function on the wrapped function and
- * patches up the prototype.
- *
- * @param wrapped the wrapper function
- * @param original the original function that gets wrapped
+ * Remembers the original function on the wrapped function and patches up the prototype.
  */
 export function markFunctionWrapped(
   wrapped: WrappedFunction,
@@ -77,11 +67,7 @@ export function markFunctionWrapped(
 }
 
 /**
- * This extracts the original function if available.  See
- * `markFunctionWrapped` for more information.
- *
- * @param func the function to unwrap
- * @returns the unwrapped version of the function if available.
+ * This extracts the original function if available. See `markFunctionWrapped` for more information.
  */
 export function getOriginalFunction(
   func: WrappedFunction
