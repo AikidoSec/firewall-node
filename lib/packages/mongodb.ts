@@ -1,6 +1,6 @@
 import { moduleExists } from "../moduleExists";
 import { fill } from "../fill";
-import { asyncLocalStorage } from "./express";
+import { asyncLocalStorage } from "./http";
 import { Package } from "./package";
 
 export class MongoDB implements Package {
@@ -13,9 +13,14 @@ export class MongoDB implements Package {
 
     fill(module.Collection.prototype, "find", (original) => {
       return function (this: unknown, ...args: unknown[]) {
-        const { request, response, id } = asyncLocalStorage.getStore();
-        console.log("find", args, request.url, id);
-        response.send("NOOOO");
+        const context = asyncLocalStorage.getStore();
+
+        if (!context) {
+          return original.apply(this, args);
+        }
+
+        const { request, response, id } = context;
+        console.log("find", args, request.url);
 
         return original.apply(this, args);
       };
