@@ -5,6 +5,7 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
+    "aikido": "file:../..",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "install": "^0.13.0",

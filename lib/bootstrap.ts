@@ -1,3 +1,9 @@
+import { MongoDB } from "./modules/mongodb";
+
 export function bootstrap() {
-  console.log("bootstrap");
+  const modules = [new MongoDB()];
+
+  modules.forEach((module) => {
+    module.setup();
+  });
 }

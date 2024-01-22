@@ -1,4 +1,4 @@
-require("../../dist"); // Normally you would use require("aikido");
+require("aikido/dist"); // Normally this would be require("aikido")
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -7,8 +7,8 @@ const { MongoClient } = require("mongodb");
 const { Posts, Post } = require("./posts");
 const { escape } = require("./escape");
 const morgan = require("morgan");
-const url = "mongodb://root:password@localhost:27017";
-const client = new MongoClient(url, { family: 4 });
+const url = "mongodb://root:password@127.0.0.1:27017";
+const client = new MongoClient(url);
 
 const posts = new Posts(client);
 
