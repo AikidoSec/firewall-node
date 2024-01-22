@@ -1,5 +1,25 @@
-import { Package } from "./package";
+import type { Request, Response, NextFunction } from "express";
+const { AsyncLocalStorage } = require("node:async_hooks");
 
-export class Express implements Package {
-  patch() {}
+export const asyncLocalStorage = new AsyncLocalStorage();
+
+let id = 1;
+function genId() {
+  const current = id;
+  id++;
+
+  return current;
+}
+
+export function middleware(req: Request, res: Response, next: NextFunction) {
+  asyncLocalStorage.run(
+    {
+      id: genId(),
+      request: req,
+      response: res,
+    },
+    () => {
+      next();
+    }
+  );
 }

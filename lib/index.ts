@@ -1,3 +1,4 @@
-import { bootstrap } from "./bootstrap";
+import { start } from "./start";
+import { middleware } from "./packages/express";
 
-bootstrap();
+export { start, middleware };
