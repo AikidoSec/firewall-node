@@ -3,8 +3,4 @@
 *
 
 # Allowed files
-!/README.md
-!/LICENSE
-!/CHANGELOG.md
 !/package.json
-!/dist/**/*

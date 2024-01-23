@@ -1,0 +1,14 @@
+{
+  "name": "express-mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "aikido-rasp": "*",
+    "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "mongodb": "^6.3.0",
+    "morgan": "^1.10.0"
+  }
+}

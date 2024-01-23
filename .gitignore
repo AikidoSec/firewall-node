@@ -13,7 +13,7 @@ coverage/
 
 # Dependency directories
 node_modules/
-package-lock.json
+../package-lock.json
 
 # Built files
 dist

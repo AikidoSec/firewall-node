@@ -6,8 +6,10 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "declaration": true,
-    "strict": true
+    "strict": true,
   },
-  "include": ["lib"],
-  "exclude": ["**/*.test.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": ["**/*.test.ts"],
 }

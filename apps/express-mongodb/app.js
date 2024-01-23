@@ -1,5 +1,4 @@
-// Normally this would be require("aikido");
-require("../../../dist");
+require("aikido-rasp");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");

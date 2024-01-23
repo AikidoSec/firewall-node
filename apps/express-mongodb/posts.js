@@ -1,3 +1,5 @@
+const { trace, context } = require("@opentelemetry/api");
+
 class Post {
   constructor(title, createdAt) {
     this._title = title;
