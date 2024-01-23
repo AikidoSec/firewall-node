@@ -25,6 +25,7 @@ export class CreateServer implements Integration {
               runWithContext(
                 {
                   method: request.method,
+                  remoteAddress: request.socket.remoteAddress,
                 },
                 () => {
                   originalHandler(request, response);

@@ -1,7 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-type RequestContext = {
+export type RequestContext = {
   method: string;
+  remoteAddress: string;
 };
 
 const requestContext = new AsyncLocalStorage<RequestContext>();
