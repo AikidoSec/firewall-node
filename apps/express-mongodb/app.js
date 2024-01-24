@@ -1,4 +1,4 @@
-require("aikido-rasp");
+require("aikido-rasp").protect();
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -8,6 +8,7 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 
 async function getPosts() {
+  // Normally you'd use environment variables for this
   const url = "mongodb://root:password@127.0.0.1:27017";
   const client = new MongoClient(url);
   await client.connect();

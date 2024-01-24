@@ -75,43 +75,47 @@ export function detectInjection(
   return { injection: false };
 }
 
+const OPERATIONS = ["find", "findOne", "findOneAndUpdate", "findOneAndDelete"];
+
 // TODO: Support more methods
 export class MongoDB implements Integration {
   setup(): void {
     new Hook(["mongodb"], (exports) => {
-      wrap(exports.Collection.prototype, "find", function (original) {
-        return function () {
-          const context = getContext();
+      OPERATIONS.forEach((operation) => {
+        wrap(exports.Collection.prototype, operation, function (original) {
+          return function () {
+            const context = getContext();
 
-          if (!context) {
-            return original.apply(this, arguments);
-          }
-
-          if (arguments.length > 0 && isPlainObject(arguments[0])) {
-            const filter = arguments[0];
-            const result = detectInjection(context, filter);
-
-            if (result.injection) {
-              const message = `Blocked NoSQL injection for MongoDB.Collection.find(...), please check ${friendlyName(result.source)}!`;
-              context.aikido.report({
-                source: result.source,
-                message: message,
-                context: context,
-                stack: new Error().stack || "",
-                metadata: {
-                  db: this.dbName,
-                  collection: this.collectionName,
-                  operation: "find",
-                  filter: filter,
-                },
-              });
-
-              throw new Error(message);
+            if (!context) {
+              return original.apply(this, arguments);
             }
-          }
 
-          return original.apply(this, arguments);
-        };
+            if (arguments.length > 0 && isPlainObject(arguments[0])) {
+              const filter = arguments[0];
+              const result = detectInjection(context, filter);
+
+              if (result.injection) {
+                const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
+                context.aikido.report({
+                  source: result.source,
+                  message: message,
+                  context: context,
+                  stack: new Error().stack || "",
+                  metadata: {
+                    db: this.dbName,
+                    collection: this.collectionName,
+                    operation: operation,
+                    filter: filter,
+                  },
+                });
+
+                throw new Error(message);
+              }
+            }
+
+            return original.apply(this, arguments);
+          };
+        });
       });
 
       return exports;

@@ -1,3 +1,3 @@
-import { start } from "./start";
+import { protect, protectLambda } from "./protect";
 
-start();
+export { protect, protectLambda };

@@ -1,0 +1,11 @@
+{
+  "resource": "/",
+  "path": "/",
+  "httpMethod": "POST",
+  "body": "{\"username\":\"hans@aikido.dev\",\"password\":{\"$gt\":\"\"}}",
+  "requestContext": {
+    "identity": {
+      "sourceIp": "1.2.3.4"
+    }
+  }
+}

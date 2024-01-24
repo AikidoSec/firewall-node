@@ -8,8 +8,7 @@ import { Integration } from "./Integration";
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
 function createMiddleware(aikido: Aikido): Middleware {
-  // Ensure that middleware has a name, don't inline this function
-  const aikidoMiddleware = (req, resp, next) => {
+  return (req, resp, next) => {
     runWithContext(
       {
         aikido: aikido,
@@ -19,9 +18,7 @@ function createMiddleware(aikido: Aikido): Middleware {
             ? req.socket.remoteAddress
             : undefined,
           body: req.body ? req.body : undefined,
-          url: new URL(
-            req.protocol + "://" + req.get("host") + req.originalUrl
-          ),
+          url: req.protocol + "://" + req.get("host") + req.originalUrl,
           headers: req.headers,
           query: req.query,
         },
@@ -31,8 +28,6 @@ function createMiddleware(aikido: Aikido): Middleware {
       }
     );
   };
-
-  return aikidoMiddleware;
 }
 
 // TODO: Support wildcard routes registered with app.all, app.route, app.use etc

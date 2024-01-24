@@ -1,0 +1,14 @@
+service: lambda-mongodb
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+
+functions:
+  login:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: /
+          method: post
