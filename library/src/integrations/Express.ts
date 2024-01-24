@@ -33,7 +33,8 @@ function createMiddleware(aikido: Aikido): Middleware {
   return aikidoMiddleware;
 }
 
-// TODO: Support wildcard routes registered with app.all, app.use etc
+// TODO: Support wildcard routes registered with app.all, app.route, app.use etc
+// And methods like OPTIONS, HEAD, TRACE, CONNECT, PATCH
 export class Express implements Integration {
   constructor(private readonly aikido: Aikido) {}
 
