@@ -20,9 +20,16 @@ class Posts {
     this.db = mongo.db("app");
   }
 
-  async all() {
+  async all(search) {
     const collection = this.db.collection("posts");
-    const posts = await collection.find({}).toArray();
+
+    const filter = {};
+    if (search) {
+      // There's a vulnerability here, which can be abused for demo purposes
+      filter.title = search;
+    }
+
+    const posts = await collection.find(filter).toArray();
 
     return posts.map((post) => new Post(post.title, post.createdAt));
   }

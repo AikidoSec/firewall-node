@@ -22,6 +22,8 @@ function createMiddleware(aikido: Aikido): Middleware {
           url: new URL(
             req.protocol + "://" + req.get("host") + req.originalUrl
           ),
+          headers: req.headers,
+          query: req.query,
         },
       },
       () => {

@@ -21,3 +21,4 @@ dist
 # IDE's
 .idea/
 .vscode/
+/library/.tap

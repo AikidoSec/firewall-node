@@ -13,3 +13,7 @@ build:
 .PHONY: watch
 watch:
 	cd library && mkdir -p ./dist && rm -r ./dist && npm run build:watch
+
+.PHONY: test
+test:
+	cd library && npm run test

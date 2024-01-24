@@ -21,20 +21,31 @@ async function main() {
 
   app.use(morgan("tiny"));
 
+  // Try http://localhost:3000/?search[$ne]=null
+  // Which will result in a query like:
+  // { title: { '$ne': null } }
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      const homePagePosts = await posts.all();
+      const homePagePosts = await posts.all(
+        req.query.search ? req.query.search : undefined
+      );
 
       res.send(`
         <html>
           <body>
+            <form action="/" method="GET">
+              <label for="search">Search</label>
+              <input type="text" name="search">
+              <input type="submit" value="Search" />
+            </form>
             <ul>
               ${homePagePosts.map((post) => `<li>${escape(post.getTitle())}</li>`).join("\n")}
             </ul>
-            <form action="/" method="POST">
+            <form action="/posts" method="POST">
+              <label for="title">Title</label>
               <input type="text" name="title" />
-              <input type="submit" value="Submit" />
+              <input type="submit" value="Create post" />
             </form>
           </body>
         </html>
@@ -43,7 +54,7 @@ async function main() {
   );
 
   app.post(
-    "/",
+    "/posts",
     express.urlencoded({ extended: false }),
     asyncHandler(async (req, res) => {
       const post = new Post(req.body.title, new Date());

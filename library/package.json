@@ -16,6 +16,7 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
+    "test": "tap src/**/*.test.ts",
     "build": "tsc",
     "build:watch": "tsc --watch"
   },
