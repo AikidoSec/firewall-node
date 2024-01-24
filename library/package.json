@@ -24,6 +24,7 @@
     "shimmer": "^1.2.1"
   },
   "optionalDependencies": {
+    "express": "^4.0.0",
     "mongodb": "^4.0.0 || ^5.0.0 || ^6.0.0"
   }
 }
