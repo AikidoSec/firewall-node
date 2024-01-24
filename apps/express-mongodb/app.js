@@ -1,5 +1,19 @@
 require("aikido-rasp");
 
+const Sentry = require("@sentry/node");
+Sentry.init({
+  dsn: "https://e23dd06d7bff44f18d86f33878e67891@019635.ingest.sentry.io/6173453",
+  maxBreadcrumbs: 50,
+  debug: true,
+  tracesSampleRate: 1,
+  integrations: [new Sentry.Integrations.Mongo({})],
+  beforeSendTransaction: (transaction) => {
+    console.log(JSON.stringify(transaction.contexts, null, 2));
+
+    return transaction;
+  },
+});
+
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const { MongoClient } = require("mongodb");
@@ -19,6 +33,8 @@ async function main() {
   const app = express();
   const posts = await getPosts();
 
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
   app.use(morgan("tiny"));
 
   // Try http://localhost:3000/?search[$ne]=null
@@ -62,6 +78,8 @@ async function main() {
       res.redirect("/");
     })
   );
+
+  app.use(Sentry.Handlers.errorHandler());
 
   return new Promise((resolve, reject) => {
     try {

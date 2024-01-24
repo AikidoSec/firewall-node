@@ -5,6 +5,7 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
+    "@sentry/node": "^7.95.0",
     "aikido-rasp": "*",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
