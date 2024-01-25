@@ -1,7 +1,10 @@
 import { isDeepStrictEqual } from "node:util";
 import { isPlainObject } from "./isPlainObject";
+import { tryDecodeAsJWT } from "./jwt";
 import { Request } from "./RequestContext";
 
+// TODO: Add path to value in body (e.g. body.title)
+// TODO: Add which query parameter (name, value) like in headers
 type DetectionResult =
   | { injection: true; source: "query" }
   | { injection: true; source: "body" }
@@ -40,15 +43,20 @@ function findValueInUserControllerValue(
     return true;
   }
 
+  if (typeof userControlledValue === "string") {
+    const jwt = tryDecodeAsJWT(userControlledValue);
+    if (jwt && findValueInUserControllerValue(jwt, filterPart)) {
+      return true;
+    }
+  }
+
   if (isPlainObject(userControlledValue)) {
     const fields = Object.keys(userControlledValue);
     for (const field of fields) {
-      if (isPlainObject(userControlledValue[field])) {
-        if (
-          findValueInUserControllerValue(userControlledValue[field], filterPart)
-        ) {
-          return true;
-        }
+      if (
+        findValueInUserControllerValue(userControlledValue[field], filterPart)
+      ) {
+        return true;
       }
     }
   }
@@ -60,7 +68,7 @@ function findInjectionInObject(
   userControlledValue: unknown,
   filter: unknown
 ): boolean {
-  if (!isPlainObject(userControlledValue) || !isPlainObject(filter)) {
+  if (!isPlainObject(filter)) {
     return false;
   }
 

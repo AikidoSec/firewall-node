@@ -159,5 +159,30 @@ t.test("detectInjection", (t) => {
     { injection: true, source: "body" }
   );
 
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        headers: {
+          /**
+           * JWT token with the following payload:
+           * {
+           *   "sub": "1234567890",
+           *   "username": {
+           *     "$ne": null
+           *   },
+           *   "iat": 1516239022
+           * }
+           */
+          Authorization:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
+        },
+      }),
+      {
+        username: { $ne: null },
+      }
+    ),
+    { injection: true, source: "headers" }
+  );
+
   t.end();
 });
