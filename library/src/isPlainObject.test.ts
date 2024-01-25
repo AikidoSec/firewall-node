@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import { isPlainObject } from "./isPlainObject";
 
 t.test(

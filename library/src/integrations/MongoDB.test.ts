@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import { Aikido } from "../Aikido";
 import { RequestContext } from "../requestContext";
 import { detectInjection } from "./MongoDB";

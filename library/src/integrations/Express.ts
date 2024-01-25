@@ -15,9 +15,7 @@ function createMiddleware(aikido: Aikido): Middleware {
         aikido: aikido,
         request: {
           method: req.method,
-          remoteAddress: req.socket.remoteAddress
-            ? req.socket.remoteAddress
-            : undefined,
+          remoteAddress: req.ip,
           body: req.body ? req.body : undefined,
           url: req.protocol + "://" + req.get("host") + req.originalUrl,
           headers: req.headers,
@@ -47,7 +45,7 @@ export class Express implements Integration {
         wrap<Application, Method>(
           // @ts-expect-error Exports are not typed properly
           exports.application,
-          "get",
+          method,
           function (original) {
             return function (this: Application) {
               const args = Array.from(arguments);
