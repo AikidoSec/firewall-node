@@ -1,6 +1,6 @@
 import * as t from "tap";
-import { Request } from "../RequestContext";
-import { detectInjection } from "./MongoDB";
+import { detectNoSQLInjection } from "./detectNoSQLInjection";
+import { Request } from "./RequestContext";
 
 function createContext({
   query,
@@ -22,24 +22,24 @@ function createContext({
 }
 
 t.test("detectInjection", (t) => {
-  t.match(detectInjection(createContext({}), {}), { injection: false });
+  t.match(detectNoSQLInjection(createContext({}), {}), { injection: false });
 
   t.match(
-    detectInjection(createContext({}), {
+    detectNoSQLInjection(createContext({}), {
       title: { title: "title" },
     }),
     { injection: false }
   );
 
   t.match(
-    detectInjection(createContext({}), {
+    detectNoSQLInjection(createContext({}), {
       title: { $ne: null },
     }),
     { injection: false }
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         query: { title: { $ne: null } },
       }),
@@ -51,7 +51,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),
@@ -63,7 +63,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),
@@ -75,7 +75,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),
@@ -94,7 +94,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),
@@ -113,7 +113,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),
@@ -132,7 +132,7 @@ t.test("detectInjection", (t) => {
   );
 
   t.match(
-    detectInjection(
+    detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
       }),

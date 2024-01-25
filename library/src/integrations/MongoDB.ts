@@ -1,109 +1,11 @@
 /* eslint-disable prefer-rest-params */
-import { isDeepStrictEqual } from "node:util";
+import type { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
+import { detectNoSQLInjection, friendlyName } from "../detectNoSQLInjection";
 import { isPlainObject } from "../isPlainObject";
-import { getContext, Request } from "../RequestContext";
+import { getContext } from "../RequestContext";
 import { Integration } from "./Integration";
-import type { Collection } from "mongodb";
-
-type DetectionResult =
-  | { injection: true; source: "query" }
-  | { injection: true; source: "body" }
-  | { injection: true; source: "headers" }
-  | { injection: false };
-
-function friendlyName(source: "query" | "body" | "headers"): string {
-  switch (source) {
-    case "query":
-      return "query parameters";
-    case "body":
-      return "body";
-    case "headers":
-      return "headers";
-  }
-}
-
-const COMPARISON_OPERATORS = [
-  "$eq",
-  "$gt",
-  "$gte",
-  "$in",
-  "$lt",
-  "$lte",
-  "$ne",
-  "$nin",
-];
-
-function findInjectionInObject(
-  userControlledValue: unknown,
-  filter: unknown
-): boolean {
-  if (!isPlainObject(userControlledValue) || !isPlainObject(filter)) {
-    return false;
-  }
-
-  const fields = Object.keys(filter);
-  for (const field of fields) {
-    const value = filter[field];
-
-    if (field === "$and" || field === "$or" || field === "$nor") {
-      if (!Array.isArray(value)) {
-        continue;
-      }
-
-      if (
-        value.find((nested) =>
-          findInjectionInObject(userControlledValue, nested)
-        )
-      ) {
-        return true;
-      }
-
-      continue;
-    }
-
-    if (field === "$not") {
-      if (findInjectionInObject(userControlledValue, value)) {
-        return true;
-      }
-
-      continue;
-    }
-
-    if (
-      isPlainObject(value) &&
-      Object.keys(value).length === 1 &&
-      COMPARISON_OPERATORS.includes(Object.keys(value)[0]) &&
-      Object.keys(userControlledValue).find((key) =>
-        isDeepStrictEqual(userControlledValue[key], value)
-      )
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-export function detectInjection(
-  request: Request,
-  filter: unknown
-): DetectionResult {
-  if (findInjectionInObject(request.body, filter)) {
-    return { injection: true, source: "body" };
-  }
-
-  if (findInjectionInObject(request.query, filter)) {
-    return { injection: true, source: "query" };
-  }
-
-  if (findInjectionInObject(request.headers, filter)) {
-    return { injection: true, source: "headers" };
-  }
-
-  return { injection: false };
-}
 
 const OPERATIONS = [
   "find",
@@ -141,7 +43,7 @@ export class MongoDB implements Integration {
 
               if (arguments.length > 0 && isPlainObject(arguments[0])) {
                 const filter = arguments[0];
-                const result = detectInjection(context.request, filter);
+                const result = detectNoSQLInjection(context.request, filter);
 
                 if (result.injection) {
                   const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
