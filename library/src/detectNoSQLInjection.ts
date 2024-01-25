@@ -28,7 +28,33 @@ const COMPARISON_OPERATORS = [
   "$lte",
   "$ne",
   "$nin",
-];
+] as const;
+
+type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
+
+function findValueInUserControllerValue(
+  userControlledValue: unknown,
+  filterPart: Record<string, unknown>
+): boolean {
+  if (isDeepStrictEqual(userControlledValue, filterPart)) {
+    return true;
+  }
+
+  if (isPlainObject(userControlledValue)) {
+    const fields = Object.keys(userControlledValue);
+    for (const field of fields) {
+      if (isPlainObject(userControlledValue[field])) {
+        if (
+          findValueInUserControllerValue(userControlledValue[field], filterPart)
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
 
 function findInjectionInObject(
   userControlledValue: unknown,
@@ -69,10 +95,10 @@ function findInjectionInObject(
     if (
       isPlainObject(value) &&
       Object.keys(value).length === 1 &&
-      COMPARISON_OPERATORS.includes(Object.keys(value)[0]) &&
-      Object.keys(userControlledValue).find((key) =>
-        isDeepStrictEqual(userControlledValue[key], value)
-      )
+      COMPARISON_OPERATORS.includes(
+        Object.keys(value)[0] as ComparisonOperator
+      ) &&
+      findValueInUserControllerValue(userControlledValue, value)
     ) {
       return true;
     }

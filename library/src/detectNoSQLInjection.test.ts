@@ -145,5 +145,19 @@ t.test("detectInjection", (t) => {
     { injection: true, source: "body" }
   );
 
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        body: { nested: { nested: { $ne: null } } },
+      }),
+      {
+        $not: {
+          title: { $ne: null },
+        },
+      }
+    ),
+    { injection: true, source: "body" }
+  );
+
   t.end();
 });
