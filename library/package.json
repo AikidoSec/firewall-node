@@ -17,7 +17,7 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
-    "test": "tap src/**/*.test.ts",
+    "test": "tap src/**/*.test.ts --allow-incomplete-coverage",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",

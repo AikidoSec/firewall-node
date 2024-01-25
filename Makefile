@@ -6,6 +6,10 @@ containers:
 express-mongodb:
 	cd apps/express-mongodb && node app.js
 
+.PHONY: install
+install:
+	npm install --workspaces
+
 .PHONY: build
 build:
 	cd library && mkdir -p ./dist && rm -r ./dist && npm run build
