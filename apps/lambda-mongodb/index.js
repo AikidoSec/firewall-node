@@ -5,17 +5,10 @@ protect();
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
+const { MongoDB } = require("@aikidosec/rasp/dist/integrations/MongoDB");
 
-exports.handler = protectLambda(async function (event, context) {
-  async function getUsers() {
-    // Normally you'd use environment variables for this
-    const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
-    await client.connect();
-
-    return new Users(client);
-  }
-
-  const users = await getUsers();
+async function main(client, event, context) {
+  const users = new Users(client);
   const user = await users.findBy("hans@aikido.dev", "password");
 
   if (!user) {
@@ -61,4 +54,18 @@ exports.handler = protectLambda(async function (event, context) {
       success: true,
     }),
   };
+}
+
+exports.handler = protectLambda(async function (event, context) {
+  // Normally you'd use environment variables for this
+  const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
+  await client.connect();
+
+  try {
+    return await main(client, event, context);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    await client.close();
+  }
 });

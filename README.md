@@ -53,3 +53,11 @@ In order for the RASP to work properly, we need the following event properties t
 * `event.headers`
 
 That's it!
+
+### Development
+
+* `$ make install` to install dependencies
+* `$ make build` to build the library
+* `$ make watch` to watch for changes and rebuild the library
+* `$ make test` to run tests using tap
+* `$ make lint` to run ESLint

@@ -6,6 +6,14 @@ containers:
 express-mongodb:
 	cd apps/express-mongodb && node app.js
 
+.PHONY: lambda-mongodb-nosql-injection
+lambda-mongodb-nosql-injection:
+	cd apps/lambda-mongodb && serverless invoke local --function login --path payloads/nosql-injection-request.json
+
+.PHONY: lambda-mongodb-safe
+lambda-mongodb-safe:
+	cd apps/lambda-mongodb && serverless invoke local --function login --path payloads/safe-request.json
+
 .PHONY: install
 install:
 	npm install --workspaces
