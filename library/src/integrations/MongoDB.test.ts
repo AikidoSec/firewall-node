@@ -15,7 +15,9 @@ t.test("we can highjack the MongoDB library", async () => {
 
   try {
     const db = client.db("test");
-    const collections = await db.listCollections({ name: "test" }).toArray();
+    const collections: { name: string }[] = await db
+      .listCollections({ name: "test" })
+      .toArray();
     if (collections.find((collection) => collection.name === "test")) {
       await db.dropCollection("test");
     }
