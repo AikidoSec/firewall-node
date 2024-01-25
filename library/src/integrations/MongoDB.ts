@@ -1,9 +1,11 @@
+/* eslint-disable prefer-rest-params */
 import { isDeepStrictEqual } from "node:util";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { isPlainObject } from "../isPlainObject";
 import { getContext, RequestContext } from "../requestContext";
 import { Integration } from "./Integration";
+import type { Collection } from "mongodb";
 
 type DetectionResult =
   | { injection: true; source: "query" }
@@ -75,47 +77,62 @@ export function detectInjection(
   return { injection: false };
 }
 
-const OPERATIONS = ["find", "findOne", "findOneAndUpdate", "findOneAndDelete"];
+const OPERATIONS = [
+  "find",
+  "findOne",
+  "findOneAndUpdate",
+  "findOneAndDelete",
+] as const;
+
+type Operation = (typeof OPERATIONS)[number];
 
 // TODO: Support more methods
 export class MongoDB implements Integration {
   setup(): void {
     new Hook(["mongodb"], (exports) => {
       OPERATIONS.forEach((operation) => {
-        wrap(exports.Collection.prototype, operation, function (original) {
-          return function () {
-            const context = getContext();
+        wrap<Collection, Operation>(
+          // @ts-expect-error Exports are not typed properly
+          exports.Collection.prototype,
+          operation,
+          // @ts-expect-error Something about a missing _id in the document
+          function (original) {
+            return function (this: Collection) {
+              const context = getContext();
 
-            if (!context) {
-              return original.apply(this, arguments);
-            }
-
-            if (arguments.length > 0 && isPlainObject(arguments[0])) {
-              const filter = arguments[0];
-              const result = detectInjection(context, filter);
-
-              if (result.injection) {
-                const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
-                context.aikido.report({
-                  source: result.source,
-                  message: message,
-                  context: context,
-                  stack: new Error().stack || "",
-                  metadata: {
-                    db: this.dbName,
-                    collection: this.collectionName,
-                    operation: operation,
-                    filter: filter,
-                  },
-                });
-
-                throw new Error(message);
+              if (!context) {
+                // @ts-expect-error Something about this context
+                return original.apply(this, arguments);
               }
-            }
 
-            return original.apply(this, arguments);
-          };
-        });
+              if (arguments.length > 0 && isPlainObject(arguments[0])) {
+                const filter = arguments[0];
+                const result = detectInjection(context, filter);
+
+                if (result.injection) {
+                  const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
+                  context.aikido.report({
+                    source: result.source,
+                    message: message,
+                    context: context,
+                    stack: new Error().stack || "",
+                    metadata: {
+                      db: this.dbName,
+                      collection: this.collectionName,
+                      operation: operation,
+                      filter: filter,
+                    },
+                  });
+
+                  throw new Error(message);
+                }
+              }
+
+              // @ts-expect-error Something about this context
+              return original.apply(this, arguments);
+            };
+          }
+        );
       });
 
       return exports;

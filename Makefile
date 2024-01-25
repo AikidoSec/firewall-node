@@ -17,3 +17,7 @@ watch:
 .PHONY: test
 test:
 	cd library && npm run test
+
+.PHONY: lint
+lint:
+	cd library && npm run lint

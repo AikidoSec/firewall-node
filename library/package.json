@@ -19,7 +19,10 @@
   "scripts": {
     "test": "tap src/**/*.test.ts",
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "lint": "npm run lint-eslint && npm run lint-tsc",
+    "lint-eslint": "eslint src/**/*.ts",
+    "lint-tsc": "tsc --noEmit"
   },
   "dependencies": {
     "require-in-the-middle": "^7.2.0",

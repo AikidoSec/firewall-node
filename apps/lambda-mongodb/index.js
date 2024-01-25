@@ -1,5 +1,6 @@
 const { protectLambda, protect } = require("@aikidosec/rasp");
 
+// TODO: How to avoid this and just have the wrapper function?
 protect();
 
 const { MongoClient } = require("mongodb");

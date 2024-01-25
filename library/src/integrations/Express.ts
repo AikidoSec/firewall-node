@@ -1,6 +1,7 @@
-import type { NextFunction, Request, Response } from "express";
+/* eslint-disable prefer-rest-params */
+import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
-import { massWrap, wrap } from "shimmer";
+import { wrap } from "shimmer";
 import { Aikido } from "../Aikido";
 import { runWithContext } from "../requestContext";
 import { Integration } from "./Integration";
@@ -30,6 +31,9 @@ function createMiddleware(aikido: Aikido): Middleware {
   };
 }
 
+const METHODS = ["get", "post", "put", "delete"] as const;
+type Method = (typeof METHODS)[number];
+
 // TODO: Support wildcard routes registered with app.all, app.route, app.use etc
 // And methods like OPTIONS, HEAD, TRACE, CONNECT, PATCH
 export class Express implements Integration {
@@ -39,41 +43,36 @@ export class Express implements Integration {
     new Hook(["express"], (exports) => {
       const aikido = this.aikido;
 
-      massWrap(
-        exports.application,
-        ["post", "put", "delete"],
-        function (original) {
-          return function () {
-            // When a route is registered, we want to push our middleware as last middleware (just before the handler itself)
-            // Keep in mind that you can push multiple middlewares to a route, so we need to find the last one
-            const args = Array.from(arguments);
-            const handler = args.pop();
-            args.push(createMiddleware(aikido));
-            args.push(handler);
+      for (const method of METHODS) {
+        wrap<Application, Method>(
+          // @ts-expect-error Exports are not typed properly
+          exports.application,
+          "get",
+          function (original) {
+            return function (this: Application) {
+              const args = Array.from(arguments);
 
-            return original.apply(this, args);
-          };
-        }
-      );
+              // If it's a single argument being a string, ignore it
+              // e.g. app.get("title") should not be wrapped
+              if (
+                method === "get" &&
+                args.length === 1 &&
+                typeof args[0] === "string"
+              ) {
+                // @ts-expect-error Argument length cannot be checked properly
+                return original.apply(this, args);
+              }
 
-      wrap(exports.application, "get", function (original) {
-        return function () {
-          // Same as POST, PUT and DELETE
-          // However, if it's a single argument being a string, ignore it
-          // e.g. app.get("title") should not be wrapped
-          const args = Array.from(arguments);
+              const handler = args.pop();
+              args.push(createMiddleware(aikido));
+              args.push(handler);
 
-          if (args.length === 1 && typeof args[0] === "string") {
-            return original.apply(this, args);
+              // @ts-expect-error Argument length cannot be checked properly
+              return original.apply(this, args);
+            };
           }
-
-          const handler = args.pop();
-          args.push(createMiddleware(aikido));
-          args.push(handler);
-
-          return original.apply(this, args);
-        };
-      });
+        );
+      }
 
       return exports;
     });

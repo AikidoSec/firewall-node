@@ -1,4 +1,8 @@
-import type { Handler } from "aws-lambda";
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  Handler,
+} from "aws-lambda";
 import { Aikido } from "../Aikido";
 import { runWithContext } from "../requestContext";
 
@@ -24,15 +28,15 @@ type SyncHandler<T extends Handler> = (
   callback: Parameters<T>[2]
 ) => void;
 
-export type AsyncHandler<T extends Handler> = (
+type AsyncHandler<T extends Handler> = (
   event: Parameters<T>[0],
   context: Parameters<T>[1]
 ) => Promise<NonNullable<Parameters<Parameters<T>[2]>[1]>>;
 
-export function createLambdaWrapper<TEvent, TResult>(
-  aikido: Aikido,
-  handler: Handler<TEvent, TResult>
-): Handler<TEvent, TResult> {
+export function createLambdaWrapper<
+  TEvent extends APIGatewayProxyEvent,
+  TResult extends APIGatewayProxyResult,
+>(aikido: Aikido, handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
   // AWSLambda is like Express. It makes a distinction about handlers based on its last argument
   // async (event) => async handler
   // async (event, context) => async handler
@@ -69,7 +73,8 @@ export function createLambdaWrapper<TEvent, TResult>(
         request: {
           url: undefined,
           method: event.httpMethod,
-          remoteAddress: event.requestContext.identity.sourceIp,
+          remoteAddress: event.requestContext?.identity?.sourceIp,
+          // TODO: Safe to assume JSON? Catch error
           body: event.body ? JSON.parse(event.body) : undefined,
           headers: event.headers,
           query: event.queryStringParameters ? event.queryStringParameters : {},

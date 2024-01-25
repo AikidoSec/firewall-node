@@ -17,7 +17,7 @@ function createContext({
     request: {
       remoteAddress: "::1",
       method: "GET",
-      url: new URL("http://localhost:3000"),
+      url: "http://localhost:3000",
       query: query,
       headers: headers,
       body: body,
