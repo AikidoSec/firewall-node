@@ -109,9 +109,13 @@ const OPERATIONS = [
   "find",
   "findOne",
   "findOneAndUpdate",
+  "findOneAndReplace",
   "findOneAndDelete",
+  "deleteOne",
+  "deleteMany",
   "updateOne",
   "updateMany",
+  "replaceOne",
 ] as const;
 
 type Operation = (typeof OPERATIONS)[number];
