@@ -35,8 +35,11 @@ const COMPARISON_OPERATORS = [
   "$nin",
 ];
 
-function findInjectionInObject(object: unknown, filter: unknown): boolean {
-  if (!isPlainObject(object) || !isPlainObject(filter)) {
+function findInjectionInObject(
+  userControlledValue: unknown,
+  filter: unknown
+): boolean {
+  if (!isPlainObject(userControlledValue) || !isPlainObject(filter)) {
     return false;
   }
 
@@ -49,7 +52,11 @@ function findInjectionInObject(object: unknown, filter: unknown): boolean {
         continue;
       }
 
-      if (value.find((nested) => findInjectionInObject(object, nested))) {
+      if (
+        value.find((nested) =>
+          findInjectionInObject(userControlledValue, nested)
+        )
+      ) {
         return true;
       }
 
@@ -57,7 +64,7 @@ function findInjectionInObject(object: unknown, filter: unknown): boolean {
     }
 
     if (field === "$not") {
-      if (findInjectionInObject(object, value)) {
+      if (findInjectionInObject(userControlledValue, value)) {
         return true;
       }
 
@@ -68,7 +75,9 @@ function findInjectionInObject(object: unknown, filter: unknown): boolean {
       isPlainObject(value) &&
       Object.keys(value).length === 1 &&
       COMPARISON_OPERATORS.includes(Object.keys(value)[0]) &&
-      Object.keys(object).find((key) => isDeepStrictEqual(object[key], value))
+      Object.keys(userControlledValue).find((key) =>
+        isDeepStrictEqual(userControlledValue[key], value)
+      )
     ) {
       return true;
     }
