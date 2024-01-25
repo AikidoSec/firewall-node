@@ -45,6 +45,18 @@ function findInjectionInObject(object: unknown, filter: unknown): boolean {
   for (const field of fields) {
     const value = filter[field];
 
+    if (field === "$and" || field === "$or" || field === "$nor") {
+      if (!Array.isArray(value)) {
+        continue;
+      }
+
+      if (value.find((nested) => findInjectionInObject(object, nested))) {
+        return true;
+      }
+
+      continue;
+    }
+
     if (
       isPlainObject(value) &&
       Object.keys(value).length === 1 &&

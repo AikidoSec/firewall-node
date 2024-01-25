@@ -78,5 +78,62 @@ t.test("detectInjection", (t) => {
     { injection: true, source: "body" }
   );
 
+  t.match(
+    detectInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        $and: [
+          {
+            title: { $ne: null },
+          },
+          {
+            published: true,
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body" }
+  );
+
+  t.match(
+    detectInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        $or: [
+          {
+            title: { $ne: null },
+          },
+          {
+            published: true,
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body" }
+  );
+
+  t.match(
+    detectInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        $nor: [
+          {
+            title: { $ne: null },
+          },
+          {
+            published: true,
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body" }
+  );
+
   t.end();
 });
