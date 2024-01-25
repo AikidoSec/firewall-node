@@ -1,8 +1,9 @@
 # Aikido RASP - Runtime Application Self-Protection
 
-```shell
-$ npm install @aikidosec/rasp
-```
+## Features
+
+* 🛡️ Protects your application against [NoSQL injection attacks](https://learn.snyk.io/lesson/nosql-injection-attack/)
+* 🔥 More to come
 
 ## Supported libraries and frameworks
 
@@ -12,6 +13,10 @@ Aikido RASP is compatible with
 * ✅ MongoDB 4.x, 5.x and 6.x
 
 ### Installation
+
+```shell
+$ npm install @aikidosec/rasp
+```
 
 #### Express
 
