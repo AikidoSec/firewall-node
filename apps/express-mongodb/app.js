@@ -1,4 +1,4 @@
-require("aikido-rasp").protect();
+require("@aikidosec/rasp").protect();
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");

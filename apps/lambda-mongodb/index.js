@@ -1,4 +1,4 @@
-const { protectLambda, protect } = require("aikido-rasp");
+const { protectLambda, protect } = require("@aikidosec/rasp");
 
 protect();
 
