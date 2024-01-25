@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import { ALBHandler, APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { Aikido } from "./Aikido";
 import { Express } from "./integrations/Express";
 import { Integration } from "./integrations/Integration";
