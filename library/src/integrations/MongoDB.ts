@@ -35,7 +35,6 @@ const COMPARISON_OPERATORS = [
   "$nin",
 ];
 
-// TODO: Expand support for $and, $or, $nor, $not
 function findInjectionInObject(object: unknown, filter: unknown): boolean {
   if (!isPlainObject(object) || !isPlainObject(filter)) {
     return false;
@@ -51,6 +50,14 @@ function findInjectionInObject(object: unknown, filter: unknown): boolean {
       }
 
       if (value.find((nested) => findInjectionInObject(object, nested))) {
+        return true;
+      }
+
+      continue;
+    }
+
+    if (field === "$not") {
+      if (findInjectionInObject(object, value)) {
         return true;
       }
 

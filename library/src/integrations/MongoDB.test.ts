@@ -135,5 +135,19 @@ t.test("detectInjection", (t) => {
     { injection: true, source: "body" }
   );
 
+  t.match(
+    detectInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        $not: {
+          title: { $ne: null },
+        },
+      }
+    ),
+    { injection: true, source: "body" }
+  );
+
   t.end();
 });
