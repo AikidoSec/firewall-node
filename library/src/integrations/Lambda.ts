@@ -37,6 +37,8 @@ export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
 >(aikido: Aikido, handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
+  aikido.installed();
+
   // AWSLambda is like Express. It makes a distinction about handlers based on its last argument
   // async (event) => async handler
   // async (event, context) => async handler
