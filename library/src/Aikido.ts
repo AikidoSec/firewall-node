@@ -6,7 +6,7 @@ import { Request } from "./RequestContext";
 import { resolve } from "path";
 
 // Lambda instances are reused, so we need to make sure we only report the installed event once
-export let INSTALLED = false;
+let INSTALLED = false;
 
 export class Aikido {
   private version: string | undefined = undefined;
