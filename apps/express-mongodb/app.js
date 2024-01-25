@@ -34,7 +34,7 @@ async function main() {
       );
 
       res.send(`
-        <html>
+        <html lang="en">
           <body>
             <form action="/" method="GET">
               <label for="search">Search</label>

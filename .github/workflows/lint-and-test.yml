@@ -2,9 +2,9 @@ name: Lint code and run tests
 on: push
 services:
   mongodb:
-    image: mongo
+    image: mongo:5
     ports:
-      - "27017:27017"
+      - 27017:27017
 jobs:
   build:
     runs-on: ubuntu-latest
