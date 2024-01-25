@@ -22,7 +22,6 @@ const OPERATIONS = [
 
 type Operation = (typeof OPERATIONS)[number];
 
-// TODO: Support more methods
 export class MongoDB implements Integration {
   setup(): void {
     new Hook(["mongodb"], (exports) => {
