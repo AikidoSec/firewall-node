@@ -4,7 +4,7 @@ import type {
   Handler,
 } from "aws-lambda";
 import { Aikido } from "../Aikido";
-import { runWithContext } from "../requestContext";
+import { runWithContext } from "../RequestContext";
 
 function isObject(value: unknown): boolean {
   return (

@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/rasp": "*",
+    "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "mongodb": "^6.3.0",

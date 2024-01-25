@@ -1,6 +1,5 @@
 import * as t from "tap";
-import { Aikido } from "../Aikido";
-import { RequestContext } from "../requestContext";
+import { Request } from "../RequestContext";
 import { detectInjection } from "./MongoDB";
 
 function createContext({
@@ -8,20 +7,17 @@ function createContext({
   headers,
   body,
 }: {
-  query?: RequestContext["request"]["query"];
-  body?: RequestContext["request"]["body"];
-  headers?: RequestContext["request"]["headers"];
-}): RequestContext {
+  query?: Request["query"];
+  body?: Request["body"];
+  headers?: Request["headers"];
+}): Request {
   return {
-    aikido: new Aikido(),
-    request: {
-      remoteAddress: "::1",
-      method: "GET",
-      url: "http://localhost:3000",
-      query: query,
-      headers: headers,
-      body: body,
-    },
+    remoteAddress: "::1",
+    method: "GET",
+    url: "http://localhost:4000",
+    query: query,
+    headers: headers,
+    body: body,
   };
 }
 

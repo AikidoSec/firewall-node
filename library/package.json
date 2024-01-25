@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "require-in-the-middle": "^7.2.0",
-    "shimmer": "^1.2.1"
+    "shimmer": "^1.2.1",
+    "undici": "^6.4.0"
   },
   "optionalDependencies": {
     "express": "^4.0.0",

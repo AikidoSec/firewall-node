@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { Aikido } from "../Aikido";
-import { runWithContext } from "../requestContext";
+import { runWithContext } from "../RequestContext";
 import { Integration } from "./Integration";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
@@ -64,6 +64,7 @@ export class Express implements Integration {
               const handler = args.pop();
               args.push(createMiddleware(aikido));
               args.push(handler);
+              aikido.installed();
 
               // @ts-expect-error Argument length cannot be checked properly
               return original.apply(this, args);

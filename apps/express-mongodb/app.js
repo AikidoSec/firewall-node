@@ -1,4 +1,5 @@
-require("@aikidosec/rasp").protect();
+require("dotenv").config();
+require("@aikidosec/rasp").protect({ debug: true });
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -22,7 +23,7 @@ async function main() {
 
   app.use(morgan("tiny"));
 
-  // Try http://localhost:3000/?search[$ne]=null
+  // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
   // { title: { '$ne': null } }
   app.get(
@@ -66,8 +67,8 @@ async function main() {
 
   return new Promise((resolve, reject) => {
     try {
-      app.listen(3000, () => {
-        console.log("Listening on port 3000");
+      app.listen(4000, () => {
+        console.log("Listening on port 4000");
         resolve();
       });
     } catch (err) {

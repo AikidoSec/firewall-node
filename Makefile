@@ -1,6 +1,6 @@
 .PHONY: containers
 containers:
-	cd apps/express-mongodb && docker-compose up -d --remove-orphans
+	cd apps && docker-compose up -d --remove-orphans
 
 .PHONY: express-mongodb
 express-mongodb:

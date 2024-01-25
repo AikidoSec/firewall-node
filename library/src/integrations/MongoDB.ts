@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { isPlainObject } from "../isPlainObject";
-import { getContext, RequestContext } from "../requestContext";
+import { getContext, Request } from "../RequestContext";
 import { Integration } from "./Integration";
 import type { Collection } from "mongodb";
 
@@ -87,18 +87,18 @@ function findInjectionInObject(
 }
 
 export function detectInjection(
-  context: RequestContext,
+  request: Request,
   filter: unknown
 ): DetectionResult {
-  if (findInjectionInObject(context.request.body, filter)) {
+  if (findInjectionInObject(request.body, filter)) {
     return { injection: true, source: "body" };
   }
 
-  if (findInjectionInObject(context.request.query, filter)) {
+  if (findInjectionInObject(request.query, filter)) {
     return { injection: true, source: "query" };
   }
 
-  if (findInjectionInObject(context.request.headers, filter)) {
+  if (findInjectionInObject(request.headers, filter)) {
     return { injection: true, source: "headers" };
   }
 
@@ -137,20 +137,20 @@ export class MongoDB implements Integration {
 
               if (arguments.length > 0 && isPlainObject(arguments[0])) {
                 const filter = arguments[0];
-                const result = detectInjection(context, filter);
+                const result = detectInjection(context.request, filter);
 
                 if (result.injection) {
                   const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
                   context.aikido.report({
                     source: result.source,
-                    message: message,
-                    context: context,
+                    kind: "nosql-injection",
+                    request: context.request,
                     stack: new Error().stack || "",
                     metadata: {
                       db: this.dbName,
                       collection: this.collectionName,
                       operation: operation,
-                      filter: filter,
+                      filter: JSON.stringify(filter),
                     },
                   });
 
