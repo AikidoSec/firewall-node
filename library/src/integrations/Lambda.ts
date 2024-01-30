@@ -5,6 +5,7 @@ import type {
 } from "aws-lambda";
 import { Aikido } from "../Aikido";
 import { runWithContext } from "../RequestContext";
+import { parse } from "cookie";
 
 function isObject(value: unknown): boolean {
   return (
@@ -80,6 +81,7 @@ export function createLambdaWrapper<
           body: event.body ? JSON.parse(event.body) : undefined,
           headers: event.headers,
           query: event.queryStringParameters ? event.queryStringParameters : {},
+          cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
         },
       },
       () => asyncHandler(event, context)

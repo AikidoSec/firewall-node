@@ -9,9 +9,12 @@ type DetectionResult =
   | { injection: true; source: "query" }
   | { injection: true; source: "body" }
   | { injection: true; source: "headers" }
+  | { injection: true; source: "cookies" }
   | { injection: false };
 
-export function friendlyName(source: "query" | "body" | "headers"): string {
+export function friendlyName(
+  source: "query" | "body" | "headers" | "cookies"
+): string {
   switch (source) {
     case "query":
       return "query parameters";
@@ -19,6 +22,8 @@ export function friendlyName(source: "query" | "body" | "headers"): string {
       return "body";
     case "headers":
       return "headers";
+    case "cookies":
+      return "cookies";
   }
 }
 
@@ -139,6 +144,10 @@ export function detectNoSQLInjection(
 
   if (findInjectionInObject(request.headers, filter)) {
     return { injection: true, source: "headers" };
+  }
+
+  if (findInjectionInObject(request.cookies, filter)) {
+    return { injection: true, source: "cookies" };
   }
 
   return { injection: false };

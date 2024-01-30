@@ -7,6 +7,7 @@ const { MongoClient } = require("mongodb");
 const { Posts, Post } = require("./posts");
 const { escape } = require("./escape");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -22,6 +23,7 @@ async function main() {
   const posts = await getPosts();
 
   app.use(morgan("tiny"));
+  app.use(cookieParser());
 
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:

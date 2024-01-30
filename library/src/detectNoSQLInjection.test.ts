@@ -6,10 +6,12 @@ function createContext({
   query,
   headers,
   body,
+  cookies,
 }: {
   query?: Request["query"];
   body?: Request["body"];
   headers?: Request["headers"];
+  cookies?: Request["cookies"];
 }): Request {
   return {
     remoteAddress: "::1",
@@ -18,6 +20,7 @@ function createContext({
     query: query,
     headers: headers,
     body: body,
+    cookies: cookies,
   };
 }
 
@@ -207,6 +210,31 @@ t.test("detectInjection", (t) => {
       }
     ),
     { injection: true, source: "headers" }
+  );
+
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        cookies: {
+          /**
+           * JWT token with the following payload:
+           * {
+           *   "sub": "1234567890",
+           *   "username": {
+           *     "$ne": null
+           *   },
+           *   "iat": 1516239022
+           * }
+           */
+          session:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
+        },
+      }),
+      {
+        username: { $ne: null },
+      }
+    ),
+    { injection: true, source: "cookies" }
   );
 
   t.end();

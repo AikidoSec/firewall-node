@@ -28,6 +28,8 @@
     "lint-tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/cookie": "^0.6.0",
+    "cookie": "^0.6.0",
     "require-in-the-middle": "^7.2.0",
     "shimmer": "^1.2.1",
     "undici": "^5.0.0"

@@ -9,7 +9,7 @@ export type Request = {
   headers: Record<string, string | string[] | undefined>;
   remoteAddress: string | undefined;
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
-  // TODO: cookies: Record<string, string>;
+  cookies: Record<string, string>;
 };
 
 export type RequestContext = {
