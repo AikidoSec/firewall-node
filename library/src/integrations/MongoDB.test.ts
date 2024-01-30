@@ -49,6 +49,7 @@ t.test("we can highjack the MongoDB library", async () => {
                 $ne: null,
               },
             },
+            cookies: {},
           },
         },
         () => {
@@ -67,6 +68,7 @@ t.test("we can highjack the MongoDB library", async () => {
           query: {},
           headers: {},
           body: {},
+          cookies: {},
         },
       },
       () => {
