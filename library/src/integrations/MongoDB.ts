@@ -46,7 +46,7 @@ export class MongoDB implements Integration {
                 const result = detectNoSQLInjection(context.request, filter);
 
                 if (result.injection) {
-                  const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)}!`;
+                  const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`;
                   context.aikido.report({
                     source: result.source,
                     kind: "nosql-injection",

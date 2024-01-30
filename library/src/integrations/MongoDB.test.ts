@@ -34,7 +34,7 @@ t.test("we can highjack the MongoDB library", async () => {
       { title: "Title" }
     );
 
-    await t.rejects(async () => {
+    const error = await t.rejects(async () => {
       await runWithContext(
         {
           aikido: new Aikido(new LoggerNoop(), new APIForTesting(), undefined),
@@ -57,6 +57,12 @@ t.test("we can highjack the MongoDB library", async () => {
         }
       );
     });
+    if (error instanceof Error) {
+      t.equal(
+        error.message,
+        "Blocked NoSQL injection for MongoDB.Collection.find(...), please check body (.title)!"
+      );
+    }
 
     await runWithContext(
       {
