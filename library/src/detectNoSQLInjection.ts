@@ -43,8 +43,18 @@ function findValueInUserControllerValue(
     return true;
   }
 
+  // TODO: Perhaps do a length check here? For performance reasons
   if (typeof userControlledValue === "string") {
-    const jwt = tryDecodeAsJWT(userControlledValue);
+    let value = userControlledValue;
+
+    if (value.toLowerCase().startsWith("bearer")) {
+      const parts = value.split(" ");
+      if (parts.length === 2) {
+        value = parts[1];
+      }
+    }
+
+    const jwt = tryDecodeAsJWT(value);
     if (jwt && findValueInUserControllerValue(jwt, filterPart)) {
       return true;
     }
