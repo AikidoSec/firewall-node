@@ -56,7 +56,7 @@ t.test("NoSQL injection using $ne in query parameter", async () => {
         title: { $ne: null },
       }
     ),
-    { injection: true, source: "query", path: ".title" }
+    { injection: true, source: "query", path: "title" }
   );
 });
 

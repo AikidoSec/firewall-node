@@ -11,6 +11,7 @@ Aikido RASP is compatible with
 
 * ✅ Express 4.x
 * ✅ MongoDB 4.x, 5.x and 6.x
+* ✅ Mongoose 8.x
 
 ### Installation
 

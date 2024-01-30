@@ -152,7 +152,7 @@ export function detectNoSQLInjection(
     return {
       injection: true,
       source: "query",
-      path: query.path,
+      path: query.path.startsWith(".") ? query.path.slice(1) : query.path,
     };
   }
 

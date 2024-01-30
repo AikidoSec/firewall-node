@@ -6,6 +6,10 @@ containers:
 express-mongodb:
 	cd apps/express-mongodb && node app.js
 
+.PHONY: express-mongoose
+express-mongoose:
+	cd apps/express-mongoose && node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd apps/lambda-mongodb && serverless invoke local --function login --path payloads/nosql-injection-request.json
