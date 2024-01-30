@@ -29,6 +29,12 @@ require('@aikidosec/rasp').protect();
 
 That's it!
 
+If you need to debug the RASP, you can set the `debug` option:
+
+```js
+require('@aikidosec/rasp').protect({ debug: true });
+```
+
 #### AWS Lambda
 
 At the very beginning of your handler.js file, add the following line:
@@ -52,6 +58,28 @@ In order for the RASP to work properly, we need the following event properties t
 * `event.headers`
 
 That's it!
+
+If you need to debug the RASP, you can set the `debug` option:
+
+```js
+const protect = require("@aikidosec/rasp").lambda({ debug: true });
+```
+
+### Reporting NoSQL injections to Aikido
+
+> Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
+>
+> [Sign up for free](https://app.aikido.dev/login)
+
+In order to send events to Aikido, grab a token from the Aikido dashboard (TODO).
+
+Set the token as an environment variable:
+
+```shell
+AIKIDO_TOKEN=your-token node your-app.js
+```
+
+(Or use [dotenv](dotenv) to load the token from an `.env` file)
 
 ### Development
 

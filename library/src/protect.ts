@@ -63,11 +63,10 @@ export function protect(options?: Options) {
   ]);
 }
 
-export function lambda(): (
-  handler: APIGatewayProxyHandler,
+export function lambda(
   options?: Options
-) => APIGatewayProxyHandler {
-  return (handler, options) => {
+): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {
+  return (handler) => {
     // Disable shimmer logging
     shimmer({ logger: () => {} });
 
