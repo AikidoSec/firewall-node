@@ -1,0 +1,26 @@
+name: Build and release
+on:
+  release:
+    types: [created]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "18.x"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@aikidosec"
+      - run: npm install
+      - run: npm run lint
+      - run: npm run test
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+      - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
+      - run: make build
+      - run: cd library && npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
