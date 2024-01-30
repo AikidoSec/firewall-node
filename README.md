@@ -1,5 +1,8 @@
 # Aikido RASP - Runtime Application Self-Protection
 
+![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Frasp?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/node-RASP?style=flat-square) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Frasp?style=flat-square)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
 ## Features
 
 * 🛡️ Protects your application against [NoSQL injection attacks](https://learn.snyk.io/lesson/nosql-injection-attack/)
