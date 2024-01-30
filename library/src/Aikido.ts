@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { hostname } from "node:os";
-import { API, Kind, Source, Token } from "./API";
+import { API, Kind, Token } from "./API";
 import { Logger } from "./Logger";
 import { Request } from "./RequestContext";
 import { resolve } from "path";
+import { Source } from "./Source";
 
 // Lambda instances are reused, so we need to make sure we only report the installed event once
 let INSTALLED = false;
@@ -63,12 +64,14 @@ export class Aikido {
     source,
     request,
     stack,
+    path,
     metadata,
   }: {
     kind: Kind;
     source: Source;
     request: Request;
     stack: string;
+    path: string;
     metadata: Record<string, string>;
   }) {
     if (this.token) {
@@ -83,6 +86,7 @@ export class Aikido {
               : undefined,
           url: request.url as string,
           method: request.method,
+          path: path,
           stack: stack,
           source: source,
           metadata: metadata,

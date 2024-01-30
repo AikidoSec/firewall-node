@@ -2,30 +2,11 @@ import { isDeepStrictEqual } from "node:util";
 import { isPlainObject } from "./isPlainObject";
 import { tryDecodeAsJWT } from "./jwt";
 import { Request } from "./RequestContext";
+import { Source } from "./Source";
 
-// TODO: Add path to value in body (e.g. body.title)
-// TODO: Add which query parameter (name, value) like in headers
 type DetectionResult =
-  | { injection: true; source: "query" }
-  | { injection: true; source: "body" }
-  | { injection: true; source: "headers" }
-  | { injection: true; source: "cookies" }
+  | { injection: true; source: Source; path: string }
   | { injection: false };
-
-export function friendlyName(
-  source: "query" | "body" | "headers" | "cookies"
-): string {
-  switch (source) {
-    case "query":
-      return "query parameters";
-    case "body":
-      return "body";
-    case "headers":
-      return "headers";
-    case "cookies":
-      return "cookies";
-  }
-}
 
 const COMPARISON_OPERATORS = [
   "$eq",
@@ -42,10 +23,13 @@ type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
 
 function findValueInUserControllerValue(
   userControlledValue: unknown,
-  filterPart: Record<string, unknown>
-): boolean {
+  filterPart: Record<string, unknown>,
+  path = ""
+): { path: string } | false {
   if (isDeepStrictEqual(userControlledValue, filterPart)) {
-    return true;
+    return {
+      path: path,
+    };
   }
 
   // TODO: Perhaps do a length check here? For performance reasons
@@ -61,17 +45,25 @@ function findValueInUserControllerValue(
 
     const jwt = tryDecodeAsJWT(value);
     if (jwt && findValueInUserControllerValue(jwt, filterPart)) {
-      return true;
+      return {
+        path: path,
+      };
     }
   }
 
   if (isPlainObject(userControlledValue)) {
     const fields = Object.keys(userControlledValue);
     for (const field of fields) {
-      if (
-        findValueInUserControllerValue(userControlledValue[field], filterPart)
-      ) {
-        return true;
+      const result = findValueInUserControllerValue(
+        userControlledValue[field],
+        filterPart,
+        `${path}.${field}`
+      );
+
+      if (result) {
+        return {
+          path: result.path,
+        };
       }
     }
   }
@@ -82,7 +74,7 @@ function findValueInUserControllerValue(
 function findInjectionInObject(
   userControlledValue: unknown,
   filter: unknown
-): boolean {
+): { path: string } | false {
   if (!isPlainObject(filter)) {
     return false;
   }
@@ -96,20 +88,26 @@ function findInjectionInObject(
         continue;
       }
 
-      if (
-        value.find((nested) =>
-          findInjectionInObject(userControlledValue, nested)
-        )
-      ) {
-        return true;
+      for (const v of value) {
+        const result = findInjectionInObject(userControlledValue, v);
+
+        if (result) {
+          return {
+            path: result.path,
+          };
+        }
       }
 
       continue;
     }
 
     if (field === "$not") {
-      if (findInjectionInObject(userControlledValue, value)) {
-        return true;
+      const result = findInjectionInObject(userControlledValue, value);
+
+      if (result) {
+        return {
+          path: result.path,
+        };
       }
 
       continue;
@@ -118,36 +116,64 @@ function findInjectionInObject(
     if (
       isPlainObject(value) &&
       Object.keys(value).length === 1 &&
-      COMPARISON_OPERATORS.includes(
-        Object.keys(value)[0] as ComparisonOperator
-      ) &&
-      findValueInUserControllerValue(userControlledValue, value)
+      COMPARISON_OPERATORS.includes(Object.keys(value)[0] as ComparisonOperator)
     ) {
-      return true;
+      const result = findValueInUserControllerValue(userControlledValue, value);
+
+      if (result) {
+        return {
+          path: result.path,
+        };
+      }
     }
   }
 
   return false;
 }
 
+// TODO: Parse the filters once for performance reasons
 export function detectNoSQLInjection(
   request: Request,
   filter: unknown
 ): DetectionResult {
-  if (findInjectionInObject(request.body, filter)) {
-    return { injection: true, source: "body" };
+  const body = findInjectionInObject(request.body, filter);
+
+  if (body) {
+    return {
+      injection: true,
+      source: "body",
+      path: body.path,
+    };
   }
 
-  if (findInjectionInObject(request.query, filter)) {
-    return { injection: true, source: "query" };
+  const query = findInjectionInObject(request.query, filter);
+
+  if (query) {
+    return {
+      injection: true,
+      source: "query",
+      path: query.path,
+    };
   }
 
-  if (findInjectionInObject(request.headers, filter)) {
-    return { injection: true, source: "headers" };
+  const headers = findInjectionInObject(request.headers, filter);
+
+  if (headers) {
+    return {
+      injection: true,
+      source: "headers",
+      path: headers.path.startsWith(".") ? headers.path.slice(1) : headers.path,
+    };
   }
 
-  if (findInjectionInObject(request.cookies, filter)) {
-    return { injection: true, source: "cookies" };
+  const cookies = findInjectionInObject(request.cookies, filter);
+
+  if (cookies) {
+    return {
+      injection: true,
+      source: "cookies",
+      path: cookies.path.startsWith(".") ? cookies.path.slice(1) : cookies.path,
+    };
   }
 
   return { injection: false };

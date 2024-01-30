@@ -1,4 +1,5 @@
 import { request } from "undici";
+import { Source } from "./Source";
 
 export class Token {
   constructor(private readonly token: string) {
@@ -16,7 +17,6 @@ export class Token {
   }
 }
 
-export type Source = "query" | "body" | "headers" | "cookies";
 export type Kind = "nosql-injection";
 
 type Installed = {
@@ -33,6 +33,7 @@ type Blocked = {
   url: string | undefined;
   method: string;
   source: Source;
+  path: string;
   stack: string;
   metadata: Record<string, string>;
 };

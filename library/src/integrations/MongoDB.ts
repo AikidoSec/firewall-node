@@ -2,9 +2,10 @@
 import type { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
-import { detectNoSQLInjection, friendlyName } from "../detectNoSQLInjection";
+import { detectNoSQLInjection } from "../detectNoSQLInjection";
 import { isPlainObject } from "../isPlainObject";
 import { getContext } from "../RequestContext";
+import { friendlyName } from "../Source";
 import { Integration } from "./Integration";
 
 const OPERATIONS = [
@@ -51,6 +52,7 @@ export class MongoDB implements Integration {
                     kind: "nosql-injection",
                     request: context.request,
                     stack: new Error().stack || "",
+                    path: result.path,
                     metadata: {
                       db: this.dbName,
                       collection: this.collectionName,
