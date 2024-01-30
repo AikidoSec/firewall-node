@@ -63,20 +63,22 @@ export function protect(options?: Options) {
   ]);
 }
 
-export function protectLambda(
+export function lambda(): (
   handler: APIGatewayProxyHandler,
   options?: Options
-): APIGatewayProxyHandler {
-  // Disable shimmer logging
-  shimmer({ logger: () => {} });
+) => APIGatewayProxyHandler {
+  return (handler, options) => {
+    // Disable shimmer logging
+    shimmer({ logger: () => {} });
 
-  options = { ...defaultOptions, ...options };
-  const token = getTokenFromEnv();
-  const logger = getLogger(options);
-  const api = getAPI();
-  const aikido = new Aikido(logger, api, token);
+    options = { ...defaultOptions, ...options };
+    const token = getTokenFromEnv();
+    const logger = getLogger(options);
+    const api = getAPI();
+    const aikido = new Aikido(logger, api, token);
 
-  setupIntegrations(aikido, [...commonIntegrations(aikido)]);
+    setupIntegrations(aikido, [...commonIntegrations(aikido)]);
 
-  return createLambdaWrapper(aikido, handler);
+    return createLambdaWrapper(aikido, handler);
+  };
 }

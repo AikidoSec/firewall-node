@@ -1,11 +1,7 @@
-const { protectLambda, protect } = require("@aikidosec/rasp");
-
-// TODO: How to avoid this and just have the wrapper function?
-protect();
+const protect = require("@aikidosec/rasp").lambda();
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
-const { MongoDB } = require("@aikidosec/rasp/dist/integrations/MongoDB");
 
 async function main(client, event, context) {
   const users = new Users(client);
@@ -56,7 +52,7 @@ async function main(client, event, context) {
   };
 }
 
-exports.handler = protectLambda(async function (event, context) {
+exports.handler = protect(async function (event, context) {
   // Normally you'd use environment variables for this
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
   await client.connect();

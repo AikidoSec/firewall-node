@@ -1,3 +1,3 @@
-import { protect, protectLambda } from "./protect";
+import { protect, lambda } from "./protect";
 
-export { protect, protectLambda };
+export { protect, lambda };

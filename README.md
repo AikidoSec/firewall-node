@@ -33,15 +33,13 @@ That's it!
 At the very beginning of your handler.js file, add the following line:
 
 ```js
-const { protect, protectLambda } = require('@aikidosec/rasp');
-
-protect();
+const protect = require("@aikidosec/rasp").lambda();
 ```
 
-And then wrap your handler function with the `protectLambda` function:
+And then wrap your handler function with the `protect` function:
 
 ```js
-exports.handler = protectLambda(async (event, context) => {
+exports.handler = protect(async (event, context) => {
   // Your handler code
 });
 ```
