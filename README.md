@@ -13,13 +13,13 @@ Aikido RASP is compatible with
 * ✅ MongoDB 4.x, 5.x and 6.x
 * ✅ Mongoose 8.x
 
-### Installation
+## Installation
 
 ```shell
 $ npm install @aikidosec/rasp
 ```
 
-#### Express
+### Express
 
 At the very beginning of your app.js file, add the following line:
 
@@ -35,7 +35,7 @@ If you need to debug the RASP, you can set the `debug` option:
 require('@aikidosec/rasp').protect({ debug: true });
 ```
 
-#### AWS Lambda
+### AWS Lambda
 
 At the very beginning of your handler.js file, add the following line:
 
@@ -65,7 +65,7 @@ If you need to debug the RASP, you can set the `debug` option:
 const protect = require("@aikidosec/rasp").lambda({ debug: true });
 ```
 
-### Reporting NoSQL injections to Aikido
+## Reporting NoSQL injections to Aikido
 
 > Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
 >
@@ -81,7 +81,7 @@ AIKIDO_TOKEN=your-token node your-app.js
 
 (Or use [dotenv](dotenv) to load the token from an `.env` file)
 
-### Development
+## Development
 
 * `$ make install` to install dependencies
 * `$ make build` to build the library
