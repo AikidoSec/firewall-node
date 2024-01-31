@@ -54,7 +54,7 @@ export class Aikido {
           version: this.getVersion(),
         })
         .catch((error) => {
-          this.logger.log("Failed to report event: " + error.message);
+          this.logger.log("Failed to report event to Aikido: " + error.message);
         });
     }
   }
@@ -90,6 +90,8 @@ export class Aikido {
           stack: stack,
           source: source,
           metadata: metadata,
+          version: this.getVersion(),
+          hostname: hostname(),
         })
         .catch((error) => {
           this.logger.log("Failed to report event: " + error.message);

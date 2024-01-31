@@ -36,6 +36,8 @@ type Blocked = {
   path: string;
   stack: string;
   metadata: Record<string, string>;
+  version: string;
+  hostname: string;
 };
 
 type Event = Installed | Blocked;
