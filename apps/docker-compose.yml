@@ -9,11 +9,6 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
-  smee:
-    image: ghcr.io/probot/smee.io:latest
-    restart: always
-    ports:
-      - "3000:3000"
 
 volumes:
   mongodb:

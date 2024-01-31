@@ -38,7 +38,7 @@ function getAPI(): API {
     return new APIFetch(new URL(process.env.AIKIDO_URL));
   }
 
-  return new APIFetch(new URL("https://aikido.dev/api/rasp/events"));
+  return new APIFetch(new URL("https://aikido.dev/api/runtime/events"));
 }
 
 function getTokenFromEnv(): Token | undefined {
