@@ -155,11 +155,38 @@ function findInjectionInObject(
   return false;
 }
 
-// TODO: Parse the filters once for performance reasons
+export function filterContainsOperator(filter: unknown) {
+  if (!isPlainObject(filter)) {
+    return false;
+  }
+
+  const fields = Object.keys(filter);
+  for (const field of fields) {
+    if (field.startsWith("$")) {
+      return true;
+    }
+
+    const value = filter[field];
+
+    if (filterContainsOperator(value)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function detectNoSQLInjection(
   request: Request,
   filter: unknown
 ): DetectionResult {
+  // Skip if filter does not contain any dollar signs
+  if (!filterContainsOperator(filter)) {
+    return {
+      injection: false,
+    };
+  }
+
   const body = findInjectionInObject(request.body, filter);
 
   if (body) {
