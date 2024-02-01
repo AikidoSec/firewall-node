@@ -1,10 +1,11 @@
 /* eslint-disable prefer-rest-params */
 import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
-import { wrap } from "shimmer";
+import { massWrap } from "shimmer";
 import { Aikido } from "../Aikido";
 import { runWithContext } from "../RequestContext";
 import { Integration } from "./Integration";
+import * as methods from "methods";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
@@ -30,11 +31,6 @@ function createMiddleware(aikido: Aikido): Middleware {
   };
 }
 
-const METHODS = ["get", "post", "put", "delete"] as const;
-type Method = (typeof METHODS)[number];
-
-// TODO: Support wildcard routes registered with app.all, app.route, app.use etc
-// And methods like OPTIONS, HEAD, TRACE, CONNECT, PATCH
 export class Express implements Integration {
   constructor(private readonly aikido: Aikido) {}
 
@@ -42,37 +38,19 @@ export class Express implements Integration {
     new Hook(["express"], (exports) => {
       const aikido = this.aikido;
 
-      for (const method of METHODS) {
-        wrap<Application, Method>(
-          // @ts-expect-error Exports are not typed properly
-          exports.application,
-          method,
-          function (original) {
-            return function (this: Application) {
-              const args = Array.from(arguments);
+      // @ts-expect-error This is magic that TypeScript doesn't understand
+      massWrap(exports.Route.prototype, methods, function (original) {
+        return function (this: Application) {
+          const args = Array.from(arguments);
+          const handler = args.pop();
+          args.push(createMiddleware(aikido));
+          args.push(handler);
+          aikido.installed();
 
-              // If it's a single argument being a string, ignore it
-              // e.g. app.get("title") should not be wrapped
-              if (
-                method === "get" &&
-                args.length === 1 &&
-                typeof args[0] === "string"
-              ) {
-                // @ts-expect-error Argument length cannot be checked properly
-                return original.apply(this, args);
-              }
-
-              const handler = args.pop();
-              args.push(createMiddleware(aikido));
-              args.push(handler);
-              aikido.installed();
-
-              // @ts-expect-error Argument length cannot be checked properly
-              return original.apply(this, args);
-            };
-          }
-        );
-      }
+          // @ts-expect-error This is magic that TypeScript doesn't understand
+          return original.apply(this, args);
+        };
+      });
 
       return exports;
     });

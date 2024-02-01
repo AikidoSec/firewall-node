@@ -25,6 +25,14 @@ async function main() {
   app.use(morgan("tiny"));
   app.use(cookieParser());
 
+  app.route("/route").get((req, res) => {
+    res.send("/route");
+  });
+
+  app.all("/all", (req, res) => {
+    res.send("/all");
+  });
+
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
   // { title: { '$ne': null } }
