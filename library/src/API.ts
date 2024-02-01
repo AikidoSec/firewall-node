@@ -65,8 +65,6 @@ export class APIFetch implements API {
 }
 
 export class APIThrottled implements API {
-  // TODO: Use LRU with fixed size
-  // Blocks won't happen too often, so we can keep them in memory
   private set = new Set<string>();
 
   constructor(private readonly api: API) {}
@@ -96,9 +94,13 @@ export class APIThrottled implements API {
     if (event.type === "blocked") {
       const fingerprint = this.getFingerprint(event);
 
-      // Already reported block
       if (this.set.has(fingerprint)) {
         return false;
+      }
+
+      // Prevent memory overflow
+      if (this.set.size > 100) {
+        this.set.clear();
       }
 
       this.set.add(fingerprint);
