@@ -24,11 +24,11 @@ function createContext({
   };
 }
 
-t.test("empty filter and request", async () => {
+t.test("empty filter and request", async (t) => {
   t.match(detectNoSQLInjection(createContext({}), {}), { injection: false });
 });
 
-t.test("filter with string value and empty request", async () => {
+t.test("filter with string value and empty request", async (t) => {
   t.match(
     detectNoSQLInjection(createContext({}), {
       title: { title: "title" },
@@ -37,7 +37,7 @@ t.test("filter with string value and empty request", async () => {
   );
 });
 
-t.test("filter with $ne and empty request", async () => {
+t.test("filter with $ne and empty request", async (t) => {
   t.match(
     detectNoSQLInjection(createContext({}), {
       title: { $ne: null },
@@ -46,7 +46,7 @@ t.test("filter with $ne and empty request", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in query parameter", async () => {
+t.test("NoSQL injection using $ne in query parameter", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -60,7 +60,7 @@ t.test("NoSQL injection using $ne in query parameter", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in body", async () => {
+t.test("NoSQL injection using $ne in body", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -74,21 +74,24 @@ t.test("NoSQL injection using $ne in body", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in headers with different name", async () => {
-  t.match(
-    detectNoSQLInjection(
-      createContext({
-        body: { title: { $ne: null } },
-      }),
-      {
-        someField: { $ne: null },
-      }
-    ),
-    { injection: true, source: "body", path: ".title" }
-  );
-});
+t.test(
+  "NoSQL injection using $ne in headers with different name",
+  async (t) => {
+    t.match(
+      detectNoSQLInjection(
+        createContext({
+          body: { title: { $ne: null } },
+        }),
+        {
+          someField: { $ne: null },
+        }
+      ),
+      { injection: true, source: "body", path: ".title" }
+    );
+  }
+);
 
-t.test("NoSQL injection using $ne inside $and", async () => {
+t.test("NoSQL injection using $ne inside $and", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -109,7 +112,7 @@ t.test("NoSQL injection using $ne inside $and", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $or", async () => {
+t.test("NoSQL injection using $ne inside $or", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -130,7 +133,7 @@ t.test("NoSQL injection using $ne inside $or", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $nor", async () => {
+t.test("NoSQL injection using $ne inside $nor", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -151,7 +154,7 @@ t.test("NoSQL injection using $ne inside $nor", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $not", async () => {
+t.test("NoSQL injection using $ne inside $not", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -167,7 +170,7 @@ t.test("NoSQL injection using $ne inside $not", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne nested in body", async () => {
+t.test("NoSQL injection using $ne nested in body", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -187,7 +190,7 @@ t.test("NoSQL injection using $ne nested in body", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in headers", async () => {
+t.test("NoSQL injection using $ne in JWT in headers", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -218,7 +221,7 @@ t.test("NoSQL injection using $ne in JWT in headers", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in bearer header", async () => {
+t.test("NoSQL injection using $ne in JWT in bearer header", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -249,7 +252,7 @@ t.test("NoSQL injection using $ne in JWT in bearer header", async () => {
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in cookies", async () => {
+t.test("NoSQL injection using $ne in JWT in cookies", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({

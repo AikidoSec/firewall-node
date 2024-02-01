@@ -6,7 +6,7 @@ import { runWithContext } from "../RequestContext";
 import { MongoDB } from "./MongoDB";
 
 // TODO: Test all wrapped methods
-t.test("we can highjack the MongoDB library", async () => {
+t.test("we can highjack the MongoDB library", async (t) => {
   new MongoDB().setup();
 
   const { MongoClient } = require("mongodb");
