@@ -1,5 +1,6 @@
 import { request } from "undici";
 import { Source } from "./Source";
+import { createHash } from "node:crypto";
 
 export class Token {
   constructor(private readonly token: string) {
@@ -40,7 +41,7 @@ type Blocked = {
   hostname: string;
 };
 
-type Event = Installed | Blocked;
+export type Event = Installed | Blocked;
 
 export interface API {
   report(token: Token, event: Event): Promise<boolean>;
@@ -60,6 +61,50 @@ export class APIFetch implements API {
     });
 
     return response.statusCode === 200;
+  }
+}
+
+export class APIThrottled implements API {
+  // TODO: Use LRU with fixed size
+  // Blocks won't happen too often, so we can keep them in memory
+  private set = new Set<string>();
+
+  constructor(private readonly api: API) {}
+
+  getFingerprint(event: Blocked) {
+    const parts: string[] = [event.source, event.path];
+    if (event.ipAddress) {
+      parts.push(event.ipAddress);
+    }
+    if (event.method) {
+      parts.push(event.method);
+    }
+    if (event.url) {
+      parts.push(event.url);
+    }
+    if (event.userAgent) {
+      parts.push(event.userAgent);
+    }
+    for (const key of Object.keys(event.metadata)) {
+      parts.push(`${key}:${event.metadata[key]}`);
+    }
+
+    return createHash("md5").update(parts.join(" ")).digest("hex");
+  }
+
+  async report(token: Token, event: Event) {
+    if (event.type === "blocked") {
+      const fingerprint = this.getFingerprint(event);
+
+      // Already reported block
+      if (this.set.has(fingerprint)) {
+        return false;
+      }
+
+      this.set.add(fingerprint);
+    }
+
+    return await this.api.report(token, event);
   }
 }
 
