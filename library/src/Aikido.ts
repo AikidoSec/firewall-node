@@ -27,12 +27,8 @@ export class Aikido {
       return this.version;
     }
 
-    const entrypoint = require.resolve("@aikidosec/rasp");
     const json: { version: string } = JSON.parse(
-      readFileSync(
-        resolve(entrypoint, "..", "..", "package.json"),
-        "utf-8"
-      ).toString()
+      readFileSync(resolve(__dirname, "..", "package.json"), "utf-8").toString()
     );
     this.version = json.version;
 
