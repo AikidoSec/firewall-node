@@ -301,3 +301,17 @@ t.test("JWT lookalike", async (t) => {
     }
   );
 });
+
+t.test("NoSQL injection using $gt in query parameter", async (t) => {
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        query: { age: { $gt: "21" } },
+      }),
+      {
+        age: { $gt: "21" },
+      }
+    ),
+    { injection: true, source: "query", path: "age" }
+  );
+});

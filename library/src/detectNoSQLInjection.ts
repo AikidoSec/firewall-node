@@ -8,7 +8,7 @@ type DetectionResult =
   | { injection: true; source: Source; path: string }
   | { injection: false };
 
-const COMPARISON_OPERATORS = [
+const OPERATORS = [
   "$eq",
   "$gt",
   "$gte",
@@ -17,9 +17,33 @@ const COMPARISON_OPERATORS = [
   "$lte",
   "$ne",
   "$nin",
+  "$and",
+  "$not",
+  "$nor",
+  "$or",
+  "$exists",
+  "$type",
+  "$expr",
+  "$jsonSchema",
+  "$mod",
+  "$regex",
+  "$text",
+  "$where",
+  "$geoIntersects",
+  "$geoWithin",
+  "$near",
+  "$nearSphere",
+  "$all",
+  "$elemMatch",
+  "$size",
+  "$bitsAllClear",
+  "$bitsAllSet",
+  "$bitsAnyClear",
+  "$bitsAnySet",
+  "$elemMatch",
 ] as const;
 
-type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
+type Operator = (typeof OPERATORS)[number];
 
 function findValueInUserControllerValue(
   userControlledValue: unknown,
@@ -116,7 +140,7 @@ function findInjectionInObject(
     if (
       isPlainObject(value) &&
       Object.keys(value).length === 1 &&
-      COMPARISON_OPERATORS.includes(Object.keys(value)[0] as ComparisonOperator)
+      OPERATORS.includes(Object.keys(value)[0] as Operator)
     ) {
       const result = findValueInUserControllerValue(userControlledValue, value);
 
