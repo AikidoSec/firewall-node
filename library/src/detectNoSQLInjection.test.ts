@@ -282,3 +282,22 @@ t.test("NoSQL injection using $ne in JWT in cookies", async (t) => {
     }
   );
 });
+
+t.test("JWT lookalike", async (t) => {
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        cookies: {
+          session:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbW!iOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
+        },
+      }),
+      {
+        username: { $ne: null },
+      }
+    ),
+    {
+      injection: false,
+    }
+  );
+});
