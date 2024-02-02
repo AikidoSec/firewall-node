@@ -1,3 +1,4 @@
 export interface Integration {
-  setup(): void;
+  getPackageName(): string;
+  setup(): boolean;
 }

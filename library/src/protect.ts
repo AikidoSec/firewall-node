@@ -1,20 +1,17 @@
 // eslint-disable-next-line import/no-unresolved
 import { APIGatewayProxyHandler } from "aws-lambda";
-import { Aikido } from "./Aikido";
+import { Agent } from "./Agent";
+import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { Express } from "./integrations/Express";
 import { Integration } from "./integrations/Integration";
-import { createLambdaWrapper } from "./integrations/Lambda";
+import { createLambdaWrapper } from "./Lambda";
 import { MongoDB } from "./integrations/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 
-function commonIntegrations(aikido: Aikido) {
+function commonIntegrations() {
   return [new MongoDB()];
-}
-
-function setupIntegrations(aikido: Aikido, integrations: Integration[]) {
-  integrations.forEach((integration) => integration.setup());
 }
 
 type Options = {
@@ -49,20 +46,29 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
+function getAgent(options: Options, integrations: Integration[]) {
+  const current = getInstance();
+
+  if (current) {
+    return current;
+  }
+
+  const token = getTokenFromEnv();
+  const logger = getLogger(options);
+  const api = getAPI();
+  const agent = new Agent(logger, api, token, integrations);
+  setInstance(agent);
+
+  return agent;
+}
+
 export function protect(options?: Options) {
   // Disable shimmer logging
   shimmer({ logger: () => {} });
 
   options = { ...defaultOptions, ...options };
-  const token = getTokenFromEnv();
-  const logger = getLogger(options);
-  const api = getAPI();
-  const aikido = new Aikido(logger, api, token);
-
-  setupIntegrations(aikido, [
-    ...commonIntegrations(aikido),
-    new Express(aikido),
-  ]);
+  const agent = getAgent(options, [...commonIntegrations(), new Express()]);
+  agent.start();
 }
 
 export function lambda(
@@ -73,13 +79,9 @@ export function lambda(
     shimmer({ logger: () => {} });
 
     options = { ...defaultOptions, ...options };
-    const token = getTokenFromEnv();
-    const logger = getLogger(options);
-    const api = getAPI();
-    const aikido = new Aikido(logger, api, token);
+    const agent = getAgent(options, [...commonIntegrations()]);
+    agent.start();
 
-    setupIntegrations(aikido, [...commonIntegrations(aikido)]);
-
-    return createLambdaWrapper(aikido, handler);
+    return createLambdaWrapper(agent, handler);
   };
 }

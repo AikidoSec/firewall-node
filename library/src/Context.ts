@@ -1,8 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { Aikido } from "./Aikido";
 import type { ParsedQs } from "qs";
 
-export type Request = {
+export type Context = {
   url: string | undefined;
   method: string;
   query: ParsedQs;
@@ -12,17 +11,12 @@ export type Request = {
   cookies: Record<string, string>;
 };
 
-export type RequestContext = {
-  aikido: Aikido;
-  request: Request;
-};
-
-const requestContext = new AsyncLocalStorage<RequestContext>();
+const requestContext = new AsyncLocalStorage<Context>();
 
 export function getContext() {
   return requestContext.getStore();
 }
 
-export function runWithContext<T>(context: RequestContext, fn: () => T) {
+export function runWithContext<T>(context: Context, fn: () => T) {
   return requestContext.run(context, fn);
 }

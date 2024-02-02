@@ -18,13 +18,19 @@ export class Token {
   }
 }
 
-export type Kind = "nosql-injection";
+export type Instance = {
+  hostname: string;
+  version: string;
+  packages: Record<string, string>;
+  ipAddress: string;
+};
 
 type Installed = {
   type: "installed";
-  hostname: string;
-  version: string;
+  instance: Instance;
 };
+
+export type Kind = "nosql-injection";
 
 type Blocked = {
   type: "blocked";
@@ -37,8 +43,7 @@ type Blocked = {
   path: string;
   stack: string;
   metadata: Record<string, string>;
-  version: string;
-  hostname: string;
+  instance: Instance;
 };
 
 export type Event = Installed | Blocked;
@@ -64,6 +69,7 @@ export class APIFetch implements API {
   }
 }
 
+// TODO: Time based throttle
 export class APIThrottled implements API {
   private set = new Set<string>();
 

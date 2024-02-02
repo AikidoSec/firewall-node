@@ -2,9 +2,10 @@
 import type { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
+import { getInstance } from "../AgentSingleton";
 import { detectNoSQLInjection } from "../detectNoSQLInjection";
 import { isPlainObject } from "../isPlainObject";
-import { getContext } from "../RequestContext";
+import { getContext } from "../Context";
 import { friendlyName } from "../Source";
 import { Integration } from "./Integration";
 
@@ -24,7 +25,11 @@ const OPERATIONS = [
 type Operation = (typeof OPERATIONS)[number];
 
 export class MongoDB implements Integration {
-  setup(): void {
+  getPackageName(): string {
+    return "mongodb";
+  }
+
+  setup(): boolean {
     new Hook(["mongodb"], (exports) => {
       OPERATIONS.forEach((operation) => {
         wrap<Collection, Operation>(
@@ -34,23 +39,24 @@ export class MongoDB implements Integration {
           // @ts-expect-error Something about a missing _id in the document
           function (original) {
             return function (this: Collection) {
-              const context = getContext();
+              const request = getContext();
+              const agent = getInstance();
 
-              if (!context) {
+              if (!request || !agent) {
                 // @ts-expect-error Something about this context
                 return original.apply(this, arguments);
               }
 
               if (arguments.length > 0 && isPlainObject(arguments[0])) {
                 const filter = arguments[0];
-                const result = detectNoSQLInjection(context.request, filter);
+                const result = detectNoSQLInjection(request, filter);
 
                 if (result.injection) {
                   const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`;
-                  context.aikido.report({
+                  agent.report({
                     source: result.source,
                     kind: "nosql-injection",
-                    request: context.request,
+                    request: request,
                     stack: new Error().stack || "",
                     path: result.path,
                     metadata: {
@@ -74,5 +80,7 @@ export class MongoDB implements Integration {
 
       return exports;
     });
+
+    return true;
   }
 }

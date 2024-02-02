@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { detectNoSQLInjection } from "./detectNoSQLInjection";
-import { Request } from "./RequestContext";
+import { Context } from "./Context";
 
 function createContext({
   query,
@@ -8,11 +8,11 @@ function createContext({
   body,
   cookies,
 }: {
-  query?: Request["query"];
-  body?: Request["body"];
-  headers?: Request["headers"];
-  cookies?: Request["cookies"];
-}): Request {
+  query?: Context["query"];
+  body?: Context["body"];
+  headers?: Context["headers"];
+  cookies?: Context["cookies"];
+}): Context {
   return {
     remoteAddress: "::1",
     method: "GET",

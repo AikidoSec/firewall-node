@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { isPlainObject } from "./isPlainObject";
 import { tryDecodeAsJWT } from "./jwt";
-import { Request } from "./RequestContext";
+import { Context } from "./Context";
 import { Source } from "./Source";
 
 type DetectionResult =
@@ -177,7 +177,7 @@ export function filterContainsOperator(filter: unknown) {
 }
 
 export function detectNoSQLInjection(
-  request: Request,
+  request: Context,
   filter: unknown
 ): DetectionResult {
   // Skip if filter does not contain any dollar signs

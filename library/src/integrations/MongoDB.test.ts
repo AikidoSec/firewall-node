@@ -1,13 +1,21 @@
 import * as t from "tap";
-import { Aikido } from "../Aikido";
-import { APIForTesting } from "../API";
+import { Agent } from "../Agent";
+import { setInstance } from "../AgentSingleton";
+import { APIForTesting, Token } from "../API";
 import { LoggerNoop } from "../Logger";
-import { runWithContext } from "../RequestContext";
+import { runWithContext } from "../Context";
 import { MongoDB } from "./MongoDB";
 
 // TODO: Test all wrapped methods
 t.test("we can highjack the MongoDB library", async (t) => {
-  new MongoDB().setup();
+  const agent = new Agent(
+    new LoggerNoop(),
+    new APIForTesting(),
+    new Token("123"),
+    [new MongoDB()]
+  );
+  agent.start();
+  setInstance(agent);
 
   const { MongoClient } = require("mongodb");
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
@@ -37,20 +45,17 @@ t.test("we can highjack the MongoDB library", async (t) => {
     const error = await t.rejects(async () => {
       await runWithContext(
         {
-          aikido: new Aikido(new LoggerNoop(), new APIForTesting(), undefined),
-          request: {
-            remoteAddress: "::1",
-            method: "POST",
-            url: "http://localhost:4000",
-            query: {},
-            headers: {},
-            body: {
-              title: {
-                $ne: null,
-              },
+          remoteAddress: "::1",
+          method: "POST",
+          url: "http://localhost:4000",
+          query: {},
+          headers: {},
+          body: {
+            title: {
+              $ne: null,
             },
-            cookies: {},
           },
+          cookies: {},
         },
         () => {
           return collection.find({ title: { $ne: null } }).toArray();
@@ -66,16 +71,13 @@ t.test("we can highjack the MongoDB library", async (t) => {
 
     await runWithContext(
       {
-        aikido: new Aikido(new LoggerNoop(), new APIForTesting(), undefined),
-        request: {
-          remoteAddress: "::1",
-          method: "POST",
-          url: "http://localhost:4000",
-          query: {},
-          headers: {},
-          body: {},
-          cookies: {},
-        },
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {},
+        headers: {},
+        body: {},
+        cookies: {},
       },
       () => {
         return collection.find({ title: { $ne: null } }).toArray();

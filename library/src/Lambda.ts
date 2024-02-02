@@ -3,8 +3,8 @@ import type {
   APIGatewayProxyResult,
   Handler,
 } from "aws-lambda";
-import { Aikido } from "../Aikido";
-import { runWithContext } from "../RequestContext";
+import { Agent } from "./Agent";
+import { runWithContext } from "./Context";
 import { parse } from "cookie";
 
 function isObject(value: unknown): boolean {
@@ -37,9 +37,7 @@ type AsyncHandler<T extends Handler> = (
 export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
->(aikido: Aikido, handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
-  aikido.installed();
-
+>(aikido: Agent, handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
   // AWSLambda is like Express. It makes a distinction about handlers based on its last argument
   // async (event) => async handler
   // async (event, context) => async handler
@@ -72,17 +70,14 @@ export function createLambdaWrapper<
   return async (event, context) => {
     return runWithContext(
       {
-        aikido: aikido,
-        request: {
-          url: undefined,
-          method: event.httpMethod,
-          remoteAddress: event.requestContext?.identity?.sourceIp,
-          // TODO: Safe to assume JSON? Catch error
-          body: event.body ? JSON.parse(event.body) : undefined,
-          headers: event.headers,
-          query: event.queryStringParameters ? event.queryStringParameters : {},
-          cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
-        },
+        url: undefined,
+        method: event.httpMethod,
+        remoteAddress: event.requestContext?.identity?.sourceIp,
+        // TODO: Safe to assume JSON? Catch error
+        body: event.body ? JSON.parse(event.body) : undefined,
+        headers: event.headers,
+        query: event.queryStringParameters ? event.queryStringParameters : {},
+        cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
       },
       () => asyncHandler(event, context)
     );

@@ -1,18 +1,13 @@
 import * as t from "tap";
-import { Aikido } from "../Aikido";
-import { APIForTesting } from "../API";
-import { LoggerNoop } from "../Logger";
 import { Express } from "./Express";
 
 // Before express is required!
-new Express(
-  new Aikido(new LoggerNoop(), new APIForTesting(), undefined)
-).setup();
+new Express().setup();
 
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
-import { getContext } from "../RequestContext";
+import { getContext } from "../Context";
 
 function getApp() {
   const app = express();
@@ -54,7 +49,7 @@ t.test("it adds context from request for GET", async (t) => {
     .set("Accept", "application/json")
     .set("X-Forwarded-For", "1.2.3.4");
 
-  t.match(response.body.request, {
+  t.match(response.body, {
     query: { title: { $ne: "null" } },
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
@@ -65,13 +60,13 @@ t.test("it adds context from request for GET", async (t) => {
 t.test("it adds context from request for POST", async (t) => {
   const response = await request(getApp()).post("/").send({ title: "Title" });
 
-  t.match(response.body.request.body, { title: "Title" });
+  t.match(response.body.body, { title: "Title" });
 });
 
 t.test("it adds context from request for route", async (t) => {
   const response = await request(getApp()).get("/route");
 
-  t.match(response.body.request, {
+  t.match(response.body, {
     query: {},
     cookies: {},
     headers: {},
@@ -81,7 +76,7 @@ t.test("it adds context from request for route", async (t) => {
 t.test("it adds context from request for all", async (t) => {
   const response = await request(getApp()).get("/all");
 
-  t.match(response.body.request, {
+  t.match(response.body, {
     query: {},
     cookies: {},
     headers: {},
