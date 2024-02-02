@@ -9,7 +9,7 @@ t.test("it sends install event once", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(logger, api, token, []);
+  const agent = new Agent(true, logger, api, token, []);
   agent.start();
 
   await new Promise((resolve) => setImmediate(resolve));

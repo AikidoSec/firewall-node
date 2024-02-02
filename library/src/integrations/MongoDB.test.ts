@@ -9,6 +9,7 @@ import { MongoDB } from "./MongoDB";
 // TODO: Test all wrapped methods
 t.test("we can highjack the MongoDB library", async (t) => {
   const agent = new Agent(
+    true,
     new LoggerNoop(),
     new APIForTesting(),
     new Token("123"),

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { hostname } from "node:os";
-import { API, Instance, Kind, Token } from "./API";
+import { API, Instance, Token } from "./API";
 import { Integration } from "./integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
@@ -25,15 +25,13 @@ export class Agent {
     return this.block;
   }
 
-  report({
-    kind,
+  foundNoSQLInjection({
     source,
     request,
     stack,
     path,
     metadata,
   }: {
-    kind: Kind;
     source: Source;
     request: Context;
     stack: string;
@@ -43,8 +41,8 @@ export class Agent {
     if (this.token && this.instance) {
       this.api
         .report(this.token, {
-          type: "blocked",
-          kind: kind,
+          type: "nosql-injection",
+          blocked: true,
           ipAddress: request.remoteAddress,
           userAgent:
             typeof request.headers["user-agent"] === "string"
@@ -58,8 +56,8 @@ export class Agent {
           metadata: metadata,
           instance: this.instance,
         })
-        .catch((error) => {
-          this.logger.log("Failed to report event: " + error.message);
+        .catch(() => {
+          this.logger.log("Failed to report NoSQL injection");
         });
     }
   }

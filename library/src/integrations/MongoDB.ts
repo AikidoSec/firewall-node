@@ -53,9 +53,8 @@ export class MongoDB implements Integration {
 
                 if (result.injection) {
                   const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`;
-                  agent.report({
+                  agent.foundNoSQLInjection({
                     source: result.source,
-                    kind: "nosql-injection",
                     request: request,
                     stack: new Error().stack || "",
                     path: result.path,
