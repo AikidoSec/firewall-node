@@ -15,11 +15,13 @@ function commonIntegrations() {
 }
 
 type Options = {
-  debug?: boolean;
+  debug: boolean;
+  block: boolean;
 };
 
 const defaultOptions: Options = {
   debug: false,
+  block: true,
 };
 
 function getLogger(options: Options): Logger {
@@ -46,6 +48,13 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
+function dryModeEnabled(): boolean {
+  return (
+    process.env.AIKIDO_NO_BLOCKING === "true" ||
+    process.env.AIKIDO_NO_BLOCKING === "1"
+  );
+}
+
 function getAgent(options: Options, integrations: Integration[]) {
   const current = getInstance();
 
@@ -56,30 +65,41 @@ function getAgent(options: Options, integrations: Integration[]) {
   const token = getTokenFromEnv();
   const logger = getLogger(options);
   const api = getAPI();
-  const agent = new Agent(logger, api, token, integrations);
+  const agent = new Agent(options.block, logger, api, token, integrations);
   setInstance(agent);
 
   return agent;
 }
 
-export function protect(options?: Options) {
+function getOptions(partialOptions?: Partial<Options>): Options {
+  const options = { ...defaultOptions, ...partialOptions };
+
+  if (dryModeEnabled()) {
+    options.block = false;
+  }
+
+  return options;
+}
+
+export function protect(options?: Partial<Options>) {
   // Disable shimmer logging
   shimmer({ logger: () => {} });
 
-  options = { ...defaultOptions, ...options };
-  const agent = getAgent(options, [...commonIntegrations(), new Express()]);
+  const agent = getAgent(getOptions(options), [
+    ...commonIntegrations(),
+    new Express(),
+  ]);
   agent.start();
 }
 
 export function lambda(
-  options?: Options
+  options?: Partial<Options>
 ): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {
   return (handler) => {
     // Disable shimmer logging
     shimmer({ logger: () => {} });
 
-    options = { ...defaultOptions, ...options };
-    const agent = getAgent(options, [...commonIntegrations()]);
+    const agent = getAgent(getOptions(options), [...commonIntegrations()]);
     agent.start();
 
     return createLambdaWrapper(agent, handler);

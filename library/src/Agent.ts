@@ -8,18 +8,22 @@ import { resolve } from "path";
 import { Source } from "./Source";
 import { satisfies } from "semver";
 import { address } from "ip";
-import { supportedPackages } from "./SupportedPackages";
 
 export class Agent {
   private started = false;
   private instance: Instance | undefined = undefined;
 
   constructor(
+    private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
     private readonly integrations: Integration[]
   ) {}
+
+  shouldBlock() {
+    return this.block;
+  }
 
   report({
     kind,
@@ -68,6 +72,10 @@ export class Agent {
 
     this.started = true;
     this.logger.log("Starting agent...");
+
+    if (!this.block) {
+      this.logger.log("Dry mode enabled, no requests will be blocked!");
+    }
 
     if (this.token) {
       this.logger.log("Found token, reporting enabled!");

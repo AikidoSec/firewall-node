@@ -67,7 +67,9 @@ export class MongoDB implements Integration {
                     },
                   });
 
-                  throw new Error(message);
+                  if (agent.shouldBlock()) {
+                    throw new Error(message);
+                  }
                 }
               }
 
