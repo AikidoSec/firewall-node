@@ -16,7 +16,7 @@ t.test("it sends install event once", async (t) => {
   t.match(api.getEvents(), [
     {
       type: "installed",
-      instance: {
+      agent: {
         hostname: hostname(),
         version: "1.0.0",
         ipAddress: address(),
@@ -30,7 +30,7 @@ t.test("it sends install event once", async (t) => {
   t.match(api.getEvents(), [
     {
       type: "installed",
-      instance: {
+      agent: {
         hostname: hostname(),
         version: "1.0.0",
         ipAddress: address(),

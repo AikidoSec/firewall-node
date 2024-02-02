@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { hostname } from "node:os";
-import { API, Instance, Token } from "./API";
+import { API, AgentInfo, Token } from "./API";
 import { Integration } from "./integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
@@ -11,7 +11,7 @@ import { address } from "ip";
 
 export class Agent {
   private started = false;
-  private instance: Instance | undefined = undefined;
+  private instance: AgentInfo | undefined = undefined;
 
   constructor(
     private readonly block: boolean,
@@ -26,12 +26,14 @@ export class Agent {
   }
 
   foundNoSQLInjection({
+    blocked,
     source,
     request,
     stack,
     path,
     metadata,
   }: {
+    blocked: boolean;
     source: Source;
     request: Context;
     stack: string;
@@ -42,19 +44,23 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "nosql-injection",
-          blocked: true,
-          ipAddress: request.remoteAddress,
-          userAgent:
-            typeof request.headers["user-agent"] === "string"
-              ? request.headers["user-agent"]
-              : undefined,
-          url: request.url as string,
-          method: request.method,
-          path: path,
-          stack: stack,
-          source: source,
-          metadata: metadata,
-          instance: this.instance,
+          injection: {
+            blocked: blocked,
+            path: path,
+            stack: stack,
+            source: source,
+            metadata: metadata,
+          },
+          request: {
+            method: request.method,
+            url: request.url as string,
+            ipAddress: request.remoteAddress,
+            userAgent:
+              typeof request.headers["user-agent"] === "string"
+                ? request.headers["user-agent"]
+                : undefined,
+          },
+          agent: this.instance,
         })
         .catch(() => {
           this.logger.log("Failed to report NoSQL injection");
@@ -146,7 +152,7 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "installed",
-          instance: this.instance,
+          agent: this.instance,
         })
         .catch((error) => {
           this.logger.log("Failed to report installed event");

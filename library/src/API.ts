@@ -17,7 +17,7 @@ export class Token {
   }
 }
 
-export type Instance = {
+export type AgentInfo = {
   hostname: string;
   version: string;
   packages: Record<string, string>;
@@ -26,21 +26,25 @@ export type Instance = {
 
 type Installed = {
   type: "installed";
-  instance: Instance;
+  agent: AgentInfo;
 };
 
 type Blocked = {
   type: "nosql-injection";
-  blocked: boolean;
-  ipAddress: string | undefined;
-  userAgent: string | undefined;
-  url: string | undefined;
-  method: string;
-  source: Source;
-  path: string;
-  stack: string;
-  metadata: Record<string, string>;
-  instance: Instance;
+  request: {
+    method: string;
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    url: string | undefined;
+  };
+  injection: {
+    source: Source;
+    path: string;
+    blocked: boolean;
+    stack: string;
+    metadata: Record<string, string>;
+  };
+  agent: AgentInfo;
 };
 
 export type Event = Installed | Blocked;
