@@ -22,6 +22,8 @@ export type AgentInfo = {
   version: string;
   packages: Record<string, string>;
   ipAddress: string;
+  osName: string;
+  osVersion: string;
 };
 
 type Installed = {

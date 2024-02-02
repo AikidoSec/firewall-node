@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { hostname } from "node:os";
+import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token } from "./API";
 import { Integration } from "./integrations/Integration";
 import { Logger } from "./Logger";
@@ -11,7 +11,7 @@ import { address } from "ip";
 
 export class Agent {
   private started = false;
-  private instance: AgentInfo | undefined = undefined;
+  private info: AgentInfo | undefined = undefined;
 
   constructor(
     private readonly block: boolean,
@@ -40,7 +40,7 @@ export class Agent {
     path: string;
     metadata: Record<string, string>;
   }) {
-    if (this.token && this.instance) {
+    if (this.token && this.info) {
       this.api
         .report(this.token, {
           type: "detected_attack",
@@ -53,14 +53,14 @@ export class Agent {
           },
           request: {
             method: request.method,
-            url: request.url as string,
+            url: request.url,
             ipAddress: request.remoteAddress,
             userAgent:
               typeof request.headers["user-agent"] === "string"
                 ? request.headers["user-agent"]
                 : undefined,
           },
-          agent: this.instance,
+          agent: this.info,
         })
         .catch(() => {
           this.logger.log("Failed to report attack");
@@ -128,31 +128,31 @@ export class Agent {
         installed[pkgName] = json.version;
       });
 
-      this.instance = {
+      this.info = {
         hostname: hostname(),
         version: json.version,
         ipAddress: address(),
         packages: installed,
+        osName: platform(),
+        osVersion: release(),
       };
     } catch (error: any) {
       this.logger.log("Failed to start agent: " + error.message);
     }
 
     const installed = this.integrations.map((integration) => {
-      return (
-        this.instance && !!this.instance.packages[integration.getPackageName()]
-      );
+      return this.info && !!this.info.packages[integration.getPackageName()];
     });
 
     if (
       this.token &&
-      this.instance &&
+      this.info &&
       installed.every((initialised) => initialised)
     ) {
       this.api
         .report(this.token, {
           type: "installed",
-          agent: this.instance,
+          agent: this.info,
         })
         .catch((error) => {
           this.logger.log("Failed to report installed event");
