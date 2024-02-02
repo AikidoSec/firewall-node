@@ -7,7 +7,7 @@ WARNING: This is an early release. Use at your own risk.
 
 ## Features
 
-* 🛡️ Protects your application against [NoSQL injection attacks](https://learn.snyk.io/lesson/nosql-injection-attack/)
+* 🛡️ Protects your application against [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
 * 🔥 More to come
 
 ## Supported libraries and frameworks
