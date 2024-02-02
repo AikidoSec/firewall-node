@@ -63,7 +63,7 @@ export class Agent {
           agent: this.instance,
         })
         .catch(() => {
-          this.logger.log("Failed to report NoSQL injection");
+          this.logger.log("Failed to report attack");
         });
     }
   }
