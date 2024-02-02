@@ -43,7 +43,7 @@ export class Agent {
     if (this.token && this.info) {
       this.api
         .report(this.token, {
-          type: "detected_attack",
+          type: "attack_detected",
           attack: {
             blocked: blocked,
             path: path,

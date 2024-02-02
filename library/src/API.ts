@@ -32,7 +32,7 @@ type Installed = {
 };
 
 type DetectedAttack = {
-  type: "detected_attack";
+  type: "attack_detected";
   request: {
     method: string;
     ipAddress: string | undefined;
