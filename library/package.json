@@ -1,7 +1,18 @@
 {
   "name": "@aikidosec/rasp",
   "version": "1.0.0",
-  "description": "",
+  "description": "Protects your application against NoSQL injections and more",
+  "keywords": [
+    "security",
+    "nosql",
+    "injection",
+    "mongodb",
+    "express",
+    "rasp",
+    "firewall",
+    "aikido"
+  ],
+  "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.131",
