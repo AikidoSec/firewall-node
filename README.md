@@ -40,6 +40,8 @@ If you need to debug the RASP, you can set the `debug` option:
 require('@aikidosec/rasp').protect({ debug: true });
 ```
 
+This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
+
 ### AWS Lambda
 
 At the very beginning of your handler.js file, add the following line:
@@ -58,9 +60,9 @@ exports.handler = protect(async (event, context) => {
 
 In order for the RASP to work properly, we need the following event properties to be present:
 
-* `event.httpMethod`
 * `event.body`
-* `event.headers`
+* `event.httpMethod` (optional)
+* `event.headers` (optional)
 
 That's it!
 
@@ -69,6 +71,8 @@ If you need to debug the RASP, you can set the `debug` option:
 ```js
 const protect = require("@aikidosec/rasp").lambda({ debug: true });
 ```
+
+This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
 
 ## Reporting NoSQL injections to Aikido
 
