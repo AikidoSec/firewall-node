@@ -29,25 +29,25 @@ type Installed = {
   agent: AgentInfo;
 };
 
-type Blocked = {
-  type: "nosql-injection";
+type DetectedAttack = {
+  type: "detected_attack";
   request: {
     method: string;
     ipAddress: string | undefined;
     userAgent: string | undefined;
     url: string | undefined;
   };
-  injection: {
+  attack: {
+    blocked: boolean;
     source: Source;
     path: string;
-    blocked: boolean;
     stack: string;
     metadata: Record<string, string>;
   };
   agent: AgentInfo;
 };
 
-export type Event = Installed | Blocked;
+export type Event = Installed | DetectedAttack;
 
 export interface API {
   report(token: Token, event: Event): Promise<boolean>;

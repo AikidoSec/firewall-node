@@ -52,8 +52,7 @@ export class MongoDB implements Integration {
                 const result = detectNoSQLInjection(request, filter);
 
                 if (result.injection) {
-                  const message = `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`;
-                  agent.foundNoSQLInjection({
+                  agent.detectedAttack({
                     blocked: agent.shouldBlock(),
                     source: result.source,
                     request: request,
@@ -68,7 +67,9 @@ export class MongoDB implements Integration {
                   });
 
                   if (agent.shouldBlock()) {
-                    throw new Error(message);
+                    throw new Error(
+                      `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`
+                    );
                   }
                 }
               }

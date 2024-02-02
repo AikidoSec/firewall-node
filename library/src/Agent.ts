@@ -25,7 +25,7 @@ export class Agent {
     return this.block;
   }
 
-  foundNoSQLInjection({
+  detectedAttack({
     blocked,
     source,
     request,
@@ -43,8 +43,8 @@ export class Agent {
     if (this.token && this.instance) {
       this.api
         .report(this.token, {
-          type: "nosql-injection",
-          injection: {
+          type: "detected_attack",
+          attack: {
             blocked: blocked,
             path: path,
             stack: stack,
