@@ -114,7 +114,6 @@ export class Agent {
   }
 
   private flushStats() {
-    console.log(this.stats);
     if (this.token && this.info) {
       this.api
         .report(this.token, {
