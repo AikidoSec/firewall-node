@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/rasp").protect({ debug: true });
+require("@aikidosec/guard").protect({ debug: true });
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");

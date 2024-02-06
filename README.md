@@ -1,6 +1,6 @@
-# Aikido RASP - Runtime Application Self-Protection
+# Aikido Guard for Node.js
 
-![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Frasp?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/node-RASP?style=flat-square) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Frasp?style=flat-square)
+![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fguard?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/guard-node?style=flat-square) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fguard?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 WARNING: This is an early release. Use at your own risk.
@@ -12,7 +12,7 @@ WARNING: This is an early release. Use at your own risk.
 
 ## Supported libraries and frameworks
 
-Aikido RASP is compatible with
+Aikido guard for Node.js is compatible with
 
 * ✅ Express 4.x
 * ✅ MongoDB 4.x, 5.x and 6.x
@@ -21,7 +21,7 @@ Aikido RASP is compatible with
 ## Installation
 
 ```shell
-$ npm install @aikidosec/rasp
+$ npm install @aikidosec/guard
 ```
 
 ### Express
@@ -29,15 +29,15 @@ $ npm install @aikidosec/rasp
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/rasp').protect();
+require('@aikidosec/guard').protect();
 ```
 
 That's it!
 
-If you need to debug the RASP, you can set the `debug` option:
+If you need to debug the guard, you can set the `debug` option:
 
 ```js
-require('@aikidosec/rasp').protect({ debug: true });
+require('@aikidosec/guard').protect({ debug: true });
 ```
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
@@ -47,7 +47,7 @@ This will output debug information to the console (e.g. if the agent failed to s
 At the very beginning of your handler.js file, add the following line:
 
 ```js
-const protect = require("@aikidosec/rasp").lambda();
+const protect = require("@aikidosec/guard").lambda();
 ```
 
 And then wrap your handler function with the `protect` function:
@@ -66,10 +66,10 @@ In order for the RASP to work properly, we need the following event properties t
 
 That's it!
 
-If you need to debug the RASP, you can set the `debug` option:
+If you need to debug the guard, you can set the `debug` option:
 
 ```js
-const protect = require("@aikidosec/rasp").lambda({ debug: true });
+const protect = require("@aikidosec/guard").lambda({ debug: true });
 ```
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
@@ -92,7 +92,7 @@ AIKIDO_TOKEN=your-token node your-app.js
 
 ## Running in dry mode
 
-If you want to test the RASP without blocking any requests, you can set the `AIKIDO_NO_BLOCKING` environment variable to `true`:
+If you want to test the guard without blocking any requests, you can set the `AIKIDO_NO_BLOCKING` environment variable to `true`:
 
 ```shell
 AIKIDO_NO_BLOCKING=true node your-app.js

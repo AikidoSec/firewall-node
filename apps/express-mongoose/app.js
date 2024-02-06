@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/rasp").protect({ debug: true });
+require("@aikidosec/guard").protect({ debug: true });
 
 const mongoose = require("mongoose");
 const express = require("express");

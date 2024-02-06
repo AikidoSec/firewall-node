@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/rasp": "*",
+    "@aikidosec/guard": "*",
     "express": "^4.18.2"
   }
 }

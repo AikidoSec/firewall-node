@@ -1,5 +1,5 @@
 {
-  "name": "@aikidosec/rasp",
+  "name": "@aikidosec/guard",
   "version": "1.0.0",
   "description": "Protects your application against NoSQL injections and more",
   "keywords": [
@@ -10,7 +10,8 @@
     "express",
     "rasp",
     "firewall",
-    "aikido"
+    "aikido",
+    "guard"
   ],
   "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
