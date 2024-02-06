@@ -2,6 +2,7 @@ import * as t from "tap";
 import { Agent } from "../Agent";
 import { setInstance } from "../AgentSingleton";
 import { APIForTesting, Token } from "../API";
+import { IDGeneratorFixed } from "../IDGenerator";
 import { LoggerNoop } from "../Logger";
 import { runWithContext } from "../Context";
 import { MongoDB } from "./MongoDB";
@@ -13,7 +14,8 @@ t.test("we can highjack the MongoDB library", async (t) => {
     new LoggerNoop(),
     new APIForTesting(),
     new Token("123"),
-    [new MongoDB()]
+    [new MongoDB()],
+    new IDGeneratorFixed("id")
   );
   agent.start();
   setInstance(agent);
@@ -89,4 +91,6 @@ t.test("we can highjack the MongoDB library", async (t) => {
   } finally {
     await client.close();
   }
+
+  agent.stop();
 });

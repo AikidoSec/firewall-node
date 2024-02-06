@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
-import { API, AgentInfo, Token } from "./API";
+import { API, AgentInfo, Token, Stats, Kind } from "./API";
+import { IDGenerator } from "./IDGenerator";
 import { Integration } from "./integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
@@ -10,22 +11,62 @@ import { satisfies } from "semver";
 import { address } from "ip";
 
 export class Agent {
+  private heartbeatIntervalInMS = 30 * 1000;
+  private interval: NodeJS.Timeout | undefined = undefined;
   private started = false;
   private info: AgentInfo | undefined = undefined;
+  private stats: Stats = {};
 
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly integrations: Integration[]
+    private readonly integrations: Integration[],
+    private readonly idGenerator: IDGenerator
   ) {}
 
   shouldBlock() {
     return this.block;
   }
 
+  inspectedCall({
+    detectedAttack,
+    module,
+    withoutContext,
+  }: {
+    detectedAttack: boolean;
+    module: string;
+    withoutContext: boolean;
+  }) {
+    this.stats[module] = this.stats[module] || {
+      blocked: 0,
+      allowed: 0,
+      withoutContext: 0,
+      total: 0,
+    };
+
+    this.stats[module].total += 1;
+
+    if (withoutContext) {
+      this.stats[module].withoutContext += 1;
+      this.stats[module].allowed += 1;
+      return;
+    }
+
+    if (detectedAttack) {
+      if (this.block) {
+        this.stats[module].blocked += 1;
+      } else {
+        this.stats[module].allowed += 1;
+      }
+    } else {
+      this.stats[module].allowed += 1;
+    }
+  }
+
   detectedAttack({
+    module,
     blocked,
     source,
     request,
@@ -33,6 +74,8 @@ export class Agent {
     path,
     metadata,
   }: {
+    module: string;
+    kind: Kind;
     blocked: boolean;
     source: Source;
     request: Context;
@@ -43,13 +86,15 @@ export class Agent {
     if (this.token && this.info) {
       this.api
         .report(this.token, {
-          type: "attack_detected",
+          type: "detected_attack",
           attack: {
+            module: module,
             blocked: blocked,
             path: path,
             stack: stack,
             source: source,
             metadata: metadata,
+            kind: "nosql_injection",
           },
           request: {
             method: request.method,
@@ -65,6 +110,27 @@ export class Agent {
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
+    }
+  }
+
+  private flushStats() {
+    console.log(this.stats);
+    if (this.token && this.info) {
+      this.api
+        .report(this.token, {
+          type: "heartbeat",
+          agent: this.info,
+          stats: this.stats,
+        })
+        .catch((error) => {
+          this.logger.log("Failed to report stats");
+        });
+    }
+  }
+
+  stop() {
+    if (this.interval) {
+      clearInterval(this.interval);
     }
   }
 
@@ -129,12 +195,16 @@ export class Agent {
       });
 
       this.info = {
-        hostname: hostname(),
+        id: this.idGenerator.generate(),
+        dryMode: !this.block,
+        hostname: hostname() || "",
         version: json.version,
-        ipAddress: address(),
+        ipAddress: address() || "",
         packages: installed,
-        osName: platform(),
-        osVersion: release(),
+        os: {
+          name: platform(),
+          version: release(),
+        },
       };
     } catch (error: any) {
       this.logger.log("Failed to start agent: " + error.message);
@@ -151,12 +221,19 @@ export class Agent {
     ) {
       this.api
         .report(this.token, {
-          type: "installed",
+          type: "started",
           agent: this.info,
         })
         .catch((error) => {
-          this.logger.log("Failed to report installed event");
+          this.logger.log("Failed to report started event");
         });
+
+      this.interval = setInterval(
+        this.flushStats.bind(this),
+        this.heartbeatIntervalInMS
+      );
+
+      process.on("exit", this.stop.bind(this));
     }
   }
 }

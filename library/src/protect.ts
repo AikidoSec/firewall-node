@@ -3,6 +3,7 @@ import { APIGatewayProxyHandler } from "aws-lambda";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, Token } from "./API";
+import { IDGeneratorULID } from "./IDGenerator";
 import { Express } from "./integrations/Express";
 import { Integration } from "./integrations/Integration";
 import { createLambdaWrapper } from "./Lambda";
@@ -63,7 +64,15 @@ function getAgent(options: Options, integrations: Integration[]) {
   const token = getTokenFromEnv();
   const logger = getLogger(options);
   const api = getAPI();
-  const agent = new Agent(options.block, logger, api, token, integrations);
+  const agent = new Agent(
+    options.block,
+    logger,
+    api,
+    token,
+    integrations,
+    new IDGeneratorULID()
+  );
+
   setInstance(agent);
 
   return agent;
