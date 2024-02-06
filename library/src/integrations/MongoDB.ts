@@ -39,38 +39,57 @@ export class MongoDB implements Integration {
           // @ts-expect-error Something about a missing _id in the document
           function (original) {
             return function (this: Collection) {
-              const request = getContext();
               const agent = getInstance();
 
-              if (!request || !agent) {
+              if (!agent) {
                 // @ts-expect-error Something about this context
                 return original.apply(this, arguments);
               }
 
-              if (arguments.length > 0 && isPlainObject(arguments[0])) {
-                const filter = arguments[0];
-                const result = detectNoSQLInjection(request, filter);
+              const hasFilter =
+                arguments.length > 0 && isPlainObject(arguments[0]);
 
-                if (result.injection) {
-                  agent.detectedAttack({
-                    blocked: agent.shouldBlock(),
-                    source: result.source,
-                    request: request,
-                    stack: new Error().stack || "",
-                    path: result.path,
-                    metadata: {
-                      db: this.dbName,
-                      collection: this.collectionName,
-                      operation: operation,
-                      filter: JSON.stringify(filter),
-                    },
+              if (hasFilter) {
+                const request = getContext();
+
+                if (request) {
+                  const filter = arguments[0];
+                  const result = detectNoSQLInjection(request, filter);
+                  agent.inspectedCall({
+                    module: "mongodb",
+                    withoutContext: false,
+                    detectedAttack: result.injection,
                   });
 
-                  if (agent.shouldBlock()) {
-                    throw new Error(
-                      `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`
-                    );
+                  if (result.injection) {
+                    agent.detectedAttack({
+                      module: "mongodb",
+                      kind: "nosql_injection",
+                      blocked: agent.shouldBlock(),
+                      source: result.source,
+                      request: request,
+                      stack: new Error().stack || "",
+                      path: result.path,
+                      metadata: {
+                        db: this.dbName,
+                        collection: this.collectionName,
+                        operation: operation,
+                        filter: JSON.stringify(filter),
+                      },
+                    });
+
+                    if (agent.shouldBlock()) {
+                      throw new Error(
+                        `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`
+                      );
+                    }
                   }
+                } else {
+                  agent.inspectedCall({
+                    module: "mongodb",
+                    withoutContext: true,
+                    detectedAttack: false,
+                  });
                 }
               }
 

@@ -18,21 +18,27 @@ export class Token {
 }
 
 export type AgentInfo = {
+  id: string;
+  dryMode: boolean;
   hostname: string;
   version: string;
   packages: Record<string, string>;
   ipAddress: string;
-  osName: string;
-  osVersion: string;
+  os: {
+    name: string;
+    version: string;
+  };
 };
 
-type Installed = {
-  type: "installed";
+type Started = {
+  type: "started";
   agent: AgentInfo;
 };
 
+export type Kind = "nosql_injection";
+
 type DetectedAttack = {
-  type: "attack_detected";
+  type: "detected_attack";
   request: {
     method: string;
     ipAddress: string | undefined;
@@ -40,6 +46,8 @@ type DetectedAttack = {
     url: string | undefined;
   };
   attack: {
+    kind: Kind;
+    module: string;
     blocked: boolean;
     source: Source;
     path: string;
@@ -49,7 +57,23 @@ type DetectedAttack = {
   agent: AgentInfo;
 };
 
-export type Event = Installed | DetectedAttack;
+export type Stats = Record<
+  string, // module name
+  {
+    blocked: number;
+    allowed: number;
+    withoutContext: number;
+    total: number;
+  }
+>;
+
+type Heartbeat = {
+  type: "heartbeat";
+  stats: Stats;
+  agent: AgentInfo;
+};
+
+export type Event = Started | DetectedAttack | Heartbeat;
 
 export interface API {
   report(token: Token, event: Event): Promise<boolean>;
