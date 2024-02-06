@@ -74,6 +74,39 @@ const protect = require("@aikidosec/guard").lambda({ debug: true });
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
 
+### Protect against prototype pollution
+
+Aikido guard can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
+
+It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) for some built-in JavaScript objects.
+
+> The `Object.freeze()` method freezes an object. A frozen object can no longer be changed; freezing an object prevents new properties from being added to it, existing properties from being removed, prevents changing the enumerability, configurability, or writability of existing properties, and prevents the values of existing properties from being changed.
+
+We believe that there are legitimate cases of prototype changes, but they should
+happen only during the initialization step. Hence, we recommend including
+this package as the last one in your application code.
+
+```js
+import { protect, preventPrototypePollution } from '@aikidosec/guard';
+
+protect();
+
+import express from 'express';
+
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Hello, world!");
+});
+
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
+
+  // Your app is initialized, now it's time to prevent prototype pollution
+  preventPrototypePollution();
+});
+```
+
 ## Reporting NoSQL injections to Aikido
 
 > Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.

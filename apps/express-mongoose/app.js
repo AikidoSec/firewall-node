@@ -1,5 +1,7 @@
 require("dotenv").config();
-require("@aikidosec/guard").protect({ debug: true });
+const { protect, preventPrototypePollution } = require("@aikidosec/guard");
+
+protect({ debug: true });
 
 const mongoose = require("mongoose");
 const express = require("express");
@@ -66,6 +68,7 @@ async function main() {
   return new Promise((resolve, reject) => {
     try {
       app.listen(4000, () => {
+        preventPrototypePollution();
         console.log("Listening on port 4000");
         resolve();
       });
