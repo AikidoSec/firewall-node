@@ -1,4 +1,4 @@
-const protect = require("@aikidosec/rasp").lambda();
+const protect = require("@aikidosec/guard").lambda();
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");

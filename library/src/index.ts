@@ -1,3 +1,4 @@
 import { protect, lambda } from "./protect";
+import { preventPrototypePollution } from "./preventPrototypePollution";
 
-export { protect, lambda };
+export { protect, lambda, preventPrototypePollution };
