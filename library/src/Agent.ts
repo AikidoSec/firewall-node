@@ -113,8 +113,9 @@ export class Agent {
     }
   }
 
-  private flushStats() {
+  private heartbeat() {
     if (this.token && this.info) {
+      this.logger.log("Reporting stats...");
       this.api
         .report(this.token, {
           type: "heartbeat",
@@ -228,7 +229,7 @@ export class Agent {
         });
 
       this.interval = setInterval(
-        this.flushStats.bind(this),
+        this.heartbeat.bind(this),
         this.heartbeatIntervalInMS
       );
 
