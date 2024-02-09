@@ -87,6 +87,7 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "detected_attack",
+          time: Date.now(),
           attack: {
             module: module,
             blocked: blocked,
@@ -119,6 +120,7 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "heartbeat",
+          time: Date.now(),
           agent: this.info,
           stats: this.stats,
         })
@@ -222,6 +224,7 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "started",
+          time: Date.now(),
           agent: this.info,
         })
         .catch((error) => {
