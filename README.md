@@ -136,15 +136,23 @@ app.listen(3000, () => {
 });
 ```
 
-## Reporting NoSQL injections to Aikido
+## Reporting to Aikido
 
 > Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
->
-> [Sign up for free](https://app.aikido.dev/login)
 
-In order to send events to Aikido, grab a token from the Aikido dashboard (TODO).
+You can use some of this library's features without Aikido, but you will get the most value when using it with Aikido.
 
-Set the token as an environment variable:
+You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login).
+
+Here's how:
+* [Login to your Aikido account](https://app.aikido.dev/login)
+* Go to [Runtime protection](https://app.aikido.dev/runtime)
+* Go to services
+* Click on "Add service"
+* Choose a name for your service
+* Click on "Generate token"
+* Copy the token
+* Set the token as an environment variable:
 
 ```shell
 AIKIDO_TOKEN=your-token node your-app.js
