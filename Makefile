@@ -34,6 +34,10 @@ watch:
 test:
 	cd library && npm run test
 
+.PHONY: test-ci
+test-ci:
+	cd library && npm run test:ci
+
 .PHONY: lint
 lint:
 	cd library && npm run lint

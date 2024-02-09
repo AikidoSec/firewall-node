@@ -39,7 +39,8 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
-    "test": "tap --coverage-report=lcov --allow-incomplete-coverage",
+    "test": "tap --allow-incomplete-coverage",
+    "test:ci": "tap --coverage-report=lcov --allow-incomplete-coverage",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
