@@ -57,8 +57,10 @@ type DetectedAttack = {
   agent: AgentInfo;
 };
 
+type ModuleName = string;
+
 export type Stats = Record<
-  string, // module name
+  ModuleName,
   {
     blocked: number;
     allowed: number;
