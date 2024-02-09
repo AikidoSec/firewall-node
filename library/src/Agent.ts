@@ -6,8 +6,8 @@ import { Integration } from "./integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
+import { satisfiesVersion } from "./satisfiesVersion";
 import { Source } from "./Source";
-import { satisfies } from "semver";
 import { address } from "ip";
 
 export class Agent {
@@ -186,7 +186,7 @@ export class Agent {
           return;
         }
 
-        if (!satisfies(json.version, optionalDeps[pkgName])) {
+        if (!satisfiesVersion(optionalDeps[pkgName], json.version)) {
           this.logger.log(
             `Skipping ${pkgName} because it does not satisfy the version range ${optionalDeps[pkgName]}`
           );
