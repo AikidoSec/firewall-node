@@ -11,7 +11,7 @@ import { satisfies } from "semver";
 import { address } from "ip";
 
 export class Agent {
-  private heartbeatIntervalInMS = 30 * 1000;
+  private heartbeatIntervalInMS = 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
   private started = false;
   private info: AgentInfo | undefined = undefined;
@@ -87,6 +87,7 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "detected_attack",
+          time: Date.now(),
           attack: {
             module: module,
             blocked: blocked,
@@ -113,11 +114,13 @@ export class Agent {
     }
   }
 
-  private flushStats() {
+  private heartbeat() {
     if (this.token && this.info) {
+      this.logger.log("Reporting stats...");
       this.api
         .report(this.token, {
           type: "heartbeat",
+          time: Date.now(),
           agent: this.info,
           stats: this.stats,
         })
@@ -221,14 +224,16 @@ export class Agent {
       this.api
         .report(this.token, {
           type: "started",
+          time: Date.now(),
           agent: this.info,
         })
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
 
+      // TODO: Check if possible in Lambda?
       this.interval = setInterval(
-        this.flushStats.bind(this),
+        this.heartbeat.bind(this),
         this.heartbeatIntervalInMS
       );
 

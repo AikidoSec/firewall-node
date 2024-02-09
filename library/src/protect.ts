@@ -2,7 +2,7 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
-import { API, APIFetch, Token } from "./API";
+import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
 import { Express } from "./integrations/Express";
 import { Integration } from "./integrations/Integration";
@@ -33,12 +33,21 @@ function getLogger(options: Options): Logger {
   return new LoggerNoop();
 }
 
+function throttle(api: API) {
+  return new APIThrottled(api, {
+    maxEventsPerInterval: 200,
+    intervalInMs: 60 * 60 * 1000,
+  });
+}
+
 function getAPI(): API {
   if (process.env.AIKIDO_URL) {
-    return new APIFetch(new URL(process.env.AIKIDO_URL));
+    return throttle(new APIFetch(new URL(process.env.AIKIDO_URL)));
   }
 
-  return new APIFetch(new URL("https://aikido.dev/api/runtime/events"));
+  return throttle(
+    new APIFetch(new URL("https://aikido.dev/api/runtime/events"))
+  );
 }
 
 function getTokenFromEnv(): Token | undefined {

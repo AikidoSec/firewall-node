@@ -68,7 +68,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
     if (error instanceof Error) {
       t.equal(
         error.message,
-        "Blocked NoSQL injection for MongoDB.Collection.find(...), please check body (.title)!"
+        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.title)"
       );
     }
 

@@ -8,7 +8,15 @@ WARNING: This is an early release. Use at your own risk.
 ## Features
 
 * 🛡️ Protects your application against [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
-* 🔥 More to come
+* 🔥 More to come (See roadmap below)
+
+## Roadmap
+
+* [ ] SQL injection protection
+* [ ] Monitor outbound requests
+* [ ] Protect against path traversal attacks
+* [ ] Protect against SSRF attacks
+* [ ] Protect against shell injection attacks
 
 ## Supported libraries and frameworks
 
@@ -30,6 +38,15 @@ At the very beginning of your app.js file, add the following line:
 
 ```js
 require('@aikidosec/guard').protect();
+```
+
+or ESM import style:
+
+```js
+import { protect } from '@aikidosec/guard';
+
+// Needs to be called before any other code
+protect();
 ```
 
 That's it!
@@ -58,6 +75,20 @@ exports.handler = protect(async (event, context) => {
 });
 ```
 
+or ESM import style:
+
+```js
+import { lambda } from '@aikidosec/guard';
+
+// Needs to be called before any other code
+const protect = lambda();
+
+// You can call this at any point in your code
+export const handler = protect(async (event, context) => {
+  // Your handler code
+});
+```
+
 In order for the RASP to work properly, we need the following event properties to be present:
 
 * `event.body`
@@ -74,7 +105,7 @@ const protect = require("@aikidosec/guard").lambda({ debug: true });
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
 
-### Protect against prototype pollution
+## Protect against prototype pollution
 
 Aikido guard can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
 

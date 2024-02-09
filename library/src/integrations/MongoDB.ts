@@ -80,7 +80,7 @@ export class MongoDB implements Integration {
 
                     if (agent.shouldBlock()) {
                       throw new Error(
-                        `Blocked NoSQL injection for MongoDB.Collection.${operation}(...), please check ${friendlyName(result.source)} (${result.path})!`
+                        `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.path})`
                       );
                     }
                   }
