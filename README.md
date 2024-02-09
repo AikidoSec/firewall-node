@@ -105,7 +105,7 @@ const protect = require("@aikidosec/guard").lambda({ debug: true });
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
 
-### Protect against prototype pollution
+## Protect against prototype pollution
 
 Aikido guard can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
 
