@@ -11,7 +11,7 @@ import { satisfies } from "semver";
 import { address } from "ip";
 
 export class Agent {
-  private heartbeatIntervalInMS = 30 * 1000;
+  private heartbeatIntervalInMS = 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
   private started = false;
   private info: AgentInfo | undefined = undefined;
