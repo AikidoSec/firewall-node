@@ -231,6 +231,7 @@ export class Agent {
           this.logger.log("Failed to report started event");
         });
 
+      // TODO: Check if possible in Lambda?
       this.interval = setInterval(
         this.heartbeat.bind(this),
         this.heartbeatIntervalInMS
