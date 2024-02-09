@@ -8,7 +8,15 @@ WARNING: This is an early release. Use at your own risk.
 ## Features
 
 * 🛡️ Protects your application against [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
-* 🔥 More to come
+* 🔥 More to come (See roadmap below)
+
+## Roadmap
+
+* [ ] SQL injection protection
+* [ ] Monitor outbound requests
+* [ ] Protect against path traversal attacks
+* [ ] Protect against SSRF attacks
+* [ ] Protect against shell injection attacks
 
 ## Supported libraries and frameworks
 
