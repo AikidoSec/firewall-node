@@ -1,4 +1,3 @@
-import { request } from "undici";
 import { Source } from "./Source";
 
 export class Token {
@@ -122,7 +121,7 @@ export class APIFetch implements API {
   constructor(private readonly reportingUrl: URL) {}
 
   async report(token: Token, event: Event) {
-    const response = await request(this.reportingUrl.toString(), {
+    const response = await fetch(this.reportingUrl.toString(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -131,7 +130,7 @@ export class APIFetch implements API {
       body: JSON.stringify(event),
     });
 
-    return response.statusCode === 200;
+    return response.status === 200;
   }
 }
 
