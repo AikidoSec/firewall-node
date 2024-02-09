@@ -23,10 +23,12 @@ export type AgentInfo = {
   version: string;
   packages: Record<string, string>;
   ipAddress: string;
+  preventedPrototypePollution: boolean;
   os: {
     name: string;
     version: string;
   };
+  nodeEnv: string;
 };
 
 type Started = {

@@ -65,6 +65,13 @@ export class Agent {
     }
   }
 
+  preventedPrototypePollution() {
+    // Will be sent in the next heartbeat
+    if (this.info) {
+      this.info.preventedPrototypePollution = true;
+    }
+  }
+
   detectedAttack({
     module,
     blocked,
@@ -203,6 +210,8 @@ export class Agent {
         version: json.version,
         ipAddress: address() || "",
         packages: installed,
+        preventedPrototypePollution: false,
+        nodeEnv: process.env.NODE_ENV || "",
         os: {
           name: platform(),
           version: release(),

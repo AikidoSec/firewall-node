@@ -1,3 +1,5 @@
+import { getInstance } from "./AgentSingleton";
+
 export function preventPrototypePollution() {
   // Taken from https://github.com/snyk-labs/nopp/blob/main/index.js
   [
@@ -14,4 +16,6 @@ export function preventPrototypePollution() {
     Boolean,
     Boolean.prototype,
   ].forEach(Object.freeze);
+
+  getInstance()?.preventedPrototypePollution();
 }
