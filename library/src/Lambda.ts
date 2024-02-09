@@ -5,7 +5,7 @@ import type {
 } from "aws-lambda";
 import { Agent } from "./Agent";
 import { runWithContext } from "./Context";
-import { parse } from "cookie";
+import { parse } from "./parseCookies";
 
 function isObject(value: unknown): boolean {
   return (
