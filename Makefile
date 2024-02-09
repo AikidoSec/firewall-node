@@ -1,22 +1,22 @@
 .PHONY: containers
 containers:
-	cd apps && docker-compose up -d --remove-orphans
+	cd sample-apps && docker-compose up -d --remove-orphans
 
 .PHONY: express-mongodb
 express-mongodb:
-	cd apps/express-mongodb && node app.js
+	cd sample-apps/express-mongodb && node app.js
 
 .PHONY: express-mongoose
 express-mongoose:
-	cd apps/express-mongoose && node app.js
+	cd sample-apps/express-mongoose && node app.js
 
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
-	cd apps/lambda-mongodb && serverless invoke local --function login --path payloads/nosql-injection-request.json
+	cd sample-apps/lambda-mongodb && serverless invoke local --function login --path payloads/nosql-injection-request.json
 
 .PHONY: lambda-mongodb-safe
 lambda-mongodb-safe:
-	cd apps/lambda-mongodb && serverless invoke local --function login --path payloads/safe-request.json
+	cd sample-apps/lambda-mongodb && serverless invoke local --function login --path payloads/safe-request.json
 
 .PHONY: install
 install:
