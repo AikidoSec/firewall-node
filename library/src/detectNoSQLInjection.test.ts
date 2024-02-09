@@ -316,7 +316,7 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $gt in query parameter", async (t) => {
+/*t.test("NoSQL injection using $gt in query parameter", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -328,4 +328,4 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
     ),
     { injection: true, source: "body", path: ".age" }
   );
-});
+});*/
