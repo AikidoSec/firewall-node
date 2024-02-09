@@ -32,6 +32,15 @@ At the very beginning of your app.js file, add the following line:
 require('@aikidosec/guard').protect();
 ```
 
+or ESM import style:
+
+```js
+import { protect } from '@aikidosec/guard';
+
+// Needs to be called before any other code
+protect();
+```
+
 That's it!
 
 If you need to debug the guard, you can set the `debug` option:
@@ -54,6 +63,20 @@ And then wrap your handler function with the `protect` function:
 
 ```js
 exports.handler = protect(async (event, context) => {
+  // Your handler code
+});
+```
+
+or ESM import style:
+
+```js
+import { lambda } from '@aikidosec/guard';
+
+// Needs to be called before any other code
+const protect = lambda();
+
+// You can call this at any point in your code
+export const handler = protect(async (event, context) => {
   // Your handler code
 });
 ```
