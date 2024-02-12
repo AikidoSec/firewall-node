@@ -207,3 +207,7 @@ t.test("it respects timeout", async () => {
   t.match(await api.report(new Token("123"), generateStartedEvent()), false);
   await stop();
 });
+
+t.test("it throws error if token is empty", async () => {
+  t.throws(() => new Token(""));
+});
