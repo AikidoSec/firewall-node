@@ -75,6 +75,7 @@ export class Agent {
 
   detectedAttack({
     module,
+    kind,
     blocked,
     source,
     request,
@@ -103,7 +104,7 @@ export class Agent {
             stack: stack,
             source: source,
             metadata: metadata,
-            kind: "nosql_injection",
+            kind: kind,
           },
           request: {
             method: request.method,
