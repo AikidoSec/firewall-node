@@ -23,7 +23,8 @@ export class Agent {
     private readonly api: API,
     private readonly token: Token | undefined,
     private readonly integrations: Integration[],
-    private readonly idGenerator: IDGenerator
+    private readonly idGenerator: IDGenerator,
+    private readonly serverless: boolean
   ) {}
 
   shouldBlock() {
@@ -123,7 +124,7 @@ export class Agent {
 
   private heartbeat() {
     if (this.token && this.info) {
-      this.logger.log("Reporting stats...");
+      this.logger.log("Heartbeat...");
       this.api
         .report(this.token, {
           type: "heartbeat",
@@ -132,7 +133,7 @@ export class Agent {
           stats: this.stats,
         })
         .catch((error) => {
-          this.logger.log("Failed to report stats");
+          this.logger.log("Failed to do heartbeat");
         });
     }
   }
@@ -140,6 +141,36 @@ export class Agent {
   stop() {
     if (this.interval) {
       clearInterval(this.interval);
+    }
+  }
+
+  private startHeartbeats() {
+    if (this.serverless) {
+      return;
+    }
+
+    this.interval = setInterval(
+      this.heartbeat.bind(this),
+      this.heartbeatIntervalInMS
+    );
+
+    process.on("exit", this.stop.bind(this));
+  }
+
+  async serverlessFunctionFinished() {
+    if (this.token && this.info) {
+      try {
+        this.logger.log("Heartbeat...");
+
+        await this.api.report(this.token, {
+          type: "heartbeat",
+          time: Date.now(),
+          agent: this.info,
+          stats: this.stats,
+        });
+      } catch (error) {
+        this.logger.log("Failed to do heartbeat");
+      }
     }
   }
 
@@ -240,13 +271,7 @@ export class Agent {
           this.logger.log("Failed to report started event");
         });
 
-      // TODO: Check if possible in Lambda?
-      this.interval = setInterval(
-        this.heartbeat.bind(this),
-        this.heartbeatIntervalInMS
-      );
-
-      process.on("exit", this.stop.bind(this));
+      this.startHeartbeats();
     }
   }
 }

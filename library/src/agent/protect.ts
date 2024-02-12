@@ -63,7 +63,15 @@ function dryModeEnabled(): boolean {
   );
 }
 
-function getAgent(options: Options, integrations: Integration[]) {
+function getAgent({
+  options,
+  integrations,
+  serverless,
+}: {
+  options: Options;
+  integrations: Integration[];
+  serverless: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -79,7 +87,8 @@ function getAgent(options: Options, integrations: Integration[]) {
     api,
     token,
     integrations,
-    new IDGeneratorULID()
+    new IDGeneratorULID(),
+    serverless
   );
 
   setInstance(agent);
@@ -101,10 +110,11 @@ export function protect(options?: Partial<Options>) {
   // Disable shimmer logging
   shimmer({ logger: () => {} });
 
-  const agent = getAgent(getOptions(options), [
-    ...commonIntegrations(),
-    new Express(),
-  ]);
+  const agent = getAgent({
+    options: getOptions(options),
+    integrations: [...commonIntegrations(), new Express()],
+    serverless: false,
+  });
   agent.start();
 }
 
@@ -115,9 +125,13 @@ export function lambda(
     // Disable shimmer logging
     shimmer({ logger: () => {} });
 
-    const agent = getAgent(getOptions(options), [...commonIntegrations()]);
+    const agent = getAgent({
+      options: getOptions(options),
+      integrations: [...commonIntegrations()],
+      serverless: true,
+    });
     agent.start();
 
-    return createLambdaWrapper(agent, handler);
+    return createLambdaWrapper(handler);
   };
 }

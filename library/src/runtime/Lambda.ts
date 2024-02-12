@@ -3,7 +3,7 @@ import type {
   APIGatewayProxyResult,
   Handler,
 } from "aws-lambda";
-import { Agent } from "../agent/Agent";
+import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext } from "../agent/Context";
 import { parse } from "../helpers/parseCookies";
 
@@ -37,7 +37,7 @@ type AsyncHandler<T extends Handler> = (
 export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
->(aikido: Agent, handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
+>(handler: Handler<TEvent, TResult>): Handler<TEvent, TResult> {
   // AWSLambda is like Express. It makes a distinction about handlers based on its last argument
   // async (event) => async handler
   // async (event, context) => async handler
@@ -79,7 +79,12 @@ export function createLambdaWrapper<
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
       },
-      () => asyncHandler(event, context)
+      async () => {
+        const response = await asyncHandler(event, context);
+        await getInstance()?.serverlessFunctionFinished();
+
+        return response;
+      }
     );
   };
 }
