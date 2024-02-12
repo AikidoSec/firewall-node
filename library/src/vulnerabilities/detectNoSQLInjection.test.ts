@@ -28,6 +28,40 @@ t.test("empty filter and request", async (t) => {
   t.match(detectNoSQLInjection(createContext({}), {}), { injection: false });
 });
 
+t.test("ignores if filter is not an object", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), "abc"), { injection: false });
+});
+
+t.test("ignores if $and is not an array", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), { $and: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $or is not an array", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), { $or: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $nor is not an array", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), { $nor: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $nor an empty array", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), { $nor: [] }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $not not an object", async (t) => {
+  t.match(detectNoSQLInjection(createContext({}), { $not: "abc" }), {
+    injection: false,
+  });
+});
+
 t.test("filter with string value and empty request", async (t) => {
   t.match(
     detectNoSQLInjection(createContext({}), {
