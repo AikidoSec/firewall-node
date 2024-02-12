@@ -57,14 +57,14 @@ export class MongoDB implements Integration {
                 if (request) {
                   const filter = arguments[0];
                   const result = detectNoSQLInjection(request, filter);
-                  agent.inspectedCall({
+                  agent.onInspectedCall({
                     module: "mongodb",
                     withoutContext: false,
                     detectedAttack: result.injection,
                   });
 
                   if (result.injection) {
-                    agent.detectedAttack({
+                    agent.onDetectedAttack({
                       module: "mongodb",
                       kind: "nosql_injection",
                       blocked: agent.shouldBlock(),
@@ -87,7 +87,7 @@ export class MongoDB implements Integration {
                     }
                   }
                 } else {
-                  agent.inspectedCall({
+                  agent.onInspectedCall({
                     module: "mongodb",
                     withoutContext: true,
                     detectedAttack: false,

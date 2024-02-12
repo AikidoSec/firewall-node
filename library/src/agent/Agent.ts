@@ -31,7 +31,7 @@ export class Agent {
     return this.block;
   }
 
-  inspectedCall({
+  onInspectedCall({
     detectedAttack,
     module,
     withoutContext,
@@ -66,14 +66,14 @@ export class Agent {
     }
   }
 
-  preventedPrototypePollution() {
+  onPrototypePollutionPrevented() {
     // Will be sent in the next heartbeat
     if (this.info) {
       this.info.preventedPrototypePollution = true;
     }
   }
 
-  detectedAttack({
+  onDetectedAttack({
     module,
     kind,
     blocked,
