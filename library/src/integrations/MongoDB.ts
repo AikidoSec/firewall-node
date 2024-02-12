@@ -10,6 +10,7 @@ import { friendlyName } from "../agent/Source";
 import { Integration } from "./Integration";
 
 const OPERATIONS = [
+  "count",
   "find",
   "findOne",
   "findOneAndUpdate",
@@ -24,6 +25,7 @@ const OPERATIONS = [
 
 type Operation = (typeof OPERATIONS)[number];
 
+// TODO: Support RAW commands via command() method
 export class MongoDB implements Integration {
   getPackageName(): string {
     return "mongodb";
