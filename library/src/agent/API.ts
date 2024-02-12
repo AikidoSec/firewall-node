@@ -111,13 +111,13 @@ export class APIThrottled implements API {
       );
 
       if (this.events.length >= this.maxEventsPerInterval) {
-        return false;
+        return;
       }
 
       this.events.push(event);
     }
 
-    return await this.api.report(token, event);
+    await this.api.report(token, event);
   }
 }
 
