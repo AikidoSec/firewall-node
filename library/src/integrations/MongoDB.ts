@@ -51,47 +51,59 @@ export class MongoDB implements Integration {
               const hasFilter =
                 arguments.length > 0 && isPlainObject(arguments[0]);
 
-              if (hasFilter) {
-                const request = getContext();
+              if (!hasFilter) {
+                agent.onInspectedCall({
+                  module: "mongodb",
+                  withoutContext: false,
+                  detectedAttack: false,
+                });
 
-                if (request) {
-                  const filter = arguments[0];
-                  const result = detectNoSQLInjection(request, filter);
-                  agent.onInspectedCall({
-                    module: "mongodb",
-                    withoutContext: false,
-                    detectedAttack: result.injection,
-                  });
+                // @ts-expect-error This is magic that TypeScript doesn't understand
+                return original.apply(this, arguments);
+              }
 
-                  if (result.injection) {
-                    agent.onDetectedAttack({
-                      module: "mongodb",
-                      kind: "nosql_injection",
-                      blocked: agent.shouldBlock(),
-                      source: result.source,
-                      request: request,
-                      stack: new Error().stack || "",
-                      path: result.path,
-                      metadata: {
-                        db: this.dbName,
-                        collection: this.collectionName,
-                        operation: operation,
-                        filter: JSON.stringify(filter),
-                      },
-                    });
+              const request = getContext();
 
-                    if (agent.shouldBlock()) {
-                      throw new Error(
-                        `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.path})`
-                      );
-                    }
-                  }
-                } else {
-                  agent.onInspectedCall({
-                    module: "mongodb",
-                    withoutContext: true,
-                    detectedAttack: false,
-                  });
+              if (!request) {
+                agent.onInspectedCall({
+                  module: "mongodb",
+                  withoutContext: true,
+                  detectedAttack: false,
+                });
+
+                // @ts-expect-error This is magic that TypeScript doesn't understand
+                return original.apply(this, arguments);
+              }
+
+              const filter = arguments[0];
+              const result = detectNoSQLInjection(request, filter);
+              agent.onInspectedCall({
+                module: "mongodb",
+                withoutContext: false,
+                detectedAttack: result.injection,
+              });
+
+              if (result.injection) {
+                agent.onDetectedAttack({
+                  module: "mongodb",
+                  kind: "nosql_injection",
+                  blocked: agent.shouldBlock(),
+                  source: result.source,
+                  request: request,
+                  stack: new Error().stack || "",
+                  path: result.path,
+                  metadata: {
+                    db: this.dbName,
+                    collection: this.collectionName,
+                    operation: operation,
+                    filter: JSON.stringify(filter),
+                  },
+                });
+
+                if (agent.shouldBlock()) {
+                  throw new Error(
+                    `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.path})`
+                  );
                 }
               }
 
