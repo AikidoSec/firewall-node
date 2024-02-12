@@ -27,6 +27,8 @@ function generateAttackEvent(): Event {
       hostname: "hostname",
       packages: {},
       ipAddress: "ipAddress",
+      preventedPrototypePollution: false,
+      nodeEnv: "",
       os: {
         name: "os",
         version: "version",
@@ -74,6 +76,8 @@ function generateStartedEvent(): Event {
       hostname: "hostname",
       packages: {},
       ipAddress: "ipAddress",
+      preventedPrototypePollution: false,
+      nodeEnv: "",
       os: {
         name: "os",
         version: "version",
@@ -118,6 +122,8 @@ function generateHeartbeatEvent(): Event {
       hostname: "hostname",
       packages: {},
       ipAddress: "ipAddress",
+      preventedPrototypePollution: false,
+      nodeEnv: "",
       os: {
         name: "os",
         version: "version",

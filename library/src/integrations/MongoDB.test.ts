@@ -1,10 +1,10 @@
 import * as t from "tap";
-import { Agent } from "../Agent";
-import { setInstance } from "../AgentSingleton";
-import { APIForTesting, Token } from "../API";
-import { IDGeneratorFixed } from "../IDGenerator";
-import { LoggerNoop } from "../Logger";
-import { runWithContext } from "../Context";
+import { Agent } from "../agent/Agent";
+import { setInstance } from "../agent/AgentSingleton";
+import { APIForTesting, Token } from "../agent/API";
+import { IDGeneratorFixed } from "../agent/IDGenerator";
+import { LoggerNoop } from "../agent/Logger";
+import { runWithContext } from "../agent/Context";
 import { MongoDB } from "./MongoDB";
 
 // TODO: Test all wrapped methods

@@ -2,11 +2,11 @@
 import type { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
-import { getInstance } from "../AgentSingleton";
-import { detectNoSQLInjection } from "../detectNoSQLInjection";
-import { isPlainObject } from "../isPlainObject";
-import { getContext } from "../Context";
-import { friendlyName } from "../Source";
+import { getInstance } from "../agent/AgentSingleton";
+import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
+import { isPlainObject } from "../helpers/isPlainObject";
+import { getContext } from "../agent/Context";
+import { friendlyName } from "../agent/Source";
 import { Integration } from "./Integration";
 
 const OPERATIONS = [
@@ -33,16 +33,16 @@ export class MongoDB implements Integration {
     new Hook(["mongodb"], (exports) => {
       OPERATIONS.forEach((operation) => {
         wrap<Collection, Operation>(
-          // @ts-expect-error Exports are not typed properly
+          // @ts-expect-error This is magic that TypeScript doesn't understand
           exports.Collection.prototype,
           operation,
-          // @ts-expect-error Something about a missing _id in the document
+          // @ts-expect-error This is magic that TypeScript doesn't understand
           function (original) {
             return function (this: Collection) {
               const agent = getInstance();
 
               if (!agent) {
-                // @ts-expect-error Something about this context
+                // @ts-expect-error This is magic that TypeScript doesn't understand
                 return original.apply(this, arguments);
               }
 
@@ -93,7 +93,7 @@ export class MongoDB implements Integration {
                 }
               }
 
-              // @ts-expect-error Something about this context
+              // @ts-expect-error This is magic that TypeScript doesn't understand
               return original.apply(this, arguments);
             };
           }

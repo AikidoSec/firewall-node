@@ -16,7 +16,8 @@ t.test("it sends install event once", async (t) => {
     api,
     token,
     [],
-    new IDGeneratorFixed("id")
+    new IDGeneratorFixed("id"),
+    false
   );
   agent.start();
 
@@ -31,6 +32,8 @@ t.test("it sends install event once", async (t) => {
         version: "1.0.0",
         ipAddress: address(),
         packages: {},
+        preventedPrototypePollution: false,
+        nodeEnv: "",
         os: {
           name: platform(),
           version: release(),
@@ -51,6 +54,8 @@ t.test("it sends install event once", async (t) => {
         version: "1.0.0",
         ipAddress: address(),
         packages: {},
+        preventedPrototypePollution: false,
+        nodeEnv: "",
         os: {
           name: platform(),
           version: release(),

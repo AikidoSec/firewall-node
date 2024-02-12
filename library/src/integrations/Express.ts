@@ -2,9 +2,9 @@
 import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
-import { runWithContext } from "../Context";
+import { runWithContext } from "../agent/Context";
 import { Integration } from "./Integration";
-import * as methods from "methods";
+import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
@@ -34,18 +34,23 @@ export class Express implements Integration {
 
   setup(): boolean {
     new Hook(["express"], (exports) => {
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      massWrap(exports.Route.prototype, methods, function (original) {
-        return function (this: Application) {
-          const args = Array.from(arguments);
-          const handler = args.pop();
-          args.push(createMiddleware());
-          args.push(handler);
+      massWrap(
+        // @ts-expect-error This is magic that TypeScript doesn't understand
+        exports.Route.prototype,
+        // @ts-expect-error This is magic that TypeScript doesn't understand
+        METHODS.map((method) => method.toLowerCase()),
+        function (original) {
+          return function (this: Application) {
+            const args = Array.from(arguments);
+            const handler = args.pop();
+            args.push(createMiddleware());
+            args.push(handler);
 
-          // @ts-expect-error This is magic that TypeScript doesn't understand
-          return original.apply(this, args);
-        };
-      });
+            // @ts-expect-error This is magic that TypeScript doesn't understand
+            return original.apply(this, args);
+          };
+        }
+      );
 
       return exports;
     });

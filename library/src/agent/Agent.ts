@@ -2,12 +2,12 @@ import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Integration } from "./integrations/Integration";
+import { Integration } from "../integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
+import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Source } from "./Source";
-import { satisfies } from "semver";
 import { address } from "ip";
 
 export class Agent {
@@ -23,7 +23,8 @@ export class Agent {
     private readonly api: API,
     private readonly token: Token | undefined,
     private readonly integrations: Integration[],
-    private readonly idGenerator: IDGenerator
+    private readonly idGenerator: IDGenerator,
+    private readonly serverless: boolean
   ) {}
 
   shouldBlock() {
@@ -62,6 +63,13 @@ export class Agent {
       }
     } else {
       this.stats[module].allowed += 1;
+    }
+  }
+
+  preventedPrototypePollution() {
+    // Will be sent in the next heartbeat
+    if (this.info) {
+      this.info.preventedPrototypePollution = true;
     }
   }
 
@@ -114,9 +122,9 @@ export class Agent {
     }
   }
 
-  private heartbeat() {
+  heartbeat() {
     if (this.token && this.info) {
-      this.logger.log("Reporting stats...");
+      this.logger.log("Heartbeat...");
       this.api
         .report(this.token, {
           type: "heartbeat",
@@ -125,7 +133,7 @@ export class Agent {
           stats: this.stats,
         })
         .catch((error) => {
-          this.logger.log("Failed to report stats");
+          this.logger.log("Failed to do heartbeat");
         });
     }
   }
@@ -134,6 +142,19 @@ export class Agent {
     if (this.interval) {
       clearInterval(this.interval);
     }
+  }
+
+  private startHeartbeats() {
+    if (this.serverless) {
+      return;
+    }
+
+    this.interval = setInterval(
+      this.heartbeat.bind(this),
+      this.heartbeatIntervalInMS
+    );
+
+    process.on("exit", this.stop.bind(this));
   }
 
   start() {
@@ -161,7 +182,7 @@ export class Agent {
         optionalDependencies: Record<string, string>;
       } = JSON.parse(
         readFileSync(
-          resolve(__dirname, "..", "package.json"),
+          resolve(__dirname, "../../package.json"),
           "utf-8"
         ).toString()
       );
@@ -186,7 +207,7 @@ export class Agent {
           return;
         }
 
-        if (!satisfies(json.version, optionalDeps[pkgName])) {
+        if (!satisfiesVersion(optionalDeps[pkgName], json.version)) {
           this.logger.log(
             `Skipping ${pkgName} because it does not satisfy the version range ${optionalDeps[pkgName]}`
           );
@@ -203,6 +224,8 @@ export class Agent {
         version: json.version,
         ipAddress: address() || "",
         packages: installed,
+        preventedPrototypePollution: false,
+        nodeEnv: process.env.NODE_ENV || "",
         os: {
           name: platform(),
           version: release(),
@@ -231,13 +254,7 @@ export class Agent {
           this.logger.log("Failed to report started event");
         });
 
-      // TODO: Check if possible in Lambda?
-      this.interval = setInterval(
-        this.heartbeat.bind(this),
-        this.heartbeatIntervalInMS
-      );
-
-      process.on("exit", this.stop.bind(this));
+      this.startHeartbeats();
     }
   }
 }

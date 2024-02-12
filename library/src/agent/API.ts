@@ -1,4 +1,3 @@
-import { request } from "undici";
 import { Source } from "./Source";
 
 export class Token {
@@ -24,10 +23,12 @@ export type AgentInfo = {
   version: string;
   packages: Record<string, string>;
   ipAddress: string;
+  preventedPrototypePollution: boolean;
   os: {
     name: string;
     version: string;
   };
+  nodeEnv: string;
 };
 
 type Started = {
@@ -119,19 +120,35 @@ export class APIThrottled implements API {
 }
 
 export class APIFetch implements API {
+  private timeoutInMS = 5000;
+
   constructor(private readonly reportingUrl: URL) {}
 
   async report(token: Token, event: Event) {
-    const response = await request(this.reportingUrl.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token.asString()}`,
-      },
-      body: JSON.stringify(event),
-    });
+    const abort = new AbortController();
+    const response = await Promise.race([
+      fetch(this.reportingUrl.toString(), {
+        signal: abort.signal,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token.asString()}`,
+        },
+        body: JSON.stringify(event),
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => {
+          abort.abort();
+          reject(new Error("Timeout"));
+        }, this.timeoutInMS)
+      ),
+    ]);
 
-    return response.statusCode === 200;
+    if (response instanceof Response) {
+      return response.status === 200;
+    }
+
+    return false;
   }
 }
 

@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { detectNoSQLInjection } from "./detectNoSQLInjection";
-import { Context } from "./Context";
+import { Context } from "../agent/Context";
 
 function createContext({
   query,

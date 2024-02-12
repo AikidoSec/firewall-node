@@ -4,10 +4,10 @@ import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
-import { Express } from "./integrations/Express";
-import { Integration } from "./integrations/Integration";
-import { createLambdaWrapper } from "./Lambda";
-import { MongoDB } from "./integrations/MongoDB";
+import { Express } from "../integrations/Express";
+import { Integration } from "../integrations/Integration";
+import { createLambdaWrapper } from "../runtime/Lambda";
+import { MongoDB } from "../integrations/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 
@@ -63,7 +63,15 @@ function dryModeEnabled(): boolean {
   );
 }
 
-function getAgent(options: Options, integrations: Integration[]) {
+function getAgent({
+  options,
+  integrations,
+  serverless,
+}: {
+  options: Options;
+  integrations: Integration[];
+  serverless: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -79,7 +87,8 @@ function getAgent(options: Options, integrations: Integration[]) {
     api,
     token,
     integrations,
-    new IDGeneratorULID()
+    new IDGeneratorULID(),
+    serverless
   );
 
   setInstance(agent);
@@ -101,10 +110,11 @@ export function protect(options?: Partial<Options>) {
   // Disable shimmer logging
   shimmer({ logger: () => {} });
 
-  const agent = getAgent(getOptions(options), [
-    ...commonIntegrations(),
-    new Express(),
-  ]);
+  const agent = getAgent({
+    options: getOptions(options),
+    integrations: [...commonIntegrations(), new Express()],
+    serverless: false,
+  });
   agent.start();
 }
 
@@ -115,9 +125,13 @@ export function lambda(
     // Disable shimmer logging
     shimmer({ logger: () => {} });
 
-    const agent = getAgent(getOptions(options), [...commonIntegrations()]);
+    const agent = getAgent({
+      options: getOptions(options),
+      integrations: [...commonIntegrations()],
+      serverless: true,
+    });
     agent.start();
 
-    return createLambdaWrapper(agent, handler);
+    return createLambdaWrapper(handler);
   };
 }

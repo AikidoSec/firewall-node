@@ -7,7 +7,7 @@ new Express().setup();
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
-import { getContext } from "../Context";
+import { getContext } from "../agent/Context";
 
 function getApp() {
   const app = express();
