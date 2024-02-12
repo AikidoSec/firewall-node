@@ -16,7 +16,8 @@ t.test("it sends install event once", async (t) => {
     api,
     token,
     [],
-    new IDGeneratorFixed("id")
+    new IDGeneratorFixed("id"),
+    false
   );
   agent.start();
 

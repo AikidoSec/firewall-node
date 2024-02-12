@@ -81,7 +81,7 @@ export function createLambdaWrapper<
       },
       async () => {
         const response = await asyncHandler(event, context);
-        await getInstance()?.serverlessFunctionFinished();
+        getInstance()?.heartbeat();
 
         return response;
       }

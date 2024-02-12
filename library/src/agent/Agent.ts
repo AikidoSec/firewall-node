@@ -122,7 +122,7 @@ export class Agent {
     }
   }
 
-  private heartbeat() {
+  heartbeat() {
     if (this.token && this.info) {
       this.logger.log("Heartbeat...");
       this.api
@@ -155,23 +155,6 @@ export class Agent {
     );
 
     process.on("exit", this.stop.bind(this));
-  }
-
-  async serverlessFunctionFinished() {
-    if (this.token && this.info) {
-      try {
-        this.logger.log("Heartbeat...");
-
-        await this.api.report(this.token, {
-          type: "heartbeat",
-          time: Date.now(),
-          agent: this.info,
-          stats: this.stats,
-        });
-      } catch (error) {
-        this.logger.log("Failed to do heartbeat");
-      }
-    }
   }
 
   start() {
