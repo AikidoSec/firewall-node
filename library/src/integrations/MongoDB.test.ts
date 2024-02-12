@@ -71,6 +71,16 @@ t.test("we can highjack the MongoDB library", async (t) => {
     await collection.deleteOne({ title: "Yet Another Title" });
 
     t.match(await collection.count({ title: "Yet Another Title" }), 0);
+    t.match(agent, {
+      stats: {
+        mongodb: {
+          blocked: 0,
+          total: 10,
+          allowed: 10,
+          withoutContext: 10,
+        },
+      },
+    });
 
     const error = await t.rejects(async () => {
       await runWithContext(
