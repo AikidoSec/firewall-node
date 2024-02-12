@@ -15,7 +15,8 @@ t.test("we can highjack the MongoDB library", async (t) => {
     new APIForTesting(),
     new Token("123"),
     [new MongoDB()],
-    new IDGeneratorFixed("id")
+    new IDGeneratorFixed("id"),
+    false
   );
   agent.start();
   setInstance(agent);
