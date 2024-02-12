@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Integration } from "./integrations/Integration";
+import { Integration } from "../integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
-import { satisfiesVersion } from "./satisfiesVersion";
+import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Source } from "./Source";
 import { address } from "ip";
 
@@ -168,7 +168,7 @@ export class Agent {
         optionalDependencies: Record<string, string>;
       } = JSON.parse(
         readFileSync(
-          resolve(__dirname, "..", "package.json"),
+          resolve(__dirname, "../../package.json"),
           "utf-8"
         ).toString()
       );

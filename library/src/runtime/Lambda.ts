@@ -3,9 +3,9 @@ import type {
   APIGatewayProxyResult,
   Handler,
 } from "aws-lambda";
-import { Agent } from "./Agent";
-import { runWithContext } from "./Context";
-import { parse } from "./parseCookies";
+import { Agent } from "../agent/Agent";
+import { runWithContext } from "../agent/Context";
+import { parse } from "../helpers/parseCookies";
 
 function isObject(value: unknown): boolean {
   return (

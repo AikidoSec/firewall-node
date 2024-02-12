@@ -1,4 +1,4 @@
-import { getInstance } from "./AgentSingleton";
+import { getInstance } from "../agent/AgentSingleton";
 
 export function preventPrototypePollution() {
   // Taken from https://github.com/snyk-labs/nopp/blob/main/index.js

@@ -2,11 +2,11 @@
 import type { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
-import { getInstance } from "../AgentSingleton";
-import { detectNoSQLInjection } from "../detectNoSQLInjection";
-import { isPlainObject } from "../isPlainObject";
-import { getContext } from "../Context";
-import { friendlyName } from "../Source";
+import { getInstance } from "../agent/AgentSingleton";
+import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
+import { isPlainObject } from "../helpers/isPlainObject";
+import { getContext } from "../agent/Context";
+import { friendlyName } from "../agent/Source";
 import { Integration } from "./Integration";
 
 const OPERATIONS = [

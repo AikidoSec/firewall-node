@@ -1,8 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
-import { isPlainObject } from "./isPlainObject";
-import { tryDecodeAsJWT } from "./jwt";
-import { Context } from "./Context";
-import { Source } from "./Source";
+import { isPlainObject } from "../helpers/isPlainObject";
+import { tryDecodeAsJWT } from "../helpers/jwt";
+import { Context } from "../agent/Context";
+import { Source } from "../agent/Source";
 
 type DetectionResult =
   | { injection: true; source: Source; path: string }

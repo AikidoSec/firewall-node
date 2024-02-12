@@ -2,7 +2,7 @@
 import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
-import { runWithContext } from "../Context";
+import { runWithContext } from "../agent/Context";
 import { Integration } from "./Integration";
 import { METHODS } from "node:http";
 
