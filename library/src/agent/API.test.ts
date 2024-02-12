@@ -1,5 +1,8 @@
 import * as t from "tap";
-import { APIForTesting, APIThrottled, Token, Event } from "./API";
+import { APIForTesting, APIThrottled, Token, Event, APIFetch } from "./API";
+import express = require("express");
+import { json } from "express";
+import * as asyncHandler from "express-async-handler";
 
 function generateAttackEvent(): Event {
   return {
@@ -154,4 +157,53 @@ t.test("it always allows heartbeat events", async () => {
   t.match(api.getEvents().length, 5);
   await throttled.report(token, generateHeartbeatEvent());
   t.match(api.getEvents().length, 6);
+});
+
+type SeenPayload = { token: string; body: unknown };
+type StopServer = () => Promise<SeenPayload[]>;
+
+function createTestEndpoint(sleepInMs?: number): StopServer {
+  const seen: SeenPayload[] = [];
+
+  const app = express();
+  app.use(json());
+  app.post(
+    "*",
+    asyncHandler(async (req, res) => {
+      if (sleepInMs) {
+        await new Promise((resolve) => setTimeout(resolve, sleepInMs));
+      }
+
+      seen.push({
+        token: req.header("Authorization") || "",
+        body: req.body,
+      });
+
+      res.send({ success: true });
+    })
+  );
+
+  const server = app.listen(3000);
+
+  return () => {
+    return new Promise((resolve) =>
+      server.close(() => {
+        resolve(seen);
+      })
+    );
+  };
+}
+
+t.test("it reports event to API endpoint", async () => {
+  const stop = createTestEndpoint();
+  const api = new APIFetch(new URL("http://localhost:3000"), 1000);
+  t.match(await api.report(new Token("123"), generateStartedEvent()), true);
+  t.match((await stop()).length, 1);
+});
+
+t.test("it respects timeout", async () => {
+  const stop = createTestEndpoint(2000);
+  const api = new APIFetch(new URL("http://localhost:3000"), 1000);
+  t.match(await api.report(new Token("123"), generateStartedEvent()), false);
+  await stop();
 });

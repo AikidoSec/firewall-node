@@ -120,9 +120,10 @@ export class APIThrottled implements API {
 }
 
 export class APIFetch implements API {
-  private timeoutInMS = 5000;
-
-  constructor(private readonly reportingUrl: URL) {}
+  constructor(
+    private readonly reportingUrl: URL,
+    private readonly timeoutInMS: number = 5000
+  ) {}
 
   async report(token: Token, event: Event) {
     const abort = new AbortController();
@@ -136,10 +137,10 @@ export class APIFetch implements API {
         },
         body: JSON.stringify(event),
       }),
-      new Promise((_, reject) =>
+      new Promise<void>((resolve) =>
         setTimeout(() => {
           abort.abort();
-          reject(new Error("Timeout"));
+          resolve();
         }, this.timeoutInMS)
       ),
     ]);
