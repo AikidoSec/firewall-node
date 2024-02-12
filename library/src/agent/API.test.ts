@@ -197,15 +197,18 @@ function createTestEndpoint(sleepInMs?: number): StopServer {
 t.test("it reports event to API endpoint", async () => {
   const stop = createTestEndpoint();
   const api = new APIFetch(new URL("http://localhost:3000"), 1000);
-  t.match(await api.report(new Token("123"), generateStartedEvent()), true);
-  t.match((await stop()).length, 1);
+  await api.report(new Token("123"), generateStartedEvent());
+  const seen = await stop();
+  t.match(seen.length, 1);
+  t.match(seen[0].token, "Bearer 123");
+  t.match(seen[0].body, { type: "started" });
 });
 
 t.test("it respects timeout", async () => {
   const stop = createTestEndpoint(2000);
   const api = new APIFetch(new URL("http://localhost:3000"), 1000);
-  t.match(await api.report(new Token("123"), generateStartedEvent()), false);
-  await stop();
+  await api.report(new Token("123"), generateStartedEvent());
+  t.match((await stop()).length, 0);
 });
 
 t.test("it throws error if token is empty", async () => {

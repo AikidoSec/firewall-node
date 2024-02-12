@@ -1,4 +1,6 @@
 import { Source } from "./Source";
+import { request as requestHttp } from "node:http";
+import { request as requestHttps } from "node:https";
 
 export class Token {
   constructor(private readonly token: string) {
@@ -82,7 +84,7 @@ type Heartbeat = {
 export type Event = Started | DetectedAttack | Heartbeat;
 
 export interface API {
-  report(token: Token, event: Event): Promise<boolean>;
+  report(token: Token, event: Event): Promise<void>;
 }
 
 type ThrottleOptions = { maxEventsPerInterval: number; intervalInMs: number };
@@ -125,10 +127,51 @@ export class APIFetch implements API {
     private readonly timeoutInMS: number = 5000
   ) {}
 
+  private async fetch(
+    url: string,
+    {
+      signal,
+      method,
+      body,
+      headers,
+    }: {
+      signal: AbortSignal;
+      method: string;
+      headers: Record<string, string>;
+      body: string;
+    }
+  ) {
+    const request = url.startsWith("https://") ? requestHttps : requestHttp;
+
+    return new Promise<Response | void>((resolve) => {
+      const req = request(
+        url,
+        {
+          method,
+          headers,
+          signal,
+        },
+        (res) => {
+          res.on("data", () => {});
+          res.on("end", () => {
+            resolve();
+          });
+        }
+      );
+
+      req.on("error", () => {
+        resolve();
+      });
+
+      req.write(body);
+      req.end();
+    });
+  }
+
   async report(token: Token, event: Event) {
     const abort = new AbortController();
-    const response = await Promise.race([
-      fetch(this.reportingUrl.toString(), {
+    await Promise.race([
+      this.fetch(this.reportingUrl.toString(), {
         signal: abort.signal,
         method: "POST",
         headers: {
@@ -144,12 +187,6 @@ export class APIFetch implements API {
         }, this.timeoutInMS)
       ),
     ]);
-
-    if (response instanceof Response) {
-      return response.status === 200;
-    }
-
-    return false;
   }
 }
 
@@ -158,8 +195,6 @@ export class APIForTesting implements API {
 
   async report(token: Token, event: Event) {
     this.events.push(event);
-
-    return true;
   }
 
   getEvents() {
