@@ -207,8 +207,12 @@ t.test("it reports event to API endpoint", async () => {
 t.test("it respects timeout", async () => {
   const stop = createTestEndpoint(2000);
   const api = new APIFetch(new URL("http://localhost:3000"), 1000);
+  const start = performance.now();
   await api.report(new Token("123"), generateStartedEvent());
-  t.match((await stop()).length, 0);
+  const finish = performance.now();
+  t.match(finish - start < 1100, true);
+  t.match(finish - start > 900, true);
+  await stop();
 });
 
 t.test("it throws error if token is empty", async () => {
