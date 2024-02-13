@@ -1,4 +1,6 @@
 {
+  "name": "express-mongodb-bench",
+  "private": true,
   "dependencies": {
     "@aikidosec/guard": "^1.0.0",
     "cookie-parser": "^1.4.6",

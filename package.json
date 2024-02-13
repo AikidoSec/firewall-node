@@ -4,7 +4,7 @@
   },
   "workspaces": [
     "sample-apps/*",
-    "benchmark",
+    "benchmarks/*",
     "library"
   ]
 }

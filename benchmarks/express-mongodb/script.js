@@ -5,7 +5,7 @@ export const options = {
   duration: "30s",
 };
 
-const url = "http://localhost:4001/login";
+const url = "http://localhost:4000/login";
 
 export default function () {
   const payload = JSON.stringify({ email: "email", password: "password" });
