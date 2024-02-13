@@ -8,5 +8,3 @@ require("./createApp")(4001).then(() => {
   console.log("Listening on port 4001");
   console.log("Secured with @aikidosec/guard!");
 });
-
-// 6535/7360
