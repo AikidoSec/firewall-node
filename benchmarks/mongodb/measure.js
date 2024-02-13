@@ -15,8 +15,5 @@ module.exports = async function measureFunctionPerformance(
     totalExecutionTime += end - start;
   }
 
-  const averageTime = totalExecutionTime / measuredIterations;
-  console.log(
-    `Average execution time over ${measuredIterations} iterations: ${averageTime.toFixed(2)} milliseconds`
-  );
+  return totalExecutionTime / measuredIterations;
 };
