@@ -1,6 +1,10 @@
 export function tryDecodeAsJWT(
   jwt: string
 ): { jwt: true; object: unknown } | { jwt: false } {
+  if (!jwt.includes(".")) {
+    return { jwt: false };
+  }
+
   const parts = jwt.split(".");
 
   if (parts.length !== 3) {

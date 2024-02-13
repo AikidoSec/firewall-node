@@ -17,5 +17,5 @@ export function preventPrototypePollution() {
     Boolean.prototype,
   ].forEach(Object.freeze);
 
-  getInstance()?.preventedPrototypePollution();
+  getInstance()?.onPrototypePollutionPrevented();
 }

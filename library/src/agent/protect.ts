@@ -46,7 +46,7 @@ function getAPI(): API {
   }
 
   return throttle(
-    new APIFetch(new URL("https://aikido.dev/api/runtime/events"))
+    new APIFetch(new URL("https://guard.aikido.dev/api/runtime/events"))
   );
 }
 

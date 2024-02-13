@@ -25,11 +25,49 @@ function createContext({
 }
 
 t.test("empty filter and request", async (t) => {
-  t.match(detectNoSQLInjection(createContext({}), {}), { injection: false });
+  t.same(detectNoSQLInjection(createContext({}), {}), {
+    injection: false,
+  });
+});
+
+t.test("ignores if filter is not an object", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), "abc"), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $and is not an array", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), { $and: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $or is not an array", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), { $or: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $nor is not an array", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), { $nor: "abc" }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $nor an empty array", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), { $nor: [] }), {
+    injection: false,
+  });
+});
+
+t.test("ignores if $not not an object", async (t) => {
+  t.same(detectNoSQLInjection(createContext({}), { $not: "abc" }), {
+    injection: false,
+  });
 });
 
 t.test("filter with string value and empty request", async (t) => {
-  t.match(
+  t.same(
     detectNoSQLInjection(createContext({}), {
       title: { title: "title" },
     }),
@@ -38,7 +76,7 @@ t.test("filter with string value and empty request", async (t) => {
 });
 
 t.test("filter with $ne and empty request", async (t) => {
-  t.match(
+  t.same(
     detectNoSQLInjection(createContext({}), {
       title: { $ne: null },
     }),
@@ -46,8 +84,8 @@ t.test("filter with $ne and empty request", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $ne in query parameter", async (t) => {
-  t.match(
+t.test("using $ne in query parameter", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         query: { title: { $ne: null } },
@@ -56,12 +94,26 @@ t.test("NoSQL injection using $ne in query parameter", async (t) => {
         title: { $ne: null },
       }
     ),
-    { injection: true, source: "query", path: "title" }
+    { injection: true, source: "query", path: ".title" }
   );
 });
 
-t.test("NoSQL injection using $ne in body", async (t) => {
-  t.match(
+t.test("Safe filter", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        query: { title: "title" },
+      }),
+      {
+        $and: [{ title: "title" }],
+      }
+    ),
+    { injection: false }
+  );
+});
+
+t.test("using $ne in body", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
@@ -74,25 +126,36 @@ t.test("NoSQL injection using $ne in body", async (t) => {
   );
 });
 
-t.test(
-  "NoSQL injection using $ne in headers with different name",
-  async (t) => {
-    t.match(
-      detectNoSQLInjection(
-        createContext({
-          body: { title: { $ne: null } },
-        }),
-        {
-          someField: { $ne: null },
-        }
-      ),
-      { injection: true, source: "body", path: ".title" }
-    );
-  }
-);
+t.test("using $ne in body (different name)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        myTitle: { $ne: null },
+      }
+    ),
+    { injection: true, source: "body", path: ".title" }
+  );
+});
 
-t.test("NoSQL injection using $ne inside $and", async (t) => {
-  t.match(
+t.test("using $ne in headers with different name", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { title: { $ne: null } },
+      }),
+      {
+        someField: { $ne: null },
+      }
+    ),
+    { injection: true, source: "body", path: ".title" }
+  );
+});
+
+t.test("using $ne inside $and", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
@@ -112,8 +175,8 @@ t.test("NoSQL injection using $ne inside $and", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $or", async (t) => {
-  t.match(
+t.test("using $ne inside $or", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
@@ -133,8 +196,8 @@ t.test("NoSQL injection using $ne inside $or", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $nor", async (t) => {
-  t.match(
+t.test("using $ne inside $nor", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
@@ -154,8 +217,8 @@ t.test("NoSQL injection using $ne inside $nor", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $ne inside $not", async (t) => {
-  t.match(
+t.test("using $ne inside $not", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { title: { $ne: null } },
@@ -170,8 +233,8 @@ t.test("NoSQL injection using $ne inside $not", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $ne nested in body", async (t) => {
-  t.match(
+t.test("using $ne nested in body", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { nested: { nested: { $ne: null } } },
@@ -185,13 +248,13 @@ t.test("NoSQL injection using $ne nested in body", async (t) => {
     {
       injection: true,
       source: "body",
-      path: ".nested",
+      path: ".nested.nested",
     }
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in headers", async (t) => {
-  t.match(
+t.test("using $ne in JWT in headers", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         headers: {
@@ -216,13 +279,13 @@ t.test("NoSQL injection using $ne in JWT in headers", async (t) => {
     {
       injection: true,
       source: "headers",
-      path: "Authorization",
+      path: ".Authorization<jwt>.username",
     }
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in bearer header", async (t) => {
-  t.match(
+t.test("using $ne in JWT in bearer header", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         headers: {
@@ -247,13 +310,13 @@ t.test("NoSQL injection using $ne in JWT in bearer header", async (t) => {
     {
       injection: true,
       source: "headers",
-      path: "Authorization",
+      path: ".Authorization<jwt>.username",
     }
   );
 });
 
-t.test("NoSQL injection using $ne in JWT in cookies", async (t) => {
-  t.match(
+t.test("using $ne in JWT in cookies", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         cookies: {
@@ -278,13 +341,13 @@ t.test("NoSQL injection using $ne in JWT in cookies", async (t) => {
     {
       injection: true,
       source: "cookies",
-      path: "session",
+      path: ".session<jwt>.username",
     }
   );
 });
 
 t.test("JWT lookalike", async (t) => {
-  t.match(
+  t.same(
     detectNoSQLInjection(
       createContext({
         cookies: {
@@ -302,8 +365,8 @@ t.test("JWT lookalike", async (t) => {
   );
 });
 
-t.test("NoSQL injection using $gt in query parameter", async (t) => {
-  t.match(
+t.test("using $gt in query parameter", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         query: { age: { $gt: "21" } },
@@ -312,12 +375,12 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
         age: { $gt: "21" },
       }
     ),
-    { injection: true, source: "query", path: "age" }
+    { injection: true, source: "query", path: ".age" }
   );
 });
 
-/*t.test("NoSQL injection using $gt in query parameter", async (t) => {
-  t.match(
+t.test("using $gt and $lt in query parameter", async (t) => {
+  t.same(
     detectNoSQLInjection(
       createContext({
         body: { age: { $gt: "21", $lt: "100" } },
@@ -328,4 +391,128 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
     ),
     { injection: true, source: "body", path: ".age" }
   );
-});*/
+});
+
+t.test("using $gt and $lt in query parameter (different name)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { age: { $gt: "21", $lt: "100" } },
+      }),
+      {
+        myAge: { $gt: "21", $lt: "100" },
+      }
+    ),
+    { injection: true, source: "body", path: ".age" }
+  );
+});
+
+t.test("using $gt and $lt in query parameter (nested)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          nested: {
+            nested: { age: { $gt: "21", $lt: "100" } },
+          },
+        },
+      }),
+      {
+        $and: [
+          {
+            someAgeField: { $gt: "21", $lt: "100" },
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body", path: ".nested.nested.age" }
+  );
+});
+
+t.test("using $gt and $lt in query parameter (root)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          $and: [
+            {
+              someAgeField: { $gt: "21", $lt: "100" },
+            },
+          ],
+        },
+      }),
+      {
+        $and: [
+          {
+            someAgeField: { $gt: "21", $lt: "100" },
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body", path: "." }
+  );
+});
+
+t.test("$where", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          $and: [
+            {
+              $where: "sleep(1000)",
+            },
+          ],
+        },
+      }),
+      {
+        $and: [
+          {
+            $where: "sleep(1000)",
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body", path: "." }
+  );
+});
+
+t.test("array body", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: [
+          {
+            $where: "sleep(1000)",
+          },
+        ],
+      }),
+      {
+        $and: [
+          {
+            $where: "sleep(1000)",
+          },
+        ],
+      }
+    ),
+    { injection: true, source: "body", path: ".[0]" }
+  );
+});
+
+t.test("safe email + password", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          email: "email",
+          password: "password",
+        },
+      }),
+      {
+        email: "email",
+        password: "password",
+      }
+    ),
+    { injection: false }
+  );
+});

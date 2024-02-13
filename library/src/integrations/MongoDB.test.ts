@@ -15,7 +15,8 @@ t.test("we can highjack the MongoDB library", async (t) => {
     new APIForTesting(),
     new Token("123"),
     [new MongoDB()],
-    new IDGeneratorFixed("id")
+    new IDGeneratorFixed("id"),
+    false
   );
   agent.start();
   setInstance(agent);
@@ -34,9 +35,14 @@ t.test("we can highjack the MongoDB library", async (t) => {
     }
 
     const collection = db.collection("test");
+
+    t.same(await collection.count({ title: "Title" }), 0);
+
     await collection.insertOne({
       title: "Title",
     });
+
+    t.same(await collection.count({ title: "Title" }), 1);
 
     t.match(
       await collection.findOne({
@@ -44,6 +50,36 @@ t.test("we can highjack the MongoDB library", async (t) => {
       }),
       { title: "Title" }
     );
+
+    await collection.updateOne(
+      { title: "Title" },
+      { $set: { title: "New Title" } }
+    );
+
+    await collection.updateMany(
+      { title: "New Title" },
+      { $set: { title: "Another Title" } }
+    );
+
+    await collection.replaceOne(
+      { title: "Another Title" },
+      { title: "Yet Another Title" }
+    );
+
+    t.same(await collection.count({ title: "Yet Another Title" }), 1);
+
+    await collection.deleteOne({ title: "Yet Another Title" });
+
+    t.same(await collection.count({ title: "Yet Another Title" }), 0);
+    // @ts-expect-error Private property
+    t.same(agent.stats, {
+      mongodb: {
+        blocked: 0,
+        total: 10,
+        allowed: 10,
+        withoutContext: 10,
+      },
+    });
 
     const error = await t.rejects(async () => {
       await runWithContext(
@@ -54,7 +90,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
           query: {},
           headers: {},
           body: {
-            title: {
+            myTitle: {
               $ne: null,
             },
           },
@@ -68,7 +104,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
     if (error instanceof Error) {
       t.equal(
         error.message,
-        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.title)"
+        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.myTitle)"
       );
     }
 

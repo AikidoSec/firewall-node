@@ -11,7 +11,7 @@ import { Source } from "./Source";
 import { address } from "ip";
 
 export class Agent {
-  private heartbeatIntervalInMS = 60 * 1000;
+  private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
   private started = false;
   private info: AgentInfo | undefined = undefined;
@@ -31,7 +31,7 @@ export class Agent {
     return this.block;
   }
 
-  inspectedCall({
+  onInspectedCall({
     detectedAttack,
     module,
     withoutContext,
@@ -66,15 +66,16 @@ export class Agent {
     }
   }
 
-  preventedPrototypePollution() {
+  onPrototypePollutionPrevented() {
     // Will be sent in the next heartbeat
     if (this.info) {
       this.info.preventedPrototypePollution = true;
     }
   }
 
-  detectedAttack({
+  onDetectedAttack({
     module,
+    kind,
     blocked,
     source,
     request,
@@ -103,7 +104,7 @@ export class Agent {
             stack: stack,
             source: source,
             metadata: metadata,
-            kind: "nosql_injection",
+            kind: kind,
           },
           request: {
             method: request.method,

@@ -8,223 +8,131 @@ type DetectionResult =
   | { injection: true; source: Source; path: string }
   | { injection: false };
 
-const OPERATORS = [
-  "$eq",
-  "$gt",
-  "$gte",
-  "$in",
-  "$lt",
-  "$lte",
-  "$ne",
-  "$nin",
-  "$and",
-  "$not",
-  "$nor",
-  "$or",
-  "$exists",
-  "$type",
-  "$expr",
-  "$jsonSchema",
-  "$mod",
-  "$regex",
-  "$text",
-  "$where",
-  "$geoIntersects",
-  "$geoWithin",
-  "$near",
-  "$nearSphere",
-  "$all",
-  "$elemMatch",
-  "$size",
-  "$bitsAllClear",
-  "$bitsAllSet",
-  "$bitsAnyClear",
-  "$bitsAnySet",
-  "$elemMatch",
-] as const;
-
-type Operator = (typeof OPERATORS)[number];
-
-function findValueInUserControllerValue(
-  userControlledValue: unknown,
+function matchFilterPartInUser(
+  user: unknown,
   filterPart: Record<string, unknown>,
   path = ""
-): { path: string } | false {
-  if (isDeepStrictEqual(userControlledValue, filterPart)) {
-    return {
-      path: path,
-    };
-  }
-
-  // TODO: Perhaps do a length check here? For performance reasons
-  if (typeof userControlledValue === "string") {
-    let value = userControlledValue;
-
-    if (value.toLowerCase().startsWith("bearer")) {
-      const parts = value.split(" ");
-      if (parts.length === 2) {
-        value = parts[1];
-      }
-    }
-
-    const jwt = tryDecodeAsJWT(value);
-    if (jwt && findValueInUserControllerValue(jwt, filterPart)) {
-      return {
-        path: path,
-      };
+): string | null {
+  if (typeof user === "string") {
+    const jwt = tryDecodeAsJWT(user);
+    if (jwt.jwt) {
+      return matchFilterPartInUser(jwt.object, filterPart, `${path}<jwt>`);
     }
   }
 
-  if (isPlainObject(userControlledValue)) {
-    const fields = Object.keys(userControlledValue);
-    for (const field of fields) {
-      const result = findValueInUserControllerValue(
-        userControlledValue[field],
+  if (isDeepStrictEqual(user, filterPart)) {
+    return path;
+  }
+
+  if (isPlainObject(user)) {
+    for (const key in user) {
+      const match = matchFilterPartInUser(
+        user[key],
         filterPart,
-        `${path}.${field}`
+        `${path}.${key}`
       );
 
-      if (result) {
-        return {
-          path: result.path,
-        };
+      if (match) {
+        return match;
       }
     }
   }
 
-  return false;
+  if (Array.isArray(user)) {
+    for (let index = 0; index < user.length; index++) {
+      const match = matchFilterPartInUser(
+        user[index],
+        filterPart,
+        `${path}.[${index}]`
+      );
+      if (match) {
+        return match;
+      }
+    }
+  }
+
+  return null;
 }
 
-function findInjectionInObject(
-  userControlledValue: unknown,
-  filter: unknown
-): { path: string } | false {
-  if (!isPlainObject(filter)) {
-    return false;
-  }
-
-  const fields = Object.keys(filter);
-  for (const field of fields) {
-    const value = filter[field];
-
-    if (field === "$and" || field === "$or" || field === "$nor") {
-      if (!Array.isArray(value)) {
-        continue;
-      }
-
-      for (const v of value) {
-        const result = findInjectionInObject(userControlledValue, v);
-
-        if (result) {
-          return {
-            path: result.path,
-          };
-        }
-      }
-
-      continue;
+function getObjectWithOperators(
+  filter: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.keys(filter).reduce((acc, key) => {
+    if (key.startsWith("$")) {
+      return { ...acc, [key]: filter[key] };
     }
 
-    if (field === "$not") {
-      const result = findInjectionInObject(userControlledValue, value);
-
-      if (result) {
-        return {
-          path: result.path,
-        };
-      }
-
-      continue;
-    }
-
-    if (
-      isPlainObject(value) &&
-      Object.keys(value).length === 1 &&
-      OPERATORS.includes(Object.keys(value)[0] as Operator)
-    ) {
-      const result = findValueInUserControllerValue(userControlledValue, value);
-
-      if (result) {
-        return {
-          path: result.path,
-        };
-      }
-    }
-  }
-
-  return false;
+    return acc;
+  }, {});
 }
 
-export function filterContainsOperator(filter: unknown) {
-  if (!isPlainObject(filter)) {
-    return false;
-  }
-
-  const fields = Object.keys(filter);
-  for (const field of fields) {
-    if (field.startsWith("$")) {
-      return true;
+function findFilterPartWithOperators(
+  user: unknown,
+  partOfFilter: unknown
+): string | null {
+  if (isPlainObject(partOfFilter)) {
+    const object = getObjectWithOperators(partOfFilter);
+    if (Object.keys(object).length > 0) {
+      const path = matchFilterPartInUser(user, object);
+      if (path) {
+        return path;
+      }
     }
 
-    const value = filter[field];
-
-    if (filterContainsOperator(value)) {
-      return true;
+    for (const key in partOfFilter) {
+      const path = findFilterPartWithOperators(user, partOfFilter[key]);
+      if (path) {
+        return path;
+      }
     }
   }
 
-  return false;
+  if (Array.isArray(partOfFilter)) {
+    for (const value of partOfFilter) {
+      const path = findFilterPartWithOperators(user, value);
+      if (path) {
+        return path;
+      }
+    }
+  }
+
+  return null;
 }
 
 export function detectNoSQLInjection(
   request: Context,
   filter: unknown
 ): DetectionResult {
-  // Skip if filter does not contain any dollar signs
-  if (!filterContainsOperator(filter)) {
-    return {
-      injection: false,
-    };
+  if (!isPlainObject(filter)) {
+    return { injection: false };
   }
 
-  const body = findInjectionInObject(request.body, filter);
+  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
+    if (source === "body" && isPlainObject(request[source])) {
+      const object = getObjectWithOperators(filter);
+      if (
+        Object.keys(object).length > 0 &&
+        isDeepStrictEqual(request[source], object)
+      ) {
+        return {
+          injection: true,
+          source: source,
+          path: ".",
+        };
+      }
+    }
 
-  if (body) {
-    return {
-      injection: true,
-      source: "body",
-      path: body.path,
-    };
-  }
+    if (request[source]) {
+      const path = findFilterPartWithOperators(request[source], filter);
 
-  const query = findInjectionInObject(request.query, filter);
-
-  if (query) {
-    return {
-      injection: true,
-      source: "query",
-      path: query.path.startsWith(".") ? query.path.slice(1) : query.path,
-    };
-  }
-
-  const headers = findInjectionInObject(request.headers, filter);
-
-  if (headers) {
-    return {
-      injection: true,
-      source: "headers",
-      path: headers.path.startsWith(".") ? headers.path.slice(1) : headers.path,
-    };
-  }
-
-  const cookies = findInjectionInObject(request.cookies, filter);
-
-  if (cookies) {
-    return {
-      injection: true,
-      source: "cookies",
-      path: cookies.path.startsWith(".") ? cookies.path.slice(1) : cookies.path,
-    };
+      if (path) {
+        return {
+          injection: true,
+          source: source,
+          path: path,
+        };
+      }
+    }
   }
 
   return { injection: false };
