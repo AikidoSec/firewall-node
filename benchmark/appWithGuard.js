@@ -1,4 +1,3 @@
-require("dotenv").config();
 const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect();
