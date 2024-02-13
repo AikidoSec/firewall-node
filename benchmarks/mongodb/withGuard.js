@@ -1,0 +1,26 @@
+require("@aikidosec/guard").protect();
+
+const measure = require("./measure");
+const getUser = require("./getUser");
+const getClient = require("./getClient");
+const { runWithContext } = require("@aikidosec/guard");
+
+async function main() {
+  const client = await getClient();
+
+  await measure(async () => {
+    await runWithContext(
+      { body: { email: "email", password: "password" } },
+      async () => {
+        await getUser(client, {
+          email: "email",
+          password: "password",
+        });
+      }
+    );
+  });
+
+  await client.close();
+}
+
+main();
