@@ -36,15 +36,15 @@ t.test("we can highjack the MongoDB library", async (t) => {
 
     const collection = db.collection("test");
 
-    t.match(await collection.count({ title: "Title" }), 0);
+    t.same(await collection.count({ title: "Title" }), 0);
 
     await collection.insertOne({
       title: "Title",
     });
 
-    t.match(await collection.count({ title: "Title" }), 1);
+    t.same(await collection.count({ title: "Title" }), 1);
 
-    t.match(
+    t.same(
       await collection.findOne({
         title: "Title",
       }),
@@ -66,12 +66,12 @@ t.test("we can highjack the MongoDB library", async (t) => {
       { title: "Yet Another Title" }
     );
 
-    t.match(await collection.count({ title: "Yet Another Title" }), 1);
+    t.same(await collection.count({ title: "Yet Another Title" }), 1);
 
     await collection.deleteOne({ title: "Yet Another Title" });
 
-    t.match(await collection.count({ title: "Yet Another Title" }), 0);
-    t.match(agent, {
+    t.same(await collection.count({ title: "Yet Another Title" }), 0);
+    t.same(agent, {
       stats: {
         mongodb: {
           blocked: 0,

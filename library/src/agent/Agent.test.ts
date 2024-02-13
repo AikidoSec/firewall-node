@@ -22,7 +22,7 @@ t.test("it sends install event once", async (t) => {
   agent.start();
 
   await new Promise((resolve) => setImmediate(resolve));
-  t.match(api.getEvents(), [
+  t.same(api.getEvents(), [
     {
       type: "started",
       agent: {
@@ -44,7 +44,7 @@ t.test("it sends install event once", async (t) => {
 
   agent.start();
   await new Promise((resolve) => setImmediate(resolve));
-  t.match(api.getEvents(), [
+  t.same(api.getEvents(), [
     {
       type: "started",
       agent: {
@@ -83,9 +83,9 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
   );
   agent.start();
   // This is a private property, not a good practice to write test like this :)
-  t.match(agent, { info: { preventedPrototypePollution: false } });
+  t.same(agent, { info: { preventedPrototypePollution: false } });
   agent.onPrototypePollutionPrevented();
-  t.match(agent, { info: { preventedPrototypePollution: true } });
+  t.same(agent, { info: { preventedPrototypePollution: true } });
   agent.stop();
 });
 
@@ -129,7 +129,7 @@ t.test("it keeps track of stats", async () => {
   });
 
   // This is a private property, not a good practice to write test like this :)
-  t.match(agent, {
+  t.same(agent, {
     stats: {
       mongodb: {
         blocked: 0,
@@ -146,7 +146,7 @@ t.test("it keeps track of stats", async () => {
     detectedAttack: false,
   });
 
-  t.match(agent, {
+  t.same(agent, {
     stats: {
       mongodb: {
         blocked: 0,
@@ -163,7 +163,7 @@ t.test("it keeps track of stats", async () => {
     detectedAttack: true,
   });
 
-  t.match(agent, {
+  t.same(agent, {
     stats: {
       mongodb: {
         blocked: 1,
@@ -198,7 +198,7 @@ t.test("it keeps tracks of stats in dry mode", async () => {
   });
 
   // This is a private property, not a good practice to write test like this :)
-  t.match(agent, {
+  t.same(agent, {
     stats: {
       mongodb: {
         blocked: 0,
