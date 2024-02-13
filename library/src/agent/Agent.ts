@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Integration } from "../integrations/Integration";
+import { Integration } from "../modules/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";

@@ -4,10 +4,10 @@ import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
-import { Express } from "../integrations/Express";
-import { Integration } from "../integrations/Integration";
+import { Express } from "../modules/Express";
+import { Integration } from "../modules/Integration";
 import { createLambdaWrapper } from "../runtime/Lambda";
-import { MongoDB } from "../integrations/MongoDB";
+import { MongoDB } from "../modules/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 
