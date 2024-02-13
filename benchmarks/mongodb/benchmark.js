@@ -45,6 +45,7 @@ async function main(times = 10, maxDiffInPercentage = 8) {
         3
       )}%`
     );
+    console.error(results);
     process.exit(1);
   } else {
     console.log(
