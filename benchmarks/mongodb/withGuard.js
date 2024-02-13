@@ -21,14 +21,7 @@ async function main() {
 
   await client.close();
 
-  return averageTimeInMS;
+  console.log(JSON.stringify({ averageTimeInMS }));
 }
 
-main().then(
-  (averageTimeInMS) => {
-    console.log(JSON.stringify({ averageTimeInMS }));
-  },
-  (error) => {
-    console.error(error);
-  }
-);
+main();

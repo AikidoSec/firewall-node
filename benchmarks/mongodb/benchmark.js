@@ -55,4 +55,4 @@ async function main(times = 10, maxDiffInPercentage = 8) {
   }
 }
 
-main().catch((error) => console.error(error));
+main();
