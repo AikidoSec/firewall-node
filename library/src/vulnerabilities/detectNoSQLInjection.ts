@@ -54,20 +54,26 @@ function matchFilterPartInUser(
   return null;
 }
 
+function getObjectWithOperators(
+  filter: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.keys(filter).reduce((acc, key) => {
+    if (key.startsWith("$")) {
+      return { ...acc, [key]: filter[key] };
+    }
+
+    return acc;
+  }, {});
+}
+
 function findFilterPartWithOperators(
   user: unknown,
   partOfFilter: unknown
 ): string | null {
   if (isPlainObject(partOfFilter)) {
-    const keys = Object.keys(partOfFilter).filter((key) => key.startsWith("$"));
-
-    if (keys.length > 0) {
-      const objectToMatch = keys.reduce(
-        (acc, key) => ({ ...acc, [key]: partOfFilter[key] }),
-        {}
-      );
-
-      const path = matchFilterPartInUser(user, objectToMatch);
+    const object = getObjectWithOperators(partOfFilter);
+    if (Object.keys(object).length > 0) {
+      const path = matchFilterPartInUser(user, object);
       if (path) {
         return path;
       }
@@ -102,15 +108,21 @@ export function detectNoSQLInjection(
   }
 
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-    if (request[source]) {
-      if (source === "body" && isDeepStrictEqual(request[source], filter)) {
+    if (source === "body" && isPlainObject(request[source])) {
+      const object = getObjectWithOperators(filter);
+      if (
+        Object.keys(object).length > 0 &&
+        isDeepStrictEqual(request[source], object)
+      ) {
         return {
           injection: true,
           source: source,
           path: ".",
         };
       }
+    }
 
+    if (request[source]) {
       const path = findFilterPartWithOperators(request[source], filter);
 
       if (path) {

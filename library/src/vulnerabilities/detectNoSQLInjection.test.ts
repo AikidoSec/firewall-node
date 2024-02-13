@@ -122,7 +122,7 @@ t.test("using $ne in body", async (t) => {
         title: { $ne: null },
       }
     ),
-    { injection: true, source: "body", path: "." }
+    { injection: true, source: "body", path: ".title" }
   );
 });
 
@@ -389,7 +389,7 @@ t.test("using $gt and $lt in query parameter", async (t) => {
         age: { $gt: "21", $lt: "100" },
       }
     ),
-    { injection: true, source: "body", path: "." }
+    { injection: true, source: "body", path: ".age" }
   );
 });
 
@@ -496,5 +496,23 @@ t.test("array body", async (t) => {
       }
     ),
     { injection: true, source: "body", path: ".[0]" }
+  );
+});
+
+t.test("safe email + password", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          email: "email",
+          password: "password",
+        },
+      }),
+      {
+        email: "email",
+        password: "password",
+      }
+    ),
+    { injection: false }
   );
 });
