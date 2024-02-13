@@ -94,6 +94,20 @@ t.test("NoSQL injection using $ne in query parameter", async (t) => {
   );
 });
 
+t.test("Safe filter", async (t) => {
+  t.match(
+    detectNoSQLInjection(
+      createContext({
+        query: { title: "title" },
+      }),
+      {
+        $and: [{ title: "title" }],
+      }
+    ),
+    { injection: false }
+  );
+});
+
 t.test("NoSQL injection using $ne in body", async (t) => {
   t.match(
     detectNoSQLInjection(
@@ -350,7 +364,7 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
   );
 });
 
-/*t.test("NoSQL injection using $gt in query parameter", async (t) => {
+t.test("NoSQL injection using $gt and $lt in query parameter", async (t) => {
   t.match(
     detectNoSQLInjection(
       createContext({
@@ -362,4 +376,56 @@ t.test("NoSQL injection using $gt in query parameter", async (t) => {
     ),
     { injection: true, source: "body", path: ".age" }
   );
-});*/
+});
+
+t.test(
+  "NoSQL injection using $gt and $lt in query parameter (nested)",
+  async (t) => {
+    t.match(
+      detectNoSQLInjection(
+        createContext({
+          body: {
+            nested: {
+              nested: { age: { $gt: "21", $lt: "100" } },
+            },
+          },
+        }),
+        {
+          $and: [
+            {
+              someAgeField: { $gt: "21", $lt: "100" },
+            },
+          ],
+        }
+      ),
+      { injection: true, source: "body", path: ".nested.nested.age" }
+    );
+  }
+);
+
+t.test(
+  "NoSQL injection using $gt and $lt in query parameter (root)",
+  async (t) => {
+    t.match(
+      detectNoSQLInjection(
+        createContext({
+          body: {
+            $and: [
+              {
+                someAgeField: { $gt: "21", $lt: "100" },
+              },
+            ],
+          },
+        }),
+        {
+          $and: [
+            {
+              someAgeField: { $gt: "21", $lt: "100" },
+            },
+          ],
+        }
+      ),
+      { injection: true, source: "body", path: "." }
+    );
+  }
+);
