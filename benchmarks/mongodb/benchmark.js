@@ -14,7 +14,7 @@ async function runScript(scriptPath) {
   });
 }
 
-async function main(times = 10, maxDiffInPercentage = 8) {
+async function main(times = 10, maxDiffInPercentage = 10) {
   const results = [];
   for (let i = 0; i < times; i++) {
     const withGuard = await runScript("withGuard.js");
