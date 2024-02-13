@@ -16,7 +16,7 @@ function matchFilterPartInUser(
   if (typeof user === "string") {
     const jwt = tryDecodeAsJWT(user);
     if (jwt.jwt) {
-      return matchFilterPartInUser(jwt.object, filterPart, path);
+      return matchFilterPartInUser(jwt.object, filterPart, `${path}<jwt>`);
     }
   }
 
@@ -29,7 +29,7 @@ function matchFilterPartInUser(
       const match = matchFilterPartInUser(
         user[key],
         filterPart,
-        path + key + "."
+        `${path}.${key}`
       );
 
       if (match) {
@@ -43,7 +43,7 @@ function matchFilterPartInUser(
       const match = matchFilterPartInUser(
         user[index],
         filterPart,
-        `${path}[${index}]`
+        `${path}.[${index}]`
       );
       if (match) {
         return match;
@@ -102,17 +102,24 @@ export function detectNoSQLInjection(
   }
 
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-    if (!request[source]) {
-      continue;
-    }
+    if (request[source]) {
+      if (source === "body" && isDeepStrictEqual(request[source], filter)) {
+        return {
+          injection: true,
+          source: source,
+          path: ".",
+        };
+      }
 
-    const path = findFilterPartWithOperators(request[source], filter);
-    if (path) {
-      return {
-        injection: true,
-        source,
-        path: source === "body" ? `.${path}` : path,
-      };
+      const path = findFilterPartWithOperators(request[source], filter);
+
+      if (path) {
+        return {
+          injection: true,
+          source: source,
+          path: path,
+        };
+      }
     }
   }
 
