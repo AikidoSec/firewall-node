@@ -20,17 +20,18 @@ function matchFilterPartInUser(
     }
   }
 
+  if (isDeepStrictEqual(user, filterPart)) {
+    return path;
+  }
+
   if (isPlainObject(user)) {
     for (const key in user) {
-      if (isDeepStrictEqual(user[key], filterPart)) {
-        return path + key;
-      }
-
       const match = matchFilterPartInUser(
         user[key],
         filterPart,
         path + key + "."
       );
+
       if (match) {
         return match;
       }
