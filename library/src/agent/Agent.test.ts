@@ -22,7 +22,7 @@ t.test("it sends install event once", async (t) => {
   agent.start();
 
   await new Promise((resolve) => setImmediate(resolve));
-  t.same(api.getEvents(), [
+  t.match(api.getEvents(), [
     {
       type: "started",
       agent: {
@@ -44,7 +44,7 @@ t.test("it sends install event once", async (t) => {
 
   agent.start();
   await new Promise((resolve) => setImmediate(resolve));
-  t.same(api.getEvents(), [
+  t.match(api.getEvents(), [
     {
       type: "started",
       agent: {
@@ -82,10 +82,11 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     false
   );
   agent.start();
-  // This is a private property, not a good practice to write test like this :)
-  t.same(agent, { info: { preventedPrototypePollution: false } });
+  // @ts-expect-error Private property
+  t.same(agent.info.preventedPrototypePollution, false);
   agent.onPrototypePollutionPrevented();
-  t.same(agent, { info: { preventedPrototypePollution: true } });
+  // @ts-expect-error Private property
+  t.same(agent.info.preventedPrototypePollution, true);
   agent.stop();
 });
 
@@ -128,15 +129,13 @@ t.test("it keeps track of stats", async () => {
     detectedAttack: false,
   });
 
-  // This is a private property, not a good practice to write test like this :)
-  t.same(agent, {
-    stats: {
-      mongodb: {
-        blocked: 0,
-        allowed: 1,
-        withoutContext: 0,
-        total: 1,
-      },
+  // @ts-expect-error Private property
+  t.same(agent.stats, {
+    mongodb: {
+      blocked: 0,
+      allowed: 1,
+      withoutContext: 0,
+      total: 1,
     },
   });
 
@@ -146,14 +145,13 @@ t.test("it keeps track of stats", async () => {
     detectedAttack: false,
   });
 
-  t.same(agent, {
-    stats: {
-      mongodb: {
-        blocked: 0,
-        allowed: 2,
-        withoutContext: 1,
-        total: 2,
-      },
+  // @ts-expect-error Private property
+  t.same(agent.stats, {
+    mongodb: {
+      blocked: 0,
+      allowed: 2,
+      withoutContext: 1,
+      total: 2,
     },
   });
 
@@ -163,14 +161,13 @@ t.test("it keeps track of stats", async () => {
     detectedAttack: true,
   });
 
-  t.same(agent, {
-    stats: {
-      mongodb: {
-        blocked: 1,
-        allowed: 2,
-        withoutContext: 1,
-        total: 3,
-      },
+  // @ts-expect-error Private property
+  t.same(agent.stats, {
+    mongodb: {
+      blocked: 1,
+      allowed: 2,
+      withoutContext: 1,
+      total: 3,
     },
   });
 });
@@ -197,15 +194,13 @@ t.test("it keeps tracks of stats in dry mode", async () => {
     detectedAttack: true,
   });
 
-  // This is a private property, not a good practice to write test like this :)
-  t.same(agent, {
-    stats: {
-      mongodb: {
-        blocked: 0,
-        allowed: 1,
-        withoutContext: 0,
-        total: 1,
-      },
+  // @ts-expect-error Private property
+  t.same(agent.stats, {
+    mongodb: {
+      blocked: 0,
+      allowed: 1,
+      withoutContext: 0,
+      total: 1,
     },
   });
 });

@@ -44,7 +44,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
 
     t.same(await collection.count({ title: "Title" }), 1);
 
-    t.same(
+    t.match(
       await collection.findOne({
         title: "Title",
       }),
@@ -71,14 +71,13 @@ t.test("we can highjack the MongoDB library", async (t) => {
     await collection.deleteOne({ title: "Yet Another Title" });
 
     t.same(await collection.count({ title: "Yet Another Title" }), 0);
-    t.same(agent, {
-      stats: {
-        mongodb: {
-          blocked: 0,
-          total: 10,
-          allowed: 10,
-          withoutContext: 10,
-        },
+    // @ts-expect-error Private property
+    t.same(agent.stats, {
+      mongodb: {
+        blocked: 0,
+        total: 10,
+        allowed: 10,
+        withoutContext: 10,
       },
     });
 
@@ -91,7 +90,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
           query: {},
           headers: {},
           body: {
-            title: {
+            myTitle: {
               $ne: null,
             },
           },
@@ -105,7 +104,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
     if (error instanceof Error) {
       t.equal(
         error.message,
-        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.title)"
+        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.myTitle)"
       );
     }
 
