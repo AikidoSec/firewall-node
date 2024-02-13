@@ -24,20 +24,17 @@ async function main(times = 10, maxDiffInPercentage = 8) {
     results.push({
       withGuardTimeInMS,
       withoutGuardTimeInMS,
+      differenceInPercentage: Math.abs(
+        ((withGuardTimeInMS - withoutGuardTimeInMS) / withoutGuardTimeInMS) *
+          100
+      ),
     });
   }
 
-  const averagesDifferenceInPercentage = results.map((result) =>
-    Math.abs(
-      ((result.withGuardTimeInMS - result.withoutGuardTimeInMS) /
-        result.withoutGuardTimeInMS) *
-        100
-    )
-  );
-
   const averageDifferenceInPercentage =
-    averagesDifferenceInPercentage.reduce((acc, diff) => acc + diff, 0) /
-    averagesDifferenceInPercentage.length;
+    results
+      .map((r) => r.differenceInPercentage)
+      .reduce((acc, diff) => acc + diff, 0) / results.length;
 
   if (averageDifferenceInPercentage > maxDiffInPercentage) {
     console.error(
