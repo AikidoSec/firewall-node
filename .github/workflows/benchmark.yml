@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: make install
+      - run: make build
       - name: Run Benchmark
         id: benchmark
         run: cd benchmarks/mongodb && node benchmark.js
