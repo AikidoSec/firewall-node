@@ -103,14 +103,11 @@ function getAgent({
   }
 
   const installed = wrapInstalledPackages();
-  const logger = getLogger(options);
-  const token = getTokenFromEnv();
-  const api = getAPI();
   const agent = new Agent(
     options.block,
-    logger,
-    api,
-    token,
+    getLogger(options),
+    getAPI(),
+    getTokenFromEnv(),
     serverless,
     installed
   );
@@ -140,10 +137,6 @@ export function protect(options?: Partial<Options>) {
   });
 
   agent.start();
-
-  process.on("exit", () => {
-    agent.stop();
-  });
 }
 
 export function lambda(

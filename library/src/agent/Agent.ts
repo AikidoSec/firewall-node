@@ -150,12 +150,6 @@ export class Agent {
     }
   }
 
-  stop() {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
-  }
-
   private startHeartbeats() {
     if (this.serverless) {
       throw new Error("Heartbeats in serverless mode are not supported");
@@ -169,6 +163,8 @@ export class Agent {
       this.heartbeat.bind(this),
       this.heartbeatIntervalInMS
     );
+
+    this.interval.unref();
   }
 
   private getAgentVersion(): string {

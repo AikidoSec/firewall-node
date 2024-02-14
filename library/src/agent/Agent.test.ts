@@ -26,7 +26,7 @@ t.test("it sends started event", async (t) => {
         version: "1.0.0",
         ipAddress: address(),
         packages: {
-          mongodb: "1.0.0",
+          mongodb: "4.0.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
@@ -37,8 +37,6 @@ t.test("it sends started event", async (t) => {
       },
     },
   ]);
-
-  agent.stop();
 });
 
 t.test("when prevent prototype pollution is enabled", async (t) => {

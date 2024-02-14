@@ -146,6 +146,4 @@ t.test("we can highjack the MongoDB library", async (t) => {
   } finally {
     await client.close();
   }
-
-  agent.stop();
 });
