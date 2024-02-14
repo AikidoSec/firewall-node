@@ -32,6 +32,8 @@ export class Express implements Wrapper {
   // So that runWithContext is called for every request
   // Whenever a MongoDB query is made, we want to inspect the filter
   // And cross-reference it with the user supplied data of the request
+  // It's important that our middleware should be the last middleware in the chain
+  // So that we have access to the parsed body, cookies, etc.
   private wrapRouteMethods(exports: unknown) {
     massWrap(
       // @ts-expect-error This is magic that TypeScript doesn't understand
