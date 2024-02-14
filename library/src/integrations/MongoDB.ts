@@ -68,7 +68,7 @@ export class MongoDB implements Integration {
         source: result.source,
         request: request,
         stack: new Error().stack || "",
-        path: result.path,
+        path: result.pathToPayload,
         metadata: {
           db: db,
           collection: collection,
@@ -79,7 +79,7 @@ export class MongoDB implements Integration {
 
       if (agent.shouldBlock()) {
         throw new Error(
-          `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.path})`
+          `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.pathToPayload})`
         );
       }
     }
