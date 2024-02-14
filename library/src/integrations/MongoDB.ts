@@ -25,8 +25,6 @@ const OPERATIONS = [
   "replaceOne",
 ] as const;
 
-type Operation = (typeof OPERATIONS)[number];
-
 // TODO: Support RAW commands via command() method
 export class MongoDB implements Integration {
   getPackageName(): string {
@@ -36,17 +34,15 @@ export class MongoDB implements Integration {
   setup(): boolean {
     new Hook(["mongodb"], (exports) => {
       OPERATIONS.forEach((operation) => {
-        wrap<Collection, Operation>(
+        wrap(
           // @ts-expect-error This is magic that TypeScript doesn't understand
           exports.Collection.prototype,
           operation,
-          // @ts-expect-error This is magic that TypeScript doesn't understand
           function (original) {
             return function (this: Collection) {
               const agent = getInstance();
 
               if (!agent) {
-                // @ts-expect-error This is magic that TypeScript doesn't understand
                 return original.apply(this, arguments);
               }
 
@@ -60,7 +56,6 @@ export class MongoDB implements Integration {
                   detectedAttack: false,
                 });
 
-                // @ts-expect-error This is magic that TypeScript doesn't understand
                 return original.apply(this, arguments);
               }
 
@@ -73,7 +68,6 @@ export class MongoDB implements Integration {
                   detectedAttack: false,
                 });
 
-                // @ts-expect-error This is magic that TypeScript doesn't understand
                 return original.apply(this, arguments);
               }
 
@@ -109,7 +103,6 @@ export class MongoDB implements Integration {
                 }
               }
 
-              // @ts-expect-error This is magic that TypeScript doesn't understand
               return original.apply(this, arguments);
             };
           }
