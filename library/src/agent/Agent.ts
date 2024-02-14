@@ -73,6 +73,20 @@ export class Agent {
     }
   }
 
+  onStart() {
+    if (this.token && this.info) {
+      this.api
+        .report(this.token, {
+          type: "started",
+          time: Date.now(),
+          agent: this.info,
+        })
+        .catch((error) => {
+          this.logger.log("Failed to report started event");
+        });
+    }
+  }
+
   onDetectedAttack({
     module,
     kind,
@@ -158,6 +172,75 @@ export class Agent {
     process.on("exit", this.stop.bind(this));
   }
 
+  private readOurLibraryPackageJSON(): {
+    version: string;
+    optionalDependencies: Record<string, string>;
+  } {
+    const json = require(resolve(__dirname, "../../package.json"));
+
+    if (!json.version) {
+      throw new Error("Missing version in package.json");
+    }
+
+    if (!json.optionalDependencies) {
+      throw new Error("Missing optionalDependencies in package.json");
+    }
+
+    return {
+      version: json.version,
+      optionalDependencies: json.optionalDependencies,
+    };
+  }
+
+  private buildAgentInfo(
+    version: string,
+    installed: Record<string, string>
+  ): AgentInfo {
+    return {
+      id: this.idGenerator.generate(),
+      dryMode: !this.block,
+      hostname: hostname() || "",
+      version: version,
+      ipAddress: address() || "",
+      packages: installed,
+      preventedPrototypePollution: false,
+      nodeEnv: process.env.NODE_ENV || "",
+      os: {
+        name: platform(),
+        version: release(),
+      },
+    };
+  }
+
+  private patchModules(optionalDependencies: Record<string, string>) {
+    const installed: Record<string, string> = {};
+
+    this.integrations.forEach((integration) => {
+      const pkgName = integration.getPackageName();
+
+      if (!optionalDependencies[pkgName]) {
+        return;
+      }
+
+      const json: { version: string } = require(`${pkgName}/package.json`);
+
+      if (!json.version) {
+        return;
+      }
+
+      if (!satisfiesVersion(optionalDependencies[pkgName], json.version)) {
+        this.logger.log(
+          `Skipping ${pkgName} because it does not satisfy the version range ${optionalDependencies[pkgName]}`
+        );
+      }
+
+      integration.setup();
+      installed[pkgName] = json.version;
+    });
+
+    return installed;
+  }
+
   start() {
     if (this.started) {
       this.logger.log("Agent already started!");
@@ -178,60 +261,10 @@ export class Agent {
     }
 
     try {
-      const json: {
-        version: string;
-        optionalDependencies: Record<string, string>;
-      } = JSON.parse(
-        readFileSync(
-          resolve(__dirname, "../../package.json"),
-          "utf-8"
-        ).toString()
-      );
-
-      if (!json.version) {
-        throw new Error("Missing version in package.json");
-      }
-
-      const optionalDeps = json.optionalDependencies || {};
-      const installed: Record<string, string> = {};
-
-      this.integrations.forEach((integration) => {
-        const pkgName = integration.getPackageName();
-
-        if (!optionalDeps[pkgName]) {
-          return;
-        }
-
-        const json: { version: string } = require(`${pkgName}/package.json`);
-
-        if (!json.version) {
-          return;
-        }
-
-        if (!satisfiesVersion(optionalDeps[pkgName], json.version)) {
-          this.logger.log(
-            `Skipping ${pkgName} because it does not satisfy the version range ${optionalDeps[pkgName]}`
-          );
-        }
-
-        integration.setup();
-        installed[pkgName] = json.version;
-      });
-
-      this.info = {
-        id: this.idGenerator.generate(),
-        dryMode: !this.block,
-        hostname: hostname() || "",
-        version: json.version,
-        ipAddress: address() || "",
-        packages: installed,
-        preventedPrototypePollution: false,
-        nodeEnv: process.env.NODE_ENV || "",
-        os: {
-          name: platform(),
-          version: release(),
-        },
-      };
+      const { version, optionalDependencies } =
+        this.readOurLibraryPackageJSON();
+      const installed = this.patchModules(optionalDependencies);
+      this.info = this.buildAgentInfo(version, installed);
     } catch (error: any) {
       this.logger.log("Failed to start agent: " + error.message);
     }
@@ -240,21 +273,8 @@ export class Agent {
       return this.info && !!this.info.packages[integration.getPackageName()];
     });
 
-    if (
-      this.token &&
-      this.info &&
-      installed.every((initialised) => initialised)
-    ) {
-      this.api
-        .report(this.token, {
-          type: "started",
-          time: Date.now(),
-          agent: this.info,
-        })
-        .catch((error) => {
-          this.logger.log("Failed to report started event");
-        });
-
+    if (installed.every((initialised) => initialised)) {
+      this.onStart();
       this.startHeartbeats();
     }
   }

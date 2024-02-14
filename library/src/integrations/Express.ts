@@ -32,29 +32,33 @@ export class Express implements Integration {
     return "express";
   }
 
-  setup(): boolean {
-    new Hook(["express"], (exports) => {
-      massWrap(
-        // @ts-expect-error This is magic that TypeScript doesn't understand
-        exports.Route.prototype,
-        // @ts-expect-error This is magic that TypeScript doesn't understand
-        METHODS.map((method) => method.toLowerCase()),
-        function (original) {
-          return function (this: Application) {
-            const args = Array.from(arguments);
-            const handler = args.pop();
-            args.push(createMiddleware());
-            args.push(handler);
+  private wrapRouteMethods(exports: unknown) {
+    massWrap(
+      // @ts-expect-error This is magic that TypeScript doesn't understand
+      exports.Route.prototype,
+      // @ts-expect-error This is magic that TypeScript doesn't understand
+      METHODS.map((method) => method.toLowerCase()),
+      function (original) {
+        return function (this: Application) {
+          const args = Array.from(arguments);
+          const handler = args.pop();
+          args.push(createMiddleware());
+          args.push(handler);
 
-            // @ts-expect-error This is magic that TypeScript doesn't understand
-            return original.apply(this, args);
-          };
-        }
-      );
+          // @ts-expect-error This is magic that TypeScript doesn't understand
+          return original.apply(this, args);
+        };
+      }
+    );
+  }
 
-      return exports;
-    });
+  private onModuleRequire<T>(exports: T): T {
+    this.wrapRouteMethods(exports);
 
-    return true;
+    return exports;
+  }
+
+  setup() {
+    new Hook(["express"], this.onModuleRequire.bind(this));
   }
 }
