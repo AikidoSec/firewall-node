@@ -21,7 +21,6 @@ const context: Context = {
   cookies: {},
 };
 
-// TODO: Test all wrapped methods
 t.test("we can highjack the MongoDB library", async (t) => {
   const agent = new Agent(
     true,

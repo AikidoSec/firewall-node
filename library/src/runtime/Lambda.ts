@@ -73,7 +73,6 @@ export function createLambdaWrapper<
         url: undefined,
         method: event.httpMethod,
         remoteAddress: event.requestContext?.identity?.sourceIp,
-        // TODO: Safe to assume JSON? Catch error
         body: event.body ? JSON.parse(event.body) : undefined,
         headers: event.headers,
         query: event.queryStringParameters ? event.queryStringParameters : {},

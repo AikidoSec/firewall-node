@@ -49,7 +49,6 @@ function inspectFilter(
   }
 }
 
-// TODO: Support RAW commands via command() method
 export class MongoDB implements Integration {
   getPackageName(): string {
     return "mongodb";
