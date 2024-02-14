@@ -4,8 +4,7 @@ const getClient = require("./getClient");
 
 async function main() {
   const client = await getClient();
-
-  await measure(async () => {
+  const averageTimeInMS = await measure(async () => {
     await getUser(client, {
       email: "email",
       password: "password",
@@ -13,6 +12,8 @@ async function main() {
   });
 
   await client.close();
+
+  console.log(JSON.stringify({ averageTimeInMS }));
 }
 
 main();

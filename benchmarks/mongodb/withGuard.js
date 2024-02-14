@@ -7,8 +7,7 @@ const { runWithContext } = require("@aikidosec/guard");
 
 async function main() {
   const client = await getClient();
-
-  await measure(async () => {
+  const averageTimeInMS = await measure(async () => {
     await runWithContext(
       { body: { email: "email", password: "password" } },
       async () => {
@@ -21,6 +20,8 @@ async function main() {
   });
 
   await client.close();
+
+  console.log(JSON.stringify({ averageTimeInMS }));
 }
 
 main();
