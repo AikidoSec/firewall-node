@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Integration } from "../integrations/Integration";
+import { Wrapper } from "./Wrapper";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
@@ -22,7 +21,7 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly integrations: Integration[],
+    private readonly modules: { name: string; wrapper: Wrapper }[],
     private readonly idGenerator: IDGenerator,
     private readonly serverless: boolean
   ) {}
@@ -81,7 +80,7 @@ export class Agent {
           time: Date.now(),
           agent: this.info,
         })
-        .catch((error) => {
+        .catch(() => {
           this.logger.log("Failed to report started event");
         });
     }
@@ -147,7 +146,7 @@ export class Agent {
           agent: this.info,
           stats: this.stats,
         })
-        .catch((error) => {
+        .catch(() => {
           this.logger.log("Failed to do heartbeat");
         });
     }
@@ -215,27 +214,25 @@ export class Agent {
   private patchModules(optionalDependencies: Record<string, string>) {
     const installed: Record<string, string> = {};
 
-    this.integrations.forEach((integration) => {
-      const pkgName = integration.getPackageName();
-
-      if (!optionalDependencies[pkgName]) {
+    this.modules.forEach((module) => {
+      if (!optionalDependencies[module.name]) {
         return;
       }
 
-      const json: { version: string } = require(`${pkgName}/package.json`);
+      const json: { version: string } = require(`${module.name}/package.json`);
 
       if (!json.version) {
         return;
       }
 
-      if (!satisfiesVersion(optionalDependencies[pkgName], json.version)) {
+      if (!satisfiesVersion(optionalDependencies[module.name], json.version)) {
         this.logger.log(
-          `Skipping ${pkgName} because it does not satisfy the version range ${optionalDependencies[pkgName]}`
+          `Skipping ${module.name} because it does not satisfy the version range ${optionalDependencies[module.name]}`
         );
       }
 
-      integration.setup();
-      installed[pkgName] = json.version;
+      module.wrapper.setupHooks();
+      installed[module.name] = json.version;
     });
 
     return installed;
@@ -269,8 +266,8 @@ export class Agent {
       this.logger.log("Failed to start agent: " + error.message);
     }
 
-    const installed = this.integrations.map((integration) => {
-      return this.info && !!this.info.packages[integration.getPackageName()];
+    const installed = this.modules.map((module) => {
+      return this.info && !!this.info.packages[module.name];
     });
 
     if (installed.every((initialised) => initialised)) {

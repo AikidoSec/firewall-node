@@ -8,7 +8,7 @@ import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { friendlyName } from "../agent/Source";
-import { Integration } from "./Integration";
+import { Wrapper } from "../agent/Wrapper";
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -40,11 +40,7 @@ type BulkWriteOperation = {
   [key in BulkWriteOperationName]?: { filter?: unknown };
 };
 
-export class MongoDB implements Integration {
-  getPackageName(): string {
-    return "mongodb";
-  }
-
+export class MongoDB implements Wrapper {
   private inspectFilter(
     db: string,
     collection: string,
@@ -199,7 +195,7 @@ export class MongoDB implements Integration {
     return exports;
   }
 
-  setup() {
+  setupHooks() {
     new Hook(["mongodb"], this.onModuleRequired.bind(this));
   }
 }

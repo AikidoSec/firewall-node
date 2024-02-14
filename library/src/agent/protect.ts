@@ -4,15 +4,15 @@ import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
-import { Express } from "../integrations/Express";
-import { Integration } from "../integrations/Integration";
+import { Express } from "../sources/Express";
+import { Wrapper } from "./Wrapper";
 import { createLambdaWrapper } from "../sources/Lambda";
-import { MongoDB } from "../integrations/MongoDB";
+import { MongoDB } from "../sinks/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 
-function commonIntegrations() {
-  return [new MongoDB()];
+function commonWrappers() {
+  return [{ name: "mongodb", wrapper: new MongoDB() }];
 }
 
 type Options = {
@@ -65,11 +65,11 @@ function dryModeEnabled(): boolean {
 
 function getAgent({
   options,
-  integrations,
+  modules,
   serverless,
 }: {
   options: Options;
-  integrations: Integration[];
+  modules: { name: string; wrapper: Wrapper }[];
   serverless: boolean;
 }) {
   const current = getInstance();
@@ -86,7 +86,7 @@ function getAgent({
     logger,
     api,
     token,
-    integrations,
+    modules,
     new IDGeneratorULID(),
     serverless
   );
@@ -112,7 +112,7 @@ export function protect(options?: Partial<Options>) {
 
   const agent = getAgent({
     options: getOptions(options),
-    integrations: [...commonIntegrations(), new Express()],
+    modules: [...commonWrappers(), { name: "express", wrapper: new Express() }],
     serverless: false,
   });
   agent.start();
@@ -127,7 +127,7 @@ export function lambda(
 
     const agent = getAgent({
       options: getOptions(options),
-      integrations: [...commonIntegrations()],
+      modules: [...commonWrappers()],
       serverless: true,
     });
     agent.start();

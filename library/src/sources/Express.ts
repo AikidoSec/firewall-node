@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 import { runWithContext } from "../agent/Context";
-import { Integration } from "./Integration";
+import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
@@ -27,11 +27,7 @@ function createMiddleware(): Middleware {
   };
 }
 
-export class Express implements Integration {
-  getPackageName() {
-    return "express";
-  }
-
+export class Express implements Wrapper {
   private wrapRouteMethods(exports: unknown) {
     massWrap(
       // @ts-expect-error This is magic that TypeScript doesn't understand
@@ -58,7 +54,7 @@ export class Express implements Integration {
     return exports;
   }
 
-  setup() {
+  setupHooks() {
     new Hook(["express"], this.onModuleRequire.bind(this));
   }
 }
