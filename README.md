@@ -172,6 +172,12 @@ AIKIDO_NO_BLOCKING=true node your-app.js
 
 See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido) to learn how to send events to Aikido.
 
+## Performance
+
+We run a benchmark on every commit to make sure that the guard has a minimal impact on your application's performance.
+
+See [benchmarks](benchmarks) for more information.
+
 ## Development
 
 * `$ make install` to install dependencies
