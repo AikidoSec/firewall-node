@@ -29,9 +29,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
     new APIForTesting(),
     new Token("123"),
     false,
-    {
-      mongodb: "1.0.0",
-    }
+    {}
   );
   agent.start();
   setInstance(agent);

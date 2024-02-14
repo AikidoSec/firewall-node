@@ -24,13 +24,16 @@ function wrapInstalledPackages() {
     },
   };
 
-  const wrapped: Record<string, string> = {};
+  const wrapped: Record<string, { version: string; supported: boolean }> = {};
   for (const packageName in packages) {
     const { range, wrapper } = packages[packageName];
     const version = getPackageVersion(packageName);
+    wrapped[packageName] = {
+      version,
+      supported: version ? satisfiesVersion(range, version) : false,
+    };
 
-    if (version && satisfiesVersion(range, version)) {
-      wrapped[packageName] = version;
+    if (wrapped[packageName].supported) {
       wrapper.wrap();
     }
   }

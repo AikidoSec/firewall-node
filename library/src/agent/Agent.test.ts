@@ -10,7 +10,10 @@ t.test("it sends started event", async (t) => {
   const api = new APIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, false, {
-    mongodb: "1.0.0",
+    mongodb: {
+      version: "4.0.0",
+      supported: true,
+    },
   });
   agent.start();
 

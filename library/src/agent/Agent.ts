@@ -18,7 +18,10 @@ export class Agent {
     private readonly api: API,
     private readonly token: Token | undefined,
     private readonly serverless: boolean,
-    private readonly wrappedPackages: Record<string, string>
+    private readonly wrappedPackages: Record<
+      string,
+      { version: string | null; supported: boolean }
+    >
   ) {}
 
   shouldBlock() {
@@ -184,7 +187,17 @@ export class Agent {
       hostname: hostname() || "",
       version: this.getAgentVersion(),
       ipAddress: address() || "",
-      packages: this.wrappedPackages,
+      packages: Object.keys(this.wrappedPackages).reduce(
+        (packages: Record<string, string>, pkg) => {
+          const details = this.wrappedPackages[pkg];
+          if (details.version && details.supported) {
+            packages[pkg] = details.version;
+          }
+
+          return packages;
+        },
+        {}
+      ),
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
       serverless: this.serverless,
@@ -206,6 +219,20 @@ export class Agent {
       this.logger.log("Found token, reporting enabled!");
     } else {
       this.logger.log("No token provided, disabling reporting.");
+    }
+
+    for (const pkg in this.wrappedPackages) {
+      const details = this.wrappedPackages[pkg];
+
+      if (!details.version) {
+        continue;
+      }
+
+      if (details.supported) {
+        this.logger.log(`${pkg}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${pkg}@${details.version} is not supported!`);
+      }
     }
 
     this.onStart();
