@@ -1,8 +1,8 @@
 import * as t from "tap";
 import { wrap } from "shimmer";
 
-wrap(require("os"), "networkInterfaces", function () {
-  return function () {
+wrap(require("os"), "networkInterfaces", function wrap() {
+  return function wrap() {
     return {
       lo: [{ address: "127.0.0.1", family: "IPv4", internal: true }],
       bond0: [{ address: "10.206.52.79", family: "IPv4", internal: false }],

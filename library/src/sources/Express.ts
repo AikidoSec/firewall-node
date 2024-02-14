@@ -34,8 +34,8 @@ export class Express implements Wrapper {
       exports.Route.prototype,
       // @ts-expect-error This is magic that TypeScript doesn't understand
       METHODS.map((method) => method.toLowerCase()),
-      function (original) {
-        return function (this: Application) {
+      function wrapRouteMethod(original) {
+        return function injectMiddleware(this: Application) {
           const args = Array.from(arguments);
           const handler = args.pop();
           args.push(createMiddleware());

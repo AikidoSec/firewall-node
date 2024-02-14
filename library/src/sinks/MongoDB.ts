@@ -88,8 +88,8 @@ export class MongoDB implements Wrapper {
       // @ts-expect-error This is magic that TypeScript doesn't understand
       exports.Collection.prototype,
       "bulkWrite",
-      function (original) {
-        return function (this: Collection) {
+      function wrapBulkWrite(original) {
+        return function protectBulkWrite(this: Collection) {
           const agent = getInstance();
 
           if (!agent) {
@@ -144,8 +144,8 @@ export class MongoDB implements Wrapper {
         // @ts-expect-error This is magic that TypeScript doesn't understand
         exports.Collection.prototype,
         operation,
-        function (original) {
-          return function (this: Collection) {
+        function wrapOperation(original) {
+          return function protectQuery(this: Collection) {
             const agent = getInstance();
 
             if (!agent) {
