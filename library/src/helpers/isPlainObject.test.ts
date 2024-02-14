@@ -20,7 +20,7 @@ t.test(
     }
 
     t.notOk(isPlainObject(/foo/));
-    t.notOk(isPlainObject(function () {}));
+    t.notOk(isPlainObject(function myFunc() {}));
     t.notOk(isPlainObject(1));
     t.notOk(isPlainObject(["foo", "bar"]));
     t.notOk(isPlainObject([]));

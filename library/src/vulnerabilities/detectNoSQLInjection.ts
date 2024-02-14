@@ -4,57 +4,87 @@ import { tryDecodeAsJWT } from "../helpers/jwt";
 import { Context } from "../agent/Context";
 import { Source } from "../agent/Source";
 
-type DetectionResult =
-  | { injection: true; source: Source; path: string }
-  | { injection: false };
+type PathPart =
+  | { type: "jwt" }
+  | { type: "object"; key: string }
+  | { type: "array"; index: number };
 
-function matchFilterPartInUser(
-  user: unknown,
-  filterPart: Record<string, unknown>,
-  path = ""
-): string | null {
-  if (typeof user === "string") {
-    const jwt = tryDecodeAsJWT(user);
-    if (jwt.jwt) {
-      return matchFilterPartInUser(jwt.object, filterPart, `${path}<jwt>`);
+function buildPathToPayload(pathToPayload: PathPart[]): string {
+  if (pathToPayload.length === 0) {
+    return ".";
+  }
+
+  return pathToPayload.reduce((acc, part) => {
+    if (part.type === "jwt") {
+      return `${acc}<jwt>`;
     }
-  }
 
-  if (isDeepStrictEqual(user, filterPart)) {
-    return path;
-  }
-
-  if (isPlainObject(user)) {
-    for (const key in user) {
-      const match = matchFilterPartInUser(
-        user[key],
-        filterPart,
-        `${path}.${key}`
-      );
-
-      if (match) {
-        return match;
-      }
+    if (part.type === "object") {
+      return `${acc}.${part.key}`;
     }
-  }
 
-  if (Array.isArray(user)) {
-    for (let index = 0; index < user.length; index++) {
-      const match = matchFilterPartInUser(
-        user[index],
-        filterPart,
-        `${path}.[${index}]`
-      );
-      if (match) {
-        return match;
-      }
+    if (part.type === "array") {
+      return `${acc}.[${part.index}]`;
     }
-  }
 
-  return null;
+    return acc;
+  }, "");
 }
 
-function getObjectWithOperators(
+function matchFilterPartInUser(
+  userInput: unknown,
+  filterPart: Record<string, unknown>,
+  pathToPayload: PathPart[] = []
+): { match: false } | { match: true; pathToPayload: string } {
+  if (typeof userInput === "string") {
+    const jwt = tryDecodeAsJWT(userInput);
+    if (jwt.jwt) {
+      return matchFilterPartInUser(
+        jwt.object,
+        filterPart,
+        pathToPayload.concat([{ type: "jwt" }])
+      );
+    }
+  }
+
+  if (isDeepStrictEqual(userInput, filterPart)) {
+    return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
+  }
+
+  if (isPlainObject(userInput)) {
+    for (const key in userInput) {
+      const match = matchFilterPartInUser(
+        userInput[key],
+        filterPart,
+        pathToPayload.concat([{ type: "object", key: key }])
+      );
+
+      if (match.match) {
+        return match;
+      }
+    }
+  }
+
+  if (Array.isArray(userInput)) {
+    for (let index = 0; index < userInput.length; index++) {
+      const match = matchFilterPartInUser(
+        userInput[index],
+        filterPart,
+        pathToPayload.concat([{ type: "array", index: index }])
+      );
+
+      if (match.match) {
+        return match;
+      }
+    }
+  }
+
+  return {
+    match: false,
+  };
+}
+
+function removeKeysThatDontStartWithDollarSign(
   filter: Record<string, unknown>
 ): Record<string, unknown> {
   return Object.keys(filter).reduce((acc, key) => {
@@ -67,37 +97,44 @@ function getObjectWithOperators(
 }
 
 function findFilterPartWithOperators(
-  user: unknown,
+  userInput: unknown,
   partOfFilter: unknown
-): string | null {
+): { found: false } | { found: true; pathToPayload: string } {
   if (isPlainObject(partOfFilter)) {
-    const object = getObjectWithOperators(partOfFilter);
+    const object = removeKeysThatDontStartWithDollarSign(partOfFilter);
     if (Object.keys(object).length > 0) {
-      const path = matchFilterPartInUser(user, object);
-      if (path) {
-        return path;
+      const result = matchFilterPartInUser(userInput, object);
+
+      if (result.match) {
+        return { found: true, pathToPayload: result.pathToPayload };
       }
     }
 
     for (const key in partOfFilter) {
-      const path = findFilterPartWithOperators(user, partOfFilter[key]);
-      if (path) {
-        return path;
+      const result = findFilterPartWithOperators(userInput, partOfFilter[key]);
+
+      if (result.found) {
+        return { found: true, pathToPayload: result.pathToPayload };
       }
     }
   }
 
   if (Array.isArray(partOfFilter)) {
     for (const value of partOfFilter) {
-      const path = findFilterPartWithOperators(user, value);
-      if (path) {
-        return path;
+      const result = findFilterPartWithOperators(userInput, value);
+
+      if (result.found) {
+        return { found: true, pathToPayload: result.pathToPayload };
       }
     }
   }
 
-  return null;
+  return { found: false };
 }
+
+type DetectionResult =
+  | { injection: true; source: Source; pathToPayload: string }
+  | { injection: false };
 
 export function detectNoSQLInjection(
   request: Context,
@@ -108,28 +145,14 @@ export function detectNoSQLInjection(
   }
 
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-    if (source === "body" && isPlainObject(request[source])) {
-      const object = getObjectWithOperators(filter);
-      if (
-        Object.keys(object).length > 0 &&
-        isDeepStrictEqual(request[source], object)
-      ) {
-        return {
-          injection: true,
-          source: source,
-          path: ".",
-        };
-      }
-    }
-
     if (request[source]) {
-      const path = findFilterPartWithOperators(request[source], filter);
+      const result = findFilterPartWithOperators(request[source], filter);
 
-      if (path) {
+      if (result.found) {
         return {
           injection: true,
           source: source,
-          path: path,
+          pathToPayload: result.pathToPayload,
         };
       }
     }

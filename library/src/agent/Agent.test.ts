@@ -2,36 +2,32 @@ import { hostname, platform, release } from "node:os";
 import * as t from "tap";
 import { Agent } from "./Agent";
 import { APIForTesting, Token } from "./API";
-import { IDGeneratorFixed } from "./IDGenerator";
 import { LoggerNoop } from "./Logger";
 import { address } from "ip";
 
-t.test("it sends install event once", async (t) => {
+t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    [],
-    new IDGeneratorFixed("id"),
-    false
-  );
+  const agent = new Agent(true, logger, api, token, false, {
+    mongodb: {
+      version: "4.0.0",
+      supported: true,
+    },
+  });
   agent.start();
 
-  await new Promise((resolve) => setImmediate(resolve));
   t.match(api.getEvents(), [
     {
       type: "started",
       agent: {
-        id: "id",
         dryMode: false,
         hostname: hostname(),
         version: "1.0.0",
         ipAddress: address(),
-        packages: {},
+        packages: {
+          mongodb: "4.0.0",
+        },
         preventedPrototypePollution: false,
         nodeEnv: "",
         os: {
@@ -41,68 +37,29 @@ t.test("it sends install event once", async (t) => {
       },
     },
   ]);
-
-  agent.start();
-  await new Promise((resolve) => setImmediate(resolve));
-  t.match(api.getEvents(), [
-    {
-      type: "started",
-      agent: {
-        id: "id",
-        dryMode: false,
-        hostname: hostname(),
-        version: "1.0.0",
-        ipAddress: address(),
-        packages: {},
-        preventedPrototypePollution: false,
-        nodeEnv: "",
-        os: {
-          name: platform(),
-          version: release(),
-        },
-      },
-    },
-  ]);
-
-  // Stop setInterval from heartbeat
-  agent.stop();
 });
 
 t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    [],
-    new IDGeneratorFixed("id"),
-    false
-  );
-  agent.start();
-  // @ts-expect-error Private property
-  t.same(agent.info.preventedPrototypePollution, false);
+  const agent = new Agent(true, logger, api, token, true, {});
   agent.onPrototypePollutionPrevented();
-  // @ts-expect-error Private property
-  t.same(agent.info.preventedPrototypePollution, true);
-  agent.stop();
+  agent.start();
+  t.match(api.getEvents(), [
+    {
+      agent: {
+        preventedPrototypePollution: true,
+      },
+    },
+  ]);
 });
 
 t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    [],
-    new IDGeneratorFixed("id"),
-    true
-  );
+  const agent = new Agent(true, logger, api, token, true, {});
 
   // This would otherwise keep the process running
   agent.start();
@@ -112,15 +69,7 @@ t.test("it keeps track of stats", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    [],
-    new IDGeneratorFixed("id"),
-    true
-  );
+  const agent = new Agent(true, logger, api, token, true, {});
 
   agent.start();
   agent.onInspectedCall({
@@ -176,15 +125,7 @@ t.test("it keeps tracks of stats in dry mode", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    false,
-    logger,
-    api,
-    token,
-    [],
-    new IDGeneratorFixed("id"),
-    true
-  );
+  const agent = new Agent(false, logger, api, token, true, {});
 
   agent.start();
 

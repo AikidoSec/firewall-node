@@ -22,9 +22,9 @@ WARNING: This is an early release. Use at your own risk.
 
 Aikido guard for Node.js is compatible with
 
-* ✅ Express 4.x
-* ✅ MongoDB 4.x, 5.x and 6.x
-* ✅ Mongoose 8.x
+* ✅ [`express`](https://www.npmjs.com/package/express) 4.x
+* ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x (Node.js driver version)
+* ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) Mongoose 8.x
 
 ## Installation
 
@@ -118,9 +118,13 @@ We believe that there are legitimate cases of prototype changes, but they should
 ```js
 import { protect, preventPrototypePollution } from '@aikidosec/guard';
 
+// Before main imports
 protect();
 
 import express from 'express';
+
+// After main imports
+preventPrototypePollution();
 
 const app = express();
 
@@ -130,9 +134,6 @@ app.get("/", (req, res) => {
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
-
-  // Your app is initialized, now it's time to prevent prototype pollution
-  preventPrototypePollution();
 });
 ```
 
@@ -171,6 +172,12 @@ AIKIDO_NO_BLOCKING=true node your-app.js
 (Or use [dotenv](dotenv) to load the token from an `.env` file)
 
 See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido) to learn how to send events to Aikido.
+
+## Performance
+
+We run a benchmark on every commit to make sure that the guard has a minimal impact on your application's performance.
+
+See [benchmarks](benchmarks) for more information.
 
 ## Development
 

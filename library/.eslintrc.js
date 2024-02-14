@@ -31,5 +31,16 @@ module.exports = {
     ],
     "import/no-unused-modules": ["warn", { unusedExports: true }],
     "security/detect-object-injection": "off",
+    "no-warning-comments": "error",
+    "max-lines-per-function": ["error", { max: 50, skipBlankLines: true }],
+    "func-names": ["error", "as-needed"],
   },
+  overrides: [
+    {
+      files: "*test.ts",
+      rules: {
+        "max-lines-per-function": "off",
+      },
+    },
+  ],
 };

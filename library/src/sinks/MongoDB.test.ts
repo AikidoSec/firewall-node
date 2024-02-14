@@ -2,21 +2,34 @@ import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
-import { IDGeneratorFixed } from "../agent/IDGenerator";
 import { LoggerNoop } from "../agent/Logger";
-import { runWithContext } from "../agent/Context";
+import { Context, runWithContext } from "../agent/Context";
 import { MongoDB } from "./MongoDB";
 
-// TODO: Test all wrapped methods
+const context: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: {
+    myTitle: {
+      $ne: null,
+    },
+  },
+  cookies: {},
+};
+
 t.test("we can highjack the MongoDB library", async (t) => {
+  new MongoDB().wrap();
+
   const agent = new Agent(
     true,
     new LoggerNoop(),
     new APIForTesting(),
     new Token("123"),
-    [new MongoDB()],
-    new IDGeneratorFixed("id"),
-    false
+    false,
+    {}
   );
   agent.start();
   setInstance(agent);
@@ -81,26 +94,32 @@ t.test("we can highjack the MongoDB library", async (t) => {
       },
     });
 
-    const error = await t.rejects(async () => {
-      await runWithContext(
-        {
-          remoteAddress: "::1",
-          method: "POST",
-          url: "http://localhost:4000",
-          query: {},
-          headers: {},
-          body: {
-            myTitle: {
-              $ne: null,
+    const bulkError = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return collection.bulkWrite([
+          {
+            updateMany: {
+              filter: { title: { $ne: null } },
+              update: { $set: { title: "New Title" } },
             },
           },
-          cookies: {},
-        },
-        () => {
-          return collection.find({ title: { $ne: null } }).toArray();
-        }
-      );
+        ]);
+      });
     });
+
+    if (bulkError instanceof Error) {
+      t.equal(
+        bulkError.message,
+        "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body (.myTitle)"
+      );
+    }
+
+    const error = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return collection.find({ title: { $ne: null } }).toArray();
+      });
+    });
+
     if (error instanceof Error) {
       t.equal(
         error.message,
@@ -122,11 +141,9 @@ t.test("we can highjack the MongoDB library", async (t) => {
         return collection.find({ title: { $ne: null } }).toArray();
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     t.fail(error.message);
   } finally {
     await client.close();
   }
-
-  agent.stop();
 });

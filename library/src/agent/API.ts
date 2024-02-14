@@ -19,7 +19,6 @@ export class Token {
 }
 
 export type AgentInfo = {
-  id: string;
   dryMode: boolean;
   hostname: string;
   version: string;
@@ -31,6 +30,7 @@ export type AgentInfo = {
     version: string;
   };
   nodeEnv: string;
+  serverless: boolean;
 };
 
 type Started = {
@@ -44,7 +44,7 @@ export type Kind = "nosql_injection";
 type DetectedAttack = {
   type: "detected_attack";
   request: {
-    method: string;
+    method: string | undefined;
     ipAddress: string | undefined;
     userAgent: string | undefined;
     url: string | undefined;

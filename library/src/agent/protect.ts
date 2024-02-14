@@ -1,18 +1,44 @@
 // eslint-disable-next-line import/no-unresolved
 import { APIGatewayProxyHandler } from "aws-lambda";
+import { getPackageVersion } from "../helpers/getPackageVersion";
+import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
-import { IDGeneratorULID } from "./IDGenerator";
-import { Express } from "../integrations/Express";
-import { Integration } from "../integrations/Integration";
-import { createLambdaWrapper } from "../runtime/Lambda";
-import { MongoDB } from "../integrations/MongoDB";
+import { Express } from "../sources/Express";
+import { createLambdaWrapper } from "../sources/Lambda";
+import { MongoDB } from "../sinks/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
+import { Wrapper } from "./Wrapper";
 
-function commonIntegrations() {
-  return [new MongoDB()];
+function wrapInstalledPackages() {
+  const packages: Record<string, { range: string; wrapper: Wrapper }> = {
+    express: {
+      range: "^4.0.0",
+      wrapper: new Express(),
+    },
+    mongodb: {
+      range: "^4.0.0 || ^5.0.0 || ^6.0.0",
+      wrapper: new MongoDB(),
+    },
+  };
+
+  const wrapped: Record<string, { version: string; supported: boolean }> = {};
+  for (const packageName in packages) {
+    const { range, wrapper } = packages[packageName];
+    const version = getPackageVersion(packageName);
+    wrapped[packageName] = {
+      version,
+      supported: version ? satisfiesVersion(range, version) : false,
+    };
+
+    if (wrapped[packageName].supported) {
+      wrapper.wrap();
+    }
+  }
+
+  return wrapped;
 }
 
 type Options = {
@@ -65,11 +91,9 @@ function dryModeEnabled(): boolean {
 
 function getAgent({
   options,
-  integrations,
   serverless,
 }: {
   options: Options;
-  integrations: Integration[];
   serverless: boolean;
 }) {
   const current = getInstance();
@@ -78,17 +102,14 @@ function getAgent({
     return current;
   }
 
-  const token = getTokenFromEnv();
-  const logger = getLogger(options);
-  const api = getAPI();
+  const installed = wrapInstalledPackages();
   const agent = new Agent(
     options.block,
-    logger,
-    api,
-    token,
-    integrations,
-    new IDGeneratorULID(),
-    serverless
+    getLogger(options),
+    getAPI(),
+    getTokenFromEnv(),
+    serverless,
+    installed
   );
 
   setInstance(agent);
@@ -112,9 +133,9 @@ export function protect(options?: Partial<Options>) {
 
   const agent = getAgent({
     options: getOptions(options),
-    integrations: [...commonIntegrations(), new Express()],
     serverless: false,
   });
+
   agent.start();
 }
 
@@ -127,9 +148,9 @@ export function lambda(
 
     const agent = getAgent({
       options: getOptions(options),
-      integrations: [...commonIntegrations()],
       serverless: true,
     });
+
     agent.start();
 
     return createLambdaWrapper(handler);

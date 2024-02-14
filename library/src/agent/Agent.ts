@@ -1,30 +1,27 @@
-import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
-import { IDGenerator } from "./IDGenerator";
-import { Integration } from "../integrations/Integration";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
-import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Source } from "./Source";
 import { address } from "ip";
 
 export class Agent {
   private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
-  private started = false;
-  private info: AgentInfo | undefined = undefined;
   private stats: Stats = {};
+  private preventedPrototypePollution = false;
 
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly integrations: Integration[],
-    private readonly idGenerator: IDGenerator,
-    private readonly serverless: boolean
+    private readonly serverless: boolean,
+    private readonly wrappedPackages: Record<
+      string,
+      { version: string | null; supported: boolean }
+    >
   ) {}
 
   shouldBlock() {
@@ -67,9 +64,23 @@ export class Agent {
   }
 
   onPrototypePollutionPrevented() {
+    this.logger.log("Prevented prototype pollution!");
+
     // Will be sent in the next heartbeat
-    if (this.info) {
-      this.info.preventedPrototypePollution = true;
+    this.preventedPrototypePollution = true;
+  }
+
+  onStart() {
+    if (this.token) {
+      this.api
+        .report(this.token, {
+          type: "started",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+        })
+        .catch(() => {
+          this.logger.log("Failed to report started event");
+        });
     }
   }
 
@@ -92,7 +103,7 @@ export class Agent {
     path: string;
     metadata: Record<string, string>;
   }) {
-    if (this.token && this.info) {
+    if (this.token) {
       this.api
         .report(this.token, {
           type: "detected_attack",
@@ -115,7 +126,7 @@ export class Agent {
                 ? request.headers["user-agent"]
                 : undefined,
           },
-          agent: this.info,
+          agent: this.getAgentInfo(),
         })
         .catch(() => {
           this.logger.log("Failed to report attack");
@@ -124,30 +135,28 @@ export class Agent {
   }
 
   heartbeat() {
-    if (this.token && this.info) {
+    if (this.token) {
       this.logger.log("Heartbeat...");
       this.api
         .report(this.token, {
           type: "heartbeat",
           time: Date.now(),
-          agent: this.info,
+          agent: this.getAgentInfo(),
           stats: this.stats,
         })
-        .catch((error) => {
+        .catch(() => {
           this.logger.log("Failed to do heartbeat");
         });
     }
   }
 
-  stop() {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
-  }
-
   private startHeartbeats() {
     if (this.serverless) {
-      return;
+      throw new Error("Heartbeats in serverless mode are not supported");
+    }
+
+    if (this.interval) {
+      throw new Error("Interval already started");
     }
 
     this.interval = setInterval(
@@ -155,16 +164,47 @@ export class Agent {
       this.heartbeatIntervalInMS
     );
 
-    process.on("exit", this.stop.bind(this));
+    this.interval.unref();
+  }
+
+  private getAgentVersion(): string {
+    const json = require(resolve(__dirname, "../../package.json"));
+
+    if (!json.version) {
+      throw new Error("Missing version in package.json");
+    }
+
+    return json.version;
+  }
+
+  private getAgentInfo(): AgentInfo {
+    return {
+      dryMode: !this.block,
+      hostname: hostname() || "",
+      version: this.getAgentVersion(),
+      ipAddress: address() || "",
+      packages: Object.keys(this.wrappedPackages).reduce(
+        (packages: Record<string, string>, pkg) => {
+          const details = this.wrappedPackages[pkg];
+          if (details.version && details.supported) {
+            packages[pkg] = details.version;
+          }
+
+          return packages;
+        },
+        {}
+      ),
+      preventedPrototypePollution: this.preventedPrototypePollution,
+      nodeEnv: process.env.NODE_ENV || "",
+      serverless: this.serverless,
+      os: {
+        name: platform(),
+        version: release(),
+      },
+    };
   }
 
   start() {
-    if (this.started) {
-      this.logger.log("Agent already started!");
-      return;
-    }
-
-    this.started = true;
     this.logger.log("Starting agent...");
 
     if (!this.block) {
@@ -177,84 +217,23 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
     }
 
-    try {
-      const json: {
-        version: string;
-        optionalDependencies: Record<string, string>;
-      } = JSON.parse(
-        readFileSync(
-          resolve(__dirname, "../../package.json"),
-          "utf-8"
-        ).toString()
-      );
+    for (const pkg in this.wrappedPackages) {
+      const details = this.wrappedPackages[pkg];
 
-      if (!json.version) {
-        throw new Error("Missing version in package.json");
+      if (!details.version) {
+        continue;
       }
 
-      const optionalDeps = json.optionalDependencies || {};
-      const installed: Record<string, string> = {};
-
-      this.integrations.forEach((integration) => {
-        const pkgName = integration.getPackageName();
-
-        if (!optionalDeps[pkgName]) {
-          return;
-        }
-
-        const json: { version: string } = require(`${pkgName}/package.json`);
-
-        if (!json.version) {
-          return;
-        }
-
-        if (!satisfiesVersion(optionalDeps[pkgName], json.version)) {
-          this.logger.log(
-            `Skipping ${pkgName} because it does not satisfy the version range ${optionalDeps[pkgName]}`
-          );
-        }
-
-        integration.setup();
-        installed[pkgName] = json.version;
-      });
-
-      this.info = {
-        id: this.idGenerator.generate(),
-        dryMode: !this.block,
-        hostname: hostname() || "",
-        version: json.version,
-        ipAddress: address() || "",
-        packages: installed,
-        preventedPrototypePollution: false,
-        nodeEnv: process.env.NODE_ENV || "",
-        os: {
-          name: platform(),
-          version: release(),
-        },
-      };
-    } catch (error: any) {
-      this.logger.log("Failed to start agent: " + error.message);
+      if (details.supported) {
+        this.logger.log(`${pkg}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${pkg}@${details.version} is not supported!`);
+      }
     }
 
-    const installed = this.integrations.map((integration) => {
-      return this.info && !!this.info.packages[integration.getPackageName()];
-    });
+    this.onStart();
 
-    if (
-      this.token &&
-      this.info &&
-      installed.every((initialised) => initialised)
-    ) {
-      this.api
-        .report(this.token, {
-          type: "started",
-          time: Date.now(),
-          agent: this.info,
-        })
-        .catch((error) => {
-          this.logger.log("Failed to report started event");
-        });
-
+    if (!this.serverless) {
       this.startHeartbeats();
     }
   }

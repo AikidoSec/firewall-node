@@ -11,6 +11,8 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
+preventPrototypePollution();
+
 async function main() {
   const app = express();
   // Normally you'd use environment variables for this
@@ -68,7 +70,6 @@ async function main() {
   return new Promise((resolve, reject) => {
     try {
       app.listen(4000, () => {
-        preventPrototypePollution();
         console.log("Listening on port 4000");
         resolve();
       });
