@@ -11,6 +11,8 @@ import { Integration } from "./Integration";
 
 const OPERATIONS = [
   "count",
+  "countDocuments",
+  "estimatedDocumentCount",
   "find",
   "findOne",
   "findOneAndUpdate",
