@@ -5,7 +5,6 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
-import { IDGeneratorULID } from "./IDGenerator";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
@@ -109,7 +108,6 @@ function getAgent({
     logger,
     api,
     token,
-    new IDGeneratorULID(),
     serverless,
     installed
   );
@@ -156,6 +154,7 @@ export function lambda(
       options: getOptions(options),
       serverless: true,
     });
+
     agent.start();
 
     return createLambdaWrapper(handler);

@@ -2,7 +2,6 @@ import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
-import { IDGeneratorFixed } from "../agent/IDGenerator";
 import { LoggerNoop } from "../agent/Logger";
 import { Context, runWithContext } from "../agent/Context";
 import { MongoDB } from "./MongoDB";
@@ -29,7 +28,6 @@ t.test("we can highjack the MongoDB library", async (t) => {
     new LoggerNoop(),
     new APIForTesting(),
     new Token("123"),
-    new IDGeneratorFixed("id"),
     false,
     {
       mongodb: "1.0.0",

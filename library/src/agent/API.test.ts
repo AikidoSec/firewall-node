@@ -24,7 +24,6 @@ function generateAttackEvent(): Event {
       metadata: {},
     },
     agent: {
-      id: "id",
       version: "1.0.0",
       dryMode: false,
       hostname: "hostname",
@@ -74,7 +73,6 @@ function generateStartedEvent(): Event {
     type: "started",
     time: Date.now(),
     agent: {
-      id: "id",
       version: "1.0.0",
       dryMode: false,
       hostname: "hostname",
@@ -121,7 +119,6 @@ function generateHeartbeatEvent(): Event {
     time: Date.now(),
     stats: {},
     agent: {
-      id: "id",
       version: "1.0.0",
       dryMode: false,
       hostname: "hostname",

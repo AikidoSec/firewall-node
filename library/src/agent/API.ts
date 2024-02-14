@@ -19,7 +19,6 @@ export class Token {
 }
 
 export type AgentInfo = {
-  id: string;
   dryMode: boolean;
   hostname: string;
   version: string;

@@ -1,6 +1,5 @@
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
-import { IDGenerator } from "./IDGenerator";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
@@ -18,7 +17,6 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly idGenerator: IDGenerator,
     private readonly serverless: boolean,
     private readonly wrappedPackages: Record<string, string>
   ) {}
@@ -182,7 +180,6 @@ export class Agent {
 
   private getAgentInfo(): AgentInfo {
     return {
-      id: this.idGenerator.generate(),
       dryMode: !this.block,
       hostname: hostname() || "",
       version: this.getAgentVersion(),
