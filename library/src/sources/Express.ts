@@ -28,6 +28,10 @@ function createMiddleware(): Middleware {
 }
 
 export class Express implements Wrapper {
+  // Whenever app.get, app.post, etc. is called, we want to inject our middleware
+  // So that runWithContext is called for every request
+  // Whenever a MongoDB query is made, we want to inspect the filter
+  // And cross-reference it with the user supplied data of the request
   private wrapRouteMethods(exports: unknown) {
     massWrap(
       // @ts-expect-error This is magic that TypeScript doesn't understand
