@@ -7,7 +7,7 @@ import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { getContext } from "../agent/Context";
 import { friendlyName } from "../agent/Source";
-import { Integration } from "./Integration";
+import { Module } from "./Module";
 
 const OPERATIONS = [
   "count",
@@ -26,9 +26,13 @@ const OPERATIONS = [
 type Operation = (typeof OPERATIONS)[number];
 
 // TODO: Support RAW commands via command() method
-export class MongoDB implements Integration {
+export class MongoDB implements Module {
   getPackageName(): string {
     return "mongodb";
+  }
+
+  isBuiltIn(): boolean {
+    return false;
   }
 
   setup(): boolean {

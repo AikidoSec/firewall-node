@@ -1,4 +1,5 @@
-export interface Integration {
+export interface Module {
   getPackageName(): string;
+  isBuiltIn(): boolean;
   setup(): boolean;
 }

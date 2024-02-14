@@ -5,7 +5,7 @@ import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
 import { Express } from "../modules/Express";
-import { Integration } from "../modules/Integration";
+import { Module } from "../modules/Module";
 import { createLambdaWrapper } from "../runtime/Lambda";
 import { MongoDB } from "../modules/MongoDB";
 import * as shimmer from "shimmer";
@@ -69,7 +69,7 @@ function getAgent({
   serverless,
 }: {
   options: Options;
-  integrations: Integration[];
+  integrations: Module[];
   serverless: boolean;
 }) {
   const current = getInstance();

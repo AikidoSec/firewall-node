@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Integration } from "../modules/Integration";
+import { Module } from "../modules/Module";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
@@ -22,7 +22,7 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly integrations: Integration[],
+    private readonly integrations: Module[],
     private readonly idGenerator: IDGenerator,
     private readonly serverless: boolean
   ) {}
@@ -71,6 +71,10 @@ export class Agent {
     if (this.info) {
       this.info.preventedPrototypePollution = true;
     }
+  }
+
+  onConnectDomain({ module, domain }: { module: string; domain: string }) {
+    console.log("connected to domain", module, domain);
   }
 
   onDetectedAttack({
@@ -177,6 +181,9 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
     }
 
+    const integrations = this.integrations.filter((i) => !i.isBuiltIn());
+    const builtIns = this.integrations.filter((i) => i.isBuiltIn());
+
     try {
       const json: {
         version: string;
@@ -195,7 +202,8 @@ export class Agent {
       const optionalDeps = json.optionalDependencies || {};
       const installed: Record<string, string> = {};
 
-      this.integrations.forEach((integration) => {
+      builtIns.forEach((builtIn) => builtIn.setup());
+      integrations.forEach((integration) => {
         const pkgName = integration.getPackageName();
 
         if (!optionalDeps[pkgName]) {
@@ -236,7 +244,7 @@ export class Agent {
       this.logger.log("Failed to start agent: " + error.message);
     }
 
-    const installed = this.integrations.map((integration) => {
+    const installed = integrations.map((integration) => {
       return this.info && !!this.info.packages[integration.getPackageName()];
     });
 

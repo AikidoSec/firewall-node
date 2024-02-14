@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 import { runWithContext } from "../agent/Context";
-import { Integration } from "./Integration";
+import { Module } from "./Module";
 import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
@@ -27,9 +27,13 @@ function createMiddleware(): Middleware {
   };
 }
 
-export class Express implements Integration {
+export class Express implements Module {
   getPackageName() {
     return "express";
+  }
+
+  isBuiltIn(): boolean {
+    return false;
   }
 
   setup(): boolean {
