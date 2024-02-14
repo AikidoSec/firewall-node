@@ -1,3 +1,3 @@
 export interface Wrapper {
-  setupHooks(): void;
+  wrap(): void;
 }

@@ -16,6 +16,7 @@ t.test(
   "should return `false` if the object is not created by the `Object` constructor.",
   async (t) => {
     function Foo() {
+      // @ts-expect-error This is magic that TypeScript doesn't understand
       this.abc = {};
     }
 
@@ -24,6 +25,7 @@ t.test(
     t.notOk(isPlainObject(1));
     t.notOk(isPlainObject(["foo", "bar"]));
     t.notOk(isPlainObject([]));
+    // @ts-expect-error This is magic that TypeScript doesn't understand
     t.notOk(isPlainObject(new Foo()));
     t.notOk(isPlainObject(null));
   }

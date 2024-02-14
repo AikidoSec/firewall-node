@@ -118,9 +118,13 @@ We believe that there are legitimate cases of prototype changes, but they should
 ```js
 import { protect, preventPrototypePollution } from '@aikidosec/guard';
 
+// Before main imports
 protect();
 
 import express from 'express';
+
+// After main imports
+preventPrototypePollution();
 
 const app = express();
 
@@ -130,9 +134,6 @@ app.get("/", (req, res) => {
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
-
-  // Your app is initialized, now it's time to prevent prototype pollution
-  preventPrototypePollution();
 });
 ```
 

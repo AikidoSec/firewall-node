@@ -54,7 +54,7 @@ export class Express implements Wrapper {
     return exports;
   }
 
-  setupHooks() {
+  wrap() {
     new Hook(["express"], this.onModuleRequire.bind(this));
   }
 }

@@ -2,7 +2,7 @@ import * as t from "tap";
 import { Express } from "./Express";
 
 // Before express is required!
-new Express().setupHooks();
+new Express().wrap();
 
 import * as express from "express";
 import * as request from "supertest";

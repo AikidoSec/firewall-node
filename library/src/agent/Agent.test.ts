@@ -6,7 +6,7 @@ import { IDGeneratorFixed } from "./IDGenerator";
 import { LoggerNoop } from "./Logger";
 import { address } from "ip";
 
-t.test("it sends install event once", async (t) => {
+t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
@@ -15,13 +15,14 @@ t.test("it sends install event once", async (t) => {
     logger,
     api,
     token,
-    [],
     new IDGeneratorFixed("id"),
-    false
+    false,
+    {
+      mongodb: "1.0.0",
+    }
   );
   agent.start();
 
-  await new Promise((resolve) => setImmediate(resolve));
   t.match(api.getEvents(), [
     {
       type: "started",
@@ -31,7 +32,9 @@ t.test("it sends install event once", async (t) => {
         hostname: hostname(),
         version: "1.0.0",
         ipAddress: address(),
-        packages: {},
+        packages: {
+          mongodb: "1.0.0",
+        },
         preventedPrototypePollution: false,
         nodeEnv: "",
         os: {
@@ -42,29 +45,6 @@ t.test("it sends install event once", async (t) => {
     },
   ]);
 
-  agent.start();
-  await new Promise((resolve) => setImmediate(resolve));
-  t.match(api.getEvents(), [
-    {
-      type: "started",
-      agent: {
-        id: "id",
-        dryMode: false,
-        hostname: hostname(),
-        version: "1.0.0",
-        ipAddress: address(),
-        packages: {},
-        preventedPrototypePollution: false,
-        nodeEnv: "",
-        os: {
-          name: platform(),
-          version: release(),
-        },
-      },
-    },
-  ]);
-
-  // Stop setInterval from heartbeat
   agent.stop();
 });
 
@@ -77,17 +57,19 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     api,
     token,
-    [],
     new IDGeneratorFixed("id"),
-    false
+    true,
+    {}
   );
-  agent.start();
-  // @ts-expect-error Private property
-  t.same(agent.info.preventedPrototypePollution, false);
   agent.onPrototypePollutionPrevented();
-  // @ts-expect-error Private property
-  t.same(agent.info.preventedPrototypePollution, true);
-  agent.stop();
+  agent.start();
+  t.match(api.getEvents(), [
+    {
+      agent: {
+        preventedPrototypePollution: true,
+      },
+    },
+  ]);
 });
 
 t.test("it does not start interval in serverless mode", async () => {
@@ -99,9 +81,9 @@ t.test("it does not start interval in serverless mode", async () => {
     logger,
     api,
     token,
-    [],
     new IDGeneratorFixed("id"),
-    true
+    true,
+    {}
   );
 
   // This would otherwise keep the process running
@@ -117,9 +99,9 @@ t.test("it keeps track of stats", async () => {
     logger,
     api,
     token,
-    [],
     new IDGeneratorFixed("id"),
-    true
+    true,
+    {}
   );
 
   agent.start();
@@ -181,9 +163,9 @@ t.test("it keeps tracks of stats in dry mode", async () => {
     logger,
     api,
     token,
-    [],
     new IDGeneratorFixed("id"),
-    true
+    true,
+    {}
   );
 
   agent.start();

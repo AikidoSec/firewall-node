@@ -1,29 +1,26 @@
 import { hostname, platform, release } from "node:os";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { IDGenerator } from "./IDGenerator";
-import { Wrapper } from "./Wrapper";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
-import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Source } from "./Source";
 import { address } from "ip";
 
 export class Agent {
   private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
-  private started = false;
-  private info: AgentInfo | undefined = undefined;
   private stats: Stats = {};
+  private preventedPrototypePollution = false;
 
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly modules: { name: string; wrapper: Wrapper }[],
     private readonly idGenerator: IDGenerator,
-    private readonly serverless: boolean
+    private readonly serverless: boolean,
+    private readonly wrappedPackages: Record<string, string>
   ) {}
 
   shouldBlock() {
@@ -66,19 +63,19 @@ export class Agent {
   }
 
   onPrototypePollutionPrevented() {
+    this.logger.log("Prevented prototype pollution!");
+
     // Will be sent in the next heartbeat
-    if (this.info) {
-      this.info.preventedPrototypePollution = true;
-    }
+    this.preventedPrototypePollution = true;
   }
 
   onStart() {
-    if (this.token && this.info) {
+    if (this.token) {
       this.api
         .report(this.token, {
           type: "started",
           time: Date.now(),
-          agent: this.info,
+          agent: this.getAgentInfo(),
         })
         .catch(() => {
           this.logger.log("Failed to report started event");
@@ -105,7 +102,7 @@ export class Agent {
     path: string;
     metadata: Record<string, string>;
   }) {
-    if (this.token && this.info) {
+    if (this.token) {
       this.api
         .report(this.token, {
           type: "detected_attack",
@@ -128,7 +125,7 @@ export class Agent {
                 ? request.headers["user-agent"]
                 : undefined,
           },
-          agent: this.info,
+          agent: this.getAgentInfo(),
         })
         .catch(() => {
           this.logger.log("Failed to report attack");
@@ -137,13 +134,13 @@ export class Agent {
   }
 
   heartbeat() {
-    if (this.token && this.info) {
+    if (this.token) {
       this.logger.log("Heartbeat...");
       this.api
         .report(this.token, {
           type: "heartbeat",
           time: Date.now(),
-          agent: this.info,
+          agent: this.getAgentInfo(),
           stats: this.stats,
         })
         .catch(() => {
@@ -160,50 +157,40 @@ export class Agent {
 
   private startHeartbeats() {
     if (this.serverless) {
-      return;
+      throw new Error("Heartbeats in serverless mode are not supported");
+    }
+
+    if (this.interval) {
+      throw new Error("Interval already started");
     }
 
     this.interval = setInterval(
       this.heartbeat.bind(this),
       this.heartbeatIntervalInMS
     );
-
-    process.on("exit", this.stop.bind(this));
   }
 
-  private readOurLibraryPackageJSON(): {
-    version: string;
-    optionalDependencies: Record<string, string>;
-  } {
+  private getAgentVersion(): string {
     const json = require(resolve(__dirname, "../../package.json"));
 
     if (!json.version) {
       throw new Error("Missing version in package.json");
     }
 
-    if (!json.optionalDependencies) {
-      throw new Error("Missing optionalDependencies in package.json");
-    }
-
-    return {
-      version: json.version,
-      optionalDependencies: json.optionalDependencies,
-    };
+    return json.version;
   }
 
-  private buildAgentInfo(
-    version: string,
-    installed: Record<string, string>
-  ): AgentInfo {
+  private getAgentInfo(): AgentInfo {
     return {
       id: this.idGenerator.generate(),
       dryMode: !this.block,
       hostname: hostname() || "",
-      version: version,
+      version: this.getAgentVersion(),
       ipAddress: address() || "",
-      packages: installed,
-      preventedPrototypePollution: false,
+      packages: this.wrappedPackages,
+      preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
+      serverless: this.serverless,
       os: {
         name: platform(),
         version: release(),
@@ -211,40 +198,7 @@ export class Agent {
     };
   }
 
-  private patchModules(optionalDependencies: Record<string, string>) {
-    const installed: Record<string, string> = {};
-
-    this.modules.forEach((module) => {
-      if (!optionalDependencies[module.name]) {
-        return;
-      }
-
-      const json: { version: string } = require(`${module.name}/package.json`);
-
-      if (!json.version) {
-        return;
-      }
-
-      if (!satisfiesVersion(optionalDependencies[module.name], json.version)) {
-        this.logger.log(
-          `Skipping ${module.name} because it does not satisfy the version range ${optionalDependencies[module.name]}`
-        );
-      }
-
-      module.wrapper.setupHooks();
-      installed[module.name] = json.version;
-    });
-
-    return installed;
-  }
-
   start() {
-    if (this.started) {
-      this.logger.log("Agent already started!");
-      return;
-    }
-
-    this.started = true;
     this.logger.log("Starting agent...");
 
     if (!this.block) {
@@ -257,21 +211,9 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
     }
 
-    try {
-      const { version, optionalDependencies } =
-        this.readOurLibraryPackageJSON();
-      const installed = this.patchModules(optionalDependencies);
-      this.info = this.buildAgentInfo(version, installed);
-    } catch (error: any) {
-      this.logger.log("Failed to start agent: " + error.message);
-    }
+    this.onStart();
 
-    const installed = this.modules.map((module) => {
-      return this.info && !!this.info.packages[module.name];
-    });
-
-    if (installed.every((initialised) => initialised)) {
-      this.onStart();
+    if (!this.serverless) {
       this.startHeartbeats();
     }
   }

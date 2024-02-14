@@ -1,18 +1,42 @@
 // eslint-disable-next-line import/no-unresolved
 import { APIGatewayProxyHandler } from "aws-lambda";
+import { getPackageVersion } from "../helpers/getPackageVersion";
+import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { IDGeneratorULID } from "./IDGenerator";
 import { Express } from "../sources/Express";
-import { Wrapper } from "./Wrapper";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
+import { Wrapper } from "./Wrapper";
 
-function commonWrappers() {
-  return [{ name: "mongodb", wrapper: new MongoDB() }];
+function wrapInstalledPackages() {
+  const packages: Record<string, { range: string; wrapper: Wrapper }> = {
+    express: {
+      range: "^4.0.0",
+      wrapper: new Express(),
+    },
+    mongodb: {
+      range: "^4.0.0 || ^5.0.0 || ^6.0.0",
+      wrapper: new MongoDB(),
+    },
+  };
+
+  const wrapped: Record<string, string> = {};
+  for (const packageName in packages) {
+    const { range, wrapper } = packages[packageName];
+    const version = getPackageVersion(packageName);
+
+    if (version && satisfiesVersion(range, version)) {
+      wrapped[packageName] = version;
+      wrapper.wrap();
+    }
+  }
+
+  return wrapped;
 }
 
 type Options = {
@@ -65,11 +89,9 @@ function dryModeEnabled(): boolean {
 
 function getAgent({
   options,
-  modules,
   serverless,
 }: {
   options: Options;
-  modules: { name: string; wrapper: Wrapper }[];
   serverless: boolean;
 }) {
   const current = getInstance();
@@ -78,17 +100,18 @@ function getAgent({
     return current;
   }
 
-  const token = getTokenFromEnv();
+  const installed = wrapInstalledPackages();
   const logger = getLogger(options);
+  const token = getTokenFromEnv();
   const api = getAPI();
   const agent = new Agent(
     options.block,
     logger,
     api,
     token,
-    modules,
     new IDGeneratorULID(),
-    serverless
+    serverless,
+    installed
   );
 
   setInstance(agent);
@@ -112,10 +135,14 @@ export function protect(options?: Partial<Options>) {
 
   const agent = getAgent({
     options: getOptions(options),
-    modules: [...commonWrappers(), { name: "express", wrapper: new Express() }],
     serverless: false,
   });
+
   agent.start();
+
+  process.on("exit", () => {
+    agent.stop();
+  });
 }
 
 export function lambda(
@@ -127,7 +154,6 @@ export function lambda(
 
     const agent = getAgent({
       options: getOptions(options),
-      modules: [...commonWrappers()],
       serverless: true,
     });
     agent.start();

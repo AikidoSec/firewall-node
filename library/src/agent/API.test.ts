@@ -36,6 +36,7 @@ function generateAttackEvent(): Event {
         name: "os",
         version: "version",
       },
+      serverless: false,
     },
   };
 }
@@ -85,6 +86,7 @@ function generateStartedEvent(): Event {
         name: "os",
         version: "version",
       },
+      serverless: false,
     },
   };
 }
@@ -131,6 +133,7 @@ function generateHeartbeatEvent(): Event {
         name: "os",
         version: "version",
       },
+      serverless: false,
     },
   };
 }

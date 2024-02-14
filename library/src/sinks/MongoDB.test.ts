@@ -22,14 +22,18 @@ const context: Context = {
 };
 
 t.test("we can highjack the MongoDB library", async (t) => {
+  new MongoDB().wrap();
+
   const agent = new Agent(
     true,
     new LoggerNoop(),
     new APIForTesting(),
     new Token("123"),
-    [new MongoDB()],
     new IDGeneratorFixed("id"),
-    false
+    false,
+    {
+      mongodb: "1.0.0",
+    }
   );
   agent.start();
   setInstance(agent);
@@ -141,7 +145,7 @@ t.test("we can highjack the MongoDB library", async (t) => {
         return collection.find({ title: { $ne: null } }).toArray();
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     t.fail(error.message);
   } finally {
     await client.close();

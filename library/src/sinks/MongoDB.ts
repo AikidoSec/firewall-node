@@ -195,7 +195,7 @@ export class MongoDB implements Wrapper {
     return exports;
   }
 
-  setupHooks() {
+  wrap() {
     new Hook(["mongodb"], this.onModuleRequired.bind(this));
   }
 }

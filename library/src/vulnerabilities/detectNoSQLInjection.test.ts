@@ -17,10 +17,10 @@ function createContext({
     remoteAddress: "::1",
     method: "GET",
     url: "http://localhost:4000",
-    query: query,
-    headers: headers,
+    query: query ? query : {},
+    headers: headers ? headers : {},
     body: body,
-    cookies: cookies,
+    cookies: cookies ? cookies : {},
   };
 }
 
@@ -84,14 +84,14 @@ t.test("filter with $ne and empty request", async (t) => {
   );
 });
 
-t.test("using $ne in query parameter", async (t) => {
+t.test("using $gt in query parameter", async (t) => {
   t.same(
     detectNoSQLInjection(
       createContext({
-        query: { title: { $ne: null } },
+        query: { title: { $gt: "" } },
       }),
       {
-        title: { $ne: null },
+        title: { $gt: "" },
       }
     ),
     { injection: true, source: "query", pathToPayload: ".title" }
