@@ -5,7 +5,6 @@ import type {
   Context,
   Handler,
 } from "aws-lambda";
-import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext } from "../agent/Context";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
@@ -120,10 +119,7 @@ export function createLambdaWrapper<
         cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
       },
       async () => {
-        const response = await asyncHandler(event, context);
-        getInstance()?.heartbeat();
-
-        return response;
+        return await asyncHandler(event, context);
       }
     );
   };
