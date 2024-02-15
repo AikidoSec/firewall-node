@@ -3,8 +3,6 @@
 ![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fguard?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/guard-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fguard?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-WARNING: This is an early release. Use at your own risk.
-
 ## Features
 
 * 🛡️ Protects your application against [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
@@ -32,110 +30,8 @@ Aikido guard for Node.js is compatible with
 $ npm install @aikidosec/guard
 ```
 
-### Express
-
-At the very beginning of your app.js file, add the following line:
-
-```js
-require('@aikidosec/guard').protect();
-```
-
-or ESM import style:
-
-```js
-import { protect } from '@aikidosec/guard';
-
-// Needs to be called before any other code
-protect();
-```
-
-That's it!
-
-If you need to debug the guard, you can set the `debug` option:
-
-```js
-require('@aikidosec/guard').protect({ debug: true });
-```
-
-This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
-
-### AWS Lambda
-
-At the very beginning of your handler.js file, add the following line:
-
-```js
-const protect = require("@aikidosec/guard").lambda();
-```
-
-And then wrap your handler function with the `protect` function:
-
-```js
-exports.handler = protect(async (event, context) => {
-  // Your handler code
-});
-```
-
-or ESM import style:
-
-```js
-import { lambda } from '@aikidosec/guard';
-
-// Needs to be called before any other code
-const protect = lambda();
-
-// You can call this at any point in your code
-export const handler = protect(async (event, context) => {
-  // Your handler code
-});
-```
-
-In order for the RASP to work properly, we need the following event properties to be present:
-
-* `event.body`
-* `event.httpMethod` (optional)
-* `event.headers` (optional)
-
-That's it!
-
-If you need to debug the guard, you can set the `debug` option:
-
-```js
-const protect = require("@aikidosec/guard").lambda({ debug: true });
-```
-
-This will output debug information to the console (e.g. if the agent failed to start, no token was found, ...).
-
-## Protect against prototype pollution
-
-Aikido guard can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
-
-It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) for some built-in JavaScript objects.
-
-> The `Object.freeze()` method freezes an object. A frozen object can no longer be changed; freezing an object prevents new properties from being added to it, existing properties from being removed, prevents changing the enumerability, configurability, or writability of existing properties, and prevents the values of existing properties from being changed.
-
-We believe that there are legitimate cases of prototype changes, but they should happen only during the initialization step. Hence, we recommend calling `preventPrototypePollution` when your application is initialised.
-
-```js
-import { protect, preventPrototypePollution } from '@aikidosec/guard';
-
-// Before main imports
-protect();
-
-import express from 'express';
-
-// After main imports
-preventPrototypePollution();
-
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Hello, world!");
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
-```
+* For express based apps, follow the [Express](docs/express.md) instructions
+* For AWS Lambda, follow the [AWS Lambda](docs/lambda.md) instructions
 
 ## Reporting to Aikido
 
@@ -176,6 +72,14 @@ See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido
 ## Performance
 
 We run a benchmark on every commit to make sure that the guard has a minimal impact on your application's performance.
+
+The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) 100 times for warmup and then 1000 times to measure the average time:
+
+| Without guard | With guard | Difference in ms | Difference in % |
+|---------------|------------|------------------|-----------------|
+| 0.2355ms      | 0.2575ms   | +0.022ms         | +8.54%          |
+
+(Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
 
 See [benchmarks](benchmarks) for more information.
 
