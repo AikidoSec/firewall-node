@@ -31,3 +31,4 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/guard-node
+      - run: make test-end-to-end

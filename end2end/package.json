@@ -1,14 +1,10 @@
 {
-  "name": "$name$",
-  "version": "$version$",
-  "description": "$END$",
-  "main": "$main$",
+  "name": "end2end",
+  "private": true,
+  "dependencies": {
+    "tap": "^18.7.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/AikidoSec/node-RASP.git"
-  },
-  "private": true
+    "test": "tap tests/*.js"
+  }
 }
