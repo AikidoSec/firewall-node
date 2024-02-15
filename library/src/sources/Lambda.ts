@@ -21,16 +21,18 @@ type AsyncHandler<TEvent, TResult> = (
   context: Context
 ) => Promise<TResult>;
 
+type AsyncOrCallbackHandler<TEvent, TResult> =
+  | AsyncHandler<TEvent, TResult>
+  | CallbackHandler<TEvent, TResult>;
+
 function isAsyncHandler<TEvent, TResult>(
-  handler: CallbackHandler<TEvent, TResult> | AsyncHandler<TEvent, TResult>
+  handler: AsyncOrCallbackHandler<TEvent, TResult>
 ): handler is AsyncHandler<TEvent, TResult> {
   return handler.length <= 2;
 }
 
 function convertToAsyncFunction<TEvent, TResult>(
-  originalHandler:
-    | CallbackHandler<TEvent, TResult>
-    | AsyncHandler<TEvent, TResult>
+  originalHandler: AsyncOrCallbackHandler<TEvent, TResult>
 ): AsyncHandler<TEvent, TResult> {
   return async (event: TEvent, context: Context): Promise<TResult> => {
     if (isAsyncHandler(originalHandler)) {
@@ -53,12 +55,19 @@ function convertToAsyncFunction<TEvent, TResult>(
   };
 }
 
-function parseBody(event: APIGatewayProxyEvent) {
-  const isJson = event.headers
-    ? isJsonContentType(event.headers["content-type"] || "")
-    : false;
+function normalizeHeaders(headers: Record<string, string | undefined>) {
+  const normalized: Record<string, string | undefined> = {};
+  for (const key in headers) {
+    normalized[key.toLowerCase()] = headers[key];
+  }
 
-  if (!event.body || !isJson) {
+  return normalized;
+}
+
+function parseBody(event: APIGatewayProxyEvent) {
+  const headers = event.headers ? normalizeHeaders(event.headers) : {};
+
+  if (!event.body || !isJsonContentType(headers["content-type"] || "")) {
     return undefined;
   }
 
@@ -85,17 +94,14 @@ function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
     isPlainObject(event) &&
     "httpMethod" in event &&
     "requestContext" in event &&
-    "headers" in event &&
-    "queryStringParameters" in event
+    "headers" in event
   );
 }
 
 export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
->(
-  handler: AsyncHandler<TEvent, TResult> | CallbackHandler<TEvent, TResult>
-): Handler<TEvent, TResult> {
+>(handler: AsyncOrCallbackHandler<TEvent, TResult>): Handler<TEvent, TResult> {
   const asyncHandler = convertToAsyncFunction(handler);
 
   return async (event, context) => {

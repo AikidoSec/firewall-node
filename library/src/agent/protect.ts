@@ -126,9 +126,12 @@ function getOptions(partialOptions?: Partial<Options>): Options {
   return options;
 }
 
-export function protect(options?: Partial<Options>) {
-  // Disable shimmer logging
+function disableShimmerLogging() {
   shimmer({ logger: () => {} });
+}
+
+export function protect(options?: Partial<Options>) {
+  disableShimmerLogging();
 
   const agent = getAgent({
     options: getOptions(options),
@@ -141,17 +144,14 @@ export function protect(options?: Partial<Options>) {
 export function lambda(
   options?: Partial<Options>
 ): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {
-  return (handler) => {
-    // Disable shimmer logging
-    shimmer({ logger: () => {} });
+  disableShimmerLogging();
 
-    const agent = getAgent({
-      options: getOptions(options),
-      serverless: true,
-    });
+  const agent = getAgent({
+    options: getOptions(options),
+    serverless: true,
+  });
 
-    agent.start();
+  agent.start();
 
-    return createLambdaWrapper(handler);
-  };
+  return createLambdaWrapper;
 }

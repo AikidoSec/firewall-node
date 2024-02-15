@@ -7,7 +7,7 @@ const { Users, User } = require("./users");
 
 preventPrototypePollution();
 
-async function main(client, event, context) {
+async function main(client, event) {
   const users = new Users(client);
   const user = await users.findBy("hans@aikido.dev", "password");
 
