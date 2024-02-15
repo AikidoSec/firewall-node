@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { Collection, Db } from "mongodb";
+import { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { Agent } from "../agent/Agent";
@@ -50,6 +50,7 @@ export class MongoDB implements Wrapper {
     operation: string
   ) {
     const result = detectNoSQLInjection(request, filter);
+
     agent.onInspectedCall({
       module: "mongodb",
       withoutContext: false,
