@@ -34,6 +34,12 @@ export class Express implements Wrapper {
   // And cross-reference it with the user supplied data of the request
   // It's important that our middleware should be the last middleware in the chain
   // So that we have access to the parsed body, cookies, etc.
+  //
+  // app.get("/path", json(), (req, res) => { ... }))
+  // we will inject our middleware ^ here
+  // app.get("/path", json(), middleware(), (req, res) => { ... }))
+  //
+  // Without having to change the user's code
   private wrapRouteMethods(exports: unknown) {
     massWrap(
       // @ts-expect-error This is magic that TypeScript doesn't understand
