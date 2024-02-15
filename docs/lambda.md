@@ -32,6 +32,8 @@ In order for the guard to work properly, we need the following event properties 
 
 That's it! Your AWS Lambda function is now protected by Aikido guard.
 
+If you want to see a full example, check our [lambda sample app](../sample-apps/lambda-mongodb).
+
 ## Debug mode
 
 If you need to debug the guard, you can set the `debug` option to `true`:

@@ -24,7 +24,9 @@ import { protect, preventPrototypePollution } from '@aikidosec/guard';
 // ...
 ```
 
-That's it! Your Express app is now protected by Aikido guard.
+That's it! Your app is now protected by Aikido guard.
+
+If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
 
 ## Debug mode
 
