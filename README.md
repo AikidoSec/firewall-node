@@ -21,8 +21,8 @@
 Aikido guard for Node.js is compatible with
 
 * ✅ [`express`](https://www.npmjs.com/package/express) 4.x
-* ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x (Node.js driver version)
-* ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) Mongoose 8.x
+* ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
+* ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) Mongoose 8.x, 7.x and 6.x
 
 ## Installation
 
