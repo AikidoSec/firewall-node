@@ -7,6 +7,7 @@ import type {
 } from "aws-lambda";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext } from "../agent/Context";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
 
 type CallbackHandler<TEvent, TResult> = (
@@ -52,6 +53,43 @@ function convertToAsyncFunction<TEvent, TResult>(
   };
 }
 
+function parseBody(event: APIGatewayProxyEvent) {
+  const isJson = event.headers
+    ? isJsonContentType(event.headers["content-type"] || "")
+    : false;
+
+  if (!event.body || !isJson) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(event.body);
+  } catch {
+    return undefined;
+  }
+}
+
+const jsonContentTypes = [
+  "application/json",
+  "application/vnd.api+json",
+  "application/csp-report",
+  "application/x-json",
+];
+
+function isJsonContentType(contentType: string) {
+  return jsonContentTypes.some((type) => contentType.includes(type));
+}
+
+function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
+  return (
+    isPlainObject(event) &&
+    "httpMethod" in event &&
+    "requestContext" in event &&
+    "headers" in event &&
+    "queryStringParameters" in event
+  );
+}
+
 export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
@@ -61,12 +99,16 @@ export function createLambdaWrapper<
   const asyncHandler = convertToAsyncFunction(handler);
 
   return async (event, context) => {
+    if (!isProxyEvent(event)) {
+      return await asyncHandler(event, context);
+    }
+
     return runWithContext(
       {
         url: undefined,
         method: event.httpMethod,
         remoteAddress: event.requestContext?.identity?.sourceIp,
-        body: event.body ? JSON.parse(event.body) : undefined,
+        body: parseBody(event),
         headers: event.headers,
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
