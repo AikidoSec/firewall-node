@@ -12,6 +12,20 @@ async function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function kill(server) {
+  return new Promise((resolve) => {
+    if (!server.connected || server.killed || !server.pid) {
+      resolve();
+    }
+
+    server.on("close", resolve);
+    server.on("exit", resolve);
+    server.on("error", resolve);
+    server.on("disconnect", resolve);
+    server.kill();
+  });
+}
+
 t.test("it blocks in blocking mode", async () => {
   const server = spawn(`node`, [pathToApp], { shell: true });
 
@@ -47,10 +61,7 @@ t.test("it blocks in blocking mode", async () => {
   } catch (error) {
     t.fail(error.message);
   } finally {
-    await new Promise((resolve) => {
-      server.on("close", resolve);
-      server.kill();
-    });
+    await kill(server);
   }
 });
 
@@ -92,9 +103,6 @@ t.test("it does not block in dry mode", async () => {
   } catch (error) {
     t.fail(error.message);
   } finally {
-    await new Promise((resolve) => {
-      server.on("close", resolve);
-      server.kill();
-    });
+    await kill(server);
   }
 });
