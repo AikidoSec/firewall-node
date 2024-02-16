@@ -13,9 +13,7 @@ jobs:
           node-version: "18.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
-      - run: npm install
-      - run: npm run lint
-      - run: npm run test
+      - run: make install
       - name: Get the version
         id: get_version
         run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
@@ -23,4 +21,4 @@ jobs:
       - run: make build
       - run: cd library && npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

@@ -1,9 +1,13 @@
-const protect = require("@aikidosec/guard").lambda();
+const { lambda, preventPrototypePollution } = require("@aikidosec/guard");
+
+const protect = lambda({ debug: true });
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-async function main(client, event, context) {
+preventPrototypePollution();
+
+async function main(client, event) {
   const users = new Users(client);
   const user = await users.findBy("hans@aikido.dev", "password");
 

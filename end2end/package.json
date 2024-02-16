@@ -1,0 +1,10 @@
+{
+  "name": "end2end",
+  "private": true,
+  "dependencies": {
+    "tap": "^18.7.0"
+  },
+  "scripts": {
+    "test": "tap tests/*.js"
+  }
+}

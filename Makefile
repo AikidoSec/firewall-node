@@ -41,3 +41,6 @@ test-ci:
 .PHONY: lint
 lint:
 	cd library && npm run lint
+
+test-end-to-end:
+	cd end2end && npm run test

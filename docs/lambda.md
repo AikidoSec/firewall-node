@@ -24,13 +24,15 @@ or ESM import style:
 import { lambda, preventPrototypePollution } from '@aikidosec/guard';
 ```
 
-In order for the RASP to work properly, we need the following event properties to be present:
+In order for the guard to work properly, we need the following event properties to be present:
 
 * `event.body`
 * `event.httpMethod` (optional)
 * `event.headers` (optional)
 
 That's it! Your AWS Lambda function is now protected by Aikido guard.
+
+If you want to see a full example, check our [lambda sample app](../sample-apps/lambda-mongodb).
 
 ## Debug mode
 
