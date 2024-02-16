@@ -1,6 +1,7 @@
 const t = require("tap");
 const { exec } = require("node:child_process");
 const { resolve } = require("node:path");
+
 const pathToApp = resolve(
   __dirname,
   "../../sample-apps/express-mongodb",
@@ -16,8 +17,12 @@ t.test("it blocks in blocking mode", (t) => {
 
   setTimeout(() => {
     Promise.all([
-      fetch("http://localhost:4000/?search[$ne]=null"),
-      fetch("http://localhost:4000/?search=title"),
+      fetch("http://localhost:4000/?search[$ne]=null", {
+        signal: AbortSignal.timeout(5000),
+      }),
+      fetch("http://localhost:4000/?search=title", {
+        signal: AbortSignal.timeout(5000),
+      }),
     ])
       .then((results) => {
         const [noSQLInjection, normalSearch] = results;
@@ -45,8 +50,12 @@ t.test("it does not block in dry mode", (t) => {
 
   setTimeout(() => {
     Promise.all([
-      fetch("http://localhost:4000/?search[$ne]=null"),
-      fetch("http://localhost:4000/?search=title"),
+      fetch("http://localhost:4000/?search[$ne]=null", {
+        signal: AbortSignal.timeout(5000),
+      }),
+      fetch("http://localhost:4000/?search=title", {
+        signal: AbortSignal.timeout(5000),
+      }),
     ])
       .then((results) => {
         const [noSQLInjection, normalSearch] = results;
