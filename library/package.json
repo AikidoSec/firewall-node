@@ -1,6 +1,6 @@
 {
   "name": "@aikidosec/guard",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Aikido guard protects your application against NoSQL injections and more",
   "keywords": [
     "security",

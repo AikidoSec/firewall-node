@@ -23,13 +23,14 @@ t.test("it sends started event", async (t) => {
       agent: {
         dryMode: false,
         hostname: hostname(),
-        version: "1.0.0",
+        version: "0.0.0",
         ipAddress: address(),
         packages: {
           mongodb: "4.0.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
+        serverless: false,
         os: {
           name: platform(),
           version: release(),
