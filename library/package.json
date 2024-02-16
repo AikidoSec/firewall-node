@@ -2,6 +2,7 @@
   "name": "@aikidosec/guard",
   "version": "0.0.0",
   "description": "Aikido guard protects your application against NoSQL injections and more",
+  "repository": "https://github.com/AikidoSec/guard-node",
   "keywords": [
     "security",
     "nosql",
