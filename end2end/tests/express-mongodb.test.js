@@ -27,7 +27,7 @@ async function kill(server) {
 }
 
 t.test("it blocks in blocking mode", async () => {
-  const server = spawn(`node`, [pathToApp], { shell: true });
+  const server = spawn(`node`, [pathToApp, "4000"], { shell: true });
 
   let stdout = "";
   server.stdout.on("data", (data) => {
@@ -66,7 +66,7 @@ t.test("it blocks in blocking mode", async () => {
 });
 
 t.test("it does not block in dry mode", async () => {
-  const server = spawn(`node`, [pathToApp], {
+  const server = spawn(`node`, [pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_NO_BLOCKING: "true" },
     shell: true,
   });
@@ -88,10 +88,10 @@ t.test("it does not block in dry mode", async () => {
 
   try {
     const [noSQLInjection, normalSearch] = await Promise.all([
-      fetch("http://localhost:4000/?search[$ne]=null", {
+      fetch("http://localhost:4001/?search[$ne]=null", {
         signal: AbortSignal.timeout(5000),
       }),
-      fetch("http://localhost:4000/?search=title", {
+      fetch("http://localhost:4001/?search=title", {
         signal: AbortSignal.timeout(5000),
       }),
     ]);
