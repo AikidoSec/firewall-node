@@ -19,6 +19,7 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
       - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
       - run: make build
+      - run: cp LICENSE library && cp README.md library
       - run: cd library && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
