@@ -12,22 +12,12 @@ async function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function kill(server) {
-  return new Promise((resolve) => {
-    if (!server.connected || server.killed || !server.pid) {
-      resolve();
-    }
-
-    server.on("close", resolve);
-    server.on("exit", resolve);
-    server.on("error", resolve);
-    server.on("disconnect", resolve);
-    server.kill();
-  });
-}
-
-t.test("it blocks in blocking mode", async () => {
+t.test("it blocks in blocking mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4000"], { shell: true });
+
+  server.on("close", () => {
+    t.end();
+  });
 
   let stdout = "";
   server.stdout.on("data", (data) => {
@@ -42,35 +32,41 @@ t.test("it blocks in blocking mode", async () => {
   });
 
   // Wait for the server to start
-  await timeout(1000);
-
-  try {
-    const [noSQLInjection, normalSearch] = await Promise.all([
-      fetch("http://localhost:4000/?search[$ne]=null", {
-        signal: AbortSignal.timeout(5000),
-      }),
-      fetch("http://localhost:4000/?search=title", {
-        signal: AbortSignal.timeout(5000),
-      }),
-    ]);
-
-    t.equal(noSQLInjection.status, 500);
-    t.equal(normalSearch.status, 200);
-    t.match(stdout, /Starting agent/);
-    t.match(stderr, /Aikido guard has blocked a NoSQL injection/);
-  } catch (error) {
-    t.fail(error.message);
-  } finally {
-    await kill(server);
-  }
+  timeout(2000)
+    .then(() =>
+      Promise.all([
+        fetch("http://localhost:4000/?search[$ne]=null", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch("http://localhost:4000/?search=title", {
+          signal: AbortSignal.timeout(5000),
+        }),
+      ])
+    )
+    .then(([noSQLInjection, normalSearch]) => {
+      t.equal(noSQLInjection.status, 500);
+      t.equal(normalSearch.status, 200);
+      t.match(stdout, /Starting agent/);
+      t.match(stderr, /Aikido guard has blocked a NoSQL injection/);
+    })
+    .catch((error) => {
+      t.fail(error.message);
+    })
+    .finally(() => {
+      server.kill();
+    });
 });
 
-t.test("it does not block in dry mode", async () => {
+t.test("it does not block in dry mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_NO_BLOCKING: "true" },
     shell: true,
   });
 
+  server.on("close", () => {
+    t.end();
+  });
+
   let stdout = "";
   server.stdout.on("data", (data) => {
     stdout += data.toString();
@@ -84,25 +80,27 @@ t.test("it does not block in dry mode", async () => {
   });
 
   // Wait for the server to start
-  await timeout(1000);
-
-  try {
-    const [noSQLInjection, normalSearch] = await Promise.all([
-      fetch("http://localhost:4001/?search[$ne]=null", {
-        signal: AbortSignal.timeout(5000),
-      }),
-      fetch("http://localhost:4001/?search=title", {
-        signal: AbortSignal.timeout(5000),
-      }),
-    ]);
-
-    t.equal(noSQLInjection.status, 200);
-    t.equal(normalSearch.status, 200);
-    t.match(stdout, /Starting agent/);
-    t.notMatch(stderr, /Aikido guard has blocked a NoSQL injection/);
-  } catch (error) {
-    t.fail(error.message);
-  } finally {
-    await kill(server);
-  }
+  timeout(2000)
+    .then(() =>
+      Promise.all([
+        fetch("http://localhost:4001/?search[$ne]=null", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch("http://localhost:4001/?search=title", {
+          signal: AbortSignal.timeout(5000),
+        }),
+      ])
+    )
+    .then(([noSQLInjection, normalSearch]) => {
+      t.equal(noSQLInjection.status, 200);
+      t.equal(normalSearch.status, 200);
+      t.match(stdout, /Starting agent/);
+      t.notMatch(stderr, /Aikido guard has blocked a NoSQL injection/);
+    })
+    .catch((error) => {
+      t.fail(error.message);
+    })
+    .finally(() => {
+      server.kill();
+    });
 });
