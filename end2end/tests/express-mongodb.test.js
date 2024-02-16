@@ -1,5 +1,5 @@
 const t = require("tap");
-const { spawn } = require("node:child_process");
+const { spawn, exec } = require("node:child_process");
 const { resolve } = require("node:path");
 
 const pathToApp = resolve(
@@ -15,13 +15,13 @@ t.test("it blocks in blocking mode", (t) => {
   let stderr = "";
 
   server.stdout.on("data", (data) => {
-    console.log("stdout", data);
-    stdout += data;
+    console.log("stdout", data.toString());
+    stdout += data.toString();
   });
 
   server.stderr.on("data", (data) => {
-    console.log("stderr", data);
-    stderr += data;
+    console.log("stderr", data.toString());
+    stderr += data.toString();
   });
 
   server.unref();
