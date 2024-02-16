@@ -89,12 +89,7 @@ function isJsonContentType(contentType: string) {
 }
 
 function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
-  return (
-    isPlainObject(event) &&
-    "httpMethod" in event &&
-    "requestContext" in event &&
-    "headers" in event
-  );
+  return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
 export function createLambdaWrapper<

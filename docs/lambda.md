@@ -11,7 +11,7 @@ const dependency = require("dependency");
 
 preventPrototypePollution(); // <-- Call this after your main imports
 
-exports.handler = protect(async (event, context) => {
+exports.handler = protect(async (event, context) => { // <-- Wrap your handler with protect
   // ...
 });
 ```
@@ -27,8 +27,7 @@ import { lambda, preventPrototypePollution } from '@aikidosec/guard';
 In order for the guard to work properly, we need the following event properties to be present:
 
 * `event.body`
-* `event.httpMethod` (optional)
-* `event.headers` (optional)
+* `event.headers`
 
 That's it! Your AWS Lambda function is now protected by Aikido guard.
 
