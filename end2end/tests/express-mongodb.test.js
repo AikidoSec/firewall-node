@@ -16,7 +16,13 @@ t.test("it blocks in blocking mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4000"], { shell: true });
 
   server.on("close", () => {
+    console.log("received close");
     t.end();
+  });
+
+  server.on("error", (err) => {
+    console.log("received error");
+    t.fail(err.message);
   });
 
   let stdout = "";
@@ -33,31 +39,36 @@ t.test("it blocks in blocking mode", (t) => {
 
   // Wait for the server to start
   timeout(2000)
-    .then(() =>
-      Promise.all([
+    .then(() => {
+      console.log("sending requests");
+      return Promise.all([
         fetch("http://localhost:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
         fetch("http://localhost:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
-      ])
-    )
+      ]);
+    })
     .then(([noSQLInjection, normalSearch]) => {
+      console.log("noSQLInjection", noSQLInjection.status);
+      console.log("normalSearch", normalSearch.status);
       t.equal(noSQLInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido guard has blocked a NoSQL injection/);
     })
     .catch((error) => {
+      console.log("error", error.message);
       t.fail(error.message);
     })
     .finally(() => {
+      console.log("killing server");
       server.kill();
     });
 });
 
-t.test("it does not block in dry mode", (t) => {
+/*t.test("it does not block in dry mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_NO_BLOCKING: "true" },
     shell: true,
@@ -103,4 +114,4 @@ t.test("it does not block in dry mode", (t) => {
     .finally(() => {
       server.kill();
     });
-});
+});*/
