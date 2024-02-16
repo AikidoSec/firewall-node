@@ -13,7 +13,7 @@ async function timeout(ms) {
 }
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4000"], { shell: true });
+  const server = spawn(`node`, [pathToApp, "4000"]);
 
   server.on("close", () => {
     console.log("received close");
