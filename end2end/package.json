@@ -5,6 +5,6 @@
     "tap": "^18.7.0"
   },
   "scripts": {
-    "test": "tap tests/*.js"
+    "test": "tap tests/*.js --allow-empty-coverage"
   }
 }
