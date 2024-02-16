@@ -3,4 +3,7 @@
 *
 
 # Allowed files
+!/README.md
+!/LICENSE
 !/package.json
+!/dist/**/*

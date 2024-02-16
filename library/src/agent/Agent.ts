@@ -1,10 +1,10 @@
 import { hostname, platform, release } from "node:os";
+import { ip } from "../helpers/ipAddress";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { Logger } from "./Logger";
 import { Context } from "./Context";
 import { resolve } from "path";
 import { Source } from "./Source";
-import { address } from "ip";
 
 export class Agent {
   private heartbeatIntervalInMS = 60 * 60 * 1000;
@@ -182,7 +182,7 @@ export class Agent {
       dryMode: !this.block,
       hostname: hostname() || "",
       version: this.getAgentVersion(),
-      ipAddress: address() || "",
+      ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
         (packages: Record<string, string>, pkg) => {
           const details = this.wrappedPackages[pkg];

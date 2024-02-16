@@ -5,6 +5,6 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/guard": "*"
+    "@aikidosec/guard": "file:../../library"
   }
 }

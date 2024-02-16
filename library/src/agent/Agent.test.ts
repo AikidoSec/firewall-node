@@ -1,9 +1,9 @@
 import { hostname, platform, release } from "node:os";
 import * as t from "tap";
+import { ip } from "../helpers/ipAddress";
 import { Agent } from "./Agent";
 import { APIForTesting, Token } from "./API";
 import { LoggerNoop } from "./Logger";
-import { address } from "ip";
 
 t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
@@ -23,13 +23,14 @@ t.test("it sends started event", async (t) => {
       agent: {
         dryMode: false,
         hostname: hostname(),
-        version: "1.0.0",
-        ipAddress: address(),
+        version: "0.0.0",
+        ipAddress: ip(),
         packages: {
           mongodb: "4.0.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
+        serverless: false,
         os: {
           name: platform(),
           version: release(),
