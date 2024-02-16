@@ -1,5 +1,5 @@
 const t = require("tap");
-const { spawn, exec } = require("node:child_process");
+const { spawn } = require("node:child_process");
 const { resolve } = require("node:path");
 
 const pathToApp = resolve(
@@ -9,18 +9,15 @@ const pathToApp = resolve(
 );
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp]);
+  const server = spawn(`node`, [pathToApp], { shell: true });
 
   let stdout = "";
-  let stderr = "";
-
   server.stdout.on("data", (data) => {
-    console.log("stdout", data.toString());
     stdout += data.toString();
   });
 
+  let stderr = "";
   server.stderr.on("data", (data) => {
-    console.log("stderr", data.toString());
     stderr += data.toString();
   });
 
@@ -41,25 +38,34 @@ t.test("it blocks in blocking mode", (t) => {
         t.equal(normalSearch.status, 200);
         t.match(stdout, /Starting agent/);
         t.match(stderr, /Aikido guard has blocked a NoSQL injection/);
-        t.end();
       })
       .catch((error) => {
         t.fail(error.message);
+      })
+      .finally(() => {
+        server.kill();
         t.end();
       });
   }, 1000);
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = exec(
-    `node ${pathToApp}`,
-    { env: { ...process.env, AIKIDO_NO_BLOCKING: "true" } },
-    (err, stdout, stderr) => {
-      t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido guard has blocked a NoSQL injection/);
-      t.end();
-    }
-  );
+  const server = spawn(`node`, [pathToApp], {
+    env: { ...process.env, AIKIDO_NO_BLOCKING: "true" },
+    shell: true,
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  server.unref();
 
   setTimeout(() => {
     Promise.all([
@@ -74,11 +80,15 @@ t.test("it does not block in dry mode", (t) => {
         const [noSQLInjection, normalSearch] = results;
         t.equal(noSQLInjection.status, 200);
         t.equal(normalSearch.status, 200);
-        server.kill();
+        t.match(stdout, /Starting agent/);
+        t.notMatch(stderr, /Aikido guard has blocked a NoSQL injection/);
       })
       .catch((error) => {
         t.fail(error.message);
+      })
+      .finally(() => {
         server.kill();
+        t.end();
       });
   }, 1000);
 });
