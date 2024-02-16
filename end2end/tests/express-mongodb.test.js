@@ -48,8 +48,8 @@ t.test("it blocks in blocking mode", async () => {
     t.fail(error.message);
   } finally {
     await new Promise((resolve) => {
-      server.kill();
       server.on("close", resolve);
+      server.kill();
     });
   }
 });
@@ -93,8 +93,8 @@ t.test("it does not block in dry mode", async () => {
     t.fail(error.message);
   } finally {
     await new Promise((resolve) => {
-      server.kill();
       server.on("close", resolve);
+      server.kill();
     });
   }
 });
