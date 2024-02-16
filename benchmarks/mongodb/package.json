@@ -2,7 +2,7 @@
   "name": "mongodb-bench",
   "private": true,
   "dependencies": {
-    "@aikidosec/guard": "^1.0.0",
+    "@aikidosec/guard": "file:../../library",
     "mongodb": "^6.3.0"
   }
 }
