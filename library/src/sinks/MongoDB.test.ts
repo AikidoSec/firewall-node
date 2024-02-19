@@ -20,7 +20,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("we can highjack the MongoDB library", async (t) => {
+t.test("we can hijack the MongoDB library", async (t) => {
   new MongoDB().wrap();
 
   const agent = new Agent(

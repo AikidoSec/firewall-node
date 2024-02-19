@@ -7,7 +7,7 @@ import { resolve } from "path";
 import { Source } from "./Source";
 
 export class Agent {
-  private heartbeatIntervalInMS = 60 * 60 * 1000;
+  private heartbeatIntervalInMS = 60 * 60 * 1000; // 1h
   private interval: NodeJS.Timeout | undefined = undefined;
   private stats: Stats = {};
   private preventedPrototypePollution = false;
