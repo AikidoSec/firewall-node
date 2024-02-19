@@ -1,9 +1,22 @@
-// Grabbed from https://github.com/jonschlinkert/is-plain-object
+/** 
+ * Grabbed from https://github.com/jonschlinkert/is-plain-object
+ * @module helpers/isPlainObject
+ */
 
 function isObject(o: unknown) {
   return Object.prototype.toString.call(o) === "[object Object]";
 }
-
+/**
+ * This function examines an object to check if it's a plain object.
+ * @param o The object you want to examine
+ * @returns True when it is a plain object, otherwise false
+ * @example
+ * isPlainObject(Object.create({})) // Returns true
+ * @example
+ * isPlainObject({ foo: "bar" }) // Returns true
+ * @example
+ * isPlainObject(new Foo()) // Returns false
+ */
 export function isPlainObject(o: unknown): o is Record<string, unknown> {
   let ctor, prot;
 
