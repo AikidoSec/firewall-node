@@ -31,6 +31,10 @@ async function main() {
   app.get(
     "/",
     asyncHandler(async (req, res) => {
+      if(req.query["petname"]) {
+        // This is very dangerous, don't copy this code into an actual application
+        await db.insertCatIntoTable(req.query["petname"]);
+      }
       let cats = await db.getAllCats();
       res.send(getHTMLBody(cats));
     })
