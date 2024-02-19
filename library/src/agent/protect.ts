@@ -7,6 +7,7 @@ import { API, APIFetch, APIThrottled, Token } from "./API";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
+import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
@@ -21,6 +22,10 @@ function wrapInstalledPackages() {
       range: "^4.0.0 || ^5.0.0 || ^6.0.0",
       wrapper: new MongoDB(),
     },
+    pg: {
+      range: '^0.5.0', // Template version
+      wrapper: new Postgres()
+    }
   };
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
