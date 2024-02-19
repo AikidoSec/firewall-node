@@ -85,7 +85,7 @@ See [benchmarks](benchmarks) for more information.
 
 ## Development
 
-* `$ make install` to install dependencies (with administrator privileges on linux)
+* `$ make install` to install dependencies
 * `$ make build` to build the library
 * `$ make watch` to watch for changes and rebuild the library
 * `$ make test` to run tests using tap
