@@ -1,7 +1,7 @@
 /* eslint-disable prefer-rest-params */
 import { Collection } from "mongodb";
 import { Hook } from "require-in-the-middle";
-import { wrap } from "shimmer";
+import { massWrap, wrap } from "shimmer";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
@@ -40,7 +40,15 @@ type BulkWriteOperation = {
   [key in BulkWriteOperationName]?: { filter?: unknown };
 };
 
-export class MongoDB implements Wrapper {
+export class MongoDB extends Wrapper {
+  constructor() {
+    super("mongodb");
+    this.addMiddleware({
+      modules: "exports.Collection.prototype",
+      functionNames: "bulkWrite",
+      middlewareFunction: this.wrapBulkWrite
+    });
+  }
   private inspectFilter(
     db: string,
     collection: string,
@@ -81,8 +89,50 @@ export class MongoDB implements Wrapper {
       }
     }
   }
+  private protectBulkWrite(this: Collection) {
+    const agent = getInstance();
 
-  private wrapBulkWrite(exports: unknown) {
+    if (!agent) {
+      return original.apply(this, arguments);
+    }
+
+    const request = getContext();
+
+    if (!request) {
+      agent.onInspectedCall({
+        module: "mongodb",
+        withoutContext: true,
+        detectedAttack: false,
+      });
+
+      return original.apply(this, arguments);
+    }
+
+    if (!Array.isArray(arguments[0])) {
+      return original.apply(this, arguments);
+    }
+
+    const operations: BulkWriteOperation[] = arguments[0];
+    operations.forEach((operation) => {
+      BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
+        const options = operation[command];
+
+        if (options && options.filter) {
+          that.inspectFilter(
+            this.dbName,
+            this.collectionName,
+            agent,
+            request,
+            options.filter,
+            "bulkWrite"
+          );
+        }
+      });
+    });
+
+    return original.apply(this, arguments);
+  };
+  private legacywrapBulkWrite(exports: unknown) {
     const that = this;
 
     wrap(
@@ -194,9 +244,5 @@ export class MongoDB implements Wrapper {
     this.wrapOperationsWithFilter(exports);
 
     return exports;
-  }
-
-  wrap() {
-    new Hook(["mongodb"], this.onModuleRequired.bind(this));
   }
 }
