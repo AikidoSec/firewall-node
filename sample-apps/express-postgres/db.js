@@ -13,7 +13,6 @@ async function connectToPostgresDB() {
     });
 
     await client.connect();
-    console.log(await client.query('SELECT NOW()'));
 
     await initDb();
 }
