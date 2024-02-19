@@ -1,6 +1,6 @@
 /**
  * The satisfiesVersion module exports only one function with the same name : satisfiesVersion
- * @module satisfiesVersion
+ * @module helpers/satisfiesVersion
  */
 
 /**
@@ -10,8 +10,10 @@
  * @returns True if the version is in range, otherwise returns false
  * 
  * @example
- *    satisfiesVersion("^1.0.0 || ^2.0.0", "1.0.0") // true
+ * satisfiesVersion("^1.0.0 || ^2.0.0", "1.0.0") // true
+ * @example
  * satisfiesVersion("^1.2.0", "1.2.1") // true
+ * @example
  * satisfiesVersion("^1.0.0", "2.0.0") // false
  */
 export function satisfiesVersion(range: string, version: string) {
