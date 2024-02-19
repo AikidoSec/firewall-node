@@ -15,11 +15,11 @@ function wrapInstalledPackages() {
   const packages: Record<string, { range: string; wrapper: Wrapper }> = {
     express: {
       range: "^4.0.0",
-      wrapper: new Express(),
+      wrapper: new Express(), // Creates a new "Express" instance which is defined in sources/
     },
     mongodb: {
       range: "^4.0.0 || ^5.0.0 || ^6.0.0",
-      wrapper: new MongoDB(),
+      wrapper: new MongoDB(), // Creates a new "MongoDB" instance, which is defined in sinks/
     },
   };
 
