@@ -3,6 +3,20 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
+function getHTMLBody(cats) {
+    return `
+<html lang="en">
+  <body>
+    <form action="/" method="GET">
+      <label for="search">Add a new cat</label>
+      <input type="text" name="petname">
+      <input type="submit" value="Add" />
+    </form>
+    <p>${cats}</p>
+  </body>
+</html>`;
+}
+
 
 
 function getPort() {
