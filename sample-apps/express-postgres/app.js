@@ -22,17 +22,30 @@ function getHTMLBody(cats) {
 </html>`;
 }
 
+async function main() {
+  const app = express();
+  db.connectToPostgresDB();
 
+  app.use(morgan("tiny"));
 
-function getPort() {
-    const port = parseInt(process.argv[2], 10) || 4000;
-  
-    if (isNaN(port)) {
-      console.error("Invalid port");
-      process.exit(1);
+  app.get(
+    "/",
+    asyncHandler(async (req, res) => {
+      let cats = db.getAllCats();
+      res.send(getHTMLBody(cats));
+    })
+  );
+
+  return new Promise((resolve, reject) => {
+    try {
+      app.listen(4000, () => {
+        console.log("Listening on port 4000");
+        resolve();
+      });
+    } catch (err) {
+      reject(err);
     }
-  
-    return port;
-  }
-  
-main(getPort());  
+  });
+}
+
+main();
