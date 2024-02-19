@@ -25,6 +25,8 @@ function tryDecode(str: string, decode: (str: string) => string): string {
  * This function parses a cookie string from the Lambda source.
  * @param str A string containing cookies
  * @returns Object with the cookie name as a key and their value as a value
+ * @example
+ * parse("foo=oof;bar=rab"); // Returns {foo: "oof", bar: "rab"}
  */
 export function parse(str: string) {
   const obj: Record<string, string> = {};
