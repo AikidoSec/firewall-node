@@ -6,6 +6,6 @@ In the root directory run `make express-postgres` to start the server.
 
 Try the following URLs:
 
-* http://localhost:4000/ - List all cats
-* http://localhost:4000/?petname=Kitty - This will add a new cat named "Kitty"
-* http://localhost:4000/?petname=Kitty'); DELETE FROM cats; - This will delete all cats
+* http://localhost:4000/ : List all cats
+* http://localhost:4000/?petname=Kitty : This will add a new cat named "Kitty"
+* http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- : This will delete all cats
