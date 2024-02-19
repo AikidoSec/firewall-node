@@ -18,6 +18,7 @@ function getHTMLBody(cats) {
       <input type="text" name="petname">
       <input type="submit" value="Add" />
     </form>
+    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;--">Test injection</a>
   </body>
 </html>`;
 }
