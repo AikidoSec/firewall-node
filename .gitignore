@@ -17,6 +17,7 @@ node_modules/
 
 # Built files
 dist
+docs
 
 # IDE's
 .idea/
