@@ -4,6 +4,7 @@ let client;
 async function connectToPostgresDB() {
     // Normally you'd use environment variables for this
     // These values were also referenced in the docker-compose.yml
+    
     client = new Client({
         user: 'root',
         host: '127.0.0.1',
