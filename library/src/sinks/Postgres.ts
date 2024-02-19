@@ -35,14 +35,13 @@ export class Postgres implements Wrapper {
                     return original.apply(this, arguments);
                 }
 
-                if (!Array.isArray(arguments[0])) {
+                let querystring:string = arguments[0];
+                if(typeof querystring !== "string") {
+                    // The query is not a string, not much to do here
                     return original.apply(this, arguments);
                 }
 
-                that.checkForSqlInjection("TEST", request);
-
-
-
+                that.checkForSqlInjection(querystring, request);
 
                 return original.apply(this, arguments);
             }
