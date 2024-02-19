@@ -1,3 +1,13 @@
+/**
+ * The JWT module only exports one function : tryDecodeAsJWT
+ * @module JWT
+ */
+
+/**
+ * 
+ * @param jwt 
+ * @returns 
+ */
 export function tryDecodeAsJWT(
   jwt: string
 ): { jwt: true; object: unknown } | { jwt: false } {
