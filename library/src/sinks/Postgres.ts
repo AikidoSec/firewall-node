@@ -8,7 +8,7 @@ import { Context, getContext } from "../agent/Context";
 
 export class Postgres implements Wrapper {
     private checkForSqlInjection(sqlStatement:string, request:Context) {
-        throw Error('We tried to filter the input! Congrats!')
+        // Currently, do nothing : Still needs to be implemented
     };
     private wrapQueryFunction(exports:unknown) {
         const that = this;
