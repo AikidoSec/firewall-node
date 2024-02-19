@@ -19,6 +19,22 @@ export class Wrapper {
       }
     })
   }
+  private addActiveMiddleware(
+    middlewareFunction:(...args:any[]) => any,
+    modules:object[] | object,
+    functionNames: never[] | never
+  ) {
+    // Make sure everything is a list
+    let modulesArray, functionNamesArray;
+
+    if(!Array.isArray(modules)) modulesArray = [modules];
+    else modulesArray = modules;
+
+    if(!Array.isArray(functionNames)) functionNamesArray = [functionNames];
+    else functionNamesArray = functionNames;
+
+    massWrap(modulesArray, functionNamesArray, middlewareFunction);
+  }
   private onModuleRequired<T>(exports: T): T {
     this.wrapFunction(exports);
     return exports;
