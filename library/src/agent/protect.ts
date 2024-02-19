@@ -23,7 +23,7 @@ function wrapInstalledPackages() {
       wrapper: new MongoDB(),
     },
     pg: {
-      range: '^0.5.0', // Template version
+      range: '^8.11.0', // Current version
       wrapper: new Postgres()
     }
   };
