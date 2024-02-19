@@ -3,6 +3,11 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
+const db = require('./db');
+const express = require("express");
+const asyncHandler = require("express-async-handler");
+const morgan = require("morgan");
+
 function getHTMLBody(cats) {
     return `
 <html lang="en">
