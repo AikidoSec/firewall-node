@@ -35,6 +35,7 @@ async function insertCatIntoTable(petname) {
 async function getAllCats() {
     // This function returns all cats in the db
     const cats = await client.query("SELECT petname FROM cats;")   
+    return cats.rows.map((row) => row.petname);
 }
 
 module.exports = {connectToPostgresDB, insertCatIntoTable, getAllCats};

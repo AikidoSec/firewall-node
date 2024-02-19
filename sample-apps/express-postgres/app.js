@@ -12,12 +12,12 @@ function getHTMLBody(cats) {
     return `
 <html lang="en">
   <body>
+    <p>All cats : ${cats.join(', ')}</p>
     <form action="/" method="GET">
       <label for="search">Add a new cat</label>
       <input type="text" name="petname">
       <input type="submit" value="Add" />
     </form>
-    <p>${cats}</p>
   </body>
 </html>`;
 }
@@ -31,7 +31,7 @@ async function main() {
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      let cats = db.getAllCats();
+      let cats = await db.getAllCats();
       res.send(getHTMLBody(cats));
     })
   );
