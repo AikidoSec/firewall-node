@@ -1,7 +1,18 @@
+/**
+ * Decodes the URI provided to it
+ * @param str encoded URI
+ * @returns decoded URI
+ */
 function decode(str: string): string {
   return str.indexOf("%") !== -1 ? decodeURIComponent(str) : str;
 }
 
+/**
+ * Encapsulates the "decode" function with a try-catch.
+ * @param str string that needs to be decoded
+ * @param decode Function used to decode
+ * @returns Returns the decoded result or the same string if decode fails
+ */
 function tryDecode(str: string, decode: (str: string) => string): string {
   try {
     return decode(str);
@@ -10,6 +21,11 @@ function tryDecode(str: string, decode: (str: string) => string): string {
   }
 }
 
+/**
+ * This function parses a cookie string from the Lambda source.
+ * @param str A string containing cookies
+ * @returns Object with the cookie name as a key and their value as a value
+ */
 export function parse(str: string) {
   const obj: Record<string, string> = {};
 
