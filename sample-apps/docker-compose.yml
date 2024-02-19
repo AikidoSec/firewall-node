@@ -13,13 +13,13 @@ services:
     image: postgres:14-alpine
     restart: always
     volumes:
-      - POSTGRES:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=root
       - POSTGRES_DB=main_db
     ports:
-     - "27016:27016"
+     - "27016:5432"
 
 
 volumes:
