@@ -1,6 +1,6 @@
 /**
  * Type definitions
- * @module Wrapper
+ * @module agent/Wrapper
  */
 
 export interface Wrapper {

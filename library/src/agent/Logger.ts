@@ -1,7 +1,7 @@
 /**
  * Exports 2 classes related to logging
  * + Type definition Logger
- * @module Logger
+ * @module agent/Logger
  */
 
 export interface Logger {
