@@ -20,10 +20,31 @@ export class Postgres implements Wrapper {
         function wrapQueryFunction(original) {
             return function safeQueryFunction(this: Client ) {
                 const agent = getInstance();
-
                 if (!agent) {
                     return original.apply(this, arguments);
                 }
+
+                const request = getContext();
+                if (!request) {
+                    agent.onInspectedCall({
+                        module: "postgres",
+                        withoutContext: true,
+                        detectedAttack: false,
+                    });
+
+                    return original.apply(this, arguments);
+                }
+
+                if (!Array.isArray(arguments[0])) {
+                    return original.apply(this, arguments);
+                }
+
+                that.checkForSqlInjection("TEST", request);
+
+
+
+
+                return original.apply(this, arguments);
             }
         }
         )
