@@ -1,42 +1,40 @@
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 
+export interface Middleware {
+  middlewareFunction:(...args:any[]) => any;
+  modules:object[] | object;
+  functionNames: string[] | string;
+}
 export class Wrapper {
   private packageName;
-  constructor(
-    packageName: string, 
-    middleware:(...args:any[]) => any[],
-    modules:object[],
-    functionNames: never[]
-  ) {
+  private middleware:Middleware[];
+  constructor(packageName: string) {
     this.packageName = packageName;
+    this.middleware = [];
   }
-  private wrapFunction(exports:unknown) {
-    // @ts-expect-error This is magic that TypeScript doesn't understand
-    massWrap(modules, functionNames, function wrapFunction(original:any) {
-      return function insertMiddleware(this:any) {
-        return original.apply(this, arguments);
-      }
-    })
+  public addMiddleware(middleware:Middleware) {
+    this.middleware.push(middleware);
   }
-  private addActiveMiddleware(
-    middlewareFunction:(...args:any[]) => any,
-    modules:object[] | object,
-    functionNames: never[] | never
-  ) {
+  private addActiveMiddleware(middleware:Middleware) {
     // Make sure everything is a list
     let modulesArray, functionNamesArray;
 
-    if(!Array.isArray(modules)) modulesArray = [modules];
-    else modulesArray = modules;
+    if(!Array.isArray(middleware.modules)) modulesArray = [middleware.modules];
+    else modulesArray = middleware.modules;
 
-    if(!Array.isArray(functionNames)) functionNamesArray = [functionNames];
-    else functionNamesArray = functionNames;
+    if(!Array.isArray(middleware.functionNames)) functionNamesArray = [middleware.functionNames];
+    else functionNamesArray = middleware.functionNames;
 
-    massWrap(modulesArray, functionNamesArray, middlewareFunction);
+    massWrap(modulesArray, functionNamesArray, function wrapFunction(original:any) {
+      return function insertMiddleware(this:any) {
+        middleware.middlewareFunction(arguments); // Call the middleware
+        return original.apply(this, arguments);
+      }
+    });
   }
   private onModuleRequired<T>(exports: T): T {
-    this.wrapFunction(exports);
+    this.middleware.map(this.addActiveMiddleware);
     return exports;
   }
   public activate() {
