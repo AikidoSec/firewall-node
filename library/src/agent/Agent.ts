@@ -204,6 +204,9 @@ export class Agent {
     };
   }
 
+  /**
+   * Starts up the agent : Checks parameters like block and token, starts heartbeats if necessary and checks which pacakges are supported, afterwards it calls {@link onStart}
+   */
   start() {
     this.logger.log("Starting agent...");
 
