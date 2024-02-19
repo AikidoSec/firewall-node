@@ -4,8 +4,12 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
+import { Context, getContext } from "../agent/Context";
 
 export class Postgres implements Wrapper {
+    private checkForSqlInjection(sqlStatement:string, request:Context) {
+        throw Error('We tried to filter the input! Congrats!')
+    };
     private wrapQueryFunction(exports:unknown) {
         const that = this;
 
