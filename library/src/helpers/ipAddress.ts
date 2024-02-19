@@ -9,6 +9,10 @@ import * as os from "os";
  * Get the IP Address of the machine running this code
  * @param interfaceName The name of the networking interface you want the IP Address from
  * @returns The ip address associated to that networking interface
+ * @example
+ * ip(); // Returns your IP address
+ * @example
+ * ip('eth0'); // Return the IP address on the interface eth0
  */
 export function ip(interfaceName?: string) {
   const item = getInterfaceAddress("IPv4", interfaceName);
