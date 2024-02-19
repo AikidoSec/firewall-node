@@ -2,7 +2,7 @@ function decode(str: string): string {
   return str.indexOf("%") !== -1 ? decodeURIComponent(str) : str;
 }
 
-function tryDecode(str: string, decode: (str: string) => string): string {
+function tryDecode(str: string): string {
   try {
     return decode(str);
   } catch (e) {
@@ -43,7 +43,7 @@ export function parse(str: string) {
         val = val.slice(1, -1);
       }
 
-      obj[key] = tryDecode(val, decode);
+      obj[key] = tryDecode(val);
     }
 
     index = endIdx + 1;
