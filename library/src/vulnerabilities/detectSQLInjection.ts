@@ -72,6 +72,8 @@ const SQL_KEYWORDS = [
   "COLLATE"
 ];
 
+const SQL_DANGEROUS_IN_STRING = ["\\", `'`, `"`, "`", "/*", "--"]
+
 const SQL_FUNCTIONS = ["group_concat", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
 
 const SQL_STATEMENTS = ['<>', "=", "!=", ""];
