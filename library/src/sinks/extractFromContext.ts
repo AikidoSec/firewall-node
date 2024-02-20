@@ -1,4 +1,5 @@
 import { Context } from "../agent/Context";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 /**
  * This checks the context (query, headers, cookies, body) for user input and extracts it into an array.
