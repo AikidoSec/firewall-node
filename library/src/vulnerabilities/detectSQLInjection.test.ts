@@ -82,12 +82,12 @@ const IS_INJECTION = [
   [`UNTER;`, "UNTER;"],
 ];
 
-t.test("Test the inputPossibleSql() function", async () => {
+t.test("Test the detectSQLInjection() function", async () => {
   for (const sql of BAD_SQL_COMMANDS) {
-    t.ok(inputPossibleSql(sql), sql);
+    t.ok(detectSQLInjection(sql, sql), sql);
   }
   for (const sql of GOOD_SQL_COMMANDS) {
-    t.notOk(inputPossibleSql(sql), sql);
+    t.notOk(detectSQLInjection(sql, sql), sql);
   }
 });
 
