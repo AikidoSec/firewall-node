@@ -1,5 +1,6 @@
 import * as t from "tap";
 import {
+  dangerousCharsInInput,
   detectSQLInjection,
   inputAlwaysEncapsulated,
   inputPossibleSql,
@@ -48,7 +49,6 @@ const BAD_SQL_COMMANDS = [
   ` or 1=1`,
   // Test some special characters
   "I'm writting you",
-  "This is not ok--",
   "Termin;ate",
   "Roses <> violets"
 ];
@@ -117,3 +117,7 @@ t.test("Test the inputAlwaysEncapsulated() function", async () => {
   t.notOk(inputAlwaysEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
   t.notOk(inputAlwaysEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
 });
+
+t.test("Test the dangerousCharsInInput() function", async () => {
+  t.ok(dangerousCharsInInput("This is not ok--"))
+})
