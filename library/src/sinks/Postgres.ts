@@ -87,7 +87,7 @@ export function inputPossibleSql(input: string): boolean {
  * @param input The user input you want to check
  * @returns True when the sql statement contains the input
  */
-function sqlContainsInput(sql: string, input: string) {
+export function sqlContainsInput(sql: string, input: string) {
   const lowercaseSql = sql.toLowerCase();
   const lowercaseInput = input.toLowerCase();
   return lowercaseSql.includes(lowercaseInput);
