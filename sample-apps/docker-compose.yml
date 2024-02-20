@@ -9,7 +9,21 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=root
+      - POSTGRES_DB=main_db
+    ports:
+     - "27016:5432"
+
 
 volumes:
   mongodb:
+    driver: local
+  postgres:
     driver: local
