@@ -57,3 +57,9 @@ export class Postgres implements Wrapper {
     new Hook(["pg"], this.onModuleRequired.bind(this));
   }
 }
+
+function isStringPossibleSQLInjection(checkString: string):boolean {
+  throw new Error("Function not yet implemented");
+  const regex = /()/gmi // Needs to be an actual regex
+  return regex.test(checkString);
+}
