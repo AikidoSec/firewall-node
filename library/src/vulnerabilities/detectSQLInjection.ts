@@ -76,18 +76,18 @@ const SQL_FUNCTIONS = ["group_concat", "waitfor", "delay", "sleep", "md5", "benc
 const SQL_STATEMENTS = ['<>', "=", "!=", ""];
 
 /**
- * This function executes 2 checks to see if something is or is not an SQL Injection : 
- * 1. Executes inputPossibleSql() - This checks wether the user input could be an SQL injection
+ * This function executes 2 checks to see if something is or is not an SQL Injection :
+ * Step 2 : sqlContainsInput
  * 2. Executes sqlContainsInput() - This checks wether the input is in the sql
  * @param sql The SQL Statement that's going to be executed
  * @param input The user input that might be dangerous
  * @returns True if SQL Injection is detected
  */
 export function detectSQLInjection(sql: string, input: string) {
-  if (!inputPossibleSql(input)) {
+  if (!sqlContainsInput(sql, input)) {
     return false;
   }
-  if (!sqlContainsInput(sql, input)) {
+  if (!inputPossibleSql(input)) {
     return false;
   }
   return true;
