@@ -91,6 +91,10 @@ const dangerousInStringRegex = new RegExp(
   SQL_DANGEROUS_IN_STRING.join("|"),
   "mgi"
 );
+const possibleSqlRegex = new RegExp(
+  [...SQL_STATEMENTS, ...SQL_FUNCTIONS, ...SQL_KEYWORDS].join("|"),
+  "mgi"
+);
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
@@ -121,7 +125,7 @@ export function detectSQLInjection(sql: string, input: string) {
  * @returns True when this is a posible SQL Injection
  */
 export function inputPossibleSql(input: string): boolean {
-  throw new Error("Needs to be rewritten");
+    return possibleSqlRegex.test(input)
 }
 
 /**
