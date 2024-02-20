@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { inputPossibleSql, sqlContainsInput } from "./Postgres";
+import { inputPossibleSql, sqlContainsInput } from "./detectSQLInjection";
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
   "Roses are red insErt are blue",
@@ -8,7 +8,6 @@ const BAD_SQL_COMMANDS = [
   "Roses are red updatE are blue",
   "Roses are red SELECT are blue",
   "Roses are red dataBASE are blue",
-  "Roses are reddelete are blue",
   "Roses are red alter are blue",
   "Roses are red grant are blue",
   "Roses are red savepoint are blue",
@@ -43,7 +42,6 @@ const BAD_SQL_COMMANDS = [
   ` or 1=1–`,
   ` or 1=1`,
   // Test some special characters
-  "steve@yahoo.com",
   "I'm writting you",
   "This is not ok--",
   "Termin;ate",
@@ -52,6 +50,7 @@ const GOOD_SQL_COMMANDS = [
   // Check for SQL Commands with allowed characters
   "Roses are red rollbacks are blue",
   "Roses are red truncates are blue",
+  "Roses are reddelete are blue",
   "Roses are red WHEREis blue",
   "Roses are redFROM is blue",
   "Roses are red ORis isAND",
@@ -59,6 +58,8 @@ const GOOD_SQL_COMMANDS = [
   `abcdefghijklmnop@hotmail.com`,
   `roses are red violets are blue!`,
   `1 is cool 2 is nice 3 thats thrice.`,
+  // Test some special characters
+  "steve@yahoo.com",
 ];
 
 t.test("Test the inputPossibleSql() function", async () => {

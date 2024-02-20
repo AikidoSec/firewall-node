@@ -1,0 +1,43 @@
+/**
+ * This function executes 2 checks to see if something is or is not an SQL Injection : 
+ * 1. Executes inputPossibleSql() - This checks wether the user input could be an SQL injection
+ * 2. Executes sqlContainsInput() - This checks wether the input is in the sql
+ * @param sql The SQL Statement that's going to be executed
+ * @param input The user input that might be dangerous
+ * @returns True if SQL Injection is detected
+ */
+export function detectSQLInjection(sql: string, input: string) {
+  if (!inputPossibleSql(input)) {
+    return false;
+  }
+  if (!sqlContainsInput(sql, input)) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * This function is the first check in order to determine if a SQL injection is happening,
+ * If the user input contains the necessary characters or words for a SQL injection, this
+ * function returns true.
+ * @param input The user input you want to check
+ * @returns True when this is a posible SQL Injection
+ */
+export function inputPossibleSql(input: string): boolean {
+  const regex =
+    /(?<![a-z0-9])(INSERT|SELECT|CREATE|DROP|DATABASE|UPDATE|DELETE|ALTER|GRANT|SAVEPOINT|COMMIT|ROLLBACK|TRUNCATE|OR|AND|UNION|AS|WHERE)(?![a-z0-9])|(\=|;|\'|\"|\`|--)/gim; // Needs to be an actual regex
+  return regex.test(input);
+}
+
+/**
+ * This function is the 2nd and last check to determine if a SQL injection is happening,
+ * If the sql statement contains user input, this function returns true (case-insensitive)
+ * @param sql The SQL Statement you want to check it against
+ * @param input The user input you want to check
+ * @returns True when the sql statement contains the input
+ */
+export function sqlContainsInput(sql: string, input: string) {
+  const lowercaseSql = sql.toLowerCase();
+  const lowercaseInput = input.toLowerCase();
+  return lowercaseSql.includes(lowercaseInput);
+}
