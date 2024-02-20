@@ -58,10 +58,18 @@ export class Postgres implements Wrapper {
   }
 }
 
-function isStringPossibleSQLInjection(checkString: string):boolean {
+/**
+ * This function is the first check in order to determine if a SQL injection is happening,
+ * If the user input contains the necessary characters or words for a SQL injection, this 
+ * function returns true.
+ * @param input The user input you want to check
+ * @returns True when this is a posible SQL Injection
+ */
+function inputPossibleSql(input: string):boolean {
   throw new Error("Function not yet implemented");
   const regex = /()/gmi // Needs to be an actual regex
-  return regex.test(checkString);
+  return regex.test(input);
+}
 
 /**
  * This function is the 2nd and last check to determine if a SQL injection is happening,
