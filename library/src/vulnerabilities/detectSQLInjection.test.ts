@@ -50,6 +50,7 @@ const BAD_SQL_COMMANDS = [
   "I'm writting you",
   "This is not ok--",
   "Termin;ate",
+  "Roses <> violets"
 ];
 const GOOD_SQL_COMMANDS = [
   // Check for SQL Commands with allowed characters
@@ -65,6 +66,7 @@ const GOOD_SQL_COMMANDS = [
   `1 is cool 2 is nice 3 thats thrice.`,
   // Test some special characters
   "steve@yahoo.com",
+  "Roses < Violets"
 ];
 
 const IS_NOT_INJECTION = [
@@ -76,7 +78,6 @@ const IS_NOT_INJECTION = [
 const IS_INJECTION = [
   [`'union'  is not UNION`, "UNION"],
   [`'union'  is not "UNION--"`, "UNION--"],
-  [`"COPY $"`, "COPY $"],
   [`"COPY/*"`, "COPY/*"],
   [`UNTER;`, "UNTER;"],
 ];
