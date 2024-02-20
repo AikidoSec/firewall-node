@@ -144,6 +144,6 @@ export function sqlContainsInput(sql: string, input: string) {
  * @param input The user input you want to check
  * @returns True if characters are present
  */
-export function dangerousCharsInInput(input: string):boolean {
-    return dangerousInStringRegex.test(input);
+export function dangerousCharsInInput(input: string): boolean {
+  return dangerousInStringRegex.test(input);
 }
