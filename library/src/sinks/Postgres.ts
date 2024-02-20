@@ -62,4 +62,16 @@ function isStringPossibleSQLInjection(checkString: string):boolean {
   throw new Error("Function not yet implemented");
   const regex = /()/gmi // Needs to be an actual regex
   return regex.test(checkString);
+
+/**
+ * This function is the 2nd and last check to determine if a SQL injection is happening,
+ * If the sql statement contains user input, this function returns true (case-insensitive)
+ * @param sql The SQL Statement you want to check it against
+ * @param input The user input you want to check
+ * @returns True when the sql statement contains the input
+ */
+function sqlContainsInput(sql: string, input: string) {
+  const lowercaseSql = sql.toLowerCase();
+  const lowercaseInput = input.toLowerCase();
+  return lowercaseSql.includes(lowercaseInput);
 }
