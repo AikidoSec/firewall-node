@@ -110,7 +110,7 @@ export function inputPossibleSql(input: string): boolean {
 }
 
 /**
- * This function is the 2nd and last check to determine if a SQL injection is happening,
+ * This function is the first step to determine if an SQL Injection is happening,
  * If the sql statement contains user input, this function returns true (case-insensitive)
  * @param sql The SQL Statement you want to check it against
  * @param input The user input you want to check
