@@ -12,8 +12,12 @@ export class Postgres implements Wrapper {
     // Currently, do nothing : Still needs to be implemented
     const userInput = extractStringsFromContext(request);
     for (let i = 0; i < userInput.length; i++) {
-      if(!inputPossibleSql(userInput[i])) {continue}
-      if(!sqlContainsInput(sql, userInput[i])) {continue}
+      if (!inputPossibleSql(userInput[i])) {
+        continue;
+      }
+      if (!sqlContainsInput(sql, userInput[i])) {
+        continue;
+      }
     }
   }
   private wrapQueryFunction(exports: unknown) {
@@ -66,14 +70,14 @@ export class Postgres implements Wrapper {
 
 /**
  * This function is the first check in order to determine if a SQL injection is happening,
- * If the user input contains the necessary characters or words for a SQL injection, this 
+ * If the user input contains the necessary characters or words for a SQL injection, this
  * function returns true.
  * @param input The user input you want to check
  * @returns True when this is a posible SQL Injection
  */
-function inputPossibleSql(input: string):boolean {
+export function inputPossibleSql(input: string): boolean {
   throw new Error("Function not yet implemented");
-  const regex = /()/gmi // Needs to be an actual regex
+  const regex = /()/gim; // Needs to be an actual regex
   return regex.test(input);
 }
 
