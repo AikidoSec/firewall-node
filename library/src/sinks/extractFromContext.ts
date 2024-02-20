@@ -44,28 +44,28 @@ export function extractFromHeaders(headers: Context["headers"]): string[] {
 
 /**
  * This checks the object for user input
- * @param body The object you want to analyze for user input
- * @returns User input found in the body as an array of strings
+ * @param obj The object you want to analyze for user input
+ * @returns User input found in the obj as an array of strings
  */
-function extract(body: any): string[] {
+function extract(obj: any): string[] {
   let results: Set<string> = new Set();
-  if (isPlainObject(body)) {
-    for (const key in body) {
-      results = new Set([key, ...results, ...extract(body[key])]);
+  if (isPlainObject(obj)) {
+    for (const key in obj) {
+      results = new Set([key, ...results, ...extract(obj[key])]);
     }
-  } else if (Array.isArray(body)) {
-    for (const element of body) {
+  } else if (Array.isArray(obj)) {
+    for (const element of obj) {
       results = new Set([...results, ...extract(element)]);
     }
-  } else if (typeof body == "string") {
-    results.add(body);
+  } else if (typeof obj == "string") {
+    results.add(obj);
   }
   return Array.from(results)
 }
 
-/**
+console.log(
   extract({
- * @param body The body property you want to analyze for user input
+    a: ["b", "c", { a: ["b", "bbb"] }],
     e: "c",
- */
-export function extractFromBody(body: Context["body"]): string[] {
+  })
+);
