@@ -1,3 +1,62 @@
+const SQL_KEYWORDS = [
+  "INSERT",
+  "SELECT",
+  "CREATE",
+  "DROP",
+  "DATABASE",
+  "UPDATE",
+  "DELETE",
+  "ALTER",
+  "GRANT",
+  "SAVEPOINT",
+  "COMMIT",
+  "ROLLBACK",
+  "TRUNCATE",
+  "OR",
+  "AND",
+  "UNION",
+  "AS",
+  "WHERE",
+  "DISTINCT",
+  "FROM",
+  "INTO",
+  "TOP",
+  "BETWEEN",
+  "LIKE",
+  "IN",
+  "NULL",
+  "NOT",
+  "TABLE",
+  "INDEX",
+  "VIEW",
+  "COUNT",
+  "SUM",
+  "AVG",
+  "MIN",
+  "MAX",
+  "GROUP",
+  "BY",
+  "HAVING",
+  "DESC",
+  "ASC",
+  "OFFSET",
+  "FETCH",
+  "LEFT",
+  "RIGHT",
+  "INNER",
+  "OUTER",
+  "JOIN",
+  "EXISTS",
+  "REVOKE",
+  "ALL",
+  "LIMIT",
+  "ORDER"
+];
+
+const SQL_FUNCTIONS = ["group_concat", "replace", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
+
+const SQL_STATEMENTS = ['<>', "=", "!=", ""];
+
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection : 
  * 1. Executes inputPossibleSql() - This checks wether the user input could be an SQL injection
