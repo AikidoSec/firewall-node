@@ -69,12 +69,15 @@ const GOOD_SQL_COMMANDS = [
 const IS_NOT_INJECTION = [
   [`'UNION 123' UNION "UNION 123" `, "UNION 123"],
   [`'union'  is not "UNION"`, "UNION!"],
+  [`"UNION;"`, "UNION;"],
 ];
 
 const IS_INJECTION = [
   [`'union'  is not UNION`, "UNION"],
   [`'union'  is not "UNION--"`, "UNION--"],
-  [`"UNION;"`, "UNION;"],
+  [`"COPY $"`, "COPY $"],
+  [`"COPY/*"`, "COPY/*"],
+  [`UNTER;`, "UNTER;"],
 ];
 
 t.test("Test the inputPossibleSql() function", async () => {
