@@ -84,6 +84,7 @@ const SQL_FUNCTIONS = [
   "pg_sleep",
 ];
 const SQL_STATEMENTS = ["<>", "=", "!=", ""];
+const SQL_STRING_CHARS = [`"`, `'`];
 
 // Declare Regexes
 const dangerousInStringRegex = new RegExp(
@@ -164,7 +165,7 @@ export function inputAlwaysEncapsulated(sql: string, input: string) {
     // Get the first character of the next segment
     let firstCharNext = sqlWithoutUserInput[i + 1].slice(0, 1);
 
-    if (![`"`, `'`].includes(lastChar)) {
+    if (!SQL_STRING_CHARS.includes(lastChar)) {
       return false; // If the character is not one of these, it's not a string.
     }
     if (lastChar != firstCharNext) {
