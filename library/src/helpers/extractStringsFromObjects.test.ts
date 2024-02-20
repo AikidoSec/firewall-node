@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { extract } from "./extractFromContext";
+import { extract } from "./extractStringsFromObjects";
 
 t.test("Can extract() extract Query objects", async () => {
   t.same(extract({ age: { $gt: "21" } }), ["age", "$gt", "21"]);
@@ -50,5 +50,11 @@ t.test("Can extract() extract header objects", async () => {
 
 t.test("Can extract() extract body objects", async () => {
   t.same(extract({ nested: { nested: { $ne: null } } }), ["nested", "$ne"]);
-  t.same(extract({ age: { $gt: "21", $lt: "100" } }), ["age", "$lt", "$gt", "21", "100"]);
+  t.same(extract({ age: { $gt: "21", $lt: "100" } }), [
+    "age",
+    "$lt",
+    "$gt",
+    "21",
+    "100",
+  ]);
 });
