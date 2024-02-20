@@ -8,10 +8,10 @@ import { isPlainObject } from "../helpers/isPlainObject";
  * @returns User input found in the context as an array of strings
  */
 export function extractFromContext(context: Context) {
-  const resultsQuery = extractFromQuery(context.query);
-  const resultsHeaders = extractFromHeaders(context.headers);
-  const resultsCookies = extractFromCookies(context.cookies);
-  const resultsBody = extractFromBody(context.body);
+  const resultsQuery = extract(context.query);
+  const resultsHeaders = extract(context.headers);
+  const resultsCookies = extract(context.cookies);
+  const resultsBody = extract(context.body);
 
   return [
     ...resultsQuery,
