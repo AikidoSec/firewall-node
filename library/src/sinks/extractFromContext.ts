@@ -43,27 +43,29 @@ export function extractFromHeaders(headers: Context["headers"]): string[] {
 }
 
 /**
- * This checks the cookies for user input
- * @param cookies The cookies property you want to analyze for user input
- * @returns User input found in the cookies as an array of strings
+ * This checks the object for user input
+ * @param body The object you want to analyze for user input
+ * @returns User input found in the body as an array of strings
  */
-export function extractFromCookies(cookies: Context["cookies"]): string[] {
-  let results: string[] = [];
-  for (const cookieKey in cookies) {
-    // the name of a cookie is also user input, some applications may try and store all cookies given to it.
-    results.push(cookieKey);
-    results.push(cookies[cookieKey]);
+function extract(body: any): string[] {
+  let results: Set<string> = new Set();
+  if (isPlainObject(body)) {
+    for (const key in body) {
+      results = new Set([key, ...results, ...extract(body[key])]);
+    }
+  } else if (Array.isArray(body)) {
+    for (const element of body) {
+      results = new Set([...results, ...extract(element)]);
+    }
+  } else if (typeof body == "string") {
+    results.add(body);
   }
-  return results;
+  return Array.from(results)
 }
 
 /**
- * This checks the body for user input
+  extract({
  * @param body The body property you want to analyze for user input
- * @returns User input found in the body as an array of strings
+    e: "c",
  */
 export function extractFromBody(body: Context["body"]): string[] {
-  let results: string[] = [];
-
-  return results;
-}
