@@ -5,10 +5,16 @@ import { massWrap } from "shimmer";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { Context, getContext } from "../agent/Context";
+import { extractStringsFromContext } from "./extractStringsFromContext";
 
 export class Postgres implements Wrapper {
-  private checkForSqlInjection(sqlStatement: string, request: Context) {
+  private checkForSqlInjection(sql: string, request: Context) {
     // Currently, do nothing : Still needs to be implemented
+    const userInput = extractStringsFromContext(request);
+    for (let i = 0; i < userInput.length; i++) {
+      if(!inputPossibleSql(userInput[i])) {continue}
+      if(!sqlContainsInput(sql, userInput[i])) {continue}
+    }
   }
   private wrapQueryFunction(exports: unknown) {
     const that = this;
