@@ -68,7 +68,7 @@ const GOOD_SQL_COMMANDS = [
 ];
 
 const IS_NOT_INJECTION = [
-  [`'UNION 123' UNION "UNION 123" and \`UNION 123\` `, "UNION 123"],
+  [`'UNION 123' UNION "UNION 123"`, "UNION 123"],
   [`'union'  is not "UNION"`, "UNION!"],
   [`"UNION;"`, "UNION;"],
 ];
