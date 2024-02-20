@@ -161,9 +161,9 @@ export function inputAlwaysEncapsulated(sql: string, input: string) {
   let previous_closing_character = "";
   for (let i = 0; i + 1 < sqlWithoutUserInput.length; i++) {
     // Get the last character of this segment
-    let lastChar = sqlWithoutUserInput[i].slice(-1);
+    const lastChar = sqlWithoutUserInput[i].slice(-1);
     // Get the first character of the next segment
-    let firstCharNext = sqlWithoutUserInput[i + 1].slice(0, 1);
+    const firstCharNext = sqlWithoutUserInput[i + 1].slice(0, 1);
 
     if (!SQL_STRING_CHARS.includes(lastChar)) {
       return false; // If the character is not one of these, it's not a string.

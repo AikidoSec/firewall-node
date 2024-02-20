@@ -106,10 +106,12 @@ t.test("Test detectSQLInjection() function", async () => {
 });
 
 t.test("Test the inputAlwaysEncapsulated() function", async () => {
-  t.ok(inputAlwaysEncapsulated(` Hello Hello 'UNION'and also "UNION" `, "UNION"));
+  t.ok(
+    inputAlwaysEncapsulated(` Hello Hello 'UNION'and also "UNION" `, "UNION")
+  );
   t.ok(inputAlwaysEncapsulated(`"UNION"`, "UNION"));
   t.ok(inputAlwaysEncapsulated(` 'UNION' `, "UNION"));
-  t.ok(inputAlwaysEncapsulated(`"UNION"'UNION'`, "UNION"))
+  t.ok(inputAlwaysEncapsulated(`"UNION"'UNION'`, "UNION"));
 
   t.notOk(inputAlwaysEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
   t.notOk(inputAlwaysEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
