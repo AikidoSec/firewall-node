@@ -1,5 +1,9 @@
 import * as t from "tap";
-import { inputPossibleSql, sqlContainsInput } from "./detectSQLInjection";
+import {
+  detectSQLInjection,
+  inputPossibleSql,
+  sqlContainsInput,
+} from "./detectSQLInjection";
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
   "Roses are red insErt are blue",
@@ -62,6 +66,14 @@ const GOOD_SQL_COMMANDS = [
   "steve@yahoo.com",
 ];
 
+const IS_NOT_INJECTION = [
+  [`'UNION 123' UNION "UNION 123" `, "UNION 123"],
+];
+
+const IS_INJECTION = [
+  [`'union'  is not UNION`, "UNION"],
+];
+
 t.test("Test the inputPossibleSql() function", async () => {
   for (const sql of BAD_SQL_COMMANDS) {
     t.ok(inputPossibleSql(sql), sql);
@@ -76,4 +88,12 @@ t.test("Test the sqlContainsInput() function", async () => {
   t.ok(sqlContainsInput("Hi I'm MJoNaSs", "jonas"));
   t.ok(sqlContainsInput("Hiya, 123^&*( is a real string", "123^&*("));
   t.notOk(sqlContainsInput("Roses are red", "violet"));
+});
+t.test("Test detectSQLInjection() function", async () => {
+  for (const test of IS_INJECTION) {
+    t.ok(detectSQLInjection(test[0], test[1]), test[0]);
+  }
+  for (const test of IS_NOT_INJECTION) {
+    t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
+  }
 });
