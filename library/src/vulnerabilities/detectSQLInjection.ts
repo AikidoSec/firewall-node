@@ -91,6 +91,9 @@ export function detectSQLInjection(sql: string, input: string) {
   if (!sqlContainsInput(sql, input)) {
     return false;
   }
+  if(dangerousCharsInInput(input)) {
+    return true;
+  }
   if (!inputPossibleSql(input)) {
     return false;
   }
@@ -121,4 +124,15 @@ export function sqlContainsInput(sql: string, input: string) {
   const lowercaseSql = sql.toLowerCase();
   const lowercaseInput = input.toLowerCase();
   return lowercaseSql.includes(lowercaseInput);
+}
+
+/**
+ * This function is the second step to determine if an SQL Injection is happening,
+ * If the user input contains characters that should never end up in a query, not
+ * even in a string, this function returns true.
+ * @param input The user input you want to check
+ * @returns True if characters are present
+ */
+export function dangerousCharsInInput(input: string):boolean {
+    return dangerousInStringRegex.test(input);
 }
