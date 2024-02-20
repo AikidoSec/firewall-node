@@ -22,6 +22,10 @@ lambda-mongodb-nosql-injection:
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless invoke local --function login --path payloads/safe-request.json
 
+.PHONY: docs
+docs:
+	npx typedoc
+
 .PHONY: install
 install:
 	npm install --workspaces

@@ -90,3 +90,4 @@ See [benchmarks](benchmarks) for more information.
 * `$ make watch` to watch for changes and rebuild the library
 * `$ make test` to run tests using tap
 * `$ make lint` to run ESLint
+* `$ make docs` to generate documentation in the ./generated_docs
