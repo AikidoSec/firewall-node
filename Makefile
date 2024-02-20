@@ -10,6 +10,10 @@ express-mongodb:
 express-mongoose:
 	cd sample-apps/express-mongoose && node app.js
 
+.PHONY: express-postgres
+express-postgres:
+	cd sample-apps/express-postgres && node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless invoke local --function login --path payloads/nosql-injection-request.json
