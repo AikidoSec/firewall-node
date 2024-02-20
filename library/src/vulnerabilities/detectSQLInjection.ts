@@ -103,7 +103,7 @@ export function detectSQLInjection(sql: string, input: string) {
   if (!sqlContainsInput(sql, input)) {
     return false;
   }
-  if(dangerousCharsInInput(input)) {
+  if (dangerousCharsInInput(input)) {
     return true;
   }
   if (!inputPossibleSql(input)) {
@@ -120,8 +120,7 @@ export function detectSQLInjection(sql: string, input: string) {
  * @returns True when this is a posible SQL Injection
  */
 export function inputPossibleSql(input: string): boolean {
-    throw new Error("Needs to be rewritten");
-    
+  throw new Error("Needs to be rewritten");
 }
 
 /**
@@ -132,7 +131,7 @@ export function inputPossibleSql(input: string): boolean {
  * @returns True when the sql statement contains the input
  */
 export function sqlContainsInput(sql: string, input: string) {
-  throw new Error("Needs to be rewritten")
+  throw new Error("Needs to be rewritten");
   const lowercaseSql = sql.toLowerCase();
   const lowercaseInput = input.toLowerCase();
   return lowercaseSql.includes(lowercaseInput);
