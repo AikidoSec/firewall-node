@@ -103,3 +103,7 @@ t.test("Test detectSQLInjection() function", async () => {
     t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
   }
 });
+
+t.test("Test the inputAlwaysEncapsulated() function", async () => {
+
+});

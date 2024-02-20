@@ -147,3 +147,29 @@ export function sqlContainsInput(sql: string, input: string) {
 export function dangerousCharsInInput(input: string): boolean {
   return dangerousInStringRegex.test(input);
 }
+
+/**
+ * This function is the third step to determine if an SQL Injection is happening,
+ * This checks if **all** occurences of our input are encapsulated as strings.
+ * @param sql The SQL Statement
+ * @param input The user input you want to check is encapsulated
+ * @returns True if the input is always encapsulated inside a string
+ */
+export function inputAlwaysEncapsulated(sql: string, input: string) {
+  const sqlWithoutUserInput = sql.split(input);
+  let previous_closing_character = "";
+  for (let i = 0; i + 1 < sqlWithoutUserInput.length; i++) {
+    // Get the last character of this segment
+    let lastChar = sqlWithoutUserInput[i].slice(-1);
+    // Get the first character of the next segment
+    let firstCharNext = sqlWithoutUserInput[i + 1].slice(0, 1);
+
+    if (![`"`, `'`].includes(lastChar)) {
+      return false; // If the character is not one of these, it's not a string.
+    }
+    if (lastChar != firstCharNext) {
+      return false; // String is not encapsulated by the same type of quotes.
+    }
+  }
+  return true;
+}
