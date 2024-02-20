@@ -11,6 +11,7 @@ import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
+import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
   const packages: Record<string, { range: string; wrapper: Wrapper }> = {
@@ -45,16 +46,6 @@ function wrapInstalledPackages() {
   return wrapped;
 }
 
-type Options = {
-  debug: boolean;
-  block: boolean;
-};
-
-const defaultOptions: Options = {
-  debug: false,
-  block: true,
-};
-
 function getLogger(options: Options): Logger {
   if (options.debug) {
     return new LoggerConsole();
@@ -86,13 +77,6 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function dryModeEnabled(): boolean {
-  return (
-    process.env.AIKIDO_NO_BLOCKING === "true" ||
-    process.env.AIKIDO_NO_BLOCKING === "1"
-  );
-}
-
 function getAgent({
   options,
   serverless,
@@ -119,16 +103,6 @@ function getAgent({
   setInstance(agent);
 
   return agent;
-}
-
-function getOptions(partialOptions?: Partial<Options>): Options {
-  const options = { ...defaultOptions, ...partialOptions };
-
-  if (dryModeEnabled()) {
-    options.block = false;
-  }
-
-  return options;
 }
 
 function disableShimmerLogging() {
