@@ -2,11 +2,13 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { ParsedQs } from "qs";
 
 /**
- * @prop url This is the requested URL
- * @prop method This is the HTTP Method used to request the URL
+ * @prop url This is the URL where the (express) request came in
+ * @prop method This is the HTTP Method used for the (express) request
  * @prop query These are the URL Query parameters (e.g. example.com?param1=value1)
  * @prop headers The HTTP headers accompanying the request
- * @prop The remote address 
+ * @prop remoteAddress The remote address of the end-user
+ * @prop body This is the (form) body that possible accompanies the request
+ * @prop cookies These are the cookies accompanying the request
  * @interface
  */
 export type Context = {
@@ -30,10 +32,10 @@ export function getContext() {
 }
 
 /**
- * 
+ *
  * @param context The context you want to set ({@link Context})
- * @param fn 
- * @returns 
+ * @param fn
+ * @returns
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
   return requestContext.run(context, fn);
