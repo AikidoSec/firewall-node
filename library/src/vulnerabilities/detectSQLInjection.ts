@@ -50,10 +50,28 @@ const SQL_KEYWORDS = [
   "REVOKE",
   "ALL",
   "LIMIT",
-  "ORDER"
+  "ORDER",
+  "ADD",
+  "CONSTRAINT",
+  "COLUMN",
+  "ANY",
+  "BACKUP",
+  "CASE",
+  "CHECK",
+  "REPLACE",
+  "DEFAULT",
+  "EXEC",
+  "FOREIGN",
+  "KEY",
+  "FULL",
+  "PROCEDURE",
+  "ROWNUM",
+  "SET",
+  "UNIQUE",
+  "VALUES",
 ];
 
-const SQL_FUNCTIONS = ["group_concat", "replace", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
+const SQL_FUNCTIONS = ["group_concat", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
 
 const SQL_STATEMENTS = ['<>', "=", "!=", ""];
 
