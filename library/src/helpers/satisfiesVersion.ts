@@ -8,7 +8,6 @@
  * @param range A range of versions written in semver
  * @param version A version number
  * @returns True if the version is in range, otherwise returns false
- * 
  * @example
  * satisfiesVersion("^1.0.0 || ^2.0.0", "1.0.0") // true
  * @example
