@@ -72,7 +72,7 @@ const SQL_KEYWORDS = [
   "VALUES",
   "COLLATE",
 ];
-const SQL_DANGEROUS_IN_STRING = ["\\", `'`, `"`, "`", "/*", "--"];
+const SQL_DANGEROUS_IN_STRING = ["\\\\", `'`, `"`, "`", "\\/\\*", "--"];
 const SQL_FUNCTIONS = [
   "group_concat",
   "waitfor",
