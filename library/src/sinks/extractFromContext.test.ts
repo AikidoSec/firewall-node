@@ -47,3 +47,8 @@ t.test("Can extract() extract header objects", async () => {
     ["Content-Type", "application/json"]
   );
 });
+
+t.test("Can extract() extract body objects", async () => {
+  t.same(extract({ nested: { nested: { $ne: null } } }), ["nested", "$ne"]);
+  t.same(extract({ age: { $gt: "21", $lt: "100" } }), ["age", "$lt", "$gt", "21", "100"]);
+});
