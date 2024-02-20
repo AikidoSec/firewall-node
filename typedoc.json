@@ -1,6 +1,6 @@
 {
     "$schema": "https://typedoc.org/schema.json",
-    "out": "docs",
+    "out": "generated_docs",
     "entryPointStrategy": "expand",
     "entryPoints": ["library/src"],
     "tsconfig": "library/tsconfig.json"
