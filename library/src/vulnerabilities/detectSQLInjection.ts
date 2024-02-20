@@ -69,6 +69,7 @@ const SQL_KEYWORDS = [
   "SET",
   "UNIQUE",
   "VALUES",
+  "COLLATE"
 ];
 
 const SQL_FUNCTIONS = ["group_concat", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
