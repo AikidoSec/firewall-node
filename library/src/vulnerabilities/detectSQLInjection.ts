@@ -70,14 +70,26 @@ const SQL_KEYWORDS = [
   "SET",
   "UNIQUE",
   "VALUES",
-  "COLLATE"
+  "COLLATE",
 ];
 const SQL_DANGEROUS_IN_STRING = ["\\", `'`, `"`, "`", "/*", "--"];
-const SQL_FUNCTIONS = ["group_concat", "waitfor", "delay", "sleep", "md5", "benchmark", "count", "pg_sleep"];
-const SQL_STATEMENTS = ['<>', "=", "!=", ""];
+const SQL_FUNCTIONS = [
+  "group_concat",
+  "waitfor",
+  "delay",
+  "sleep",
+  "md5",
+  "benchmark",
+  "count",
+  "pg_sleep",
+];
+const SQL_STATEMENTS = ["<>", "=", "!=", ""];
 
 // Declare Regexes
-const dangerousInStringRegex = new RegExp(SQL_DANGEROUS_IN_STRING.join("|"), 'mgi'); 
+const dangerousInStringRegex = new RegExp(
+  SQL_DANGEROUS_IN_STRING.join("|"),
+  "mgi"
+);
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
