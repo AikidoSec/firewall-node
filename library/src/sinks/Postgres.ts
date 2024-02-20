@@ -76,7 +76,7 @@ export class Postgres implements Wrapper {
  * @returns True when this is a posible SQL Injection
  */
 export function inputPossibleSql(input: string): boolean {
-  const regex = /(?<![a-z0-9])(INSERT|SELECT|CREATE|DROP|DATABASE|UPDATE|DELETE|ALTER|GRANT|SAVEPOINT|COMMIT|ROLLBACK|TRUNCATE|OR|AND|UNION|AS|WHERE)(?![a-z0-9])|('|"|`)|(\}|\{|\}|\*)/gim; // Needs to be an actual regex
+  const regex = /(?<![a-z0-9])(INSERT|SELECT|CREATE|DROP|DATABASE|UPDATE|DELETE|ALTER|GRANT|SAVEPOINT|COMMIT|ROLLBACK|TRUNCATE|OR|AND|UNION|AS|WHERE)(?![a-z0-9])|(\'|\"|\`|\=)/gim; // Needs to be an actual regex
   return regex.test(input);
 }
 

@@ -56,4 +56,9 @@ t.test("Check for statements from Auth_Bypass.txt", async () => {
     t.ok(inputPossibleSql(` or 1=1–`));
     t.ok(inputPossibleSql(` or 1=1`));
 });
+
+t.test("Check for some statements that are allowed", async () => {
+    t.notOk(inputPossibleSql(`abcdefghijklmnop@hotmail.com`));
+    t.notOk(inputPossibleSql(`roses are red violets are blue!`));
+    t.notOk(inputPossibleSql(`1 is cool 2 is nice 3 thats thrice.`));
 });
