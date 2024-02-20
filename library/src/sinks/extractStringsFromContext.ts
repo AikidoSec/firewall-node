@@ -6,7 +6,7 @@ import { extract } from "../helpers/extractStringsFromObjects";
  * @param context The context you want to analyze for user input
  * @returns User input found in the context as an array of strings
  */
-export function extractFromContext(context: Context) {
+export function extractStringsFromContext(context: Context) {
   const resultsQuery = extract(context.query);
   const resultsHeaders = extract(context.headers);
   const resultsCookies = extract(context.cookies);
