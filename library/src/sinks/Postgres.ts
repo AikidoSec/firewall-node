@@ -18,10 +18,10 @@ export class Postgres implements Wrapper {
       [exports.Client.prototype, exports.Pool.prototype],
       ["query"],
       function wrapQueryFunction(original) {
-        return function safeQueryFunction(this: Client) {
+        return function safeQueryFunction(this: Client, ...args: unknown[]) {
           const agent = getInstance();
           if (!agent) {
-            return original.apply(this, arguments);
+            return original.apply(this, args);
           }
 
           const request = getContext();
@@ -32,18 +32,17 @@ export class Postgres implements Wrapper {
               detectedAttack: false,
             });
 
-            return original.apply(this, arguments);
+            return original.apply(this, args);
           }
-
-          let querystring: string = arguments[0];
-          if (typeof querystring !== "string") {
+          if (typeof args[0] !== "string") {
             // The query is not a string, not much to do here
-            return original.apply(this, arguments);
+            return original.apply(this, args);
           }
+          const querystring: string = args[0];
 
           that.checkForSqlInjection(querystring, request);
 
-          return original.apply(this, arguments);
+          return original.apply(this, args);
         };
       }
     );

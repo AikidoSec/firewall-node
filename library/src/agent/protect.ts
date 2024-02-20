@@ -23,9 +23,9 @@ function wrapInstalledPackages() {
       wrapper: new MongoDB(),
     },
     pg: {
-      range: '^8.11.0', // Current version
-      wrapper: new Postgres()
-    }
+      range: "^8.11.0", // Current version
+      wrapper: new Postgres(),
+    },
   };
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
