@@ -6,7 +6,6 @@
 function decode(str: string): string {
   return str.indexOf("%") !== -1 ? decodeURIComponent(str) : str;
 }
-
 /**
  * Encapsulates the "decode" function with a try-catch.
  * @param str string that needs to be decoded
