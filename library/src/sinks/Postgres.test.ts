@@ -63,9 +63,16 @@ t.test("Check for some statements that are allowed", async () => {
     t.notOk(inputPossibleSql(`1 is cool 2 is nice 3 thats thrice.`));
 });
 
+t.test("Test some special characters", async () => {
+    t.ok(inputPossibleSql("Termin;ate"));
+    t.notOk(inputPossibleSql("steve@yahoo.com"));
+    t.ok(inputPossibleSql("I'm writting you"));
+    t.ok(inputPossibleSql("This is not ok--"))
+});
+
 t.test("Test the sqlContainsInput() function", async () => {
     t.ok(sqlContainsInput("SELECT * FROM 'Jonas';", "Jonas"));
     t.ok(sqlContainsInput("Hi I'm MJoNaSs", "jonas"));
     t.ok(sqlContainsInput("Hiya, 123^&*( is a real string", "123^&*("));
     t.notOk(sqlContainsInput("Roses are red", "violet"));
-})
+});
