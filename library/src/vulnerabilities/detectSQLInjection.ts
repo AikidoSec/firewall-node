@@ -83,7 +83,7 @@ const SQL_FUNCTIONS = [
   "count",
   "pg_sleep",
 ];
-const SQL_STATEMENTS = ["<>", "=", "!=", ""];
+const SQL_STATEMENTS = ["<>", "=", "!=", ";"];
 const SQL_STRING_CHARS = [`"`, `'`];
 
 // Declare Regexes
