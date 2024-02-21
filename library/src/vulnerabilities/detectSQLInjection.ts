@@ -1,3 +1,8 @@
+import { Agent } from "../agent/Agent";
+import { Context } from "../agent/Context";
+import { Source, friendlyName } from "../agent/Source";
+import { extract } from "../helpers/extractStringsFromObjects";
+
 // Declare constants
 const SQL_KEYWORDS = [
   "INSERT",
@@ -182,4 +187,47 @@ export function inputAlwaysEncapsulated(sql: string, input: string) {
     }
   }
   return true;
+}
+
+/**
+ * This function goes over all the different input types in the context and checks
+ * if it's a possible SQL Injection, if so the function messages an Agent and if
+ * needed, throws an error to block any further code.
+ * @param sql The SQL statement that was executed
+ * @param request The request that might contain a SQL Injection
+ * @param agent The agent which needs to get a report in case of detection
+ * @param module The name of the module e.g. postgres, mysql, mssql
+ */
+export function checkContextForSqlInjection(
+  sql: string,
+  request: Context,
+  agent: Agent,
+  module: string
+) {
+  // Currently, do nothing : Still needs to be implemented
+  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
+    if (request[source]) {
+      const userInput = extract(request[source]);
+      for (let i = 0; i < userInput.length; i++) {
+        if (detectSQLInjection(sql, userInput[i])) {
+          agent.onDetectedAttack({
+            module,
+            kind: "sql_injection",
+            blocked: agent.shouldBlock(),
+            source,
+            request: request,
+            stack: new Error().stack || "",
+            path: "UNKOWN",
+            metadata: {},
+          });
+
+          if (agent.shouldBlock()) {
+            throw new Error(
+              `Aikido guard has blocked a SQL injection: ${userInput[i]} originating from ${friendlyName(source)}`
+            );
+          }
+        }
+      }
+    }
+  }
 }

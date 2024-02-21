@@ -2,43 +2,11 @@ import { Wrapper } from "../agent/Wrapper";
 import { Client } from "pg";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
-import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { Context, getContext } from "../agent/Context";
-import { extractStringsFromContext } from "./extractStringsFromContext";
-import { detectSQLInjection } from "../vulnerabilities/detectSQLInjection";
-import { Source, friendlyName } from "../agent/Source";
-import { extract } from "../helpers/extractStringsFromObjects";
+import { getContext } from "../agent/Context";
+import { checkContextForSqlInjection } from "../vulnerabilities/detectSQLInjection";
 
 export class Postgres implements Wrapper {
-  private checkForSqlInjection(sql: string, request: Context, agent: Agent) {
-    // Currently, do nothing : Still needs to be implemented
-    for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-      if (request[source]) {
-        const userInput = extract(request[source]);
-        for (let i = 0; i < userInput.length; i++) {
-          if (detectSQLInjection(sql, userInput[i])) {
-            agent.onDetectedAttack({
-              module: "postgres",
-              kind: "sql_injection",
-              blocked: agent.shouldBlock(),
-              source,
-              request: request,
-              stack: new Error().stack || "",
-              path: "UNKOWN",
-              metadata: {},
-            });
-
-            if (agent.shouldBlock()) {
-              throw new Error(
-                `Aikido guard has blocked a SQL injection: ${userInput[i]} originating from ${friendlyName(source)}`
-              );
-            }
-          }
-        }
-      }
-    }
-  }
   private wrapQueryFunction(exports: unknown) {
     const that = this;
 
@@ -69,7 +37,7 @@ export class Postgres implements Wrapper {
           }
           const querystring: string = args[0];
 
-          that.checkForSqlInjection(querystring, request, agent);
+          checkContextForSqlInjection(querystring, request, agent, "postgres");
 
           return original.apply(this, args);
         };
