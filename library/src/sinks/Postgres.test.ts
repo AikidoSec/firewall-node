@@ -3,7 +3,7 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
 import { LoggerNoop } from "../agent/Logger";
-import type { Context } from "../agent/Context";
+import { runWithContext, type Context } from "../agent/Context";
 import { Postgres } from "./Postgres";
 import type { Client } from "pg";
 
@@ -63,6 +63,18 @@ t.test("We can hijack Postgres class", async () => {
         withoutContext: 2,
       },
     });
+
+    const bulkError = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return client.query("'OR 1=1--");
+      });
+    });
+    if (bulkError instanceof Error) {
+      t.equal(
+        bulkError.message,
+        "Aikido guard has blocked a SQL injection: 'OR 1=1-- originating from body"
+      );
+    }
   } catch (error: any) {
     t.fail(error);
   } finally {
