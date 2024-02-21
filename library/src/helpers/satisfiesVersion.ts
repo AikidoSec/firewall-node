@@ -1,3 +1,20 @@
+/**
+ * The satisfiesVersion module exports only one function with the same name : satisfiesVersion
+ * @module helpers/satisfiesVersion
+ */
+
+/**
+ * This function checks if a certain version satisfies a version range.
+ * @param range A range of versions written in semver
+ * @param version A version number
+ * @returns True if the version is in range, otherwise returns false
+ * @example
+ * satisfiesVersion("^1.0.0 || ^2.0.0", "1.0.0") // true
+ * @example
+ * satisfiesVersion("^1.2.0", "1.2.1") // true
+ * @example
+ * satisfiesVersion("^1.0.0", "2.0.0") // false
+ */
 export function satisfiesVersion(range: string, version: string) {
   if (!range || !version) {
     return false;
