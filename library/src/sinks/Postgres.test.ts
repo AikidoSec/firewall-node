@@ -79,7 +79,7 @@ t.test("We can hijack Postgres class", async () => {
       {
         remoteAddress: "::1",
         method: "POST",
-        url: "http://localhost:4000",
+        url: "http://localhost:4000/",
         query: {},
         headers: {},
         body: {},
