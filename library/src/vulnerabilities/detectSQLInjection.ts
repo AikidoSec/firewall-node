@@ -92,7 +92,10 @@ const dangerousInStringRegex = new RegExp(
   "im"
 );
 const possibleSqlRegex = new RegExp(
-  SQL_KEYWORDS.join("|"),
+  "(?<=[a-z])(" +
+    SQL_KEYWORDS.join("|") +
+    ")(?=[a-z])(" +
+    SQL_STATEMENTS.join("|"),
   "im"
 );
 
