@@ -1,17 +1,17 @@
-const { Client } = require('pg');
-let client;
+// Get the client
+const mysql = require('mysql2');
+let connection;
 
-async function connectToPostgresDB() {
+async function connectToMysqlDB() {
     // Normally you'd use environment variables for this
     // These values were also referenced in the docker-compose.yml
     
-    client = new Client({
+    connection = await mysql.createConnection({
+        host: 'localhost',
         user: 'root',
-        host: '127.0.0.1',
-        database: 'main_db',
         password: 'password',
-        port: 27016,
-    });
+        database: 'catsdb',
+    })
 
     await client.connect();
 
@@ -20,7 +20,7 @@ async function connectToPostgresDB() {
 
 async function initDb() {
     // This creates the cats table
-    await client.query(`
+    await connection.execute(`
     CREATE TABLE IF NOT EXISTS cats (
         petname varchar(255)
     );
@@ -29,12 +29,12 @@ async function initDb() {
 
 async function insertCatIntoTable(petname) {
     // This makes your database vulnerable to SQL Injections! vvv
-    await client.query(`INSERT INTO cats(petname) VALUES ('${petname}');`)
+    await connection.execute(`INSERT INTO cats(petname) VALUES ('${petname}');`)
 }
 
 async function getAllCats() {
     // This function returns all cats in the db
-    const cats = await client.query("SELECT petname FROM cats;")   
+    const cats = await connection.execute("SELECT petname FROM cats;")   
     return cats.rows.map((row) => row.petname);
 }
 

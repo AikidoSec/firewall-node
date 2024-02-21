@@ -25,7 +25,7 @@ function getHTMLBody(cats) {
 
 async function main() {
   const app = express();
-  db.connectToPostgresDB();
+  db.connectToMysqlDB();
 
   app.use(morgan("tiny"));
 
