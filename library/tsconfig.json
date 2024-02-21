@@ -8,6 +8,8 @@
     "declaration": true,
     "strict": true,
     "allowJs": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
   },
   "include": ["src"],
   "exclude": ["**/*.test.ts"],
