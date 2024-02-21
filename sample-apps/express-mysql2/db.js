@@ -28,7 +28,7 @@ async function initDb() {
 
 async function insertCatIntoTable(petname) {
     // This makes your database vulnerable to SQL Injections! vvv
-    await connection.execute(`INSERT INTO cats(petname) VALUES ('${petname}');`)
+    await connection.query(`INSERT INTO cats(petname) VALUES ('${petname}');`)
 }
 
 async function getAllCats() {
