@@ -5,8 +5,9 @@ import { APIForTesting, Token } from "../agent/API";
 import { LoggerNoop } from "../agent/Logger";
 import { Context, runWithContext } from "../agent/Context";
 import { Postgres } from "./Postgres";
+import type { Client } from "pg";
 
-async function initDb(client) {
+async function initDb(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS cats (
         petname varchar(255)
@@ -25,7 +26,6 @@ const context: Context = {
   },
   cookies: {},
 };
-
 t.test("We can hijack Postgres class", async () => {
   const postgres = new Postgres();
   postgres.wrap();
@@ -64,24 +64,9 @@ t.test("We can hijack Postgres class", async () => {
         withoutContext: 2,
       },
     });
-/*
-    await runWithContext(
-      {
-        remoteAddress: "::1",
-        method: "POST",
-        url: "http://localhost:4000",
-        query: {},
-        headers: {},
-        body: {},
-        cookies: {},
-      },
-      () => {
-        return collection.find({ title: { $ne: null } }).toArray();
-      }
-    );*/
   } catch (error: any) {
-    //t.fail(error.message);
+    t.fail(error);
   } finally {
-    //await client.close();
+    await client.close();
   }
 });
