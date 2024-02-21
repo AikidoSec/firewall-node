@@ -29,6 +29,7 @@ const BAD_SQL_COMMANDS = [
   "Roses <> violets",
   "Roses < Violets",
   "Roses > Violets",
+  "Roses != Violets",
 ];
 const GOOD_SQL_COMMANDS = [
   // Check for SQL Commands with allowed characters
