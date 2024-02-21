@@ -22,7 +22,7 @@ const context: Context = {
   query: {},
   headers: {},
   body: {
-    myTitle: `'OR 1=1--`,
+    myTitle: `-- should be blocked`,
   },
   cookies: {},
 };
@@ -54,6 +54,7 @@ t.test("We can hijack Postgres class", async () => {
     // Execute 2 queries
     await initDb(client);
     const cats2 = await client.query("SELECT petname FROM cats;");
+
     // @ts-expect-error Private property
     t.same(agent.stats, {
       postgres: {
@@ -66,23 +67,37 @@ t.test("We can hijack Postgres class", async () => {
 
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {
-        return client.query("'OR 1=1--");
+        return client.query("-- should be blocked");
       });
     });
     if (bulkError instanceof Error) {
       t.equal(
         bulkError.message,
-        "Aikido guard has blocked a SQL injection: 'OR 1=1-- originating from body"
+        "Aikido guard has blocked a SQL injection: -- should be blocked originating from body"
       );
     }
+
     // @ts-expect-error null is normally not a valid agent
     setInstance(null); // We want to check if the code works when an Agent is not defined.
     await runWithContext(context, () => {
       // Normally this should be detected, but since the agent
       // is not defined we let it through.
-      return client.query("'OR 1=1--");
+      return client.query("-- should be blocked");
     });
     setInstance(agent); // Put the agent back for the following tests
+
+    const undefinedQueryError = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return client.query(null);
+      });
+    });
+    if (undefinedQueryError instanceof Error) {
+      t.equal(
+        undefinedQueryError.message,
+        "Client was passed a null or undefined query"
+      );
+    }
+
     await runWithContext(
       {
         remoteAddress: "::1",
