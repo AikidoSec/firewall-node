@@ -9,11 +9,10 @@ async function connectToMysqlDB() {
     connection = await mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: 'password',
+        password: 'mypassword',
         database: 'catsdb',
+        port: 27015
     })
-
-    await client.connect();
 
     await initDb();
 }
@@ -38,4 +37,4 @@ async function getAllCats() {
     return cats.rows.map((row) => row.petname);
 }
 
-module.exports = {connectToPostgresDB, insertCatIntoTable, getAllCats};
+module.exports = {connectToMysqlDB, insertCatIntoTable, getAllCats};
