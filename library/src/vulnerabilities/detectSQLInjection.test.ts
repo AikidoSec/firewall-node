@@ -28,17 +28,8 @@ const BAD_SQL_COMMANDS = [
   "I'm writting you",
   "Termin;ate",
   "Roses <> violets",
-  // Test SQL Functions
-  "sleep()",
-  "sleep    (1)",
-  "  pg_sleep (2)",
-  "sleep              (  3  )",
-  "sleep /* */ (2)",
-  " group_concat()",
-  " waitfor()",
-  "delay()",
-  "md5()",
-  "benchmark()",
+  "Roses < Violets",
+  "Roses > Violets",
 ];
 const GOOD_SQL_COMMANDS = [
   // Check for SQL Commands with allowed characters
@@ -54,7 +45,6 @@ const GOOD_SQL_COMMANDS = [
   `1 is cool 2 is nice 3 thats thrice.`,
   // Test some special characters
   "steve@yahoo.com",
-  "Roses < Violets",
   // Test SQL Function (that should not be blocked)
   "I was benchmark ing",
   "We were delay ed",

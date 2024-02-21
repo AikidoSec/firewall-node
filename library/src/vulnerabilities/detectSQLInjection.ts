@@ -78,7 +78,7 @@ const SQL_KEYWORDS = [
   "COLLATE",
 ];
 const SQL_DANGEROUS_IN_STRING = ["\\\\", `'`, `"`, "`", "\\/\\*", "--"];
-const SQL_STATEMENTS = ["<>", "=", "!=", ";"];
+const SQL_OPERATORS = ["=", "!=", ";", "\\+", "-", "\\*", "\\/", "%", "&", "\\|", "\\^", ">", "<"];
 const SQL_STRING_CHARS = [`"`, `'`];
 
 // Declare Regexes
@@ -90,7 +90,7 @@ const possibleSqlRegex = new RegExp(
   "(?<![a-z])(" +
     SQL_KEYWORDS.join("|") +
     ")(?![a-z])|(" +
-    SQL_STATEMENTS.join("|") +
+    SQL_OPERATORS.join("|") +
     ")",
   //    SQL_FUNCTIONS.join("|") +
   //    ")(?=[\\s]*\\()",
