@@ -96,22 +96,6 @@ const SQL_OPERATORS = [
 ]; // SQL Operators : = ! ; + - * / % & | ^ > <
 const SQL_STRING_CHARS = [`"`, `'`];
 
-// Declare Regexes
-const dangerousInStringRegex = new RegExp(
-  SQL_DANGEROUS_IN_STRING.join("|"),
-  "im"
-);
-const possibleSqlRegex = new RegExp(
-  "(?<![a-z])(" +
-    SQL_KEYWORDS.join("|") +
-    ")(?![a-z])|(" +
-    SQL_OPERATORS.join("|") +
-    ")|(?<=([\\s|.|" +
-    SQL_OPERATORS.join("|") +
-    "]|^)+)([a-z0-9_-]+)(?=[\\s]*\\()",
-  "im"
-);
-
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
  * Step 2 : sqlContainsInput
@@ -132,6 +116,22 @@ export function detectSQLInjection(sql: string, input: string) {
   }
   return false;
 }
+
+// Declare Regexes
+const dangerousInStringRegex = new RegExp(
+  SQL_DANGEROUS_IN_STRING.join("|"),
+  "im"
+);
+const possibleSqlRegex = new RegExp(
+  "(?<![a-z])(" +
+    SQL_KEYWORDS.join("|") +
+    ")(?![a-z])|(" +
+    SQL_OPERATORS.join("|") +
+    ")|(?<=([\\s|.|" +
+    SQL_OPERATORS.join("|") +
+    "]|^)+)([a-z0-9_-]+)(?=[\\s]*\\()",
+  "im"
+);
 
 /**
  * This function is the first check in order to determine if a SQL injection is happening,
