@@ -165,9 +165,6 @@ export function dangerousCharsInInput(input: string): boolean {
  */
 export function inputAlwaysEncapsulated(sql: string, input: string) {
   const sqlWithoutUserInput = sql.split(input);
-  if (sqlWithoutUserInput.length <= 0) {
-    return false;
-  }
   for (let i = 0; i + 1 < sqlWithoutUserInput.length; i++) {
     // Get the last character of this segment
     const lastChar = sqlWithoutUserInput[i].slice(-1);
