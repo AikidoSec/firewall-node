@@ -25,7 +25,7 @@ function main() {
 }
 main();
 
-function runBenchmark(sql: string, input: string) {
+function runBenchmark(sql, input) {
   const startTime = performance.now();
   detectSQLInjection(sql, input);
   const endTime = performance.now();
