@@ -116,6 +116,7 @@ t.test("Test the inputAlwaysEncapsulated() function", async () => {
 
   t.notOk(inputAlwaysEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
   t.notOk(inputAlwaysEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
+  t.notOk(inputAlwaysEncapsulated('UNION', 'UNION'))
 });
 
 t.test("Test the dangerousCharsInInput() function", async () => {
