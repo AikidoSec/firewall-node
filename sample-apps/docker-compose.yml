@@ -24,6 +24,7 @@ services:
     image: mysql:8
     # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
     command: --default-authentication-plugin=mysql_native_password
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: mypassword
       MYSQL_DATABASE: catsdb
@@ -31,6 +32,17 @@ services:
       - "27015:3306"
     volumes:
       - mysql:/var/lib/mysql
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${Sa_Password:-password123}
+      - MSSQL_PID=Developer
+    ports:
+      - "27015:1433"
+    volumes:
+      - mssql:/var/opt/mssql
 
 
 volumes:
@@ -39,4 +51,6 @@ volumes:
   postgres:
     driver: local
   mysql:
+    driver: local
+  mssql:
     driver: local
