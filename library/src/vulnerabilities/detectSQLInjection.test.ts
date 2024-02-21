@@ -82,6 +82,14 @@ t.test("Test the detectSQLInjection() function", async () => {
     t.notOk(detectSQLInjection(sql, sql), sql);
   }
 });
+t.test("Test detectSQLInjection() function", async () => {
+  for (const test of IS_INJECTION) {
+    t.ok(detectSQLInjection(test[0], test[1]), test[0]);
+  }
+  for (const test of IS_NOT_INJECTION) {
+    t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
+  }
+});
 
 // BEGIN TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
@@ -138,19 +146,21 @@ t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
 
 // END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
+t.test("Test the detectSQLInjection() function to see if it detects SQL Functions", async () => {
+  // Keep in mind t.ok means that it IS in fact a SQL Injection
+  t.ok(detectSQLInjection("foobar()", "foobar()"));
+  t.ok(detectSQLInjection("foobar(1234567)", "foobar(1234567)"));
+  t.ok(detectSQLInjection("foobar       ()", "foobar       ()"));
+  
+  t.notOk(detectSQLInjection("foobar)", "foobar)"));
+  t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
+});
+
 t.test("Test the sqlContainsInput() function", async () => {
   t.ok(sqlContainsInput("SELECT * FROM 'Jonas';", "Jonas"));
   t.ok(sqlContainsInput("Hi I'm MJoNaSs", "jonas"));
   t.ok(sqlContainsInput("Hiya, 123^&*( is a real string", "123^&*("));
   t.notOk(sqlContainsInput("Roses are red", "violet"));
-});
-t.test("Test detectSQLInjection() function", async () => {
-  for (const test of IS_INJECTION) {
-    t.ok(detectSQLInjection(test[0], test[1]), test[0]);
-  }
-  for (const test of IS_NOT_INJECTION) {
-    t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
-  }
 });
 
 t.test("Test the inputAlwaysEncapsulated() function", async () => {
