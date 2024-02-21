@@ -87,7 +87,7 @@ const auth_bypass = fs
   .readFileSync(
     path.join(
       __dirname,
-      "./../../testing/sql-injection-payloads/Auth_Bypass.txt"
+      "./../../../testing/sql-injection-payloads/Auth_Bypass.txt"
     ),
     "utf-8"
   )
@@ -100,7 +100,7 @@ t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
 
 const postgres_txt = fs
   .readFileSync(
-    path.join(__dirname, "./../../testing/sql-injection-payloads/postgres.txt"),
+    path.join(__dirname, "./../../../testing/sql-injection-payloads/postgres.txt"),
     "utf-8"
   )
   .split(/\r?\n/);
@@ -112,7 +112,7 @@ t.test("Test the detectSQLInjection() with postgres.txt", async () => {
 
 const mysql_txt = fs
   .readFileSync(
-    path.join(__dirname, "./../../testing/sql-injection-payloads/mysql.txt"),
+    path.join(__dirname, "./../../../testing/sql-injection-payloads/mysql.txt"),
     "utf-8"
   )
   .split(/\r?\n/);
@@ -129,7 +129,7 @@ const mssql_and_db2_txt = fs
   .readFileSync(
     path.join(
       __dirname,
-      "./../../testing/sql-injection-payloads/mssql_and_db2.txt"
+      "./../../../testing/sql-injection-payloads/mssql_and_db2.txt"
     ),
     "utf-8"
   )
