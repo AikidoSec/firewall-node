@@ -146,15 +146,18 @@ t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
 
 // END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
-t.test("Test the detectSQLInjection() function to see if it detects SQL Functions", async () => {
-  // Keep in mind t.ok means that it IS in fact a SQL Injection
-  t.ok(detectSQLInjection("foobar()", "foobar()"));
-  t.ok(detectSQLInjection("foobar(1234567)", "foobar(1234567)"));
-  t.ok(detectSQLInjection("foobar       ()", "foobar       ()"));
-  
-  t.notOk(detectSQLInjection("foobar)", "foobar)"));
-  t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
-});
+t.test(
+  "Test the detectSQLInjection() function to see if it detects SQL Functions",
+  async () => {
+    // Keep in mind t.ok means that it IS in fact a SQL Injection
+    t.ok(detectSQLInjection("foobar()", "foobar()"));
+    t.ok(detectSQLInjection("foobar(1234567)", "foobar(1234567)"));
+    t.ok(detectSQLInjection("foobar       ()", "foobar       ()"));
+
+    t.notOk(detectSQLInjection("foobar)", "foobar)"));
+    t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
+  }
+);
 
 t.test("Test the sqlContainsInput() function", async () => {
   t.ok(sqlContainsInput("SELECT * FROM 'Jonas';", "Jonas"));

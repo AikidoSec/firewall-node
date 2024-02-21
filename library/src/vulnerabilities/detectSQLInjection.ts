@@ -92,8 +92,8 @@ const possibleSqlRegex = new RegExp(
     ")(?![a-z])|(" +
     SQL_STATEMENTS.join("|") +
     ")",
-//    SQL_FUNCTIONS.join("|") +
-//    ")(?=[\\s]*\\()",
+  //    SQL_FUNCTIONS.join("|") +
+  //    ")(?=[\\s]*\\()",
   "im"
 );
 
