@@ -77,7 +77,8 @@ const SQL_KEYWORDS = [
   "VALUES",
   "COLLATE",
 ];
-const SQL_DANGEROUS_IN_STRING = ["\\\\", `'`, `"`, "`", "\\/\\*", "--"];
+// We make use of double backslashes to create a single backslash in the RegEx
+const SQL_DANGEROUS_IN_STRING = ["\\\\", `'`, `"`, "`", "\\/\\*", "--"]; // Dangerous characters in strings : \ ' " ` /* --
 const SQL_OPERATORS = [
   "=",
   "!",
@@ -92,7 +93,7 @@ const SQL_OPERATORS = [
   "\\^",
   ">",
   "<",
-];
+]; // SQL Operators : = ! ; + - * / % & | ^ > <
 const SQL_STRING_CHARS = [`"`, `'`];
 
 // Declare Regexes
