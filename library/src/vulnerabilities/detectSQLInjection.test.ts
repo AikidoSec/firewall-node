@@ -1,4 +1,6 @@
 import * as t from "tap";
+import * as fs from "fs";
+import * as path from "path";
 import {
   dangerousCharsInInput,
   detectSQLInjection,
@@ -6,6 +8,7 @@ import {
   inputPossibleSql,
   sqlContainsInput,
 } from "./detectSQLInjection";
+
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
   "Roses are red insErt are blue",
@@ -21,33 +24,6 @@ const BAD_SQL_COMMANDS = [
   "Roses are red or blue",
   "Roses are red and lovely",
   "This is a group_concat_test",
-  // https://github.com/payloadbox/sql-injection-payload-list/blob/master/Intruder/payloads-sql-blind/MSSQL/payloads-sql-blind-MSSQL-INSERT.txt
-  `"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)%20waitfor%20delay%20'0:0:20'%20--`,
-  `',NULL,NULL,NULL,NULL,NULL,NULL)%20waitfor%20delay%20'0:0:20'%20--`,
-  `',NULL,NULL,NULL,NULL,NULL)%20waitfor%20delay%20'0:0:20'%20--`,
-  `)%20waitfor%20delay%20'0:0:20'%20/*`,
-  `))%20waitfor%20delay%20'0:0:20'%20--`,
-  // https://github.com/payloadbox/sql-injection-payload-list/blob/master/Intruder/detect/MySQL/MySQL.txt
-  `1'1`,
-  `1 exec sp_ (or exec xp_)`,
-  `1 and 1=1`,
-  `1' and 1=(select count(*) from tablenames); --`,
-  `1 or 1=1`,
-  `1or1=1`,
-  `fake@ema'or'il.nl'='il.nl`,
-  `1'or'1'='1`,
-  // https://github.com/payloadbox/sql-injection-payload-list/blob/master/Intruder/exploit/Auth_Bypass.txt
-  `'-'`,
-  `")) or (("x"))=(("x`,
-  `admin' or '1'='1'#`,
-  `' AND 1=0 UNION ALL SELECT '', '81dc9bdb52d04dc20036dbd8313ed055`,
-  `') or ('a'='a and hi") or ("a"="a`,
-  `" or "1"="1`,
-  `' UNION ALL SELECT system_user(),user();#`,
-  `admin' and substring(password/text(),1,1)='7`,
-  `' or 1=1 limit 1 -- -+`,
-  ` or 1=1–`,
-  ` or 1=1`,
   // Test some special characters
   "I'm writting you",
   "Termin;ate",
@@ -106,6 +82,61 @@ t.test("Test the detectSQLInjection() function", async () => {
     t.notOk(detectSQLInjection(sql, sql), sql);
   }
 });
+
+// BEGIN TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
+
+const auth_bypass = fs
+  .readFileSync(
+    path.join(__dirname, "./../../testing/exploit/Auth_Bypass.txt"),
+    "utf-8"
+  )
+  .split(/\r?\n/);
+t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
+  for (const sql of auth_bypass) {
+    t.ok(detectSQLInjection(sql, sql), sql);
+  }
+});
+
+const postgres_txt = fs
+  .readFileSync(
+    path.join(__dirname, "./../../testing/exploit/postgres.txt"),
+    "utf-8"
+  )
+  .split(/\r?\n/);
+t.test("Test the detectSQLInjection() with postgres.txt", async () => {
+  for (const sql of postgres_txt) {
+    t.ok(detectSQLInjection(sql, sql), sql);
+  }
+});
+
+const mysql_txt = fs
+  .readFileSync(
+    path.join(__dirname, "./../../testing/exploit/mysql.txt"),
+    "utf-8"
+  )
+  .split(/\r?\n/);
+t.test(
+  "Test the detectSQLInjection() with postgres-enumeration.txt",
+  async () => {
+    for (const sql of mysql_txt) {
+      t.ok(detectSQLInjection(sql, sql), sql);
+    }
+  }
+);
+
+const mssql_and_db2_txt = fs
+  .readFileSync(
+    path.join(__dirname, "./../../testing/exploit/mssql_and_db2.txt"),
+    "utf-8"
+  )
+  .split(/\r?\n/);
+t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
+  for (const sql of mysql_txt) {
+    t.ok(detectSQLInjection(sql, sql), sql);
+  }
+});
+
+// END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
 t.test("Test the sqlContainsInput() function", async () => {
   t.ok(sqlContainsInput("SELECT * FROM 'Jonas';", "Jonas"));
