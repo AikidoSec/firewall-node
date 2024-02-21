@@ -70,7 +70,8 @@
         "SET",
         "UNIQUE",
         "VALUES",
-        "COLLATE"
+        "COLLATE",
+        "IS"
     ],
     "SQL_OPERATORS": [
         "=",

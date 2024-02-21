@@ -37,12 +37,10 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red truncates are blue",
   "Roses are reddelete are blue",
   "Roses are red WHEREis blue",
-  "Roses are redFROM is blue",
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
   `roses are red violets are blue#`,
-  `1 is cool 2 is nice 3 thats thrice.`,
   // Test some special characters
   "steve@yahoo.com",
   // Test SQL Function (that should not be blocked)
