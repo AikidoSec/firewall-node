@@ -41,7 +41,7 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
-  `roses are red violets are blue!`,
+  `roses are red violets are blue#`,
   `1 is cool 2 is nice 3 thats thrice.`,
   // Test some special characters
   "steve@yahoo.com",
