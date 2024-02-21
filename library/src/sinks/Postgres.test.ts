@@ -75,6 +75,20 @@ t.test("We can hijack Postgres class", async () => {
         "Aikido guard has blocked a SQL injection: 'OR 1=1-- originating from body"
       );
     }
+    await runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {},
+        headers: {},
+        body: {},
+        cookies: {},
+      },
+      () => {
+        return client.query("-- This is a comment");
+      }
+    );
   } catch (error: any) {
     t.fail(error);
   } finally {
