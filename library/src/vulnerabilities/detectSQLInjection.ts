@@ -89,11 +89,11 @@ const SQL_STRING_CHARS = [`"`, `'`];
 // Declare Regexes
 const dangerousInStringRegex = new RegExp(
   SQL_DANGEROUS_IN_STRING.join("|"),
-  "mgi"
+  "im"
 );
 const possibleSqlRegex = new RegExp(
-  [...SQL_STATEMENTS, ...SQL_FUNCTIONS, ...SQL_KEYWORDS].join("|"),
-  "mgi"
+  SQL_KEYWORDS.join("|"),
+  "im"
 );
 
 /**
