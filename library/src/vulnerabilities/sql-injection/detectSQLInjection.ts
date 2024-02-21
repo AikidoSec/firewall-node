@@ -24,18 +24,21 @@ import {
  */
 export function detectSQLInjection(query: string, userInput: string) {
   if (!queryContainsUserInput(query, userInput)) {
+    // If the user input is not part of the query, return false (No need to check)
     return false;
   }
   if (dangerousCharsInInput(userInput)) {
+    // If the user input contains characters that are dangerous in every context :
+    // Encapsulated or not, return true (No need to check any further)
     return true;
   }
-  if (
-    !userInputOccurrencesSafelyEncapsulated(query, userInput) &&
-    userInputContainsSQLsyntax(userInput)
-  ) {
-    return true;
+  if (userInputOccurrencesSafelyEncapsulated(query, userInput)) {
+    // If the user input is safely encapsulated as a string in the query
+    // We can ignore it and return false (i.e. not an injection)
+    return false;
   }
-  return false;
+  // Executing our final check with the massive RegEx :
+  return userInputContainsSQLsyntax(userInput);
 }
 
 // Declare Regexes
