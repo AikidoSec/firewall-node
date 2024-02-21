@@ -7,7 +7,7 @@ import {
   inputAlwaysEncapsulated,
   inputPossibleSql,
   sqlContainsInput,
-} from "./sql-injection/detectSQLInjection";
+} from "./detectSQLInjection";
 
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
@@ -66,7 +66,7 @@ const IS_INJECTION = [
 
 t.test("Test the detectSQLInjection() function", async () => {
   for (const sql of BAD_SQL_COMMANDS) {
-    t.ok(detectSQLInjection(sql, sql), sql);
+    t_isSqlInjection(sql, sql);
   }
   for (const sql of GOOD_SQL_COMMANDS) {
     t.notOk(detectSQLInjection(sql, sql), sql);
@@ -74,7 +74,7 @@ t.test("Test the detectSQLInjection() function", async () => {
 });
 t.test("Test detectSQLInjection() function", async () => {
   for (const test of IS_INJECTION) {
-    t.ok(detectSQLInjection(test[0], test[1]), test[0]);
+    t_isSqlInjection(test[0], test[1]);
   }
   for (const test of IS_NOT_INJECTION) {
     t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
@@ -94,19 +94,22 @@ const auth_bypass = fs
   .split(/\r?\n/);
 t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
   for (const sql of auth_bypass) {
-    t.ok(detectSQLInjection(sql, sql), sql);
+    t_isSqlInjection(sql, sql);
   }
 });
 
 const postgres_txt = fs
   .readFileSync(
-    path.join(__dirname, "./../../../testing/sql-injection-payloads/postgres.txt"),
+    path.join(
+      __dirname,
+      "./../../../testing/sql-injection-payloads/postgres.txt"
+    ),
     "utf-8"
   )
   .split(/\r?\n/);
 t.test("Test the detectSQLInjection() with postgres.txt", async () => {
   for (const sql of postgres_txt) {
-    t.ok(detectSQLInjection(sql, sql), sql);
+    t_isSqlInjection(sql, sql);
   }
 });
 
@@ -120,7 +123,7 @@ t.test(
   "Test the detectSQLInjection() with postgres-enumeration.txt",
   async () => {
     for (const sql of mysql_txt) {
-      t.ok(detectSQLInjection(sql, sql), sql);
+      t_isSqlInjection(sql, sql);
     }
   }
 );
@@ -136,7 +139,7 @@ const mssql_and_db2_txt = fs
   .split(/\r?\n/);
 t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
   for (const sql of mysql_txt) {
-    t.ok(detectSQLInjection(sql, sql), sql);
+    t_isSqlInjection(sql, sql);
   }
 });
 
@@ -146,19 +149,19 @@ t.test(
   "Test the detectSQLInjection() function to see if it detects SQL Functions",
   async () => {
     // Keep in mind t.ok means that it IS in fact a SQL Injection
-    t.ok(detectSQLInjection("foobar()", "foobar()"));
-    t.ok(detectSQLInjection("foobar(1234567)", "foobar(1234567)"));
-    t.ok(detectSQLInjection("foobar       ()", "foobar       ()"));
-    t.ok(detectSQLInjection(".foobar()", ".foobar()"));
-    t.ok(detectSQLInjection("20+foobar()", "20+foobar()"));
-    t.ok(detectSQLInjection("20-foobar(", "20-foobar("));
-    t.ok(detectSQLInjection("20<foobar()", "20<foobar()"));
-    t.ok(detectSQLInjection("20*foobar  ()", "20*foobar  ()"));
-    t.ok(detectSQLInjection("!foobar()", "!foobar()"));
-    t.ok(detectSQLInjection("=foobar()", "=foobar()"));
-    t.ok(detectSQLInjection("1foobar()", "1foobar()"));
-    t.ok(detectSQLInjection("1foo_bar()", "1foo_bar()"));
-    t.ok(detectSQLInjection("1foo-bar()", "1foo-bar()"));
+    t_isSqlInjection("foobar()", "foobar()");
+    t_isSqlInjection("foobar(1234567)", "foobar(1234567)");
+    t_isSqlInjection("foobar       ()", "foobar       ()");
+    t_isSqlInjection(".foobar()", ".foobar()");
+    t_isSqlInjection("20+foobar()", "20+foobar()");
+    t_isSqlInjection("20-foobar(", "20-foobar(");
+    t_isSqlInjection("20<foobar()", "20<foobar()");
+    t_isSqlInjection("20*foobar  ()", "20*foobar  ()");
+    t_isSqlInjection("!foobar()", "!foobar()");
+    t_isSqlInjection("=foobar()", "=foobar()");
+    t_isSqlInjection("1foobar()", "1foobar()");
+    t_isSqlInjection("1foo_bar()", "1foo_bar()");
+    t_isSqlInjection("1foo-bar()", "1foo-bar()");
 
     t.notOk(detectSQLInjection("foobar)", "foobar)"));
     t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
@@ -190,3 +193,7 @@ t.test("Test the inputAlwaysEncapsulated() function", async () => {
 t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));
 });
+
+function t_isSqlInjection(sql, input) {
+  t.ok(detectSQLInjection(sql, input), sql);
+}
