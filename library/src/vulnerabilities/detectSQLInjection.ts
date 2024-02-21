@@ -107,7 +107,7 @@ const possibleSqlRegex = new RegExp(
     SQL_OPERATORS.join("|") +
     ")|(?<=([\\s|.|" +
     SQL_OPERATORS.join("|") +
-    "]|^)+)([a-z_]+)(?=[\\s]*\\()",
+    "]|^)+)([a-z0-9_-]+)(?=[\\s]*\\()",
   "im"
 );
 
