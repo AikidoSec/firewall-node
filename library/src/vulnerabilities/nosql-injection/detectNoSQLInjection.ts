@@ -1,8 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
-import { isPlainObject } from "../helpers/isPlainObject";
-import { tryDecodeAsJWT } from "../helpers/jwt";
-import { Context } from "../agent/Context";
-import { Source } from "../agent/Source";
+import { isPlainObject } from "../../helpers/isPlainObject";
+import { tryDecodeAsJWT } from "../../helpers/jwt";
+import { Context } from "../../agent/Context";
+import { Source } from "../../agent/Source";
 
 type PathPart =
   | { type: "jwt" }

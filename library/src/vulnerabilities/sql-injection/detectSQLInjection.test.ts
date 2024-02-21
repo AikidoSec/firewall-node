@@ -7,7 +7,7 @@ import {
   inputAlwaysEncapsulated,
   inputPossibleSql,
   sqlContainsInput,
-} from "./detectSQLInjection";
+} from "./sql-injection/detectSQLInjection";
 
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP

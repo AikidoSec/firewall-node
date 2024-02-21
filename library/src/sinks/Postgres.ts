@@ -4,7 +4,7 @@ import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
-import { checkContextForSqlInjection } from "../vulnerabilities/detectSQLInjection";
+import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 export class Postgres implements Wrapper {
   private wrapQueryFunction(exports: unknown) {
