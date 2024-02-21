@@ -82,6 +82,7 @@ const SQL_FUNCTIONS = [
   "benchmark",
   "count",
   "pg_sleep",
+  "repeat",
 ];
 const SQL_STATEMENTS = ["<>", "=", "!=", ";"];
 const SQL_STRING_CHARS = [`"`, `'`];
