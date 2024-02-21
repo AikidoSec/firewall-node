@@ -19,11 +19,22 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_DB=main_db
     ports:
-     - "27016:5432"
+      - "27016:5432"
+  mysql:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "27015:3306"
+    volumes:
+      - mysql:/var/lib/mysql
 
 
 volumes:
   mongodb:
     driver: local
   postgres:
+    driver: local
+  mysql:
     driver: local
