@@ -39,7 +39,7 @@ type Started = {
   time: number;
 };
 
-export type Kind = "nosql_injection" | "sql_injection_pg";
+export type Kind = "nosql_injection" | "sql_injection";
 
 type DetectedAttack = {
   type: "detected_attack";
