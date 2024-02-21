@@ -8,9 +8,10 @@ async function connectToMariaDB() {
     pool = new mariadb.createPool({
         user: 'root',
         host: '127.0.0.1',
-        database: 'main_db',
-        password: 'password',
-        port: 27016,
+        database: 'catsdb',
+        password: 'mypassword',
+        port: 27015,
+        multipleStatements: true,
     });
 
     conn = await pool.getConnection();
@@ -35,7 +36,7 @@ async function insertCatIntoTable(petname) {
 async function getAllCats() {
     // This function returns all cats in the db
     const cats = await conn.query("SELECT petname FROM cats;")   
-    return cats.rows.map((row) => row.petname);
+    return cats.map((row) => row.petname);
 }
 
 module.exports = {connectToMariaDB, insertCatIntoTable, getAllCats};
