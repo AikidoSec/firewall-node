@@ -75,6 +75,14 @@ t.test("We can hijack Postgres class", async () => {
         "Aikido guard has blocked a SQL injection: 'OR 1=1-- originating from body"
       );
     }
+    // @ts-ignore
+    setInstance(null); // We want to check if the code works when an Agent is not defined.
+    await runWithContext(context, () => {
+      // Normally this should be detected, but since the agent
+      // is not defined we let it through.
+      return client.query("'OR 1=1--");
+    });
+    setInstance(agent); // Put the agent back for the following tests
     await runWithContext(
       {
         remoteAddress: "::1",
