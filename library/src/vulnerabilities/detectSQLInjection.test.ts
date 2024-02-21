@@ -143,9 +143,19 @@ t.test(
     t.ok(detectSQLInjection("foobar()", "foobar()"));
     t.ok(detectSQLInjection("foobar(1234567)", "foobar(1234567)"));
     t.ok(detectSQLInjection("foobar       ()", "foobar       ()"));
+    t.ok(detectSQLInjection(".foobar()", ".foobar()"));
+    t.ok(detectSQLInjection("20+foobar()", "20+foobar()"));
+    t.ok(detectSQLInjection("20-foobar(", "20-foobar("));
+    t.ok(detectSQLInjection("20<foobar()", "20<foobar()"));
+    t.ok(detectSQLInjection("20*foobar  ()", "20*foobar  ()"));
+    t.ok(detectSQLInjection("!foobar()", "!foobar()"));
+    t.ok(detectSQLInjection("=foobar()", "=foobar()"));
 
     t.notOk(detectSQLInjection("foobar)", "foobar)"));
     t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
+    t.notOk(detectSQLInjection("1foobar()", "1foobar()"));
+    t.notOk(detectSQLInjection("#foobar()", "#foobar()"));
+    t.notOk(detectSQLInjection("$foobar()", "$foobar()"));
   }
 );
 
