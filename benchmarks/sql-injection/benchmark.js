@@ -55,19 +55,19 @@ function getAvgBenchmark() {
  */
 function fetchSqlStatements() {
   const auth_bypass_txt = fs.readFileSync(
-    path.join(__dirname, "./../../library/testing/exploit/Auth_Bypass.txt"),
+    path.join(__dirname, "./../../library/testing/sql-injection-payloads/Auth_Bypass.txt"),
     "utf-8"
   );
   const postgres_txt = fs.readFileSync(
-    path.join(__dirname, "./../../library/testing/exploit/postgres.txt"),
+    path.join(__dirname, "./../../library/testing/sql-injection-payloads/postgres.txt"),
     "utf-8"
   );
   const mysql_txt = fs.readFileSync(
-    path.join(__dirname, "./../../library/testing/exploit/mysql.txt"),
+    path.join(__dirname, "./../../library/testing/sql-injection-payloads/mysql.txt"),
     "utf-8"
   );
   const mssql_and_db2_txt = fs.readFileSync(
-    path.join(__dirname, "./../../library/testing/exploit/mssql_and_db2.txt"),
+    path.join(__dirname, "./../../library/testing/sql-injection-payloads/mssql_and_db2.txt"),
     "utf-8"
   );
 
