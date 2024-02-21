@@ -3,7 +3,7 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
 import { LoggerNoop } from "../agent/Logger";
-import { Context, runWithContext } from "../agent/Context";
+import type { Context } from "../agent/Context";
 import { Postgres } from "./Postgres";
 import type { Client } from "pg";
 
@@ -29,7 +29,6 @@ const context: Context = {
 t.test("We can hijack Postgres class", async () => {
   const postgres = new Postgres();
   postgres.wrap();
-
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -67,6 +66,6 @@ t.test("We can hijack Postgres class", async () => {
   } catch (error: any) {
     t.fail(error);
   } finally {
-    await client.close();
+    await client.end();
   }
 });
