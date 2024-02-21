@@ -16,20 +16,20 @@ import {
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
- * Step 2 : sqlContainsInput
- * 2. Executes sqlContainsInput() - This checks wether the input is in the sql
- * @param sql The SQL Statement that's going to be executed
- * @param input The user input that might be dangerous
+ * Step 2 : queryContainsUserInput
+ * 2. Executes queryContainsUserInput() - This checks wether the input is in the sql
+ * @param query The SQL Statement that's going to be executed
+ * @param userInput The user input that might be dangerous
  * @returns True if SQL Injection is detected
  */
-export function queryContainsUserInput(sql: string, input: string) {
-  if (!sqlContainsInput(sql, input)) {
+export function detectSQLInjection(query: string, userInput: string) {
+  if (!queryContainsUserInput(query, userInput)) {
     return false;
   }
-  if (dangerousCharsInInput(input)) {
+  if (dangerousCharsInInput(userInput)) {
     return true;
   }
-  if (!userInputOccurrencesSafelyEncapsulated(sql, input) && userInputContainsSQLsyntax(input)) {
+  if (!userInputOccurrencesSafelyEncapsulated(query, userInput) && userInputContainsSQLsyntax(userInput)) {
     return true;
   }
   return false;
@@ -65,13 +65,13 @@ export function userInputContainsSQLsyntax(input: string): boolean {
 /**
  * This function is the first step to determine if an SQL Injection is happening,
  * If the sql statement contains user input, this function returns true (case-insensitive)
- * @param sql The SQL Statement you want to check it against
- * @param input The user input you want to check
+ * @param query The SQL Statement you want to check it against
+ * @param userInput The user input you want to check
  * @returns True when the sql statement contains the input
  */
-export function sqlContainsInput(sql: string, input: string) {
-  const lowercaseSql = sql.toLowerCase();
-  const lowercaseInput = input.toLowerCase();
+export function queryContainsUserInput(query: string, userInput: string) {
+  const lowercaseSql = query.toLowerCase();
+  const lowercaseInput = userInput.toLowerCase();
   return lowercaseSql.includes(lowercaseInput);
 }
 
@@ -79,27 +79,27 @@ export function sqlContainsInput(sql: string, input: string) {
  * This function is the second step to determine if an SQL Injection is happening,
  * If the user input contains characters that should never end up in a query, not
  * even in a string, this function returns true.
- * @param input The user input you want to check
+ * @param userInput The user input you want to check
  * @returns True if characters are present
  */
-export function dangerousCharsInInput(input: string): boolean {
-  return dangerousInStringRegex.test(input);
+export function dangerousCharsInInput(userInput: string): boolean {
+  return dangerousInStringRegex.test(userInput);
 }
 
 /**
  * This function is the third step to determine if an SQL Injection is happening,
  * This checks if **all** occurences of our input are encapsulated as strings.
- * @param sql The SQL Statement
- * @param input The user input you want to check is encapsulated
+ * @param query The SQL Statement
+ * @param userInput The user input you want to check is encapsulated
  * @returns True if the input is always encapsulated inside a string
  */
-export function userInputOccurrencesSafelyEncapsulated(sql: string, input: string) {
-  const sqlWithoutUserInput = sql.split(input);
-  for (let i = 0; i + 1 < sqlWithoutUserInput.length; i++) {
+export function userInputOccurrencesSafelyEncapsulated(query: string, userInput: string) {
+  const queryWithoutUserInput = query.split(userInput);
+  for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
     // Get the last character of this segment
-    const lastChar = sqlWithoutUserInput[i].slice(-1);
+    const lastChar = queryWithoutUserInput[i].slice(-1);
     // Get the first character of the next segment
-    const firstCharNext = sqlWithoutUserInput[i + 1].slice(0, 1);
+    const firstCharNext = queryWithoutUserInput[i + 1].slice(0, 1);
 
     if (!SQL_STRING_CHARS.includes(lastChar)) {
       return false; // If the character is not one of these, it's not a string.
@@ -131,7 +131,7 @@ export function checkContextForSqlInjection(
     if (request[source]) {
       const userInput = extract(request[source]);
       for (let i = 0; i < userInput.length; i++) {
-        if (queryContainsUserInput(sql, userInput[i])) {
+        if (detectSQLInjection(sql, userInput[i])) {
           agent.onDetectedAttack({
             module,
             kind: "sql_injection",
