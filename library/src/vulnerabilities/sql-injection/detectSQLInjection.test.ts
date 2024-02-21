@@ -69,7 +69,7 @@ t.test("Test the detectSQLInjection() function", async () => {
     t_isSqlInjection(sql, sql);
   }
   for (const sql of GOOD_SQL_COMMANDS) {
-    t.notOk(detectSQLInjection(sql, sql), sql);
+    t_isNotSqlInjection(sql, sql);
   }
 });
 t.test("Test detectSQLInjection() function", async () => {
@@ -77,7 +77,7 @@ t.test("Test detectSQLInjection() function", async () => {
     t_isSqlInjection(test[0], test[1]);
   }
   for (const test of IS_NOT_INJECTION) {
-    t.notOk(detectSQLInjection(test[0], test[1]), test[0]);
+    t_isNotSqlInjection(test[0], test[1]);
   }
 });
 
@@ -163,10 +163,10 @@ t.test(
     t_isSqlInjection("1foo_bar()", "1foo_bar()");
     t_isSqlInjection("1foo-bar()", "1foo-bar()");
 
-    t.notOk(detectSQLInjection("foobar)", "foobar)"));
-    t.notOk(detectSQLInjection("foobar      )", "foobar      )"));
-    t.notOk(detectSQLInjection("#foobar()", "#foobar()"));
-    t.notOk(detectSQLInjection("$foobar()", "$foobar()"));
+    t_isNotSqlInjection("foobar)", "foobar)");
+    t_isNotSqlInjection("foobar      )", "foobar      )");
+    t_isNotSqlInjection("#foobar()", "#foobar()");
+    t_isNotSqlInjection("$foobar()", "$foobar()");
   }
 );
 
@@ -196,4 +196,8 @@ t.test("Test the dangerousCharsInInput() function", async () => {
 
 function t_isSqlInjection(sql, input) {
   t.ok(detectSQLInjection(sql, input), sql);
+}
+
+function t_isNotSqlInjection(sql, input) {
+  t.notOk(detectSQLInjection(sql, input), sql);
 }
