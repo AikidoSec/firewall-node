@@ -52,16 +52,16 @@ const GOOD_SQL_COMMANDS = [
 ];
 
 const IS_NOT_INJECTION = [
-  [`'UNION 123' UNION "UNION 123"`, "UNION 123"],
-  [`'union'  is not "UNION"`, "UNION!"],
-  [`"UNION;"`, "UNION;"],
+  [`'UNION 123' UNION "UNION 123"`, "UNION 123"], // String encapsulation
+  [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
+  [`"UNION;"`, "UNION;"], // String encapsulation
 ];
 
 const IS_INJECTION = [
-  [`'union'  is not UNION`, "UNION"],
-  [`'union'  is not "UNION--"`, "UNION--"],
-  [`"COPY/*"`, "COPY/*"],
-  [`UNTER;`, "UNTER;"],
+  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
+  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
+  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
+  [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
 t.test("Test the detectSQLInjection() function", async () => {
