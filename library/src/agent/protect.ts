@@ -100,7 +100,7 @@ function getAgent({
   return agent;
 }
 /**
- * This function **disables** logging from the "shimer" package
+ * This function **disables** logging from the "shimer" package - this avoid logs whenever a function doesn't exist
  */
 function disableShimmerLogging() {
   shimmer({ logger: () => {} });
