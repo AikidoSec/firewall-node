@@ -2,25 +2,17 @@ import { Agent } from "../agent/Agent";
 import { Context } from "../agent/Context";
 import { Source, friendlyName } from "../agent/Source";
 import { extract } from "../helpers/extractStringsFromObjects";
-import { SQL_KEYWORDS } from "./detectSQLInjection.config.json";
-// We make use of double backslashes to create a single backslash in the RegEx
-const SQL_DANGEROUS_IN_STRING = ["\\\\", `'`, `"`, "`", "\\/\\*", "--"]; // Dangerous characters in strings : \ ' " ` /* --
-const SQL_OPERATORS = [
-  "=",
-  "!",
-  ";",
-  "\\+",
-  "\\-",
-  "\\*",
-  "\\/",
-  "%",
-  "&",
-  "\\|",
-  "\\^",
-  ">",
-  "<",
-]; // SQL Operators : = ! ; + - * / % & | ^ > <
-const SQL_STRING_CHARS = [`"`, `'`];
+
+/* We make use of double backslashes to create a single backslash in the RegEx
+ * SQL Operators : = ! ; + - * / % & | ^ > <
+ * Dangerous characters in strings : \ ' " ` /* --
+ */
+import {
+  SQL_KEYWORDS,
+  SQL_OPERATORS,
+  SQL_DANGEROUS_IN_STRING,
+  SQL_STRING_CHARS,
+} from "./detectSQLInjection.config.json";
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
