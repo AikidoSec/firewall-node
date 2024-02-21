@@ -8,7 +8,24 @@ const {
   detectSQLInjection,
 } = require("../../library/src/vulnerabilities/detectSQLInjection");
 
-function runBenchmark(sql:string, input:string) {
+const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
+
+function main() {
+  const avgTime = getAvgBenchmark();
+  if (avgTime > MAX_TIME_LIMIT) {
+    console.error(
+      `Average time it took for detectSQLInjection() : ${avgTime}ms, this exceeds the allowed time of ${MAX_TIME_LIMIT}ms!`
+    );
+    process.exit(1);
+  } else {
+    console.info(
+      `Average time it took for detectSQLInjection() : ${avgTime}ms`
+    );
+  }
+}
+main();
+
+function runBenchmark(sql: string, input: string) {
   const startTime = performance.now();
   detectSQLInjection(sql, input);
   const endTime = performance.now();
@@ -20,16 +37,16 @@ function runBenchmark(sql:string, input:string) {
  * @returns average time in milliseconds
  */
 function getAvgBenchmark() {
-    const sqlArray = fetchSqlStatements();
-    let avgTime = 0;
-    for (const sql of sqlArray) {
-        avgTime += runBenchmark(sql, sql)
-    }
-    console.log(avgTime)
-    avgTime = avgTime / sqlArray.length
+  const sqlArray = fetchSqlStatements();
+  let avgTime = 0;
+  for (const sql of sqlArray) {
+    avgTime += runBenchmark(sql, sql);
+  }
+  console.log(avgTime);
+  avgTime = avgTime / sqlArray.length;
 
-  return avgTime
-};
+  return avgTime;
+}
 
 /**
  * This function collects the dangerous sql statements in testing/exploit
