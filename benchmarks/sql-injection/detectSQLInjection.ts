@@ -2,9 +2,8 @@
  * Runs benchmarks for the detection of SQL Injections
  * @module
  */
-const { performance } = require('perf_hooks');
 const fs = require('fs');
-import { detectSQLInjection } from "../../library/src/vulnerabilities/detectSQLInjection";
+const { detectSQLInjection } = require("../../library/src/vulnerabilities/detectSQLInjection");
 
 const SQL_STATEMENT = "TEST";
 const USER_INPUT = "T";
