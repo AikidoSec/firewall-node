@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const {
   detectSQLInjection,
-} = require("../../library/dist/vulnerabilities/detectSQLInjection");
+} = require("../../library/dist/vulnerabilities/sql-injection/detectSQLInjection");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 
