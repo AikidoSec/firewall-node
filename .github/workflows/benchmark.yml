@@ -11,6 +11,14 @@ jobs:
           "MONGO_INITDB_ROOT_PASSWORD": "password"
         ports:
           - 27017:27017
+      postgres:
+        image: postgres:14-alpine
+        env:
+          "POSTGRES_PASSWORD": "password"
+          "POSTGRES_USER": "root"
+          "POSTGRES_DB": "main_db"
+        ports:
+          - "27016:5432"
     timeout-minutes: 5
     strategy:
       matrix:
