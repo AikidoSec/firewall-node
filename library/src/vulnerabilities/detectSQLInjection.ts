@@ -92,10 +92,11 @@ const dangerousInStringRegex = new RegExp(
   "im"
 );
 const possibleSqlRegex = new RegExp(
-  "(?<=[a-z])(" +
+  "(?<![a-z])(" +
     SQL_KEYWORDS.join("|") +
-    ")(?=[a-z])(" +
-    SQL_STATEMENTS.join("|"),
+    ")(?![a-z])|(" +
+    SQL_STATEMENTS.join("|") +
+    ")",
   "im"
 );
 
@@ -128,7 +129,7 @@ export function detectSQLInjection(sql: string, input: string) {
  * @returns True when this is a posible SQL Injection
  */
 export function inputPossibleSql(input: string): boolean {
-    return possibleSqlRegex.test(input)
+  return possibleSqlRegex.test(input);
 }
 
 /**
