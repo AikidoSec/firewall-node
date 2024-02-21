@@ -5,8 +5,7 @@ import {
   dangerousCharsInInput,
   detectSQLInjection,
   userInputOccurrencesSafelyEncapsulated,
-  userInputContainsSQLsyntax,
-  sqlContainsInput,
+  queryContainsUserInput,
 } from "./detectSQLInjection";
 
 const BAD_SQL_COMMANDS = [
@@ -36,7 +35,7 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red rollbacks are blue",
   "Roses are red truncates are blue",
   "Roses are reddelete are blue",
-  "Roses are red WHEREis blue", 
+  "Roses are red WHEREis blue",
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
@@ -168,25 +167,35 @@ t.test(
   }
 );
 
-t.test("Test the sqlContainsInput() function", async () => {
-  t.ok(sqlContainsInput("SELECT * FROM 'Jonas';", "Jonas"));
-  t.ok(sqlContainsInput("Hi I'm MJoNaSs", "jonas"));
-  t.ok(sqlContainsInput("Hiya, 123^&*( is a real string", "123^&*("));
-  t.notOk(sqlContainsInput("Roses are red", "violet"));
+t.test("Test the queryContainsUserInput() function", async () => {
+  t.ok(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"));
+  t.ok(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"));
+  t.ok(queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("));
+  t.notOk(queryContainsUserInput("Roses are red", "violet"));
 });
 
-t.test("Test the userInputOccurrencesSafelyEncapsulated() function", async () => {
-  t.ok(
-    userInputOccurrencesSafelyEncapsulated(` Hello Hello 'UNION'and also "UNION" `, "UNION")
-  );
-  t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"));
-  t.ok(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"));
-  t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"));
+t.test(
+  "Test the userInputOccurrencesSafelyEncapsulated() function",
+  async () => {
+    t.ok(
+      userInputOccurrencesSafelyEncapsulated(
+        ` Hello Hello 'UNION'and also "UNION" `,
+        "UNION"
+      )
+    );
+    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"));
+    t.ok(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"));
+    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"));
 
-  t.notOk(userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
-  t.notOk(userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
-  t.notOk(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"));
-});
+    t.notOk(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION")
+    );
+    t.notOk(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION")
+    );
+    t.notOk(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"));
+  }
+);
 
 t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));

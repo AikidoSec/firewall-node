@@ -29,7 +29,10 @@ export function detectSQLInjection(query: string, userInput: string) {
   if (dangerousCharsInInput(userInput)) {
     return true;
   }
-  if (!userInputOccurrencesSafelyEncapsulated(query, userInput) && userInputContainsSQLsyntax(userInput)) {
+  if (
+    !userInputOccurrencesSafelyEncapsulated(query, userInput) &&
+    userInputContainsSQLsyntax(userInput)
+  ) {
     return true;
   }
   return false;
@@ -55,11 +58,11 @@ const possibleSqlRegex = new RegExp(
  * This function is the first check in order to determine if a SQL injection is happening,
  * If the user input contains the necessary characters or words for a SQL injection, this
  * function returns true.
- * @param input The user input you want to check
+ * @param userInput The user input you want to check
  * @returns True when this is a posible SQL Injection
  */
-export function userInputContainsSQLsyntax(input: string): boolean {
-  return possibleSqlRegex.test(input);
+export function userInputContainsSQLsyntax(userInput: string): boolean {
+  return possibleSqlRegex.test(userInput);
 }
 
 /**
@@ -93,7 +96,10 @@ export function dangerousCharsInInput(userInput: string): boolean {
  * @param userInput The user input you want to check is encapsulated
  * @returns True if the input is always encapsulated inside a string
  */
-export function userInputOccurrencesSafelyEncapsulated(query: string, userInput: string) {
+export function userInputOccurrencesSafelyEncapsulated(
+  query: string,
+  userInput: string
+) {
   const queryWithoutUserInput = query.split(userInput);
   for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
     // Get the last character of this segment
