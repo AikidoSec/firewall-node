@@ -22,14 +22,14 @@ import {
  * @param input The user input that might be dangerous
  * @returns True if SQL Injection is detected
  */
-export function detectSQLInjection(sql: string, input: string) {
+export function queryContainsUserInput(sql: string, input: string) {
   if (!sqlContainsInput(sql, input)) {
     return false;
   }
   if (dangerousCharsInInput(input)) {
     return true;
   }
-  if (!inputAlwaysEncapsulated(sql, input) && inputPossibleSql(input)) {
+  if (!userInputOccurrencesSafelyEncapsulated(sql, input) && userInputContainsSQLsyntax(input)) {
     return true;
   }
   return false;
@@ -58,7 +58,7 @@ const possibleSqlRegex = new RegExp(
  * @param input The user input you want to check
  * @returns True when this is a posible SQL Injection
  */
-export function inputPossibleSql(input: string): boolean {
+export function userInputContainsSQLsyntax(input: string): boolean {
   return possibleSqlRegex.test(input);
 }
 
@@ -93,7 +93,7 @@ export function dangerousCharsInInput(input: string): boolean {
  * @param input The user input you want to check is encapsulated
  * @returns True if the input is always encapsulated inside a string
  */
-export function inputAlwaysEncapsulated(sql: string, input: string) {
+export function userInputOccurrencesSafelyEncapsulated(sql: string, input: string) {
   const sqlWithoutUserInput = sql.split(input);
   for (let i = 0; i + 1 < sqlWithoutUserInput.length; i++) {
     // Get the last character of this segment
@@ -131,7 +131,7 @@ export function checkContextForSqlInjection(
     if (request[source]) {
       const userInput = extract(request[source]);
       for (let i = 0; i < userInput.length; i++) {
-        if (detectSQLInjection(sql, userInput[i])) {
+        if (queryContainsUserInput(sql, userInput[i])) {
           agent.onDetectedAttack({
             module,
             kind: "sql_injection",

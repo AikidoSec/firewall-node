@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
-  detectSQLInjection,
+  queryContainsUserInput,
 } = require("../../library/dist/vulnerabilities/sql-injection/detectSQLInjection");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
@@ -14,12 +14,12 @@ function main() {
   const avgTime = getAvgBenchmark();
   if (avgTime > MAX_TIME_LIMIT) {
     console.error(
-      `Average time it took for detectSQLInjection() : ${avgTime}ms, this exceeds the allowed time of ${MAX_TIME_LIMIT}ms!`
+      `Average time it took for queryContainsUserInput() : ${avgTime}ms, this exceeds the allowed time of ${MAX_TIME_LIMIT}ms!`
     );
     process.exit(1);
   } else {
     console.info(
-      `Average time it took for detectSQLInjection() : ${avgTime}ms`
+      `Average time it took for queryContainsUserInput() : ${avgTime}ms`
     );
   }
 }
@@ -27,7 +27,7 @@ main();
 
 function runBenchmark(sql, input) {
   const startTime = performance.now();
-  detectSQLInjection(sql, input);
+  queryContainsUserInput(sql, input);
   const endTime = performance.now();
   return endTime - startTime;
 }

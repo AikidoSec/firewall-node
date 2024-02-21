@@ -3,9 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   dangerousCharsInInput,
-  detectSQLInjection,
-  inputAlwaysEncapsulated,
-  inputPossibleSql,
+  queryContainsUserInput,
+  userInputOccurrencesSafelyEncapsulated,
+  userInputContainsSQLsyntax,
   sqlContainsInput,
 } from "./detectSQLInjection";
 
@@ -36,7 +36,7 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red rollbacks are blue",
   "Roses are red truncates are blue",
   "Roses are reddelete are blue",
-  "Roses are red WHEREis blue",
+  "Roses are red WHEREis blue", 
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
@@ -62,7 +62,7 @@ const IS_INJECTION = [
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
-t.test("Test the detectSQLInjection() function", async () => {
+t.test("Test the queryContainsUserInput() function", async () => {
   for (const sql of BAD_SQL_COMMANDS) {
     t_isSqlInjection(sql, sql);
   }
@@ -70,7 +70,7 @@ t.test("Test the detectSQLInjection() function", async () => {
     t_isNotSqlInjection(sql, sql);
   }
 });
-t.test("Test detectSQLInjection() function", async () => {
+t.test("Test queryContainsUserInput() function", async () => {
   for (const test of IS_INJECTION) {
     t_isSqlInjection(test[0], test[1]);
   }
@@ -90,7 +90,7 @@ const auth_bypass = fs
     "utf-8"
   )
   .split(/\r?\n/);
-t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
+t.test("Test the queryContainsUserInput() with Auth_Bypass.txt", async () => {
   for (const sql of auth_bypass) {
     t_isSqlInjection(sql, sql);
   }
@@ -105,7 +105,7 @@ const postgres_txt = fs
     "utf-8"
   )
   .split(/\r?\n/);
-t.test("Test the detectSQLInjection() with postgres.txt", async () => {
+t.test("Test the queryContainsUserInput() with postgres.txt", async () => {
   for (const sql of postgres_txt) {
     t_isSqlInjection(sql, sql);
   }
@@ -118,7 +118,7 @@ const mysql_txt = fs
   )
   .split(/\r?\n/);
 t.test(
-  "Test the detectSQLInjection() with postgres-enumeration.txt",
+  "Test the queryContainsUserInput() with postgres-enumeration.txt",
   async () => {
     for (const sql of mysql_txt) {
       t_isSqlInjection(sql, sql);
@@ -135,7 +135,7 @@ const mssql_and_db2_txt = fs
     "utf-8"
   )
   .split(/\r?\n/);
-t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
+t.test("Test the queryContainsUserInput() with mssql_and_db2.txt", async () => {
   for (const sql of mysql_txt) {
     t_isSqlInjection(sql, sql);
   }
@@ -144,7 +144,7 @@ t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
 // END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
 t.test(
-  "Test the detectSQLInjection() function to see if it detects SQL Functions",
+  "Test the queryContainsUserInput() function to see if it detects SQL Functions",
   async () => {
     // Keep in mind t.ok means that it IS in fact a SQL Injection
     t_isSqlInjection("foobar()", "foobar()");
@@ -175,17 +175,17 @@ t.test("Test the sqlContainsInput() function", async () => {
   t.notOk(sqlContainsInput("Roses are red", "violet"));
 });
 
-t.test("Test the inputAlwaysEncapsulated() function", async () => {
+t.test("Test the userInputOccurrencesSafelyEncapsulated() function", async () => {
   t.ok(
-    inputAlwaysEncapsulated(` Hello Hello 'UNION'and also "UNION" `, "UNION")
+    userInputOccurrencesSafelyEncapsulated(` Hello Hello 'UNION'and also "UNION" `, "UNION")
   );
-  t.ok(inputAlwaysEncapsulated(`"UNION"`, "UNION"));
-  t.ok(inputAlwaysEncapsulated(` 'UNION' `, "UNION"));
-  t.ok(inputAlwaysEncapsulated(`"UNION"'UNION'`, "UNION"));
+  t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"));
+  t.ok(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"));
+  t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"));
 
-  t.notOk(inputAlwaysEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
-  t.notOk(inputAlwaysEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
-  t.notOk(inputAlwaysEncapsulated("UNION", "UNION"));
+  t.notOk(userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"));
+  t.notOk(userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"));
+  t.notOk(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"));
 });
 
 t.test("Test the dangerousCharsInInput() function", async () => {
@@ -193,9 +193,9 @@ t.test("Test the dangerousCharsInInput() function", async () => {
 });
 
 function t_isSqlInjection(sql, input) {
-  t.ok(detectSQLInjection(sql, input), sql);
+  t.ok(queryContainsUserInput(sql, input), sql);
 }
 
 function t_isNotSqlInjection(sql, input) {
-  t.notOk(detectSQLInjection(sql, input), sql);
+  t.notOk(queryContainsUserInput(sql, input), sql);
 }
