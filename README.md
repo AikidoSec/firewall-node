@@ -27,7 +27,11 @@ Aikido guard for Node.js is compatible with
 ## Installation
 
 ```shell
-$ npm install @aikidosec/guard
+# The --save-exact makes sure that you don't automatically install a newer version
+$ npm install --save --save-exact @aikdiosec/guard
+
+# The --exact makes sure that you don't automatically install a newer version
+$ yarn add --exact @aikidosec/guard
 ```
 
 * For express based apps, follow the [Express](docs/express.md) instructions
