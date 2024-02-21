@@ -1,5 +1,5 @@
 // Get the client
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 let connection;
 
 async function connectToMysqlDB() {
@@ -33,8 +33,8 @@ async function insertCatIntoTable(petname) {
 
 async function getAllCats() {
     // This function returns all cats in the db
-    const cats = await connection.execute("SELECT petname FROM cats;")   
-    return cats.rows.map((row) => row.petname);
+    const [cats] = await connection.execute("SELECT petname FROM `cats`;")   
+    return cats.map((row) => row.petname);
 }
 
 module.exports = {connectToMysqlDB, insertCatIntoTable, getAllCats};
