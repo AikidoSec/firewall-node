@@ -19,11 +19,24 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_DB=main_db
     ports:
-     - "27016:5432"
+      - "27016:5432"
+  mysql:
+    image: mysql:8
+    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_DATABASE: catsdb
+    ports:
+      - "27015:3306"
+    volumes:
+      - mysql:/var/lib/mysql
 
 
 volumes:
   mongodb:
     driver: local
   postgres:
+    driver: local
+  mysql:
     driver: local
