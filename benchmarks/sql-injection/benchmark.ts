@@ -17,6 +17,7 @@ function runBenchmark(sql:string, input:string) {
 
 /**
  * This function calculates the average time in ms / SQL Statement
+ * @returns average time in milliseconds
  */
 function getAvgBenchmark() {
     const sqlArray = fetchSqlStatements();
@@ -27,9 +28,9 @@ function getAvgBenchmark() {
     console.log(avgTime)
     avgTime = avgTime / sqlArray.length
 
-  console.log(`Benchmark complete: ${avgTime}ms`);
-}
-getAvgBenchmark();
+  return avgTime
+};
+
 /**
  * This function collects the dangerous sql statements in testing/exploit
  * into a single array
