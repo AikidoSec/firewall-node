@@ -20,6 +20,7 @@ const BAD_SQL_COMMANDS = [
   "Roses are red commit are blue",
   "Roses are red or blue",
   "Roses are red and lovely",
+  "This is a group_concat_test",
   // https://github.com/payloadbox/sql-injection-payload-list/blob/master/Intruder/payloads-sql-blind/MSSQL/payloads-sql-blind-MSSQL-INSERT.txt
   `"),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)%20waitfor%20delay%20'0:0:20'%20--`,
   `',NULL,NULL,NULL,NULL,NULL,NULL)%20waitfor%20delay%20'0:0:20'%20--`,
@@ -82,7 +83,6 @@ const GOOD_SQL_COMMANDS = [
   "I was benchmark ing",
   "We were delay ed",
   "I will waitfor you",
-  "This is a group_concat_test",
 ];
 
 const IS_NOT_INJECTION = [
