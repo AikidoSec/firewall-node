@@ -1,5 +1,15 @@
+/**
+ * Exports type def Source but mainly the function {@link friendlyName}
+ * @module agent/Source
+ */
+
 export type Source = "query" | "body" | "headers" | "cookies";
 
+/**
+ * Returns the friendly name of a source type
+ * @param source A source type (either "query", "body", "headers" or "cookies")
+ * @returns A friendly name for each of these types
+ */
 export function friendlyName(source: Source): string {
   switch (source) {
     case "query":
