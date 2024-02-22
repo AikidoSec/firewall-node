@@ -22,13 +22,14 @@ export class Wrapper {
     this.middlewareFunction = middlewareFunction;
   }
   private wrapFunction(exports: unknown) {
+    const that = this;
     for (const wrapSelector of this.wrapSelectors) {
       massWrap(
         wrapSelector.exportsSelector(exports),
         [wrapSelector.wrapFunction],
         function wrapFunction(original) {
           return function wrappedFunction(this: any, ...args: unknown[]) {
-            this.middlewareFunction(args, wrapSelector.wrapFunction);
+            that.middlewareFunction(args, wrapSelector.wrapFunction);
             return original.apply(this, args);
           };
         }
