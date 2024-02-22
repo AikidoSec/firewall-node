@@ -174,7 +174,7 @@ export class MongoDB extends Wrapper {
 }
 
 const mongodbWrapSelector: WrapSelector = {
-  wrapFunctions: [""],
+  wrapFunction: "",
   exportsSelector: (exports) => {
     return [];
   },

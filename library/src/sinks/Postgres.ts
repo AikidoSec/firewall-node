@@ -43,11 +43,9 @@ export class Postgres extends Wrapper {
 }
 
 const postgresWrapSelector: WrapSelector = {
-  wrapFunctions: ["query"],
-  exportsSelector,
+  wrapFunction: "query",
+  exportsSelector: (exports: any) => [
+    exports.Client.prototype,
+    exports.Pool.prototype,
+  ],
 };
-
-function exportsSelector(exports: unknown) {
-  // @ts-expect-error This is magic that TypeScript doesn't understand
-  return [exports.Client.prototype, exports.Pool.prototype];
-}

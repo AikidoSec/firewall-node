@@ -2,7 +2,7 @@ import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 
 export interface WrapSelector {
-  wrapFunctions: string[];
+  wrapFunction: string;
   exportsSelector(exports: unknown): any[];
 }
 export class Wrapper {
@@ -22,14 +22,13 @@ export class Wrapper {
     this.middlewareFunction = middlewareFunction;
   }
   private wrapFunction(exports: unknown) {
-    const that = this;
     for (const wrapSelector of this.wrapSelectors) {
       massWrap(
         wrapSelector.exportsSelector(exports),
-        wrapSelector.wrapFunctions,
+        [wrapSelector.wrapFunction],
         function wrapFunction(original) {
           return function wrappedFunction(this: any, ...args: unknown[]) {
-            this.middlewareFunction(args);
+            this.middlewareFunction(args, wrapSelector.wrapFunction);
             return original.apply(this, args);
           };
         }
