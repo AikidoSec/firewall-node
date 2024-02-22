@@ -12,7 +12,7 @@ export class Postgres extends Wrapper {
     super(
       "pg",
       PG_PACKAGE_VERSION_RANGE,
-      postgresWrapSelector,
+      [postgresWrapSelector],
       Postgres.middleware
     );
   }

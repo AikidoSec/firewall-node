@@ -44,7 +44,12 @@ type BulkWriteOperation = {
 
 export class MongoDB extends Wrapper {
   constructor() {
-    super("mongodb", MONGODB_VERSION_RANGE, mongodbWrapSelector, MongoDB.middleware);
+    super(
+      "mongodb",
+      MONGODB_VERSION_RANGE,
+      [mongodbWrapSelector],
+      MongoDB.middleware
+    );
   }
   static inspectFilter(
     db: string,
@@ -86,9 +91,7 @@ export class MongoDB extends Wrapper {
       }
     }
   }
-  static middleware() {
-
-  }
+  static middleware() {}
 
   protectBulkWrite(this: Collection) {
     const agent = getInstance();
@@ -131,7 +134,7 @@ export class MongoDB extends Wrapper {
       });
     });
   }
-  protectQuery(this: Collection, operation:string) {
+  protectQuery(this: Collection, operation: string) {
     const agent = getInstance();
 
     if (!agent) {
@@ -173,6 +176,6 @@ export class MongoDB extends Wrapper {
 const mongodbWrapSelector: WrapSelector = {
   wrapFunctions: [""],
   exportsSelector: (exports) => {
-    return []
-  }
-}
+    return [];
+  },
+};
