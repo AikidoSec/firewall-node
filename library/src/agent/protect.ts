@@ -14,14 +14,7 @@ import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages = [new Postgres(), new MongoDB()];
-
-  /*
-    express: {
-      range: "^4.0.0",
-      wrapper: new Express(),
-    },
-  };*/
+  const packages = [new Postgres(), new MongoDB(), new Express()];
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
   for (const wrapper of packages) {
@@ -99,11 +92,17 @@ function getAgent({
 
   return agent;
 }
-
+/**
+ * This function **disables** logging from the "shimer" package - this avoid logs whenever a function doesn't exist
+ */
 function disableShimmerLogging() {
   shimmer({ logger: () => {} });
 }
 
+/**
+ * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
+ * @param options Options to pass along to the protect function (See type definition)
+ */
 export function protect(options?: Partial<Options>) {
   disableShimmerLogging();
 
@@ -115,6 +114,11 @@ export function protect(options?: Partial<Options>) {
   agent.start();
 }
 
+/**
+ * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
+ * @param options Options to pass along to the protect function (See type definition)
+ * @returns Function that allows creation of lambda wrapper
+ */
 export function lambda(
   options?: Partial<Options>
 ): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {
