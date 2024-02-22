@@ -14,7 +14,7 @@ export class Mysql2 extends Wrapper {
 
     super("mysql2", EXAMPLE_PACKAGE_VERSION_RANGE, {
       execute: queryWrapSelector,
-      query: queryWrapSelector
+      query: queryWrapSelector,
     });
   }
   static middleware(args: unknown[]) {

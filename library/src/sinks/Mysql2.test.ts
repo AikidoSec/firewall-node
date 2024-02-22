@@ -69,7 +69,7 @@ t.test("We can hijack mysql2 class", async () => {
       },
     });
     // @ts-expect-error
-    console.log(agent.stats)
+    console.log(agent.stats);
 
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {
@@ -94,7 +94,7 @@ t.test("We can hijack mysql2 class", async () => {
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
-        // @ts-expect-error
+        // @ts-expect-error null is normally an invalid thing to put inside a query
         return connection.query(null);
       });
     });
