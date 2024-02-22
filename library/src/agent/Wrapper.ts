@@ -27,7 +27,8 @@ export class Wrapper {
         [operation],
         function wrapFunction(original) {
           return function wrappedFunction(this: any, ...args: unknown[]) {
-            const returnedArgs:unknown[]|undefined = wrapSelector.middleware.call(this, args, operation)
+            const returnedArgs: unknown[] | undefined =
+              wrapSelector.middleware.call(this, args, operation);
             return original.apply(this, returnedArgs ?? args);
           };
         }
