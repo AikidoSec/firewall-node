@@ -3,10 +3,12 @@ import type { NextFunction, Request, Response, Application } from "express";
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 import { runWithContext } from "../agent/Context";
-import { Wrapper } from "../agent/Wrapper";
+import { WrapSelector, Wrapper } from "../agent/Wrapper";
 import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
+
+const EXPRESS_VERSION_RANGE = "";
 
 function createMiddleware(): Middleware {
   return (req, resp, next) => {
@@ -27,7 +29,7 @@ function createMiddleware(): Middleware {
   };
 }
 
-export class Express implements Wrapper {
+export class Express extends Wrapper {
   // Whenever app.get, app.post, etc. is called, we want to inject our middleware
   // So that runWithContext is called for every request
   // Whenever a MongoDB query is made, we want to inspect the filter
@@ -40,33 +42,26 @@ export class Express implements Wrapper {
   // app.get("/path", json(), middleware(), (req, res) => { ... }))
   //
   // Without having to change the user's code
-  private wrapRouteMethods(exports: unknown) {
-    massWrap(
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      exports.Route.prototype,
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      METHODS.map((method) => method.toLowerCase()),
-      function wrapRouteMethod(original) {
-        return function injectMiddleware(this: Application) {
-          const args = Array.from(arguments);
-          const handler = args.pop();
-          args.push(createMiddleware());
-          args.push(handler);
-
-          // @ts-expect-error This is magic that TypeScript doesn't understand
-          return original.apply(this, args);
-        };
-      }
-    );
+  constructor() {
+    super("express", EXPRESS_VERSION_RANGE, getWrapSelectors());
   }
+  static middleware(this: any, args: unknown[], method: string) {
+    const handler = args.pop();
+    args.push(createMiddleware());
+    args.push(handler);
 
-  private onModuleRequire<T>(exports: T): T {
-    this.wrapRouteMethods(exports);
-
-    return exports;
+    return args;
   }
+}
 
-  wrap() {
-    new Hook(["express"], this.onModuleRequire.bind(this));
+function getWrapSelectors() {
+  const wrapSelectors: Record<string, WrapSelector> = {};
+  const methods = METHODS.map((method) => method.toLowerCase());
+  for (const method of methods) {
+    wrapSelectors[method] = {
+      exportsSelector: (exports: any) => exports.Route.prototype,
+      middleware: Express.middleware,
+    };
   }
+  return wrapSelectors;
 }
