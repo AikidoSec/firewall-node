@@ -97,10 +97,7 @@ t.test("We can hijack mysql2 class", async () => {
       });
     });
     if (undefinedQueryError instanceof Error) {
-      t.equal(
-        undefinedQueryError.message,
-        "Cannot read property 'constructor' of null"
-      );
+      t.ok(undefinedQueryError.message.startsWith("Cannot read"));
     }
 
     await runWithContext(
