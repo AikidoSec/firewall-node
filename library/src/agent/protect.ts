@@ -4,17 +4,20 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
-import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
+
+import { Express } from "../sources/Express";
 import { Postgres } from "../sinks/Postgres";
+import { Mysql2 } from "../sinks/Mysql2";
+
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages = [new Postgres(), new MongoDB(), new Express()];
+  const packages = [new Postgres(), new MongoDB(), new Express(), new Mysql2()];
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
   for (const wrapper of packages) {
