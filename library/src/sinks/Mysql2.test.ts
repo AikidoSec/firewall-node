@@ -56,7 +56,7 @@ t.test("We can hijack mysql2 class", async () => {
   try {
     // Execute 2 queries
     await initDb(connection);
-    const cats2 = await connection.execute("SELECT petname FROM `cats`;");
+    const cats2 = await connection.query("SELECT petname FROM `cats`;");
 
     // @ts-expect-error Private property
     t.same(agent.stats, {
