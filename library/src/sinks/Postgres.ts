@@ -7,14 +7,20 @@ import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 const PG_PACKAGE_VERSION_RANGE = "^8.11.0";
+
 export class Postgres extends Wrapper {
   constructor() {
-    super(
-      "pg",
-      PG_PACKAGE_VERSION_RANGE,
-      [postgresWrapSelector],
-      Postgres.middleware
-    );
+    const postgresWrapSelector: WrapSelector = {
+      exportsSelector: (exports: any) => [
+        exports.Client.prototype,
+        exports.Pool.prototype,
+      ],
+      middleware: Postgres.middleware,
+    };
+
+    super("pg", PG_PACKAGE_VERSION_RANGE, {
+      query: postgresWrapSelector,
+    });
   }
   static middleware(args: unknown[]) {
     const agent = getInstance();
@@ -41,11 +47,3 @@ export class Postgres extends Wrapper {
     checkContextForSqlInjection(querystring, request, agent, "postgres");
   }
 }
-
-const postgresWrapSelector: WrapSelector = {
-  wrapFunction: "query",
-  exportsSelector: (exports: any) => [
-    exports.Client.prototype,
-    exports.Pool.prototype,
-  ],
-};
