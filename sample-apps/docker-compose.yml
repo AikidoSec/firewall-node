@@ -31,7 +31,14 @@ services:
       - "27015:3306"
     volumes:
       - mysql:/var/lib/mysql
-
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Strong$Password"
+      MSSQL_PID: "Developer"
+    ports:
+      - "27014:1433"
 volumes:
   mongodb:
     driver: local
