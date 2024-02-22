@@ -27,6 +27,10 @@ function wrapInstalledPackages() {
       range: "^8.11.0", // Current version
       wrapper: new Postgres(),
     },
+    mysql2: {
+      range: "^3.9.0", // Current version
+      wrapper: new Mysql2()
+    }
   };
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
