@@ -8,7 +8,7 @@ import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
-const EXPRESS_VERSION_RANGE = "";
+const EXPRESS_VERSION_RANGE = "^4.0.0";
 
 function createMiddleware(): Middleware {
   return (req, resp, next) => {
