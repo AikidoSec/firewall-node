@@ -68,8 +68,6 @@ t.test("We can hijack mysql2 class", async () => {
         withoutContext: 2,
       },
     });
-    // @ts-expect-error
-    console.log(agent.stats);
 
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {
