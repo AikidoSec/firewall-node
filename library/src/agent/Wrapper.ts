@@ -26,7 +26,7 @@ export class Wrapper {
       massWrap(
         wrapSelector.exportsSelector(exports),
         [operation],
-        async function wrapFunction(original) {
+        function wrapFunction(original) {
           return async function wrappedFunction(this: any, ...args: unknown[]) {
             if (wrapSelector.executeOriginalFirst === "async") {
               const res = await original.apply(this, args);

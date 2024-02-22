@@ -4,19 +4,30 @@ import { WrapSelector, Wrapper } from "../agent/Wrapper";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 const MARIADB_PACKAGE_VERSION = "^3.2.0";
+const CONN_PROMISE_FUNC = [
+  "query",
+  "queryStream",
+  "execute",
+  "batch",
+  "prepare",
+];
 
 export class MariaDB extends Wrapper {
   constructor() {
     const functionWrapSelector: WrapSelector = {
-      exportsSelector: (exports: any) => [exports.myObject.prototype],
+      exportsSelector: (exports: any) => [exports],
       middleware: MariaDB.middleware,
+      executeOriginalFirst: "async",
     };
-
     super("mariadb", MARIADB_PACKAGE_VERSION, {
-      my_function: functionWrapSelector,
+      createConnection: functionWrapSelector,
+      createPool: functionWrapSelector
     });
   }
-  static middleware(args: unknown[], operation: string) {
+  static middleware(args: unknown[], operation: string, res:any) {
+    console.log(res)
+  }
+  static _middleware(args: unknown[], operation: string) {
     const agent = getInstance();
     if (!agent) {
       return;
