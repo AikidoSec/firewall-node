@@ -92,6 +92,19 @@ t.test("We can hijack mysql2 class", async () => {
     });
     setInstance(agent); // Put the agent back for the following tests
 
+    const undefinedQueryError = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        // @ts-expect-error
+        return connection.query(null);
+      });
+    });
+    if (undefinedQueryError instanceof Error) {
+      t.equal(
+        undefinedQueryError.message,
+        "Cannot read property 'constructor' of null"
+      );
+    }
+
     await runWithContext(
       {
         remoteAddress: "::1",
