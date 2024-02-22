@@ -1,35 +1,33 @@
 import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 
-export interface WrapSelector {
-  wrapFunction: string;
+export type WrapSelector = {
   exportsSelector(exports: unknown): any[];
-}
+  middleware(args: unknown[], operation: string): void;
+};
 export class Wrapper {
   public readonly packageName;
   public readonly versionRange;
   private wrapSelectors;
-  private middlewareFunction;
   constructor(
     packageName: string,
     versionRange: string,
-    wrapSelectors: WrapSelector[],
-    middlewareFunction: any
+    wrapSelectors: Record<string, WrapSelector>
   ) {
     this.packageName = packageName;
     this.versionRange = versionRange;
     this.wrapSelectors = wrapSelectors;
-    this.middlewareFunction = middlewareFunction;
   }
   private wrapFunction(exports: unknown) {
     const that = this;
-    for (const wrapSelector of this.wrapSelectors) {
+    for (const operation in this.wrapSelectors) {
+      const wrapSelector = this.wrapSelectors[operation];
       massWrap(
         wrapSelector.exportsSelector(exports),
-        [wrapSelector.wrapFunction],
+        [operation],
         function wrapFunction(original) {
           return function wrappedFunction(this: any, ...args: unknown[]) {
-            that.middlewareFunction(args, wrapSelector.wrapFunction);
+            wrapSelector.middleware(args, operation);
             return original.apply(this, args);
           };
         }
