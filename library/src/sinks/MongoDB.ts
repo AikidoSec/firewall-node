@@ -89,7 +89,7 @@ export class MongoDB extends Wrapper {
   }
   static middleware() {}
 
-  static protectBulkWrite(this: Collection, args: unknown[]) {
+  static protectBulkWrite(this: any, args: unknown[]) {
     const agent = getInstance();
 
     if (!agent) {
