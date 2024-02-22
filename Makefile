@@ -22,6 +22,10 @@ express-mysql2:
 express-mariadb:
 	cd sample-apps/express-mariadb && node app.js
 
+.PHONY: express-mssql
+express-mssql:
+	cd sample-apps/express-mssql && node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless invoke local --function login --path payloads/nosql-injection-request.json
