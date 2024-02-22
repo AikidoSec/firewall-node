@@ -27,6 +27,7 @@ const context: Context = {
   },
   cookies: {},
 };
+let connection: Connection;
 
 t.test("We can hijack mysql2 class", async () => {
   const mysql2 = new Mysql2();
@@ -44,7 +45,7 @@ t.test("We can hijack mysql2 class", async () => {
   agent.start();
   setInstance(agent);
 
-  const connection = await mysql.createConnection({
+  connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "mypassword",
@@ -107,5 +108,7 @@ t.test("We can hijack mysql2 class", async () => {
     );
   } catch (error: any) {
     t.fail(error);
+  } finally {
+    await connection.end();
   }
 });
