@@ -87,7 +87,6 @@ export class MongoDB extends Wrapper {
       }
     }
   }
-  static middleware() {}
 
   static protectBulkWrite(this: any, args: unknown[]) {
     const agent = getInstance();
@@ -104,15 +103,14 @@ export class MongoDB extends Wrapper {
         withoutContext: true,
         detectedAttack: false,
       });
-
       return;
     }
 
-    if (!Array.isArray(arguments[0])) {
+    if (!Array.isArray(args[0])) {
       return;
     }
 
-    const operations: BulkWriteOperation[] = arguments[0];
+    const operations: BulkWriteOperation[] = args[0];
     operations.forEach((operation) => {
       BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
         const options = operation[command];
@@ -137,7 +135,7 @@ export class MongoDB extends Wrapper {
       return;
     }
 
-    const hasFilter = arguments.length > 0 && isPlainObject(arguments[0]);
+    const hasFilter = args.length > 0 && isPlainObject(args[0]);
 
     if (!hasFilter) {
       return;
@@ -155,7 +153,7 @@ export class MongoDB extends Wrapper {
       return;
     }
 
-    const filter = arguments[0];
+    const filter = args[0];
     MongoDB.inspectFilter(
       this.dbName,
       this.collectionName,
