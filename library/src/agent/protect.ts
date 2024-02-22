@@ -6,13 +6,16 @@ import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
+
+// Import sinks
 import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
+import { Mysql2 } from "../sinks/Mysql2";
+
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
-
 function wrapInstalledPackages() {
   const packages: Record<string, { range: string; wrapper: Wrapper }> = {
     express: {
@@ -29,8 +32,8 @@ function wrapInstalledPackages() {
     },
     mysql2: {
       range: "^3.9.0", // Current version
-      wrapper: new Mysql2()
-    }
+      wrapper: new Mysql2(),
+    },
   };
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
