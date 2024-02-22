@@ -8,7 +8,7 @@ const EXAMPLE_PACKAGE_VERSION_RANGE = "^3.9.0";
 export class Mysql2 extends Wrapper {
   constructor() {
     const queryWrapSelector: WrapSelector = {
-      exportsSelector: (exports: any) => [exports.Connection.prototype],
+      exportsSelector: (exports: any) => [exports.Connection],
       middleware: Mysql2.middleware,
     };
 
