@@ -6,9 +6,15 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
+const PG_PACKAGE_VERSION_RANGE = "^8.11.0";
 export class Postgres extends Wrapper {
   constructor() {
-    super("pg", postgresWrapSelector, Postgres.middleware);
+    super(
+      "pg",
+      PG_PACKAGE_VERSION_RANGE,
+      postgresWrapSelector,
+      Postgres.middleware
+    );
   }
   static middleware(args: unknown[]) {
     const agent = getInstance();

@@ -6,11 +6,13 @@ export interface WrapSelector {
   exportsSelector(exports:unknown): any[]
 };
 export class Wrapper {
-  private readonly packageName;
+  public readonly packageName;
+  public readonly versionRange;
   private wrapSelector;
   private middlewareFunction;
-  constructor(packageName:string, wrapSelector:WrapSelector, middlewareFunction:any) {
+  constructor(packageName:string, versionRange:string, wrapSelector:WrapSelector, middlewareFunction:any) {
     this.packageName = packageName;
+    this.versionRange = versionRange;
     this.wrapSelector = wrapSelector;
     this.middlewareFunction = middlewareFunction
   }

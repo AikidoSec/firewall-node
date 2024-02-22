@@ -14,7 +14,9 @@ import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages: Record<string, { range: string; wrapper: Wrapper }> = {
+  const packages = [new Postgres()];
+
+  /*
     express: {
       range: "^4.0.0",
       wrapper: new Express(),
@@ -22,23 +24,20 @@ function wrapInstalledPackages() {
     mongodb: {
       range: "^4.0.0 || ^5.0.0 || ^6.0.0",
       wrapper: new MongoDB(),
-    },
-    pg: {
-      range: "^8.11.0", // Current version
-      wrapper: new Postgres(),
-    },
-  };
+    }
+  };*/
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
-  for (const packageName in packages) {
-    const { range, wrapper } = packages[packageName];
-    const version = getPackageVersion(packageName);
-    wrapped[packageName] = {
+  for (const wrapper of packages) {
+    const version = getPackageVersion(wrapper.packageName);
+    wrapped[wrapper.packageName] = {
       version,
-      supported: version ? satisfiesVersion(range, version) : false,
+      supported: version
+        ? satisfiesVersion(wrapper.versionRange, version)
+        : false,
     };
 
-    if (wrapped[packageName].supported) {
+    if (wrapped[wrapper.packageName].supported) {
       wrapper.wrap();
     }
   }
