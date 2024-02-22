@@ -14,17 +14,13 @@ import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages = [new Postgres()];
+  const packages = [new Postgres(), new MongoDB()];
 
   /*
     express: {
       range: "^4.0.0",
       wrapper: new Express(),
     },
-    mongodb: {
-      range: "^4.0.0 || ^5.0.0 || ^6.0.0",
-      wrapper: new MongoDB(),
-    }
   };*/
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
