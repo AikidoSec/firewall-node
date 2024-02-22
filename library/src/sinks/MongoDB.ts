@@ -8,7 +8,7 @@ import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectN
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { friendlyName } from "../agent/Source";
-import { Wrapper } from "../agent/Wrapper";
+import { WrapSelector, Wrapper } from "../agent/Wrapper";
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -25,6 +25,8 @@ const OPERATIONS_WITH_FILTER = [
   "replaceOne",
 ] as const;
 
+const MONGODB_VERSION_RANGE = "";
+
 const BULK_WRITE_OPERATIONS_WITH_FILTER = [
   "replaceOne",
   "updateOne",
@@ -40,8 +42,11 @@ type BulkWriteOperation = {
   [key in BulkWriteOperationName]?: { filter?: unknown };
 };
 
-export class MongoDB implements Wrapper {
-  private inspectFilter(
+export class MongoDB extends Wrapper {
+  constructor() {
+    super("mongodb", MONGODB_VERSION_RANGE, mongodbWrapSelector, MongoDB.middleware);
+  }
+  static inspectFilter(
     db: string,
     collection: string,
     agent: Agent,
@@ -81,122 +86,93 @@ export class MongoDB implements Wrapper {
       }
     }
   }
+  static middleware() {
 
-  private wrapBulkWrite(exports: unknown) {
-    const that = this;
-
-    wrap(
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      exports.Collection.prototype,
-      "bulkWrite",
-      function wrapBulkWrite(original) {
-        return function protectBulkWrite(this: Collection) {
-          const agent = getInstance();
-
-          if (!agent) {
-            return original.apply(this, arguments);
-          }
-
-          const request = getContext();
-
-          if (!request) {
-            agent.onInspectedCall({
-              module: "mongodb",
-              withoutContext: true,
-              detectedAttack: false,
-            });
-
-            return original.apply(this, arguments);
-          }
-
-          if (!Array.isArray(arguments[0])) {
-            return original.apply(this, arguments);
-          }
-
-          const operations: BulkWriteOperation[] = arguments[0];
-          operations.forEach((operation) => {
-            BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
-              const options = operation[command];
-
-              if (options && options.filter) {
-                that.inspectFilter(
-                  this.dbName,
-                  this.collectionName,
-                  agent,
-                  request,
-                  options.filter,
-                  "bulkWrite"
-                );
-              }
-            });
-          });
-
-          return original.apply(this, arguments);
-        };
-      }
-    );
   }
 
-  private wrapOperationsWithFilter(exports: unknown) {
-    const that = this;
+  protectBulkWrite(this: Collection) {
+    const agent = getInstance();
 
-    OPERATIONS_WITH_FILTER.forEach((operation) => {
-      wrap(
-        // @ts-expect-error This is magic that TypeScript doesn't understand
-        exports.Collection.prototype,
-        operation,
-        function wrapOperation(original) {
-          return function protectQuery(this: Collection) {
-            const agent = getInstance();
+    if (!agent) {
+      return;
+    }
 
-            if (!agent) {
-              return original.apply(this, arguments);
-            }
+    const request = getContext();
 
-            const hasFilter =
-              arguments.length > 0 && isPlainObject(arguments[0]);
+    if (!request) {
+      agent.onInspectedCall({
+        module: "mongodb",
+        withoutContext: true,
+        detectedAttack: false,
+      });
 
-            if (!hasFilter) {
-              return original.apply(this, arguments);
-            }
+      return;
+    }
 
-            const request = getContext();
+    if (!Array.isArray(arguments[0])) {
+      return;
+    }
 
-            if (!request) {
-              agent.onInspectedCall({
-                module: "mongodb",
-                withoutContext: true,
-                detectedAttack: false,
-              });
+    const operations: BulkWriteOperation[] = arguments[0];
+    operations.forEach((operation) => {
+      BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
+        const options = operation[command];
 
-              return original.apply(this, arguments);
-            }
-
-            const filter = arguments[0];
-            that.inspectFilter(
-              this.dbName,
-              this.collectionName,
-              agent,
-              request,
-              filter,
-              operation
-            );
-
-            return original.apply(this, arguments);
-          };
+        if (options && options.filter) {
+          MongoDB.inspectFilter(
+            this.dbName,
+            this.collectionName,
+            agent,
+            request,
+            options.filter,
+            "bulkWrite"
+          );
         }
-      );
+      });
     });
   }
+  protectQuery(this: Collection, operation:string) {
+    const agent = getInstance();
 
-  private onModuleRequired<T>(exports: T): T {
-    this.wrapBulkWrite(exports);
-    this.wrapOperationsWithFilter(exports);
+    if (!agent) {
+      return;
+    }
 
-    return exports;
+    const hasFilter = arguments.length > 0 && isPlainObject(arguments[0]);
+
+    if (!hasFilter) {
+      return;
+    }
+
+    const request = getContext();
+
+    if (!request) {
+      agent.onInspectedCall({
+        module: "mongodb",
+        withoutContext: true,
+        detectedAttack: false,
+      });
+
+      return;
+    }
+
+    const filter = arguments[0];
+    MongoDB.inspectFilter(
+      this.dbName,
+      this.collectionName,
+      agent,
+      request,
+      filter,
+      operation
+    );
+
+    return;
   }
+}
 
-  wrap() {
-    new Hook(["mongodb"], this.onModuleRequired.bind(this));
+const mongodbWrapSelector: WrapSelector = {
+  wrapFunctions: [""],
+  exportsSelector: (exports) => {
+    return []
   }
 }
