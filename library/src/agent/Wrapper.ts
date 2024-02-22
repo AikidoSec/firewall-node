@@ -3,7 +3,8 @@ import { massWrap } from "shimmer";
 
 export type WrapSelector = {
   exportsSelector(exports: unknown): any[];
-  middleware(args: unknown[], operation: string): unknown[] | any;
+  middleware(args: unknown[], operation: string, res?:any): unknown[] | any;
+  executeOriginalFirst?: boolean;
 };
 export class Wrapper {
   public readonly packageName;
@@ -27,6 +28,10 @@ export class Wrapper {
         [operation],
         function wrapFunction(original) {
           return function wrappedFunction(this: any, ...args: unknown[]) {
+            if(wrapSelector.executeOriginalFirst) {
+              const res = original.apply(this, args);
+              return wrapSelector.middleware.call(this, args, operation, res);
+            }
             const returnedArgs: unknown[] | undefined =
               wrapSelector.middleware.call(this, args, operation);
             return original.apply(this, returnedArgs ?? args);
