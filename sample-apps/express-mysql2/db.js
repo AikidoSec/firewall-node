@@ -11,7 +11,8 @@ async function connectToMysqlDB() {
         user: 'root',
         password: 'mypassword',
         database: 'catsdb',
-        port: 27015
+        port: 27015,
+        multipleStatements: true
     })
 
     await initDb();
