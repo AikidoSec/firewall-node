@@ -26,7 +26,7 @@ export class ExamplePackage extends Wrapper {
       middleware: ExamplePackage.middleware,
     };
 
-    super("pg", EXAMPLE_PACKAGE_VERSION_RANGE, {
+    super("example_package", EXAMPLE_PACKAGE_VERSION_RANGE, {
       my_function: functionWrapSelector,
     });
   }
