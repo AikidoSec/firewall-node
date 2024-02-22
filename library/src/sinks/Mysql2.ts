@@ -38,6 +38,6 @@ export class Mysql2 extends Wrapper {
     }
     const querystring: string = args[0];
 
-    checkContextForSqlInjection(querystring, request, agent, "postgres");
+    checkContextForSqlInjection(querystring, request, agent, "mysql2");
   }
 }
