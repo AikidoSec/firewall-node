@@ -44,12 +44,8 @@ type BulkWriteOperation = {
 
 export class MongoDB extends Wrapper {
   constructor() {
-    super(
-      "mongodb",
-      MONGODB_VERSION_RANGE,
-      [mongodbWrapSelector],
-      MongoDB.middleware
-    );
+    //wrap
+    super("mongodb", MONGODB_VERSION_RANGE, getWrapSelectors());
   }
   static inspectFilter(
     db: string,
@@ -93,7 +89,7 @@ export class MongoDB extends Wrapper {
   }
   static middleware() {}
 
-  protectBulkWrite(this: Collection) {
+  static protectBulkWrite(this: Collection, args: unknown[]) {
     const agent = getInstance();
 
     if (!agent) {
@@ -134,7 +130,7 @@ export class MongoDB extends Wrapper {
       });
     });
   }
-  protectQuery(this: Collection, operation: string) {
+  static protectQuery(this: any, args: unknown[], operation: string) {
     const agent = getInstance();
 
     if (!agent) {
@@ -173,9 +169,22 @@ export class MongoDB extends Wrapper {
   }
 }
 
-const mongodbWrapSelector: WrapSelector = {
-  wrapFunction: "",
-  exportsSelector: (exports) => {
-    return [];
-  },
-};
+function getWrapSelectors() {
+  const wrapSelectors: Record<string, WrapSelector> = {};
+
+  // Add bulkWrite
+  wrapSelectors["bulkWrite"] = {
+    exportsSelector: (exports: any) => [exports.Collection.prototype],
+    middleware: MongoDB.protectBulkWrite,
+  };
+
+  // Add operations with filter
+  OPERATIONS_WITH_FILTER.forEach((operation) => {
+    wrapSelectors[operation] = {
+      exportsSelector: (exports: any) => [exports.Collection.prototype],
+      middleware: MongoDB.protectQuery,
+    };
+  });
+
+  return wrapSelectors;
+}
