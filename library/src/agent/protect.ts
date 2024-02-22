@@ -8,13 +8,19 @@ import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
+import { MariaDB } from "../sinks/MariaDB";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages = [new Postgres(), new MongoDB(), new Express()];
+  const packages = [
+    new Postgres(),
+    new MongoDB(),
+    new Express(),
+    new MariaDB(),
+  ];
 
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
   for (const wrapper of packages) {
