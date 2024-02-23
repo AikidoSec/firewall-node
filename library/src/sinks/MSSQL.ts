@@ -8,16 +8,20 @@ const MSSQL_VERSION_RANGE = "^10.0.0"; // Current version as of development
 export class MSSQL extends Wrapper {
   constructor() {
     const queryWrapSelector: WrapSelector = {
-      exportsSelector: (exports: any) => [exports],
+      exportsSelector: (exports: any) => [
+        exports.Request.prototype,
+        exports.ConnectionPool.prototype,
+      ],
       middleware: MSSQL.middleware,
     };
 
     super("mssql", MSSQL_VERSION_RANGE, {
       query: queryWrapSelector,
+      execute: queryWrapSelector,
+      batch: queryWrapSelector,
     });
   }
   static middleware(args: unknown[], operation: string) {
-    console.log("Middleware was called")
     const agent = getInstance();
     if (!agent) {
       return;
