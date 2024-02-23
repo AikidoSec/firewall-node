@@ -6,18 +6,18 @@ import { LoggerNoop } from "../agent/Logger";
 import { runWithContext, type Context } from "../agent/Context";
 import { MSSQL } from "./MSSQL";
 
-async function initDb(sql:any) {
-    // This creates the cats table
-    try {
-      await sql.query(`
+async function initDb(sql: any) {
+  // This creates the cats table
+  try {
+    await sql.query(`
       CREATE TABLE dbo.cats (
           petname varchar(255)
       );
       `);
-    } catch (err) {
-      // Ignore errors -> Database already exists
-    }
+  } catch (err) {
+    // Ignore errors -> Database already exists
   }
+}
 
 const context: Context = {
   remoteAddress: "::1",
@@ -46,7 +46,9 @@ t.test("We can hijack Postgres class", async () => {
   setInstance(agent);
 
   const sql = require("mssql");
-  await sql.connect("Server=localhost,27014;Database=master;User Id=sa;Password=Strongeeeee%Password;Encrypt=false");
+  await sql.connect(
+    "Server=localhost,27014;Database=master;User Id=sa;Password=Strongeeeee%Password;Encrypt=false"
+  );
 
   try {
     // Execute 2 queries
@@ -90,10 +92,7 @@ t.test("We can hijack Postgres class", async () => {
       });
     });
     if (undefinedQueryError instanceof Error) {
-      t.equal(
-        undefinedQueryError.message,
-        "Cannot read property '0' of null"
-      );
+      t.equal(undefinedQueryError.message, "Cannot read property '0' of null");
     }
 
     await runWithContext(
