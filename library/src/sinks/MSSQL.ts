@@ -8,7 +8,7 @@ const MSSQL_VERSION_RANGE = "^10.0.0"; // Current version as of development
 export class MSSQL extends Wrapper {
   constructor() {
     const queryWrapSelector: WrapSelector = {
-      exportsSelector: (exports: any) => [exports.prototype],
+      exportsSelector: (exports: any) => [exports],
       middleware: MSSQL.middleware,
     };
 
