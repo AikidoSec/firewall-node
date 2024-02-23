@@ -1,4 +1,4 @@
-import { Hook } from "require-in-the-middle";
+//import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 
 export type WrapSelector = {
@@ -42,6 +42,6 @@ export class Wrapper {
   }
 
   wrap() {
-    new Hook([this.packageName], this.onModuleRequired.bind(this));
+    //new Hook([this.packageName], this.onModuleRequired.bind(this));
   }
 }
