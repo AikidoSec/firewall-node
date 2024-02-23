@@ -1,0 +1,1 @@
+export {nextMiddleware as middleware} from './../../library/src';
