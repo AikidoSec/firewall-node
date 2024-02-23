@@ -5,18 +5,22 @@ async function connectToMysqlDB() {
   // Normally you'd use environment variables for this
   // These values were also referenced in the docker-compose.yml
   await sql.connect(
-    "Server=localhost,27014;Database=database;User Id=username;Password=password;Encrypt=true"
+    "Server=localhost,27014;Database=master;User Id=sa;Password=Strongeeeee%Password;Encrypt=false"
   );
   await initDb();
 }
 
 async function initDb() {
   // This creates the cats table
-  await sql.query(`
-    CREATE TABLE IF NOT EXISTS cats (
+  try {
+    await sql.query(`
+    CREATE TABLE dbo.cats (
         petname varchar(255)
     );
     `);
+  } catch (err) {
+    // Ignore errors -> Database already exists
+  }
 }
 
 async function insertCatIntoTable(petname) {
@@ -26,8 +30,9 @@ async function insertCatIntoTable(petname) {
 
 async function getAllCats() {
   // This function returns all cats in the db
-  const [cats] = await sql.execute("SELECT petname FROM `cats`;");
-  return cats.map((row) => row.petname);
+  const cats = await sql.query("SELECT petname FROM dbo.cats;");
+  console.log(cats);
+  return cats.recordset.map((record) => record.petname);
 }
 
 module.exports = { connectToMysqlDB, insertCatIntoTable, getAllCats };

@@ -35,7 +35,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Strong$Password"
+      MSSQL_SA_PASSWORD: "Strongeeeee%Password"
       MSSQL_PID: "Developer"
     ports:
       - "27014:1433"
