@@ -31,7 +31,6 @@ async function insertCatIntoTable(petname) {
 async function getAllCats() {
   // This function returns all cats in the db
   const cats = await sql.query("SELECT petname FROM dbo.cats;");
-  console.log(cats);
   return cats.recordset.map((record) => record.petname);
 }
 
