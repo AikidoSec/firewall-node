@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
   },
   "include": ["src"],
-  "exclude": ["**/*.test.ts"],
+  "exclude": ["**/*.test.ts", "**/sample-apps"],
 }
