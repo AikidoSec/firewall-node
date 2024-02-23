@@ -19,6 +19,14 @@ jobs:
           "POSTGRES_DB": "main_db"
         ports:
           - "27016:5432"
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          "ACCEPT_EULA": "Y"
+          "MSSQL_SA_PASSWORD": "Strongeeeee%Password"
+          "MSSQL_PID": "Developer"
+        ports:
+          - "27014:1433"
     strategy:
       matrix:
         node-version: [16.x, 18.x, 20.x]
