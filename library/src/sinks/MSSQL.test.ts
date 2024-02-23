@@ -92,7 +92,8 @@ t.test("We can hijack Postgres class", async () => {
       });
     });
     if (undefinedQueryError instanceof Error) {
-      t.equal(undefinedQueryError.message, "Cannot read property '0' of null");
+      // Depending on environment different error messages (property vs. properties)
+      t.ok(undefinedQueryError.message.startsWith("Cannot read"));
     }
 
     await runWithContext(
