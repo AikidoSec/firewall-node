@@ -1,4 +1,4 @@
-import { isDeepStrictEqual } from "node:util";
+import { isDeepStrictEqual } from "util";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/jwt";
 import { Context } from "../../agent/Context";

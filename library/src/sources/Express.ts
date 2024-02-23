@@ -4,7 +4,7 @@ import { Hook } from "require-in-the-middle";
 import { massWrap } from "shimmer";
 import { runWithContext } from "../agent/Context";
 import { WrapSelector, Wrapper } from "../agent/Wrapper";
-import { METHODS } from "node:http";
+import { METHODS } from "http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 

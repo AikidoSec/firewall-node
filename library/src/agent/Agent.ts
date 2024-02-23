@@ -1,4 +1,4 @@
-import { hostname, platform, release } from "node:os";
+import { hostname, platform, release } from "os";
 import { ip } from "../helpers/ipAddress";
 import { API, AgentInfo, Token, Stats, Kind } from "./API";
 import { Logger } from "./Logger";
