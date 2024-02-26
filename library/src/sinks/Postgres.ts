@@ -15,11 +15,13 @@ export class Postgres implements Wrapper {
       function wrapQueryFunction(original) {
         return function safeQueryFunction(this: Client, ...args: unknown[]) {
           const agent = getInstance();
+
           if (!agent) {
             return original.apply(this, args);
           }
 
           const request = getContext();
+
           if (!request) {
             agent.onInspectedCall({
               module: "postgres",
@@ -29,12 +31,13 @@ export class Postgres implements Wrapper {
 
             return original.apply(this, args);
           }
+
           if (typeof args[0] !== "string") {
             // The query is not a string, not much to do here
             return original.apply(this, args);
           }
-          const querystring: string = args[0];
 
+          const querystring: string = args[0];
           checkContextForSqlInjection(querystring, request, agent, "postgres");
 
           return original.apply(this, args);
