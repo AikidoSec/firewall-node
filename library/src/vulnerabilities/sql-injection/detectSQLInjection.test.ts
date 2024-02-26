@@ -90,6 +90,7 @@ const auth_bypass = fs
     "utf-8"
   )
   .split(/\r?\n/);
+
 t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
   for (const sql of auth_bypass) {
     t_isSqlInjection(sql, sql);
@@ -105,6 +106,7 @@ const postgres_txt = fs
     "utf-8"
   )
   .split(/\r?\n/);
+
 t.test("Test the detectSQLInjection() with postgres.txt", async () => {
   for (const sql of postgres_txt) {
     t_isSqlInjection(sql, sql);
@@ -117,6 +119,7 @@ const mysql_txt = fs
     "utf-8"
   )
   .split(/\r?\n/);
+
 t.test(
   "Test the detectSQLInjection() with postgres-enumeration.txt",
   async () => {
@@ -135,8 +138,9 @@ const mssql_and_db2_txt = fs
     "utf-8"
   )
   .split(/\r?\n/);
+
 t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
-  for (const sql of mysql_txt) {
+  for (const sql of mssql_and_db2_txt) {
     t_isSqlInjection(sql, sql);
   }
 });
