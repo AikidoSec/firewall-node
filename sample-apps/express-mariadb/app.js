@@ -3,16 +3,18 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const db = require('./db');
+const db = require("./db");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 
+preventPrototypePollution();
+
 function getHTMLBody(cats) {
-    return `
+  return `
 <html lang="en">
   <body>
-    <p>All cats : ${cats.join(', ')}</p>
+    <p>All cats : ${cats.join(", ")}</p>
     <form action="/" method="GET">
       <label for="search">Add a new cat</label>
       <input type="text" name="petname">
@@ -32,7 +34,7 @@ async function main() {
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      if(req.query["petname"]) {
+      if (req.query["petname"]) {
         // This is very dangerous, don't copy this code into an actual application
         await db.insertCatIntoTable(req.query["petname"]);
       }
