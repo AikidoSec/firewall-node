@@ -81,6 +81,7 @@ export function userInputContainsSQLSyntax(userInput: string): boolean {
 export function queryContainsUserInput(query: string, userInput: string) {
   const lowercaseSql = query.toLowerCase();
   const lowercaseInput = userInput.toLowerCase();
+
   return lowercaseSql.includes(lowercaseInput);
 }
 
@@ -143,8 +144,8 @@ export function checkContextForSqlInjection(
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (request[source]) {
       const userInput = extract(request[source]);
-      for (let i = 0; i < userInput.length; i++) {
-        if (detectSQLInjection(sql, userInput[i])) {
+      for (const str of userInput) {
+        if (detectSQLInjection(sql, str)) {
           agent.onDetectedAttack({
             module,
             kind: "sql_injection",
@@ -158,7 +159,7 @@ export function checkContextForSqlInjection(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido guard has blocked a SQL injection: ${userInput[i]} originating from ${friendlyName(source)}`
+              `Aikido guard has blocked a SQL injection: ${str} originating from ${friendlyName(source)}`
             );
           }
         }
