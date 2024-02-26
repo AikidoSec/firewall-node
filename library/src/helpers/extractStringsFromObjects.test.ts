@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import * as t from "tap";
 import { extract } from "./extractStringsFromObjects";
 

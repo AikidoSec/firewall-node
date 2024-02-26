@@ -34,6 +34,7 @@ module.exports = {
     "no-warning-comments": "error",
     "max-lines-per-function": ["error", { max: 50, skipBlankLines: true }],
     "func-names": ["error", "as-needed"],
+    camelcase: "error",
   },
   overrides: [
     {

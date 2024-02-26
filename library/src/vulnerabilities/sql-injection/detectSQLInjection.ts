@@ -41,7 +41,7 @@ export function detectSQLInjection(query: string, userInput: string) {
   }
 
   // Executing our final check with the massive RegEx :
-  return userInputContainsSQLsyntax(userInput);
+  return userInputContainsSQLSyntax(userInput);
 }
 
 const dangerousInStringRegex = new RegExp(
@@ -67,7 +67,7 @@ const possibleSqlRegex = new RegExp(
  * @param userInput The user input you want to check
  * @returns True when this is a possible SQL Injection
  */
-export function userInputContainsSQLsyntax(userInput: string): boolean {
+export function userInputContainsSQLSyntax(userInput: string): boolean {
   return possibleSqlRegex.test(userInput);
 }
 
