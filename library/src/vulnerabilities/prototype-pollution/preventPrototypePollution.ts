@@ -6,7 +6,9 @@ export function preventPrototypePollution() {
     Object,
     Object.prototype,
     Function,
-    Function.prototype,
+    // We don't freeze the prototype of Function, as it's used by mysql2
+    // We'll investigate later and see how this can be abused
+    // Function.prototype,
     Array,
     Array.prototype,
     String,
