@@ -17,7 +17,7 @@ import {
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
  * Step 2 : queryContainsUserInput
- * 2. Executes queryContainsUserInput() - This checks wether the input is in the sql
+ * 2. Executes queryContainsUserInput() - This checks whether the input is in the sql
  * @param query The SQL Statement that's going to be executed
  * @param userInput The user input that might be dangerous
  * @returns True if SQL Injection is detected
@@ -32,25 +32,28 @@ export function detectSQLInjection(query: string, userInput: string) {
     // If the user input is not part of the query, return false (No need to check)
     return false;
   }
+
   if (dangerousCharsInInput(userInput)) {
     // If the user input contains characters that are dangerous in every context :
     // Encapsulated or not, return true (No need to check any further)
     return true;
   }
+
   if (userInputOccurrencesSafelyEncapsulated(query, userInput)) {
     // If the user input is safely encapsulated as a string in the query
     // We can ignore it and return false (i.e. not an injection)
     return false;
   }
+
   // Executing our final check with the massive RegEx :
-  return userInputContainsSQLsyntax(userInput);
+  return userInputContainsSQLSyntax(userInput);
 }
 
-// Declare Regexes
 const dangerousInStringRegex = new RegExp(
   SQL_DANGEROUS_IN_STRING.join("|"),
   "im"
 );
+
 const possibleSqlRegex = new RegExp(
   "(?<![a-z])(" +
     SQL_KEYWORDS.join("|") +
@@ -67,9 +70,9 @@ const possibleSqlRegex = new RegExp(
  * If the user input contains the necessary characters or words for a SQL injection, this
  * function returns true.
  * @param userInput The user input you want to check
- * @returns True when this is a posible SQL Injection
+ * @returns True when this is a possible SQL Injection
  */
-export function userInputContainsSQLsyntax(userInput: string): boolean {
+export function userInputContainsSQLSyntax(userInput: string): boolean {
   return possibleSqlRegex.test(userInput);
 }
 
@@ -83,6 +86,7 @@ export function userInputContainsSQLsyntax(userInput: string): boolean {
 export function queryContainsUserInput(query: string, userInput: string) {
   const lowercaseSql = query.toLowerCase();
   const lowercaseInput = userInput.toLowerCase();
+
   return lowercaseSql.includes(lowercaseInput);
 }
 
@@ -99,7 +103,7 @@ export function dangerousCharsInInput(userInput: string): boolean {
 
 /**
  * This function is the third step to determine if an SQL Injection is happening,
- * This checks if **all** occurences of our input are encapsulated as strings.
+ * This checks if **all** occurrences of our input are encapsulated as strings.
  * @param query The SQL Statement
  * @param userInput The user input you want to check is encapsulated
  * @returns True if the input is always encapsulated inside a string
@@ -118,10 +122,12 @@ export function userInputOccurrencesSafelyEncapsulated(
     if (!SQL_STRING_CHARS.includes(lastChar)) {
       return false; // If the character is not one of these, it's not a string.
     }
+
     if (lastChar != firstCharNext) {
       return false; // String is not encapsulated by the same type of quotes.
     }
   }
+
   return true;
 }
 
@@ -140,12 +146,11 @@ export function checkContextForSqlInjection(
   agent: Agent,
   module: string
 ) {
-  // Currently, do nothing : Still needs to be implemented
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (request[source]) {
       const userInput = extract(request[source]);
-      for (let i = 0; i < userInput.length; i++) {
-        if (detectSQLInjection(sql, userInput[i])) {
+      for (const str of userInput) {
+        if (detectSQLInjection(sql, str)) {
           agent.onDetectedAttack({
             module,
             kind: "sql_injection",
@@ -159,7 +164,7 @@ export function checkContextForSqlInjection(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido guard has blocked a SQL injection: ${userInput[i]} originating from ${friendlyName(source)}`
+              `Aikido guard has blocked a SQL injection: ${str} originating from ${friendlyName(source)}`
             );
           }
         }

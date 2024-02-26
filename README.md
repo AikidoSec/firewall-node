@@ -6,11 +6,11 @@
 ## Features
 
 * 🛡️ Protects your application against [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
+* 🛡️ Protects your application against [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
 * 🔥 More to come (See roadmap below)
 
 ## Roadmap
 
-* [ ] SQL injection protection
 * [ ] Monitor outbound requests
 * [ ] Protect against path traversal attacks
 * [ ] Protect against SSRF attacks

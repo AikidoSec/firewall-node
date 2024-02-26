@@ -10,9 +10,9 @@ import type { Client } from "pg";
 async function initDb(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS cats (
-        petname varchar(255)
+      petname varchar(255)
     );
-    `);
+  `);
 }
 
 const context: Context = {
@@ -26,9 +26,10 @@ const context: Context = {
   },
   cookies: {},
 };
+
 t.test("We can hijack Postgres class", async () => {
-  const postgres = new Postgres();
-  postgres.wrap();
+  new Postgres().wrap();
+
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -77,7 +78,6 @@ t.test("We can hijack Postgres class", async () => {
       );
     }
 
-    // @ts-expect-error null is normally not a valid agent
     setInstance(null); // We want to check if the code works when an Agent is not defined.
     await runWithContext(context, () => {
       // Normally this should be detected, but since the agent

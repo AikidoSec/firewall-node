@@ -3,16 +3,19 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const db = require('./db');
+const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
+const mysql = require("mysql2/promise");
+
+preventPrototypePollution();
 
 function getHTMLBody(cats) {
-    return `
+  return `
 <html lang="en">
   <body>
-    <p>All cats : ${cats.join(', ')}</p>
+    <p>All cats : ${cats.join(", ")}</p>
     <form action="/" method="GET">
       <label for="search">Add a new cat</label>
       <input type="text" name="petname">
@@ -23,21 +26,42 @@ function getHTMLBody(cats) {
 </html>`;
 }
 
+async function createConnection() {
+  // Normally you'd use environment variables for this
+  const connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "mypassword",
+    database: "catsdb",
+    port: 27015,
+    multipleStatements: true,
+  });
+
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS cats (
+        petname varchar(255)
+    );
+  `);
+
+  return connection;
+}
+
 async function main() {
+  const db = await createConnection();
+  const cats = new Cats(db);
+
   const app = express();
-  db.connectToMysqlDB();
 
   app.use(morgan("tiny"));
 
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      if(req.query["petname"]) {
-        // This is very dangerous, don't copy this code into an actual application
-        await db.insertCatIntoTable(req.query["petname"]);
+      if (req.query["petname"]) {
+        await cats.add(req.query["petname"]);
       }
-      let cats = await db.getAllCats();
-      res.send(getHTMLBody(cats));
+
+      res.send(getHTMLBody(await cats.getAll()));
     })
   );
 

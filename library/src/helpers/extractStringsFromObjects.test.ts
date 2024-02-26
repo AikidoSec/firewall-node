@@ -1,5 +1,10 @@
+/* eslint-disable camelcase */
 import * as t from "tap";
 import { extract } from "./extractStringsFromObjects";
+
+t.test("empty object returns empty array", async () => {
+  t.same(extract({}), []);
+});
 
 t.test("Can extract() extract Query objects", async () => {
   t.same(extract({ age: { $gt: "21" } }), ["age", "$gt", "21"]);
@@ -57,4 +62,14 @@ t.test("Can extract() extract body objects", async () => {
     "21",
     "100",
   ]);
+});
+
+t.test("it decodes JWTs", async () => {
+  t.same(
+    extract({
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
+    }),
+    ["token", "iat", "username", "sub", "1234567890", "$ne"]
+  );
 });
