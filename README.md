@@ -28,7 +28,7 @@ Aikido guard for Node.js is compatible with
 
 ```shell
 # The --save-exact makes sure that you don't automatically install a newer version
-$ npm install --save --save-exact @aikdiosec/guard
+$ npm install --save-exact @aikdiosec/guard
 
 # The --exact makes sure that you don't automatically install a newer version
 $ yarn add --exact @aikidosec/guard
