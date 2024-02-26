@@ -3,41 +3,71 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const db = require('./db');
+const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
+const mariadb = require("mariadb");
+
+preventPrototypePollution();
 
 function getHTMLBody(cats) {
-    return `
+  return `
 <html lang="en">
   <body>
-    <p>All cats : ${cats.join(', ')}</p>
-    <form action="/" method="GET">
-      <label for="search">Add a new cat</label>
+    <p>All cats : ${cats.join(", ")}</p>
+    <form action="/" method="post">
       <input type="text" name="petname">
+      <p>Try this: Kitty'); DELETE FROM cats;--</p>
       <input type="submit" value="Add" />
     </form>
-    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H">Test injection</a>
   </body>
 </html>`;
 }
 
+async function getDBClient() {
+  const db = new mariadb.createPool({
+    user: "root",
+    host: "127.0.0.1",
+    database: "catsdb",
+    password: "mypassword",
+    port: 27015,
+    multipleStatements: true,
+  });
+
+  const conn = await db.getConnection();
+  await conn.query("CREATE TABLE IF NOT EXISTS cats (petname varchar(255));");
+  conn.end();
+
+  return db;
+}
+
 async function main() {
   const app = express();
-  db.connectToMariaDB();
+  const db = await getDBClient();
+  const cats = new Cats(db);
 
   app.use(morgan("tiny"));
 
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      if(req.query["petname"]) {
-        // This is very dangerous, don't copy this code into an actual application
-        await db.insertCatIntoTable(req.query["petname"]);
+      res.send(getHTMLBody(await cats.all()));
+    })
+  );
+
+  app.post(
+    "/",
+    express.urlencoded({ extended: false }),
+    asyncHandler(async (req, res) => {
+      if (!req.body.petname) {
+        res.status(400).send();
+        return;
       }
-      let cats = await db.getAllCats();
-      res.send(getHTMLBody(cats));
+
+      await cats.add(req.body.petname);
+
+      res.redirect("/");
     })
   );
 
