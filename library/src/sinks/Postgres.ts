@@ -8,8 +8,6 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/de
 
 export class Postgres implements Wrapper {
   private wrapQueryFunction(exports: unknown) {
-    const that = this;
-
     massWrap(
       // @ts-expect-error This is magic that TypeScript doesn't understand
       [exports.Client.prototype, exports.Pool.prototype],
@@ -47,6 +45,7 @@ export class Postgres implements Wrapper {
 
   private onModuleRequired<T>(exports: T): T {
     this.wrapQueryFunction(exports);
+
     return exports;
   }
 
