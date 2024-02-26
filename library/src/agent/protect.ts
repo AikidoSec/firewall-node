@@ -7,6 +7,7 @@ import { API, APIFetch, APIThrottled, Token } from "./API";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
+import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
@@ -16,11 +17,15 @@ function wrapInstalledPackages() {
   const packages: Record<string, { range: string; wrapper: Wrapper }> = {
     express: {
       range: "^4.0.0",
-      wrapper: new Express(), // Creates a new "Express" instance which is defined in sources/
+      wrapper: new Express(),
     },
     mongodb: {
       range: "^4.0.0 || ^5.0.0 || ^6.0.0",
-      wrapper: new MongoDB(), // Creates a new "MongoDB" instance, which is defined in sinks/
+      wrapper: new MongoDB(),
+    },
+    pg: {
+      range: "^8.0.0",
+      wrapper: new Postgres(),
     },
   };
 
@@ -99,8 +104,9 @@ function getAgent({
 
   return agent;
 }
+
 /**
- * This function **disables** logging from the "shimer" package - this avoid logs whenever a function doesn't exist
+ * This function **disables** logging from the "shimmer" package - this avoids logs whenever a function doesn't exist
  */
 function disableShimmerLogging() {
   shimmer({ logger: () => {} });

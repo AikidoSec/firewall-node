@@ -4,7 +4,7 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { detectNoSQLInjection } from "../vulnerabilities/detectNoSQLInjection";
+import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { friendlyName } from "../agent/Source";

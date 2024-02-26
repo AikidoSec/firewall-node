@@ -11,6 +11,14 @@ jobs:
           "MONGO_INITDB_ROOT_PASSWORD": "password"
         ports:
           - 27017:27017
+      postgres:
+        image: postgres:14-alpine
+        env:
+          "POSTGRES_PASSWORD": "password"
+          "POSTGRES_USER": "root"
+          "POSTGRES_DB": "main_db"
+        ports:
+          - "27016:5432"
     timeout-minutes: 5
     strategy:
       matrix:
@@ -23,6 +31,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: make install
       - run: make build
-      - name: Run Benchmark
-        id: benchmark
+      - name: Run MongoDB Benchmark
+        id: mongodb_benchmark
         run: cd benchmarks/mongodb && node benchmark.js
+      - name: Run SQL Injection Benchmark
+        id: sql_injection_bencmark
+        run: cd benchmarks/sql-injection && node benchmark.js
