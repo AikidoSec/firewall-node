@@ -1,4 +1,5 @@
 import { isPlainObject } from "./isPlainObject";
+import { tryDecodeAsJWT } from "./jwt";
 
 /**
  * This checks the object for user input
@@ -19,7 +20,12 @@ export function extract(obj: unknown): string[] {
   }
 
   if (typeof obj == "string") {
-    results.add(obj);
+    const jwt = tryDecodeAsJWT(obj);
+    if (jwt.jwt) {
+      results = new Set([...results, ...extract(jwt.object)]);
+    } else {
+      results.add(obj);
+    }
   }
 
   return Array.from(results);
