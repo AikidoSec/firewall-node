@@ -3,10 +3,11 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const db = require("./db");
+const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
+const { Client } = require("pg");
 
 preventPrototypePollution();
 
@@ -20,14 +21,35 @@ function getHTMLBody(cats) {
       <input type="text" name="petname">
       <input type="submit" value="Add" />
     </form>
-    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;--">Test injection</a>
+    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H">Test injection</a>
   </body>
 </html>`;
 }
 
+async function createConnection() {
+  const client = new Client({
+    user: "root",
+    host: "127.0.0.1",
+    database: "main_db",
+    password: "password",
+    port: 27016,
+  });
+
+  await client.connect();
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS cats (
+        petname varchar(255)
+    );
+  `);
+
+  return client;
+}
+
 async function main() {
+  const db = await createConnection();
+  const cats = new Cats(db);
+
   const app = express();
-  db.connectToPostgresDB();
 
   app.use(morgan("tiny"));
 
@@ -35,11 +57,10 @@ async function main() {
     "/",
     asyncHandler(async (req, res) => {
       if (req.query["petname"]) {
-        // This is very dangerous, don't copy this code into an actual application
-        await db.insertCatIntoTable(req.query["petname"]);
+        await cats.add(req.query["petname"]);
       }
-      let cats = await db.getAllCats();
-      res.send(getHTMLBody(cats));
+
+      res.send(getHTMLBody(await cats.getAll()));
     })
   );
 

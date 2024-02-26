@@ -3,7 +3,7 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const db = require("./db");
+const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
@@ -25,9 +25,32 @@ function getHTMLBody(cats) {
 </html>`;
 }
 
+async function createConnection() {
+  const pool = new mariadb.createPool({
+    user: "root",
+    host: "127.0.0.1",
+    database: "catsdb",
+    password: "mypassword",
+    port: 27015,
+    multipleStatements: true,
+  });
+
+  const conn = await pool.getConnection();
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS cats (
+        petname varchar(255)
+    );
+  `);
+  conn.end();
+
+  return pool;
+}
+
 async function main() {
+  const db = await createConnection();
+  const cats = new Cats(db);
+
   const app = express();
-  db.connectToMariaDB();
 
   app.use(morgan("tiny"));
 
@@ -35,11 +58,10 @@ async function main() {
     "/",
     asyncHandler(async (req, res) => {
       if (req.query["petname"]) {
-        // This is very dangerous, don't copy this code into an actual application
-        await db.insertCatIntoTable(req.query["petname"]);
+        await cats.add(req.query["petname"]);
       }
-      let cats = await db.getAllCats();
-      res.send(getHTMLBody(cats));
+
+      res.send(getHTMLBody(await cats.getAll()));
     })
   );
 
