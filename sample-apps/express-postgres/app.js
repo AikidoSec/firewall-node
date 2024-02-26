@@ -3,70 +3,41 @@ const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
-const Cats = require("./Cats");
+const db = require('./db');
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
-const { Client } = require("pg");
-
-preventPrototypePollution();
 
 function getHTMLBody(cats) {
-  return `
+    return `
 <html lang="en">
   <body>
-    <p>All cats : ${cats.join(", ")}</p>
-    <form action="/" method="post">
+    <p>All cats : ${cats.join(', ')}</p>
+    <form action="/" method="GET">
+      <label for="search">Add a new cat</label>
       <input type="text" name="petname">
-      <p>Try this: Kitty'); DELETE FROM cats;--</p>
       <input type="submit" value="Add" />
     </form>
+    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;--">Test injection</a>
   </body>
 </html>`;
 }
 
-async function getDBClient() {
-  // You would normally use environment variables for this
-  const db = new Client({
-    user: "root",
-    host: "127.0.0.1",
-    database: "main_db",
-    password: "password",
-    port: 27016,
-  });
-
-  await db.connect();
-  await db.query("CREATE TABLE IF NOT EXISTS cats (petname varchar(255));");
-
-  return db;
-}
-
 async function main() {
-  const db = await getDBClient();
-  const cats = new Cats(db);
-
   const app = express();
+  db.connectToPostgresDB();
 
   app.use(morgan("tiny"));
 
   app.get(
     "/",
     asyncHandler(async (req, res) => {
-      res.send(getHTMLBody(await cats.all()));
-    })
-  );
-
-  app.post(
-    "/",
-    express.urlencoded({ extended: false }),
-    asyncHandler(async (req, res) => {
-      if (!req.body.petname) {
-        res.status(400).send();
-        return;
+      if(req.query["petname"]) {
+        // This is very dangerous, don't copy this code into an actual application
+        await db.insertCatIntoTable(req.query["petname"]);
       }
-
-      await cats.add(req.body.petname);
-      res.redirect("/");
+      let cats = await db.getAllCats();
+      res.send(getHTMLBody(cats));
     })
   );
 
