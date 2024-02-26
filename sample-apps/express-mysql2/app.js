@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { protect } = require("@aikidosec/guard");
+const { protect, preventPrototypePollution } = require("@aikidosec/guard");
 
 protect({ debug: true });
 
@@ -7,6 +7,8 @@ const db = require("./db");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
+
+preventPrototypePollution();
 
 function getHTMLBody(cats) {
   return `
