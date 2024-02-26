@@ -48,12 +48,16 @@ const GOOD_SQL_COMMANDS = [
   "I was benchmark ing",
   "We were delay ed",
   "I will waitfor you",
+  // Allow single characters
+  "#",
+  "'",
 ];
 
 const IS_NOT_INJECTION = [
   [`'UNION 123' UNION "UNION 123"`, "UNION 123"], // String encapsulation
   [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
   [`"UNION;"`, "UNION;"], // String encapsulation
+  ["SELECT * FROM table", "*"],
 ];
 
 const IS_INJECTION = [
@@ -208,10 +212,10 @@ t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));
 });
 
-function isSqlInjection(sql, input) {
+function isSqlInjection(sql: string, input: string) {
   t.ok(detectSQLInjection(sql, input), sql);
 }
 
-function isNotSqlInjection(sql, input) {
+function isNotSqlInjection(sql: string, input: string) {
   t.notOk(detectSQLInjection(sql, input), sql);
 }
