@@ -7,7 +7,6 @@ const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
-const { Client } = require("pg");
 
 preventPrototypePollution();
 
@@ -27,22 +26,24 @@ function getHTMLBody(cats) {
 }
 
 async function createConnection() {
-  const client = new Client({
+  const pool = new mariadb.createPool({
     user: "root",
     host: "127.0.0.1",
-    database: "main_db",
-    password: "password",
-    port: 27016,
+    database: "catsdb",
+    password: "mypassword",
+    port: 27015,
+    multipleStatements: true,
   });
 
-  await client.connect();
-  await client.query(`
+  const conn = await pool.getConnection();
+  await conn.query(`
     CREATE TABLE IF NOT EXISTS cats (
         petname varchar(255)
     );
   `);
+  conn.end();
 
-  return client;
+  return pool;
 }
 
 async function main() {

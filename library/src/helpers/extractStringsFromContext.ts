@@ -1,5 +1,6 @@
 import { Context } from "../agent/Context";
-import { extract } from "../helpers/extractStringsFromObjects";
+import { extract } from "./extractStringsFromObjects";
+
 /**
  * This checks the context (query, headers, cookies, body) for user input and extracts it into an array.
  * Useful for checking SQL Injections

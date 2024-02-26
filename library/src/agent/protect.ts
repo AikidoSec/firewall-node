@@ -24,7 +24,7 @@ function wrapInstalledPackages() {
       wrapper: new MongoDB(),
     },
     pg: {
-      range: "^8.11.0", // Current version
+      range: "^8.0.0",
       wrapper: new Postgres(),
     },
   };
@@ -105,10 +105,17 @@ function getAgent({
   return agent;
 }
 
+/**
+ * This function **disables** logging from the "shimmer" package - this avoids logs whenever a function doesn't exist
+ */
 function disableShimmerLogging() {
   shimmer({ logger: () => {} });
 }
 
+/**
+ * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
+ * @param options Options to pass along to the protect function (See type definition)
+ */
 export function protect(options?: Partial<Options>) {
   disableShimmerLogging();
 
@@ -120,6 +127,11 @@ export function protect(options?: Partial<Options>) {
   agent.start();
 }
 
+/**
+ * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
+ * @param options Options to pass along to the protect function (See type definition)
+ * @returns Function that allows creation of lambda wrapper
+ */
 export function lambda(
   options?: Partial<Options>
 ): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {

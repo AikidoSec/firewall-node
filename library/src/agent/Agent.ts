@@ -7,11 +7,21 @@ import { resolve } from "path";
 import { Source } from "./Source";
 
 export class Agent {
+  /** Gives the interval in milliseconds between heartbeats. Currently set at 1h */
   private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
   private stats: Stats = {};
   private preventedPrototypePollution = false;
 
+  /**
+   * Constructor
+   * @param block Elaborate...
+   * @param logger Elaborate...
+   * @param api Elaborate...
+   * @param token Elaborate...
+   * @param serverless Elaborate...
+   * @param wrappedPackages Elaborate...
+   */
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
@@ -24,6 +34,10 @@ export class Agent {
     >
   ) {}
 
+  /**
+   * This makes the block property accessible.
+   * @returns the state of the "block" property on this class
+   */
   shouldBlock() {
     return this.block;
   }
@@ -70,6 +84,9 @@ export class Agent {
     this.preventedPrototypePollution = true;
   }
 
+  /**
+   * Reports to the API that this agent has started
+   */
   onStart() {
     if (this.token) {
       this.api
@@ -84,6 +101,9 @@ export class Agent {
     }
   }
 
+  /**
+   * This function gets called when an attack is detected, it reports this attack to the API
+   */
   onDetectedAttack({
     module,
     kind,
@@ -134,6 +154,9 @@ export class Agent {
     }
   }
 
+  /**
+   * Sends a hearbeat via the API to the server (only when not in serverless mode)
+   */
   heartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
@@ -150,6 +173,9 @@ export class Agent {
     }
   }
 
+  /**
+   * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
+   */
   private startHeartbeats() {
     if (this.serverless) {
       throw new Error("Heartbeats in serverless mode are not supported");
@@ -167,6 +193,10 @@ export class Agent {
     this.interval.unref();
   }
 
+  /**
+   * Gets this project's version number from the package.json file
+   * @returns version number
+   */
   private getAgentVersion(): string {
     const json = require(resolve(__dirname, "../../package.json"));
 
@@ -204,6 +234,9 @@ export class Agent {
     };
   }
 
+  /**
+   * Starts up the agent : Checks parameters like block and token, starts heartbeats if necessary and checks which pacakges are supported, afterwards it calls {@link onStart}
+   */
   start() {
     this.logger.log("Starting agent...");
 
