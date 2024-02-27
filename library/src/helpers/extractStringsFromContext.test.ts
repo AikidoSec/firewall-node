@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { extractStringsFromContext } from "./extractStringsFromContext";
 
-t.test("extractStringsFromContext()", async () => {
+t.test("it extracts strings from request context", async () => {
   t.same(
     extractStringsFromContext({
       cookies: { roses: "are" },

@@ -1,7 +1,7 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { Source, friendlyName } from "../../agent/Source";
-import { extract } from "../../helpers/extractStringsFromObjects";
+import { extractStringsFromObject } from "../../helpers/extractStringsFromObjects";
 
 /* We make use of double backslashes to create a single backslash in the RegEx
  * SQL Operators : = ! ; + - * / % & | ^ > <
@@ -149,7 +149,7 @@ export function checkContextForSqlInjection(
 ) {
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (request[source]) {
-      const userInput = extract(request[source]);
+      const userInput = extractStringsFromObject(request[source]);
       for (const str of userInput) {
         if (detectSQLInjection(sql, str)) {
           agent.onDetectedAttack({
