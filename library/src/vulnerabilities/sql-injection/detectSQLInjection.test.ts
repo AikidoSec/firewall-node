@@ -1,8 +1,8 @@
 import * as t from "tap";
 import * as fs from "fs";
 import * as path from "path";
+import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import {
-  dangerousCharsInInput,
   detectSQLInjection,
   userInputOccurrencesSafelyEncapsulated,
   queryContainsUserInput,
