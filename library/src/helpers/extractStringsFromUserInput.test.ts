@@ -1,24 +1,24 @@
 /* eslint-disable camelcase */
 import * as t from "tap";
-import { extractStringsFromObject } from "./extractStringsFromObject";
+import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
 t.test("empty object returns empty array", async () => {
-  t.same(extractStringsFromObject({}), []);
+  t.same(extractStringsFromUserInput({}), []);
 });
 
 t.test("it can extract query objects", async () => {
-  t.same(extractStringsFromObject({ age: { $gt: "21" } }), [
+  t.same(extractStringsFromUserInput({ age: { $gt: "21" } }), [
     "age",
     "$gt",
     "21",
   ]);
-  t.same(extractStringsFromObject({ title: { $ne: "null" } }), [
+  t.same(extractStringsFromUserInput({ title: { $ne: "null" } }), [
     "title",
     "$ne",
     "null",
   ]);
   t.same(
-    extractStringsFromObject({
+    extractStringsFromUserInput({
       age: "whaat",
       user_input: ["whaat", "dangerous"],
     }),
@@ -27,13 +27,13 @@ t.test("it can extract query objects", async () => {
 });
 
 t.test("it can extract cookie objects", async () => {
-  t.same(extractStringsFromObject({ session: "ABC", session2: "DEF" }), [
+  t.same(extractStringsFromUserInput({ session: "ABC", session2: "DEF" }), [
     "session2",
     "session",
     "ABC",
     "DEF",
   ]);
-  t.same(extractStringsFromObject({ session: "ABC", session2: 1234 }), [
+  t.same(extractStringsFromUserInput({ session: "ABC", session2: 1234 }), [
     "session2",
     "session",
     "ABC",
@@ -42,19 +42,19 @@ t.test("it can extract cookie objects", async () => {
 
 t.test("it can extract header objects", async () => {
   t.same(
-    extractStringsFromObject({
+    extractStringsFromUserInput({
       "Content-Type": "application/json",
     }),
     ["Content-Type", "application/json"]
   );
   t.same(
-    extractStringsFromObject({
+    extractStringsFromUserInput({
       "Content-Type": 54321,
     }),
     ["Content-Type"]
   );
   t.notSame(
-    extractStringsFromObject({
+    extractStringsFromUserInput({
       "Content-Type": "application/json",
       ExtraHeader: "value",
     }),
@@ -63,12 +63,12 @@ t.test("it can extract header objects", async () => {
 });
 
 t.test("it can extract body objects", async () => {
-  t.same(extractStringsFromObject({ nested: { nested: { $ne: null } } }), [
+  t.same(extractStringsFromUserInput({ nested: { nested: { $ne: null } } }), [
     "nested",
     "$ne",
   ]);
 
-  t.same(extractStringsFromObject({ age: { $gt: "21", $lt: "100" } }), [
+  t.same(extractStringsFromUserInput({ age: { $gt: "21", $lt: "100" } }), [
     "age",
     "$lt",
     "$gt",
@@ -79,7 +79,7 @@ t.test("it can extract body objects", async () => {
 
 t.test("it decodes JWTs", async () => {
   t.same(
-    extractStringsFromObject({
+    extractStringsFromUserInput({
       token:
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
     }),

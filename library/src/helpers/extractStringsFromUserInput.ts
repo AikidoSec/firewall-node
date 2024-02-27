@@ -4,7 +4,7 @@ import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 /**
  * Extract all strings from an object, see unit tests for examples
  */
-export function extractStringsFromObject(obj: unknown): string[] {
+export function extractStringsFromUserInput(obj: unknown): string[] {
   let results: Set<string> = new Set();
 
   if (isPlainObject(obj)) {
@@ -12,21 +12,24 @@ export function extractStringsFromObject(obj: unknown): string[] {
       results = new Set([
         key,
         ...results,
-        ...extractStringsFromObject(obj[key]),
+        ...extractStringsFromUserInput(obj[key]),
       ]);
     }
   }
 
   if (Array.isArray(obj)) {
     for (const element of obj) {
-      results = new Set([...results, ...extractStringsFromObject(element)]);
+      results = new Set([...results, ...extractStringsFromUserInput(element)]);
     }
   }
 
   if (typeof obj == "string") {
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
-      results = new Set([...results, ...extractStringsFromObject(jwt.object)]);
+      results = new Set([
+        ...results,
+        ...extractStringsFromUserInput(jwt.object),
+      ]);
     } else {
       results.add(obj);
     }
