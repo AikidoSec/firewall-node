@@ -1,4 +1,4 @@
-name: Lint code and run tests
+name: Unit tests
 on: push
 jobs:
   build:
@@ -29,7 +29,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: make install
-      - run: make lint
       - run: make test-ci
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
