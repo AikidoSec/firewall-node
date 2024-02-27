@@ -1,11 +1,3 @@
-export interface Logger {
-  log(message: string): void;
-}
-
-/**
- * A console class that has the log function
- * @class LoggerConsole
- */
 export class LoggerConsole {
   /**
    * Creates a terminal log with the "AIKIDO: " affix.
@@ -13,11 +5,5 @@ export class LoggerConsole {
    */
   log(message: string) {
     console.log(`AIKIDO: ${message}`);
-  }
-}
-
-export class LoggerNoop {
-  log(message: string) {
-    // noop
   }
 }

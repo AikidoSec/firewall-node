@@ -1,15 +1,20 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
-import { API, APIFetch, APIThrottled, Token } from "./API";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
-import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
+import { API } from "./api/API";
+import { APIFetch } from "./api/APIFetch";
+import { APIThrottled } from "./api/APIThrottled";
+import { Token } from "./api/Token";
 import { applyHooks } from "./applyHooks";
-import { Hooks } from "./Wrapper";
+import { Hooks } from "./hooks/Hooks";
+import { Logger } from "./logger/Logger";
+import { LoggerConsole } from "./logger/LoggerConsole";
+import { LoggerNoop } from "./logger/LoggerNoop";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {

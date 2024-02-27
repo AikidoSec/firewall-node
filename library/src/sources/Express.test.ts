@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { applyHooks } from "../agent/applyHooks";
-import { Hooks } from "../agent/Wrapper";
+import { Hooks } from "../agent/hooks/Hooks";
 import { Express } from "./Express";
 
 // Before express is required!

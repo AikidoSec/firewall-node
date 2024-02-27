@@ -1,4 +1,5 @@
-import { Hooks, Wrapper } from "../agent/Wrapper";
+import { Hooks } from "../agent/hooks/Hooks";
+import { Wrapper } from "../agent/Wrapper";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";

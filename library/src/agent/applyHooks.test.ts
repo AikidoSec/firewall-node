@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { applyHooks } from "./applyHooks";
-import { Hooks } from "./Wrapper";
+import { Hooks } from "./hooks/Hooks";
 
 t.test("it ignores if package is not installed", async (t) => {
   const hooks = new Hooks();

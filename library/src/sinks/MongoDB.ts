@@ -2,11 +2,12 @@
 import { Collection } from "mongodb";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
+import { Hooks } from "../agent/hooks/Hooks";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { friendlyName } from "../agent/Source";
-import { Hooks, Wrapper } from "../agent/Wrapper";
+import { Wrapper } from "../agent/Wrapper";
 
 const OPERATIONS_WITH_FILTER = [
   "count",

@@ -1,9 +1,11 @@
 import { hostname, platform, release } from "node:os";
 import { ip } from "../helpers/ipAddress";
-import { API, AgentInfo, Token, Stats, Kind } from "./API";
-import { Logger } from "./Logger";
+import { API } from "./api/API";
+import { AgentInfo, Kind, Stats } from "./api/Event";
+import { Token } from "./api/Token";
 import { Context } from "./Context";
 import { resolve } from "path";
+import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
 
 export class Agent {
