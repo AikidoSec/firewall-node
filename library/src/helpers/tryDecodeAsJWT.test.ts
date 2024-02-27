@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { tryDecodeAsJWT } from "./jwt";
+import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 t.test("it returns undefined for empty string", async () => {
   t.same(tryDecodeAsJWT(""), { jwt: false });

@@ -1,18 +1,7 @@
-/**
- * The ipAddress module exports only one function : {@link ip}
- * @module helpers/ipAddress
- */
-
 import * as os from "os";
 
 /**
  * Get the IP Address of the machine running this code
- * @param interfaceName The name of the networking interface you want the IP Address from
- * @returns The ip address associated to that networking interface
- * @example
- * ip(); // Returns your IP address
- * @example
- * ip('eth0'); // Return the IP address on the interface eth0
  */
 export function ip(interfaceName?: string) {
   const item = getInterfaceAddress("IPv4", interfaceName);
@@ -28,6 +17,7 @@ function getDefaultInterfaceName() {
   } else if (platform === "win32") {
     val = undefined;
   }
+
   return val;
 }
 
@@ -38,9 +28,11 @@ function matchName(
   if (expectedFamily === "IPv4") {
     return actualFamily === "IPv4" || actualFamily === 4;
   }
+
   if (expectedFamily === "IPv6") {
     return actualFamily === "IPv6" || actualFamily === 6;
   }
+
   return actualFamily === expectedFamily;
 }
 

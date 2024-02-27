@@ -1,16 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { ParsedQs } from "qs";
 
-/**
- * @prop url This is the URL where the (express) request came in
- * @prop method This is the HTTP Method used for the (express) request
- * @prop query These are the URL Query parameters (e.g. example.com?param1=value1)
- * @prop headers The HTTP headers accompanying the request
- * @prop remoteAddress The remote address of the end-user
- * @prop body This is the (form) body that possible accompanies the request
- * @prop cookies These are the cookies accompanying the request
- * @interface
- */
 export type Context = {
   url: string | undefined;
   method: string;
@@ -24,18 +14,18 @@ export type Context = {
 const requestContext = new AsyncLocalStorage<Context>();
 
 /**
- * This function gives you the {@link Context} stored in asynchronous local storage
- * @returns the stored context in asynchronous local storage
+ * Get the current request context that is being handled
  */
 export function getContext() {
   return requestContext.getStore();
 }
 
 /**
+ * Executes a function with a given request context
  *
- * @param context The context you want to set ({@link Context})
- * @param fn
- * @returns
+ * The code executed inside the function will have access to the context using {@link getContext}
+ *
+ * This is needed because Node.js is single-threaded, so we can't use a global variable to store the context.
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
   return requestContext.run(context, fn);
