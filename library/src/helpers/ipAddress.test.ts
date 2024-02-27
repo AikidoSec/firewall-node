@@ -14,4 +14,5 @@ import { ip } from "./ipAddress";
 
 t.test("it works", async () => {
   t.same(ip(), "10.206.52.79");
+  t.same(ip("eth0"), undefined);
 });

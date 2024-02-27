@@ -21,6 +21,10 @@ t.test("it returns false if invalid range", async () => {
   t.equal(satisfiesVersion("1.0.0", "1.0.0"), false);
 });
 
+t.test("it returns false if invalid range", async () => {
+  t.equal(satisfiesVersion("^1.0", "1.0.0"), false);
+});
+
 t.test("it matches single range", async () => {
   t.equal(satisfiesVersion("^1.0.0", "1.0.0"), true);
   t.equal(satisfiesVersion("^1.0.0", "1.1.0"), true);
