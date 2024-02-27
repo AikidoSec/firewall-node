@@ -45,7 +45,7 @@ async function createConnection() {
   return client;
 }
 
-async function main() {
+async function main(port) {
   const db = await createConnection();
   const cats = new Cats(db);
 
@@ -66,8 +66,8 @@ async function main() {
 
   return new Promise((resolve, reject) => {
     try {
-      app.listen(4000, () => {
-        console.log("Listening on port 4000");
+      app.listen(port, () => {
+        console.log(`Listening on port ${port}`);
         resolve();
       });
     } catch (err) {
@@ -76,4 +76,15 @@ async function main() {
   });
 }
 
-main();
+function getPort() {
+  const port = parseInt(process.argv[2], 10) || 4000;
+
+  if (isNaN(port)) {
+    console.error("Invalid port");
+    process.exit(1);
+  }
+
+  return port;
+}
+
+main(getPort());
