@@ -21,5 +21,5 @@ t.test("method throws error if name is empty", async (t) => {
     .withVersion("^1.0.0")
     .subject((exports) => exports);
 
-  t.throws(() => subject.method("", () => {}));
+  t.throws(() => subject.inspect("", () => {}));
 });

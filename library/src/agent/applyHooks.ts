@@ -2,7 +2,7 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
-import { Hooks, Method } from "./Wrapper";
+import { DangerousMethod, Hooks, SafeMethod } from "./Wrapper";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -49,9 +49,13 @@ export function applyHooks(hooks: Hooks) {
           return;
         }
 
-        selector
-          .getMethods()
-          .forEach((method) => interceptMethodCalls(subject, method));
+        selector.getMethods().forEach((method) => {
+          if (method instanceof SafeMethod) {
+            safelyWrapMethodCalls(subject, method);
+          } else {
+            dangerouslyWrapMethodCalls(subject, method);
+          }
+        });
       });
 
       return exports;
@@ -61,7 +65,32 @@ export function applyHooks(hooks: Hooks) {
   return wrapped;
 }
 
-function interceptMethodCalls(subject: unknown, method: Method) {
+/**
+ * Wraps a method call with a safe interceptor, which doesn't modify the arguments of the method call.
+ */
+function safelyWrapMethodCalls(subject: unknown, method: SafeMethod) {
+  // @ts-expect-error We don't now the type of the subject
+  wrap(subject, method.getName(), function wrap(original: Function) {
+    return function wrap() {
+      // eslint-disable-next-line prefer-rest-params
+      const args = Array.from(arguments);
+      // @ts-expect-error We don't now the type of this
+      method.getInterceptor()(args, this);
+
+      return original.apply(
+        // @ts-expect-error We don't now the type of this
+        this,
+        // eslint-disable-next-line prefer-rest-params
+        arguments
+      );
+    };
+  });
+}
+
+/**
+ * Wraps a method call with a dangerous interceptor, which modifies the arguments of the method call.
+ */
+function dangerouslyWrapMethodCalls(subject: unknown, method: DangerousMethod) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {

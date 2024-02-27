@@ -22,7 +22,7 @@ t.test("it ignores unknown selectors", async (t) => {
     .package("shimmer")
     .withVersion("^1.0.0")
     .subject((exports) => exports.doesNotExist)
-    .method("method", () => {});
+    .inspect("method", () => {});
 
   t.same(applyHooks(hooks), {
     shimmer: {
@@ -41,7 +41,7 @@ t.test("it ignores if version is not supported", async (t) => {
     .package("shimmer")
     .withVersion("^2.0.0")
     .subject((exports) => exports)
-    .method("method", () => {});
+    .inspect("method", () => {});
 
   t.same(applyHooks(hooks), {});
 });

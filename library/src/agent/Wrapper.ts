@@ -1,9 +1,33 @@
-type Interceptor = (args: unknown[], subject: unknown) => void | unknown[];
+type SafeInterceptor = (args: unknown[], subject: unknown) => void;
 
-export class Method {
+type ModifyingArgumentsInterceptor = (
+  args: unknown[],
+  subject: unknown
+) => unknown[];
+
+export class SafeMethod {
   constructor(
     private readonly name: string,
-    private readonly interceptor: Interceptor
+    private readonly interceptor: SafeInterceptor
+  ) {
+    if (!this.name) {
+      throw new Error("Method name is required");
+    }
+  }
+
+  getName() {
+    return this.name;
+  }
+
+  getInterceptor() {
+    return this.interceptor;
+  }
+}
+
+export class DangerousMethod {
+  constructor(
+    private readonly name: string,
+    private readonly interceptor: ModifyingArgumentsInterceptor
   ) {
     if (!this.name) {
       throw new Error("Method name is required");
@@ -20,12 +44,22 @@ export class Method {
 }
 
 class Selector {
-  private methods: Method[] = [];
+  private methods: (SafeMethod | DangerousMethod)[] = [];
 
   constructor(private readonly selector: (exports: unknown) => unknown) {}
 
-  method(name: string, interceptor: Interceptor) {
-    const method = new Method(name, interceptor);
+  inspect(name: string, interceptor: SafeInterceptor) {
+    const method = new SafeMethod(name, interceptor);
+    this.methods.push(method);
+
+    return method;
+  }
+
+  dangerouslyModifyArguments(
+    name: string,
+    interceptor: ModifyingArgumentsInterceptor
+  ) {
+    const method = new DangerousMethod(name, interceptor);
     this.methods.push(method);
 
     return method;
