@@ -1,5 +1,5 @@
 import { isPlainObject } from "./isPlainObject";
-import { tryDecodeAsJWT } from "./jwt";
+import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 /**
  * This checks the object for user input
