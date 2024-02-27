@@ -55,9 +55,9 @@ export function applyHooks(hooks: Hooks) {
 
         selector.getMethodInterceptors().forEach((method) => {
           if (method instanceof MethodInterceptor) {
-            wrapMethodWithoutModifyingArguments(subject, method);
+            wrapWithoutArgumentModification(subject, method);
           } else {
-            wrapMethodThatModifiesArguments(subject, method);
+            wrapWithArgumentModification(subject, method);
           }
         });
       });
@@ -72,7 +72,7 @@ export function applyHooks(hooks: Hooks) {
 /**
  * Wraps a method call with an interceptor that doesn't modify the arguments of the method call.
  */
-function wrapMethodWithoutModifyingArguments(
+function wrapWithoutArgumentModification(
   subject: unknown,
   method: MethodInterceptor
 ) {
@@ -97,7 +97,7 @@ function wrapMethodWithoutModifyingArguments(
 /**
  * Wraps a method call with an interceptor that modifies the arguments of the method call.
  */
-function wrapMethodThatModifiesArguments(
+function wrapWithArgumentModification(
   subject: unknown,
   method: ModifyingArgumentsMethodInterceptor
 ) {
