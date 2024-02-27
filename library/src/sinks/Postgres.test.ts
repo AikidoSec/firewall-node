@@ -4,6 +4,7 @@ import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
 import { LoggerNoop } from "../agent/Logger";
 import { runWithContext, type Context } from "../agent/Context";
+import { Hooks, wrapPackages } from "../agent/Wrapper";
 import { Postgres } from "./Postgres";
 import type { Client } from "pg";
 
@@ -28,7 +29,9 @@ const context: Context = {
 };
 
 t.test("We can hijack Postgres class", async () => {
-  new Postgres().wrap();
+  const hooks = new Hooks();
+  new Postgres().wrap(hooks);
+  wrapPackages(hooks);
 
   const agent = new Agent(
     true,

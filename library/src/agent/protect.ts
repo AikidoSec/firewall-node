@@ -1,6 +1,4 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
-import { getPackageVersion } from "../helpers/getPackageVersion";
-import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API, APIFetch, APIThrottled, Token } from "./API";
@@ -10,40 +8,18 @@ import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
-import { Wrapper } from "./Wrapper";
+import { Hooks, wrapPackages } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const packages: Record<string, { range: string; wrapper: Wrapper }> = {
-    express: {
-      range: "^4.0.0",
-      wrapper: new Express(),
-    },
-    mongodb: {
-      range: "^4.0.0 || ^5.0.0 || ^6.0.0",
-      wrapper: new MongoDB(),
-    },
-    pg: {
-      range: "^8.0.0",
-      wrapper: new Postgres(),
-    },
-  };
+  const wrappers = [new Express(), new MongoDB(), new Postgres()];
 
-  const wrapped: Record<string, { version: string; supported: boolean }> = {};
-  for (const packageName in packages) {
-    const { range, wrapper } = packages[packageName];
-    const version = getPackageVersion(packageName);
-    wrapped[packageName] = {
-      version,
-      supported: version ? satisfiesVersion(range, version) : false,
-    };
+  const hooks = new Hooks();
+  wrappers.forEach((wrapper) => {
+    wrapper.wrap(hooks);
+  });
 
-    if (wrapped[packageName].supported) {
-      wrapper.wrap();
-    }
-  }
-
-  return wrapped;
+  return wrapPackages(hooks);
 }
 
 function getLogger(options: Options): Logger {

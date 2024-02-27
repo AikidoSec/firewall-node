@@ -1,58 +1,42 @@
-import { Wrapper } from "../agent/Wrapper";
-import { Client } from "pg";
-import { Hook } from "require-in-the-middle";
-import { massWrap } from "shimmer";
+import { Hooks, Wrapper } from "../agent/Wrapper";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 export class Postgres implements Wrapper {
-  private wrapQueryFunction(exports: unknown) {
-    massWrap(
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      [exports.Client.prototype, exports.Pool.prototype],
-      ["query"],
-      function wrapQueryFunction(original) {
-        return function safeQueryFunction(this: Client, ...args: unknown[]) {
-          const agent = getInstance();
+  private inspectQuery(args: unknown[]) {
+    const agent = getInstance();
 
-          if (!agent) {
-            return original.apply(this, args);
-          }
+    if (!agent) {
+      return;
+    }
 
-          const request = getContext();
+    const request = getContext();
 
-          if (!request) {
-            agent.onInspectedCall({
-              module: "postgres",
-              withoutContext: true,
-              detectedAttack: false,
-            });
+    if (!request) {
+      return agent.onInspectedCall({
+        module: "postgres",
+        withoutContext: true,
+        detectedAttack: false,
+      });
+    }
 
-            return original.apply(this, args);
-          }
+    if (typeof args[0] !== "string") {
+      // The query is not a string, not much to do here
+      return;
+    }
 
-          if (typeof args[0] !== "string") {
-            // The query is not a string, not much to do here
-            return original.apply(this, args);
-          }
-
-          const querystring: string = args[0];
-          checkContextForSqlInjection(querystring, request, agent, "postgres");
-
-          return original.apply(this, args);
-        };
-      }
-    );
+    const querystring: string = args[0];
+    checkContextForSqlInjection(querystring, request, agent, "postgres");
   }
 
-  private onModuleRequired<T>(exports: T): T {
-    this.wrapQueryFunction(exports);
+  wrap(hooks: Hooks) {
+    const pg = hooks.package("pg").withVersion("^7.0.0 || ^8.0.0");
 
-    return exports;
-  }
+    const client = pg.subject((exports) => exports.Client.prototype);
+    client.method("query", (args) => this.inspectQuery(args));
 
-  wrap() {
-    new Hook(["pg"], this.onModuleRequired.bind(this));
+    const pool = pg.subject((exports) => exports.Pool.prototype);
+    pool.method("query", (args) => this.inspectQuery(args));
   }
 }

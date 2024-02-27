@@ -1,9 +1,7 @@
 /* eslint-disable prefer-rest-params */
-import type { NextFunction, Request, Response, Application } from "express";
-import { Hook } from "require-in-the-middle";
-import { massWrap } from "shimmer";
+import type { NextFunction, Request, Response } from "express";
 import { runWithContext } from "../agent/Context";
-import { Wrapper } from "../agent/Wrapper";
+import { Hooks, Wrapper } from "../agent/Wrapper";
 import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
@@ -40,33 +38,20 @@ export class Express implements Wrapper {
   // app.get("/path", json(), middleware(), (req, res) => { ... }))
   //
   // Without having to change the user's code
-  private wrapRouteMethods(exports: unknown) {
-    massWrap(
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      exports.Route.prototype,
-      // @ts-expect-error This is magic that TypeScript doesn't understand
-      METHODS.map((method) => method.toLowerCase()),
-      function wrapRouteMethod(original) {
-        return function injectMiddleware(this: Application) {
-          const args = Array.from(arguments);
-          const handler = args.pop();
-          args.push(createMiddleware());
-          args.push(handler);
+  private addMiddleware(args: unknown[]) {
+    const handler = args.pop();
+    args.push(createMiddleware());
+    args.push(handler);
 
-          // @ts-expect-error This is magic that TypeScript doesn't understand
-          return original.apply(this, args);
-        };
-      }
-    );
+    return args;
   }
 
-  private onModuleRequire<T>(exports: T): T {
-    this.wrapRouteMethods(exports);
+  wrap(hooks: Hooks) {
+    const express = hooks.package("express").withVersion("^4.0.0");
 
-    return exports;
-  }
-
-  wrap() {
-    new Hook(["express"], this.onModuleRequire.bind(this));
+    const route = express.subject((exports) => exports.Route.prototype);
+    METHODS.map((method) => method.toLowerCase()).forEach((method) => {
+      route.method(method, (args) => this.addMiddleware(args));
+    });
   }
 }
