@@ -54,9 +54,7 @@ export class Express implements Wrapper {
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
     expressMethodNames.forEach((method) => {
-      route.dangerouslyModifyArguments(method, (args) =>
-        this.addMiddleware(args)
-      );
+      route.modifyArguments(method, (args) => this.addMiddleware(args));
     });
   }
 }

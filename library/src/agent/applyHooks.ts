@@ -2,7 +2,11 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
-import { DangerousMethod, Hooks, SafeMethod } from "./Wrapper";
+import {
+  ModifyingArgumentsMethodInterceptor,
+  Hooks,
+  MethodInterceptor,
+} from "./Wrapper";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -49,11 +53,11 @@ export function applyHooks(hooks: Hooks) {
           return;
         }
 
-        selector.getMethods().forEach((method) => {
-          if (method instanceof SafeMethod) {
-            safelyWrapMethodCalls(subject, method);
+        selector.getMethodInterceptors().forEach((method) => {
+          if (method instanceof MethodInterceptor) {
+            wrapMethodWithoutModifyingArguments(subject, method);
           } else {
-            dangerouslyWrapMethodCalls(subject, method);
+            wrapMethodThatModifiesArguments(subject, method);
           }
         });
       });
@@ -66,9 +70,12 @@ export function applyHooks(hooks: Hooks) {
 }
 
 /**
- * Wraps a method call with a safe interceptor, which doesn't modify the arguments of the method call.
+ * Wraps a method call with an interceptor that doesn't modify the arguments of the method call.
  */
-function safelyWrapMethodCalls(subject: unknown, method: SafeMethod) {
+function wrapMethodWithoutModifyingArguments(
+  subject: unknown,
+  method: MethodInterceptor
+) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
@@ -88,9 +95,12 @@ function safelyWrapMethodCalls(subject: unknown, method: SafeMethod) {
 }
 
 /**
- * Wraps a method call with a dangerous interceptor, which modifies the arguments of the method call.
+ * Wraps a method call with an interceptor that modifies the arguments of the method call.
  */
-function dangerouslyWrapMethodCalls(subject: unknown, method: DangerousMethod) {
+function wrapMethodThatModifiesArguments(
+  subject: unknown,
+  method: ModifyingArgumentsMethodInterceptor
+) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
