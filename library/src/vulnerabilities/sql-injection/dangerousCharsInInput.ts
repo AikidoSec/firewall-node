@@ -1,7 +1,8 @@
-import { SQL_DANGEROUS_IN_STRING } from "./config.json";
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
+import { SQL_DANGEROUS_IN_STRING } from "./config";
 
 const dangerousInStringRegex = new RegExp(
-  SQL_DANGEROUS_IN_STRING.join("|"),
+  SQL_DANGEROUS_IN_STRING.map(escapeStringRegexp).join("|"),
   "im"
 );
 

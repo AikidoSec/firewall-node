@@ -1,15 +1,16 @@
-import { SQL_KEYWORDS, SQL_OPERATORS } from "./config.json";
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
+import { SQL_KEYWORDS, SQL_OPERATORS } from "./config";
 
 const matchSqlKeywords =
   "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
   SQL_KEYWORDS.join("|") + // Look for SQL Keywords
   ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
 
-const matchSqlOperators = `(${SQL_OPERATORS.join("|")})`;
+const matchSqlOperators = `(${SQL_OPERATORS.map(escapeStringRegexp).join("|")})`;
 
 const matchSqlFunctions =
   "(?<=([\\s|.|" + // Lookbehind : A sql function should be preceded by spaces, dots,
-  SQL_OPERATORS.join("|") + // Or sql operators
+  SQL_OPERATORS.map(escapeStringRegexp).join("|") + // Or sql operators
   "]|^)+)" +
   "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
   "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.

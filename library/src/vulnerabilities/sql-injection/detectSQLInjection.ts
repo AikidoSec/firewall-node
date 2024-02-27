@@ -3,11 +3,7 @@ import { Context } from "../../agent/Context";
 import { friendlyName, Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 
-/* We make use of double backslashes to create a single backslash in the RegEx
- * SQL Operators : = ! ; + - * / % & | ^ > <
- * Dangerous characters in strings : \ ' " ` /* --
- */
-import { SQL_STRING_CHARS } from "./config.json";
+import { SQL_STRING_CHARS } from "./config";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 
