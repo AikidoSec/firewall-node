@@ -56,13 +56,15 @@ const dangerousInStringRegex = new RegExp(
 );
 
 const possibleSqlRegex = new RegExp(
-  "(?<![a-z])(" +
-    SQL_KEYWORDS.join("|") +
-    ")(?![a-z])|(" +
-    SQL_OPERATORS.join("|") +
-    ")|(?<=([\\s|.|" +
-    SQL_OPERATORS.join("|") +
-    "]|^)+)([a-z0-9_-]+)(?=[\\s]*\\()",
+  "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
+    SQL_KEYWORDS.join("|") + // Look for SQL Keywords (defined in config.json)
+    ")(?![a-z])|(" + // Lookahead : if the keywords are followed by one or more letters, it should not match
+    SQL_OPERATORS.join("|") + // Match all SQL Operators
+    ")|(?<=([\\s|.|" + // Lookbehind : A sql function should be preceded by spaces, dots,
+    SQL_OPERATORS.join("|") + // Or sql operators
+    "]|^)+)" +
+    "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
+    "(?=[\\s]*\\()", // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
   "im"
 );
 
