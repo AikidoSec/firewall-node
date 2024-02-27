@@ -13,15 +13,6 @@ export class Agent {
   private stats: Stats = {};
   private preventedPrototypePollution = false;
 
-  /**
-   * Constructor
-   * @param block Elaborate...
-   * @param logger Elaborate...
-   * @param api Elaborate...
-   * @param token Elaborate...
-   * @param serverless Elaborate...
-   * @param wrappedPackages Elaborate...
-   */
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
@@ -34,10 +25,6 @@ export class Agent {
     >
   ) {}
 
-  /**
-   * This makes the block property accessible.
-   * @returns the state of the "block" property on this class
-   */
   shouldBlock() {
     return this.block;
   }
@@ -155,7 +142,7 @@ export class Agent {
   }
 
   /**
-   * Sends a hearbeat via the API to the server (only when not in serverless mode)
+   * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   heartbeat() {
     if (this.token) {
@@ -235,7 +222,10 @@ export class Agent {
   }
 
   /**
-   * Starts up the agent : Checks parameters like block and token, starts heartbeats if necessary and checks which pacakges are supported, afterwards it calls {@link onStart}
+   * Starts up the agent
+   * Checks parameters like block and token,
+   * starts heartbeats if necessary and checks which packages are supported,
+   * afterward it calls {@link onStart}
    */
   start() {
     this.logger.log("Starting agent...");
