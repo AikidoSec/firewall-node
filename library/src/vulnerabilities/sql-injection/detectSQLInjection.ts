@@ -1,14 +1,11 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
-import { Source, friendlyName } from "../../agent/Source";
+import { friendlyName, Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 
-import {
-  SQL_KEYWORDS,
-  SQL_OPERATORS,
-  SQL_DANGEROUS_IN_STRING,
-  SQL_STRING_CHARS,
-} from "./config";
+import { SQL_STRING_CHARS } from "./config";
+import { dangerousCharsInInput } from "./dangerousCharsInInput";
+import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
@@ -46,33 +43,6 @@ export function detectSQLInjection(query: string, userInput: string) {
   return userInputContainsSQLSyntax(userInput);
 }
 
-const dangerousInStringRegex = new RegExp(
-  SQL_DANGEROUS_IN_STRING.join("|"),
-  "im"
-);
-
-const possibleSqlRegex = new RegExp(
-  "(?<![a-z])(" +
-    SQL_KEYWORDS.join("|") +
-    ")(?![a-z])|(" +
-    SQL_OPERATORS.join("|") +
-    ")|(?<=([\\s|.|" +
-    SQL_OPERATORS.join("|") +
-    "]|^)+)([a-z0-9_-]+)(?=[\\s]*\\()",
-  "im"
-);
-
-/**
- * This function is the first check in order to determine if a SQL injection is happening,
- * If the user input contains the necessary characters or words for a SQL injection, this
- * function returns true.
- * @param userInput The user input you want to check
- * @returns True when this is a possible SQL Injection
- */
-export function userInputContainsSQLSyntax(userInput: string): boolean {
-  return possibleSqlRegex.test(userInput);
-}
-
 /**
  * This function is the first step to determine if an SQL Injection is happening,
  * If the sql statement contains user input, this function returns true (case-insensitive)
@@ -85,17 +55,6 @@ export function queryContainsUserInput(query: string, userInput: string) {
   const lowercaseInput = userInput.toLowerCase();
 
   return lowercaseSql.includes(lowercaseInput);
-}
-
-/**
- * This function is the second step to determine if an SQL Injection is happening,
- * If the user input contains characters that should never end up in a query, not
- * even in a string, this function returns true.
- * @param userInput The user input you want to check
- * @returns True if characters are present
- */
-export function dangerousCharsInInput(userInput: string): boolean {
-  return dangerousInStringRegex.test(userInput);
 }
 
 /**
