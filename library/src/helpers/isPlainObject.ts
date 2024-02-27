@@ -1,6 +1,5 @@
 /**
  * Grabbed from https://github.com/jonschlinkert/is-plain-object
- * @module helpers/isPlainObject
  */
 
 function isObject(o: unknown) {

@@ -1,9 +1,4 @@
 /**
- * The satisfiesVersion module exports only one function with the same name : satisfiesVersion
- * @module helpers/satisfiesVersion
- */
-
-/**
  * This function checks if a certain version satisfies a version range.
  * @param range A range of versions written in semver
  * @param version A version number
