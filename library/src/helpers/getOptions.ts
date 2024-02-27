@@ -1,9 +1,4 @@
 /**
- * This module contains the default options and the function {@link getOptions}
- * @module helpers/getOptions
- */
-
-/**
  * It gets the options for an Agent
  * @param partialOptions Your own values which will overwrite the default options
  * @returns Options which you can then pass onto the Agent

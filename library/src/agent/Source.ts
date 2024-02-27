@@ -1,8 +1,3 @@
-/**
- * Exports type def Source but mainly the function {@link friendlyName}
- * @module agent/Source
- */
-
 export type Source = "query" | "body" | "headers" | "cookies";
 
 /**
