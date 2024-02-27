@@ -4,6 +4,13 @@ import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Hooks, Method } from "./Wrapper";
 
+/**
+ * Hooks allows you to register packages and then wrap specific methods on
+ * the exports of the package. This doesn't do the actual wrapping yet.
+ *
+ * That's where applyHooks comes in, we take the registered packages and
+ * its methods and do the actual wrapping so that we can intercept method calls.
+ */
 export function applyHooks(hooks: Hooks) {
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
 
