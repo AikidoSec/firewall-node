@@ -34,9 +34,9 @@ export class Postgres implements Wrapper {
     const pg = hooks.package("pg").withVersion("^7.0.0 || ^8.0.0");
 
     const client = pg.subject((exports) => exports.Client.prototype);
-    client.method("query", (args) => this.inspectQuery(args));
+    client.inspect("query", (args) => this.inspectQuery(args));
 
     const pool = pg.subject((exports) => exports.Pool.prototype);
-    pool.method("query", (args) => this.inspectQuery(args));
+    pool.inspect("query", (args) => this.inspectQuery(args));
   }
 }

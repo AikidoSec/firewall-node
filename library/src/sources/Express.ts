@@ -50,8 +50,11 @@ export class Express implements Wrapper {
     const express = hooks.package("express").withVersion("^4.0.0");
 
     const route = express.subject((exports) => exports.Route.prototype);
-    METHODS.map((method) => method.toLowerCase()).forEach((method) => {
-      route.method(method, (args) => this.addMiddleware(args));
+
+    const expressMethodNames = METHODS.map((method) => method.toLowerCase());
+
+    expressMethodNames.forEach((method) => {
+      route.modifyArguments(method, (args) => this.addMiddleware(args));
     });
   }
 }

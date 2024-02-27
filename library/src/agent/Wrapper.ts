@@ -1,6 +1,6 @@
-type Interceptor = (args: unknown[], subject: unknown) => void | unknown[];
+type Interceptor = (args: unknown[], subject: unknown) => void;
 
-export class Method {
+export class MethodInterceptor {
   constructor(
     private readonly name: string,
     private readonly interceptor: Interceptor
@@ -19,13 +19,51 @@ export class Method {
   }
 }
 
+type ModifyingArgumentsInterceptor = (
+  args: unknown[],
+  subject: unknown
+) => unknown[];
+
+export class ModifyingArgumentsMethodInterceptor {
+  constructor(
+    private readonly name: string,
+    private readonly interceptor: ModifyingArgumentsInterceptor
+  ) {
+    if (!this.name) {
+      throw new Error("Method name is required");
+    }
+  }
+
+  getName() {
+    return this.name;
+  }
+
+  getInterceptor() {
+    return this.interceptor;
+  }
+}
+
 class Selector {
-  private methods: Method[] = [];
+  private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
+    [];
 
   constructor(private readonly selector: (exports: unknown) => unknown) {}
 
-  method(name: string, interceptor: Interceptor) {
-    const method = new Method(name, interceptor);
+  inspect(methodName: string, interceptor: Interceptor) {
+    const method = new MethodInterceptor(methodName, interceptor);
+    this.methods.push(method);
+
+    return method;
+  }
+
+  modifyArguments(
+    methodName: string,
+    interceptor: ModifyingArgumentsInterceptor
+  ) {
+    const method = new ModifyingArgumentsMethodInterceptor(
+      methodName,
+      interceptor
+    );
     this.methods.push(method);
 
     return method;
@@ -35,7 +73,7 @@ class Selector {
     return this.selector;
   }
 
-  getMethods() {
+  getMethodInterceptors() {
     return this.methods;
   }
 }

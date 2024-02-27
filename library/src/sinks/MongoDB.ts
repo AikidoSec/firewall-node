@@ -168,12 +168,12 @@ export class MongoDB implements Wrapper {
     );
 
     OPERATIONS_WITH_FILTER.forEach((operation) => {
-      collection.method(operation, (args, collection) =>
+      collection.inspect(operation, (args, collection) =>
         this.inspectOperation(operation, args, collection as Collection)
       );
     });
 
-    collection.method("bulkWrite", (args, collection) =>
+    collection.inspect("bulkWrite", (args, collection) =>
       this.inspectBulkWrite(args, collection as Collection)
     );
   }
