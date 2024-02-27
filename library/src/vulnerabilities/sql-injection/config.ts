@@ -1,4 +1,4 @@
-const SQL_KEYWORDS = [
+export const SQL_KEYWORDS = [
   "INSERT",
   "SELECT",
   "CREATE",
@@ -73,37 +73,29 @@ const SQL_KEYWORDS = [
   "IS",
 ];
 
-// We make use of double backslashes to create a single backslash in the RegEx
-const SQL_OPERATORS = [
+export const SQL_OPERATORS = [
   "=",
   "!",
   ";",
-  "\\+", // This checks for "+"
-  "\\-", // This checks for "-"
-  "\\*", // This checks for "*"
-  "\\/", // This checks for a slash
+  "+",
+  "-",
+  "*",
+  "/",
   "%",
   "&",
-  "\\|", // This checks for "|"
-  "\\^", // This checks for "^"
+  "|",
+  "^",
   ">",
   "<",
 ];
 
-// We make use of double backslashes to create a single backslash in the RegEx
-const SQL_DANGEROUS_IN_STRING = [
-  "\\\\", // Check for backslashes : "\"
-  "'", // Check for single quotes
-  '"', // Check for double quotes
-  "`", // Check for `
-  "\\/\\*", // Check for the start of a comment : "/*"
-  "--", // Check for the the start of a comment : "--"
+export const SQL_DANGEROUS_IN_STRING = [
+  "\\",
+  "'",
+  '"',
+  "`",
+  "/*", // Start of comment
+  "--", // Start of comment
 ];
-const SQL_STRING_CHARS = ['"', "'"];
 
-export {
-  SQL_KEYWORDS,
-  SQL_OPERATORS,
-  SQL_DANGEROUS_IN_STRING,
-  SQL_STRING_CHARS,
-};
+export const SQL_STRING_CHARS = ['"', "'"];
