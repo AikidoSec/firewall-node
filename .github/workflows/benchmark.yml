@@ -35,5 +35,5 @@ jobs:
         id: mongodb_benchmark
         run: cd benchmarks/mongodb && node benchmark.js
       - name: Run SQL Injection Benchmark
-        id: sql_injection_bencmark
+        id: sql_injection_benchmark
         run: cd benchmarks/sql-injection && node benchmark.js
