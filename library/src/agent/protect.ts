@@ -8,7 +8,7 @@ import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
-import { wrap } from "./wrap";
+import { applyHooks } from "./applyHooks";
 import { Hooks } from "./Wrapper";
 import { Options, getOptions } from "../helpers/getOptions";
 
@@ -20,7 +20,7 @@ function wrapInstalledPackages() {
     wrapper.wrap(hooks);
   });
 
-  return wrap(hooks);
+  return applyHooks(hooks);
 }
 
 function getLogger(options: Options): Logger {

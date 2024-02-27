@@ -1,29 +1,10 @@
 import { Hook } from "require-in-the-middle";
-import { wrap as shim } from "shimmer";
+import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Hooks, Method } from "./Wrapper";
 
-function wrapMethod(subject: unknown, method: Method) {
-  // @ts-expect-error We don't now the type of the subject
-  shim(subject, method.getName(), function wrap(original: Function) {
-    return function wrap() {
-      // eslint-disable-next-line prefer-rest-params
-      const args = Array.from(arguments);
-      // @ts-expect-error We don't now the type of this
-      const updatedArgs = method.getInterceptor()(args, this);
-
-      return original.apply(
-        // @ts-expect-error We don't now the type of this
-        this,
-        // eslint-disable-next-line prefer-rest-params
-        Array.isArray(updatedArgs) ? updatedArgs : arguments
-      );
-    };
-  });
-}
-
-export function wrap(hooks: Hooks) {
+export function applyHooks(hooks: Hooks) {
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
 
   hooks.getPackages().forEach((pkg) => {
@@ -61,7 +42,9 @@ export function wrap(hooks: Hooks) {
           return;
         }
 
-        selector.getMethods().forEach((method) => wrapMethod(subject, method));
+        selector
+          .getMethods()
+          .forEach((method) => interceptMethodCalls(subject, method));
       });
 
       return exports;
@@ -69,4 +52,23 @@ export function wrap(hooks: Hooks) {
   });
 
   return wrapped;
+}
+
+function interceptMethodCalls(subject: unknown, method: Method) {
+  // @ts-expect-error We don't now the type of the subject
+  wrap(subject, method.getName(), function wrap(original: Function) {
+    return function wrap() {
+      // eslint-disable-next-line prefer-rest-params
+      const args = Array.from(arguments);
+      // @ts-expect-error We don't now the type of this
+      const updatedArgs = method.getInterceptor()(args, this);
+
+      return original.apply(
+        // @ts-expect-error We don't now the type of this
+        this,
+        // eslint-disable-next-line prefer-rest-params
+        Array.isArray(updatedArgs) ? updatedArgs : arguments
+      );
+    };
+  });
 }
