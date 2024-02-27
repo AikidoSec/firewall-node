@@ -1,11 +1,12 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting, Token } from "../agent/API";
-import { LoggerNoop } from "../agent/Logger";
+import { APIForTesting } from "../agent/api/APIForTesting";
+import { Token } from "../agent/api/Token";
 import { runWithContext, type Context } from "../agent/Context";
 import { applyHooks } from "../agent/applyHooks";
-import { Hooks } from "../agent/Wrapper";
+import { Hooks } from "../agent/hooks/Hooks";
+import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
 import type { Client } from "pg";
 

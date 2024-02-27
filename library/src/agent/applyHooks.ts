@@ -2,11 +2,9 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
-import {
-  ModifyingArgumentsMethodInterceptor,
-  Hooks,
-  MethodInterceptor,
-} from "./Wrapper";
+import { Hooks } from "./hooks/Hooks";
+import { MethodInterceptor } from "./hooks/MethodInterceptor";
+import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on

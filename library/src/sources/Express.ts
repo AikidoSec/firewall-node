@@ -1,7 +1,8 @@
 /* eslint-disable prefer-rest-params */
 import type { NextFunction, Request, Response } from "express";
 import { runWithContext } from "../agent/Context";
-import { Hooks, Wrapper } from "../agent/Wrapper";
+import { Hooks } from "../agent/hooks/Hooks";
+import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "node:http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;

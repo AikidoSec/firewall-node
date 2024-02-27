@@ -2,8 +2,9 @@ import { hostname, platform, release } from "node:os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
 import { Agent } from "./Agent";
-import { APIForTesting, Token } from "./API";
-import { LoggerNoop } from "./Logger";
+import { APIForTesting } from "./api/APIForTesting";
+import { Token } from "./api/Token";
+import { LoggerNoop } from "./logger/LoggerNoop";
 
 t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();

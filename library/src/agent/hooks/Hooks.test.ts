@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { Hooks } from "./Wrapper";
+import { Hooks } from "./Hooks";
 
 t.test("package throws error if name is empty", async (t) => {
   const hooks = new Hooks();

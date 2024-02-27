@@ -35,6 +35,7 @@ module.exports = {
     "max-lines-per-function": ["error", { max: 50, skipBlankLines: true }],
     "func-names": ["error", "as-needed"],
     camelcase: "error",
+    "max-classes-per-file": ["error", 1],
   },
   overrides: [
     {
