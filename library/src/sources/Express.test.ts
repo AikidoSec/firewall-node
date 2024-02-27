@@ -1,11 +1,12 @@
 import * as t from "tap";
-import { Hooks, wrapPackages } from "../agent/Wrapper";
+import { wrap } from "../agent/wrap";
+import { Hooks } from "../agent/Wrapper";
 import { Express } from "./Express";
 
 // Before express is required!
 const hooks = new Hooks();
 new Express().wrap(hooks);
-wrapPackages(hooks);
+wrap(hooks);
 
 import * as express from "express";
 import * as request from "supertest";
