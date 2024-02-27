@@ -4,6 +4,8 @@ import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting, Token } from "../agent/API";
 import { LoggerNoop } from "../agent/Logger";
 import { Context, runWithContext } from "../agent/Context";
+import { wrap } from "../agent/wrap";
+import { Hooks } from "../agent/Wrapper";
 import { MongoDB } from "./MongoDB";
 
 const context: Context = {
@@ -21,7 +23,9 @@ const context: Context = {
 };
 
 t.test("we can highjack the MongoDB library", async (t) => {
-  new MongoDB().wrap();
+  const hooks = new Hooks();
+  new MongoDB().wrap(hooks);
+  wrap(hooks);
 
   const agent = new Agent(
     true,
