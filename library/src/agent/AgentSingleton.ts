@@ -1,8 +1,3 @@
-/**
- * This module contains a variable instance, and methods to get and set the current agent
- * @module agent/AgentSingleton
- */
-
 import { Agent } from "./Agent";
 
 let instance: Agent | undefined = undefined;
