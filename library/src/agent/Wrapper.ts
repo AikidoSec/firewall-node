@@ -110,6 +110,25 @@ export class Hooks {
   }
 }
 
+function wrapMethod(subject: unknown, method: Method) {
+  // @ts-expect-error We don't now the type of the subject
+  wrap(subject, method.getName(), function wrap(original: Function) {
+    return function wrap() {
+      // eslint-disable-next-line prefer-rest-params
+      const args = Array.from(arguments);
+      // @ts-expect-error We don't now the type of this
+      const updatedArgs = method.getInterceptor()(args, this);
+
+      return original.apply(
+        // @ts-expect-error We don't now the type of this
+        this,
+        // eslint-disable-next-line prefer-rest-params
+        Array.isArray(updatedArgs) ? updatedArgs : arguments
+      );
+    };
+  });
+}
+
 export function wrapPackages(hooks: Hooks) {
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
 
@@ -148,18 +167,7 @@ export function wrapPackages(hooks: Hooks) {
           return;
         }
 
-        selector.getMethods().forEach((method) => {
-          wrap(subject, method.getName(), function (original) {
-            return function (this: unknown, ...args: unknown[]) {
-              const updatedArgs = method.getInterceptor()(args, this);
-
-              return original.apply(
-                this,
-                Array.isArray(updatedArgs) ? updatedArgs : args
-              );
-            };
-          });
-        });
+        selector.getMethods().forEach((method) => wrapMethod(subject, method));
       });
 
       return exports;
