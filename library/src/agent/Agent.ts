@@ -3,7 +3,7 @@ import { hostname, platform, release } from "node:os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { ip } from "../helpers/ipAddress";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { normalizeRequestHeaders } from "../helpers/normalizeRequestHeaders";
+import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
 import { AgentInfo, Kind, Stats } from "./api/Event";
 import { Token } from "./api/Token";
@@ -139,7 +139,7 @@ export class Agent {
                 ? request.headers["user-agent"]
                 : undefined,
             body: convertRequestBodyToString(request.body),
-            headers: normalizeRequestHeaders(request.headers),
+            headers: filterEmptyRequestHeaders(request.headers),
           },
           agent: this.getAgentInfo(),
         })

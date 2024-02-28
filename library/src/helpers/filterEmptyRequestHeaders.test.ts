@@ -1,11 +1,12 @@
 import * as t from "tap";
-import { normalizeRequestHeaders } from "./normalizeRequestHeaders";
+import { filterEmptyRequestHeaders } from "./filterEmptyRequestHeaders";
 
-t.test("it normalizes headers", async (t) => {
+t.test("it filters empty headers", async (t) => {
   t.same(
-    normalizeRequestHeaders({
+    filterEmptyRequestHeaders({
       string: "value",
       array: ["a", "b"],
+      emptyArray: [],
       undefined: undefined,
     }),
     {
