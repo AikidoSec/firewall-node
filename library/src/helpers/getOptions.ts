@@ -5,10 +5,7 @@
  */
 export function getOptions(partialOptions?: Partial<Options>): Options {
   const options = { ...defaultOptions, ...partialOptions };
-
-  if (dryModeEnabled()) {
-    options.block = false;
-  }
+  options.block = shouldBlock();
 
   return options;
 }
@@ -24,12 +21,15 @@ const defaultOptions: Options = {
 };
 
 /**
- * This function checks the "AIKIDO_NO_BLOCKING" environment variable, when this is set to true or 1,
- * the function returns true, otherwise the function returns false.
+ * Should we block attacks? This is determined by the environment variable AIKIDO_NO_BLOCKING
  */
-function dryModeEnabled(): boolean {
-  return (
+function shouldBlock(): boolean {
+  if (
     process.env.AIKIDO_NO_BLOCKING === "true" ||
     process.env.AIKIDO_NO_BLOCKING === "1"
-  );
+  ) {
+    return false;
+  }
+
+  return true;
 }
