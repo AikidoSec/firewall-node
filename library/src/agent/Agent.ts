@@ -1,5 +1,9 @@
+/* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "node:os";
+import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { ip } from "../helpers/ipAddress";
+import { isPlainObject } from "../helpers/isPlainObject";
+import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
 import { AgentInfo, Kind, Stats } from "./api/Event";
 import { Token } from "./api/Token";
@@ -134,6 +138,8 @@ export class Agent {
               typeof request.headers["user-agent"] === "string"
                 ? request.headers["user-agent"]
                 : undefined,
+            body: convertRequestBodyToString(request.body),
+            headers: filterEmptyRequestHeaders(request.headers),
           },
           agent: this.getAgentInfo(),
         })
