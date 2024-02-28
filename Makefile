@@ -14,6 +14,10 @@ express-mongoose:
 express-postgres:
 	cd sample-apps/express-postgres && node app.js
 
+.PHONY: express-mysql
+express-mysql:
+	cd sample-apps/express-mysql && node app.js
+
 .PHONY: express-mysql2
 express-mysql2:
 	cd sample-apps/express-mysql2 && node app.js

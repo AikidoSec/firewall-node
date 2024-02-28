@@ -4,7 +4,7 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
-export class Postgres implements Wrapper {
+export class MySQL implements Wrapper {
   private inspectQuery(args: unknown[]) {
     const agent = getInstance();
 
@@ -16,7 +16,7 @@ export class Postgres implements Wrapper {
 
     if (!request) {
       return agent.onInspectedCall({
-        module: "postgres",
+        module: "mysql",
         withoutContext: true,
         detectedAttack: false,
       });
@@ -28,16 +28,15 @@ export class Postgres implements Wrapper {
     }
 
     const sql: string = args[0];
-    checkContextForSqlInjection(sql, request, agent, "postgres");
+    checkContextForSqlInjection(sql, request, agent, "mysql");
   }
 
   wrap(hooks: Hooks) {
-    const pg = hooks.package("pg").withVersion("^7.0.0 || ^8.0.0");
+    const mysql = hooks.package("mysql").withVersion("^2.0.0");
 
-    const client = pg.subject((exports) => exports.Client.prototype);
-    client.inspect("query", (args) => this.inspectQuery(args));
-
-    const pool = pg.subject((exports) => exports.Pool.prototype);
-    pool.inspect("query", (args) => this.inspectQuery(args));
+    const connection = mysql
+      .file("lib/Connection")
+      .subject((exports) => exports.prototype);
+    connection.inspect("query", (args) => this.inspectQuery(args));
   }
 }

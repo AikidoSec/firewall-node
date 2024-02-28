@@ -4,7 +4,7 @@ import {
   ModifyingArgumentsMethodInterceptor,
 } from "./ModifyingArgumentsInterceptor";
 
-export class Selector {
+export class Subject {
   private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
     [];
 

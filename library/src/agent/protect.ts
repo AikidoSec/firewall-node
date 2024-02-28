@@ -1,4 +1,5 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import { MySQL } from "../sinks/MySQL";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { Express } from "../sources/Express";
@@ -18,7 +19,7 @@ import { LoggerNoop } from "./logger/LoggerNoop";
 import { Options, getOptions } from "../helpers/getOptions";
 
 function wrapInstalledPackages() {
-  const wrappers = [new Express(), new MongoDB(), new Postgres()];
+  const wrappers = [new Express(), new MongoDB(), new Postgres(), new MySQL()];
 
   const hooks = new Hooks();
   wrappers.forEach((wrapper) => {

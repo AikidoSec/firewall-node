@@ -1,7 +1,9 @@
-import { Selector } from "./Selector";
+import { Subject } from "./Subject";
+import { File } from "./File";
 
 export class VersionedPackage {
-  private selectors: Selector[] = [];
+  private subjects: Subject[] = [];
+  private files: File[] = [];
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -13,14 +15,25 @@ export class VersionedPackage {
     return this.range;
   }
 
-  subject(selector: (exports: any) => unknown): Selector {
-    const fn = new Selector(selector);
-    this.selectors.push(fn);
+  file(relativePath: string): File {
+    const file = new File(relativePath);
+    this.files.push(file);
+
+    return file;
+  }
+
+  subject(selector: (exports: any) => unknown): Subject {
+    const fn = new Subject(selector);
+    this.subjects.push(fn);
 
     return fn;
   }
 
-  getSelectors() {
-    return this.selectors;
+  getSubjects() {
+    return this.subjects;
+  }
+
+  getFiles() {
+    return this.files;
   }
 }
