@@ -2,7 +2,6 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { friendlyName, Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
-
 import { SQL_STRING_CHARS } from "./config";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";

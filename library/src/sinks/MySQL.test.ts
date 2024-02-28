@@ -3,12 +3,24 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Token } from "../agent/api/Token";
-import { runWithContext, type Context } from "../agent/Context";
 import { applyHooks } from "../agent/applyHooks";
+import { runWithContext, type Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
-import { Postgres } from "./Postgres";
-import type { Client } from "pg";
+import { MySQL } from "./MySQL";
+import type { Connection } from "mysql";
+
+function query(sql: string, connection: Connection) {
+  return new Promise((resolve, reject) => {
+    connection.query(sql, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
+
+      resolve(results);
+    });
+  });
+}
 
 const context: Context = {
   remoteAddress: "::1",
@@ -22,11 +34,12 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("We can hijack Postgres class", async () => {
+t.test("it inspects query method calls and blocks if needed", async () => {
   const hooks = new Hooks();
-  new Postgres().wrap(hooks);
+  new MySQL().wrap(hooks);
   applyHooks(hooks);
 
+  const mysql = require("mysql");
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -38,28 +51,30 @@ t.test("We can hijack Postgres class", async () => {
   agent.start();
   setInstance(agent);
 
-  const { Client } = require("pg");
-  const client = new Client({
+  const connection = await mysql.createConnection({
+    host: "localhost",
     user: "root",
-    host: "127.0.0.1",
-    database: "main_db",
-    password: "password",
-    port: 27016,
+    password: "mypassword",
+    database: "catsdb",
+    port: 27015,
+    multipleStatements: true,
   });
-  await client.connect();
 
   try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS cats (
-        petname varchar(255)
-      );
-    `);
-    await client.query("TRUNCATE cats");
-    t.same((await client.query("SELECT petname FROM cats;")).rows, []);
+    await query(
+      `
+        CREATE TABLE IF NOT EXISTS cats (
+            petname varchar(255)
+        );
+      `,
+      connection
+    );
+    await query("TRUNCATE cats", connection);
+    t.same(await query("SELECT petname FROM `cats`;", connection), []);
 
     // @ts-expect-error Private property
     t.same(agent.stats, {
-      postgres: {
+      mysql: {
         blocked: 0,
         total: 3,
         allowed: 3,
@@ -69,9 +84,10 @@ t.test("We can hijack Postgres class", async () => {
 
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {
-        return client.query("-- should be blocked");
+        return connection.query("-- should be blocked");
       });
     });
+
     if (bulkError instanceof Error) {
       t.equal(
         bulkError.message,
@@ -83,20 +99,18 @@ t.test("We can hijack Postgres class", async () => {
     await runWithContext(context, () => {
       // Normally this should be detected, but since the agent
       // is not defined we let it through.
-      return client.query("-- should be blocked");
+      return query("-- should be blocked", connection);
     });
     setInstance(agent); // Put the agent back for the following tests
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
-        return client.query(null);
+        return query(undefined, connection);
       });
     });
+
     if (undefinedQueryError instanceof Error) {
-      t.equal(
-        undefinedQueryError.message,
-        "Client was passed a null or undefined query"
-      );
+      t.same(undefinedQueryError.message, "ER_EMPTY_QUERY: Query was empty");
     }
 
     await runWithContext(
@@ -110,12 +124,12 @@ t.test("We can hijack Postgres class", async () => {
         cookies: {},
       },
       () => {
-        return client.query("-- This is a comment");
+        return connection.query("-- This is a comment");
       }
     );
   } catch (error: any) {
     t.fail(error);
   } finally {
-    await client.end();
+    await connection.end();
   }
 });

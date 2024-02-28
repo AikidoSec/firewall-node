@@ -7,7 +7,7 @@ const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
-const mysql = require("mysql2/promise");
+const mysql = require("mysql");
 
 preventPrototypePollution();
 
@@ -37,7 +37,7 @@ async function createConnection() {
     multipleStatements: true,
   });
 
-  await connection.execute(`
+  await connection.query(`
     CREATE TABLE IF NOT EXISTS cats (
         petname varchar(255)
     );

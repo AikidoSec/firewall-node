@@ -1,7 +1,9 @@
-import { Selector } from "./Selector";
+import { WrappableSubject } from "./WrappableSubject";
+import { WrappableFile } from "./WrappableFile";
 
 export class VersionedPackage {
-  private selectors: Selector[] = [];
+  private subjects: WrappableSubject[] = [];
+  private files: WrappableFile[] = [];
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -13,14 +15,25 @@ export class VersionedPackage {
     return this.range;
   }
 
-  subject(selector: (exports: any) => unknown): Selector {
-    const fn = new Selector(selector);
-    this.selectors.push(fn);
+  addFile(relativePath: string): WrappableFile {
+    const file = new WrappableFile(relativePath);
+    this.files.push(file);
+
+    return file;
+  }
+
+  addSubject(selector: (exports: any) => unknown): WrappableSubject {
+    const fn = new WrappableSubject(selector);
+    this.subjects.push(fn);
 
     return fn;
   }
 
-  getSelectors() {
-    return this.selectors;
+  getSubjects() {
+    return this.subjects;
+  }
+
+  getFiles() {
+    return this.files;
   }
 }

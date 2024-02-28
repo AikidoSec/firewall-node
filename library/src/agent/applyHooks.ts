@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
@@ -5,6 +6,7 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Hooks } from "./hooks/Hooks";
 import { MethodInterceptor } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
+import { WrappableSubject } from "./hooks/WrappableSubject";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -23,18 +25,29 @@ export function applyHooks(hooks: Hooks) {
       return;
     }
 
-    const selectors = pkg
+    wrapped[pkg.getName()] = {
+      version,
+      supported: false,
+    };
+
+    const versions = pkg
       .getVersions()
       .map((versioned) => {
         if (!satisfiesVersion(versioned.getRange(), version)) {
           return [];
         }
 
-        return versioned.getSelectors();
+        return {
+          subjects: versioned.getSubjects(),
+          files: versioned.getFiles(),
+        };
       })
       .flat();
 
-    if (selectors.length === 0) {
+    const files = versions.map((hook) => hook.files).flat();
+    const subjects = versions.map((hook) => hook.subjects).flat();
+
+    if (subjects.length === 0 && files.length === 0) {
       return;
     }
 
@@ -43,25 +56,21 @@ export function applyHooks(hooks: Hooks) {
       supported: true,
     };
 
-    new Hook([pkg.getName()], (exports) => {
-      selectors.forEach((selector) => {
-        const subject = selector.getSelector()(exports);
+    if (subjects.length > 0) {
+      new Hook([pkg.getName()], (exports) => {
+        subjects.forEach((selector) => wrapSubject(exports, selector));
 
-        if (!subject) {
-          return;
-        }
-
-        selector.getMethodInterceptors().forEach((method) => {
-          if (method instanceof MethodInterceptor) {
-            wrapWithoutArgumentModification(subject, method);
-          } else {
-            wrapWithArgumentModification(subject, method);
-          }
-        });
+        return exports;
       });
+    }
 
-      return exports;
-    });
+    if (files.length > 0) {
+      files.forEach((file) => {
+        const exports = require(join(pkg.getName(), file.getRelativePath()));
+
+        file.getSubjects().forEach((subject) => wrapSubject(exports, subject));
+      });
+    }
   });
 
   return wrapped;
@@ -114,5 +123,21 @@ function wrapWithArgumentModification(
         Array.isArray(updatedArgs) ? updatedArgs : arguments
       );
     };
+  });
+}
+
+function wrapSubject(exports: unknown, subject: WrappableSubject) {
+  const theSubject = subject.getSelector()(exports);
+
+  if (!theSubject) {
+    return;
+  }
+
+  subject.getMethodInterceptors().forEach((method) => {
+    if (method instanceof ModifyingArgumentsMethodInterceptor) {
+      wrapWithArgumentModification(theSubject, method);
+    } else {
+      wrapWithoutArgumentModification(theSubject, method);
+    }
   });
 }

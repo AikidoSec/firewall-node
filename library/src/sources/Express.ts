@@ -48,9 +48,9 @@ export class Express implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const express = hooks.package("express").withVersion("^4.0.0");
+    const express = hooks.addPackage("express").withVersion("^4.0.0");
 
-    const route = express.subject((exports) => exports.Route.prototype);
+    const route = express.addSubject((exports) => exports.Route.prototype);
 
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
