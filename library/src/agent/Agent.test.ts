@@ -183,7 +183,7 @@ t.test("it converts body to string and normalizes headers", async () => {
         body: JSON.stringify({ a: 1 }, null, 2),
         headers: {
           key: "value",
-          multiple: "value1",
+          multiple: ["value1", "value2"],
         },
       },
     },
@@ -225,7 +225,7 @@ t.test("it cuts off body when too long", async () => {
         body: "a".repeat(16384),
         headers: {
           key: "value",
-          multiple: "value1",
+          multiple: ["value1", "value2"],
         },
       },
     },

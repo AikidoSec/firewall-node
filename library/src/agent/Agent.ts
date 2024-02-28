@@ -115,21 +115,21 @@ export class Agent {
 
   private normalizeHeaders(
     headers: Context["headers"]
-  ): Record<string, string> {
-    const simpleHeaders: Record<string, string> = {};
+  ): Record<string, string | string[]> {
+    const normalized: Record<string, string | string[]> = {};
     for (const key in headers) {
       const value = headers[key];
 
       if (Array.isArray(value) && value.length > 0) {
-        simpleHeaders[key] = value[0];
+        normalized[key] = value;
       }
 
       if (typeof value === "string" && value.length > 0) {
-        simpleHeaders[key] = value;
+        normalized[key] = value;
       }
     }
 
-    return simpleHeaders;
+    return normalized;
   }
 
   /**

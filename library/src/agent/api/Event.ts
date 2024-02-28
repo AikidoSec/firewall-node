@@ -30,7 +30,7 @@ type DetectedAttack = {
     ipAddress: string | undefined;
     userAgent: string | undefined;
     url: string | undefined;
-    headers: Record<string, string>;
+    headers: Record<string, string | string[]>;
     body: string | undefined;
   };
   attack: {
