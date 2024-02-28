@@ -10,14 +10,6 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
 import type { Client } from "pg";
 
-async function initDb(client: Client) {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS cats (
-      petname varchar(255)
-    );
-  `);
-}
-
 const context: Context = {
   remoteAddress: "::1",
   method: "POST",
@@ -57,17 +49,21 @@ t.test("We can hijack Postgres class", async () => {
   await client.connect();
 
   try {
-    // Execute 2 queries
-    await initDb(client);
-    const cats2 = await client.query("SELECT petname FROM cats;");
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cats (
+        petname varchar(255)
+      );
+    `);
+    await client.query("TRUNCATE cats");
+    t.same((await client.query("SELECT petname FROM cats;")).rows, []);
 
     // @ts-expect-error Private property
     t.same(agent.stats, {
       postgres: {
         blocked: 0,
-        total: 2,
-        allowed: 2,
-        withoutContext: 2,
+        total: 3,
+        allowed: 3,
+        withoutContext: 3,
       },
     });
 

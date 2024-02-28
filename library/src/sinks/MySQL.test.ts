@@ -22,18 +22,6 @@ function query(sql: string, connection: Connection) {
   });
 }
 
-async function initDb(connection: Connection) {
-  // This creates the cats table
-  await query(
-    `
-      CREATE TABLE IF NOT EXISTS cats (
-          petname varchar(255)
-      );
-    `,
-    connection
-  );
-}
-
 const context: Context = {
   remoteAddress: "::1",
   method: "POST",
@@ -73,17 +61,24 @@ t.test("it inspects query method calls and blocks if needed", async () => {
   });
 
   try {
-    // Execute 2 queries
-    await initDb(connection);
+    await query(
+      `
+        CREATE TABLE IF NOT EXISTS cats (
+            petname varchar(255)
+        );
+      `,
+      connection
+    );
+    await query("TRUNCATE cats", connection);
     t.same(await query("SELECT petname FROM `cats`;", connection), []);
 
     // @ts-expect-error Private property
     t.same(agent.stats, {
       mysql: {
         blocked: 0,
-        total: 2,
-        allowed: 2,
-        withoutContext: 2,
+        total: 3,
+        allowed: 3,
+        withoutContext: 3,
       },
     });
 
