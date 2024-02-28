@@ -15,14 +15,14 @@ export class VersionedPackage {
     return this.range;
   }
 
-  file(relativePath: string): WrappableFile {
+  addFile(relativePath: string): WrappableFile {
     const file = new WrappableFile(relativePath);
     this.files.push(file);
 
     return file;
   }
 
-  getSubject(selector: (exports: any) => unknown): WrappableSubject {
+  addSubject(selector: (exports: any) => unknown): WrappableSubject {
     const fn = new WrappableSubject(selector);
     this.subjects.push(fn);
 

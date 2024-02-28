@@ -32,12 +32,12 @@ export class Postgres implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const pg = hooks.package("pg").withVersion("^7.0.0 || ^8.0.0");
+    const pg = hooks.addPackage("pg").withVersion("^7.0.0 || ^8.0.0");
 
-    const client = pg.getSubject((exports) => exports.Client.prototype);
+    const client = pg.addSubject((exports) => exports.Client.prototype);
     client.inspect("query", (args) => this.inspectQuery(args));
 
-    const pool = pg.getSubject((exports) => exports.Pool.prototype);
+    const pool = pg.addSubject((exports) => exports.Pool.prototype);
     pool.inspect("query", (args) => this.inspectQuery(args));
   }
 }

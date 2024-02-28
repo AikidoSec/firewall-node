@@ -4,24 +4,29 @@ import { Hooks } from "./hooks/Hooks";
 
 t.test("it ignores if package is not installed", async (t) => {
   const hooks = new Hooks();
-  hooks.package("unknown").withVersion("^1.0.0");
+  hooks.addPackage("unknown").withVersion("^1.0.0");
 
   t.same(applyHooks(hooks), {});
 });
 
 t.test("it ignores if packages have empty selectors", async (t) => {
   const hooks = new Hooks();
-  hooks.package("shimmer").withVersion("^1.0.0");
+  hooks.addPackage("shimmer").withVersion("^1.0.0");
 
-  t.same(applyHooks(hooks), {});
+  t.same(applyHooks(hooks), {
+    shimmer: {
+      version: "1.2.1",
+      supported: false,
+    },
+  });
 });
 
 t.test("it ignores unknown selectors", async (t) => {
   const hooks = new Hooks();
   hooks
-    .package("shimmer")
+    .addPackage("shimmer")
     .withVersion("^1.0.0")
-    .getSubject((exports) => exports.doesNotExist)
+    .addSubject((exports) => exports.doesNotExist)
     .inspect("method", () => {});
 
   t.same(applyHooks(hooks), {
@@ -38,10 +43,15 @@ t.test("it ignores unknown selectors", async (t) => {
 t.test("it ignores if version is not supported", async (t) => {
   const hooks = new Hooks();
   hooks
-    .package("shimmer")
+    .addPackage("shimmer")
     .withVersion("^2.0.0")
-    .getSubject((exports) => exports)
+    .addSubject((exports) => exports)
     .inspect("method", () => {});
 
-  t.same(applyHooks(hooks), {});
+  t.same(applyHooks(hooks), {
+    shimmer: {
+      version: "1.2.1",
+      supported: false,
+    },
+  });
 });

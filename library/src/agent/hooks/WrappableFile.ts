@@ -22,7 +22,7 @@ export class WrappableFile {
     return this.relativePath;
   }
 
-  getSubject(selector: (exports: any) => unknown): WrappableSubject {
+  addSubject(selector: (exports: any) => unknown): WrappableSubject {
     const fn = new WrappableSubject(selector);
     this.subjects.push(fn);
 

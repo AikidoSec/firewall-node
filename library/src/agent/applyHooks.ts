@@ -25,6 +25,11 @@ export function applyHooks(hooks: Hooks) {
       return;
     }
 
+    wrapped[pkg.getName()] = {
+      version,
+      supported: false,
+    };
+
     const versions = pkg
       .getVersions()
       .map((versioned) => {

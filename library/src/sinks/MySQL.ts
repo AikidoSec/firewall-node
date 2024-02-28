@@ -29,11 +29,11 @@ export class MySQL implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const mysql = hooks.package("mysql").withVersion("^2.0.0");
+    const mysql = hooks.addPackage("mysql").withVersion("^2.0.0");
 
     const connection = mysql
-      .file("lib/Connection")
-      .getSubject((exports) => exports.prototype);
+      .addFile("lib/Connection")
+      .addSubject((exports) => exports.prototype);
 
     connection.inspect("query", (args) => this.inspectQuery(args));
   }
