@@ -59,7 +59,7 @@ export class APIFetch implements API {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token.asString()}`,
+          Authorization: token.asString(),
         },
         body: JSON.stringify(event),
       }),
