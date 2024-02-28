@@ -25,6 +25,7 @@ Aikido guard for Node.js is compatible with
 * ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) 8.x, 7.x and 6.x
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
+* ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
 
 ## Installation
 
