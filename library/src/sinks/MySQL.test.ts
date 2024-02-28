@@ -46,7 +46,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("We can hijack mysql2 class", async () => {
+t.test("it inspects query method calls and blocks if needed", async () => {
   const hooks = new Hooks();
   new MySQL().wrap(hooks);
   applyHooks(hooks);
