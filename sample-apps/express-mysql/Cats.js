@@ -3,13 +3,25 @@ class Cats {
     this.db = db;
   }
 
+  async query(sql) {
+    return new Promise((resolve, reject) => {
+      this.db.query(sql, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
   async add(name) {
     // This is unsafe! This is for demo purposes only, you should use parameterized queries.
-    await this.db.query(`INSERT INTO cats(petname) VALUES ('${name}');`);
+    await this.query(`INSERT INTO cats(petname) VALUES ('${name}');`);
   }
 
   async getAll() {
-    const [cats] = await this.db.query("SELECT petname FROM `cats`;");
+    const cats = await this.query("SELECT petname FROM `cats`;");
 
     return cats.map((row) => row.petname);
   }
