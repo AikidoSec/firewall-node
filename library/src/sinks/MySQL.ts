@@ -22,13 +22,10 @@ export class MySQL implements Wrapper {
       });
     }
 
-    if (typeof args[0] !== "string") {
-      // The query is not a string, not much to do here
-      return;
+    if (typeof args[0] === "string") {
+      const sql = args[0];
+      checkContextForSqlInjection(sql, request, agent, "mysql");
     }
-
-    const sql: string = args[0];
-    checkContextForSqlInjection(sql, request, agent, "mysql");
   }
 
   wrap(hooks: Hooks) {
