@@ -26,7 +26,7 @@ t.test("method throws error if name is empty", async (t) => {
   const subject = hooks
     .package("package")
     .withVersion("^1.0.0")
-    .subject((exports) => exports);
+    .getSubject((exports) => exports);
 
   t.throws(() => subject.inspect("", () => {}));
 });

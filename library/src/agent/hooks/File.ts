@@ -22,7 +22,7 @@ export class File {
     return this.relativePath;
   }
 
-  subject(selector: (exports: any) => unknown): Subject {
+  getSubject(selector: (exports: any) => unknown): Subject {
     const fn = new Subject(selector);
     this.subjects.push(fn);
 

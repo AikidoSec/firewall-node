@@ -164,7 +164,7 @@ export class MongoDB implements Wrapper {
       .package("mongodb")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0");
 
-    const collection = mongodb.subject(
+    const collection = mongodb.getSubject(
       (exports) => exports.Collection.prototype
     );
 

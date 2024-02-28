@@ -33,7 +33,8 @@ export class MySQL implements Wrapper {
 
     const connection = mysql
       .file("lib/Connection")
-      .subject((exports) => exports.prototype);
+      .getSubject((exports) => exports.prototype);
+
     connection.inspect("query", (args) => this.inspectQuery(args));
   }
 }
