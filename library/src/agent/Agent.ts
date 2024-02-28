@@ -1,7 +1,9 @@
 /* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "node:os";
+import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { ip } from "../helpers/ipAddress";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { normalizeRequestHeaders } from "../helpers/normalizeRequestHeaders";
 import { API } from "./api/API";
 import { AgentInfo, Kind, Stats } from "./api/Event";
 import { Token } from "./api/Token";
@@ -92,46 +94,6 @@ export class Agent {
     }
   }
 
-  private convertBodyToString(
-    body: unknown,
-    maxLength = 16384
-  ): string | undefined {
-    if (typeof body === "string") {
-      return body.length > maxLength ? body.slice(0, maxLength) : body;
-    }
-
-    if (isPlainObject(body)) {
-      try {
-        const serialized = JSON.stringify(body, null, 2);
-
-        return this.convertBodyToString(serialized, maxLength);
-      } catch {
-        return undefined;
-      }
-    }
-
-    return undefined;
-  }
-
-  private normalizeHeaders(
-    headers: Context["headers"]
-  ): Record<string, string | string[]> {
-    const normalized: Record<string, string | string[]> = {};
-    for (const key in headers) {
-      const value = headers[key];
-
-      if (Array.isArray(value) && value.length > 0) {
-        normalized[key] = value;
-      }
-
-      if (typeof value === "string" && value.length > 0) {
-        normalized[key] = value;
-      }
-    }
-
-    return normalized;
-  }
-
   /**
    * This function gets called when an attack is detected, it reports this attack to the API
    */
@@ -176,8 +138,8 @@ export class Agent {
               typeof request.headers["user-agent"] === "string"
                 ? request.headers["user-agent"]
                 : undefined,
-            body: this.convertBodyToString(request.body),
-            headers: this.normalizeHeaders(request.headers),
+            body: convertRequestBodyToString(request.body),
+            headers: normalizeRequestHeaders(request.headers),
           },
           agent: this.getAgentInfo(),
         })
