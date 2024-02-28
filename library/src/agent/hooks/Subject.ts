@@ -4,12 +4,20 @@ import {
   ModifyingArgumentsMethodInterceptor,
 } from "./ModifyingArgumentsInterceptor";
 
+/**
+ * A subject represents an object from package exports that we want to hook into.
+ */
 export class Subject {
   private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
     [];
 
   constructor(private readonly selector: (exports: unknown) => unknown) {}
 
+  /**
+   * Inspect method calls without modifying arguments
+   *
+   * This is the preferred way to use when wrapping methods
+   */
   inspect(methodName: string, interceptor: Interceptor) {
     const method = new MethodInterceptor(methodName, interceptor);
     this.methods.push(method);
@@ -17,6 +25,13 @@ export class Subject {
     return method;
   }
 
+  /**
+   * Inspect methods call and return modified arguments
+   *
+   * e.g. to append our middleware to express routes
+   *
+   * Don't use this unless you have to, it's better to use inspect
+   */
   modifyArguments(
     methodName: string,
     interceptor: ModifyingArgumentsInterceptor

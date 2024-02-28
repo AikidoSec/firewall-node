@@ -1,5 +1,12 @@
 import { VersionedPackage } from "./VersionedPackage";
 
+/**
+ * Represents an installed package that can have multiple versions.
+ *
+ * When the package is required, you can wrap methods from the exports objects.
+ *
+ * Not to be used for built-in node modules.
+ */
 export class Package {
   private versions: VersionedPackage[] = [];
 
