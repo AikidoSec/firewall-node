@@ -6,7 +6,7 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Hooks } from "./hooks/Hooks";
 import { MethodInterceptor } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
-import { Subject } from "./hooks/Subject";
+import { WrappableSubject } from "./hooks/WrappableSubject";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -121,7 +121,7 @@ function wrapWithArgumentModification(
   });
 }
 
-function wrapSubject(exports: unknown, subject: Subject) {
+function wrapSubject(exports: unknown, subject: WrappableSubject) {
   const theSubject = subject.getSelector()(exports);
 
   if (!theSubject) {

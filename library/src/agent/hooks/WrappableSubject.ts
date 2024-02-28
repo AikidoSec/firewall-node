@@ -7,7 +7,7 @@ import {
 /**
  * A subject represents an object from package exports that we want to hook into.
  */
-export class Subject {
+export class WrappableSubject {
   private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
     [];
 

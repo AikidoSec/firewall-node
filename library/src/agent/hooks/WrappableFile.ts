@@ -1,4 +1,4 @@
-import { Subject } from "./Subject";
+import { WrappableSubject } from "./WrappableSubject";
 
 /**
  * Normally we use require-in-the-middle to wrap the exports of a package.
@@ -9,8 +9,8 @@ import { Subject } from "./Subject";
  *
  * Using require-in-the-middle is preferred because we don't have to require any files until the package is actually used.
  */
-export class File {
-  private subjects: Subject[] = [];
+export class WrappableFile {
+  private subjects: WrappableSubject[] = [];
 
   constructor(private readonly relativePath: string) {
     if (!this.relativePath) {
@@ -22,8 +22,8 @@ export class File {
     return this.relativePath;
   }
 
-  getSubject(selector: (exports: any) => unknown): Subject {
-    const fn = new Subject(selector);
+  getSubject(selector: (exports: any) => unknown): WrappableSubject {
+    const fn = new WrappableSubject(selector);
     this.subjects.push(fn);
 
     return fn;
