@@ -1,6 +1,6 @@
 import { Context } from "../agent/Context";
 
-export function normalizeHeaders(
+export function normalizeRequestHeaders(
   headers: Context["headers"]
 ): Record<string, string | string[]> {
   const normalized: Record<string, string | string[]> = {};

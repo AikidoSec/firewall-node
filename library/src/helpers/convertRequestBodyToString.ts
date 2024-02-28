@@ -1,6 +1,6 @@
 import { isPlainObject } from "./isPlainObject";
 
-export function convertBodyToString(
+export function convertRequestBodyToString(
   body: unknown,
   maxLength = 16384
 ): string | undefined {
@@ -12,7 +12,7 @@ export function convertBodyToString(
     try {
       const serialized = JSON.stringify(body, null, 2);
 
-      return convertBodyToString(serialized, maxLength);
+      return convertRequestBodyToString(serialized, maxLength);
     } catch {
       return undefined;
     }

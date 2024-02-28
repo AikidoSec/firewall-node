@@ -1,9 +1,9 @@
 import * as t from "tap";
-import { normalizeHeaders } from "./normalizeHeaders";
+import { normalizeRequestHeaders } from "./normalizeRequestHeaders";
 
 t.test("it normalizes headers", async (t) => {
   t.same(
-    normalizeHeaders({
+    normalizeRequestHeaders({
       string: "value",
       array: ["a", "b"],
       undefined: undefined,
