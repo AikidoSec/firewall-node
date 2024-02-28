@@ -7,20 +7,7 @@ import { applyHooks } from "../agent/applyHooks";
 import { runWithContext, type Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
-import { MySQL } from "./MySQL";
-import type { Connection } from "mysql";
-
-function query(sql: string, connection: Connection) {
-  return new Promise((resolve, reject) => {
-    connection.query(sql, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-
-      resolve(results);
-    });
-  });
-}
+import { MySQL2 } from "./MySQL2";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -36,10 +23,10 @@ const context: Context = {
 
 t.test("it inspects query method calls and blocks if needed", async () => {
   const hooks = new Hooks();
-  new MySQL().wrap(hooks);
+  new MySQL2().wrap(hooks);
   applyHooks(hooks);
 
-  const mysql = require("mysql");
+  const mysql = require("mysql2/promise");
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -61,20 +48,20 @@ t.test("it inspects query method calls and blocks if needed", async () => {
   });
 
   try {
-    await query(
+    await connection.query(
       `
         CREATE TABLE IF NOT EXISTS cats (
             petname varchar(255)
         );
-      `,
-      connection
+      `
     );
-    await query("TRUNCATE cats", connection);
-    t.same(await query("SELECT petname FROM `cats`;", connection), []);
+    await connection.execute("TRUNCATE cats");
+    const [rows] = await connection.query("SELECT petname FROM `cats`;");
+    t.same(rows, []);
 
     // @ts-expect-error Private property
     t.same(agent.stats, {
-      mysql: {
+      mysql2: {
         blocked: 0,
         total: 3,
         allowed: 3,
@@ -99,18 +86,21 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     await runWithContext(context, () => {
       // Normally this should be detected, but since the agent
       // is not defined we let it through.
-      return query("-- should be blocked", connection);
+      return connection.query("-- should be blocked");
     });
     setInstance(agent); // Put the agent back for the following tests
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
-        return query(undefined, connection);
+        return connection.query(undefined);
       });
     });
 
     if (undefinedQueryError instanceof Error) {
-      t.same(undefinedQueryError.message, "ER_EMPTY_QUERY: Query was empty");
+      t.same(
+        undefinedQueryError.message,
+        "Cannot read properties of undefined (reading 'constructor')"
+      );
     }
 
     await runWithContext(

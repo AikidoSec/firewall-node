@@ -95,5 +95,5 @@ See [benchmarks](benchmarks) for more information.
 * `$ make build` to build the library
 * `$ make watch` to watch for changes and rebuild the library
 * `$ make test` to run tests using tap
+* `$ make end2end` to run end-to-end tests using tap
 * `$ make lint` to run ESLint
-* `$ make docs` to generate documentation in the ./generated_docs
