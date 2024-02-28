@@ -68,7 +68,7 @@ t.test("it reports event to API endpoint", async () => {
   await api.report(new Token("123"), generateStartedEvent());
   const seen = await stop();
   t.same(seen.length, 1);
-  t.same(seen[0].token, "Bearer 123");
+  t.same(seen[0].token, "123");
   // @ts-expect-error Type is not known
   t.same(seen[0].body.type, "started");
 });
