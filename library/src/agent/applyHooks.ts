@@ -91,8 +91,8 @@ function wrapWhenModuleIsRequired(pkg: Package, subjects: WrappableSubject[]) {
   });
 }
 
-function isAikidoGuardBlockError(error: string) {
-  return error.startsWith("Aikido guard");
+function isAikidoGuardBlockError(error: Error) {
+  return error.message.startsWith("Aikido guard");
 }
 
 /**
