@@ -109,6 +109,7 @@ function wrapWithoutArgumentModification(
         // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this);
       } catch (error: any) {
+        // we must of course throw our own blocking errors
         if (error.message.startsWith("Aikido guard")) {
           throw error;
         }
