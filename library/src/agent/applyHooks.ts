@@ -1,8 +1,9 @@
 import { join } from "node:path";
-import { wrap } from "shimmer";
+import { unwrap, wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
+import { getContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
 import { MethodInterceptor } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
@@ -108,16 +109,39 @@ function wrapWithoutArgumentModification(
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
+      if (agent.shouldStopInspectingCalls(module)) {
+        // @ts-expect-error We don't now the type of the subject
+        unwrap(subject, method.getName());
+      }
+
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
+      const context = getContext();
+      const start = performance.now();
 
       try {
         // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this, agent);
+        const end = performance.now();
+        agent.onInspectedCall({
+          module: module,
+          withoutContext: !context,
+          detectedAttack: false,
+          duration: end - start,
+        });
       } catch (error: any) {
+        const end = performance.now();
+        const isAikidoGuardBlock = isAikidoGuardBlockError(error);
+        agent.onInspectedCall({
+          module: module,
+          withoutContext: !context,
+          detectedAttack: isAikidoGuardBlock,
+          duration: end - start,
+        });
+
         // Rethrow our own errors
         // Otherwise we cannot block injections
-        if (isAikidoGuardBlockError(error)) {
+        if (isAikidoGuardBlock) {
           throw error;
         }
 

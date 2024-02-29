@@ -20,6 +20,9 @@ export class Agent {
   private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
   private stats: Stats = {};
+  private maxSamples = 50;
+  private maxAverageInMS = 0.05;
+  private timings: Record<string, number[]> = {};
   private preventedPrototypePollution = false;
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private started = false;
@@ -36,22 +39,51 @@ export class Agent {
     return this.block;
   }
 
+  shouldStopInspectingCalls(module: string) {
+    if (!this.timings[module]) {
+      return false;
+    }
+
+    if (this.timings[module].length < this.maxSamples) {
+      return false;
+    }
+
+    const average =
+      this.timings[module].reduce((a, b) => a + b, 0) /
+      this.timings[module].length;
+
+    return average > this.maxAverageInMS;
+  }
+
   onInspectedCall({
-    detectedAttack,
     module,
     withoutContext,
+    detectedAttack,
+    duration,
   }: {
-    detectedAttack: boolean;
     module: string;
+    detectedAttack: boolean;
     withoutContext: boolean;
+    duration: number;
   }) {
-    this.stats[module] = this.stats[module] || {
-      blocked: 0,
-      allowed: 0,
-      withoutContext: 0,
-      total: 0,
-    };
+    if (!this.stats[module]) {
+      this.stats[module] = {
+        blocked: 0,
+        allowed: 0,
+        withoutContext: 0,
+        total: 0,
+      };
+    }
 
+    if (!this.timings[module]) {
+      this.timings[module] = [];
+    }
+
+    if (this.timings[module].length >= this.maxSamples) {
+      this.timings[module].shift();
+    }
+
+    this.timings[module].push(duration);
     this.stats[module].total += 1;
 
     if (withoutContext) {

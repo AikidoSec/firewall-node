@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { Agent } from "./Agent";
-import { setInstance } from "./AgentSingleton";
 import { APIForTesting } from "./api/APIForTesting";
 import { applyHooks } from "./applyHooks";
 import { Hooks } from "./hooks/Hooks";

@@ -83,6 +83,7 @@ t.test("it keeps track of stats", async () => {
     module: "mongodb",
     withoutContext: false,
     detectedAttack: false,
+    duration: 0.1,
   });
 
   // @ts-expect-error Private property
@@ -99,6 +100,7 @@ t.test("it keeps track of stats", async () => {
     module: "mongodb",
     withoutContext: true,
     detectedAttack: false,
+    duration: 0.1,
   });
 
   // @ts-expect-error Private property
@@ -115,6 +117,7 @@ t.test("it keeps track of stats", async () => {
     module: "mongodb",
     withoutContext: false,
     detectedAttack: true,
+    duration: 0.1,
   });
 
   // @ts-expect-error Private property
@@ -140,6 +143,7 @@ t.test("it keeps tracks of stats in dry mode", async () => {
     module: "mongodb",
     withoutContext: false,
     detectedAttack: true,
+    duration: 0.1,
   });
 
   // @ts-expect-error Private property
