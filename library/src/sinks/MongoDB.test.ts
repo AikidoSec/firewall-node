@@ -80,6 +80,16 @@ t.test("it detects NoSQL injections", async (t) => {
 
     t.same(await collection.count({ title: "Yet Another Title" }), 0);
 
+    // Bulk write without context
+    await collection.bulkWrite([
+      {
+        updateMany: {
+          filter: { someField: "value" },
+          update: { $set: { someField: "New Title" } },
+        },
+      },
+    ]);
+
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {
         return collection.bulkWrite([

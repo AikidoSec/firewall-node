@@ -74,6 +74,28 @@ export class MongoDB implements Wrapper {
     }
   }
 
+  private inspectBulkWriteOperation(
+    operation: BulkWriteOperation,
+    collection: Collection,
+    agent: Agent,
+    context: Context
+  ) {
+    BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
+      const options = operation[command];
+
+      if (options && options.filter) {
+        this.inspectFilter(
+          collection.dbName,
+          collection.collectionName,
+          agent,
+          context,
+          options.filter,
+          "bulkWrite"
+        );
+      }
+    });
+  }
+
   private inspectBulkWrite(
     args: unknown[],
     collection: Collection,
@@ -85,27 +107,12 @@ export class MongoDB implements Wrapper {
       return;
     }
 
-    if (!Array.isArray(args[0])) {
-      return;
-    }
-
-    const operations: BulkWriteOperation[] = args[0];
-    operations.forEach((operation) => {
-      BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
-        const options = operation[command];
-
-        if (options && options.filter) {
-          this.inspectFilter(
-            collection.dbName,
-            collection.collectionName,
-            agent,
-            context,
-            options.filter,
-            "bulkWrite"
-          );
-        }
+    if (Array.isArray(args[0]) && args[0].length > 0) {
+      const operations: BulkWriteOperation[] = args[0];
+      operations.forEach((operation) => {
+        this.inspectBulkWriteOperation(operation, collection, agent, context);
       });
-    });
+    }
   }
 
   private inspectOperation(
