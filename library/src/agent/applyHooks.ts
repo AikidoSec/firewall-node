@@ -91,6 +91,10 @@ function wrapWhenModuleIsRequired(pkg: Package, subjects: WrappableSubject[]) {
   });
 }
 
+function isAikidoGuardBlockError(error: string) {
+  return error.startsWith("Aikido guard");
+}
+
 /**
  * Wraps a method call with an interceptor that doesn't modify the arguments of the method call.
  */
@@ -109,7 +113,9 @@ function wrapWithoutArgumentModification(
         // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this);
       } catch (error: any) {
-        if (error.message.startsWith("Aikido guard")) {
+        // Rethrow our own errors
+        // Otherwise we cannot block injections
+        if (isAikidoGuardBlockError(error)) {
           throw error;
         }
 
@@ -153,7 +159,9 @@ function wrapWithArgumentModification(
         // @ts-expect-error We don't now the type of this
         updatedArgs = method.getInterceptor()(args, this);
       } catch (error: any) {
-        if (error.message.startsWith("Aikido guard")) {
+        // Rethrow our own errors
+        // Otherwise we cannot block injections
+        if (isAikidoGuardBlockError(error)) {
           throw error;
         }
 
