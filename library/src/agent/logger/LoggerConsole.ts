@@ -1,4 +1,6 @@
-export class LoggerConsole {
+import { Logger } from "./Logger";
+
+export class LoggerConsole implements Logger {
   /**
    * Creates a terminal log with the "AIKIDO: " affix.
    * @param message Message to be logged

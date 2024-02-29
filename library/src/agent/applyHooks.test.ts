@@ -1,6 +1,11 @@
 import * as t from "tap";
+import { Agent } from "./Agent";
+import { setInstance } from "./AgentSingleton";
+import { APIForTesting } from "./api/APIForTesting";
 import { applyHooks } from "./applyHooks";
 import { Hooks } from "./hooks/Hooks";
+import { LoggerForTesting } from "./logger/LoggerForTesting";
+import { LoggerNoop } from "./logger/LoggerNoop";
 
 t.test("it ignores if package is not installed", async (t) => {
   const hooks = new Hooks();
@@ -56,6 +61,12 @@ t.test("it ignores if version is not supported", async (t) => {
   });
 });
 
+function removeStackTraceErrorMessage(error: string) {
+  const [msg] = error.split("\n");
+
+  return msg;
+}
+
 t.test("it adds try/catch around the wrapped method", async (t) => {
   const hooks = new Hooks();
   const connection = hooks
@@ -67,6 +78,9 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   });
   connection.modifyArguments("execute", () => {
     throw new Error("THIS SHOULD BE CATCHED");
+  });
+  connection.inspect("ping", () => {
+    throw new Error("Aikido guard has blocked a SQL injection");
   });
 
   t.same(applyHooks(hooks), {
@@ -91,6 +105,27 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
 
   const [executeRows] = await actualConnection.execute("SELECT 1 as number");
   t.same(executeRows, [{ number: 1 }]);
+
+  const logger = new LoggerForTesting();
+  setInstance(
+    new Agent(false, logger, new APIForTesting(), undefined, false, {})
+  );
+
+  const [queryRows2] = await actualConnection.query("SELECT 1 as number");
+  t.same(queryRows2, [{ number: 1 }]);
+
+  const [executeRows2] = await actualConnection.execute("SELECT 1 as number");
+  t.same(executeRows2, [{ number: 1 }]);
+
+  const error = await t.rejects(() => actualConnection.ping());
+  if (error instanceof Error) {
+    t.equal(error.message, "Aikido guard has blocked a SQL injection");
+  }
+
+  t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
+    'Internal error in module "mysql2" in method "query"',
+    'Internal error in module "mysql2" in method "execute"',
+  ]);
 
   await actualConnection.end();
 });
