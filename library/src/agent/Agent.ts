@@ -94,6 +94,20 @@ export class Agent {
     }
   }
 
+  onErrorThrownByInterceptor({
+    error,
+    module,
+    method,
+  }: {
+    error: Error;
+    module: string;
+    method: string;
+  }) {
+    this.logger.log(
+      `Internal error in module "${module}" in method "${method}"\n${error.stack}`
+    );
+  }
+
   /**
    * This function gets called when an attack is detected, it reports this attack to the API
    */
