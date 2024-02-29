@@ -22,6 +22,7 @@ export class Agent {
   private stats: Stats = {};
   private preventedPrototypePollution = false;
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private started = false;
 
   constructor(
     private readonly block: boolean,
@@ -244,6 +245,12 @@ export class Agent {
   }
 
   start(wrappers: Wrapper[]) {
+    if (this.started) {
+      throw new Error("Agent already started!");
+    }
+
+    this.started = true;
+
     this.logger.log("Starting agent...");
 
     if (!this.block) {

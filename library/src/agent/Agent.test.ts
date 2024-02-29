@@ -37,6 +37,15 @@ t.test("it sends started event", async (t) => {
   ]);
 });
 
+t.test("it throws error if already started", async () => {
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+  agent.start([new MongoDB()]);
+  t.throws(() => agent.start([new MongoDB()]), "Agent already started!");
+});
+
 t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
