@@ -25,10 +25,5 @@ export class Postgres implements Wrapper {
     client.inspect("query", (args, subject, agent) =>
       this.inspectQuery(args, agent)
     );
-
-    const pool = pg.addSubject((exports) => exports.Pool.prototype);
-    pool.inspect("query", (args, subject, agent) =>
-      this.inspectQuery(args, agent)
-    );
   }
 }
