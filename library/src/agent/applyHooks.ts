@@ -3,9 +3,12 @@ import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
+import { getInstance } from "./AgentSingleton";
 import { Hooks } from "./hooks/Hooks";
 import { MethodInterceptor } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
+import { Package } from "./hooks/Package";
+import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 
 /**
@@ -57,23 +60,35 @@ export function applyHooks(hooks: Hooks) {
     };
 
     if (subjects.length > 0) {
-      new Hook([pkg.getName()], (exports) => {
-        subjects.forEach((selector) => wrapSubject(exports, selector));
-
-        return exports;
-      });
+      wrapWhenModuleIsRequired(pkg, subjects);
     }
 
     if (files.length > 0) {
-      files.forEach((file) => {
-        const exports = require(join(pkg.getName(), file.getRelativePath()));
-
-        file.getSubjects().forEach((subject) => wrapSubject(exports, subject));
-      });
+      wrapFilesImmediately(pkg, files);
     }
   });
 
   return wrapped;
+}
+
+function wrapFilesImmediately(pkg: Package, files: WrappableFile[]) {
+  files.forEach((file) => {
+    const exports = require(join(pkg.getName(), file.getRelativePath()));
+
+    file
+      .getSubjects()
+      .forEach((subject) => wrapSubject(exports, subject, pkg.getName()));
+  });
+}
+
+function wrapWhenModuleIsRequired(pkg: Package, subjects: WrappableSubject[]) {
+  new Hook([pkg.getName()], (exports) => {
+    subjects.forEach((selector) =>
+      wrapSubject(exports, selector, pkg.getName())
+    );
+
+    return exports;
+  });
 }
 
 /**
@@ -81,15 +96,29 @@ export function applyHooks(hooks: Hooks) {
  */
 function wrapWithoutArgumentModification(
   subject: unknown,
-  method: MethodInterceptor
+  method: MethodInterceptor,
+  module: string
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
-      // @ts-expect-error We don't now the type of this
-      method.getInterceptor()(args, this);
+
+      try {
+        // @ts-expect-error We don't now the type of this
+        method.getInterceptor()(args, this);
+      } catch (error: any) {
+        const agent = getInstance();
+
+        if (agent) {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: method.getName(),
+            module: module,
+          });
+        }
+      }
 
       return original.apply(
         // @ts-expect-error We don't now the type of this
@@ -106,27 +135,45 @@ function wrapWithoutArgumentModification(
  */
 function wrapWithArgumentModification(
   subject: unknown,
-  method: ModifyingArgumentsMethodInterceptor
+  method: ModifyingArgumentsMethodInterceptor,
+  module: string
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
-      // @ts-expect-error We don't now the type of this
-      const updatedArgs = method.getInterceptor()(args, this);
+      let updatedArgs = args;
+
+      try {
+        // @ts-expect-error We don't now the type of this
+        updatedArgs = method.getInterceptor()(args, this);
+      } catch (error: any) {
+        const agent = getInstance();
+
+        if (agent) {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: method.getName(),
+            module: module,
+          });
+        }
+      }
 
       return original.apply(
         // @ts-expect-error We don't now the type of this
         this,
-        // eslint-disable-next-line prefer-rest-params
-        Array.isArray(updatedArgs) ? updatedArgs : arguments
+        updatedArgs
       );
     };
   });
 }
 
-function wrapSubject(exports: unknown, subject: WrappableSubject) {
+function wrapSubject(
+  exports: unknown,
+  subject: WrappableSubject,
+  module: string
+) {
   const theSubject = subject.getSelector()(exports);
 
   if (!theSubject) {
@@ -135,9 +182,9 @@ function wrapSubject(exports: unknown, subject: WrappableSubject) {
 
   subject.getMethodInterceptors().forEach((method) => {
     if (method instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(theSubject, method);
+      wrapWithArgumentModification(theSubject, method, module);
     } else {
-      wrapWithoutArgumentModification(theSubject, method);
+      wrapWithoutArgumentModification(theSubject, method, module);
     }
   });
 }
