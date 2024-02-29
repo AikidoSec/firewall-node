@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { Hook } from "require-in-the-middle";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
@@ -82,13 +81,9 @@ function wrapFilesImmediately(pkg: Package, files: WrappableFile[]) {
 }
 
 function wrapWhenModuleIsRequired(pkg: Package, subjects: WrappableSubject[]) {
-  new Hook([pkg.getName()], (exports) => {
-    subjects.forEach((selector) =>
-      wrapSubject(exports, selector, pkg.getName())
-    );
+  const exports = require(pkg.getName());
 
-    return exports;
-  });
+  subjects.forEach((selector) => wrapSubject(exports, selector, pkg.getName()));
 }
 
 function isAikidoGuardBlockError(error: Error) {
