@@ -1,11 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting } from "../agent/api/APIForTesting";
-import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { applyHooks } from "../agent/applyHooks";
-import { Hooks } from "../agent/hooks/Hooks";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
 
@@ -23,21 +19,15 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("we can highjack the MongoDB library", async (t) => {
-  const hooks = new Hooks();
-  new MongoDB().wrap(hooks);
-  applyHooks(hooks);
-
+t.test("it detects NoSQL injections", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
     new APIForTesting(),
-    new Token("123"),
-    false,
-    {}
+    undefined,
+    true
   );
-  agent.start();
-  setInstance(agent);
+  agent.start([new MongoDB()]);
 
   const { MongoClient } = require("mongodb");
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
@@ -89,15 +79,6 @@ t.test("we can highjack the MongoDB library", async (t) => {
     await collection.deleteOne({ title: "Yet Another Title" });
 
     t.same(await collection.count({ title: "Yet Another Title" }), 0);
-    // @ts-expect-error Private property
-    t.same(agent.stats, {
-      mongodb: {
-        blocked: 0,
-        total: 10,
-        allowed: 10,
-        withoutContext: 10,
-      },
-    });
 
     const bulkError = await t.rejects(async () => {
       await runWithContext(context, () => {

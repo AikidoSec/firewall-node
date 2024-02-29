@@ -1,12 +1,18 @@
 import * as t from "tap";
-import { applyHooks } from "../agent/applyHooks";
-import { Hooks } from "../agent/hooks/Hooks";
+import { Agent } from "../agent/Agent";
+import { APIForTesting } from "../agent/api/APIForTesting";
+import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 
-// Before express is required!
-const hooks = new Hooks();
-new Express().wrap(hooks);
-applyHooks(hooks);
+// Before require("express")
+const agent = new Agent(
+  true,
+  new LoggerNoop(),
+  new APIForTesting(),
+  undefined,
+  true
+);
+agent.start([new Express()]);
 
 import * as express from "express";
 import * as request from "supertest";

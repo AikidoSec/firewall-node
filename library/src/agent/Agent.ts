@@ -2,7 +2,6 @@
 import { hostname, platform, release } from "node:os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { ip } from "../helpers/ipAddress";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
 import { AgentInfo, Kind, Stats } from "./api/Event";
@@ -11,6 +10,10 @@ import { Context } from "./Context";
 import { resolve } from "path";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
+import { wrapInstalledPackages } from "./wrapInstalledPackages";
+import { Wrapper } from "./Wrapper";
+
+type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   /** Gives the interval in milliseconds between heartbeats. Currently set at 1h */
@@ -18,17 +21,14 @@ export class Agent {
   private interval: NodeJS.Timeout | undefined = undefined;
   private stats: Stats = {};
   private preventedPrototypePollution = false;
+  private wrappedPackages: Record<string, WrappedPackage> = {};
 
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly serverless: boolean,
-    private readonly wrappedPackages: Record<
-      string,
-      { version: string | null; supported: boolean }
-    >
+    private readonly serverless: boolean
   ) {}
 
   shouldBlock() {
@@ -243,13 +243,7 @@ export class Agent {
     };
   }
 
-  /**
-   * Starts up the agent
-   * Checks parameters like block and token,
-   * starts heartbeats if necessary and checks which packages are supported,
-   * afterward it calls {@link onStart}
-   */
-  start() {
+  start(wrappers: Wrapper[]) {
     this.logger.log("Starting agent...");
 
     if (!this.block) {
@@ -261,6 +255,8 @@ export class Agent {
     } else {
       this.logger.log("No token provided, disabling reporting.");
     }
+
+    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
 
     for (const pkg in this.wrappedPackages) {
       const details = this.wrappedPackages[pkg];

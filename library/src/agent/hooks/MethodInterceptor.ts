@@ -1,4 +1,10 @@
-export type Interceptor = (args: unknown[], subject: unknown) => void;
+import { Agent } from "../Agent";
+
+export type Interceptor = (
+  args: unknown[],
+  subject: unknown,
+  agent: Agent
+) => void;
 
 export class MethodInterceptor {
   constructor(

@@ -1,40 +1,21 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import * as shimmer from "shimmer";
+import { getOptions, Options } from "../helpers/getOptions";
+import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
-import { Agent } from "./Agent";
-import { getInstance, setInstance } from "./AgentSingleton";
+import { Postgres } from "../sinks/Postgres";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
-import { MongoDB } from "../sinks/MongoDB";
-import { Postgres } from "../sinks/Postgres";
-import * as shimmer from "shimmer";
+import { Agent } from "./Agent";
+import { getInstance, setInstance } from "./AgentSingleton";
 import { API } from "./api/API";
 import { APIFetch } from "./api/APIFetch";
 import { APIThrottled } from "./api/APIThrottled";
 import { Token } from "./api/Token";
-import { applyHooks } from "./applyHooks";
-import { Hooks } from "./hooks/Hooks";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
-import { Options, getOptions } from "../helpers/getOptions";
-
-function wrapInstalledPackages() {
-  const wrappers = [
-    new Express(),
-    new MongoDB(),
-    new Postgres(),
-    new MySQL(),
-    new MySQL2(),
-  ];
-
-  const hooks = new Hooks();
-  wrappers.forEach((wrapper) => {
-    wrapper.wrap(hooks);
-  });
-
-  return applyHooks(hooks);
-}
 
 function getLogger(options: Options): Logger {
   if (options.debug) {
@@ -80,14 +61,12 @@ function getAgent({
     return current;
   }
 
-  const installed = wrapInstalledPackages();
   const agent = new Agent(
     options.block,
     getLogger(options),
     getAPI(),
     getTokenFromEnv(),
-    serverless,
-    installed
+    serverless
   );
 
   setInstance(agent);
@@ -102,6 +81,16 @@ function disableShimmerLogging() {
   shimmer({ logger: () => {} });
 }
 
+function getWrappers() {
+  return [
+    new Express(),
+    new MongoDB(),
+    new Postgres(),
+    new MySQL(),
+    new MySQL2(),
+  ];
+}
+
 /**
  * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
  * @param options Options to pass along to the protect function (See type definition)
@@ -114,7 +103,7 @@ export function protect(options?: Partial<Options>) {
     serverless: false,
   });
 
-  agent.start();
+  agent.start(getWrappers());
 }
 
 /**
@@ -132,7 +121,7 @@ export function lambda(
     serverless: true,
   });
 
-  agent.start();
+  agent.start(getWrappers());
 
   return createLambdaWrapper;
 }

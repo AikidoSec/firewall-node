@@ -1,6 +1,7 @@
 import { hostname, platform, release } from "node:os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
+import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { APIForTesting } from "./api/APIForTesting";
 import { Token } from "./api/Token";
@@ -10,13 +11,8 @@ t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, false, {
-    mongodb: {
-      version: "4.0.0",
-      supported: true,
-    },
-  });
-  agent.start();
+  const agent = new Agent(true, logger, api, token, false);
+  agent.start([new MongoDB()]);
 
   t.match(api.getEvents(), [
     {
@@ -27,7 +23,7 @@ t.test("it sends started event", async (t) => {
         version: "0.0.0",
         ipAddress: ip(),
         packages: {
-          mongodb: "4.0.0",
+          mongodb: "6.3.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
@@ -45,9 +41,9 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
+  const agent = new Agent(true, logger, api, token, true);
   agent.onPrototypePollutionPrevented();
-  agent.start();
+  agent.start([]);
   t.match(api.getEvents(), [
     {
       agent: {
@@ -61,19 +57,19 @@ t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
+  const agent = new Agent(true, logger, api, token, true);
 
   // This would otherwise keep the process running
-  agent.start();
+  agent.start([]);
 });
 
 t.test("it keeps track of stats", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
+  const agent = new Agent(true, logger, api, token, true);
 
-  agent.start();
+  agent.start([]);
   agent.onInspectedCall({
     module: "mongodb",
     withoutContext: false,
@@ -127,9 +123,9 @@ t.test("it keeps tracks of stats in dry mode", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(false, logger, api, token, true, {});
+  const agent = new Agent(false, logger, api, token, true);
 
-  agent.start();
+  agent.start([]);
 
   agent.onInspectedCall({
     module: "mongodb",

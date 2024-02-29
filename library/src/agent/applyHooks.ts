@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
-import { getInstance } from "./AgentSingleton";
+import { Agent } from "./Agent";
 import { Hooks } from "./hooks/Hooks";
 import { MethodInterceptor } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
@@ -17,7 +17,7 @@ import { WrappableSubject } from "./hooks/WrappableSubject";
  * That's where applyHooks comes in, we take the registered packages and
  * its methods and do the actual wrapping so that we can intercept method calls.
  */
-export function applyHooks(hooks: Hooks) {
+export function applyHooks(hooks: Hooks, agent: Agent) {
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
 
   hooks.getPackages().forEach((pkg) => {
@@ -59,31 +59,37 @@ export function applyHooks(hooks: Hooks) {
     };
 
     if (subjects.length > 0) {
-      wrapWhenModuleIsRequired(pkg, subjects);
+      wrapPackage(pkg, subjects, agent);
     }
 
     if (files.length > 0) {
-      wrapFilesImmediately(pkg, files);
+      wrapFiles(pkg, files, agent);
     }
   });
 
   return wrapped;
 }
 
-function wrapFilesImmediately(pkg: Package, files: WrappableFile[]) {
+function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
     const exports = require(join(pkg.getName(), file.getRelativePath()));
 
     file
       .getSubjects()
-      .forEach((subject) => wrapSubject(exports, subject, pkg.getName()));
+      .forEach(
+        (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
+        agent
+      );
   });
 }
 
-function wrapWhenModuleIsRequired(pkg: Package, subjects: WrappableSubject[]) {
+function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
   const exports = require(pkg.getName());
 
-  subjects.forEach((selector) => wrapSubject(exports, selector, pkg.getName()));
+  subjects.forEach(
+    (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
+    agent
+  );
 }
 
 function isAikidoGuardBlockError(error: Error) {
@@ -96,7 +102,8 @@ function isAikidoGuardBlockError(error: Error) {
 function wrapWithoutArgumentModification(
   subject: unknown,
   method: MethodInterceptor,
-  module: string
+  module: string,
+  agent: Agent
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
@@ -106,7 +113,7 @@ function wrapWithoutArgumentModification(
 
       try {
         // @ts-expect-error We don't now the type of this
-        method.getInterceptor()(args, this);
+        method.getInterceptor()(args, this, agent);
       } catch (error: any) {
         // Rethrow our own errors
         // Otherwise we cannot block injections
@@ -114,15 +121,11 @@ function wrapWithoutArgumentModification(
           throw error;
         }
 
-        const agent = getInstance();
-
-        if (agent) {
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: method.getName(),
-            module: module,
-          });
-        }
+        agent.onErrorThrownByInterceptor({
+          error: error,
+          method: method.getName(),
+          module: module,
+        });
       }
 
       return original.apply(
@@ -141,7 +144,8 @@ function wrapWithoutArgumentModification(
 function wrapWithArgumentModification(
   subject: unknown,
   method: ModifyingArgumentsMethodInterceptor,
-  module: string
+  module: string,
+  agent: Agent
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
@@ -152,7 +156,7 @@ function wrapWithArgumentModification(
 
       try {
         // @ts-expect-error We don't now the type of this
-        updatedArgs = method.getInterceptor()(args, this);
+        updatedArgs = method.getInterceptor()(args, this, agent);
       } catch (error: any) {
         // Rethrow our own errors
         // Otherwise we cannot block injections
@@ -160,15 +164,11 @@ function wrapWithArgumentModification(
           throw error;
         }
 
-        const agent = getInstance();
-
-        if (agent) {
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: method.getName(),
-            module: module,
-          });
-        }
+        agent.onErrorThrownByInterceptor({
+          error: error,
+          method: method.getName(),
+          module: module,
+        });
       }
 
       return original.apply(
@@ -183,7 +183,8 @@ function wrapWithArgumentModification(
 function wrapSubject(
   exports: unknown,
   subject: WrappableSubject,
-  module: string
+  module: string,
+  agent: Agent
 ) {
   const theSubject = subject.getSelector()(exports);
 
@@ -193,9 +194,9 @@ function wrapSubject(
 
   subject.getMethodInterceptors().forEach((method) => {
     if (method instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(theSubject, method, module);
+      wrapWithArgumentModification(theSubject, method, module, agent);
     } else {
-      wrapWithoutArgumentModification(theSubject, method, module);
+      wrapWithoutArgumentModification(theSubject, method, module, agent);
     }
   });
 }
