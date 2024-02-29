@@ -109,6 +109,10 @@ function wrapWithoutArgumentModification(
         // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this);
       } catch (error: any) {
+        if (error.message.startsWith("Aikido guard")) {
+          throw error;
+        }
+
         const agent = getInstance();
 
         if (agent) {
@@ -149,6 +153,10 @@ function wrapWithArgumentModification(
         // @ts-expect-error We don't now the type of this
         updatedArgs = method.getInterceptor()(args, this);
       } catch (error: any) {
+        if (error.message.startsWith("Aikido guard")) {
+          throw error;
+        }
+
         const agent = getInstance();
 
         if (agent) {
