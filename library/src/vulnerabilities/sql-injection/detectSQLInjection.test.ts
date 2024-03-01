@@ -212,6 +212,10 @@ t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));
 });
 
+t.test("Test the postgres bitwise operator #", async () => {
+    isSqlInjection("10 # 12", "10 # 12");
+});
+
 function isSqlInjection(sql: string, input: string) {
   t.ok(detectSQLInjection(sql, input), sql);
 }
