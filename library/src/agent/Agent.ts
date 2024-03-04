@@ -1,18 +1,14 @@
 /* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "node:os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
+import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
-import {
-  AgentInfo,
-  Kind,
-  Stats,
-  StoppedInspectingCallsReason,
-} from "./api/Event";
+import { AgentInfo, Kind, StoppedInspectingCallsReason } from "./api/Event";
 import { Token } from "./api/Token";
 import { Context } from "./Context";
-import { resolve } from "path";
+import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
@@ -24,12 +20,12 @@ export class Agent {
   /** Gives the interval in milliseconds between heartbeats. Currently set at 1h */
   private heartbeatIntervalInMS = 60 * 60 * 1000;
   private interval: NodeJS.Timeout | undefined = undefined;
-  private stats: Stats = {};
-  private maxSamples = 50;
-  private maxAverageInMS = 0.05;
-  private timings: Record<string, number[]> = {};
   private preventedPrototypePollution = false;
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private statistics = new InspectionStatistics({
+    maxSamples: 50,
+    maxAverageInMS: 0.05,
+  });
   private started = false;
 
   constructor(
@@ -44,69 +40,8 @@ export class Agent {
     return this.block;
   }
 
-  shouldStopInspectingCalls(module: string) {
-    if (!this.timings[module]) {
-      return false;
-    }
-
-    if (this.timings[module].length < this.maxSamples) {
-      return false;
-    }
-
-    const average =
-      this.timings[module].reduce((a, b) => a + b, 0) /
-      this.timings[module].length;
-
-    return average > this.maxAverageInMS;
-  }
-
-  onInspectedCall({
-    module,
-    withoutContext,
-    detectedAttack,
-    duration,
-  }: {
-    module: string;
-    detectedAttack: boolean;
-    withoutContext: boolean;
-    duration: number;
-  }) {
-    if (!this.stats[module]) {
-      this.stats[module] = {
-        blocked: 0,
-        allowed: 0,
-        withoutContext: 0,
-        total: 0,
-      };
-    }
-
-    this.stats[module].total += 1;
-
-    if (withoutContext) {
-      this.stats[module].withoutContext += 1;
-      this.stats[module].allowed += 1;
-      return;
-    }
-
-    if (!this.timings[module]) {
-      this.timings[module] = [];
-    }
-
-    if (this.timings[module].length >= this.maxSamples) {
-      this.timings[module].shift();
-    }
-
-    this.timings[module].push(duration);
-
-    if (detectedAttack) {
-      if (this.block) {
-        this.stats[module].blocked += 1;
-      } else {
-        this.stats[module].allowed += 1;
-      }
-    } else {
-      this.stats[module].allowed += 1;
-    }
+  getInspectionStatistics() {
+    return this.statistics;
   }
 
   onPrototypePollutionPrevented() {
@@ -120,7 +55,7 @@ export class Agent {
     module: string,
     reason: StoppedInspectingCallsReason
   ) {
-    delete this.timings[module];
+    this.statistics.cleanupTimings(module);
 
     if (this.token) {
       this.api
@@ -234,7 +169,7 @@ export class Agent {
           type: "heartbeat",
           time: Date.now(),
           agent: this.getAgentInfo(),
-          stats: this.stats,
+          stats: this.statistics.getStats(),
         })
         .catch(() => {
           this.logger.log("Failed to do heartbeat");
@@ -262,25 +197,11 @@ export class Agent {
     this.interval.unref();
   }
 
-  /**
-   * Gets this project's version number from the package.json file
-   * @returns version number
-   */
-  private getAgentVersion(): string {
-    const json = require(resolve(__dirname, "../../package.json"));
-
-    if (!json.version) {
-      throw new Error("Missing version in package.json");
-    }
-
-    return json.version;
-  }
-
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       hostname: hostname() || "",
-      version: this.getAgentVersion(),
+      version: getAgentVersion(),
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
         (packages: Record<string, string>, pkg) => {

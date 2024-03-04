@@ -110,7 +110,7 @@ function wrapWithoutArgumentModification(
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
-      if (agent.shouldStopInspectingCalls(module)) {
+      if (agent.getInspectionStatistics().shouldStopInspectingCalls(module)) {
         // @ts-expect-error We don't now the type of the subject
         unwrap(subject, method.getName());
         agent.onStoppedInspectingCalls(module, "performance");
@@ -119,11 +119,12 @@ function wrapWithoutArgumentModification(
       const context = getContext();
 
       if (!context) {
-        agent.onInspectedCall({
+        agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: true,
           detectedAttack: false,
           duration: 0,
+          blocked: false,
         });
 
         return original.apply(
@@ -142,20 +143,22 @@ function wrapWithoutArgumentModification(
         // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this, agent);
         const end = performance.now();
-        agent.onInspectedCall({
+        agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: false,
           detectedAttack: false,
           duration: end - start,
+          blocked: false,
         });
       } catch (error: any) {
         const end = performance.now();
         const isAikidoGuardBlock = isAikidoGuardBlockError(error);
-        agent.onInspectedCall({
+        agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: false,
           detectedAttack: isAikidoGuardBlock,
           duration: end - start,
+          blocked: isAikidoGuardBlock,
         });
 
         // Rethrow our own errors
