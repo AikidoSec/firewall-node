@@ -71,3 +71,84 @@ t.test("it does not start interval in serverless mode", async () => {
   // This would otherwise keep the process running
   agent.start([]);
 });
+
+t.test("when attack detected", async () => {
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+  agent.onDetectedAttack({
+    module: "mongodb",
+    kind: "nosql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {},
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+    },
+    stack: "stack",
+    path: ".nested",
+    metadata: {
+      db: "app",
+    },
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack",
+      attack: {
+        module: "mongodb",
+        kind: "nosql_injection",
+        blocked: true,
+        source: "body",
+        path: ".nested",
+        stack: "stack",
+        metadata: {
+          db: "app",
+        },
+      },
+      request: {
+        method: "POST",
+        ipAddress: "::1",
+        url: "http://localhost:4000",
+        headers: {},
+        body: "{}",
+      },
+    },
+  ]);
+});
+
+t.test("when stopped inspection method calls", async () => {
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+  agent.onStoppedInspectingCalls("mongodb", "performance");
+  agent.getInspectionStatistics().onInspectedCall({
+    module: "mongodb",
+    withoutContext: false,
+    detectedAttack: false,
+    duration: 0.1,
+    blocked: false,
+  });
+  t.match(api.getEvents(), [
+    {
+      type: "stopped_inspecting_calls",
+      module: "mongodb",
+      reason: "performance",
+      stats: {
+        mongodb: {
+          blocked: 0,
+          total: 1,
+          withoutContext: 0,
+          allowed: 1,
+        },
+      },
+    },
+  ]);
+});

@@ -1,9 +1,11 @@
 import { Agent } from "../Agent";
+import { Context } from "../Context";
 
 export type Interceptor = (
   args: unknown[],
   subject: unknown,
-  agent: Agent
+  agent: Agent,
+  context: Context
 ) => void;
 
 export class MethodInterceptor {

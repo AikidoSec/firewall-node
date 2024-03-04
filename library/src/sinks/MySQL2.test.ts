@@ -5,7 +5,7 @@ import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL2 } from "./MySQL2";
 
-const context: Context = {
+const dangerousContext: Context = {
   remoteAddress: "::1",
   method: "POST",
   url: "http://localhost:4000",
@@ -14,6 +14,16 @@ const context: Context = {
   body: {
     myTitle: `-- should be blocked`,
   },
+  cookies: {},
+};
+
+const safeContext: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000/",
+  query: {},
+  headers: {},
+  body: {},
   cookies: {},
 };
 
@@ -51,7 +61,7 @@ t.test("it detects SQL injections", async () => {
     t.same(rows, []);
 
     const bulkError = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      await runWithContext(dangerousContext, () => {
         return connection.query("-- should be blocked");
       });
     });
@@ -64,7 +74,7 @@ t.test("it detects SQL injections", async () => {
     }
 
     const undefinedQueryError = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      await runWithContext(dangerousContext, () => {
         return connection.query(undefined);
       });
     });
@@ -76,20 +86,9 @@ t.test("it detects SQL injections", async () => {
       );
     }
 
-    await runWithContext(
-      {
-        remoteAddress: "::1",
-        method: "POST",
-        url: "http://localhost:4000/",
-        query: {},
-        headers: {},
-        body: {},
-        cookies: {},
-      },
-      () => {
-        return connection.query("-- This is a comment");
-      }
-    );
+    await runWithContext(safeContext, () => {
+      return connection.query("-- This is a comment");
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

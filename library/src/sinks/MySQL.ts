@@ -1,17 +1,11 @@
 import { Agent } from "../agent/Agent";
+import { Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
-import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 export class MySQL implements Wrapper {
-  private inspectQuery(args: unknown[], agent: Agent) {
-    const context = getContext();
-
-    if (!context) {
-      return;
-    }
-
+  private inspectQuery(args: unknown[], agent: Agent, context: Context) {
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
       checkContextForSqlInjection(sql, context, agent, "mysql");
@@ -25,8 +19,8 @@ export class MySQL implements Wrapper {
       .addFile("lib/Connection")
       .addSubject((exports) => exports.prototype);
 
-    connection.inspect("query", (args, subject, agent) =>
-      this.inspectQuery(args, agent)
+    connection.inspect("query", (args, subject, agent, context) =>
+      this.inspectQuery(args, agent, context)
     );
   }
 }

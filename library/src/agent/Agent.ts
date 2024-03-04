@@ -65,6 +65,7 @@ export class Agent {
           time: Date.now(),
           module: module,
           agent: this.getAgentInfo(),
+          stats: this.statistics.getStats(),
         })
         .catch(() => {
           this.logger.log("Failed to report stopped inspecting calls event");
@@ -161,7 +162,7 @@ export class Agent {
   /**
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
-  heartbeat() {
+  private heartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
       this.api

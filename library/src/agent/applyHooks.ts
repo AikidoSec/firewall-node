@@ -141,7 +141,7 @@ function wrapWithoutArgumentModification(
 
       try {
         // @ts-expect-error We don't now the type of this
-        method.getInterceptor()(args, this, agent);
+        method.getInterceptor()(args, this, agent, context);
         const end = performance.now();
         agent.getInspectionStatistics().onInspectedCall({
           module: module,

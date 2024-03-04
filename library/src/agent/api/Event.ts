@@ -72,6 +72,7 @@ type StoppedInspectingCalls = {
   reason: StoppedInspectingCallsReason;
   module: ModuleName;
   agent: AgentInfo;
+  stats: Stats;
   time: number;
 };
 
