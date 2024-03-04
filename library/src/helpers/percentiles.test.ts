@@ -58,11 +58,11 @@ t.test("array of percentiles", async (t) => {
 });
 
 t.test("throw an error if less than 0", async (t) => {
-  t.throws(() => percentiles([-1], []));
+  t.throws(() => percentiles([-1], [1]));
 });
 
 t.test("throw an error if grater than 100", async (t) => {
-  t.throws(() => percentiles([101], []));
+  t.throws(() => percentiles([101], [1]));
 });
 
 t.test("empty list", async (t) => {
