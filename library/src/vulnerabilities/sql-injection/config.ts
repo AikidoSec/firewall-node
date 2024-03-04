@@ -87,6 +87,8 @@ export const SQL_OPERATORS = [
   "^",
   ">",
   "<",
+  "#",
+  "::",
 ];
 
 export const SQL_DANGEROUS_IN_STRING = [
@@ -96,6 +98,7 @@ export const SQL_DANGEROUS_IN_STRING = [
   "`",
   "/*", // Start of comment
   "--", // Start of comment
+  "#", // Start of comment
 ];
 
 export const SQL_STRING_CHARS = ['"', "'"];
