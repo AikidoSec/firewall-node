@@ -213,13 +213,13 @@ t.test("Test the dangerousCharsInInput() function", async () => {
 });
 
 t.test("Test the postgres bitwise operator #", async () => {
-    isSqlInjection("10 # 12", "10 # 12");
+  isSqlInjection("10 # 12", "10 # 12");
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.ok(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), true, sql);
 }
 
 function isNotSqlInjection(sql: string, input: string) {
-  t.notOk(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), false, sql);
 }
