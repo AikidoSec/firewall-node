@@ -48,7 +48,7 @@ type DetectedAttack = {
 
 type ModuleName = string;
 
-export type Stats = Record<
+type Stats = Record<
   ModuleName,
   {
     blocked: number;
