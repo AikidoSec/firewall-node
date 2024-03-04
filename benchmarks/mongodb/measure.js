@@ -7,13 +7,13 @@ module.exports = async function measureFunctionPerformance(
     await func();
   }
 
-  let totalExecutionTime = 0;
+  const timings = [];
   for (let i = 0; i < measuredIterations; i++) {
     const start = performance.now();
     await func();
     const end = performance.now();
-    totalExecutionTime += end - start;
+    timings.push(end - start);
   }
 
-  return totalExecutionTime / measuredIterations;
+  return timings;
 };

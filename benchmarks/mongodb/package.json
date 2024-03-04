@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/guard": "file:../../library",
-    "mongodb": "^6.3.0"
+    "mongodb": "^6.3.0",
+    "percentile": "^1.6.0"
   }
 }
