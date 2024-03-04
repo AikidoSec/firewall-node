@@ -65,4 +65,18 @@ type Heartbeat = {
   time: number;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat;
+export type StoppedInspectingCallsReason = "performance";
+
+type StoppedInspectingCalls = {
+  type: "stopped_inspecting_calls";
+  reason: StoppedInspectingCallsReason;
+  module: ModuleName;
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event =
+  | Started
+  | DetectedAttack
+  | Heartbeat
+  | StoppedInspectingCalls;

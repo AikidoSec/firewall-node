@@ -2,8 +2,19 @@ import * as t from "tap";
 import { Agent } from "./Agent";
 import { APIForTesting } from "./api/APIForTesting";
 import { applyHooks } from "./applyHooks";
+import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerNoop } from "./logger/LoggerNoop";
+
+const context: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: undefined,
+  cookies: {},
+};
 
 t.test(
   "it stops inspecting method calls when average time was too high",
@@ -51,11 +62,11 @@ t.test(
     });
 
     for (let i = 0; i < 100; i++) {
-      await actualConnection.execute("SELECT 1");
+      await runWithContext(context, () => actualConnection.execute("SELECT 1"));
     }
 
     for (let i = 0; i < 100; i++) {
-      await actualConnection.query("SELECT 1");
+      await runWithContext(context, () => actualConnection.query("SELECT 1"));
     }
 
     t.same(fastCalls, 100);

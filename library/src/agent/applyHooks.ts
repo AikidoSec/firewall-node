@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { join } from "node:path";
 import { unwrap, wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
@@ -112,11 +113,29 @@ function wrapWithoutArgumentModification(
       if (agent.shouldStopInspectingCalls(module)) {
         // @ts-expect-error We don't now the type of the subject
         unwrap(subject, method.getName());
+        agent.onStoppedInspectingCalls(module, "performance");
+      }
+
+      const context = getContext();
+
+      if (!context) {
+        agent.onInspectedCall({
+          module: module,
+          withoutContext: true,
+          detectedAttack: false,
+          duration: 0,
+        });
+
+        return original.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          // eslint-disable-next-line prefer-rest-params
+          arguments
+        );
       }
 
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
-      const context = getContext();
       const start = performance.now();
 
       try {
@@ -125,7 +144,7 @@ function wrapWithoutArgumentModification(
         const end = performance.now();
         agent.onInspectedCall({
           module: module,
-          withoutContext: !context,
+          withoutContext: false,
           detectedAttack: false,
           duration: end - start,
         });
@@ -134,7 +153,7 @@ function wrapWithoutArgumentModification(
         const isAikidoGuardBlock = isAikidoGuardBlockError(error);
         agent.onInspectedCall({
           module: module,
-          withoutContext: !context,
+          withoutContext: false,
           detectedAttack: isAikidoGuardBlock,
           duration: end - start,
         });

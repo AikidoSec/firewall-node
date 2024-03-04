@@ -4,7 +4,12 @@ import { convertRequestBodyToString } from "../helpers/convertRequestBodyToStrin
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
-import { AgentInfo, Kind, Stats } from "./api/Event";
+import {
+  AgentInfo,
+  Kind,
+  Stats,
+  StoppedInspectingCallsReason,
+} from "./api/Event";
 import { Token } from "./api/Token";
 import { Context } from "./Context";
 import { resolve } from "path";
@@ -75,6 +80,14 @@ export class Agent {
       };
     }
 
+    this.stats[module].total += 1;
+
+    if (withoutContext) {
+      this.stats[module].withoutContext += 1;
+      this.stats[module].allowed += 1;
+      return;
+    }
+
     if (!this.timings[module]) {
       this.timings[module] = [];
     }
@@ -84,13 +97,6 @@ export class Agent {
     }
 
     this.timings[module].push(duration);
-    this.stats[module].total += 1;
-
-    if (withoutContext) {
-      this.stats[module].withoutContext += 1;
-      this.stats[module].allowed += 1;
-      return;
-    }
 
     if (detectedAttack) {
       if (this.block) {
@@ -108,6 +114,27 @@ export class Agent {
 
     // Will be sent in the next heartbeat
     this.preventedPrototypePollution = true;
+  }
+
+  onStoppedInspectingCalls(
+    module: string,
+    reason: StoppedInspectingCallsReason
+  ) {
+    delete this.timings[module];
+
+    if (this.token) {
+      this.api
+        .report(this.token, {
+          type: "stopped_inspecting_calls",
+          reason: reason,
+          time: Date.now(),
+          module: module,
+          agent: this.getAgentInfo(),
+        })
+        .catch(() => {
+          this.logger.log("Failed to report stopped inspecting calls event");
+        });
+    }
   }
 
   /**

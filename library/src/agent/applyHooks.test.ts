@@ -2,8 +2,19 @@ import * as t from "tap";
 import { Agent } from "./Agent";
 import { APIForTesting } from "./api/APIForTesting";
 import { applyHooks } from "./applyHooks";
+import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
+
+const context: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: undefined,
+  cookies: {},
+};
 
 function createAgent() {
   const logger = new LoggerForTesting();
@@ -116,10 +127,14 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
     multipleStatements: true,
   });
 
-  const [queryRows] = await actualConnection.query("SELECT 1 as number");
+  const [queryRows] = await runWithContext(context, () =>
+    actualConnection.query("SELECT 1 as number")
+  );
   t.same(queryRows, [{ number: 1 }]);
 
-  const [executeRows] = await actualConnection.execute("SELECT 1 as number");
+  const [executeRows] = await runWithContext(context, () =>
+    actualConnection.execute("SELECT 1 as number")
+  );
   t.same(executeRows, [{ number: 1 }]);
 
   t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
@@ -127,12 +142,16 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
     'Internal error in module "mysql2" in method "execute"',
   ]);
 
-  const error = await t.rejects(() => actualConnection.ping());
+  const error = await t.rejects(() =>
+    runWithContext(context, () => actualConnection.ping())
+  );
   if (error instanceof Error) {
     t.equal(error.message, "Aikido guard has blocked a SQL injection");
   }
 
-  const error2 = await t.rejects(() => actualConnection.rollback());
+  const error2 = await t.rejects(() =>
+    runWithContext(context, () => actualConnection.rollback())
+  );
   if (error2 instanceof Error) {
     t.equal(error2.message, "Aikido guard has blocked a SQL injection");
   }
