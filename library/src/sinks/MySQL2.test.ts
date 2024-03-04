@@ -89,6 +89,10 @@ t.test("it detects SQL injections", async () => {
     await runWithContext(safeContext, () => {
       return connection.query("-- This is a comment");
     });
+
+    await runWithContext(safeContext, () => {
+      return connection.execute("SELECT 1");
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

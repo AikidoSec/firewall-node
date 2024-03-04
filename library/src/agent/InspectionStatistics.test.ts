@@ -59,6 +59,23 @@ t.test("it keeps track of amount of calls", async () => {
       total: 3,
     },
   });
+
+  stats.onInspectedCall({
+    module: "mongodb",
+    withoutContext: false,
+    detectedAttack: true,
+    duration: 0.1,
+    blocked: true,
+  });
+
+  t.same(stats.getStats(), {
+    mongodb: {
+      blocked: 2,
+      allowed: 2,
+      withoutContext: 1,
+      total: 4,
+    },
+  });
 });
 
 t.test("it keep track of last X calls ", async () => {
