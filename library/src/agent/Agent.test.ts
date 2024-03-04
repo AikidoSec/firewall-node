@@ -123,32 +123,40 @@ t.test("when attack detected", async () => {
   ]);
 });
 
-t.test("when stopped inspection method calls", async () => {
+t.test("it sends heartbeat when reached max timings", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, false);
-  agent.onStoppedInspectingCalls("mongodb", "performance");
-  agent.getInspectionStatistics().onInspectedCall({
-    module: "mongodb",
-    withoutContext: false,
-    detectedAttack: false,
-    duration: 0.1,
-    blocked: false,
-  });
+  agent.start([]);
+  for (let i = 0; i < 1000; i++) {
+    agent.getInspectionStatistics().onInspectedCall({
+      module: "mongodb",
+      withoutContext: false,
+      blocked: false,
+      durationInMs: 0.1,
+    });
+  }
   t.match(api.getEvents(), [
     {
-      type: "stopped_inspecting_calls",
+      type: "started",
+    },
+  ]);
+  for (let i = 0; i < 4000; i++) {
+    agent.getInspectionStatistics().onInspectedCall({
       module: "mongodb",
-      reason: "performance",
-      stats: {
-        mongodb: {
-          blocked: 0,
-          total: 1,
-          withoutContext: 0,
-          allowed: 1,
-        },
-      },
+      withoutContext: false,
+      blocked: false,
+      durationInMs: 0.1,
+    });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
     },
   ]);
 });

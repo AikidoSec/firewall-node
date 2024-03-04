@@ -5,7 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
-import { AgentInfo, Kind, StoppedInspectingCallsReason } from "./api/Event";
+import { AgentInfo, Kind } from "./api/Event";
 import { Token } from "./api/Token";
 import { Context } from "./Context";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -17,16 +17,17 @@ import { Wrapper } from "./Wrapper";
 type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
-  /** Gives the interval in milliseconds between heartbeats. Currently set at 1h */
-  private heartbeatIntervalInMS = 60 * 60 * 1000;
+  private started = false;
+  private sendHeartbeatEveryMS = 30 * 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 5 * 1000;
+  private lastHeartbeat = Date.now();
+  private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private statistics = new InspectionStatistics({
-    maxSamples: 50,
-    maxAverageInMS: 0.05,
+    maxTimings: 5000,
   });
-  private started = false;
 
   constructor(
     private readonly block: boolean,
@@ -49,28 +50,6 @@ export class Agent {
 
     // Will be sent in the next heartbeat
     this.preventedPrototypePollution = true;
-  }
-
-  onStoppedInspectingCalls(
-    module: string,
-    reason: StoppedInspectingCallsReason
-  ) {
-    this.statistics.cleanupTimings(module);
-
-    if (this.token) {
-      this.api
-        .report(this.token, {
-          type: "stopped_inspecting_calls",
-          reason: reason,
-          time: Date.now(),
-          module: module,
-          agent: this.getAgentInfo(),
-          stats: this.statistics.getStats(),
-        })
-        .catch(() => {
-          this.logger.log("Failed to report stopped inspecting calls event");
-        });
-    }
   }
 
   /**
@@ -190,10 +169,19 @@ export class Agent {
       throw new Error("Interval already started");
     }
 
-    this.interval = setInterval(
-      this.heartbeat.bind(this),
-      this.heartbeatIntervalInMS
-    );
+    this.interval = setInterval(() => {
+      const now = Date.now();
+      const diff = now - this.lastHeartbeat;
+      const shouldSendHeartbeat =
+        diff > this.sendHeartbeatEveryMS ||
+        (this.statistics.reachedMaxTimings() && !this.reportedInitialStats);
+
+      if (shouldSendHeartbeat) {
+        this.heartbeat();
+        this.lastHeartbeat = now;
+        this.reportedInitialStats = true;
+      }
+    }, this.checkIfHeartbeatIsNeededEveryMS);
 
     this.interval.unref();
   }

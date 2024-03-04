@@ -110,21 +110,12 @@ function wrapWithoutArgumentModification(
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
     return function wrap() {
-      if (agent.getInspectionStatistics().shouldStopInspectingCalls(module)) {
-        // @ts-expect-error We don't now the type of the subject
-        unwrap(subject, method.getName());
-        agent.onStoppedInspectingCalls(module, "performance");
-      }
-
       const context = getContext();
 
       if (!context) {
         agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: true,
-          detectedAttack: false,
-          duration: 0,
-          blocked: false,
         });
 
         return original.apply(
@@ -146,9 +137,8 @@ function wrapWithoutArgumentModification(
         agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: false,
-          detectedAttack: false,
-          duration: end - start,
           blocked: false,
+          durationInMs: end - start,
         });
       } catch (error: any) {
         const end = performance.now();
@@ -156,9 +146,8 @@ function wrapWithoutArgumentModification(
         agent.getInspectionStatistics().onInspectedCall({
           module: module,
           withoutContext: false,
-          detectedAttack: isAikidoGuardBlock,
-          duration: end - start,
           blocked: isAikidoGuardBlock,
+          durationInMs: end - start,
         });
 
         // Rethrow our own errors

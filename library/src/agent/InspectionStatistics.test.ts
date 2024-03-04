@@ -3,8 +3,7 @@ import { InspectionStatistics } from "./InspectionStatistics";
 
 t.test("it keeps track of amount of calls", async () => {
   const stats = new InspectionStatistics({
-    maxAverageInMS: 0.1,
-    maxSamples: 50,
+    maxTimings: 50,
   });
 
   t.same(stats.getStats(), {});
@@ -12,9 +11,8 @@ t.test("it keeps track of amount of calls", async () => {
   stats.onInspectedCall({
     module: "mongodb",
     withoutContext: false,
-    detectedAttack: false,
-    duration: 0.1,
     blocked: false,
+    durationInMs: 0.1,
   });
 
   t.same(stats.getStats(), {
@@ -23,15 +21,19 @@ t.test("it keeps track of amount of calls", async () => {
       allowed: 1,
       withoutContext: 0,
       total: 1,
+      averageInMS: 0.1,
+      percentiles: {
+        50: 0.1,
+        75: 0.1,
+        90: 0.1,
+        95: 0.1,
+      },
     },
   });
 
   stats.onInspectedCall({
     module: "mongodb",
     withoutContext: true,
-    detectedAttack: false,
-    duration: 0.1,
-    blocked: false,
   });
 
   t.same(stats.getStats(), {
@@ -40,15 +42,21 @@ t.test("it keeps track of amount of calls", async () => {
       allowed: 2,
       withoutContext: 1,
       total: 2,
+      averageInMS: 0.1,
+      percentiles: {
+        50: 0.1,
+        75: 0.1,
+        90: 0.1,
+        95: 0.1,
+      },
     },
   });
 
   stats.onInspectedCall({
     module: "mongodb",
     withoutContext: false,
-    detectedAttack: true,
-    duration: 0.1,
     blocked: true,
+    durationInMs: 0.5,
   });
 
   t.same(stats.getStats(), {
@@ -57,15 +65,21 @@ t.test("it keeps track of amount of calls", async () => {
       allowed: 2,
       withoutContext: 1,
       total: 3,
+      averageInMS: 0.3,
+      percentiles: {
+        50: 0.1,
+        75: 0.5,
+        90: 0.5,
+        95: 0.5,
+      },
     },
   });
 
   stats.onInspectedCall({
     module: "mongodb",
     withoutContext: false,
-    detectedAttack: true,
-    duration: 0.1,
     blocked: true,
+    durationInMs: 0.3,
   });
 
   t.same(stats.getStats(), {
@@ -74,55 +88,29 @@ t.test("it keeps track of amount of calls", async () => {
       allowed: 2,
       withoutContext: 1,
       total: 4,
+      averageInMS: 0.3,
+      percentiles: {
+        50: 0.3,
+        75: 0.5,
+        90: 0.5,
+        95: 0.5,
+      },
     },
   });
-});
 
-t.test("it keep track of last X calls ", async () => {
-  const stats = new InspectionStatistics({
-    maxSamples: 50,
-    maxAverageInMS: 0.1,
-  });
+  t.same(stats.reachedMaxTimings(), false);
 
-  for (const _ of Array.from({ length: 49 })) {
+  for (let i = 0; i < 50; i++) {
     stats.onInspectedCall({
       module: "mongodb",
       withoutContext: false,
-      detectedAttack: false,
-      duration: 0.2,
       blocked: false,
-    });
-    t.same(stats.shouldStopInspectingCalls("mongodb"), false);
-  }
-
-  stats.onInspectedCall({
-    module: "mongodb",
-    withoutContext: false,
-    detectedAttack: false,
-    duration: 0.2,
-    blocked: false,
-  });
-  t.same(stats.shouldStopInspectingCalls("mongodb"), true);
-
-  stats.cleanupTimings("mongodb");
-  t.same(stats.shouldStopInspectingCalls("mongodb"), false);
-});
-
-t.test("it stays under the average", async () => {
-  const stats = new InspectionStatistics({
-    maxSamples: 50,
-    maxAverageInMS: 0.1,
-  });
-
-  for (const _ of Array.from({ length: 50 })) {
-    stats.onInspectedCall({
-      module: "mongodb",
-      withoutContext: false,
-      detectedAttack: false,
-      duration: 0.05,
-      blocked: false,
+      durationInMs: 0.1,
     });
   }
 
-  t.same(stats.shouldStopInspectingCalls("mongodb"), false);
+  t.same(stats.reachedMaxTimings(), true);
+
+  // @ts-expect-error Stats is private
+  t.same(stats.stats.mongodb.timings.length, 50);
 });

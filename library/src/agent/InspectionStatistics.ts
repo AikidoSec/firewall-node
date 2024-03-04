@@ -1,92 +1,106 @@
-import { Stats } from "./api/Event";
+import { percentiles } from "../helpers/percentiles";
+
+type ModuleStats = {
+  blocked: number;
+  allowed: number;
+  withoutContext: number;
+  total: number;
+  timings: number[];
+};
+
+type ModuleStatsEnriched = {
+  averageInMS: number;
+  percentiles: Record<string, number>;
+} & Omit<ModuleStats, "timings">;
+
+type InspectCallArguments =
+  | {
+      module: string;
+      withoutContext: false;
+      blocked: boolean;
+      durationInMs: number;
+    }
+  | {
+      module: string;
+      withoutContext: true;
+    };
 
 export class InspectionStatistics {
-  private stats: Stats = {};
-  private timings: Record<string, number[]> = {};
-  private readonly maxSamples: number;
-  private readonly maxAverageInMS: number;
+  private stats: Record<string, ModuleStats> = {};
+  private readonly maxTimings: number;
 
-  constructor({
-    maxSamples,
-    maxAverageInMS,
-  }: {
-    maxSamples: number;
-    maxAverageInMS: number;
-  }) {
-    this.maxSamples = maxSamples;
-    this.maxAverageInMS = maxAverageInMS;
+  constructor({ maxTimings }: { maxTimings: number }) {
+    this.maxTimings = maxTimings;
   }
 
-  getStats() {
-    return this.stats;
+  reachedMaxTimings() {
+    return Object.values(this.stats).some(
+      (moduleStats) => moduleStats.timings.length >= this.maxTimings
+    );
   }
 
-  shouldStopInspectingCalls(module: string) {
-    if (!this.timings[module]) {
-      return false;
+  getStats(): Record<string, ModuleStatsEnriched> {
+    const stats: Record<string, ModuleStatsEnriched> = {};
+
+    for (const module in this.stats) {
+      const moduleStats = this.stats[module];
+      const timings = moduleStats.timings;
+
+      const averageInMS =
+        timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
+
+      stats[module] = {
+        total: moduleStats.total,
+        blocked: moduleStats.blocked,
+        allowed: moduleStats.allowed,
+        withoutContext: moduleStats.withoutContext,
+        averageInMS,
+        percentiles: {},
+      };
+
+      if (timings.length > 0) {
+        const [p50, p75, p90, p95] = percentiles([50, 75, 90, 99], timings);
+        stats[module].percentiles = {
+          "50": p50,
+          "75": p75,
+          "90": p90,
+          "95": p95,
+        };
+      }
     }
 
-    if (this.timings[module].length < this.maxSamples) {
-      return false;
-    }
-
-    const average =
-      this.timings[module].reduce((a, b) => a + b, 0) /
-      this.timings[module].length;
-
-    return average > this.maxAverageInMS;
+    return stats;
   }
 
-  cleanupTimings(module: string) {
-    delete this.timings[module];
-  }
+  onInspectedCall(args: InspectCallArguments) {
+    const { module } = args;
 
-  onInspectedCall({
-    module,
-    withoutContext,
-    detectedAttack,
-    duration,
-    blocked,
-  }: {
-    module: string;
-    detectedAttack: boolean;
-    withoutContext: boolean;
-    duration: number;
-    blocked: boolean;
-  }) {
     if (!this.stats[module]) {
       this.stats[module] = {
         blocked: 0,
         allowed: 0,
         withoutContext: 0,
         total: 0,
+        timings: [],
       };
     }
 
     this.stats[module].total += 1;
 
-    if (withoutContext) {
+    if (args.withoutContext) {
       this.stats[module].withoutContext += 1;
       this.stats[module].allowed += 1;
       return;
     }
 
-    if (!this.timings[module]) {
-      this.timings[module] = [];
+    this.stats[module].timings.push(args.durationInMs);
+
+    if (this.stats[module].timings.length > this.maxTimings) {
+      this.stats[module].timings.shift();
     }
 
-    if (this.timings[module].length >= this.maxSamples) {
-      this.timings[module].shift();
-    }
-
-    this.timings[module].push(duration);
-
-    if (detectedAttack) {
-      if (blocked) {
-        this.stats[module].blocked += 1;
-      } else {
-        this.stats[module].allowed += 1;
-      }
+    if (args.blocked) {
+      this.stats[module].blocked += 1;
     } else {
       this.stats[module].allowed += 1;
     }
