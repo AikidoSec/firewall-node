@@ -56,6 +56,7 @@ export type Stats = Record<
     withoutContext: number;
     total: number;
     averageInMS: number;
+    percentiles: Record<string, number>;
   }
 >;
 
