@@ -17,7 +17,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("it detects SQL injections", async () => {
+t.test("it inspects query method calls and blocks if needed", async () => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
