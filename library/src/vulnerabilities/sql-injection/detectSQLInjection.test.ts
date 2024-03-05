@@ -175,14 +175,11 @@ function isNotSqlInjection(sql: string, input: string) {
 }
 
 const files = [
-  join(__dirname, "../../../testing/sql-injection-payloads", "Auth_Bypass.txt"),
-  join(__dirname, "../../../testing/sql-injection-payloads", "postgres.txt"),
-  join(__dirname, "../../../testing/sql-injection-payloads", "mysql.txt"),
-  join(
-    __dirname,
-    "../../../testing/sql-injection-payloads",
-    "mssql_and_db2.txt"
-  ),
+  // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
+  join(__dirname, "payloads", "Auth_Bypass.txt"),
+  join(__dirname, "payloads", "postgres.txt"),
+  join(__dirname, "payloads", "mysql.txt"),
+  join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
 for (const file of files) {
