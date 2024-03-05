@@ -1,5 +1,6 @@
+import { basename, join } from "path";
 import * as t from "tap";
-import * as fs from "fs";
+import { readFileSync } from "fs";
 import * as path from "path";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import {
@@ -81,72 +82,6 @@ t.test("Test detectSQLInjection() function", async () => {
   }
   for (const test of IS_NOT_INJECTION) {
     isNotSqlInjection(test[0], test[1]);
-  }
-});
-
-// BEGIN TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
-
-const AUTH_BYPASS = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/Auth_Bypass.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
-  for (const sql of AUTH_BYPASS) {
-    isSqlInjection(sql, sql);
-  }
-});
-
-const POSTGRES_TXT = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/postgres.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with postgres.txt", async () => {
-  for (const sql of POSTGRES_TXT) {
-    isSqlInjection(sql, sql);
-  }
-});
-
-const MYSQL_TXT = fs
-  .readFileSync(
-    path.join(__dirname, "./../../../testing/sql-injection-payloads/mysql.txt"),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test(
-  "Test the detectSQLInjection() with postgres-enumeration.txt",
-  async () => {
-    for (const sql of MYSQL_TXT) {
-      isSqlInjection(sql, sql);
-    }
-  }
-);
-
-const MSSQL_AND_DB2 = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/mssql_and_db2.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
-  for (const sql of MSSQL_AND_DB2) {
-    isSqlInjection(sql, sql);
   }
 });
 
@@ -237,4 +172,28 @@ function isSqlInjection(sql: string, input: string) {
 
 function isNotSqlInjection(sql: string, input: string) {
   t.same(detectSQLInjection(sql, input), false, sql);
+}
+
+const files = [
+  join(__dirname, "../../../testing/sql-injection-payloads", "Auth_Bypass.txt"),
+  join(__dirname, "../../../testing/sql-injection-payloads", "postgres.txt"),
+  join(__dirname, "../../../testing/sql-injection-payloads", "mysql.txt"),
+  join(
+    __dirname,
+    "../../../testing/sql-injection-payloads",
+    "mssql_and_db2.txt"
+  ),
+];
+
+for (const file of files) {
+  const contents = readFileSync(file, "utf-8");
+  const lines = contents.split(/\r?\n/);
+  for (const sql of lines) {
+    t.test(
+      `It flags ${sql} from ${basename(file)} as SQL injection`,
+      async () => {
+        t.same(detectSQLInjection(sql, sql), true, sql);
+      }
+    );
+  }
 }
