@@ -41,7 +41,6 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
-  `roses are red violets are blue#`,
   // Test some special characters
   "steve@yahoo.com",
   // Test SQL Function (that should not be blocked)
@@ -156,7 +155,6 @@ t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
 t.test(
   "Test the detectSQLInjection() function to see if it detects SQL Functions",
   async () => {
-    // Keep in mind t.ok means that it IS in fact a SQL Injection
     isSqlInjection("foobar()", "foobar()");
     isSqlInjection("foobar(1234567)", "foobar(1234567)");
     isSqlInjection("foobar       ()", "foobar       ()");
@@ -170,41 +168,50 @@ t.test(
     isSqlInjection("1foobar()", "1foobar()");
     isSqlInjection("1foo_bar()", "1foo_bar()");
     isSqlInjection("1foo-bar()", "1foo-bar()");
+    isSqlInjection("#foobar()", "#foobar()");
 
     isNotSqlInjection("foobar)", "foobar)");
     isNotSqlInjection("foobar      )", "foobar      )");
-    isNotSqlInjection("#foobar()", "#foobar()");
     isNotSqlInjection("$foobar()", "$foobar()");
   }
 );
 
 t.test("Test the queryContainsUserInput() function", async () => {
-  t.ok(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"));
-  t.ok(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"));
-  t.ok(queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("));
-  t.notOk(queryContainsUserInput("Roses are red", "violet"));
+  t.same(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"), true);
+  t.same(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"), true);
+  t.same(
+    queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("),
+    true
+  );
+  t.same(queryContainsUserInput("Roses are red", "violet"), false);
 });
 
 t.test(
   "Test the userInputOccurrencesSafelyEncapsulated() function",
   async () => {
-    t.ok(
+    t.same(
       userInputOccurrencesSafelyEncapsulated(
         ` Hello Hello 'UNION'and also "UNION" `,
         "UNION"
-      )
+      ),
+      true
     );
-    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"));
-    t.ok(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"));
-    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"));
+    t.same(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"), true);
+    t.same(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"), true);
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"),
+      true
+    );
 
-    t.notOk(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION")
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"),
+      false
     );
-    t.notOk(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION")
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"),
+      false
     );
-    t.notOk(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"));
+    t.same(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"), false);
   }
 );
 
@@ -212,14 +219,22 @@ t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));
 });
 
-t.test("Test the postgres bitwise operator #", async () => {
-    isSqlInjection("10 # 12", "10 # 12");
+t.test("It flags postgres bitwise operator as SQL injection", async () => {
+  isSqlInjection("SELECT 10 # 12", "10 # 12");
+});
+
+t.test("It flags MySQL bitwise operator as SQL injection", async () => {
+  isSqlInjection("SELECT 10 ^ 12", "10 ^ 12");
+});
+
+t.test("It flags postgres type cast operator as SQL injection", async () => {
+  isSqlInjection("SELECT abc::date", "abc::date");
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.ok(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), true, sql);
 }
 
 function isNotSqlInjection(sql: string, input: string) {
-  t.notOk(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), false, sql);
 }
