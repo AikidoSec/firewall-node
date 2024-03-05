@@ -1,6 +1,7 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
-import { friendlyName, Source } from "../../agent/Source";
+import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
+import { sourceHumanName, Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { SQL_STRING_CHARS } from "./config";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
@@ -88,40 +89,29 @@ export function userInputOccurrencesSafelyEncapsulated(
 
 /**
  * This function goes over all the different input types in the context and checks
- * if it's a possible SQL Injection, if so the function messages an Agent and if
- * needed, throws an error to block any further code.
- * @param sql The SQL statement that was executed
- * @param request The request that might contain a SQL Injection
- * @param agent The agent which needs to get a report in case of detection
- * @param module The name of the module e.g. postgres, mysql, mssql
+ * if it's a possible SQL Injection, if so the function returns an InterceptorResult
  */
-export function checkContextForSqlInjection(
-  sql: string,
-  request: Context,
-  agent: Agent,
-  module: string
-) {
+export function checkContextForSqlInjection({
+  sql,
+  operation,
+  context,
+}: {
+  sql: string;
+  operation: string;
+  context: Context;
+}): InterceptorResult {
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-    if (request[source]) {
-      const userInput = extractStringsFromUserInput(request[source]);
+    if (context[source]) {
+      const userInput = extractStringsFromUserInput(context[source]);
       for (const str of userInput) {
         if (detectSQLInjection(sql, str)) {
-          agent.onDetectedAttack({
-            module,
+          return {
+            operation: operation,
             kind: "sql_injection",
-            blocked: agent.shouldBlock(),
-            source,
-            request: request,
-            stack: new Error().stack || "",
-            path: "UNKOWN",
+            source: source,
+            pathToPayload: "UNKOWN",
             metadata: {},
-          });
-
-          if (agent.shouldBlock()) {
-            throw new Error(
-              `Aikido guard has blocked a SQL injection: ${str} originating from ${friendlyName(source)}`
-            );
-          }
+          };
         }
       }
     }

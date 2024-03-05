@@ -10,15 +10,18 @@ t.test("it keeps track of amount of calls", async () => {
 
   stats.onInspectedCall({
     module: "mongodb",
-    withoutContext: false,
     blocked: false,
     durationInMs: 0.1,
+    attackDetected: false,
   });
 
   t.same(stats.getStats(), {
     mongodb: {
-      blocked: 0,
-      allowed: 1,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      interceptorThrewError: 0,
       withoutContext: 0,
       total: 1,
       averageInMS: 0.1,
@@ -27,19 +30,20 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
 
-  stats.onInspectedCall({
-    module: "mongodb",
-    withoutContext: true,
-  });
+  stats.inspectedCallWithoutContext("mongodb");
 
   t.same(stats.getStats(), {
     mongodb: {
-      blocked: 0,
-      allowed: 2,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      interceptorThrewError: 0,
       withoutContext: 1,
       total: 2,
       averageInMS: 0.1,
@@ -48,52 +52,83 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
 
-  stats.onInspectedCall({
-    module: "mongodb",
-    withoutContext: false,
-    blocked: true,
-    durationInMs: 0.5,
-  });
+  stats.interceptorThrewError("mongodb");
 
   t.same(stats.getStats(), {
     mongodb: {
-      blocked: 1,
-      allowed: 2,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      interceptorThrewError: 1,
       withoutContext: 1,
       total: 3,
-      averageInMS: 0.3,
+      averageInMS: 0.1,
       percentiles: {
         50: 0.1,
-        75: 0.5,
-        90: 0.5,
-        95: 0.5,
+        75: 0.1,
+        90: 0.1,
+        95: 0.1,
+        99: 0.1,
       },
     },
   });
 
   stats.onInspectedCall({
     module: "mongodb",
-    withoutContext: false,
-    blocked: true,
-    durationInMs: 0.3,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: true,
   });
 
   t.same(stats.getStats(), {
     mongodb: {
-      blocked: 2,
-      allowed: 2,
+      attacksDetected: {
+        total: 1,
+        blocked: 0,
+      },
+      interceptorThrewError: 1,
       withoutContext: 1,
       total: 4,
-      averageInMS: 0.3,
+      averageInMS: 0.1,
       percentiles: {
-        50: 0.3,
-        75: 0.5,
-        90: 0.5,
-        95: 0.5,
+        50: 0.1,
+        75: 0.1,
+        90: 0.1,
+        95: 0.1,
+        99: 0.1,
+      },
+    },
+  });
+
+  stats.onInspectedCall({
+    module: "mongodb",
+    blocked: true,
+    durationInMs: 0.3,
+    attackDetected: true,
+  });
+
+  t.same(stats.getStats(), {
+    mongodb: {
+      attacksDetected: {
+        total: 2,
+        blocked: 1,
+      },
+      interceptorThrewError: 1,
+      withoutContext: 1,
+      total: 5,
+      averageInMS: 0.16666666666666666,
+      percentiles: {
+        50: 0.1,
+        75: 0.3,
+        90: 0.3,
+        95: 0.3,
+        99: 0.3,
       },
     },
   });
@@ -103,9 +138,9 @@ t.test("it keeps track of amount of calls", async () => {
   for (let i = 0; i < 50; i++) {
     stats.onInspectedCall({
       module: "mongodb",
-      withoutContext: false,
       blocked: false,
       durationInMs: 0.1,
+      attackDetected: false,
     });
   }
 
