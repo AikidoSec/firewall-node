@@ -3,7 +3,6 @@ import connectMongo from "./lib/mongoose";
 import Guestbook from "./lib/GuestBook";
 
 export default async function Page() {
-  
   return (
     <main className="p-16">
       <h1>Mongoose</h1>
