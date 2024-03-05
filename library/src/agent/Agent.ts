@@ -207,6 +207,7 @@ export class Agent {
    * @returns version number
    */
   private getAgentVersion(): string {
+    return '1.0.0'
     const json = require(resolve(__dirname, "../../package.json"));
 
     if (!json.version) {

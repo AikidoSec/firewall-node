@@ -1,5 +1,5 @@
 import {Form} from "./Form";
-import connectMongo from "./lib/mongoose";
+import connectMongo from "./lib/mongoose.js";
 import Guestbook from "./lib/GuestBook";
 
 export default async function Page() {
