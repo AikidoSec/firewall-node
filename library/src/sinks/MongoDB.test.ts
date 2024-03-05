@@ -104,7 +104,7 @@ t.test("it detects NoSQL injections", async (t) => {
     });
 
     if (bulkError instanceof Error) {
-      t.equal(
+      t.same(
         bulkError.message,
         "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body (.myTitle)"
       );
@@ -117,7 +117,7 @@ t.test("it detects NoSQL injections", async (t) => {
     });
 
     if (error instanceof Error) {
-      t.equal(
+      t.same(
         error.message,
         "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.myTitle)"
       );

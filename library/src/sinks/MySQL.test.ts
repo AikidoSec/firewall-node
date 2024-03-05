@@ -62,16 +62,16 @@ t.test("it detects SQL injections", async () => {
     await query("TRUNCATE cats", connection);
     t.same(await query("SELECT petname FROM `cats`;", connection), []);
 
-    const bulkError = await t.rejects(async () => {
+    const error = await t.rejects(async () => {
       await runWithContext(context, () => {
         return connection.query("-- should be blocked");
       });
     });
 
-    if (bulkError instanceof Error) {
-      t.equal(
-        bulkError.message,
-        "Aikido guard has blocked a SQL injection: -- should be blocked originating from body"
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Aikido guard has blocked a SQL injection: MySQL.query(...) originating from body (UNKOWN)"
       );
     }
 

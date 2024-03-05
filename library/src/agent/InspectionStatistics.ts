@@ -1,29 +1,20 @@
 import { percentiles } from "../helpers/percentiles";
 
 type ModuleStats = {
-  blocked: number;
-  allowed: number;
   withoutContext: number;
   total: number;
   timings: number[];
+  interceptorThrewError: number;
+  attacksDetected: {
+    total: number;
+    blocked: number;
+  };
 };
 
 type ModuleStatsEnriched = {
   averageInMS: number;
   percentiles: Record<string, number>;
 } & Omit<ModuleStats, "timings">;
-
-type InspectCallArguments =
-  | {
-      module: string;
-      withoutContext: false;
-      blocked: boolean;
-      durationInMs: number;
-    }
-  | {
-      module: string;
-      withoutContext: true;
-    };
 
 export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
@@ -51,8 +42,11 @@ export class InspectionStatistics {
 
       stats[module] = {
         total: moduleStats.total,
-        blocked: moduleStats.blocked,
-        allowed: moduleStats.allowed,
+        attacksDetected: {
+          total: moduleStats.attacksDetected.total,
+          blocked: moduleStats.attacksDetected.blocked,
+        },
+        interceptorThrewError: moduleStats.interceptorThrewError,
         withoutContext: moduleStats.withoutContext,
         averageInMS,
         percentiles: {},
@@ -72,37 +66,58 @@ export class InspectionStatistics {
     return stats;
   }
 
-  onInspectedCall(args: InspectCallArguments) {
-    const { module } = args;
-
+  private ensureModuleStats(module: string) {
     if (!this.stats[module]) {
       this.stats[module] = {
-        blocked: 0,
-        allowed: 0,
         withoutContext: 0,
         total: 0,
         timings: [],
+        interceptorThrewError: 0,
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
       };
     }
+  }
+
+  inspectedCallWithoutContext(module: string) {
+    this.ensureModuleStats(module);
+    this.stats[module].total += 1;
+    this.stats[module].withoutContext += 1;
+  }
+
+  interceptorThrewError(module: string) {
+    this.ensureModuleStats(module);
+    this.stats[module].total += 1;
+    this.stats[module].interceptorThrewError += 1;
+  }
+
+  onInspectedCall({
+    module,
+    blocked,
+    attackDetected,
+    durationInMs,
+  }: {
+    module: string;
+    durationInMs: number;
+    attackDetected: boolean;
+    blocked: boolean;
+  }) {
+    this.ensureModuleStats(module);
 
     this.stats[module].total += 1;
-
-    if (args.withoutContext) {
-      this.stats[module].withoutContext += 1;
-      this.stats[module].allowed += 1;
-      return;
-    }
-
-    this.stats[module].timings.push(args.durationInMs);
+    this.stats[module].timings.push(durationInMs);
 
     if (this.stats[module].timings.length > this.maxTimings) {
       this.stats[module].timings.shift();
     }
 
-    if (args.blocked) {
-      this.stats[module].blocked += 1;
-    } else {
-      this.stats[module].allowed += 1;
+    if (attackDetected) {
+      this.stats[module].attacksDetected.total += 1;
+      if (blocked) {
+        this.stats[module].attacksDetected.blocked += 1;
+      }
     }
   }
 }

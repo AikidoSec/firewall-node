@@ -46,15 +46,15 @@ t.test("it detects SQL injections", async () => {
     await client.query("TRUNCATE cats");
     t.same((await client.query("SELECT petname FROM cats;")).rows, []);
 
-    const bulkError = await t.rejects(async () => {
+    const error = await t.rejects(async () => {
       await runWithContext(context, () => {
         return client.query("-- should be blocked");
       });
     });
-    if (bulkError instanceof Error) {
-      t.equal(
-        bulkError.message,
-        "Aikido guard has blocked a SQL injection: -- should be blocked originating from body"
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Aikido guard has blocked a SQL injection: pg.query(...) originating from body (UNKOWN)"
       );
     }
 
@@ -64,7 +64,7 @@ t.test("it detects SQL injections", async () => {
       });
     });
     if (undefinedQueryError instanceof Error) {
-      t.equal(
+      t.same(
         undefinedQueryError.message,
         "Client was passed a null or undefined query"
       );

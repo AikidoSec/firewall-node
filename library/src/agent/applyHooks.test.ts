@@ -102,12 +102,6 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   connection.modifyArguments("execute", () => {
     throw new Error("THIS SHOULD BE CATCHED");
   });
-  connection.inspect("ping", () => {
-    throw new Error("Aikido guard has blocked a SQL injection");
-  });
-  connection.modifyArguments("rollback", () => {
-    throw new Error("Aikido guard has blocked a SQL injection");
-  });
 
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
@@ -141,20 +135,6 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
     'Internal error in module "mysql2" in method "query"',
     'Internal error in module "mysql2" in method "execute"',
   ]);
-
-  const error = await t.rejects(() =>
-    runWithContext(context, () => actualConnection.ping())
-  );
-  if (error instanceof Error) {
-    t.equal(error.message, "Aikido guard has blocked a SQL injection");
-  }
-
-  const error2 = await t.rejects(() =>
-    runWithContext(context, () => actualConnection.rollback())
-  );
-  if (error2 instanceof Error) {
-    t.equal(error2.message, "Aikido guard has blocked a SQL injection");
-  }
 
   await actualConnection.end();
 });

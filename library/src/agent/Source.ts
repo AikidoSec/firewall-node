@@ -5,7 +5,7 @@ export type Source = "query" | "body" | "headers" | "cookies";
  * @param source A source type (either "query", "body", "headers" or "cookies")
  * @returns A friendly name for each of these types
  */
-export function friendlyName(source: Source): string {
+export function sourceHumanName(source: Source): string {
   switch (source) {
     case "query":
       return "query parameters";

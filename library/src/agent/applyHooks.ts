@@ -1,16 +1,21 @@
 /* eslint-disable max-lines-per-function */
 import { join } from "node:path";
-import { unwrap, wrap } from "shimmer";
+import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
+import { attackKindHumanName } from "./Attack";
 import { getContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
-import { MethodInterceptor } from "./hooks/MethodInterceptor";
+import {
+  InterceptorResult,
+  MethodInterceptor,
+} from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
 import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
+import { sourceHumanName } from "./Source";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -94,10 +99,6 @@ function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
   );
 }
 
-function isAikidoGuardBlockError(error: Error) {
-  return error.message.startsWith("Aikido guard");
-}
-
 /**
  * Wraps a method call with an interceptor that doesn't modify the arguments of the method call.
  */
@@ -113,10 +114,7 @@ function wrapWithoutArgumentModification(
       const context = getContext();
 
       if (!context) {
-        agent.getInspectionStatistics().onInspectedCall({
-          module: module,
-          withoutContext: true,
-        });
+        agent.getInspectionStatistics().inspectedCallWithoutContext(module);
 
         return original.apply(
           // @ts-expect-error We don't now the type of this
@@ -129,38 +127,45 @@ function wrapWithoutArgumentModification(
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
       const start = performance.now();
+      let result: InterceptorResult = undefined;
 
       try {
         // @ts-expect-error We don't now the type of this
-        method.getInterceptor()(args, this, agent, context);
-        const end = performance.now();
-        agent.getInspectionStatistics().onInspectedCall({
-          module: module,
-          withoutContext: false,
-          blocked: false,
-          durationInMs: end - start,
-        });
+        result = method.getInterceptor()(args, this, agent, context);
       } catch (error: any) {
-        const end = performance.now();
-        const isAikidoGuardBlock = isAikidoGuardBlockError(error);
-        agent.getInspectionStatistics().onInspectedCall({
-          module: module,
-          withoutContext: false,
-          blocked: isAikidoGuardBlock,
-          durationInMs: end - start,
-        });
-
-        // Rethrow our own errors
-        // Otherwise we cannot block injections
-        if (isAikidoGuardBlock) {
-          throw error;
-        }
-
+        agent.getInspectionStatistics().interceptorThrewError(module);
         agent.onErrorThrownByInterceptor({
           error: error,
           method: method.getName(),
           module: module,
         });
+      }
+
+      const end = performance.now();
+      agent.getInspectionStatistics().onInspectedCall({
+        module: module,
+        attackDetected: !!result,
+        blocked: agent.shouldBlock(),
+        durationInMs: end - start,
+      });
+
+      if (result) {
+        agent.onDetectedAttack({
+          module: module,
+          kind: result.kind,
+          source: result.source,
+          blocked: agent.shouldBlock(),
+          stack: new Error().stack!,
+          path: result.pathToPayload,
+          metadata: result.metadata,
+          request: context,
+        });
+
+        if (agent.shouldBlock()) {
+          throw new Error(
+            `Aikido guard has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)} (${result.pathToPayload})`
+          );
+        }
       }
 
       return original.apply(
@@ -193,12 +198,6 @@ function wrapWithArgumentModification(
         // @ts-expect-error We don't now the type of this
         updatedArgs = method.getInterceptor()(args, this, agent);
       } catch (error: any) {
-        // Rethrow our own errors
-        // Otherwise we cannot block injections
-        if (isAikidoGuardBlockError(error)) {
-          throw error;
-        }
-
         agent.onErrorThrownByInterceptor({
           error: error,
           method: method.getName(),
