@@ -100,7 +100,7 @@ function wrapWithoutArgumentModification(
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
-    return function wrap() {
+    return function wrap(this: any) {
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
 
@@ -143,7 +143,7 @@ function wrapWithArgumentModification(
 ) {
   // @ts-expect-error We don't now the type of the subject
   wrap(subject, method.getName(), function wrap(original: Function) {
-    return function wrap() {
+    return function wrap(this: any) {
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
       let updatedArgs = args;
