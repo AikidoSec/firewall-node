@@ -8,7 +8,6 @@ import { applyHooks } from "../agent/applyHooks";
 import { Hooks } from "../agent/hooks/Hooks";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
-import type { Client } from "pg";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -22,7 +21,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("We can hijack Postgres class", async () => {
+t.test("it inspects query method calls and blocks if needed", async () => {
   const hooks = new Hooks();
   new Postgres().wrap(hooks);
   applyHooks(hooks);

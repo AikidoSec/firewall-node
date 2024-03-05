@@ -23,7 +23,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("we can highjack the MongoDB library", async (t) => {
+t.test("it inspects method calls and blocks if needed", async (t) => {
   const hooks = new Hooks();
   new MongoDB().wrap(hooks);
   applyHooks(hooks);
