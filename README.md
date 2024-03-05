@@ -83,11 +83,11 @@ See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido
 
 We run a benchmark on every commit to make sure that the guard has a minimal impact on your application's performance.
 
-The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) 100 times for warmup and then 1000 times to measure the average time:
+The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the guard:
 
-| Without guard | With guard | Difference in ms | Difference in % |
-|---------------|------------|------------------|-----------------|
-| 0.2355ms      | 0.2575ms   | +0.022ms         | +8.54%          |
+| Without guard | With guard | Difference in ms |
+|---------------|------------|------------------|
+| 0.214ms       | 0.222ms    | +0.008ms         |
 
 (Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
 

@@ -1,4 +1,5 @@
 const { exec } = require("child_process");
+const percentile = require("percentile");
 
 async function runScript(scriptPath) {
   return new Promise((resolve, reject) => {
@@ -14,41 +15,27 @@ async function runScript(scriptPath) {
   });
 }
 
-async function main(times = 10, maxDiffInPercentage = 10) {
-  const results = [];
-  for (let i = 0; i < times; i++) {
-    const withGuard = await runScript("withGuard.js");
-    const { averageTimeInMS: withGuardTimeInMS } = JSON.parse(withGuard);
-    const withoutGuard = await runScript("withoutGuard.js");
-    const { averageTimeInMS: withoutGuardTimeInMS } = JSON.parse(withoutGuard);
-    results.push({
-      withGuardTimeInMS,
-      withoutGuardTimeInMS,
-      differenceInPercentage: Math.abs(
-        ((withGuardTimeInMS - withoutGuardTimeInMS) / withoutGuardTimeInMS) *
-          100
-      ),
-    });
-  }
+async function main(maxDiffInMS = 0.1) {
+  const withGuard = await runScript("withGuard.js");
+  const withGuardTimings = JSON.parse(withGuard);
+  const withoutGuard = await runScript("withoutGuard.js");
+  const withoutGuardTimings = JSON.parse(withoutGuard);
+  const meanWithGuard = percentile(50, withGuardTimings);
+  const meanWithoutGuard = percentile(50, withoutGuardTimings);
+  const differenceInMS = Math.abs(meanWithGuard - meanWithoutGuard);
 
-  const averageDifferenceInPercentage =
-    results
-      .map((r) => r.differenceInPercentage)
-      .reduce((acc, diff) => acc + diff, 0) / results.length;
-
-  if (averageDifferenceInPercentage > maxDiffInPercentage) {
+  if (differenceInMS > maxDiffInMS) {
     console.error(
-      `The difference between the two benchmarks is too high: ${averageDifferenceInPercentage.toFixed(
+      `The difference between the two benchmarks is too high: ${differenceInMS.toFixed(
         3
-      )}%`
+      )}`
     );
-    console.error(results);
     process.exit(1);
   } else {
     console.log(
-      `The difference between the two benchmarks is acceptable: ${averageDifferenceInPercentage.toFixed(
+      `The difference between the two benchmarks is acceptable: ${differenceInMS.toFixed(
         3
-      )}%`
+      )}`
     );
   }
 }
