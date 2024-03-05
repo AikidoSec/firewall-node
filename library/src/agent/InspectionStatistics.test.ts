@@ -30,6 +30,7 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
@@ -51,6 +52,7 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
@@ -72,6 +74,7 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
@@ -98,6 +101,7 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.1,
         90: 0.1,
         95: 0.1,
+        99: 0.1,
       },
     },
   });
@@ -124,6 +128,7 @@ t.test("it keeps track of amount of calls", async () => {
         75: 0.3,
         90: 0.3,
         95: 0.3,
+        99: 0.3,
       },
     },
   });

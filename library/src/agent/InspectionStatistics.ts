@@ -53,12 +53,16 @@ export class InspectionStatistics {
       };
 
       if (timings.length > 0) {
-        const [p50, p75, p90, p95] = percentiles([50, 75, 90, 99], timings);
+        const [p50, p75, p90, p95, p99] = percentiles(
+          [50, 75, 90, 95, 99],
+          timings
+        );
         stats[module].percentiles = {
           "50": p50,
           "75": p75,
           "90": p90,
           "95": p95,
+          "99": p99,
         };
       }
     }
