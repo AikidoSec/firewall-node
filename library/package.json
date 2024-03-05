@@ -24,6 +24,7 @@
     "@types/node": "^20.11.5",
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
+    "@types/react": "^18.2.63",
     "@types/shimmer": "^1.0.5",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
@@ -49,6 +50,7 @@
     "lint-tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/mongodb": "^4.0.7",
     "next": "^14.1.0",
     "require-in-the-middle": "^7.2.0",
     "shimmer": "^1.2.1"

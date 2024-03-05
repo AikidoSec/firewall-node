@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { runWithContext } from "../agent/Context";
 
 export function nextMiddleware(req: NextRequest) {
-  console.log(req.headers);
-  console.log(req.nextUrl);
-  console.log(req.cookies);
+  // console.log(req.headers);
+  // console.log(req.nextUrl);
+  // console.log(req.cookies);
 
   runWithContext(
     {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <Script
+        id="tailwindcss"
+        src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"
+        strategy="afterInteractive"  
+      />
+      <body className={`${inter.className} dark bg-black text-white font-sans antialiased`}>{children}</body>
     </html>
   );
 }

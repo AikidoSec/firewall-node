@@ -8,6 +8,7 @@ import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { MongoDB } from "../sinks/MongoDB";
 import { Postgres } from "../sinks/Postgres";
+// @ts-ignore
 import * as shimmer from "shimmer";
 import { Logger, LoggerConsole, LoggerNoop } from "./Logger";
 import { Wrapper } from "./Wrapper";
@@ -96,6 +97,7 @@ function getAgent({
  * This function **disables** logging from the "shimer" package - this avoid logs whenever a function doesn't exist
  */
 function disableShimmerLogging() {
+  // @ts-ignore
   shimmer({ logger: () => {} });
 }
 

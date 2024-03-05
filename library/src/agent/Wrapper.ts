@@ -22,7 +22,7 @@ export class Wrapper {
     const that = this;
     for (const operation in this.wrapSelectors) {
       const wrapSelector = this.wrapSelectors[operation];
-      massWrap(
+      massWrap<any, any>(
         wrapSelector.exportsSelector(exports),
         [operation],
         function wrapFunction(original) {
