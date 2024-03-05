@@ -105,7 +105,6 @@ function wrapWithoutArgumentModification(
       const args = Array.from(arguments);
 
       try {
-        // @ts-expect-error We don't now the type of this
         method.getInterceptor()(args, this);
       } catch (error: any) {
         // Rethrow our own errors
@@ -126,7 +125,6 @@ function wrapWithoutArgumentModification(
       }
 
       return original.apply(
-        // @ts-expect-error We don't now the type of this
         this,
         // eslint-disable-next-line prefer-rest-params
         arguments
@@ -151,7 +149,6 @@ function wrapWithArgumentModification(
       let updatedArgs = args;
 
       try {
-        // @ts-expect-error We don't now the type of this
         updatedArgs = method.getInterceptor()(args, this);
       } catch (error: any) {
         // Rethrow our own errors
@@ -172,7 +169,6 @@ function wrapWithArgumentModification(
       }
 
       return original.apply(
-        // @ts-expect-error We don't now the type of this
         this,
         updatedArgs
       );

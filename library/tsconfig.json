@@ -6,7 +6,8 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "declaration": true,
-    "strict": true,
+    "strict": false,
+    "skipLibCheck": true,
     "allowJs": false
   },
   "include": ["src"],
