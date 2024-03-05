@@ -1,4 +1,4 @@
-import { hostname, platform, release } from "node:os";
+import { hostname, platform, release } from "os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
 import { Agent } from "./Agent";

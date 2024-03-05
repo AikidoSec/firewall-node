@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import { runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
-import { METHODS } from "node:http";
+import { METHODS } from "http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
