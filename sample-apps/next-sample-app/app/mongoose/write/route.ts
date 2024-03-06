@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         async () => {
             const { message } = body
             const msg = await Guestbook.find({ message }, {}, { sort: { _id: -1 } });
-            await Guestbook.create({ message });
+            // await Guestbook.create({ message });
         }
     );
     return NextResponse.json({ message: "Message added" });
