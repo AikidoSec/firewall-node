@@ -13,68 +13,77 @@ export class SQLDialectMySQL implements SQLDialect {
       const char = sql[i];
       const nextChar = sql[i + 1];
 
-      // Handle escaping characters
-      if (char === "\\" && !inSingleLineComment && !inMultiLineComment) {
+      // Skip processing for escaped characters, ensuring we're not in a comment
+      if (
+        char === "\\" &&
+        !inSingleLineComment &&
+        !inMultiLineComment &&
+        literal
+      ) {
         i++;
         continue;
       }
 
-      // Check for single-line comment start
+      // Start or end of literal processing
       if (
-        (char === "#" || (char === "-" && nextChar === "-")) &&
+        escapeQuotes.includes(char) &&
+        !inSingleLineComment &&
         !inMultiLineComment
       ) {
-        inSingleLineComment = true;
-        continue;
-      }
-
-      // Check for multi-line comment start
-      if (char === "/" && nextChar === "*" && !inSingleLineComment) {
-        inMultiLineComment = true;
-        i++; // Skip the '*' to avoid confusion with closing tags
-        continue;
-      }
-
-      // Handle end of single-line comment
-      if (inSingleLineComment && char === "\n") {
-        inSingleLineComment = false;
-        continue;
-      }
-
-      // Handle end of multi-line comment
-      if (inMultiLineComment && char === "*" && nextChar === "/") {
-        inMultiLineComment = false;
-        i++; // Move past the '/'
-        continue;
-      }
-
-      // Skip literal processing if we're inside a comment
-      if (inSingleLineComment || inMultiLineComment) {
-        continue;
-      }
-
-      // Literal processing
-      for (const quote of escapeQuotes) {
-        if (char === quote) {
-          if (literal && literal.quote === quote) {
-            // Double quote escape check
-            if (sql[i + 1] === quote) {
-              i++;
-              continue;
-            }
-
-            ranges.push([literal.start, i, sql.slice(literal.start + 1, i)]);
-            literal = undefined;
+        if (literal && literal.quote === char) {
+          // Check for escape sequence of the quote itself
+          if (sql[i + 1] === char) {
+            i++; // Skip the next quote
             continue;
           }
 
-          literal = { start: i, quote: char };
+          ranges.push([literal.start, i, sql.slice(literal.start + 1, i)]);
+          literal = undefined; // Exit literal
+          continue;
+        }
+
+        if (!literal) {
+          literal = { start: i, quote: char }; // Start a new literal
+          continue;
+        }
+      }
+
+      // Only check for comments if not inside a literal
+      if (!literal) {
+        // Single-line comment start
+        if (
+          (char === "#" || (char === "-" && nextChar === "-")) &&
+          !inMultiLineComment
+        ) {
+          inSingleLineComment = true;
+          continue;
+        }
+
+        // Multi-line comment start
+        if (char === "/" && nextChar === "*" && !inSingleLineComment) {
+          inMultiLineComment = true;
+          i++; // Skip the '*' to avoid confusion with closing tags
+          continue;
+        }
+
+        // End of single-line comment
+        if (inSingleLineComment && char === "\n") {
+          inSingleLineComment = false;
+          continue;
+        }
+
+        // End of multi-line comment
+        if (inMultiLineComment && char === "*" && nextChar === "/") {
+          inMultiLineComment = false;
+          i++; // Move past the '/'
+          continue;
         }
       }
     }
 
-    // If we end up with an unclosed literal, it's an error in the SQL syntax
+    // Check for unclosed literal as an error in SQL syntax
     if (literal) {
+      // Unclosed literal, return an empty range or handle as an error
       return [];
     }
 
