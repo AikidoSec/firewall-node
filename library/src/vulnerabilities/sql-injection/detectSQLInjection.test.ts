@@ -1,13 +1,13 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
-import * as path from "path";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import {
   detectSQLInjection,
   userInputOccurrencesSafelyEncapsulated,
   queryContainsUserInput,
 } from "./detectSQLInjection";
+import { SQLDialectMySQL } from "./dialect/SQLDialectMySQL";
 
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
@@ -127,26 +127,60 @@ t.test(
     t.same(
       userInputOccurrencesSafelyEncapsulated(
         ` Hello Hello 'UNION'and also "UNION" `,
-        "UNION"
+        "UNION",
+        new SQLDialectMySQL()
       ),
       true
     );
-    t.same(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"), true);
-    t.same(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"), true);
     t.same(
-      userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"),
+      userInputOccurrencesSafelyEncapsulated(
+        `"UNION"`,
+        "UNION",
+        new SQLDialectMySQL()
+      ),
+      true
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        ` 'UNION' `,
+        "UNION",
+        new SQLDialectMySQL()
+      ),
+      true
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `"UNION"'UNION'`,
+        "UNION",
+        new SQLDialectMySQL()
+      ),
       true
     );
 
     t.same(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"),
+      userInputOccurrencesSafelyEncapsulated(
+        `'UNION'"UNION"UNION`,
+        "UNION",
+        new SQLDialectMySQL()
+      ),
       false
     );
     t.same(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"),
+      userInputOccurrencesSafelyEncapsulated(
+        `'UNION'UNION"UNION"`,
+        "UNION",
+        new SQLDialectMySQL()
+      ),
       false
     );
-    t.same(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"), false);
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        "UNION",
+        "UNION",
+        new SQLDialectMySQL()
+      ),
+      false
+    );
   }
 );
 
@@ -167,11 +201,11 @@ t.test("It flags postgres type cast operator as SQL injection", async () => {
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input), true, sql);
+  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), true, sql);
 }
 
 function isNotSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input), false, sql);
+  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), false, sql);
 }
 
 const files = [
@@ -186,10 +220,15 @@ for (const file of files) {
   const contents = readFileSync(file, "utf-8");
   const lines = contents.split(/\r?\n/);
   for (const sql of lines) {
+    const source = `${sql} (${basename(file)})`;
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
-        t.same(detectSQLInjection(sql, sql), true, sql);
+        t.same(
+          detectSQLInjection(sql, sql, new SQLDialectMySQL()),
+          true,
+          source
+        );
       }
     );
   }

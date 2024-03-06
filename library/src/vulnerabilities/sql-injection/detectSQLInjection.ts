@@ -1,28 +1,29 @@
-import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
-import { sourceHumanName, Source } from "../../agent/Source";
+import { Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
-import { SQL_STRING_CHARS } from "./config";
+import { findAllOccurrences } from "../../helpers/findAllOccurrences";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
+import { SQLDialect } from "./dialect/SQLDialect";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
  * Step 2 : queryContainsUserInput
  * 2. Executes queryContainsUserInput() - This checks whether the input is in the sql
- * @param query The SQL Statement that's going to be executed
- * @param userInput The user input that might be dangerous
- * @returns True if SQL Injection is detected
  */
-export function detectSQLInjection(query: string, userInput: string) {
+export function detectSQLInjection(
+  sql: string,
+  userInput: string,
+  dialect: SQLDialect
+) {
   if (userInput.length <= 1) {
     // We ignore single characters since they are only able to crash the SQL Server,
     // And don't pose a big threat.
     return false;
   }
 
-  if (!queryContainsUserInput(query, userInput)) {
+  if (!queryContainsUserInput(sql, userInput)) {
     // If the user input is not part of the query, return false (No need to check)
     return false;
   }
@@ -33,7 +34,7 @@ export function detectSQLInjection(query: string, userInput: string) {
     return true;
   }
 
-  if (userInputOccurrencesSafelyEncapsulated(query, userInput)) {
+  if (userInputOccurrencesSafelyEncapsulated(sql, userInput, dialect)) {
     // If the user input is safely encapsulated as a string in the query
     // We can ignore it and return false (i.e. not an injection)
     return false;
@@ -60,31 +61,23 @@ export function queryContainsUserInput(query: string, userInput: string) {
 /**
  * This function is the third step to determine if an SQL Injection is happening,
  * This checks if **all** occurrences of our input are encapsulated as strings.
- * @param query The SQL Statement
- * @param userInput The user input you want to check is encapsulated
- * @returns True if the input is always encapsulated inside a string
  */
 export function userInputOccurrencesSafelyEncapsulated(
-  query: string,
-  userInput: string
+  sql: string,
+  userInput: string,
+  dialect: SQLDialect
 ) {
-  const queryWithoutUserInput = query.split(userInput);
-  for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
-    // Get the last character of this segment
-    const lastChar = queryWithoutUserInput[i].slice(-1);
-    // Get the first character of the next segment
-    const firstCharNext = queryWithoutUserInput[i + 1].slice(0, 1);
+  const escaped = dialect.getEscapedRanges(sql);
 
-    if (!SQL_STRING_CHARS.includes(lastChar)) {
-      return false; // If the character is not one of these, it's not a string.
+  return findAllOccurrences(sql, userInput).every(([start, end]) => {
+    if (
+      escaped.some(
+        ([startEscape, endEscape]) => startEscape <= start && end <= endEscape
+      )
+    ) {
+      return true;
     }
-
-    if (lastChar != firstCharNext) {
-      return false; // String is not encapsulated by the same type of quotes.
-    }
-  }
-
-  return true;
+  });
 }
 
 /**
@@ -95,16 +88,18 @@ export function checkContextForSqlInjection({
   sql,
   operation,
   context,
+  dialect,
 }: {
   sql: string;
   operation: string;
   context: Context;
+  dialect: SQLDialect;
 }): InterceptorResult {
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const str of userInput) {
-        if (detectSQLInjection(sql, str)) {
+        if (detectSQLInjection(sql, str, dialect)) {
           return {
             operation: operation,
             kind: "sql_injection",

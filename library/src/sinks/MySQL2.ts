@@ -4,8 +4,11 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
+import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialect/SQLDialectMySQL";
 
 export class MySQL2 implements Wrapper {
+  private readonly dialect = new SQLDialectMySQL();
+
   private inspectQuery(
     operation: string,
     args: unknown[],
@@ -18,6 +21,7 @@ export class MySQL2 implements Wrapper {
         operation: operation,
         sql: sql,
         context: context,
+        dialect: this.dialect,
       });
     }
   }

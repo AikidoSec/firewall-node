@@ -1,3 +1,5 @@
+// https://github.com/mysql/mysql-server/blob/trunk/sql/lex.h
+
 export const SQL_KEYWORDS = [
   "INSERT",
   "SELECT",
