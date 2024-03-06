@@ -5,10 +5,10 @@ import { runWithContext } from '@aikidosec/guard'
 
 export async function POST(req: NextRequest) {
     await connectMongo();
-    const { message } = await req.json();
+    const body = await req.json();
     await runWithContext(
         {
-            body: { message },
+            body,
             url: req.url,
             method: req.method,
             query: undefined,
@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
             }, {}),
         },
         async () => {
+            const { message } = body
+            const msg = await Guestbook.find({ message }, {}, { sort: { _id: -1 } });
             await Guestbook.create({ message });
         }
     );

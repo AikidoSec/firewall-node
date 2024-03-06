@@ -11,7 +11,7 @@ export const Form = () => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message: { $gt: "" } }),
         });
         await res.json();
         window.location.reload();
