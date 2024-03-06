@@ -14,23 +14,43 @@ export class SQLDialectMySQL implements SQLDialect {
       const char = sql[i];
       const nextChar = sql[i + 1];
 
-      // Skip processing for escaped characters, ensuring we're not in a comment
-      if (
-        char === "\\" &&
-        !inSingleLineComment &&
-        !inMultiLineComment &&
-        literal
-      ) {
-        i++;
+      // Check if we're currently in a single line comment
+      if (!literal && inSingleLineComment) {
+        if (char === "\n") {
+          inSingleLineComment = false;
+        }
         continue;
       }
 
-      // Start or end of literal processing
-      if (
-        escapeQuotes.includes(char) &&
-        !inSingleLineComment &&
-        !inMultiLineComment
-      ) {
+      // Check if we're currently in a multi line comment
+      if (!literal && inMultiLineComment) {
+        if (char === "*" && nextChar === "/") {
+          inMultiLineComment = false;
+          i++; // Move past the '/'
+        }
+        continue;
+      }
+
+      // Check for the start of single line comments
+      if (char === "#" || (char === "-" && nextChar === "-")) {
+        inSingleLineComment = true;
+        continue;
+      }
+
+      // Check for the start of multi line comments
+      if (char === "/" && nextChar === "*") {
+        inMultiLineComment = true;
+        i++; // Skip the '*' to avoid confusion with closing tags
+        continue;
+      }
+
+      // Process literals and escaped characters
+      if (char === "\\" && literal) {
+        i++; // Skip escaped character
+        continue;
+      }
+
+      if (escapeQuotes.includes(char)) {
         if (literal && literal.quote === char) {
           // Check for escape sequence of the quote itself
           if (sql[i + 1] === char) {
@@ -45,46 +65,12 @@ export class SQLDialectMySQL implements SQLDialect {
 
         if (!literal) {
           literal = { start: i, quote: char }; // Start a new literal
-          continue;
-        }
-      }
-
-      // Only check for comments if not inside a literal
-      if (!literal) {
-        // Single-line comment start
-        if (
-          (char === "#" || (char === "-" && nextChar === "-")) &&
-          !inMultiLineComment
-        ) {
-          inSingleLineComment = true;
-          continue;
-        }
-
-        // Multi-line comment start
-        if (char === "/" && nextChar === "*" && !inSingleLineComment) {
-          inMultiLineComment = true;
-          i++; // Skip the '*' to avoid confusion with closing tags
-          continue;
-        }
-
-        // End of single-line comment
-        if (inSingleLineComment && char === "\n") {
-          inSingleLineComment = false;
-          continue;
-        }
-
-        // End of multi-line comment
-        if (inMultiLineComment && char === "*" && nextChar === "/") {
-          inMultiLineComment = false;
-          i++; // Move past the '/'
-          continue;
         }
       }
     }
 
     // Check for unclosed literal as an error in SQL syntax
     if (literal) {
-      // Unclosed literal, return an empty range or handle as an error
       return [];
     }
 
