@@ -64,7 +64,7 @@ export class SQLDialectMySQL implements SQLDialect {
           const contents = sql.slice(literal.start + 1, i);
 
           if (contents.length > 0) {
-            ranges.push([literal.start + 1, i - 1, contents]);
+            ranges.push([literal.start + 1, i, contents]);
           }
 
           literal = undefined; // Exit literal
