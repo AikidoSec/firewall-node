@@ -22,6 +22,9 @@ t.test("it understands MySQL escaping rules", async (t) => {
     ],
     ["SELECT * FROM users WHERE id = 'id' 'id;", []],
     ["SELECT * FROM users WHERE id = ''id';", []],
+    ["SELECT * FROM users WHERE id = '\\'id';", [[31, 36, "\\'id"]]],
+    ["SELECT * FROM users WHERE id = '\\\\'id';", []],
+    ["SELECT * FROM users WHERE id = '\\\\\\'id';", [[31, 38, "\\\\\\'id"]]],
     ["SELECT * FROM users WHERE id = '''id';", [[31, 36, "''id"]]],
     ['SELECT * FROM users WHERE id = """id";', [[31, 36, '""id']]],
     [

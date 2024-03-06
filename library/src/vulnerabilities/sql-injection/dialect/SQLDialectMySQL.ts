@@ -9,6 +9,11 @@ export class SQLDialectMySQL implements SQLDialect {
     for (let i = 0; i < sql.length; i++) {
       const char = sql[i];
 
+      if (char === "\\") {
+        i++;
+        continue;
+      }
+
       for (const quote of escapeQuotes) {
         if (char === quote) {
           if (literal && literal.quote === quote) {
