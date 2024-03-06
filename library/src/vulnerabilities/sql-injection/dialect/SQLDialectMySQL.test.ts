@@ -5,44 +5,44 @@ import { Range } from "./SQLDialect";
 t.test("it understands MySQL escaping rules", async (t) => {
   const mysql = new SQLDialectMySQL();
   const checks: [string, Range[]][] = [
-    ["", []],
-    [" ", []],
-    ["SELECT * FROM users", []],
-    ["SELECT * FROM users WHERE id = '", []],
-    ['SELECT * FROM users WHERE id = "', []],
-    ["SELECT * FROM users;", []],
-    ["SELECT * FROM users WHERE id = '';", [[31, 32, ""]]],
-    ["SELECT * FROM users -- WHERE id = '';", []],
+    [``, []],
+    [` `, []],
+    [`SELECT * FROM users`, []],
+    [`SELECT * FROM users WHERE id = '`, []],
+    [`SELECT * FROM users WHERE id = "`, []],
+    [`SELECT * FROM users;`, []],
+    [`SELECT * FROM users WHERE id = '';`, [[31, 32, ""]]],
+    [`SELECT * FROM users -- WHERE id = '';`, []],
     [
       `SELECT * -- WHERE id = ''
         FROM users;`,
       [],
     ],
-    ["SELECT * FROM users # WHERE id = '';", []],
-    ["SELECT * FROM users /* WHERE id = '' */", []],
+    [`SELECT * FROM users # WHERE id = '';`, []],
+    [`SELECT * FROM users /* WHERE id = '' */`, []],
     [
       `SELECT * /* WHERE
       id = '' */
       FROM users`,
       [],
     ],
-    ["SELECT * FROM users WHERE id = 'id';", [[31, 34, "id"]]],
+    [`SELECT * FROM users WHERE id = 'id';`, [[31, 34, "id"]]],
     [
-      "SELECT * FROM users WHERE id = 'id' 'id';",
+      `SELECT * FROM users WHERE id = 'id' 'id';`,
       [
         [31, 34, "id"],
         [36, 39, "id"],
       ],
     ],
-    ["SELECT * FROM users WHERE id = 'id' 'id;", []],
-    ["SELECT * FROM users WHERE id = ''id';", []],
-    ["SELECT * FROM users WHERE id = '\\'id';", [[31, 36, "\\'id"]]],
-    ["SELECT * FROM users WHERE id = '\\\\'id';", []],
-    ["SELECT * FROM users WHERE id = '\\\\\\'id';", [[31, 38, "\\\\\\'id"]]],
-    ["SELECT * FROM users WHERE id = '''id';", [[31, 36, "''id"]]],
-    ['SELECT * FROM users WHERE id = """id";', [[31, 36, '""id']]],
+    [`SELECT * FROM users WHERE id = 'id' 'id;`, []],
+    [`SELECT * FROM users WHERE id = ''id';`, []],
+    [`SELECT * FROM users WHERE id = '\\'id';`, [[31, 36, "\\'id"]]],
+    [`SELECT * FROM users WHERE id = '\\\\'id';`, []],
+    [`SELECT * FROM users WHERE id = '\\\\\\'id';`, [[31, 38, "\\\\\\'id"]]],
+    [`SELECT * FROM users WHERE id = '''id';`, [[31, 36, "''id"]]],
+    [`SELECT * FROM users WHERE id = """id";`, [[31, 36, '""id']]],
     [
-      "SELECT * FROM users WHERE id = 'id' AND id = 'b';",
+      `SELECT * FROM users WHERE id = 'id' AND id = 'b';`,
       [
         [31, 34, "id"],
         [45, 47, "b"],

@@ -1,5 +1,6 @@
 import { SQLDialect, Range } from "./SQLDialect";
 
+// https://github.com/mysql/mysql-server/blob/trunk/sql/lex.h
 export class SQLDialectMySQL implements SQLDialect {
   getEscapedRanges(sql: string): Range[] {
     const ranges: Range[] = [];
