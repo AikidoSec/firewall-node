@@ -17,7 +17,7 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("it inspects query method calls and blocks if needed", async () => {
+t.test("it detects SQL injections", async () => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -27,15 +27,16 @@ t.test("it inspects query method calls and blocks if needed", async () => {
   );
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg");
-  const client = new Client({
+  const { Pool } = require("pg");
+  const pool = new Pool({
     user: "root",
     host: "127.0.0.1",
     database: "main_db",
     password: "password",
     port: 27016,
   });
-  await client.connect();
+
+  const client = await pool.connect();
 
   try {
     await client.query(`
@@ -87,6 +88,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
   } catch (error: any) {
     t.fail(error);
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 });

@@ -1,3 +1,4 @@
+import { Kind } from "../Attack";
 import { Source } from "../Source";
 
 export type AgentInfo = {
@@ -20,8 +21,6 @@ type Started = {
   agent: AgentInfo;
   time: number;
 };
-
-export type Kind = "nosql_injection" | "sql_injection";
 
 type DetectedAttack = {
   type: "detected_attack";
@@ -48,13 +47,17 @@ type DetectedAttack = {
 
 type ModuleName = string;
 
-export type Stats = Record<
+type Stats = Record<
   ModuleName,
   {
-    blocked: number;
-    allowed: number;
+    attacksDetected: {
+      total: number;
+      blocked: number;
+    };
     withoutContext: number;
     total: number;
+    averageInMS: number;
+    percentiles: Record<string, number>;
   }
 >;
 

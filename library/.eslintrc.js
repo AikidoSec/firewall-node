@@ -36,6 +36,7 @@ module.exports = {
     "func-names": ["error", "as-needed"],
     camelcase: "error",
     "max-classes-per-file": ["error", 1],
+    "no-console": "error",
   },
   overrides: [
     {

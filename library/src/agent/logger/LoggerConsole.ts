@@ -1,11 +1,8 @@
 import { Logger } from "./Logger";
 
 export class LoggerConsole implements Logger {
-  /**
-   * Creates a terminal log with the "AIKIDO: " affix.
-   * @param message Message to be logged
-   */
   log(message: string) {
+    // eslint-disable-next-line no-console
     console.log(`AIKIDO: ${message}`);
   }
 }

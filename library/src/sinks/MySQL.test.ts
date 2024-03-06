@@ -1,11 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting } from "../agent/api/APIForTesting";
-import { Token } from "../agent/api/Token";
-import { applyHooks } from "../agent/applyHooks";
 import { runWithContext, type Context } from "../agent/Context";
-import { Hooks } from "../agent/hooks/Hooks";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL } from "./MySQL";
 import type { Connection } from "mysql";
@@ -34,23 +30,17 @@ const context: Context = {
   cookies: {},
 };
 
-t.test("it inspects query method calls and blocks if needed", async () => {
-  const hooks = new Hooks();
-  new MySQL().wrap(hooks);
-  applyHooks(hooks);
-
-  const mysql = require("mysql");
+t.test("it detects SQL injections", async () => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
     new APIForTesting(),
-    new Token("123"),
-    false,
-    {}
+    undefined,
+    true
   );
-  agent.start();
-  setInstance(agent);
+  agent.start([new MySQL()]);
 
+  const mysql = require("mysql");
   const connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -72,36 +62,18 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     await query("TRUNCATE cats", connection);
     t.same(await query("SELECT petname FROM `cats`;", connection), []);
 
-    // @ts-expect-error Private property
-    t.same(agent.stats, {
-      mysql: {
-        blocked: 0,
-        total: 3,
-        allowed: 3,
-        withoutContext: 3,
-      },
-    });
-
-    const bulkError = await t.rejects(async () => {
+    const error = await t.rejects(async () => {
       await runWithContext(context, () => {
         return connection.query("-- should be blocked");
       });
     });
 
-    if (bulkError instanceof Error) {
-      t.equal(
-        bulkError.message,
-        "Aikido guard has blocked a SQL injection: -- should be blocked originating from body"
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Aikido guard has blocked a SQL injection: MySQL.query(...) originating from body (UNKOWN)"
       );
     }
-
-    setInstance(null); // We want to check if the code works when an Agent is not defined.
-    await runWithContext(context, () => {
-      // Normally this should be detected, but since the agent
-      // is not defined we let it through.
-      return query("-- should be blocked", connection);
-    });
-    setInstance(agent); // Put the agent back for the following tests
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {

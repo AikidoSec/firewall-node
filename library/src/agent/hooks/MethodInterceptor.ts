@@ -1,4 +1,22 @@
-export type Interceptor = (args: unknown[], subject: unknown) => void;
+import { Agent } from "../Agent";
+import { Kind } from "../Attack";
+import { Context } from "../Context";
+import { Source } from "../Source";
+
+export type InterceptorResult = {
+  operation: string;
+  kind: Kind;
+  source: Source;
+  pathToPayload: string;
+  metadata: Record<string, string>;
+} | void;
+
+export type Interceptor = (
+  args: unknown[],
+  subject: unknown,
+  agent: Agent,
+  context: Context
+) => InterceptorResult;
 
 export class MethodInterceptor {
   constructor(

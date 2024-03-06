@@ -1,12 +1,10 @@
 /* eslint-disable prefer-rest-params */
 import { Collection } from "mongodb";
-import { Agent } from "../agent/Agent";
-import { getInstance } from "../agent/AgentSingleton";
 import { Hooks } from "../agent/hooks/Hooks";
+import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { Context, getContext } from "../agent/Context";
-import { friendlyName } from "../agent/Source";
+import { Context } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 
 const OPERATIONS_WITH_FILTER = [
@@ -43,120 +41,87 @@ export class MongoDB implements Wrapper {
   private inspectFilter(
     db: string,
     collection: string,
-    agent: Agent,
     request: Context,
     filter: unknown,
     operation: string
-  ) {
+  ): InterceptorResult {
     const result = detectNoSQLInjection(request, filter);
 
-    agent.onInspectedCall({
-      module: "mongodb",
-      withoutContext: false,
-      detectedAttack: result.injection,
-    });
-
     if (result.injection) {
-      agent.onDetectedAttack({
-        module: "mongodb",
+      return {
+        operation: `MongoDB.Collection.${operation}`,
         kind: "nosql_injection",
-        blocked: agent.shouldBlock(),
         source: result.source,
-        request: request,
-        stack: new Error().stack || "",
-        path: result.pathToPayload,
+        pathToPayload: result.pathToPayload,
         metadata: {
           db: db,
           collection: collection,
           operation: operation,
           filter: JSON.stringify(filter),
         },
-      });
+      };
+    }
+  }
 
-      if (agent.shouldBlock()) {
-        throw new Error(
-          `Aikido guard has blocked a NoSQL injection: MongoDB.Collection.${operation}(...) originating from ${friendlyName(result.source)} (${result.pathToPayload})`
+  private inspectBulkWriteOperation(
+    operation: BulkWriteOperation,
+    collection: Collection,
+    context: Context
+  ): InterceptorResult {
+    for (const op of BULK_WRITE_OPERATIONS_WITH_FILTER) {
+      const options = operation[op];
+
+      if (options && options.filter) {
+        return this.inspectFilter(
+          collection.dbName,
+          collection.collectionName,
+          context,
+          options.filter,
+          "bulkWrite"
         );
       }
     }
   }
 
-  private inspectBulkWrite(args: unknown[], collection: Collection) {
-    const agent = getInstance();
+  private inspectBulkWrite(
+    args: unknown[],
+    collection: Collection,
+    context: Context
+  ) {
+    if (Array.isArray(args[0]) && args[0].length > 0) {
+      const operations: BulkWriteOperation[] = args[0];
 
-    if (!agent) {
-      return;
-    }
+      for (const operation of operations) {
+        const result = this.inspectBulkWriteOperation(
+          operation,
+          collection,
+          context
+        );
 
-    const request = getContext();
-
-    if (!request) {
-      return agent.onInspectedCall({
-        module: "mongodb",
-        withoutContext: true,
-        detectedAttack: false,
-      });
-    }
-
-    if (!Array.isArray(args[0])) {
-      return;
-    }
-
-    const operations: BulkWriteOperation[] = args[0];
-    operations.forEach((operation) => {
-      BULK_WRITE_OPERATIONS_WITH_FILTER.forEach((command) => {
-        const options = operation[command];
-
-        if (options && options.filter) {
-          this.inspectFilter(
-            collection.dbName,
-            collection.collectionName,
-            agent,
-            request,
-            options.filter,
-            "bulkWrite"
-          );
+        if (result) {
+          return result;
         }
-      });
-    });
+      }
+    }
   }
 
   private inspectOperation(
     operation: string,
     args: unknown[],
-    collection: Collection
-  ): void {
-    const agent = getInstance();
+    collection: Collection,
+    context: Context
+  ): InterceptorResult {
+    if (args.length > 0 && isPlainObject(args[0])) {
+      const filter = args[0];
 
-    if (!agent) {
-      return;
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        filter,
+        operation
+      );
     }
-
-    const hasFilter = args.length > 0 && isPlainObject(args[0]);
-
-    if (!hasFilter) {
-      return;
-    }
-
-    const request = getContext();
-
-    if (!request) {
-      return agent.onInspectedCall({
-        module: "mongodb",
-        withoutContext: true,
-        detectedAttack: false,
-      });
-    }
-
-    const filter = args[0];
-    this.inspectFilter(
-      collection.dbName,
-      collection.collectionName,
-      agent,
-      request,
-      filter,
-      operation
-    );
   }
 
   wrap(hooks: Hooks) {
@@ -169,13 +134,18 @@ export class MongoDB implements Wrapper {
     );
 
     OPERATIONS_WITH_FILTER.forEach((operation) => {
-      collection.inspect(operation, (args, collection) =>
-        this.inspectOperation(operation, args, collection as Collection)
+      collection.inspect(operation, (args, collection, agent, context) =>
+        this.inspectOperation(
+          operation,
+          args,
+          collection as Collection,
+          context
+        )
       );
     });
 
-    collection.inspect("bulkWrite", (args, collection) =>
-      this.inspectBulkWrite(args, collection as Collection)
+    collection.inspect("bulkWrite", (args, collection, agent, context) =>
+      this.inspectBulkWrite(args, collection as Collection, context)
     );
   }
 }

@@ -1,6 +1,7 @@
 import { hostname, platform, release } from "os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
+import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { APIForTesting } from "./api/APIForTesting";
 import { Token } from "./api/Token";
@@ -10,13 +11,8 @@ t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, false, {
-    mongodb: {
-      version: "4.0.0",
-      supported: true,
-    },
-  });
-  agent.start();
+  const agent = new Agent(true, logger, api, token, false);
+  agent.start([new MongoDB()]);
 
   t.match(api.getEvents(), [
     {
@@ -27,7 +23,7 @@ t.test("it sends started event", async (t) => {
         version: "0.0.0",
         ipAddress: ip(),
         packages: {
-          mongodb: "4.0.0",
+          mongodb: "6.3.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
@@ -41,13 +37,22 @@ t.test("it sends started event", async (t) => {
   ]);
 });
 
+t.test("it throws error if already started", async () => {
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+  agent.start([new MongoDB()]);
+  t.throws(() => agent.start([new MongoDB()]), "Agent already started!");
+});
+
 t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
+  const agent = new Agent(true, logger, api, token, true);
   agent.onPrototypePollutionPrevented();
-  agent.start();
+  agent.start([]);
   t.match(api.getEvents(), [
     {
       agent: {
@@ -61,89 +66,97 @@ t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
+  const agent = new Agent(true, logger, api, token, true);
 
   // This would otherwise keep the process running
-  agent.start();
+  agent.start([]);
 });
 
-t.test("it keeps track of stats", async () => {
+t.test("when attack detected", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, true, {});
-
-  agent.start();
-  agent.onInspectedCall({
+  const agent = new Agent(true, logger, api, token, false);
+  agent.onDetectedAttack({
     module: "mongodb",
-    withoutContext: false,
-    detectedAttack: false,
-  });
-
-  // @ts-expect-error Private property
-  t.same(agent.stats, {
-    mongodb: {
-      blocked: 0,
-      allowed: 1,
-      withoutContext: 0,
-      total: 1,
+    kind: "nosql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {},
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+    },
+    stack: "stack",
+    path: ".nested",
+    metadata: {
+      db: "app",
     },
   });
 
-  agent.onInspectedCall({
-    module: "mongodb",
-    withoutContext: true,
-    detectedAttack: false,
-  });
-
-  // @ts-expect-error Private property
-  t.same(agent.stats, {
-    mongodb: {
-      blocked: 0,
-      allowed: 2,
-      withoutContext: 1,
-      total: 2,
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack",
+      attack: {
+        module: "mongodb",
+        kind: "nosql_injection",
+        blocked: true,
+        source: "body",
+        path: ".nested",
+        stack: "stack",
+        metadata: {
+          db: "app",
+        },
+      },
+      request: {
+        method: "POST",
+        ipAddress: "::1",
+        url: "http://localhost:4000",
+        headers: {},
+        body: "{}",
+      },
     },
-  });
-
-  agent.onInspectedCall({
-    module: "mongodb",
-    withoutContext: false,
-    detectedAttack: true,
-  });
-
-  // @ts-expect-error Private property
-  t.same(agent.stats, {
-    mongodb: {
-      blocked: 1,
-      allowed: 2,
-      withoutContext: 1,
-      total: 3,
-    },
-  });
+  ]);
 });
 
-t.test("it keeps tracks of stats in dry mode", async () => {
+t.test("it sends heartbeat when reached max timings", async () => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
-  const agent = new Agent(false, logger, api, token, true, {});
-
-  agent.start();
-
-  agent.onInspectedCall({
-    module: "mongodb",
-    withoutContext: false,
-    detectedAttack: true,
-  });
-
-  // @ts-expect-error Private property
-  t.same(agent.stats, {
-    mongodb: {
-      blocked: 0,
-      allowed: 1,
-      withoutContext: 0,
-      total: 1,
+  const agent = new Agent(true, logger, api, token, false);
+  agent.start([]);
+  for (let i = 0; i < 1000; i++) {
+    agent.getInspectionStatistics().onInspectedCall({
+      module: "mongodb",
+      withoutContext: false,
+      blocked: false,
+      durationInMs: 0.1,
+    });
+  }
+  t.match(api.getEvents(), [
+    {
+      type: "started",
     },
-  });
+  ]);
+  for (let i = 0; i < 4000; i++) {
+    agent.getInspectionStatistics().onInspectedCall({
+      module: "mongodb",
+      withoutContext: false,
+      blocked: false,
+      durationInMs: 0.1,
+    });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
 });

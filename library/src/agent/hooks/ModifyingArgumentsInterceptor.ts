@@ -1,6 +1,9 @@
+import { Agent } from "../Agent";
+
 export type ModifyingArgumentsInterceptor = (
   args: unknown[],
-  subject: unknown
+  subject: unknown,
+  agent: Agent
 ) => unknown[];
 
 export class ModifyingArgumentsMethodInterceptor {

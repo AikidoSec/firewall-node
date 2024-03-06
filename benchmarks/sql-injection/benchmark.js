@@ -2,7 +2,7 @@
  * Runs benchmarks for the detection of SQL Injections
  */
 const fs = require("fs");
-const path = require("path");
+const { join } = require("path");
 const {
   detectSQLInjection,
 } = require("../../library/dist/vulnerabilities/sql-injection/detectSQLInjection");
@@ -48,45 +48,31 @@ function getAvgBenchmark() {
   return avgTime;
 }
 
-/**
- * This function collects the dangerous sql statements in testing/exploit
- * into a single array
- * @returns An array with dangerous SQL statements
- */
 function fetchSqlStatements() {
-  const auth_bypass_txt = fs.readFileSync(
-    path.join(
+  const files = [
+    join(
       __dirname,
-      "./../../library/testing/sql-injection-payloads/Auth_Bypass.txt"
+      "../../library/src/vulnerabilities/sql-injection/payloads",
+      "Auth_Bypass.txt"
     ),
-    "utf-8"
-  );
-  const postgres_txt = fs.readFileSync(
-    path.join(
+    join(
       __dirname,
-      "./../../library/testing/sql-injection-payloads/postgres.txt"
+      "../../library/src/vulnerabilities/sql-injection/payloads",
+      "postgres.txt"
     ),
-    "utf-8"
-  );
-  const mysql_txt = fs.readFileSync(
-    path.join(
+    join(
       __dirname,
-      "./../../library/testing/sql-injection-payloads/mysql.txt"
+      "../../library/src/vulnerabilities/sql-injection/payloads",
+      "mysql.txt"
     ),
-    "utf-8"
-  );
-  const mssql_and_db2_txt = fs.readFileSync(
-    path.join(
+    join(
       __dirname,
-      "./../../library/testing/sql-injection-payloads/mssql_and_db2.txt"
+      "../../library/src/vulnerabilities/sql-injection/payloads",
+      "mssql_and_db2.txt"
     ),
-    "utf-8"
-  );
-
-  return [
-    ...auth_bypass_txt.split(/\r?\n/),
-    ...postgres_txt.split(/\r?\n/),
-    ...mysql_txt.split(/\r?\n/),
-    ...mssql_and_db2_txt.split(/\r?\n/),
   ];
+
+  return files
+    .map((file) => fs.readFileSync(file, "utf-8").split(/\r?\n/))
+    .flat();
 }

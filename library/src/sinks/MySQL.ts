@@ -1,30 +1,24 @@
+import { Agent } from "../agent/Agent";
+import { Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { getInstance } from "../agent/AgentSingleton";
-import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
 
 export class MySQL implements Wrapper {
-  private inspectQuery(args: unknown[]) {
-    const agent = getInstance();
-
-    if (!agent) {
-      return;
-    }
-
-    const request = getContext();
-
-    if (!request) {
-      return agent.onInspectedCall({
-        module: "mysql",
-        withoutContext: true,
-        detectedAttack: false,
-      });
-    }
-
-    if (typeof args[0] === "string" && args[0].length > 0) {
+  private inspectQuery(
+    args: unknown[],
+    agent: Agent,
+    context: Context
+  ): InterceptorResult {
+    if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
-      checkContextForSqlInjection(sql, request, agent, "mysql");
+
+      return checkContextForSqlInjection({
+        sql: sql,
+        context: context,
+        operation: "MySQL.query",
+      });
     }
   }
 
@@ -35,6 +29,8 @@ export class MySQL implements Wrapper {
       .addFile("lib/Connection")
       .addSubject((exports) => exports.prototype);
 
-    connection.inspect("query", (args) => this.inspectQuery(args));
+    connection.inspect("query", (args, subject, agent, context) =>
+      this.inspectQuery(args, agent, context)
+    );
   }
 }

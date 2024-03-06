@@ -1,73 +1,49 @@
 /* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
+import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { API } from "./api/API";
-import { AgentInfo, Kind, Stats } from "./api/Event";
+import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
+import { Kind } from "./Attack";
 import { Context } from "./Context";
-import { resolve } from "path";
+import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
+import { wrapInstalledPackages } from "./wrapInstalledPackages";
+import { Wrapper } from "./Wrapper";
+
+type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
-  /** Gives the interval in milliseconds between heartbeats. Currently set at 1h */
-  private heartbeatIntervalInMS = 60 * 60 * 1000;
+  private started = false;
+  private sendHeartbeatEveryMS = 30 * 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 5 * 1000;
+  private lastHeartbeat = Date.now();
+  private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
-  private stats: Stats = {};
   private preventedPrototypePollution = false;
+  private wrappedPackages: Record<string, WrappedPackage> = {};
+  private statistics = new InspectionStatistics({
+    maxTimings: 5000,
+  });
 
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly serverless: boolean,
-    private readonly wrappedPackages: Record<
-      string,
-      { version: string | null; supported: boolean }
-    >
+    private readonly serverless: boolean
   ) {}
 
   shouldBlock() {
     return this.block;
   }
 
-  onInspectedCall({
-    detectedAttack,
-    module,
-    withoutContext,
-  }: {
-    detectedAttack: boolean;
-    module: string;
-    withoutContext: boolean;
-  }) {
-    this.stats[module] = this.stats[module] || {
-      blocked: 0,
-      allowed: 0,
-      withoutContext: 0,
-      total: 0,
-    };
-
-    this.stats[module].total += 1;
-
-    if (withoutContext) {
-      this.stats[module].withoutContext += 1;
-      this.stats[module].allowed += 1;
-      return;
-    }
-
-    if (detectedAttack) {
-      if (this.block) {
-        this.stats[module].blocked += 1;
-      } else {
-        this.stats[module].allowed += 1;
-      }
-    } else {
-      this.stats[module].allowed += 1;
-    }
+  getInspectionStatistics() {
+    return this.statistics;
   }
 
   onPrototypePollutionPrevented() {
@@ -166,7 +142,7 @@ export class Agent {
   /**
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
-  heartbeat() {
+  private heartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
       this.api
@@ -174,7 +150,7 @@ export class Agent {
           type: "heartbeat",
           time: Date.now(),
           agent: this.getAgentInfo(),
-          stats: this.stats,
+          stats: this.statistics.getStats(),
         })
         .catch(() => {
           this.logger.log("Failed to do heartbeat");
@@ -194,33 +170,28 @@ export class Agent {
       throw new Error("Interval already started");
     }
 
-    this.interval = setInterval(
-      this.heartbeat.bind(this),
-      this.heartbeatIntervalInMS
-    );
+    this.interval = setInterval(() => {
+      const now = Date.now();
+      const diff = now - this.lastHeartbeat;
+      const shouldSendHeartbeat =
+        diff > this.sendHeartbeatEveryMS ||
+        (this.statistics.reachedMaxTimings() && !this.reportedInitialStats);
+
+      if (shouldSendHeartbeat) {
+        this.heartbeat();
+        this.lastHeartbeat = now;
+        this.reportedInitialStats = true;
+      }
+    }, this.checkIfHeartbeatIsNeededEveryMS);
 
     this.interval.unref();
-  }
-
-  /**
-   * Gets this project's version number from the package.json file
-   * @returns version number
-   */
-  private getAgentVersion(): string {
-    const json = require(resolve(__dirname, "../../package.json"));
-
-    if (!json.version) {
-      throw new Error("Missing version in package.json");
-    }
-
-    return json.version;
   }
 
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       hostname: hostname() || "",
-      version: this.getAgentVersion(),
+      version: getAgentVersion(),
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
         (packages: Record<string, string>, pkg) => {
@@ -243,13 +214,13 @@ export class Agent {
     };
   }
 
-  /**
-   * Starts up the agent
-   * Checks parameters like block and token,
-   * starts heartbeats if necessary and checks which packages are supported,
-   * afterward it calls {@link onStart}
-   */
-  start() {
+  start(wrappers: Wrapper[]) {
+    if (this.started) {
+      throw new Error("Agent already started!");
+    }
+
+    this.started = true;
+
     this.logger.log("Starting agent...");
 
     if (!this.block) {
@@ -261,6 +232,8 @@ export class Agent {
     } else {
       this.logger.log("No token provided, disabling reporting.");
     }
+
+    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
 
     for (const pkg in this.wrappedPackages) {
       const details = this.wrappedPackages[pkg];
