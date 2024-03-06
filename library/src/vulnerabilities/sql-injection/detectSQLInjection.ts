@@ -67,17 +67,20 @@ export function userInputOccurrencesSafelyEncapsulated(
   userInput: string,
   dialect: SQLDialect
 ) {
-  const escaped = dialect.getEscapedRanges(sql);
+  const escapedRanges = dialect.getEscapedRanges(sql);
 
-  return findAllOccurrences(sql, userInput).every(([start, end]) => {
-    if (
-      escaped.some(
-        ([startEscape, endEscape]) => startEscape <= start && end <= endEscape
-      )
-    ) {
-      return true;
+  return findAllOccurrences(sql, userInput).every(
+    ([userInputStart, userInputEnd]) => {
+      if (
+        escapedRanges.some(
+          ([startEscape, endEscape]) =>
+            startEscape < userInputStart && endEscape > userInputEnd
+        )
+      ) {
+        return true;
+      }
     }
-  });
+  );
 }
 
 /**
