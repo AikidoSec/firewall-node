@@ -6,6 +6,9 @@ const { join } = require("path");
 const {
   detectSQLInjection,
 } = require("../../library/dist/vulnerabilities/sql-injection/detectSQLInjection");
+const {
+  SQLDialectMySQL,
+} = require("../../library/dist/vulnerabilities/sql-injection/dialect/SQLDialectMySQL");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 
@@ -26,8 +29,9 @@ function main() {
 main();
 
 function runBenchmark(sql, input) {
+  const dialect = new SQLDialectMySQL();
   const startTime = performance.now();
-  detectSQLInjection(sql, input);
+  detectSQLInjection(sql, input, dialect);
   const endTime = performance.now();
   return endTime - startTime;
 }
