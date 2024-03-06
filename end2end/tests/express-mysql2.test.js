@@ -1,6 +1,6 @@
 const t = require("tap");
-const { spawn } = require("node:child_process");
-const { resolve } = require("node:path");
+const { spawn } = require("child_process");
+const { resolve } = require("path");
 const timeout = require("../timeout");
 
 const pathToApp = resolve(

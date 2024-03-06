@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { hostname, platform, release } from "node:os";
+import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";

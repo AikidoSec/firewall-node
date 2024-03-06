@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { join } from "node:path";
+import { join } from "path";
 import { wrap } from "shimmer";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";

@@ -1,5 +1,5 @@
-import { request as requestHttp } from "node:http";
-import { request as requestHttps } from "node:https";
+import { request as requestHttp } from "http";
+import { request as requestHttps } from "https";
 import { API } from "./API";
 import { Token } from "./Token";
 import { Event } from "./Event";

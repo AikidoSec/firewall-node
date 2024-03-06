@@ -1,5 +1,6 @@
+import { basename, join } from "path";
 import * as t from "tap";
-import * as fs from "fs";
+import { readFileSync } from "fs";
 import * as path from "path";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import {
@@ -41,7 +42,6 @@ const GOOD_SQL_COMMANDS = [
   "Roses are red ORis isAND",
   // Check for some general statements
   `abcdefghijklmnop@hotmail.com`,
-  `roses are red violets are blue#`,
   // Test some special characters
   "steve@yahoo.com",
   // Test SQL Function (that should not be blocked)
@@ -85,78 +85,11 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
-// BEGIN TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
-
-const AUTH_BYPASS = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/Auth_Bypass.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with Auth_Bypass.txt", async () => {
-  for (const sql of AUTH_BYPASS) {
-    isSqlInjection(sql, sql);
-  }
-});
-
-const POSTGRES_TXT = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/postgres.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with postgres.txt", async () => {
-  for (const sql of POSTGRES_TXT) {
-    isSqlInjection(sql, sql);
-  }
-});
-
-const MYSQL_TXT = fs
-  .readFileSync(
-    path.join(__dirname, "./../../../testing/sql-injection-payloads/mysql.txt"),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test(
-  "Test the detectSQLInjection() with postgres-enumeration.txt",
-  async () => {
-    for (const sql of MYSQL_TXT) {
-      isSqlInjection(sql, sql);
-    }
-  }
-);
-
-const MSSQL_AND_DB2 = fs
-  .readFileSync(
-    path.join(
-      __dirname,
-      "./../../../testing/sql-injection-payloads/mssql_and_db2.txt"
-    ),
-    "utf-8"
-  )
-  .split(/\r?\n/);
-
-t.test("Test the detectSQLInjection() with mssql_and_db2.txt", async () => {
-  for (const sql of MSSQL_AND_DB2) {
-    isSqlInjection(sql, sql);
-  }
-});
-
 // END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
 
 t.test(
   "Test the detectSQLInjection() function to see if it detects SQL Functions",
   async () => {
-    // Keep in mind t.ok means that it IS in fact a SQL Injection
     isSqlInjection("foobar()", "foobar()");
     isSqlInjection("foobar(1234567)", "foobar(1234567)");
     isSqlInjection("foobar       ()", "foobar       ()");
@@ -170,41 +103,50 @@ t.test(
     isSqlInjection("1foobar()", "1foobar()");
     isSqlInjection("1foo_bar()", "1foo_bar()");
     isSqlInjection("1foo-bar()", "1foo-bar()");
+    isSqlInjection("#foobar()", "#foobar()");
 
     isNotSqlInjection("foobar)", "foobar)");
     isNotSqlInjection("foobar      )", "foobar      )");
-    isNotSqlInjection("#foobar()", "#foobar()");
     isNotSqlInjection("$foobar()", "$foobar()");
   }
 );
 
 t.test("Test the queryContainsUserInput() function", async () => {
-  t.ok(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"));
-  t.ok(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"));
-  t.ok(queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("));
-  t.notOk(queryContainsUserInput("Roses are red", "violet"));
+  t.same(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"), true);
+  t.same(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"), true);
+  t.same(
+    queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("),
+    true
+  );
+  t.same(queryContainsUserInput("Roses are red", "violet"), false);
 });
 
 t.test(
   "Test the userInputOccurrencesSafelyEncapsulated() function",
   async () => {
-    t.ok(
+    t.same(
       userInputOccurrencesSafelyEncapsulated(
         ` Hello Hello 'UNION'and also "UNION" `,
         "UNION"
-      )
+      ),
+      true
     );
-    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"));
-    t.ok(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"));
-    t.ok(userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"));
+    t.same(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"), true);
+    t.same(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"), true);
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"),
+      true
+    );
 
-    t.notOk(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION")
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"),
+      false
     );
-    t.notOk(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION")
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"),
+      false
     );
-    t.notOk(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"));
+    t.same(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"), false);
   }
 );
 
@@ -212,14 +154,43 @@ t.test("Test the dangerousCharsInInput() function", async () => {
   t.ok(dangerousCharsInInput("This is not ok--"));
 });
 
-t.test("Test the postgres bitwise operator #", async () => {
-    isSqlInjection("10 # 12", "10 # 12");
+t.test("It flags postgres bitwise operator as SQL injection", async () => {
+  isSqlInjection("SELECT 10 # 12", "10 # 12");
+});
+
+t.test("It flags MySQL bitwise operator as SQL injection", async () => {
+  isSqlInjection("SELECT 10 ^ 12", "10 ^ 12");
+});
+
+t.test("It flags postgres type cast operator as SQL injection", async () => {
+  isSqlInjection("SELECT abc::date", "abc::date");
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.ok(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), true, sql);
 }
 
 function isNotSqlInjection(sql: string, input: string) {
-  t.notOk(detectSQLInjection(sql, input), sql);
+  t.same(detectSQLInjection(sql, input), false, sql);
+}
+
+const files = [
+  // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
+  join(__dirname, "payloads", "Auth_Bypass.txt"),
+  join(__dirname, "payloads", "postgres.txt"),
+  join(__dirname, "payloads", "mysql.txt"),
+  join(__dirname, "payloads", "mssql_and_db2.txt"),
+];
+
+for (const file of files) {
+  const contents = readFileSync(file, "utf-8");
+  const lines = contents.split(/\r?\n/);
+  for (const sql of lines) {
+    t.test(
+      `It flags ${sql} from ${basename(file)} as SQL injection`,
+      async () => {
+        t.same(detectSQLInjection(sql, sql), true, sql);
+      }
+    );
+  }
 }
