@@ -2,6 +2,7 @@ import { SQLDialect, Range } from "./SQLDialect";
 
 // https://github.com/mysql/mysql-server/blob/trunk/sql/lex.h
 export class SQLDialectMySQL implements SQLDialect {
+  // eslint-disable-next-line max-lines-per-function
   getEscapedRanges(sql: string): Range[] {
     const ranges: Range[] = [];
     let literal: { start: number; quote: string } | undefined = undefined;
