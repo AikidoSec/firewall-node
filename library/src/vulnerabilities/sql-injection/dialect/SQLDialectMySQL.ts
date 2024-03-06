@@ -1,6 +1,9 @@
 import { SQLDialect, Range } from "./SQLDialect";
 
-// https://github.com/mysql/mysql-server/blob/trunk/sql/lex.h
+// Comments: https://dev.mysql.com/doc/refman/8.0/en/comments.html
+// String literals: https://dev.mysql.com/doc/refman/8.0/en/string-literals.html
+// List of symbols can be found here https://github.com/mysql/mysql-server/blob/trunk/sql/lex.h
+// Pay attention to NO_BACKSLASH_ESCAPES and ANSI_QUOTES modes
 export class SQLDialectMySQL implements SQLDialect {
   // eslint-disable-next-line max-lines-per-function
   getEscapedRanges(sql: string): Range[] {
@@ -58,7 +61,12 @@ export class SQLDialectMySQL implements SQLDialect {
             continue;
           }
 
-          ranges.push([literal.start, i, sql.slice(literal.start + 1, i)]);
+          const contents = sql.slice(literal.start + 1, i);
+
+          if (contents.length > 0) {
+            ranges.push([literal.start + 1, i - 1, contents]);
+          }
+
           literal = undefined; // Exit literal
           continue;
         }

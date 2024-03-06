@@ -74,7 +74,7 @@ export function userInputOccurrencesSafelyEncapsulated(
       if (
         escapedRanges.some(
           ([startEscape, endEscape]) =>
-            startEscape < userInputStart && endEscape > userInputEnd
+            startEscape <= userInputStart && endEscape >= userInputEnd
         )
       ) {
         return true;
