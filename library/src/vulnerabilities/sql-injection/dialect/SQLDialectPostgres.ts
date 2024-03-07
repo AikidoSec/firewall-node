@@ -52,7 +52,7 @@ export class SQLDialectPostgres implements SQLDialect {
         continue;
       }
 
-      if (escapeQuotes.includes(char)) {
+      if (escapeQuotes.includes(char) && (literal ? !literal.tag : true)) {
         if (literal) {
           // Check for escape sequence of the quote itself
           if (sql[i + 1] === char) {
@@ -75,7 +75,7 @@ export class SQLDialectPostgres implements SQLDialect {
         }
       }
 
-      if (char === "$") {
+      if (char === "$" && (literal ? literal.tag : true)) {
         if (literal && nextChar === "$") {
           const contents = sql.slice(literal.start + 2, i);
           if (contents.length > 0) {
