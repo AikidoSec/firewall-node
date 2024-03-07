@@ -148,9 +148,9 @@ END;
 $function$;`,
       [[11, 58, "\nBEGIN\n  RETURN ($1 ~ $q$[\\t\\r\\n\\v\\\\]$q$);\nEND;\n"]],
     ],
-    /*[
+    [
       `SELECT * FROM functions WHERE definition = $$BEGIN RETURN $Q$SELECT 'Hello, World!';$Q$; END;$$;`,
-      [[45, 93, "BEGIN RETURN $Q$SELECT 'Hello, World!';$Q$; END;"]],
+      [[45, 92, "BEGIN RETURN $Q$SELECT 'Hello, World!';$Q$; END;"]],
     ],
     [
       `SELECT * FROM scripts WHERE content = $CustomTag$Incorrectly terminated string;`,
@@ -158,7 +158,7 @@ $function$;`,
     ],
     [
       `SELECT * FROM articles WHERE body = $$He said, 'This is "quoted" text.'$$;`,
-      [[38, 71, "He said, 'This is \"quoted\" text.'"]],
+      [[38, 70, "He said, 'This is \"quoted\" text.'"]],
     ],
     [
       `SELECT * FROM articles WHERE body = $He said, 'This is "quoted" text.'$$;`,
@@ -170,24 +170,24 @@ $function$;`,
     ],
     [
       `SELECT * FROM articles WHERE body = $Tag$He said, 'This is "quoted" text.'$Tag$;`,
-      [[41, 74, "He said, 'This is \"quoted\" text.'"]],
+      [[41, 73, "He said, 'This is \"quoted\" text.'"]],
     ],
     [
       `SELECT * FROM articles WHERE body = $Tag$He said, 'This is "quoted" text.'$tag$;`,
       [],
     ],
     [
-      `SELECT * FROM books /!* Outer comment /!* Nested comment *!/ Outer continued *!/;`,
+      `SELECT * FROM books /* Outer comment /!* Nested comment *!/ Outer continued */;`,
       [],
     ],
     [
       `SELECT * FROM comments WHERE text = 'This -- is not a comment.';`,
-      [[37, 62, "This -- is not a comment."]],
+      [[37, 61, "This -- is not a comment."]],
     ],
     [
       `SELECT * FROM pages WHERE content = $A$This is a \'quoted\' text inside a dollar-quoted string$A$;`,
-      [[39, 92, "This is a 'quoted' text inside a dollar-quoted string"]],
-    ],*/
+      [[39, 91, "This is a 'quoted' text inside a dollar-quoted string"]],
+    ],
     [
       `
         SELECT * FROM MY_TABLE;

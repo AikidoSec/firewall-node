@@ -115,7 +115,7 @@ export class SQLDialectPostgres implements SQLDialect {
         }
 
         if (!literal) {
-          const name = /^([A-Za-z0-9_]+)/;
+          const name = /^([A-Za-z0-9_]+)\$/;
           const match = sql.slice(i + 1).match(name);
           if (match) {
             literal = { start: i, tag: true, name: match[1] };
