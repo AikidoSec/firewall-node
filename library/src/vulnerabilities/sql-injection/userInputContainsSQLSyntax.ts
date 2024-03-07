@@ -1,12 +1,13 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQLDialect } from "./dialect/SQLDialect";
+import { SQLDialectPostgres } from "./dialect/SQLDialectPostgres";
 
 function compileSqlRegex(dialect: SQLDialect): RegExp {
   const operators = dialect.getOperators();
   const keywords = dialect.getKeywords();
   const matchSqlKeywords =
     "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
-    keywords.join("|") + // Look for SQL Keywords
+    keywords.map(escapeStringRegexp).join("|") + // Look for SQL Keywords
     ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
 
   const matchSqlOperators = `(${operators.map(escapeStringRegexp).join("|")})`;
@@ -17,10 +18,10 @@ function compileSqlRegex(dialect: SQLDialect): RegExp {
     "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
     "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
 
-  const matchStatementSeparator = "(;)";
+  const matchTerminator = "(;)";
 
   return new RegExp(
-    `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}|${matchStatementSeparator}`,
+    `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}|${matchTerminator}`,
     "im"
   );
 }
