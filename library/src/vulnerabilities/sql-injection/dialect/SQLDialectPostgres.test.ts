@@ -115,6 +115,10 @@ t.test("it understands Postgres escaping rules", async (t) => {
         ],
       ],
     ],
+    [
+      `SELECT $$This is a string with a $ sign in it$$;`,
+      [[9, 44, "This is a string with a $ sign in it"]],
+    ],
     /*[
       `SELECT * FROM functions WHERE definition = $$BEGIN RETURN $Q$SELECT 'Hello, World!';$Q$; END;$$;`,
       [[45, 93, "BEGIN RETURN $Q$SELECT 'Hello, World!';$Q$; END;"]],

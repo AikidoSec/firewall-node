@@ -4,7 +4,10 @@ export class SQLDialectPostgres implements SQLDialect {
   // eslint-disable-next-line max-lines-per-function
   getEscapedRanges(sql: string): Range[] {
     const ranges: Range[] = [];
-    let literal: { start: number; quote: string } | undefined = undefined;
+    let literal:
+      | { start: number; tag: false }
+      | { start: number; tag: true; name?: string }
+      | undefined = undefined;
     const escapeQuotes = ["'"];
     let inSingleLineComment = false;
     let inMultiLineComment = false;
@@ -50,7 +53,7 @@ export class SQLDialectPostgres implements SQLDialect {
       }
 
       if (escapeQuotes.includes(char)) {
-        if (literal && literal.quote === char) {
+        if (literal) {
           // Check for escape sequence of the quote itself
           if (sql[i + 1] === char) {
             i++; // Skip the next quote
@@ -68,7 +71,25 @@ export class SQLDialectPostgres implements SQLDialect {
         }
 
         if (!literal) {
-          literal = { start: i, quote: char }; // Start a new literal
+          literal = { start: i, tag: false }; // Start a new literal
+        }
+      }
+
+      if (char === "$") {
+        if (literal && nextChar === "$") {
+          const contents = sql.slice(literal.start + 2, i);
+          if (contents.length > 0) {
+            ranges.push([literal.start + 2, i - 1, contents]);
+          }
+          literal = undefined; // Exit literal
+          i++; // Skip the next '$'
+          continue;
+        }
+
+        if (!literal && nextChar === "$") {
+          literal = { start: i, tag: true };
+          i++; // Skip the next '$'
+          continue;
         }
       }
     }
