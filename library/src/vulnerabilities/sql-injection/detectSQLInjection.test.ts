@@ -213,7 +213,6 @@ const files = [
   join(__dirname, "payloads", "Auth_Bypass.txt"),
   join(__dirname, "payloads", "postgres.txt"),
   join(__dirname, "payloads", "mysql.txt"),
-  join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
 for (const file of files) {

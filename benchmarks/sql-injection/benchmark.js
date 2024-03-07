@@ -69,11 +69,6 @@ function fetchSqlStatements() {
       "../../library/src/vulnerabilities/sql-injection/payloads",
       "mysql.txt"
     ),
-    join(
-      __dirname,
-      "../../library/src/vulnerabilities/sql-injection/payloads",
-      "mssql_and_db2.txt"
-    ),
   ];
 
   return files
