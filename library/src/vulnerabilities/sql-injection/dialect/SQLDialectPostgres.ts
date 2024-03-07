@@ -76,6 +76,28 @@ export class SQLDialectPostgres implements SQLDialect {
       }
 
       if (char === "$" && (literal ? literal.tag : true)) {
+        if (
+          literal &&
+          literal.tag &&
+          literal.name &&
+          sql.slice(i + 1).startsWith(`${literal.name}$`)
+        ) {
+          const contents = sql.slice(
+            literal.start + literal.name.length + 2,
+            i
+          );
+          if (contents.length > 0) {
+            ranges.push([
+              literal.start + literal.name.length + 2,
+              i - 1,
+              contents,
+            ]);
+          }
+          i += literal.name.length + 1; // Skip the tag name and the next '$'
+          literal = undefined; // Exit literal
+          continue;
+        }
+
         if (literal && nextChar === "$") {
           const contents = sql.slice(literal.start + 2, i);
           if (contents.length > 0) {
@@ -90,6 +112,15 @@ export class SQLDialectPostgres implements SQLDialect {
           literal = { start: i, tag: true };
           i++; // Skip the next '$'
           continue;
+        }
+
+        if (!literal) {
+          const name = /^([A-Za-z0-9_]+)/;
+          const match = sql.slice(i + 1).match(name);
+          if (match) {
+            literal = { start: i, tag: true, name: match[1] };
+            i += match[1].length; // Skip the tag name
+          }
         }
       }
     }
