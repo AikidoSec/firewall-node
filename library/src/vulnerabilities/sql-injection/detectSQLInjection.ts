@@ -41,7 +41,7 @@ export function detectSQLInjection(
   }
 
   // Executing our final check with the massive RegEx :
-  return userInputContainsSQLSyntax(userInput);
+  return userInputContainsSQLSyntax(userInput, dialect);
 }
 
 /**

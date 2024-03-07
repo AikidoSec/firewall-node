@@ -1,33 +1,47 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_KEYWORDS, SQL_OPERATORS } from "./config";
+import { SQLDialect } from "./dialect/SQLDialect";
 
-const matchSqlKeywords =
-  "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
-  SQL_KEYWORDS.join("|") + // Look for SQL Keywords
-  ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
+function compileSqlRegex(dialect: SQLDialect): RegExp {
+  const operators = dialect.getOperators();
+  const keywords = dialect.getKeywords();
+  const matchSqlKeywords =
+    "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
+    keywords.join("|") + // Look for SQL Keywords
+    ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
 
-const matchSqlOperators = `(${SQL_OPERATORS.map(escapeStringRegexp).join("|")})`;
+  const matchSqlOperators = `(${operators.map(escapeStringRegexp).join("|")})`;
+  const matchSqlFunctions =
+    "(?<=([\\s|.|" + // Lookbehind : A sql function should be preceded by spaces, dots,
+    operators.map(escapeStringRegexp).join("|") + // Or sql operators
+    "]|^)+)" +
+    "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
+    "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
 
-const matchSqlFunctions =
-  "(?<=([\\s|.|" + // Lookbehind : A sql function should be preceded by spaces, dots,
-  SQL_OPERATORS.map(escapeStringRegexp).join("|") + // Or sql operators
-  "]|^)+)" +
-  "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
-  "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
+  const matchStatementSeparator = "(;)";
 
-const possibleSqlRegex = new RegExp(
-  // Match one or more of : sql keywords, sql operators, sql functions
-  `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}`,
-  "im"
-);
+  return new RegExp(
+    `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}|${matchStatementSeparator}`,
+    "im"
+  );
+}
+
+const cache = new Map<string, RegExp>();
 
 /**
  * This function is the first check in order to determine if a SQL injection is happening,
  * If the user input contains the necessary characters or words for a SQL injection, this
  * function returns true.
- * @param userInput The user input you want to check
- * @returns True when this is a possible SQL Injection
  */
-export function userInputContainsSQLSyntax(userInput: string): boolean {
+export function userInputContainsSQLSyntax(
+  userInput: string,
+  dialect: SQLDialect
+): boolean {
+  let possibleSqlRegex = cache.get(dialect.constructor.name);
+
+  if (!possibleSqlRegex) {
+    possibleSqlRegex = compileSqlRegex(dialect);
+    cache.set(dialect.constructor.name, possibleSqlRegex);
+  }
+
   return possibleSqlRegex.test(userInput);
 }
