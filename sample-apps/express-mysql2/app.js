@@ -21,7 +21,7 @@ function getHTMLBody(cats) {
       <input type="text" name="petname">
       <input type="submit" value="Add" />
     </form>
-    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H">Test injection</a>
+    <a href="http://localhost:4000/?petname=Kitty'); DELETE FROM cats;-- H">Test injection</a> / <a href="http://localhost:4000/clear">Clear table</a>
   </body>
 </html>`;
 }
@@ -64,6 +64,11 @@ async function main(port) {
       res.send(getHTMLBody(await cats.getAll()));
     })
   );
+
+  app.get("/clear", asyncHandler(async (req, res) => {
+    await db.execute("DELETE FROM cats;");
+    res.redirect("/");
+  }));
 
   return new Promise((resolve, reject) => {
     try {
