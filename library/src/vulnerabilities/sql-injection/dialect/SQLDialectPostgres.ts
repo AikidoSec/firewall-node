@@ -6,10 +6,10 @@ export class SQLDialectPostgres implements SQLDialect {
   getEscapedRanges(sql: string): Range[] {
     const ranges: Range[] = [];
     let literal:
-      | { start: number; tag: false }
+      | { start: number; quote: string; tag: false }
       | { start: number; tag: true; name?: string }
       | undefined = undefined;
-    const escapeQuotes = ["'"];
+    const escapeQuotes = ["'", '"'];
     let inSingleLineComment = false;
     let inMultiLineComment = false;
 
@@ -72,7 +72,7 @@ export class SQLDialectPostgres implements SQLDialect {
         }
 
         if (!literal) {
-          literal = { start: i, tag: false }; // Start a new literal
+          literal = { start: i, tag: false, quote: char }; // Start a new literal
         }
       }
 
@@ -128,7 +128,15 @@ export class SQLDialectPostgres implements SQLDialect {
 
     // Check for unclosed literal as an error in SQL syntax
     if (literal) {
-      return [];
+      if (literal.tag) {
+        throw new Error(
+          `Unclosed tag${literal.name ? ` with name ${literal.name}` : ""} starting at position ${literal.start}`
+        );
+      }
+
+      throw new Error(
+        `Unclosed ${literal.start} starting at position ${literal.start}`
+      );
     }
 
     return ranges;

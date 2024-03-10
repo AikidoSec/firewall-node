@@ -8,7 +8,7 @@ export class SQLDialectMySQL implements SQLDialect {
   getEscapedRanges(sql: string): Range[] {
     const ranges: Range[] = [];
     let literal: { start: number; quote: string } | undefined = undefined;
-    const escapeQuotes = ["'", '"'];
+    const escapeQuotes = ["'", '"', "`"];
     let inSingleLineComment = false;
     let inMultiLineComment = false;
 
@@ -47,7 +47,7 @@ export class SQLDialectMySQL implements SQLDialect {
       }
 
       // Process literals and escaped characters
-      if (char === "\\" && literal) {
+      if (char === "\\" && literal && literal.quote !== "`") {
         i++; // Skip escaped character
         continue;
       }
@@ -78,7 +78,9 @@ export class SQLDialectMySQL implements SQLDialect {
 
     // Check for unclosed literal as an error in SQL syntax
     if (literal) {
-      return [];
+      throw new Error(
+        `Unclosed ${literal.quote} starting at position ${literal.start}`
+      );
     }
 
     return ranges;

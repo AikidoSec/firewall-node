@@ -1,6 +1,5 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQLDialect } from "./dialect/SQLDialect";
-import { SQLDialectPostgres } from "./dialect/SQLDialectPostgres";
 
 function compileSqlRegex(dialect: SQLDialect): RegExp {
   const operators = dialect.getOperators();

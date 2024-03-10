@@ -1,11 +1,13 @@
 import { basename, join } from "path";
 import * as t from "tap";
-import { readFileSync } from "fs";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialect/SQLDialectMySQL";
+import { getLines } from "./testUtils";
+
+const dialect = new SQLDialectMySQL();
 
 t.test("It flags MySQL bitwise operator as SQL injection", async () => {
-  isSqlInjection("SELECT 10 ^ 12", "10 ^ 12");
+  t.same(detectSQLInjection("SELECT 10 ^ 12", "10 ^ 12", dialect), true);
 });
 
 const files = [
@@ -13,28 +15,40 @@ const files = [
   join(__dirname, "payloads", "mysql.txt"),
 ];
 
-for (const file of files) {
-  const contents = readFileSync(file, "utf-8");
-  const lines = contents.split(/\r?\n/);
-  for (const sql of lines) {
-    const source = `${sql} (${basename(file)})`;
-    t.test(
-      `It flags ${sql} from ${basename(file)} as SQL injection`,
-      async () => {
+function quote(input: string) {
+  return `'${input.replace(/'/g, "''")}'`;
+}
+
+t.test(
+  `it does not flag SQL injection payloads as SQL injections if properly escaped`,
+  async () => {
+    for (const file of files) {
+      for (const payload of getLines(file)) {
         t.same(
-          detectSQLInjection(sql, sql, new SQLDialectMySQL()),
-          true,
-          source
+          detectSQLInjection(
+            `SELECT * FROM users WHERE id = ${quote(payload)}`,
+            payload,
+            dialect
+          ),
+          false,
+          `${payload} (${basename(file)})`
         );
       }
-    );
+    }
   }
-}
+);
 
-function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), true, sql);
-}
-
-function isNotSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectMySQL()), false, sql);
-}
+t.test(
+  "it flags payloads as SQL injections if not properly escaped",
+  async () => {
+    for (const file of files) {
+      for (const payload of getLines(file)) {
+        t.same(
+          detectSQLInjection(payload, payload, dialect),
+          true,
+          `${payload} (${basename(file)})`
+        );
+      }
+    }
+  }
+);

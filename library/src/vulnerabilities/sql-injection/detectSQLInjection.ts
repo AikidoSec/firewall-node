@@ -3,7 +3,6 @@ import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
 import { Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { findAllOccurrences } from "../../helpers/findAllOccurrences";
-import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import { SQLDialect } from "./dialect/SQLDialect";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 
@@ -28,11 +27,11 @@ export function detectSQLInjection(
     return false;
   }
 
-  if (dangerousCharsInInput(userInput)) {
-    // If the user input contains characters that are dangerous in every context :
-    // Encapsulated or not, return true (No need to check any further)
-    return true;
-  }
+  console.log(
+    userInputOccurrencesSafelyEncapsulated(sql, userInput, dialect),
+    sql,
+    userInput
+  );
 
   if (userInputOccurrencesSafelyEncapsulated(sql, userInput, dialect)) {
     // If the user input is safely encapsulated as a string in the query
@@ -40,18 +39,16 @@ export function detectSQLInjection(
     return false;
   }
 
-  // Executing our final check with the massive RegEx :
+  // If the user input is part of the query and not safely encapsulated
+  // We need to check if it contains SQL syntax
   return userInputContainsSQLSyntax(userInput, dialect);
 }
 
 /**
  * This function is the first step to determine if an SQL Injection is happening,
  * If the sql statement contains user input, this function returns true (case-insensitive)
- * @param query The SQL Statement you want to check it against
- * @param userInput The user input you want to check
- * @returns True when the sql statement contains the input
  */
-export function queryContainsUserInput(query: string, userInput: string) {
+function queryContainsUserInput(query: string, userInput: string) {
   const lowercaseSql = query.toLowerCase();
   const lowercaseInput = userInput.toLowerCase();
 
@@ -62,7 +59,7 @@ export function queryContainsUserInput(query: string, userInput: string) {
  * This function is the third step to determine if an SQL Injection is happening,
  * This checks if **all** occurrences of our input are encapsulated as strings.
  */
-export function userInputOccurrencesSafelyEncapsulated(
+function userInputOccurrencesSafelyEncapsulated(
   sql: string,
   userInput: string,
   dialect: SQLDialect

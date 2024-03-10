@@ -4,13 +4,27 @@ import { Range } from "./SQLDialect";
 
 t.test("it understands MySQL escaping rules", async (t) => {
   const mysql = new SQLDialectMySQL();
-  const checks: [string, Range[]][] = [
+  const checks: [string, Range[] | Error][] = [
     [``, []],
     [` `, []],
     [`SELECT * FROM users`, []],
-    [`SELECT * FROM users WHERE id = '`, []],
-    [`SELECT * FROM users WHERE id = "`, []],
+    [
+      `SELECT * FROM users WHERE id = '`,
+      new Error("Unclosed ' starting at position 31"),
+    ],
+    [
+      `SELECT * FROM users WHERE id = "`,
+      new Error('Unclosed " starting at position 31'),
+    ],
     [`SELECT * FROM users;`, []],
+    ["SELECT * FROM `users`;", [[15, 19, "users"]]],
+    ["SELECT * FROM `use``rs`;", [[15, 21, "use``rs"]]],
+    [
+      "SELECT * FROM `use\\`rs`;",
+      new Error("Unclosed ` starting at position 22"),
+    ],
+    ["SELECT * FROM `users --`;", [[15, 22, "users --"]]],
+    ["SELECT * FROM `users #`;", [[15, 21, "users #"]]],
     [`SELECT * FROM users WHERE id = '';`, []],
     [`SELECT * FROM users -- WHERE id = '';`, []],
     [
@@ -34,7 +48,10 @@ t.test("it understands MySQL escaping rules", async (t) => {
         [37, 38, "id"],
       ],
     ],
-    [`SELECT * FROM users WHERE id = 'id' 'id;`, []],
+    [
+      `SELECT * FROM users WHERE id = 'id' 'id;`,
+      new Error("Unclosed ' starting at position 36"),
+    ],
     [`SELECT * FROM users WHERE id = ''id';`, []],
     [`SELECT * FROM users WHERE id = '\\'id';`, [[32, 35, "\\'id"]]],
     [`SELECT * FROM users WHERE id = '\\\\'id';`, []],
@@ -118,6 +135,17 @@ t.test("it understands MySQL escaping rules", async (t) => {
   ];
 
   for (const [input, expected] of checks) {
-    t.same(mysql.getEscapedRanges(input), expected, input);
+    if (expected instanceof Error) {
+      const error = t.throws(() => mysql.getEscapedRanges(input), input);
+      if (error instanceof Error) {
+        t.match(error.message, expected.message, input);
+      }
+    } else {
+      try {
+        t.same(mysql.getEscapedRanges(input), expected, input);
+      } catch (error) {
+        t.fail(`${input} threw an error: ${error.message}`);
+      }
+    }
   }
 });

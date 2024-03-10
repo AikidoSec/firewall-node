@@ -4,7 +4,7 @@ import { Range } from "./SQLDialect";
 
 t.test("it understands Postgres escaping rules", async (t) => {
   const postgres = new SQLDialectPostgres();
-  const checks: [string, Range[]][] = [
+  const checks: [string, Range[] | Error][] = [
     [``, []],
     [` `, []],
     [`SELECT * FROM users`, []],

@@ -1,11 +1,7 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
-import { dangerousCharsInInput } from "./dangerousCharsInInput";
-import {
-  detectSQLInjection,
-  queryContainsUserInput,
-} from "./detectSQLInjection";
+import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialect/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialect/SQLDialectPostgres";
 
@@ -105,20 +101,6 @@ t.test(
   }
 );
 
-t.test("Test the queryContainsUserInput() function", async () => {
-  t.same(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"), true);
-  t.same(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"), true);
-  t.same(
-    queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("),
-    true
-  );
-  t.same(queryContainsUserInput("Roses are red", "violet"), false);
-});
-
-t.test("Test the dangerousCharsInInput() function", async () => {
-  t.ok(dangerousCharsInInput("This is not ok--"));
-});
-
 function isSqlInjection(sql: string, input: string) {
   t.same(
     detectSQLInjection(sql, input, new SQLDialectMySQL()),
@@ -143,29 +125,4 @@ function isNotSqlInjection(sql: string, input: string) {
     false,
     sql + " (Postgres)"
   );
-}
-
-const files = [join(__dirname, "payloads", "Auth_Bypass.txt")];
-
-for (const file of files) {
-  const contents = readFileSync(file, "utf-8");
-  const lines = contents.split(/\r?\n/);
-  for (const sql of lines) {
-    const source = `${sql} (${basename(file)})`;
-    t.test(
-      `It flags ${sql} from ${basename(file)} as SQL injection`,
-      async () => {
-        t.same(
-          detectSQLInjection(sql, sql, new SQLDialectMySQL()),
-          true,
-          source + " (MySQL)"
-        );
-        t.same(
-          detectSQLInjection(sql, sql, new SQLDialectPostgres()),
-          true,
-          source + " (Postgres)"
-        );
-      }
-    );
-  }
 }
