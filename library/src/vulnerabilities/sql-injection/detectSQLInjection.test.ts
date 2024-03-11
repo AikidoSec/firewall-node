@@ -179,6 +179,10 @@ const files = [
   join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
+function quote(str: string) {
+  return `'${str.replace(/'/g, "''")}'`;
+}
+
 for (const file of files) {
   const contents = readFileSync(file, "utf-8");
   const lines = contents.split(/\r?\n/);
@@ -187,6 +191,18 @@ for (const file of files) {
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
         t.same(detectSQLInjection(sql, sql), true, sql);
+      }
+    );
+
+    t.test(
+      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped)`,
+      async () => {
+        const escaped = quote(sql);
+        t.same(
+          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
+          false,
+          sql
+        );
       }
     );
   }
