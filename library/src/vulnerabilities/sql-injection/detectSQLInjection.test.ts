@@ -128,6 +128,10 @@ function doubleQuoted(str: string) {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
+function backticks(str: string) {
+  return "`" + str.replace(/`/g, "``") + "`";
+}
+
 for (const file of files) {
   const contents = readFileSync(file, "utf-8");
   const lines = contents.split(/\r?\n/);
@@ -160,6 +164,14 @@ for (const file of files) {
           false,
           sql
         );
+      }
+    );
+
+    t.test(
+      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with backticks)`,
+      async () => {
+        const escaped = backticks(sql);
+        t.same(detectSQLInjection("SELECT * FROM ${escaped}", sql), false, sql);
       }
     );
   }
