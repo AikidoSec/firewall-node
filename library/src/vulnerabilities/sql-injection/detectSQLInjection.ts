@@ -1,4 +1,4 @@
-import { dangerousCharsInInput } from "./dangerousCharsInInput";
+import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { queryContainsUserInput } from "./queryContainsUserInput";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 import { userInputOccurrencesSafelyEncapsulated } from "./userInputOccurrencesSafelyEncapsulated";
@@ -23,9 +23,10 @@ export function detectSQLInjection(query: string, userInput: string) {
     return false;
   }
 
-  if (dangerousCharsInInput(userInput)) {
-    // If the user input contains characters that are dangerous in every context :
-    // Encapsulated or not, return true (No need to check any further)
+  if (
+    SQL_DANGEROUS_IN_STRING.some((dangerous) => userInput.includes(dangerous))
+  ) {
+    // If the user input is a dangerous string, return true (i.e. SQL Injection)
     return true;
   }
 

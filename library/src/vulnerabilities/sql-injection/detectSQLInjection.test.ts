@@ -256,6 +256,13 @@ for (const file of files) {
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
+        t.same(detectSQLInjection(sql, sql), true, sql);
+      }
+    );
+
+    t.test(
+      `It flags ${sql} from ${basename(file)} as SQL injection (in query)`,
+      async () => {
         t.same(
           detectSQLInjection(`SELECT * FROM users ${sql}`, sql),
           true,
