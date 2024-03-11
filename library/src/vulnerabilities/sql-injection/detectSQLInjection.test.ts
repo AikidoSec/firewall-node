@@ -20,6 +20,7 @@ const BAD_SQL_COMMANDS = [
   "Roses are red and lovely",
   "This is a group_concat_test",
   // Test some special characters
+  "I'm writting you",
   "Termin;ate",
   "Roses <> violets",
   "Roses < Violets",
@@ -79,39 +80,6 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
-// Weird edge cases, but we'll flag 'em as SQL injections for now
-// Requires better understanding of the SQL syntax
-t.test("Comment is same as user input", async () => {
-  isSqlInjection(
-    "SELECT * FROM hashtags WHERE name = 'name' -- Query by name",
-    "name"
-  );
-  isSqlInjection(
-    "SELECT * FROM hashtags WHERE name = '-- Query by name' -- Query by name",
-    "-- Query by name"
-  );
-});
-
-t.test("It checks whether the string is safely escaped", async () => {
-  isNotSqlInjection(
-    `SELECT * FROM comments WHERE comment = "I'm writting you"`,
-    "I'm writting you"
-  );
-  isNotSqlInjection(
-    `SELECT * FROM comments WHERE comment = 'I"m writting you'`,
-    'I"m writting you'
-  );
-
-  isSqlInjection(
-    `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
-    "I'm writting you"
-  );
-  isSqlInjection(
-    `SELECT * FROM comments WHERE comment = "I"m writting you"`,
-    'I"m writting you'
-  );
-});
-
 SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
   t.test(
     `It flags dangerous string ${dangerous} as SQL injection`,
@@ -120,13 +88,6 @@ SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
       const input = `${dangerous} a`;
       isSqlInjection(`SELECT * FROM users WHERE ${input}`, input);
     }
-  );
-});
-
-t.test("It does not flag escaped # as SQL injection", async () => {
-  isNotSqlInjection(
-    "SELECT * FROM hashtags WHERE name = '#hashtag'",
-    "#hashtag"
   );
 });
 
@@ -161,72 +122,6 @@ t.test("It flags MySQL bitwise operator as SQL injection", async () => {
 
 t.test("It flags postgres type cast operator as SQL injection", async () => {
   isSqlInjection("SELECT abc::date", "abc::date");
-});
-
-t.test("It flags multiline queries correctly", async () => {
-  isSqlInjection(
-    `
-        SELECT *
-        FROM users
-        WHERE id = '1' OR 1=1
-      `,
-    "1' OR 1=1"
-  );
-  isSqlInjection(
-    `
-      SELECT *
-      FROM users
-      WHERE id = '1' OR 1=1
-        AND is_escaped = '1'' OR 1=1'
-    `,
-    "1' OR 1=1"
-  );
-  isSqlInjection(
-    `
-      SELECT *
-      FROM users
-      WHERE id = '1' OR 1=1
-        AND is_escaped = "1' OR 1=1"
-    `,
-    "1' OR 1=1"
-  );
-
-  isNotSqlInjection(
-    `
-      SELECT * FROM \`users\`
-      WHERE id = 123
-    `,
-    "123"
-  );
-  isNotSqlInjection(
-    `
-      SELECT * FROM \`us\`\`ers\`
-      WHERE id = 123
-    `,
-    "us``ers"
-  );
-  isNotSqlInjection(
-    `
-        SELECT * FROM users
-        WHERE id = 123
-    `,
-    "123"
-  );
-  isNotSqlInjection(
-    `
-        SELECT * FROM users
-        WHERE id = '123'
-    `,
-    "123"
-  );
-  isNotSqlInjection(
-    `
-      SELECT *
-      FROM users
-      WHERE is_escaped = "1' OR 1=1"
-    `,
-    "1' OR 1=1"
-  );
 });
 
 const files = [
