@@ -1,6 +1,7 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
+import { SQL_DANGEROUS_IN_STRING, SQL_STRING_CHARS } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
 
 const BAD_SQL_COMMANDS = [
@@ -19,7 +20,6 @@ const BAD_SQL_COMMANDS = [
   "Roses are red and lovely",
   "This is a group_concat_test",
   // Test some special characters
-  "I'm writting you",
   "Termin;ate",
   "Roses <> violets",
   "Roses < Violets",
@@ -79,6 +79,57 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
+// Weird edge cases, but we'll flag 'em as SQL injections for now
+// Requires better understanding of the SQL syntax
+t.test("Comment is same as user input", async () => {
+  isSqlInjection(
+    "SELECT * FROM hashtags WHERE name = 'name' -- Query by name",
+    "name"
+  );
+  isSqlInjection(
+    "SELECT * FROM hashtags WHERE name = '-- Query by name' -- Query by name",
+    "-- Query by name"
+  );
+});
+
+t.test("It checks whether the string is safely escaped", async () => {
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I'm writting you"`,
+    "I'm writting you"
+  );
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I"m writting you'`,
+    'I"m writting you'
+  );
+
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
+    "I'm writting you"
+  );
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I"m writting you"`,
+    'I"m writting you'
+  );
+});
+
+SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
+  t.test(
+    `It flags dangerous string ${dangerous} as SQL injection`,
+    async () => {
+      // Needs to be longer than 1 char
+      const input = `${dangerous} a`;
+      isSqlInjection(`SELECT * FROM users WHERE ${input}`, input);
+    }
+  );
+});
+
+t.test("It does not flag escaped # as SQL injection", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM hashtags WHERE name = '#hashtag'",
+    "#hashtag"
+  );
+});
+
 t.test("It flags function calls as SQL injections", async () => {
   isSqlInjection("foobar()", "foobar()");
   isSqlInjection("foobar(1234567)", "foobar(1234567)");
@@ -112,6 +163,72 @@ t.test("It flags postgres type cast operator as SQL injection", async () => {
   isSqlInjection("SELECT abc::date", "abc::date");
 });
 
+t.test("It flags multiline queries correctly", async () => {
+  isSqlInjection(
+    `
+        SELECT *
+        FROM users
+        WHERE id = '1' OR 1=1
+      `,
+    "1' OR 1=1"
+  );
+  isSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE id = '1' OR 1=1
+        AND is_escaped = '1'' OR 1=1'
+    `,
+    "1' OR 1=1"
+  );
+  isSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE id = '1' OR 1=1
+        AND is_escaped = "1' OR 1=1"
+    `,
+    "1' OR 1=1"
+  );
+
+  isNotSqlInjection(
+    `
+      SELECT * FROM \`users\`
+      WHERE id = 123
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+      SELECT * FROM \`us\`\`ers\`
+      WHERE id = 123
+    `,
+    "us``ers"
+  );
+  isNotSqlInjection(
+    `
+        SELECT * FROM users
+        WHERE id = 123
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+        SELECT * FROM users
+        WHERE id = '123'
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE is_escaped = "1' OR 1=1"
+    `,
+    "1' OR 1=1"
+  );
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
@@ -139,7 +256,11 @@ for (const file of files) {
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
-        t.same(detectSQLInjection(sql, sql), true, sql);
+        t.same(
+          detectSQLInjection(`SELECT * FROM users ${sql}`, sql),
+          true,
+          sql
+        );
       }
     );
 
