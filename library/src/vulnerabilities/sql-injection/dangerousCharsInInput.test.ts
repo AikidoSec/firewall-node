@@ -11,3 +11,7 @@ SQL_DANGEROUS_IN_STRING.forEach((char) => {
 t.test("it returns false for safe chars", async (t) => {
   t.same(dangerousCharsInInput("safe"), false);
 });
+
+t.test("it returns true if comment chars are used", async () => {
+  t.same(dangerousCharsInInput("This is not ok--"), true);
+});

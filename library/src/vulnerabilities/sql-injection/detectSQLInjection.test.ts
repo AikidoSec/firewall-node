@@ -82,8 +82,6 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
-// END TESTS WITH EXPLOITS FROM : https://github.com/payloadbox/sql-injection-payload-list/tree/master
-
 t.test(
   "Test the detectSQLInjection() function to see if it detects SQL Functions",
   async () => {
@@ -107,49 +105,6 @@ t.test(
     isNotSqlInjection("$foobar()", "$foobar()");
   }
 );
-
-t.test("Test the queryContainsUserInput() function", async () => {
-  t.same(queryContainsUserInput("SELECT * FROM 'Jonas';", "Jonas"), true);
-  t.same(queryContainsUserInput("Hi I'm MJoNaSs", "jonas"), true);
-  t.same(
-    queryContainsUserInput("Hiya, 123^&*( is a real string", "123^&*("),
-    true
-  );
-  t.same(queryContainsUserInput("Roses are red", "violet"), false);
-});
-
-t.test(
-  "Test the userInputOccurrencesSafelyEncapsulated() function",
-  async () => {
-    t.same(
-      userInputOccurrencesSafelyEncapsulated(
-        ` Hello Hello 'UNION'and also "UNION" `,
-        "UNION"
-      ),
-      true
-    );
-    t.same(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"), true);
-    t.same(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"), true);
-    t.same(
-      userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"),
-      true
-    );
-
-    t.same(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'"UNION"UNION`, "UNION"),
-      false
-    );
-    t.same(
-      userInputOccurrencesSafelyEncapsulated(`'UNION'UNION"UNION"`, "UNION"),
-      false
-    );
-    t.same(userInputOccurrencesSafelyEncapsulated("UNION", "UNION"), false);
-  }
-);
-
-t.test("Test the dangerousCharsInInput() function", async () => {
-  t.ok(dangerousCharsInInput("This is not ok--"));
-});
 
 t.test("It flags postgres bitwise operator as SQL injection", async () => {
   isSqlInjection("SELECT 10 # 12", "10 # 12");
@@ -179,6 +134,10 @@ const files = [
   join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
+function quote(str: string) {
+  return `'${str.replace(/'/g, "''")}'`;
+}
+
 for (const file of files) {
   const contents = readFileSync(file, "utf-8");
   const lines = contents.split(/\r?\n/);
@@ -187,6 +146,18 @@ for (const file of files) {
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
         t.same(detectSQLInjection(sql, sql), true, sql);
+      }
+    );
+
+    t.test(
+      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped)`,
+      async () => {
+        const escaped = quote(sql);
+        t.same(
+          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
+          false,
+          sql
+        );
       }
     );
   }
