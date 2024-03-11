@@ -1,13 +1,10 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
-import * as path from "path";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
-import {
-  detectSQLInjection,
-  userInputOccurrencesSafelyEncapsulated,
-  queryContainsUserInput,
-} from "./detectSQLInjection";
+import { detectSQLInjection } from "./detectSQLInjection";
+import { queryContainsUserInput } from "./queryContainsUserInput";
+import { userInputOccurrencesSafelyEncapsulated } from "./userInputOccurrencesSafelyEncapsulated";
 
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
