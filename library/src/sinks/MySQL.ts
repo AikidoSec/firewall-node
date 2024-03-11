@@ -3,7 +3,7 @@ import { Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
+import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 
 export class MySQL implements Wrapper {
   private inspectQuery(

@@ -1,10 +1,7 @@
-import { Context } from "../../agent/Context";
-import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
-import { Source } from "../../agent/Source";
-import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
-import { SQL_STRING_CHARS } from "./config";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
+import { queryContainsUserInput } from "./queryContainsUserInput";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
+import { userInputOccurrencesSafelyEncapsulated } from "./userInputOccurrencesSafelyEncapsulated";
 
 /**
  * This function executes 2 checks to see if something is or is not an SQL Injection :
@@ -40,79 +37,4 @@ export function detectSQLInjection(query: string, userInput: string) {
 
   // Executing our final check with the massive RegEx :
   return userInputContainsSQLSyntax(userInput);
-}
-
-/**
- * This function is the first step to determine if an SQL Injection is happening,
- * If the sql statement contains user input, this function returns true (case-insensitive)
- * @param query The SQL Statement you want to check it against
- * @param userInput The user input you want to check
- * @returns True when the sql statement contains the input
- */
-export function queryContainsUserInput(query: string, userInput: string) {
-  const lowercaseSql = query.toLowerCase();
-  const lowercaseInput = userInput.toLowerCase();
-
-  return lowercaseSql.includes(lowercaseInput);
-}
-
-/**
- * This function is the third step to determine if an SQL Injection is happening,
- * This checks if **all** occurrences of our input are encapsulated as strings.
- * @param query The SQL Statement
- * @param userInput The user input you want to check is encapsulated
- * @returns True if the input is always encapsulated inside a string
- */
-export function userInputOccurrencesSafelyEncapsulated(
-  query: string,
-  userInput: string
-) {
-  const queryWithoutUserInput = query.split(userInput);
-  for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
-    // Get the last character of this segment
-    const lastChar = queryWithoutUserInput[i].slice(-1);
-    // Get the first character of the next segment
-    const firstCharNext = queryWithoutUserInput[i + 1].slice(0, 1);
-
-    if (!SQL_STRING_CHARS.includes(lastChar)) {
-      return false; // If the character is not one of these, it's not a string.
-    }
-
-    if (lastChar != firstCharNext) {
-      return false; // String is not encapsulated by the same type of quotes.
-    }
-  }
-
-  return true;
-}
-
-/**
- * This function goes over all the different input types in the context and checks
- * if it's a possible SQL Injection, if so the function returns an InterceptorResult
- */
-export function checkContextForSqlInjection({
-  sql,
-  operation,
-  context,
-}: {
-  sql: string;
-  operation: string;
-  context: Context;
-}): InterceptorResult {
-  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
-    if (context[source]) {
-      const userInput = extractStringsFromUserInput(context[source]);
-      for (const str of userInput) {
-        if (detectSQLInjection(sql, str)) {
-          return {
-            operation: operation,
-            kind: "sql_injection",
-            source: source,
-            pathToPayload: "UNKOWN",
-            metadata: {},
-          };
-        }
-      }
-    }
-  }
 }

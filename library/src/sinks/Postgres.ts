@@ -3,7 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { Context } from "../agent/Context";
-import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/detectSQLInjection";
+import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 
 export class Postgres implements Wrapper {
   private inspectQuery(args: unknown[], context: Context): InterceptorResult {
