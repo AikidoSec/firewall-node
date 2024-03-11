@@ -1,7 +1,6 @@
-import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
-import { sourceHumanName, Source } from "../../agent/Source";
+import { Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { SQL_STRING_CHARS } from "./config";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";

@@ -1,7 +1,6 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
-import * as path from "path";
 import { dangerousCharsInInput } from "./dangerousCharsInInput";
 import {
   detectSQLInjection,
