@@ -50,12 +50,8 @@ function charAppearsInsideUserInputUnescaped(userInput: string, char: string) {
       continue;
     }
 
-    if (userInput[i] === char) {
-      if (!escaped) {
-        return false;
-      }
-
-      escaped = false;
+    if (userInput[i] === char && !escaped) {
+      return false;
     }
 
     escaped = false;
