@@ -111,16 +111,19 @@ t.test("It does not flag escaped # as SQL injection", async () => {
   );
 });
 
-// Weird edge cases, but we'll flag 'em as SQL injections for now
+// Weird edge case, but we'll flag 'em as SQL injections for now
 // Requires better understanding of the SQL syntax
 t.test("Comment is same as user input", async () => {
   isSqlInjection(
-    "SELECT * FROM hashtags WHERE name = 'name' -- Query by name",
-    "name"
-  );
-  isSqlInjection(
     "SELECT * FROM hashtags WHERE name = '-- Query by name' -- Query by name",
     "-- Query by name"
+  );
+});
+
+t.test("input occurs in comment", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM hashtags WHERE name = 'name' -- Query by name",
+    "name"
   );
 });
 
