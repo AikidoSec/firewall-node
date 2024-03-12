@@ -80,7 +80,12 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
-// TODO Add tests with backslashes before the quotes
+t.test("It knows about backslash escaping rules", async () => {
+  isSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
+
+  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
+});
 
 t.test("It checks whether the string is safely escaped", async () => {
   isSqlInjection(

@@ -7,19 +7,29 @@ export function userInputOccurrencesSafelyEncapsulated(
   const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
 
   return segmentsInBetween.every(({ currentSegment, nextSegment }) => {
-    const lastChar = currentSegment.slice(-1);
+    const charBeforeUserInput = currentSegment.slice(-1);
+    const quoteChar = SQL_STRING_CHARS.find(
+      (char) => char.char === charBeforeUserInput
+    );
 
-    if (!SQL_STRING_CHARS.map((char) => char.char).includes(lastChar)) {
+    if (!quoteChar) {
       return false;
     }
 
-    const nextChar = nextSegment.slice(0, 1);
+    const charAfterUserInput = nextSegment.slice(0, 1);
 
-    if (lastChar !== nextChar) {
+    if (charBeforeUserInput !== charAfterUserInput) {
       return false;
     }
 
-    return !userInput.includes(lastChar);
+    if (quoteChar.canUseBackwardSlash) {
+      return charAppearsInsideUserInputUnescaped(
+        userInput,
+        charBeforeUserInput
+      );
+    }
+
+    return !userInput.includes(charBeforeUserInput);
   });
 }
 
@@ -30,4 +40,26 @@ function getCurrentAndNextSegments<T>(
     currentSegment: currentItem,
     nextSegment: array[index + 1],
   }));
+}
+
+function charAppearsInsideUserInputUnescaped(userInput: string, char: string) {
+  let escaped = false;
+  for (let i = 0; i < userInput.length; i++) {
+    if (!escaped && userInput[i] === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (userInput[i] === char) {
+      if (!escaped) {
+        return false;
+      }
+
+      escaped = false;
+    }
+
+    escaped = false;
+  }
+
+  return !escaped;
 }

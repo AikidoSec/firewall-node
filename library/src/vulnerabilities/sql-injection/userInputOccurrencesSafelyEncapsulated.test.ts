@@ -12,6 +12,8 @@ t.test(
       true
     );
     t.same(userInputOccurrencesSafelyEncapsulated(`"UNION"`, "UNION"), true);
+    t.same(userInputOccurrencesSafelyEncapsulated("`UNION`", "UNION"), true);
+    t.same(userInputOccurrencesSafelyEncapsulated("`U`NION`", "U`NION"), false);
     t.same(userInputOccurrencesSafelyEncapsulated(` 'UNION' `, "UNION"), true);
     t.same(
       userInputOccurrencesSafelyEncapsulated(`"UNION"'UNION'`, "UNION"),
@@ -42,6 +44,34 @@ t.test(
         `UN'ION`
       ),
       false
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM cats WHERE id = 'UNION\\'`,
+        "UNION\\"
+      ),
+      false
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM cats WHERE id = 'UNION\\\\'`,
+        "UNION\\\\"
+      ),
+      true
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM cats WHERE id = 'UNION\\\\\\'`,
+        "UNION\\\\\\"
+      ),
+      false
+    );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM cats WHERE id = 'UNION\\n'`,
+        "UNION\\n"
+      ),
+      true
     );
   }
 );

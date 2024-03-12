@@ -91,18 +91,21 @@ export const SQL_OPERATORS = [
   "::",
 ];
 
-export const SQL_STRING_CHARS: { char: string; backwardSlash: boolean }[] = [
+export const SQL_STRING_CHARS: {
+  char: string;
+  canUseBackwardSlash: boolean;
+}[] = [
   {
     char: '"',
-    backwardSlash: true,
+    canUseBackwardSlash: true,
   },
   {
     char: "'",
-    backwardSlash: true,
+    canUseBackwardSlash: true,
   },
   {
     char: "`",
-    backwardSlash: false,
+    canUseBackwardSlash: false,
   },
 ];
 
