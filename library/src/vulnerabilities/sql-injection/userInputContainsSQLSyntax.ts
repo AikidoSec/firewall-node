@@ -1,5 +1,5 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_KEYWORDS, SQL_OPERATORS } from "./config";
+import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS, SQL_OPERATORS } from "./config";
 
 const matchSqlKeywords =
   "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
@@ -15,9 +15,12 @@ const matchSqlFunctions =
   "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
   "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
 
+const matchDangerousStrings =
+  SQL_DANGEROUS_IN_STRING.map(escapeStringRegexp).join("|");
+
 const possibleSqlRegex = new RegExp(
   // Match one or more of : sql keywords, sql operators, sql functions
-  `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}`,
+  `${matchSqlKeywords}|${matchSqlOperators}|${matchSqlFunctions}|${matchDangerousStrings}`,
   "im"
 );
 

@@ -53,12 +53,12 @@ const IS_NOT_INJECTION = [
   [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
   [`"UNION;"`, "UNION;"], // String encapsulation
   ["SELECT * FROM table", "*"],
+  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
+  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
 ];
 
 const IS_INJECTION = [
   [`'union'  is not UNION`, "UNION"], // String not always encapsulated
-  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
-  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
@@ -78,6 +78,30 @@ t.test("Test detectSQLInjection() function", async () => {
   for (const test of IS_NOT_INJECTION) {
     isNotSqlInjection(test[0], test[1]);
   }
+});
+
+t.test("It checks whether the string is safely escaped", async () => {
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
+    "I'm writting you"
+  );
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I"m writting you"`,
+    'I"m writting you'
+  );
+
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I'm writting you"`,
+    "I'm writting you"
+  );
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I"m writting you'`,
+    'I"m writting you'
+  );
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I\`m writting you"`,
+    "I`m writting you"
+  );
 });
 
 SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
