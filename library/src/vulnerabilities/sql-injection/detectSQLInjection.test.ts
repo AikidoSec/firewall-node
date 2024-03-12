@@ -80,11 +80,13 @@ t.test("Test detectSQLInjection() function", async () => {
   }
 });
 
-t.test("It knows about backslash escaping rules", async () => {
+t.test("It allows escape sequences", async () => {
   isSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
+  isSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
 
-  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\tusers'", "\tusers");
 });
 
 t.test("It checks whether the string is safely escaped", async () => {
