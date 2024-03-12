@@ -133,7 +133,7 @@ const files = [
 ];
 
 function escapeLikeDatabase(str: string, char: string) {
-  return char + str.replace(new RegExp(char, "g"), "\\" + char) + char;
+  return char + str.replace(new RegExp(char, "g"), char.repeat(2)) + char;
 }
 
 for (const file of files) {
