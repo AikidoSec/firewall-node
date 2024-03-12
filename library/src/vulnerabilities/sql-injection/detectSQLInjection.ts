@@ -17,16 +17,20 @@ export function detectSQLInjection(query: string, userInput: string) {
   const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
 
   if (
-    segmentsInBetween.length > 0 &&
     segmentsInBetween.every(({ currentSegment, nextSegment }) => {
       const lastChar = currentSegment.slice(-1);
+
+      if (!SQL_STRING_CHARS.includes(lastChar)) {
+        return false;
+      }
+
       const nextChar = nextSegment.slice(0, 1);
 
-      return (
-        SQL_STRING_CHARS.includes(lastChar) &&
-        lastChar === nextChar &&
-        !userInput.includes(lastChar)
-      );
+      if (lastChar !== nextChar) {
+        return false;
+      }
+
+      return !userInput.includes(lastChar);
     })
   ) {
     return false;
@@ -39,14 +43,8 @@ export function detectSQLInjection(query: string, userInput: string) {
 function getCurrentAndNextSegments<T>(
   array: T[]
 ): { currentSegment: T; nextSegment: T }[] {
-  return array
-    .slice(0, -1)
-    .map((currentItem, index) => ({
-      currentSegment: currentItem,
-      nextSegment: array[index + 1],
-    }))
-    .filter(
-      ({ currentSegment, nextSegment }) =>
-        currentSegment !== "" && nextSegment !== ""
-    );
+  return array.slice(0, -1).map((currentItem, index) => ({
+    currentSegment: currentItem,
+    nextSegment: array[index + 1],
+  }));
 }
