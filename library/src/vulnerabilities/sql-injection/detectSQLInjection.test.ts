@@ -132,16 +132,8 @@ const files = [
   join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
-function singleQuoted(str: string) {
-  return `'${str.replace(/'/g, "''")}'`;
-}
-
-function doubleQuoted(str: string) {
-  return `"${str.replace(/"/g, '""')}"`;
-}
-
-function backticks(str: string) {
-  return "`" + str.replace(/`/g, "``") + "`";
+function escapeLikeDatabase(str: string, char: string) {
+  return char + str.replace(new RegExp(char, "g"), "\\" + char) + char;
 }
 
 for (const file of files) {
@@ -169,7 +161,7 @@ for (const file of files) {
     t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes)`,
       async () => {
-        const escaped = singleQuoted(sql);
+        const escaped = escapeLikeDatabase(sql, "'");
         t.same(
           detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
           false,
@@ -181,7 +173,7 @@ for (const file of files) {
     t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes)`,
       async () => {
-        const escaped = doubleQuoted(sql);
+        const escaped = escapeLikeDatabase(sql, '"');
         t.same(
           detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
           false,
@@ -193,7 +185,7 @@ for (const file of files) {
     t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with backticks)`,
       async () => {
-        const escaped = backticks(sql);
+        const escaped = escapeLikeDatabase(sql, "`");
         t.same(detectSQLInjection("SELECT * FROM ${escaped}", sql), false, sql);
       }
     );
