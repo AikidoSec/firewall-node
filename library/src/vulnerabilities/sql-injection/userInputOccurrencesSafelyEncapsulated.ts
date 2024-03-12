@@ -13,14 +13,19 @@ export function userInputOccurrencesSafelyEncapsulated(
 ) {
   const queryWithoutUserInput = query.split(userInput);
   for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
+    const segment = queryWithoutUserInput[i];
+
     // Get the last character of this segment
-    const lastChar = queryWithoutUserInput[i].slice(-1);
-    // Get the first character of the next segment
-    const firstCharNext = queryWithoutUserInput[i + 1].slice(0, 1);
+    const lastChar = segment.slice(-1);
 
     if (!SQL_STRING_CHARS.includes(lastChar)) {
       return false; // If the character is not one of these, it's not a string.
     }
+
+    const nextSegment = queryWithoutUserInput[i + 1];
+
+    // Get the first character of the next segment
+    const firstCharNext = nextSegment.slice(0, 1);
 
     if (lastChar != firstCharNext) {
       return false; // String is not encapsulated by the same type of quotes.
