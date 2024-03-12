@@ -1,3 +1,5 @@
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
+
 export const SQL_KEYWORDS = [
   "INSERT",
   "SELECT",
@@ -91,23 +93,7 @@ export const SQL_OPERATORS = [
   "::",
 ];
 
-export const SQL_STRING_CHARS: {
-  char: string;
-  canUseBackwardSlash: boolean;
-}[] = [
-  {
-    char: '"',
-    canUseBackwardSlash: true,
-  },
-  {
-    char: "'",
-    canUseBackwardSlash: true,
-  },
-  {
-    char: "`",
-    canUseBackwardSlash: false,
-  },
-];
+export const SQL_STRING_CHARS = ['"', "'", "`"];
 
 export const SQL_DANGEROUS_IN_STRING = [
   '"', // Double quote
@@ -119,3 +105,5 @@ export const SQL_DANGEROUS_IN_STRING = [
   "--", // Start of comment
   "#", // Start of comment
 ];
+
+export const SQL_ESCAPE_SEQUENCES = ["\\n", "\\r", "\\t"];

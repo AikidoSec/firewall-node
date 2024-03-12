@@ -136,6 +136,24 @@ t.test("input occurs in comment", async () => {
   );
 });
 
+t.test("User input is multiline", async () => {
+  isSqlInjection(
+    `SELECT * FROM users WHERE id = 'a'
+OR 1=1;#'`,
+    `a'
+OR 1=1#`
+  );
+
+  isNotSqlInjection(
+    `SELECT * FROM users WHERE id = 'a
+b
+c';`,
+    `a
+b
+c`
+  );
+});
+
 t.test("It flags multiline queries correctly", async () => {
   isSqlInjection(
     `

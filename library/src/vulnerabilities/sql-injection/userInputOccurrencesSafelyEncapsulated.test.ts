@@ -57,7 +57,7 @@ t.test(
         `SELECT * FROM cats WHERE id = 'UNION\\\\'`,
         "UNION\\\\"
       ),
-      true
+      false
     );
     t.same(
       userInputOccurrencesSafelyEncapsulated(
