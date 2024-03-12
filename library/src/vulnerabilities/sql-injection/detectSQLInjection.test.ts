@@ -141,7 +141,7 @@ t.test("input occurs in comment", async () => {
 t.test("User input is multiline", async () => {
   isSqlInjection(
     `SELECT * FROM users WHERE id = 'a'
-OR 1=1;#'`,
+OR 1=1#'`,
     `a'
 OR 1=1#`
   );
