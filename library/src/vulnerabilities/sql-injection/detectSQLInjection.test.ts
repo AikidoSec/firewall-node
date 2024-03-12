@@ -89,6 +89,7 @@ t.test("It checks whether the string is safely escaped", async () => {
     `SELECT * FROM comments WHERE comment = "I"m writting you"`,
     'I"m writting you'
   );
+  isSqlInjection("SELECT * FROM `comm`ents`", "`comm`ents");
 
   isNotSqlInjection(
     `SELECT * FROM comments WHERE comment = "I'm writting you"`,
@@ -102,6 +103,7 @@ t.test("It checks whether the string is safely escaped", async () => {
     `SELECT * FROM comments WHERE comment = "I\`m writting you"`,
     "I`m writting you"
   );
+  isNotSqlInjection("SELECT * FROM `comm'ents`", "comm'ents");
 });
 
 t.test("It does not flag escaped # as SQL injection", async () => {
