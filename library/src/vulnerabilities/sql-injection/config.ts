@@ -91,7 +91,20 @@ export const SQL_OPERATORS = [
   "::",
 ];
 
-export const SQL_STRING_CHARS = ["'", '"', "`"];
+export const SQL_STRING_CHARS: { char: string; backwardSlash: boolean }[] = [
+  {
+    char: '"',
+    backwardSlash: true,
+  },
+  {
+    char: "'",
+    backwardSlash: true,
+  },
+  {
+    char: "`",
+    backwardSlash: false,
+  },
+];
 
 export const SQL_DANGEROUS_IN_STRING = [
   '"', // Double quote
