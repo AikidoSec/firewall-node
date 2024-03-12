@@ -1,6 +1,6 @@
-import { SQL_STRING_CHARS } from "./config";
 import { queryContainsUserInput } from "./queryContainsUserInput";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
+import { userInputOccurrencesSafelyEncapsulated } from "./userInputOccurrencesSafelyEncapsulated";
 
 export function detectSQLInjection(query: string, userInput: string) {
   if (userInput.length <= 1) {
@@ -14,37 +14,10 @@ export function detectSQLInjection(query: string, userInput: string) {
     return false;
   }
 
-  const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
-
-  if (
-    segmentsInBetween.every(({ currentSegment, nextSegment }) => {
-      const lastChar = currentSegment.slice(-1);
-
-      if (!SQL_STRING_CHARS.includes(lastChar)) {
-        return false;
-      }
-
-      const nextChar = nextSegment.slice(0, 1);
-
-      if (lastChar !== nextChar) {
-        return false;
-      }
-
-      return !userInput.includes(lastChar);
-    })
-  ) {
+  if (userInputOccurrencesSafelyEncapsulated(query, userInput)) {
     return false;
   }
 
   // Executing our final check with the massive RegEx
   return userInputContainsSQLSyntax(userInput);
-}
-
-function getCurrentAndNextSegments<T>(
-  array: T[]
-): { currentSegment: T; nextSegment: T }[] {
-  return array.slice(0, -1).map((currentItem, index) => ({
-    currentSegment: currentItem,
-    nextSegment: array[index + 1],
-  }));
 }
