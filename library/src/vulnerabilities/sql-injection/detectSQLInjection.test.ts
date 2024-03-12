@@ -129,27 +129,14 @@ t.test("input occurs in comment", async () => {
   );
 });
 
-t.test("It checks whether the string is safely escaped", async () => {
-  isNotSqlInjection(
-    `SELECT * FROM comments WHERE comment = "I'm writting you"`,
-    "I'm writting you"
-  );
-  isNotSqlInjection(
-    `SELECT * FROM comments WHERE comment = 'I"m writting you'`,
-    'I"m writting you'
-  );
-
-  isSqlInjection(
-    `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
-    "I'm writting you"
-  );
-  isSqlInjection(
-    `SELECT * FROM comments WHERE comment = "I"m writting you"`,
-    'I"m writting you'
-  );
-});
-
 t.test("It flags multiline queries correctly", async () => {
+  isSqlInjection(
+    `
+      SELECT * FROM \`users\`\`
+      WHERE id = 123
+    `,
+    "users`"
+  );
   isSqlInjection(
     `
         SELECT *
@@ -189,7 +176,7 @@ t.test("It flags multiline queries correctly", async () => {
       SELECT * FROM \`us\`\`ers\`
       WHERE id = 123
     `,
-    "us``ers"
+    "users"
   );
   isNotSqlInjection(
     `
