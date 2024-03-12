@@ -132,8 +132,19 @@ const files = [
   join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
-function escapeLikeDatabase(str: string, char: string) {
-  return char + str.replace(new RegExp(char, "g"), "\\" + char) + char;
+/**
+ * escapeLikeDatabase("I'm a test", "'") => 'I''m a test'
+ * escapeLikeDatabase("I'm a test", "'", true) => 'I\'m a test'
+ */
+function escapeLikeDatabase(str: string, char: string, backslash = false) {
+  return (
+    char +
+    str.replace(
+      new RegExp(char, "g"),
+      backslash ? "\\" + char : char.repeat(2)
+    ) +
+    char
+  );
 }
 
 for (const file of files) {
@@ -171,9 +182,33 @@ for (const file of files) {
     );
 
     t.test(
+      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes using backslash)`,
+      async () => {
+        const escaped = escapeLikeDatabase(sql, "'", true);
+        t.same(
+          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
+          false,
+          sql
+        );
+      }
+    );
+
+    t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"');
+        t.same(
+          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
+          false,
+          sql
+        );
+      }
+    );
+
+    t.test(
+      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes using backslash)`,
+      async () => {
+        const escaped = escapeLikeDatabase(sql, '"', true);
         t.same(
           detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
           false,
