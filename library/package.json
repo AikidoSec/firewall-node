@@ -17,6 +17,7 @@
   "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
   "devDependencies": {
+    "@sinonjs/fake-timers": "^11.2.2",
     "@types/aws-lambda": "^8.10.131",
     "@types/cookie-parser": "^1.4.6",
     "@types/express": "^4.17.21",
@@ -26,6 +27,7 @@
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
     "@types/shimmer": "^1.0.5",
+    "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
