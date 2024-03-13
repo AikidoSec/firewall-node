@@ -1,11 +1,14 @@
-import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { Context } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
+import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
+import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 
 export class Postgres implements Wrapper {
+  private readonly dialect: SQLDialect = new SQLDialectPostgres();
+
   private inspectQuery(args: unknown[], context: Context): InterceptorResult {
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql: string = args[0];
@@ -14,6 +17,7 @@ export class Postgres implements Wrapper {
         sql: sql,
         context: context,
         operation: "pg.query",
+        dialect: this.dialect,
       });
     }
   }

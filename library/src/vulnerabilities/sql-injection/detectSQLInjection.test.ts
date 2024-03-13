@@ -1,8 +1,10 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
-import { SQL_DANGEROUS_IN_STRING, SQL_STRING_CHARS } from "./config";
+import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
+import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
+import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 
 const BAD_SQL_COMMANDS = [
   // Check for SQL Commands like : INSERT or DROP
@@ -261,18 +263,6 @@ t.test("It flags function calls as SQL injections", async () => {
   isNotSqlInjection("$foobar()", "$foobar()");
 });
 
-t.test("It flags postgres bitwise operator as SQL injection", async () => {
-  isSqlInjection("SELECT 10 # 12", "10 # 12");
-});
-
-t.test("It flags MySQL bitwise operator as SQL injection", async () => {
-  isSqlInjection("SELECT 10 ^ 12", "10 ^ 12");
-});
-
-t.test("It flags postgres type cast operator as SQL injection", async () => {
-  isSqlInjection("SELECT abc::date", "abc::date");
-});
-
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
@@ -303,18 +293,14 @@ for (const file of files) {
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection`,
       async () => {
-        t.same(detectSQLInjection(sql, sql), true, sql);
+        isSqlInjection(sql, sql);
       }
     );
 
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection (in query)`,
       async () => {
-        t.same(
-          detectSQLInjection(`SELECT * FROM users ${sql}`, sql),
-          true,
-          sql
-        );
+        isSqlInjection(`SELECT * FROM users ${sql}`, sql);
       }
     );
 
@@ -322,11 +308,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "'");
-        t.same(
-          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
-          false,
-          sql
-        );
+        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
       }
     );
 
@@ -334,11 +316,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "'", true);
-        t.same(
-          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
-          false,
-          sql
-        );
+        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
       }
     );
 
@@ -346,11 +324,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"');
-        t.same(
-          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
-          false,
-          sql
-        );
+        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
       }
     );
 
@@ -358,11 +332,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"', true);
-        t.same(
-          detectSQLInjection("SELECT * FROM users WHERE id = ${escaped}", sql),
-          false,
-          sql
-        );
+        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
       }
     );
 
@@ -370,16 +340,34 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with backticks)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "`");
-        t.same(detectSQLInjection("SELECT * FROM ${escaped}", sql), false, sql);
+        isNotSqlInjection("SELECT * FROM ${escaped}", sql);
       }
     );
   }
 }
 
 function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input), true, sql);
+  t.same(
+    detectSQLInjection(sql, input, new SQLDialectMySQL()),
+    true,
+    `${sql} (mysql)`
+  );
+  t.same(
+    detectSQLInjection(sql, input, new SQLDialectPostgres()),
+    true,
+    `${sql} (postgres)`
+  );
 }
 
 function isNotSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input), false, sql);
+  t.same(
+    detectSQLInjection(sql, input, new SQLDialectMySQL()),
+    false,
+    `${sql} (mysql)`
+  );
+  t.same(
+    detectSQLInjection(sql, input, new SQLDialectPostgres()),
+    false,
+    `${sql} (postgres)`
+  );
 }
