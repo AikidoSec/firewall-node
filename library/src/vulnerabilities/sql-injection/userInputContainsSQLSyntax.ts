@@ -15,10 +15,9 @@ export function userInputContainsSQLSyntax(
 }
 
 function buildRegex(dialect: SQLDialect) {
-  const keywords = SQL_KEYWORDS.concat(dialect.getKeywords());
   const matchSqlKeywords =
     "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
-    keywords.join("|") + // Look for SQL Keywords
+    SQL_KEYWORDS.map(escapeStringRegexp).join("|") + // Look for SQL Keywords
     ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
 
   const matchSqlOperators = `(${SQL_OPERATORS.map(escapeStringRegexp).join("|")})`;
@@ -30,8 +29,11 @@ function buildRegex(dialect: SQLDialect) {
     "([a-z0-9_-]+)" + // The name of a sql function can include letters, numbers, "_" and "-"
     "(?=[\\s]*\\()"; // Lookahead : A sql function should be followed by a "(" , spaces are allowed.
 
-  const matchDangerousStrings =
-    SQL_DANGEROUS_IN_STRING.map(escapeStringRegexp).join("|");
+  const matchDangerousStrings = SQL_DANGEROUS_IN_STRING.concat(
+    dialect.getDangerousStrings()
+  )
+    .map(escapeStringRegexp)
+    .join("|");
 
   return new RegExp(
     // Match one or more of : sql keywords, sql operators, sql functions

@@ -2,7 +2,7 @@
 import { SQLDialect } from "./SQLDialect";
 
 export class SQLDialectPostgres implements SQLDialect {
-  getKeywords(): string[] {
-    return [];
+  getDangerousStrings(): string[] {
+    return ["$"];
   }
 }
