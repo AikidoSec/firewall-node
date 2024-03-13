@@ -6,8 +6,10 @@ t.test("it keeps track of amount of calls", async () => {
   const clock = FakeTimers.install();
 
   const maxPerfSamplesInMemory = 50;
+  const maxCompressedStatsInMemory = 5;
   const stats = new InspectionStatistics({
     maxPerfSamplesInMemory: maxPerfSamplesInMemory,
+    maxCompressedStatsInMemory: maxCompressedStatsInMemory,
   });
 
   t.same(stats.getStats(), {});
@@ -106,7 +108,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   clock.tick(1000);
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < maxPerfSamplesInMemory; i++) {
     stats.onInspectedCall({
       module: "mongodb",
       blocked: false,
@@ -146,6 +148,25 @@ t.test("it keeps track of amount of calls", async () => {
 
   // @ts-expect-error Stats is private
   t.ok(stats.stats.mongodb.timings.durations.length < maxPerfSamplesInMemory);
+
+  for (
+    let i = 0;
+    i < maxPerfSamplesInMemory * maxCompressedStatsInMemory * 2;
+    i++
+  ) {
+    stats.onInspectedCall({
+      module: "mongodb",
+      blocked: false,
+      durationInMs: i * 0.1,
+      attackDetected: false,
+    });
+  }
+
+  t.same(
+    // @ts-expect-error Stats is private
+    stats.stats.mongodb.compressedTimings.length,
+    maxCompressedStatsInMemory
+  );
 
   clock.uninstall();
 });

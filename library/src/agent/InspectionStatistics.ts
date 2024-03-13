@@ -26,9 +26,17 @@ type ModuleStatsWithoutTimings = Omit<ModuleStats, "timings">;
 export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
   private readonly maxPerfSamplesInMemory: number;
+  private readonly maxCompressedStatsInMemory: number;
 
-  constructor({ maxPerfSamplesInMemory }: { maxPerfSamplesInMemory: number }) {
+  constructor({
+    maxPerfSamplesInMemory,
+    maxCompressedStatsInMemory,
+  }: {
+    maxPerfSamplesInMemory: number;
+    maxCompressedStatsInMemory: number;
+  }) {
     this.maxPerfSamplesInMemory = maxPerfSamplesInMemory;
+    this.maxCompressedStatsInMemory = maxCompressedStatsInMemory;
   }
 
   hasCompressedStats() {
@@ -109,6 +117,13 @@ export class InspectionStatistics {
         end: timings.lastCallAt,
       },
     });
+
+    if (
+      this.stats[module].compressedTimings.length >
+      this.maxCompressedStatsInMemory
+    ) {
+      this.stats[module].compressedTimings.shift();
+    }
 
     this.stats[module].timings.durations = [];
     this.stats[module].timings.firstCallAt = Date.now();

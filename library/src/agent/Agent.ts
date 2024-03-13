@@ -28,6 +28,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
+    maxCompressedStatsInMemory: 100,
   });
 
   constructor(
