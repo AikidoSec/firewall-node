@@ -175,7 +175,7 @@ export class Agent {
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const shouldReportInitialStats =
-        this.statistics.reachedMaxTimings() && !this.reportedInitialStats;
+        this.statistics.hasCompressedStats() && !this.reportedInitialStats;
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();

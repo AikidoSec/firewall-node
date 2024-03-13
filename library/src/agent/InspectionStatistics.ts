@@ -1,9 +1,19 @@
 import { percentiles } from "../helpers/percentiles";
 
+type ModuleCompressedTimings = {
+  averageInMS: number;
+  percentiles: Record<string, number>;
+  datetime: {
+    start: number;
+    end: number;
+  };
+};
+
 type ModuleStats = {
   withoutContext: number;
   total: number;
-  timings: number[];
+  timings: { durations: number[]; firstCallAt: number; lastCallAt: number };
+  compressedTimings: ModuleCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
@@ -11,10 +21,7 @@ type ModuleStats = {
   };
 };
 
-type ModuleStatsEnriched = {
-  averageInMS: number;
-  percentiles: Record<string, number>;
-} & Omit<ModuleStats, "timings">;
+type ModuleStatsWithoutTimings = Omit<ModuleStats, "timings">;
 
 export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
@@ -24,22 +31,16 @@ export class InspectionStatistics {
     this.maxPerfSamplesInMemory = maxPerfSamplesInMemory;
   }
 
-  reachedMaxTimings() {
+  hasCompressedStats() {
     return Object.values(this.stats).some(
-      (moduleStats) => moduleStats.timings.length >= this.maxPerfSamplesInMemory
+      (moduleStats) => moduleStats.compressedTimings.length > 0
     );
   }
 
-  getStats(): Record<string, ModuleStatsEnriched> {
-    const stats: Record<string, ModuleStatsEnriched> = {};
-
+  getStats(): Record<string, ModuleStatsWithoutTimings> {
+    const stats: Record<string, ModuleStatsWithoutTimings> = {};
     for (const module in this.stats) {
       const moduleStats = this.stats[module];
-      const timings = moduleStats.timings;
-
-      const averageInMS =
-        timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
-
       stats[module] = {
         total: moduleStats.total,
         attacksDetected: {
@@ -48,23 +49,8 @@ export class InspectionStatistics {
         },
         interceptorThrewError: moduleStats.interceptorThrewError,
         withoutContext: moduleStats.withoutContext,
-        averageInMS,
-        percentiles: {},
+        compressedTimings: moduleStats.compressedTimings,
       };
-
-      if (timings.length > 0) {
-        const [p50, p75, p90, p95, p99] = percentiles(
-          [50, 75, 90, 95, 99],
-          timings
-        );
-        stats[module].percentiles = {
-          "50": p50,
-          "75": p75,
-          "90": p90,
-          "95": p95,
-          "99": p99,
-        };
-      }
     }
 
     return stats;
@@ -75,7 +61,12 @@ export class InspectionStatistics {
       this.stats[module] = {
         withoutContext: 0,
         total: 0,
-        timings: [],
+        timings: {
+          durations: [],
+          firstCallAt: Date.now(),
+          lastCallAt: Date.now(),
+        },
+        compressedTimings: [],
         interceptorThrewError: 0,
         attacksDetected: {
           total: 0,
@@ -83,6 +74,45 @@ export class InspectionStatistics {
         },
       };
     }
+  }
+
+  private compressPerfSamples(module: string) {
+    if (!this.stats[module]) {
+      return;
+    }
+
+    if (this.stats[module].timings.durations.length === 0) {
+      return;
+    }
+
+    const timings = this.stats[module].timings;
+    const averageInMS =
+      timings.durations.reduce((acc, curr) => acc + curr, 0) /
+      timings.durations.length;
+
+    const [p50, p75, p90, p95, p99] = percentiles(
+      [50, 75, 90, 95, 99],
+      timings.durations
+    );
+
+    this.stats[module].compressedTimings.push({
+      averageInMS,
+      percentiles: {
+        "50": p50,
+        "75": p75,
+        "90": p90,
+        "95": p95,
+        "99": p99,
+      },
+      datetime: {
+        start: timings.firstCallAt,
+        end: timings.lastCallAt,
+      },
+    });
+
+    this.stats[module].timings.durations = [];
+    this.stats[module].timings.firstCallAt = Date.now();
+    this.stats[module].timings.lastCallAt = Date.now();
   }
 
   inspectedCallWithoutContext(module: string) {
@@ -111,11 +141,15 @@ export class InspectionStatistics {
     this.ensureModuleStats(module);
 
     this.stats[module].total += 1;
-    this.stats[module].timings.push(durationInMs);
 
-    if (this.stats[module].timings.length > this.maxPerfSamplesInMemory) {
-      this.stats[module].timings.shift();
+    if (
+      this.stats[module].timings.durations.length >= this.maxPerfSamplesInMemory
+    ) {
+      this.compressPerfSamples(module);
     }
+
+    this.stats[module].timings.durations.push(durationInMs);
+    this.stats[module].timings.lastCallAt = Date.now();
 
     if (attackDetected) {
       this.stats[module].attacksDetected.total += 1;

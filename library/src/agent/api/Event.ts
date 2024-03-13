@@ -56,8 +56,14 @@ type Stats = Record<
     };
     withoutContext: number;
     total: number;
-    averageInMS: number;
-    percentiles: Record<string, number>;
+    compressedTimings: {
+      averageInMS: number;
+      percentiles: Record<string, number>;
+      datetime: {
+        start: number;
+        end: number;
+      };
+    }[];
   }
 >;
 
