@@ -154,6 +154,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
     });
   }
 
+  // After 5 seconds, nothing should happen
   clock.tick(1000 * 5);
 
   t.match(api.getEvents(), [
@@ -162,11 +163,40 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
+  // After 10 minutes, we'll see that the required amount of performance samples has been reached
+  // And then send a heartbeat
   clock.tick(10 * 60 * 1000);
 
   t.match(api.getEvents(), [
     {
       type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  // After another 10 minutes, we'll see that we already sent the initial stats
+  clock.tick(10 * 60 * 1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  // Every 30 minutes we'll send a heartbeat
+  clock.tick(30 * 60 * 1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
     },
     {
       type: "heartbeat",
