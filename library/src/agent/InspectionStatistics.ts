@@ -20,8 +20,8 @@ export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
   private readonly maxTimings: number;
 
-  constructor({ maxTimings }: { maxTimings: number }) {
-    this.maxTimings = maxTimings;
+  constructor({ maxPerfSamplesInMemory }: { maxPerfSamplesInMemory: number }) {
+    this.maxTimings = maxPerfSamplesInMemory;
   }
 
   reachedMaxTimings() {

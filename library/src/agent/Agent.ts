@@ -27,7 +27,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private statistics = new InspectionStatistics({
-    maxTimings: 5000,
+    maxPerfSamplesInMemory: 5000,
   });
 
   constructor(

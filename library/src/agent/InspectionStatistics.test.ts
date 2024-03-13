@@ -3,7 +3,7 @@ import { InspectionStatistics } from "./InspectionStatistics";
 
 t.test("it keeps track of amount of calls", async () => {
   const stats = new InspectionStatistics({
-    maxTimings: 50,
+    maxPerfSamplesInMemory: 50,
   });
 
   t.same(stats.getStats(), {});
