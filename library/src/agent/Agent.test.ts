@@ -1,3 +1,4 @@
+import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
@@ -124,6 +125,8 @@ t.test("when attack detected", async () => {
 });
 
 t.test("it sends heartbeat when reached max timings", async () => {
+  const clock = FakeTimers.install();
+
   const logger = new LoggerNoop();
   const api = new APIForTesting();
   const token = new Token("123");
@@ -132,9 +135,9 @@ t.test("it sends heartbeat when reached max timings", async () => {
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
       module: "mongodb",
-      withoutContext: false,
       blocked: false,
       durationInMs: 0.1,
+      attackDetected: false,
     });
   }
   t.match(api.getEvents(), [
@@ -145,12 +148,22 @@ t.test("it sends heartbeat when reached max timings", async () => {
   for (let i = 0; i < 4000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
       module: "mongodb",
-      withoutContext: false,
       blocked: false,
       durationInMs: 0.1,
+      attackDetected: false,
     });
   }
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  clock.tick(10 * 60 * 1000);
+
   t.match(api.getEvents(), [
     {
       type: "started",
@@ -159,4 +172,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
       type: "heartbeat",
     },
   ]);
+
+  clock.uninstall();
 });
