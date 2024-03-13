@@ -260,7 +260,7 @@ t.test("It flags function calls as SQL injections", async () => {
 
   isNotSqlInjection("foobar)", "foobar)");
   isNotSqlInjection("foobar      )", "foobar      )");
-  isNotSqlInjection("$foobar()", "$foobar()");
+  isNotSqlInjection("€foobar()", "€foobar()");
 });
 
 const files = [
