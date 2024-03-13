@@ -53,12 +53,12 @@ const IS_NOT_INJECTION = [
   [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
   [`"UNION;"`, "UNION;"], // String encapsulation
   ["SELECT * FROM table", "*"],
+  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
+  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
 ];
 
 const IS_INJECTION = [
   [`'union'  is not UNION`, "UNION"], // String not always encapsulated
-  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
-  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
@@ -78,6 +78,155 @@ t.test("Test detectSQLInjection() function", async () => {
   for (const test of IS_NOT_INJECTION) {
     isNotSqlInjection(test[0], test[1]);
   }
+});
+
+t.test("It allows escape sequences", async () => {
+  isSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
+  isSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
+
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
+  isNotSqlInjection("SELECT * FROM users WHERE id = '\tusers'", "\tusers");
+});
+
+t.test("It checks whether the string is safely escaped", async () => {
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
+    "I'm writting you"
+  );
+  isSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I"m writting you"`,
+    'I"m writting you'
+  );
+  isSqlInjection("SELECT * FROM `comm`ents`", "`comm`ents");
+
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I'm writting you"`,
+    "I'm writting you"
+  );
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = 'I"m writting you'`,
+    'I"m writting you'
+  );
+  isNotSqlInjection(
+    `SELECT * FROM comments WHERE comment = "I\`m writting you"`,
+    "I`m writting you"
+  );
+  isNotSqlInjection("SELECT * FROM `comm'ents`", "comm'ents");
+});
+
+t.test("It does not flag escaped # as SQL injection", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM hashtags WHERE name = '#hashtag'",
+    "#hashtag"
+  );
+});
+
+// Weird edge case, but we'll flag 'em as SQL injections for now
+// Requires better understanding of the SQL syntax
+t.test("Comment is same as user input", async () => {
+  isSqlInjection(
+    "SELECT * FROM hashtags WHERE name = '-- Query by name' -- Query by name",
+    "-- Query by name"
+  );
+});
+
+t.test("input occurs in comment", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM hashtags WHERE name = 'name' -- Query by name",
+    "name"
+  );
+});
+
+t.test("User input is multiline", async () => {
+  isSqlInjection(
+    `SELECT * FROM users WHERE id = 'a'
+OR 1=1#'`,
+    `a'
+OR 1=1#`
+  );
+
+  isNotSqlInjection(
+    `SELECT * FROM users WHERE id = 'a
+b
+c';`,
+    `a
+b
+c`
+  );
+});
+
+t.test("It flags multiline queries correctly", async () => {
+  isSqlInjection(
+    `
+      SELECT * FROM \`users\`\`
+      WHERE id = 123
+    `,
+    "users`"
+  );
+  isSqlInjection(
+    `
+        SELECT *
+        FROM users
+        WHERE id = '1' OR 1=1
+      `,
+    "1' OR 1=1"
+  );
+  isSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE id = '1' OR 1=1
+        AND is_escaped = '1'' OR 1=1'
+    `,
+    "1' OR 1=1"
+  );
+  isSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE id = '1' OR 1=1
+        AND is_escaped = "1' OR 1=1"
+    `,
+    "1' OR 1=1"
+  );
+
+  isNotSqlInjection(
+    `
+      SELECT * FROM \`users\`
+      WHERE id = 123
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+      SELECT * FROM \`us\`\`ers\`
+      WHERE id = 123
+    `,
+    "users"
+  );
+  isNotSqlInjection(
+    `
+        SELECT * FROM users
+        WHERE id = 123
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+        SELECT * FROM users
+        WHERE id = '123'
+    `,
+    "123"
+  );
+  isNotSqlInjection(
+    `
+      SELECT *
+      FROM users
+      WHERE is_escaped = "1' OR 1=1"
+    `,
+    "1' OR 1=1"
+  );
 });
 
 SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {

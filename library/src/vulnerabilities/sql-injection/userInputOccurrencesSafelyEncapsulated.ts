@@ -1,36 +1,48 @@
-import { SQL_STRING_CHARS } from "./config";
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
+import { SQL_ESCAPE_SEQUENCES, SQL_STRING_CHARS } from "./config";
 
-/**
- * This function is the third step to determine if an SQL Injection is happening,
- * This checks if **all** occurrences of our input are encapsulated as strings.
- * @param query The SQL Statement
- * @param userInput The user input you want to check is encapsulated
- * @returns True if the input is always encapsulated inside a string
- */
+const escapeSequencesRegex = new RegExp(
+  SQL_ESCAPE_SEQUENCES.map(escapeStringRegexp).join("|"),
+  "gm"
+);
+
 export function userInputOccurrencesSafelyEncapsulated(
   query: string,
   userInput: string
 ) {
-  const queryWithoutUserInput = query.split(userInput);
-  for (let i = 0; i + 1 < queryWithoutUserInput.length; i++) {
-    const segment = queryWithoutUserInput[i];
+  const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
 
-    // Get the last character of this segment
-    const lastChar = segment.slice(-1);
+  return segmentsInBetween.every(({ currentSegment, nextSegment }) => {
+    const charBeforeUserInput = currentSegment.slice(-1);
+    const quoteChar = SQL_STRING_CHARS.find(
+      (char) => char === charBeforeUserInput
+    );
 
-    if (!SQL_STRING_CHARS.includes(lastChar)) {
-      return false; // If the character is not one of these, it's not a string.
+    if (!quoteChar) {
+      return false;
     }
 
-    const nextSegment = queryWithoutUserInput[i + 1];
+    const charAfterUserInput = nextSegment.slice(0, 1);
 
-    // Get the first character of the next segment
-    const firstCharNext = nextSegment.slice(0, 1);
-
-    if (lastChar != firstCharNext) {
-      return false; // String is not encapsulated by the same type of quotes.
+    if (charBeforeUserInput !== charAfterUserInput) {
+      return false;
     }
-  }
 
-  return true;
+    if (userInput.includes(charBeforeUserInput)) {
+      return false;
+    }
+
+    const withoutEscapeSequences = userInput.replace(escapeSequencesRegex, "");
+
+    return !withoutEscapeSequences.includes("\\");
+  });
+}
+
+function getCurrentAndNextSegments<T>(
+  array: T[]
+): { currentSegment: T; nextSegment: T }[] {
+  return array.slice(0, -1).map((currentItem, index) => ({
+    currentSegment: currentItem,
+    nextSegment: array[index + 1],
+  }));
 }
