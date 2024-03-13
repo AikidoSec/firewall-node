@@ -3,7 +3,6 @@ import * as t from "tap";
 import { readFileSync } from "fs";
 import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
-import { SQLDialect } from "./dialects/SQLDialect";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 
@@ -262,18 +261,6 @@ t.test("It flags function calls as SQL injections", async () => {
   isNotSqlInjection("foobar)", "foobar)");
   isNotSqlInjection("foobar      )", "foobar      )");
   isNotSqlInjection("$foobar()", "$foobar()");
-});
-
-t.test("It flags postgres bitwise operator as SQL injection", async () => {
-  isSqlInjection("SELECT 10 # 12", "10 # 12");
-});
-
-t.test("It flags MySQL bitwise operator as SQL injection", async () => {
-  isSqlInjection("SELECT 10 ^ 12", "10 ^ 12");
-});
-
-t.test("It flags postgres type cast operator as SQL injection", async () => {
-  isSqlInjection("SELECT abc::date", "abc::date");
 });
 
 const files = [

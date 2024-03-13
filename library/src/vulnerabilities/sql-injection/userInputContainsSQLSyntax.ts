@@ -1,5 +1,5 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_DANGEROUS_IN_STRING, SQL_OPERATORS } from "./config";
+import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS, SQL_OPERATORS } from "./config";
 import { SQLDialect } from "./dialects/SQLDialect";
 
 /**
@@ -15,9 +15,10 @@ export function userInputContainsSQLSyntax(
 }
 
 function buildRegex(dialect: SQLDialect) {
+  const keywords = SQL_KEYWORDS.concat(dialect.getKeywords());
   const matchSqlKeywords =
     "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
-    dialect.getKeywords().join("|") + // Look for SQL Keywords
+    keywords.join("|") + // Look for SQL Keywords
     ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
 
   const matchSqlOperators = `(${SQL_OPERATORS.map(escapeStringRegexp).join("|")})`;
