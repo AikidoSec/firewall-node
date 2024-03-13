@@ -2,8 +2,6 @@ import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQL_DANGEROUS_IN_STRING, SQL_OPERATORS } from "./config";
 import { SQLDialect } from "./dialects/SQLDialect";
 
-const cachedRegex = new Map<string, RegExp>();
-
 /**
  * This function is the first check in order to determine if a SQL injection is happening,
  * If the user input contains the necessary characters or words for a SQL injection, this
@@ -13,14 +11,7 @@ export function userInputContainsSQLSyntax(
   userInput: string,
   dialect: SQLDialect
 ): boolean {
-  let possibleSQLRegex = cachedRegex.get(dialect.constructor.name);
-
-  if (!possibleSQLRegex) {
-    possibleSQLRegex = buildRegex(dialect);
-    cachedRegex.set(dialect.constructor.name, possibleSQLRegex);
-  }
-
-  return possibleSQLRegex.test(userInput);
+  return buildRegex(dialect).test(userInput);
 }
 
 function buildRegex(dialect: SQLDialect) {
