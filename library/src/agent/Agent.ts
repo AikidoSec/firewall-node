@@ -20,7 +20,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 30 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 5 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 10 * 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
