@@ -18,15 +18,15 @@ type ModuleStatsEnriched = {
 
 export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
-  private readonly maxTimings: number;
+  private readonly maxPerfSamplesInMemory: number;
 
   constructor({ maxPerfSamplesInMemory }: { maxPerfSamplesInMemory: number }) {
-    this.maxTimings = maxPerfSamplesInMemory;
+    this.maxPerfSamplesInMemory = maxPerfSamplesInMemory;
   }
 
   reachedMaxTimings() {
     return Object.values(this.stats).some(
-      (moduleStats) => moduleStats.timings.length >= this.maxTimings
+      (moduleStats) => moduleStats.timings.length >= this.maxPerfSamplesInMemory
     );
   }
 
@@ -113,7 +113,7 @@ export class InspectionStatistics {
     this.stats[module].total += 1;
     this.stats[module].timings.push(durationInMs);
 
-    if (this.stats[module].timings.length > this.maxTimings) {
+    if (this.stats[module].timings.length > this.maxPerfSamplesInMemory) {
       this.stats[module].timings.shift();
     }
 
