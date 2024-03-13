@@ -1,5 +1,3 @@
-import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-
 export const SQL_KEYWORDS = [
   "INSERT",
   "SELECT",
