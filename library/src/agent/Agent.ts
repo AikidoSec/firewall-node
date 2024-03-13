@@ -173,11 +173,11 @@ export class Agent {
     this.interval = setInterval(() => {
       const now = Date.now();
       const diff = now - this.lastHeartbeat;
-      const shouldSendHeartbeat =
-        diff > this.sendHeartbeatEveryMS ||
-        (this.statistics.reachedMaxTimings() && !this.reportedInitialStats);
+      const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
+      const shouldReportInitialStats =
+        this.statistics.reachedMaxTimings() && !this.reportedInitialStats;
 
-      if (shouldSendHeartbeat) {
+      if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();
         this.lastHeartbeat = now;
         this.reportedInitialStats = true;
