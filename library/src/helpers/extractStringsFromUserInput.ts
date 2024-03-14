@@ -36,11 +36,10 @@ export function extractStringsFromUserInput(
   if (typeof obj == "string") {
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
-      const strings = extractStringsFromUserInput(
+      extractStringsFromUserInput(
         jwt.object,
         pathToPayload.concat([{ type: "jwt" }])
-      );
-      strings.forEach((value, key) => results.set(key, value));
+      ).forEach((value, key) => results.set(key, value));
     } else {
       results.set(obj, buildPathToPayload(pathToPayload));
     }
