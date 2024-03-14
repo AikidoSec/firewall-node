@@ -5,7 +5,7 @@ import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
 
-const context: Context = {
+const unsafeContext: Context = {
   remoteAddress: "::1",
   method: "POST",
   url: "http://localhost:4000",
@@ -16,6 +16,16 @@ const context: Context = {
       $ne: null,
     },
   },
+  cookies: {},
+};
+
+const safeContext = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: {},
   cookies: {},
 };
 
@@ -91,7 +101,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     ]);
 
     const bulkError = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      await runWithContext(unsafeContext, () => {
         return collection.bulkWrite([
           {
             updateMany: {
@@ -111,7 +121,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     }
 
     const error = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      await runWithContext(unsafeContext, () => {
         return collection.find({ title: { $ne: null } }).toArray();
       });
     });
@@ -122,6 +132,27 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
         "Aikido guard has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.myTitle)"
       );
     }
+
+    // Test if it checks arguments
+    await runWithContext(safeContext, async () => {
+      await t.rejects(async () => collection.bulkWrite());
+      await t.rejects(async () => collection.bulkWrite(1));
+      await t.rejects(async () => collection.bulkWrite([1]));
+      await t.rejects(async () => collection.bulkWrite([]));
+      await t.rejects(async () => collection.bulkWrite([{}]));
+      await t.rejects(async () =>
+        collection.bulkWrite([
+          {
+            updateOne: {
+              // Structure similar to what MongoDB expects, but without 'filter'
+              update: { $set: { a: 1 } },
+            },
+          },
+        ])
+      );
+      await t.rejects(() => collection.updateOne());
+      await t.rejects(() => collection.updateOne(1));
+    });
 
     await runWithContext(
       {

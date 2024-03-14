@@ -170,10 +170,12 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
+    /* c8 ignore next 3 */
     if (this.serverless) {
       throw new Error("Heartbeats in serverless mode are not supported");
     }
 
+    /* c8 ignore next 3 */
     if (this.interval) {
       throw new Error("Interval already started");
     }
@@ -198,8 +200,10 @@ export class Agent {
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
+      /* c8 ignore next */
       hostname: hostname() || "",
       version: getAgentVersion(),
+      /* c8 ignore next */
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
         (packages: Record<string, string>, pkg) => {
@@ -246,6 +250,7 @@ export class Agent {
     for (const pkg in this.wrappedPackages) {
       const details = this.wrappedPackages[pkg];
 
+      /* c8 ignore next 3 */
       if (!details.version) {
         continue;
       }
