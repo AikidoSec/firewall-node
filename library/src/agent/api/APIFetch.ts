@@ -24,6 +24,7 @@ export class APIFetch implements API {
       body: string;
     }
   ) {
+    /* c8 ignore next */
     const request = url.startsWith("https://") ? requestHttps : requestHttp;
 
     return new Promise<Response | void>((resolve) => {
