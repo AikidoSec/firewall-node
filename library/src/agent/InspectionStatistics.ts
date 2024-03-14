@@ -1,16 +1,16 @@
 import { percentiles } from "../helpers/percentiles";
 
-type ModuleCompressedTimings = {
+type SinkCompressedTimings = {
   averageInMS: number;
   percentiles: Record<string, number>;
   compressedAt: number;
 };
 
-type ModuleStats = {
+type SinkStats = {
   withoutContext: number;
   total: number;
   durations: number[];
-  compressedTimings: ModuleCompressedTimings[];
+  compressedTimings: SinkCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
@@ -18,11 +18,11 @@ type ModuleStats = {
   };
 };
 
-type ModuleStatsWithoutTimings = Omit<ModuleStats, "durations">;
+type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
 
 export class InspectionStatistics {
   private startedAt = Date.now();
-  private stats: Record<string, ModuleStats> = {};
+  private stats: Record<string, SinkStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
   private requests: {
@@ -46,7 +46,7 @@ export class InspectionStatistics {
 
   hasCompressedStats() {
     return Object.values(this.stats).some(
-      (moduleStats) => moduleStats.compressedTimings.length > 0
+      (sinkStats) => sinkStats.compressedTimings.length > 0
     );
   }
 
@@ -57,7 +57,7 @@ export class InspectionStatistics {
   }
 
   getStats(): {
-    modules: Record<string, ModuleStatsWithoutTimings>;
+    sinks: Record<string, SinkStatsWithoutTimings>;
     startedAt: number;
     requests: {
       total: number;
@@ -67,31 +67,31 @@ export class InspectionStatistics {
       };
     };
   } {
-    const stats: Record<string, ModuleStatsWithoutTimings> = {};
-    for (const module in this.stats) {
-      const moduleStats = this.stats[module];
-      stats[module] = {
-        total: moduleStats.total,
+    const sinks: Record<string, SinkStatsWithoutTimings> = {};
+    for (const sink in this.stats) {
+      const sinkStats = this.stats[sink];
+      sinks[sink] = {
+        total: sinkStats.total,
         attacksDetected: {
-          total: moduleStats.attacksDetected.total,
-          blocked: moduleStats.attacksDetected.blocked,
+          total: sinkStats.attacksDetected.total,
+          blocked: sinkStats.attacksDetected.blocked,
         },
-        interceptorThrewError: moduleStats.interceptorThrewError,
-        withoutContext: moduleStats.withoutContext,
-        compressedTimings: moduleStats.compressedTimings,
+        interceptorThrewError: sinkStats.interceptorThrewError,
+        withoutContext: sinkStats.withoutContext,
+        compressedTimings: sinkStats.compressedTimings,
       };
     }
 
     return {
-      modules: stats,
+      sinks: sinks,
       startedAt: this.startedAt,
       requests: this.requests,
     };
   }
 
-  private ensureModuleStats(module: string) {
-    if (!this.stats[module]) {
-      this.stats[module] = {
+  private ensureSinkStats(sink: string) {
+    if (!this.stats[sink]) {
+      this.stats[sink] = {
         withoutContext: 0,
         total: 0,
         durations: [],
@@ -105,18 +105,18 @@ export class InspectionStatistics {
     }
   }
 
-  private compressPerfSamples(module: string) {
+  private compressPerfSamples(sink: string) {
     /* c8 ignore start */
-    if (!this.stats[module]) {
+    if (!this.stats[sink]) {
       return;
     }
 
-    if (this.stats[module].durations.length === 0) {
+    if (this.stats[sink].durations.length === 0) {
       return;
     }
     /* c8 ignore stop */
 
-    const timings = this.stats[module].durations;
+    const timings = this.stats[sink].durations;
     const averageInMS =
       timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
 
@@ -125,7 +125,7 @@ export class InspectionStatistics {
       timings
     );
 
-    this.stats[module].compressedTimings.push({
+    this.stats[sink].compressedTimings.push({
       averageInMS,
       percentiles: {
         "50": p50,
@@ -138,25 +138,25 @@ export class InspectionStatistics {
     });
 
     if (
-      this.stats[module].compressedTimings.length >
+      this.stats[sink].compressedTimings.length >
       this.maxCompressedStatsInMemory
     ) {
-      this.stats[module].compressedTimings.shift();
+      this.stats[sink].compressedTimings.shift();
     }
 
-    this.stats[module].durations = [];
+    this.stats[sink].durations = [];
   }
 
-  inspectedCallWithoutContext(module: string) {
-    this.ensureModuleStats(module);
-    this.stats[module].total += 1;
-    this.stats[module].withoutContext += 1;
+  inspectedCallWithoutContext(sink: string) {
+    this.ensureSinkStats(sink);
+    this.stats[sink].total += 1;
+    this.stats[sink].withoutContext += 1;
   }
 
-  interceptorThrewError(module: string) {
-    this.ensureModuleStats(module);
-    this.stats[module].total += 1;
-    this.stats[module].interceptorThrewError += 1;
+  interceptorThrewError(sink: string) {
+    this.ensureSinkStats(sink);
+    this.stats[sink].total += 1;
+    this.stats[sink].interceptorThrewError += 1;
   }
 
   onRequest({
@@ -176,30 +176,30 @@ export class InspectionStatistics {
   }
 
   onInspectedCall({
-    module,
+    sink,
     blocked,
     attackDetected,
     durationInMs,
   }: {
-    module: string;
+    sink: string;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
   }) {
-    this.ensureModuleStats(module);
+    this.ensureSinkStats(sink);
 
-    this.stats[module].total += 1;
+    this.stats[sink].total += 1;
 
-    if (this.stats[module].durations.length >= this.maxPerfSamplesInMemory) {
-      this.compressPerfSamples(module);
+    if (this.stats[sink].durations.length >= this.maxPerfSamplesInMemory) {
+      this.compressPerfSamples(sink);
     }
 
-    this.stats[module].durations.push(durationInMs);
+    this.stats[sink].durations.push(durationInMs);
 
     if (attackDetected) {
-      this.stats[module].attacksDetected.total += 1;
+      this.stats[sink].attacksDetected.total += 1;
       if (blocked) {
-        this.stats[module].attacksDetected.blocked += 1;
+        this.stats[sink].attacksDetected.blocked += 1;
       }
     }
   }

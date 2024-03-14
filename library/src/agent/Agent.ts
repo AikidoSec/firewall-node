@@ -155,7 +155,7 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
           stats: {
-            modules: stats.modules,
+            sinks: stats.sinks,
             startedAt: stats.startedAt,
             endedAt: endedAt,
             requests: stats.requests,

@@ -11,14 +11,14 @@ t.test("it resets stats", async () => {
   });
 
   stats.onInspectedCall({
-    module: "mongodb",
+    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
   });
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 0,
@@ -43,7 +43,7 @@ t.test("it resets stats", async () => {
   clock.tick(1000);
   stats.reset();
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 1000,
     requests: {
       total: 0,
@@ -68,7 +68,7 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -80,14 +80,14 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
-    module: "mongodb",
+    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
   });
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 0,
@@ -112,7 +112,7 @@ t.test("it keeps track of amount of calls", async () => {
   stats.inspectedCallWithoutContext("mongodb");
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 0,
@@ -137,7 +137,7 @@ t.test("it keeps track of amount of calls", async () => {
   stats.interceptorThrewError("mongodb");
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 0,
@@ -160,14 +160,14 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
-    module: "mongodb",
+    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: true,
   });
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 1,
@@ -190,14 +190,14 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
-    module: "mongodb",
+    sink: "mongodb",
     blocked: true,
     durationInMs: 0.3,
     attackDetected: true,
   });
 
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 2,
@@ -225,7 +225,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   for (let i = 0; i < maxPerfSamplesInMemory; i++) {
     stats.onInspectedCall({
-      module: "mongodb",
+      sink: "mongodb",
       blocked: false,
       durationInMs: i * 0.1,
       attackDetected: false,
@@ -234,7 +234,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   t.same(stats.hasCompressedStats(), true);
   t.same(stats.getStats(), {
-    modules: {
+    sinks: {
       mongodb: {
         attacksDetected: {
           total: 2,
@@ -277,7 +277,7 @@ t.test("it keeps track of amount of calls", async () => {
     i++
   ) {
     stats.onInspectedCall({
-      module: "mongodb",
+      sink: "mongodb",
       blocked: false,
       durationInMs: i * 0.1,
       attackDetected: false,
@@ -302,7 +302,7 @@ t.test("it keeps track of requests", async () => {
   });
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -319,7 +319,7 @@ t.test("it keeps track of requests", async () => {
   });
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 0,
     requests: {
       total: 1,
@@ -336,7 +336,7 @@ t.test("it keeps track of requests", async () => {
   });
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 0,
     requests: {
       total: 2,
@@ -353,7 +353,7 @@ t.test("it keeps track of requests", async () => {
   });
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 0,
     requests: {
       total: 3,
@@ -369,7 +369,7 @@ t.test("it keeps track of requests", async () => {
   stats.reset();
 
   t.same(stats.getStats(), {
-    modules: {},
+    sinks: {},
     startedAt: 1000,
     requests: {
       total: 0,
