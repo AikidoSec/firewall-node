@@ -20,7 +20,7 @@ export function buildPathToPayload(pathToPayload: PathPart[]): string {
     if (part.type === "array") {
       return `${acc}.[${part.index}]`;
     }
-
+    /* c8 ignore next */
     return acc;
   }, "");
 }

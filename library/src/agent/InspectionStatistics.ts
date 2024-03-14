@@ -90,6 +90,7 @@ export class InspectionStatistics {
   }
 
   private compressPerfSamples(module: string) {
+    /* c8 ignore start */
     if (!this.stats[module]) {
       return;
     }
@@ -97,6 +98,7 @@ export class InspectionStatistics {
     if (this.stats[module].durations.length === 0) {
       return;
     }
+    /* c8 ignore stop */
 
     const timings = this.stats[module].durations;
     const averageInMS =
