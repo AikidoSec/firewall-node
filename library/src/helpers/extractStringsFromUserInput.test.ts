@@ -112,3 +112,24 @@ t.test("it decodes JWTs", async () => {
     }
   );
 });
+
+t.test("it does not allow prototype pollution", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      __proto__: "__proto__",
+    }),
+    {}
+  );
+  t.same(
+    extractStringsFromUserInput({
+      constructor: "constructor",
+    }),
+    {}
+  );
+  t.same(
+    extractStringsFromUserInput({
+      prototype: "prototype",
+    }),
+    {}
+  );
+});

@@ -5,24 +5,27 @@ import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 type UserString = string;
 type PathToUserString = string;
 
-/**
- * Extract all strings from an object, see unit tests for examples
- */
+// eslint-disable-next-line max-lines-per-function
 export function extractStringsFromUserInput(
   obj: unknown,
   pathToPayload: PathPart[] = []
 ): Record<UserString, PathToUserString> {
-  const results: Record<UserString, PathToUserString> = {};
+  const results: Record<UserString, PathToUserString> = Object.create(null);
 
   if (isPlainObject(obj)) {
     for (const key in obj) {
-      results[key] = buildPathToPayload(pathToPayload);
+      if (isSafeKey(key)) {
+        results[key] = buildPathToPayload(pathToPayload);
+      }
+
       const strings = extractStringsFromUserInput(
         obj[key],
         pathToPayload.concat([{ type: "object", key: key }])
       );
       for (const key in strings) {
-        results[key] = strings[key];
+        if (isSafeKey(key)) {
+          results[key] = strings[key];
+        }
       }
     }
   }
@@ -33,8 +36,10 @@ export function extractStringsFromUserInput(
         obj[i],
         pathToPayload.concat([{ type: "array", index: i }])
       );
-      for (const nestedKey in strings) {
-        results[nestedKey] = strings[nestedKey];
+      for (const key in strings) {
+        if (isSafeKey(key)) {
+          results[key] = strings[key];
+        }
       }
     }
   }
@@ -42,17 +47,27 @@ export function extractStringsFromUserInput(
   if (typeof obj == "string") {
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
-      const nestedResults = extractStringsFromUserInput(
+      const strings = extractStringsFromUserInput(
         jwt.object,
         pathToPayload.concat([{ type: "jwt" }])
       );
-      for (const nestedKey in nestedResults) {
-        results[nestedKey] = nestedResults[nestedKey];
+      for (const key in strings) {
+        if (isSafeKey(key)) {
+          results[key] = strings[key];
+        }
       }
     } else {
-      results[obj] = buildPathToPayload(pathToPayload);
+      if (isSafeKey(obj)) {
+        results[obj] = buildPathToPayload(pathToPayload);
+      }
     }
   }
 
   return results;
+}
+
+const unsafeKeys = ["__proto__", "constructor", "prototype"];
+
+function isSafeKey(key: string) {
+  return !unsafeKeys.includes(key);
 }
