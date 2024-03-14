@@ -5,7 +5,7 @@ import * as os from "os";
  */
 export function ip(interfaceName?: string) {
   const item = getInterfaceAddress("IPv4", interfaceName);
-  /* c8 ignore next */
+
   return item?.address;
 }
 
@@ -28,20 +28,18 @@ function matchName(
   if (expectedFamily === "IPv4") {
     return actualFamily === "IPv4" || actualFamily === 4;
   }
-  /* c8 ignore start */
+
   if (expectedFamily === "IPv6") {
     return actualFamily === "IPv6" || actualFamily === 6;
   }
 
   return actualFamily === expectedFamily;
 }
-/* c8 ignore stop */
 
-export function getInterfaceAddress(family?: string, name?: string) {
+function getInterfaceAddress(family?: string, name?: string) {
   const interfaces = os.networkInterfaces();
   const noName = !name;
   name = name || getDefaultInterfaceName();
-  /* c8 ignore next */
   family = family || "IPv4";
   if (name) {
     for (let i = -1; i < 8; i++) {
@@ -52,11 +50,10 @@ export function getInterfaceAddress(family?: string, name?: string) {
           if (matchName(item.family, family)) {
             return item;
           }
-        } /* c8 ignore start */
+        }
       }
     }
   }
-  /* c8 ignore stop */
 
   if (noName) {
     // filter all loopback or local addresses
@@ -72,8 +69,8 @@ export function getInterfaceAddress(family?: string, name?: string) {
             return item;
           }
         }
-      } /* c8 ignore start */
+      }
     }
   }
-  /* c8 ignore stop */
+  return;
 }

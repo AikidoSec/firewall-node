@@ -1,9 +1,7 @@
 import * as t from "tap";
 import { wrap } from "shimmer";
 
-const os = require("os");
-
-wrap(os, "networkInterfaces", function wrap() {
+wrap(require("os"), "networkInterfaces", function wrap() {
   return function wrap() {
     return {
       lo: [{ address: "127.0.0.1", family: "IPv4", internal: true }],
@@ -12,18 +10,9 @@ wrap(os, "networkInterfaces", function wrap() {
   };
 });
 
-import { getInterfaceAddress, ip } from "./ipAddress";
+import { ip } from "./ipAddress";
 
 t.test("it works", async () => {
   t.same(ip(), "10.206.52.79");
-});
-
-t.test("platform is win32", async () => {
-  wrap(os, "platform", function wrap() {
-    return function wrap() {
-      return "win32";
-    };
-  });
-
-  t.same(ip(), "10.206.52.79");
+  t.same(ip("eth0"), undefined);
 });

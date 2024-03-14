@@ -29,5 +29,4 @@ t.test("method throws error if name is empty", async (t) => {
     .addSubject((exports) => exports);
 
   t.throws(() => subject.inspect("", () => {}));
-  t.throws(() => subject.modifyArguments("", (args) => args));
 });

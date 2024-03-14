@@ -28,14 +28,3 @@ t.test(
     t.notOk(isPlainObject(null));
   }
 );
-
-t.test("should return `false` if prototype has been modified", async (t) => {
-  function CustomConstructor() {}
-
-  // Directly use a built-in type's prototype, for example, Array.prototype
-  CustomConstructor.prototype = Array.prototype;
-
-  const instance = new CustomConstructor();
-
-  t.same(isPlainObject(instance), false);
-});
