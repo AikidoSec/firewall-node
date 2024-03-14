@@ -31,6 +31,13 @@ t.test("it resets stats", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   clock.tick(1000);
@@ -38,6 +45,13 @@ t.test("it resets stats", async () => {
   t.same(stats.getStats(), {
     modules: {},
     startedAt: 1000,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   clock.uninstall();
@@ -56,6 +70,13 @@ t.test("it keeps track of amount of calls", async () => {
   t.same(stats.getStats(), {
     modules: {},
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   stats.onInspectedCall({
@@ -79,6 +100,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   stats.inspectedCallWithoutContext("mongodb");
@@ -97,6 +125,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   stats.interceptorThrewError("mongodb");
@@ -115,6 +150,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   stats.onInspectedCall({
@@ -138,6 +180,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   stats.onInspectedCall({
@@ -161,6 +210,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   t.same(stats.hasCompressedStats(), false);
@@ -203,6 +259,13 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
     startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
   });
 
   // @ts-expect-error Stats is private
@@ -226,6 +289,96 @@ t.test("it keeps track of amount of calls", async () => {
     stats.stats.mongodb.compressedTimings.length,
     maxCompressedStatsInMemory
   );
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  stats.onRequest({
+    attackDetected: false,
+    blocked: false,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+    requests: {
+      total: 1,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  stats.onRequest({
+    attackDetected: true,
+    blocked: false,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+    requests: {
+      total: 2,
+      attacksDetected: {
+        total: 1,
+        blocked: 0,
+      },
+    },
+  });
+
+  stats.onRequest({
+    attackDetected: true,
+    blocked: true,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+    requests: {
+      total: 3,
+      attacksDetected: {
+        total: 2,
+        blocked: 1,
+      },
+    },
+  });
+
+  clock.tick(1000);
+
+  stats.reset();
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 1000,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
 
   clock.uninstall();
 });

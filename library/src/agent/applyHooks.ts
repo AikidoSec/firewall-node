@@ -150,6 +150,9 @@ function wrapWithoutArgumentModification(
       });
 
       if (result) {
+        // Flag request as having an attack detected
+        context.attackDetected = true;
+
         agent.onDetectedAttack({
           module: module,
           kind: result.kind,

@@ -25,6 +25,13 @@ export class InspectionStatistics {
   private stats: Record<string, ModuleStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
+  private requests: {
+    total: number;
+    attacksDetected: {
+      total: number;
+      blocked: number;
+    };
+  } = { total: 0, attacksDetected: { total: 0, blocked: 0 } };
 
   constructor({
     maxPerfSamplesInMemory,
@@ -45,12 +52,20 @@ export class InspectionStatistics {
 
   reset() {
     this.stats = {};
+    this.requests = { total: 0, attacksDetected: { total: 0, blocked: 0 } };
     this.startedAt = Date.now();
   }
 
   getStats(): {
     modules: Record<string, ModuleStatsWithoutTimings>;
     startedAt: number;
+    requests: {
+      total: number;
+      attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+    };
   } {
     const stats: Record<string, ModuleStatsWithoutTimings> = {};
     for (const module in this.stats) {
@@ -70,6 +85,7 @@ export class InspectionStatistics {
     return {
       modules: stats,
       startedAt: this.startedAt,
+      requests: this.requests,
     };
   }
 
@@ -141,6 +157,22 @@ export class InspectionStatistics {
     this.ensureModuleStats(module);
     this.stats[module].total += 1;
     this.stats[module].interceptorThrewError += 1;
+  }
+
+  onRequest({
+    attackDetected,
+    blocked,
+  }: {
+    attackDetected: boolean;
+    blocked: boolean;
+  }) {
+    this.requests.total += 1;
+    if (attackDetected) {
+      this.requests.attacksDetected.total += 1;
+      if (blocked) {
+        this.requests.attacksDetected.blocked += 1;
+      }
+    }
   }
 
   onInspectedCall({

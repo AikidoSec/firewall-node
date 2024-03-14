@@ -1,13 +1,14 @@
 /* eslint-disable prefer-rest-params */
 import type { NextFunction, Request, Response } from "express";
-import { runWithContext } from "../agent/Context";
+import { Agent } from "../agent/Agent";
+import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
-function createMiddleware(): Middleware {
+function createMiddleware(agent: Agent): Middleware {
   return (req, resp, next) => {
     runWithContext(
       {
@@ -22,6 +23,13 @@ function createMiddleware(): Middleware {
       },
       () => {
         next();
+        const context = getContext();
+        if (context) {
+          agent.getInspectionStatistics().onRequest({
+            blocked: agent.shouldBlock(),
+            attackDetected: !!context.attackDetected,
+          });
+        }
       }
     );
   };
@@ -40,9 +48,9 @@ export class Express implements Wrapper {
   // app.get("/path", json(), middleware(), (req, res) => { ... }))
   //
   // Without having to change the user's code
-  private addMiddleware(args: unknown[]) {
+  private addMiddleware(args: unknown[], agent: Agent) {
     const handler = args.pop();
-    args.push(createMiddleware());
+    args.push(createMiddleware(agent));
     args.push(handler);
 
     return args;
@@ -56,7 +64,9 @@ export class Express implements Wrapper {
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
     expressMethodNames.forEach((method) => {
-      route.modifyArguments(method, (args) => this.addMiddleware(args));
+      route.modifyArguments(method, (args, subject, agent) =>
+        this.addMiddleware(args, agent)
+      );
     });
   }
 }

@@ -65,6 +65,13 @@ type Heartbeat = {
     modules: Record<string, ModuleStats>;
     startedAt: number;
     endedAt: number;
+    requests: {
+      total: number;
+      attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+    };
   };
   agent: AgentInfo;
   time: number;
