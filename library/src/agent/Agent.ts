@@ -28,6 +28,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
+    maxCompressedStatsInMemory: 100,
   });
 
   constructor(
@@ -145,12 +146,19 @@ export class Agent {
   private heartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
+      const stats = this.statistics.getStats();
+      const endedAt = Date.now();
+      this.statistics.reset();
       this.api
         .report(this.token, {
           type: "heartbeat",
           time: Date.now(),
           agent: this.getAgentInfo(),
-          stats: this.statistics.getStats(),
+          stats: {
+            modules: stats.modules,
+            startedAt: stats.startedAt,
+            endedAt: endedAt,
+          },
         })
         .catch(() => {
           this.logger.log("Failed to do heartbeat");
@@ -175,7 +183,7 @@ export class Agent {
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const shouldReportInitialStats =
-        this.statistics.reachedMaxTimings() && !this.reportedInitialStats;
+        this.statistics.hasCompressedStats() && !this.reportedInitialStats;
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();

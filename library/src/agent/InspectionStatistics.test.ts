@@ -1,12 +1,14 @@
+import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { InspectionStatistics } from "./InspectionStatistics";
 
-t.test("it keeps track of amount of calls", async () => {
+t.test("it resets stats", async () => {
+  const clock = FakeTimers.install();
+
   const stats = new InspectionStatistics({
     maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
   });
-
-  t.same(stats.getStats(), {});
 
   stats.onInspectedCall({
     module: "mongodb",
@@ -16,67 +18,103 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-      interceptorThrewError: 0,
-      withoutContext: 0,
-      total: 1,
-      averageInMS: 0.1,
-      percentiles: {
-        50: 0.1,
-        75: 0.1,
-        90: 0.1,
-        95: 0.1,
-        99: 0.1,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
       },
     },
+    startedAt: 0,
+  });
+
+  clock.tick(1000);
+  stats.reset();
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 1000,
+  });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of amount of calls", async () => {
+  const clock = FakeTimers.install();
+
+  const maxPerfSamplesInMemory = 50;
+  const maxCompressedStatsInMemory = 5;
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: maxPerfSamplesInMemory,
+    maxCompressedStatsInMemory: maxCompressedStatsInMemory,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+  });
+
+  stats.onInspectedCall({
+    module: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
   });
 
   stats.inspectedCallWithoutContext("mongodb");
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-      interceptorThrewError: 0,
-      withoutContext: 1,
-      total: 2,
-      averageInMS: 0.1,
-      percentiles: {
-        50: 0.1,
-        75: 0.1,
-        90: 0.1,
-        95: 0.1,
-        99: 0.1,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 1,
+        total: 2,
+        compressedTimings: [],
       },
     },
+    startedAt: 0,
   });
 
   stats.interceptorThrewError("mongodb");
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 3,
-      averageInMS: 0.1,
-      percentiles: {
-        50: 0.1,
-        75: 0.1,
-        90: 0.1,
-        95: 0.1,
-        99: 0.1,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 3,
+        compressedTimings: [],
       },
     },
+    startedAt: 0,
   });
 
   stats.onInspectedCall({
@@ -87,23 +125,19 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 1,
-        blocked: 0,
-      },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 4,
-      averageInMS: 0.1,
-      percentiles: {
-        50: 0.1,
-        75: 0.1,
-        90: 0.1,
-        95: 0.1,
-        99: 0.1,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 1,
+          blocked: 0,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 4,
+        compressedTimings: [],
       },
     },
+    startedAt: 0,
   });
 
   stats.onInspectedCall({
@@ -114,38 +148,84 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 2,
-        blocked: 1,
-      },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 5,
-      averageInMS: 0.16666666666666666,
-      percentiles: {
-        50: 0.1,
-        75: 0.3,
-        90: 0.3,
-        95: 0.3,
-        99: 0.3,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 2,
+          blocked: 1,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 5,
+        compressedTimings: [],
       },
     },
+    startedAt: 0,
   });
 
-  t.same(stats.reachedMaxTimings(), false);
+  t.same(stats.hasCompressedStats(), false);
 
-  for (let i = 0; i < 50; i++) {
+  clock.tick(1000);
+
+  for (let i = 0; i < maxPerfSamplesInMemory; i++) {
     stats.onInspectedCall({
       module: "mongodb",
       blocked: false,
-      durationInMs: 0.1,
+      durationInMs: i * 0.1,
       attackDetected: false,
     });
   }
 
-  t.same(stats.reachedMaxTimings(), true);
+  t.same(stats.hasCompressedStats(), true);
+  t.same(stats.getStats(), {
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 2,
+          blocked: 1,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 55,
+        compressedTimings: [
+          {
+            averageInMS: 2.1719999999999997,
+            percentiles: {
+              "50": 2.1,
+              "75": 3.4000000000000004,
+              "90": 4.1000000000000005,
+              "95": 4.4,
+              "99": 4.6000000000000005,
+            },
+            compressedAt: 1000,
+          },
+        ],
+      },
+    },
+    startedAt: 0,
+  });
 
   // @ts-expect-error Stats is private
-  t.same(stats.stats.mongodb.timings.length, 50);
+  t.ok(stats.stats.mongodb.durations.length < maxPerfSamplesInMemory);
+
+  for (
+    let i = 0;
+    i < maxPerfSamplesInMemory * maxCompressedStatsInMemory * 2;
+    i++
+  ) {
+    stats.onInspectedCall({
+      module: "mongodb",
+      blocked: false,
+      durationInMs: i * 0.1,
+      attackDetected: false,
+    });
+  }
+
+  t.same(
+    // @ts-expect-error Stats is private
+    stats.stats.mongodb.compressedTimings.length,
+    maxCompressedStatsInMemory
+  );
+
+  clock.uninstall();
 });

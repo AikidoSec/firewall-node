@@ -145,7 +145,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
       type: "started",
     },
   ]);
-  for (let i = 0; i < 4000; i++) {
+  for (let i = 0; i < 4001; i++) {
     agent.getInspectionStatistics().onInspectedCall({
       module: "mongodb",
       blocked: false,
