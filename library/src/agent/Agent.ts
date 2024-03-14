@@ -146,12 +146,19 @@ export class Agent {
   private heartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
+      const stats = this.statistics.getStats();
+      const endedAt = Date.now();
+      this.statistics.reset();
       this.api
         .report(this.token, {
           type: "heartbeat",
           time: Date.now(),
           agent: this.getAgentInfo(),
-          stats: this.statistics.getStats(),
+          stats: {
+            modules: stats.modules,
+            startedAt: stats.startedAt,
+            endedAt: endedAt,
+          },
         })
         .catch(() => {
           this.logger.log("Failed to do heartbeat");

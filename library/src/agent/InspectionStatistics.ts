@@ -3,16 +3,13 @@ import { percentiles } from "../helpers/percentiles";
 type ModuleCompressedTimings = {
   averageInMS: number;
   percentiles: Record<string, number>;
-  datetime: {
-    start: number;
-    end: number;
-  };
+  compressedAt: number;
 };
 
 type ModuleStats = {
   withoutContext: number;
   total: number;
-  timings: { durations: number[]; firstCallAt: number; lastCallAt: number };
+  durations: number[];
   compressedTimings: ModuleCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
@@ -21,9 +18,10 @@ type ModuleStats = {
   };
 };
 
-type ModuleStatsWithoutTimings = Omit<ModuleStats, "timings">;
+type ModuleStatsWithoutTimings = Omit<ModuleStats, "durations">;
 
 export class InspectionStatistics {
+  private startedAt = Date.now();
   private stats: Record<string, ModuleStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
@@ -45,7 +43,15 @@ export class InspectionStatistics {
     );
   }
 
-  getStats(): Record<string, ModuleStatsWithoutTimings> {
+  reset() {
+    this.stats = {};
+    this.startedAt = Date.now();
+  }
+
+  getStats(): {
+    modules: Record<string, ModuleStatsWithoutTimings>;
+    startedAt: number;
+  } {
     const stats: Record<string, ModuleStatsWithoutTimings> = {};
     for (const module in this.stats) {
       const moduleStats = this.stats[module];
@@ -61,7 +67,10 @@ export class InspectionStatistics {
       };
     }
 
-    return stats;
+    return {
+      modules: stats,
+      startedAt: this.startedAt,
+    };
   }
 
   private ensureModuleStats(module: string) {
@@ -69,11 +78,7 @@ export class InspectionStatistics {
       this.stats[module] = {
         withoutContext: 0,
         total: 0,
-        timings: {
-          durations: [],
-          firstCallAt: Date.now(),
-          lastCallAt: Date.now(),
-        },
+        durations: [],
         compressedTimings: [],
         interceptorThrewError: 0,
         attacksDetected: {
@@ -89,18 +94,17 @@ export class InspectionStatistics {
       return;
     }
 
-    if (this.stats[module].timings.durations.length === 0) {
+    if (this.stats[module].durations.length === 0) {
       return;
     }
 
-    const timings = this.stats[module].timings;
+    const timings = this.stats[module].durations;
     const averageInMS =
-      timings.durations.reduce((acc, curr) => acc + curr, 0) /
-      timings.durations.length;
+      timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
 
     const [p50, p75, p90, p95, p99] = percentiles(
       [50, 75, 90, 95, 99],
-      timings.durations
+      timings
     );
 
     this.stats[module].compressedTimings.push({
@@ -112,10 +116,7 @@ export class InspectionStatistics {
         "95": p95,
         "99": p99,
       },
-      datetime: {
-        start: timings.firstCallAt,
-        end: timings.lastCallAt,
-      },
+      compressedAt: Date.now(),
     });
 
     if (
@@ -125,9 +126,7 @@ export class InspectionStatistics {
       this.stats[module].compressedTimings.shift();
     }
 
-    this.stats[module].timings.durations = [];
-    this.stats[module].timings.firstCallAt = Date.now();
-    this.stats[module].timings.lastCallAt = Date.now();
+    this.stats[module].durations = [];
   }
 
   inspectedCallWithoutContext(module: string) {
@@ -157,14 +156,11 @@ export class InspectionStatistics {
 
     this.stats[module].total += 1;
 
-    if (
-      this.stats[module].timings.durations.length >= this.maxPerfSamplesInMemory
-    ) {
+    if (this.stats[module].durations.length >= this.maxPerfSamplesInMemory) {
       this.compressPerfSamples(module);
     }
 
-    this.stats[module].timings.durations.push(durationInMs);
-    this.stats[module].timings.lastCallAt = Date.now();
+    this.stats[module].durations.push(durationInMs);
 
     if (attackDetected) {
       this.stats[module].attacksDetected.total += 1;

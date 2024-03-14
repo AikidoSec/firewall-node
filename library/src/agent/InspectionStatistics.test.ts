@@ -2,6 +2,47 @@ import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { InspectionStatistics } from "./InspectionStatistics";
 
+t.test("it resets stats", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onInspectedCall({
+    module: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
+
+  t.same(stats.getStats(), {
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
+  });
+
+  clock.tick(1000);
+  stats.reset();
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 1000,
+  });
+
+  clock.uninstall();
+});
+
 t.test("it keeps track of amount of calls", async () => {
   const clock = FakeTimers.install();
 
@@ -12,7 +53,10 @@ t.test("it keeps track of amount of calls", async () => {
     maxCompressedStatsInMemory: maxCompressedStatsInMemory,
   });
 
-  t.same(stats.getStats(), {});
+  t.same(stats.getStats(), {
+    modules: {},
+    startedAt: 0,
+  });
 
   stats.onInspectedCall({
     module: "mongodb",
@@ -22,46 +66,55 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
       },
-      interceptorThrewError: 0,
-      withoutContext: 0,
-      total: 1,
-      compressedTimings: [],
     },
+    startedAt: 0,
   });
 
   stats.inspectedCallWithoutContext("mongodb");
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 1,
+        total: 2,
+        compressedTimings: [],
       },
-      interceptorThrewError: 0,
-      withoutContext: 1,
-      total: 2,
-      compressedTimings: [],
     },
+    startedAt: 0,
   });
 
   stats.interceptorThrewError("mongodb");
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 3,
+        compressedTimings: [],
       },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 3,
-      compressedTimings: [],
     },
+    startedAt: 0,
   });
 
   stats.onInspectedCall({
@@ -72,16 +125,19 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 1,
-        blocked: 0,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 1,
+          blocked: 0,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 4,
+        compressedTimings: [],
       },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 4,
-      compressedTimings: [],
     },
+    startedAt: 0,
   });
 
   stats.onInspectedCall({
@@ -92,16 +148,19 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 2,
-        blocked: 1,
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 2,
+          blocked: 1,
+        },
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 5,
+        compressedTimings: [],
       },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 5,
-      compressedTimings: [],
     },
+    startedAt: 0,
   });
 
   t.same(stats.hasCompressedStats(), false);
@@ -119,35 +178,35 @@ t.test("it keeps track of amount of calls", async () => {
 
   t.same(stats.hasCompressedStats(), true);
   t.same(stats.getStats(), {
-    mongodb: {
-      attacksDetected: {
-        total: 2,
-        blocked: 1,
-      },
-      interceptorThrewError: 1,
-      withoutContext: 1,
-      total: 55,
-      compressedTimings: [
-        {
-          averageInMS: 2.1719999999999997,
-          percentiles: {
-            "50": 2.1,
-            "75": 3.4000000000000004,
-            "90": 4.1000000000000005,
-            "95": 4.4,
-            "99": 4.6000000000000005,
-          },
-          datetime: {
-            start: 0,
-            end: 1000,
-          },
+    modules: {
+      mongodb: {
+        attacksDetected: {
+          total: 2,
+          blocked: 1,
         },
-      ],
+        interceptorThrewError: 1,
+        withoutContext: 1,
+        total: 55,
+        compressedTimings: [
+          {
+            averageInMS: 2.1719999999999997,
+            percentiles: {
+              "50": 2.1,
+              "75": 3.4000000000000004,
+              "90": 4.1000000000000005,
+              "95": 4.4,
+              "99": 4.6000000000000005,
+            },
+            compressedAt: 1000,
+          },
+        ],
+      },
     },
+    startedAt: 0,
   });
 
   // @ts-expect-error Stats is private
-  t.ok(stats.stats.mongodb.timings.durations.length < maxPerfSamplesInMemory);
+  t.ok(stats.stats.mongodb.durations.length < maxPerfSamplesInMemory);
 
   for (
     let i = 0;

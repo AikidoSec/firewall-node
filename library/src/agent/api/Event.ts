@@ -45,31 +45,27 @@ type DetectedAttack = {
   time: number;
 };
 
-type ModuleName = string;
-
-type Stats = Record<
-  ModuleName,
-  {
-    attacksDetected: {
-      total: number;
-      blocked: number;
-    };
-    withoutContext: number;
+type ModuleStats = {
+  attacksDetected: {
     total: number;
-    compressedTimings: {
-      averageInMS: number;
-      percentiles: Record<string, number>;
-      datetime: {
-        start: number;
-        end: number;
-      };
-    }[];
-  }
->;
+    blocked: number;
+  };
+  withoutContext: number;
+  total: number;
+  compressedTimings: {
+    averageInMS: number;
+    percentiles: Record<string, number>;
+    compressedAt: number;
+  }[];
+};
 
 type Heartbeat = {
   type: "heartbeat";
-  stats: Stats;
+  stats: {
+    modules: Record<string, ModuleStats>;
+    startedAt: number;
+    endedAt: number;
+  };
   agent: AgentInfo;
   time: number;
 };
