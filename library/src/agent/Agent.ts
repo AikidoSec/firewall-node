@@ -158,6 +158,7 @@ export class Agent {
             modules: stats.modules,
             startedAt: stats.startedAt,
             endedAt: endedAt,
+            requests: stats.requests,
           },
         })
         .catch(() => {
