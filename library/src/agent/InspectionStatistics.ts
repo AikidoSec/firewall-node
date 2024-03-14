@@ -9,8 +9,8 @@ type ModuleCompressedTimings = {
 type ModuleStats = {
   withoutContext: number;
   total: number;
-  durations: number[];
-  compressedTimings: ModuleCompressedTimings[];
+  durations: number[];  // main array where we accumulate durations for each sink-request (eg mysql query)
+  compressedTimings: ModuleCompressedTimings[]; // main array where we put compressed blocks of stats
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
