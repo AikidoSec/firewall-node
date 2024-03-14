@@ -80,7 +80,9 @@ export class MongoDB implements Wrapper {
           "bulkWrite"
         );
       }
-    } /* c8 ignore next */
+    }
+
+    return undefined;
   }
 
   private inspectBulkWrite(
@@ -102,7 +104,9 @@ export class MongoDB implements Wrapper {
           return result;
         }
       }
-    } /* c8 ignore next */
+    }
+
+    return undefined;
   }
 
   private inspectOperation(
@@ -122,6 +126,8 @@ export class MongoDB implements Wrapper {
         operation
       );
     }
+
+    return undefined;
   }
 
   wrap(hooks: Hooks) {
