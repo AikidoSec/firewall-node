@@ -23,7 +23,7 @@ export function checkContextForSqlInjection({
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
-      for (const [str, path] of Object.entries(userInput)) {
+      for (const [str, path] of userInput.entries()) {
         if (detectSQLInjection(sql, str, dialect)) {
           return {
             operation: operation,
