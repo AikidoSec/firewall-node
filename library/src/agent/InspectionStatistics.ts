@@ -9,7 +9,9 @@ type SinkCompressedTimings = {
 type SinkStats = {
   withoutContext: number;
   total: number;
+  // array where we accumulate durations for each sink-request (e.g. mysql.query)
   durations: number[];
+  // array where we put compressed blocks of stats
   compressedTimings: SinkCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
