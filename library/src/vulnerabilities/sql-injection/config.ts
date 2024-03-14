@@ -67,6 +67,8 @@ export const SQL_KEYWORDS = [
   "PROCEDURE",
   "ROWNUM",
   "SET",
+  "SESSION",
+  "GLOBAL",
   "UNIQUE",
   "VALUES",
   "COLLATE",
