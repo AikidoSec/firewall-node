@@ -9,6 +9,7 @@ export type Context = {
   remoteAddress: string | undefined;
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
+  attackDetected?: boolean;
 };
 
 const requestContext = new AsyncLocalStorage<Context>();

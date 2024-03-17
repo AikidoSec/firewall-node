@@ -227,7 +227,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      module: "mongodb",
+      sink: "mongodb",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -240,7 +240,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
   for (let i = 0; i < 4001; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      module: "mongodb",
+      sink: "mongodb",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,

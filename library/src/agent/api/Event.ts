@@ -45,7 +45,7 @@ type DetectedAttack = {
   time: number;
 };
 
-type ModuleStats = {
+type MonitoredSinkStats = {
   attacksDetected: {
     total: number;
     blocked: number;
@@ -62,9 +62,16 @@ type ModuleStats = {
 type Heartbeat = {
   type: "heartbeat";
   stats: {
-    modules: Record<string, ModuleStats>;
+    sinks: Record<string, MonitoredSinkStats>;
     startedAt: number;
     endedAt: number;
+    requests: {
+      total: number;
+      attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+    };
   };
   agent: AgentInfo;
   time: number;

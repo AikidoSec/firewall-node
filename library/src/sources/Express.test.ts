@@ -49,6 +49,13 @@ function getApp() {
     res.send(context);
   });
 
+  app.get("/detect-attack", (req, res) => {
+    const context = getContext();
+    context.attackDetected = true;
+
+    res.send(context);
+  });
+
   return app;
 }
 
@@ -60,6 +67,7 @@ t.test("it adds context from request for GET", async (t) => {
     .set("X-Forwarded-For", "1.2.3.4");
 
   t.match(response.body, {
+    method: "GET",
     query: { title: { $ne: "null" } },
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
@@ -70,13 +78,17 @@ t.test("it adds context from request for GET", async (t) => {
 t.test("it adds context from request for POST", async (t) => {
   const response = await request(getApp()).post("/").send({ title: "Title" });
 
-  t.match(response.body.body, { title: "Title" });
+  t.match(response.body, {
+    method: "POST",
+    body: { title: "Title" },
+  });
 });
 
 t.test("it adds context from request for route", async (t) => {
   const response = await request(getApp()).get("/route");
 
   t.match(response.body, {
+    method: "GET",
     query: {},
     cookies: {},
     headers: {},
@@ -87,8 +99,38 @@ t.test("it adds context from request for all", async (t) => {
   const response = await request(getApp()).get("/all");
 
   t.match(response.body, {
+    method: "GET",
     query: {},
     cookies: {},
     headers: {},
+  });
+});
+
+t.test("it counts requests", async () => {
+  agent.getInspectionStatistics().reset();
+  await request(getApp()).get("/");
+  await request(getApp()).post("/");
+  t.match(agent.getInspectionStatistics().getStats(), {
+    requests: {
+      total: 2,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+});
+
+t.test("it counts attacks detected", async (t) => {
+  agent.getInspectionStatistics().reset();
+  await request(getApp()).get("/detect-attack");
+  t.match(agent.getInspectionStatistics().getStats(), {
+    requests: {
+      total: 1,
+      attacksDetected: {
+        total: 1,
+        blocked: 1,
+      },
+    },
   });
 });

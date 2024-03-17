@@ -143,13 +143,16 @@ function wrapWithoutArgumentModification(
 
       const end = performance.now();
       agent.getInspectionStatistics().onInspectedCall({
-        module: module,
+        sink: module,
         attackDetected: !!result,
         blocked: agent.shouldBlock(),
         durationInMs: end - start,
       });
 
       if (result) {
+        // Flag request as having an attack detected
+        context.attackDetected = true;
+
         agent.onDetectedAttack({
           module: module,
           kind: result.kind,
