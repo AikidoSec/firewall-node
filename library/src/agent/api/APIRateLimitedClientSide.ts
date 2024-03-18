@@ -22,13 +22,12 @@ export class APIRateLimitedClientSide implements API {
       const currentTime = Date.now();
 
       // Filter out events that are outside the current interval
-      // Otherwise, we would keep growing the array indefinitely
       this.events = this.events.filter(
         (e) => e.time > currentTime - this.intervalInMs
       );
 
       // If we have reached the maximum number of events, we return an error
-      // Instead of sending the event to the server
+      // This prevents the array from growing indefinitely
       if (this.events.length >= this.maxEventsPerInterval) {
         return { success: false, error: "max_attacks_reached" };
       }
