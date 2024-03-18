@@ -5,6 +5,7 @@
   "workspaces": [
     "sample-apps/*",
     "benchmarks/*",
+    "end2end",
     "library"
   ]
 }
