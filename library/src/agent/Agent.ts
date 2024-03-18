@@ -4,7 +4,6 @@ import { convertRequestBodyToString } from "../helpers/convertRequestBodyToStrin
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
-import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { API } from "./api/API";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
@@ -132,7 +131,7 @@ export class Agent {
             path: path,
             stack: stack,
             source: source,
-            metadata: limitLengthMetadata(metadata, 16384),
+            metadata: metadata,
             kind: kind,
           },
           request: {
