@@ -1,4 +1,4 @@
-import { API } from "./API";
+import { API, APIResult } from "./API";
 import { Token } from "./Token";
 import { Event } from "./Event";
 
@@ -17,7 +17,7 @@ export class APIThrottled implements API {
     this.intervalInMs = intervalInMs;
   }
 
-  async report(token: Token, event: Event) {
+  async report(token: Token, event: Event): Promise<APIResult> {
     if (event.type === "detected_attack") {
       const currentTime = Date.now();
 
@@ -26,12 +26,12 @@ export class APIThrottled implements API {
       );
 
       if (this.events.length >= this.maxEventsPerInterval) {
-        return;
+        return { success: false, error: "max_attacks_reached" };
       }
 
       this.events.push(event);
     }
 
-    await this.api.report(token, event);
+    return await this.api.report(token, event);
   }
 }

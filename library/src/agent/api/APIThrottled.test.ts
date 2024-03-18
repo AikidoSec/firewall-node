@@ -14,6 +14,8 @@ function generateAttackEvent(): Event {
       method: undefined,
       ipAddress: undefined,
       userAgent: undefined,
+      headers: undefined,
+      body: undefined,
     },
     attack: {
       module: "module",
@@ -118,7 +120,18 @@ function generateHeartbeatEvent(): Event {
   return {
     type: "heartbeat",
     time: Date.now(),
-    stats: {},
+    stats: {
+      endedAt: 0,
+      startedAt: 0,
+      sinks: {},
+      requests: {
+        total: 0,
+        attacksDetected: {
+          blocked: 0,
+          total: 0,
+        },
+      },
+    },
     agent: {
       version: "1.0.0",
       dryMode: false,

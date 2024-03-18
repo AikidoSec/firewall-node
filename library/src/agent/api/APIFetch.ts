@@ -1,6 +1,6 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
-import { API } from "./API";
+import { API, APIResult } from "./API";
 import { Token } from "./Token";
 import { Event } from "./Event";
 
@@ -23,11 +23,11 @@ export class APIFetch implements API {
       headers: Record<string, string>;
       body: string;
     }
-  ) {
+  ): Promise<APIResult> {
     /* c8 ignore next */
     const request = url.startsWith("https://") ? requestHttps : requestHttp;
 
-    return new Promise<Response | void>((resolve) => {
+    return new Promise((resolve, reject) => {
       const req = request(
         url,
         {
@@ -38,13 +38,20 @@ export class APIFetch implements API {
         (res) => {
           res.on("data", () => {});
           res.on("end", () => {
-            resolve();
+            if (res.statusCode === 429) {
+              resolve({
+                success: false,
+                error: "rate_limited",
+              });
+            } else {
+              resolve({ success: true });
+            }
           });
         }
       );
 
-      req.on("error", () => {
-        resolve();
+      req.on("error", (error) => {
+        reject(error);
       });
 
       req.write(body);
@@ -52,9 +59,10 @@ export class APIFetch implements API {
     });
   }
 
-  async report(token: Token, event: Event) {
+  async report(token: Token, event: Event): Promise<APIResult> {
     const abort = new AbortController();
-    await Promise.race([
+
+    return await Promise.race([
       this.fetch(this.reportingUrl.toString(), {
         signal: abort.signal,
         method: "POST",
@@ -64,10 +72,10 @@ export class APIFetch implements API {
         },
         body: JSON.stringify(event),
       }),
-      new Promise<void>((resolve) =>
+      new Promise<APIResult>((resolve) =>
         setTimeout(() => {
           abort.abort();
-          resolve();
+          resolve({ success: false, error: "timeout" });
         }, this.timeoutInMS)
       ),
     ]);
