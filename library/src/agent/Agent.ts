@@ -47,9 +47,16 @@ export class Agent {
     return this.statistics;
   }
 
-  unableToPreventPrototypePollution(pkg: string, version: string) {
+  unableToPreventPrototypePollution(
+    incompatiblePackages: Record<string, string>
+  ) {
+    const list: string[] = [];
+    for (const pkg in incompatiblePackages) {
+      list.push(`${pkg}@${incompatiblePackages[pkg]}`);
+    }
+
     this.logger.log(
-      `Unable to prevent prototype pollution, incompatible package found: ${pkg}@${version}`
+      `Unable to prevent prototype pollution, incompatible packages found: ${list.join(" ")}`
     );
   }
 

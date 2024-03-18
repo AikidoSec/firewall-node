@@ -2,28 +2,59 @@ import { getInstance } from "../../agent/AgentSingleton";
 import { getPackageVersion } from "../../helpers/getPackageVersion";
 import { satisfiesVersion } from "../../helpers/satisfiesVersion";
 
-const INCOMPATIBLE_PACKAGES: Record<string, string> = {
+type PackageName = string;
+type PackageRange = string;
+type PackageVersion = string;
+
+const INCOMPATIBLE_PACKAGE: Record<PackageName, PackageRange> = {
   mongoose: "^1.0.0 || ^2.0.0 || ^3.0.0 || ^4.0.0",
 };
 
 export function preventPrototypePollution() {
-  for (const pkg in INCOMPATIBLE_PACKAGES) {
+  const result = freezeBuiltinsIfPossible(INCOMPATIBLE_PACKAGE);
+  const agent = getInstance();
+
+  /* c8 ignore next 3 */
+  if (!result.success) {
+    agent?.unableToPreventPrototypePollution(result.incompatiblePackages);
+    return;
+  }
+
+  agent?.onPrototypePollutionPrevented();
+}
+
+type FreezeResult =
+  | { success: true }
+  | {
+      success: false;
+      incompatiblePackages: Record<PackageName, PackageVersion>;
+    };
+
+export function freezeBuiltinsIfPossible(
+  incompatiblePackageVersions: Record<PackageName, PackageRange>
+): FreezeResult {
+  const incompatiblePackages: Record<PackageName, PackageVersion> = {};
+  for (const pkg in incompatiblePackageVersions) {
     const version = getPackageVersion(pkg);
 
     if (!version) {
       continue;
     }
 
-    const ranges = INCOMPATIBLE_PACKAGES[pkg];
-    if (satisfiesVersion(version, ranges)) {
-      getInstance()?.unableToPreventPrototypePollution(pkg, version);
-      return;
+    const ranges = incompatiblePackageVersions[pkg];
+
+    if (satisfiesVersion(ranges, version)) {
+      incompatiblePackages[pkg] = version;
     }
+  }
+
+  if (Object.keys(incompatiblePackages).length > 0) {
+    return { success: false, incompatiblePackages };
   }
 
   freezeBuiltins();
 
-  getInstance()?.onPrototypePollutionPrevented();
+  return { success: true };
 }
 
 function freezeBuiltins() {

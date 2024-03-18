@@ -350,8 +350,8 @@ t.test("unable to prevent prototype pollution", async () => {
   const api = new APIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, false);
-  agent.unableToPreventPrototypePollution("mongoose", "1.0.0");
+  agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
-    "Unable to prevent prototype pollution, incompatible package found: mongoose@1.0.0",
+    "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
 });
