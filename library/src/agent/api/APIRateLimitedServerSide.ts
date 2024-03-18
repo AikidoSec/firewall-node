@@ -2,7 +2,7 @@ import { API, APIResult } from "./API";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-export class APIRateLimited implements API {
+export class APIRateLimitedServerSide implements API {
   private readonly stopSendingForInMilliseconds = 30 * 60 * 1000;
   private rateLimitedAt: number | null = null;
 

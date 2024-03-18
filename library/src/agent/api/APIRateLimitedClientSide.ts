@@ -4,7 +4,7 @@ import { Event } from "./Event";
 
 type ThrottleOptions = { maxEventsPerInterval: number; intervalInMs: number };
 
-export class APIThrottled implements API {
+export class APIRateLimitedClientSide implements API {
   private readonly maxEventsPerInterval: number;
   private readonly intervalInMs: number;
   private events: Event[] = [];

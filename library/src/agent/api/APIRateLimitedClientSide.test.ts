@@ -1,7 +1,6 @@
 import * as t from "tap";
-
 import { APIForTesting } from "./APIForTesting";
-import { APIThrottled } from "./APIThrottled";
+import { APIRateLimitedClientSide } from "./APIRateLimitedClientSide";
 import { Token } from "./Token";
 import { Event } from "./Event";
 
@@ -47,7 +46,7 @@ t.test("it throttles attack events", async () => {
   const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new APIThrottled(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });
@@ -96,7 +95,7 @@ t.test("it always allows started events", async () => {
   const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new APIThrottled(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });
@@ -153,7 +152,7 @@ t.test("it always allows heartbeat events", async () => {
   const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new APIThrottled(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });

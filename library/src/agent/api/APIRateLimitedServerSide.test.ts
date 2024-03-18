@@ -1,7 +1,7 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { APIForTesting } from "./APIForTesting";
-import { APIRateLimited } from "./APIRateLimited";
+import { APIRateLimitedServerSide } from "./APIRateLimitedServerSide";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
@@ -30,7 +30,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
   const clock = FakeTimers.install();
 
   const api = new APIForTesting();
-  const rateLimitedAPI = new APIRateLimited(api);
+  const rateLimitedAPI = new APIRateLimitedServerSide(api);
   const token = new Token("token");
 
   t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
