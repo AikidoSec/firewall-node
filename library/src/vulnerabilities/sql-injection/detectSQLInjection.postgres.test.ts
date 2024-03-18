@@ -18,6 +18,21 @@ t.test("It flags double dollar sign as SQL injection", async () => {
   isNotSQLInjection("SELECT '$$text$$'", "$$text$$");
 });
 
+t.test("It flags CLIENT_ENCODING as SQL injection", async () => {
+  isSqlInjection("SET CLIENT_ENCODING TO 'UTF8'", "CLIENT_ENCODING TO 'UTF8'");
+  isSqlInjection("SET CLIENT_ENCODING = 'UTF8'", "CLIENT_ENCODING = 'UTF8'");
+  isSqlInjection("SET CLIENT_ENCODING='UTF8'", "CLIENT_ENCODING='UTF8'");
+
+  isNotSQLInjection(
+    `SELECT * FROM users WHERE id = 'SET CLIENT_ENCODING = "UTF8"'`,
+    `SET CLIENT_ENCODING = "UTF8"`
+  );
+  isNotSQLInjection(
+    `SELECT * FROM users WHERE id = 'SET CLIENT_ENCODING TO "UTF8"'`,
+    `SET CLIENT_ENCODING TO "UTF8"`
+  );
+});
+
 function isSqlInjection(sql: string, input: string) {
   t.same(detectSQLInjection(sql, input, new SQLDialectPostgres()), true, sql);
 }

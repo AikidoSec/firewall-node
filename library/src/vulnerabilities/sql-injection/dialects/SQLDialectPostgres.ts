@@ -3,7 +3,16 @@ import { SQLDialect } from "./SQLDialect";
 
 export class SQLDialectPostgres implements SQLDialect {
   getDangerousStrings(): string[] {
-    // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING
-    return ["$"];
+    return [
+      // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING
+      "$",
+    ];
+  }
+
+  getKeywords(): string[] {
+    return [
+      // https://www.postgresql.org/docs/current/sql-set.html
+      "CLIENT_ENCODING",
+    ];
   }
 }
