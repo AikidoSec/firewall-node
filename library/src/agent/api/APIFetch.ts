@@ -38,6 +38,9 @@ export class APIFetch implements API {
         (res) => {
           res.on("data", () => {});
           res.on("end", () => {
+            // We don't throw errors unless the request times out, is aborted or fails for low level reasons
+            // Error objects are annoying to work with
+            // That's why we use `resolve` instead of `reject`
             if (res.statusCode === 429) {
               resolve({
                 success: false,
