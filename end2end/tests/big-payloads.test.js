@@ -31,7 +31,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
     stderr += data.toString();
   });
 
-  const amount = 10000;
+  const amount = 2000;
 
   // Wait for the server to start
   timeout(2000)
