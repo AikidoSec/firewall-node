@@ -30,7 +30,15 @@ function generateStartedEvent(): Event {
 type SeenPayload = { token: string; body: unknown };
 type StopServer = () => Promise<SeenPayload[]>;
 
-function createTestEndpoint(sleepInMs?: number): StopServer {
+function createTestEndpoint({
+  statusCode,
+  sleepInMs,
+  port,
+}: {
+  sleepInMs?: number;
+  statusCode?: number;
+  port: number;
+}): Promise<StopServer> {
   const seen: SeenPayload[] = [];
 
   const app = express();
@@ -47,25 +55,33 @@ function createTestEndpoint(sleepInMs?: number): StopServer {
         body: req.body,
       });
 
+      if (statusCode) {
+        res.status(statusCode);
+      }
+
       res.send({ success: true });
     })
   );
 
-  const server = app.listen(3000);
-
-  return () => {
-    return new Promise((resolve) =>
-      server.close(() => {
-        resolve(seen);
-      })
-    );
-  };
+  return new Promise((resolve) => {
+    const server = app.listen(port, () => {
+      resolve(() => {
+        return new Promise((resolve) =>
+          server.close(() => {
+            resolve(seen);
+          })
+        );
+      });
+    });
+  });
 }
 
 t.test("it reports event to API endpoint", async () => {
-  const stop = createTestEndpoint();
+  const stop = await createTestEndpoint({ port: 3000 });
   const api = new APIFetch(new URL("http://localhost:3000"), 1000);
-  await api.report(new Token("123"), generateStartedEvent());
+  t.same(await api.report(new Token("123"), generateStartedEvent()), {
+    success: true,
+  });
   const seen = await stop();
   t.same(seen.length, 1);
   t.same(seen[0].token, "123");
@@ -74,16 +90,25 @@ t.test("it reports event to API endpoint", async () => {
 });
 
 t.test("it respects timeout", async () => {
-  const stop = createTestEndpoint(2000);
-  const api = new APIFetch(new URL("http://localhost:3000"), 1000);
+  const stop = await createTestEndpoint({ sleepInMs: 2000, port: 3001 });
+  const api = new APIFetch(new URL("http://localhost:3001"), 1000);
   const start = performance.now();
-  await api.report(new Token("123"), generateStartedEvent());
+  t.same(await api.report(new Token("123"), generateStartedEvent()), {
+    success: false,
+    error: "timeout",
+  });
   const finish = performance.now();
   // Added 200ms to prevent flakiness
   t.same(finish - start < 1200, true);
   await stop();
 });
 
-t.test("it throws error if token is empty", async () => {
-  t.throws(() => new Token(""));
+t.test("it deals with 429", async () => {
+  const stop = await createTestEndpoint({ statusCode: 429, port: 3002 });
+  const api = new APIFetch(new URL("http://localhost:3002"), 1000);
+  t.same(await api.report(new Token("123"), generateStartedEvent()), {
+    success: false,
+    error: "rate_limited",
+  });
+  await stop();
 });

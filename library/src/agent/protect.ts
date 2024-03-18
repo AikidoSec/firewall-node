@@ -11,7 +11,8 @@ import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API } from "./api/API";
 import { APIFetch } from "./api/APIFetch";
-import { APIThrottled } from "./api/APIThrottled";
+import { APIRateLimitedServerSide } from "./api/APIRateLimitedServerSide";
+import { APIRateLimitedClientSide } from "./api/APIRateLimitedClientSide";
 import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
@@ -25,21 +26,24 @@ function getLogger(options: Options): Logger {
   return new LoggerNoop();
 }
 
-function throttle(api: API) {
-  return new APIThrottled(api, {
+function clientSideRateLimited(api: API) {
+  return new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 200,
     intervalInMs: 60 * 60 * 1000,
   });
 }
 
+function serverSideRateLimited(api: API) {
+  return new APIRateLimitedServerSide(api);
+}
+
 function getAPI(): API {
+  let url = new URL("https://guard.aikido.dev/api/runtime/events");
   if (process.env.AIKIDO_URL) {
-    return throttle(new APIFetch(new URL(process.env.AIKIDO_URL)));
+    url = new URL(process.env.AIKIDO_URL);
   }
 
-  return throttle(
-    new APIFetch(new URL("https://guard.aikido.dev/api/runtime/events"))
-  );
+  return serverSideRateLimited(clientSideRateLimited(new APIFetch(url)));
 }
 
 function getTokenFromEnv(): Token | undefined {
