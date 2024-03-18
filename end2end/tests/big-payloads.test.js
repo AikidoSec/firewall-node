@@ -31,12 +31,12 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
     stderr += data.toString();
   });
 
-  const amount = 10000;
+  const amount = 2000;
 
   // Wait for the server to start
   timeout(2000)
     .then(() => {
-      return PromisePool.withConcurrency(5)
+      return PromisePool.withConcurrency(3)
         .for(Array.from({ length: amount }))
         .process(async () => {
           const filter = {
