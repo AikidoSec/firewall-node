@@ -14,7 +14,7 @@ export function preventPrototypePollution() {
   const result = freezeBuiltinsIfPossible(INCOMPATIBLE_PACKAGE);
   const agent = getInstance();
 
-  /* c8 ignore next 3 */
+  /* c8 ignore next 4 */
   if (!result.success) {
     agent?.unableToPreventPrototypePollution(result.incompatiblePackages);
     return;

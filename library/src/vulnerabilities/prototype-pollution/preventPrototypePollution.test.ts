@@ -32,6 +32,10 @@ t.test("it freezes builtins", async (t) => {
   });
 });
 
+t.test("without agent instance", async () => {
+  preventPrototypePollution();
+});
+
 t.test("it lets agent know", async () => {
   const logger = new LoggerForTesting();
   const agent = new Agent(
