@@ -28,7 +28,7 @@ function getLogger(options: Options): Logger {
 
 function clientSideRateLimited(api: API) {
   return new APIRateLimitedClientSide(api, {
-    maxEventsPerInterval: 200,
+    maxEventsPerInterval: 100,
     intervalInMs: 60 * 60 * 1000,
   });
 }
