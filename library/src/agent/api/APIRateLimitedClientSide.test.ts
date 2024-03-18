@@ -171,3 +171,30 @@ t.test("it always allows heartbeat events", async () => {
   await throttled.report(token, generateHeartbeatEvent());
   t.same(api.getEvents().length, 6);
 });
+
+t.test("it does not blow memory", async () => {
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const throttled = new APIRateLimitedClientSide(api, {
+    maxEventsPerInterval: 10,
+    intervalInMs: 60000,
+  });
+
+  for (let i = 0; i < 10; i++) {
+    t.same(await throttled.report(token, generateAttackEvent()), {
+      success: true,
+    });
+  }
+
+  for (let i = 0; i < 100; i++) {
+    const result = await throttled.report(token, generateAttackEvent());
+    if (result.success) {
+      t.fail(
+        `Expected to be rate limited at index ${i}: ${JSON.stringify(result)}`
+      );
+    }
+  }
+
+  // @ts-expect-error Private field but we need to check the length
+  t.same(throttled.events.length, 10);
+});
