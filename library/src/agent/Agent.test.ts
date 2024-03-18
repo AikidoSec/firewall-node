@@ -344,3 +344,14 @@ t.test("it logs when failed to report event", async () => {
     "Failed to report attack",
   ]);
 });
+
+t.test("unable to prevent prototype pollution", async () => {
+  const logger = new LoggerForTesting();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+  agent.unableToPreventPrototypePollution("mongoose", "1.0.0");
+  t.same(logger.getMessages(), [
+    "Unable to prevent prototype pollution, incompatible package found: mongoose@1.0.0",
+  ]);
+});

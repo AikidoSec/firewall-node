@@ -47,6 +47,12 @@ export class Agent {
     return this.statistics;
   }
 
+  unableToPreventPrototypePollution(pkg: string, version: string) {
+    this.logger.log(
+      `Unable to prevent prototype pollution, incompatible package found: ${pkg}@${version}`
+    );
+  }
+
   onPrototypePollutionPrevented() {
     this.logger.log("Prevented prototype pollution!");
 
