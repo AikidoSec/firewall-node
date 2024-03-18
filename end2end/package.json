@@ -2,6 +2,7 @@
   "name": "end2end",
   "private": true,
   "dependencies": {
+    "@supercharge/promise-pool": "^3.1.1",
     "tap": "^18.7.0"
   },
   "scripts": {

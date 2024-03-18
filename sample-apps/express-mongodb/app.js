@@ -71,6 +71,18 @@ async function main(port) {
     })
   );
 
+  app.post(
+    "/search",
+    express.json(),
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to NoSQL injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      // Always validate and sanitize user input!
+      res.send(await posts.search(req.body));
+    })
+  );
+
   return new Promise((resolve, reject) => {
     try {
       app.listen(port, () => {
