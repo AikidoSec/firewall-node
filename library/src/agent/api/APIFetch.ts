@@ -46,6 +46,11 @@ export class APIFetch implements API {
                 success: false,
                 error: "rate_limited",
               });
+            } else if (res.statusCode === 401) {
+              resolve({
+                success: false,
+                error: "invalid_token",
+              });
             } else {
               resolve({ success: true });
             }

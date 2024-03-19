@@ -112,3 +112,13 @@ t.test("it deals with 429", async () => {
   });
   await stop();
 });
+
+t.test("it deals with 401", async () => {
+  const stop = await createTestEndpoint({ statusCode: 401, port: 3003 });
+  const api = new APIFetch(new URL("http://localhost:3003"), 1000);
+  t.same(await api.report(new Token("123"), generateStartedEvent()), {
+    success: false,
+    error: "invalid_token",
+  });
+  await stop();
+});
