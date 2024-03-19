@@ -3,7 +3,7 @@ import type { ParsedQs } from "qs";
 
 export type Context = {
   url: string | undefined;
-  method: string;
+  method: string | undefined;
   query: ParsedQs;
   headers: Record<string, string | string[] | undefined>;
   remoteAddress: string | undefined;
