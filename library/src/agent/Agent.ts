@@ -26,6 +26,7 @@ export class Agent {
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
+  private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -51,6 +52,8 @@ export class Agent {
   unableToPreventPrototypePollution(
     incompatiblePackages: Record<string, string>
   ) {
+    this.incompatiblePackages = incompatiblePackages;
+
     const list: string[] = [];
     for (const pkg in incompatiblePackages) {
       list.push(`${pkg}@${incompatiblePackages[pkg]}`);
@@ -66,6 +69,7 @@ export class Agent {
 
     // Will be sent in the next heartbeat
     this.preventedPrototypePollution = true;
+    this.incompatiblePackages = {};
   }
 
   /**
@@ -231,6 +235,9 @@ export class Agent {
         },
         {}
       ),
+      incompatiblePackages: {
+        prototypePollution: this.incompatiblePackages,
+      },
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
       serverless: this.serverless,
