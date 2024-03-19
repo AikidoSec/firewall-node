@@ -1,11 +1,12 @@
 {
-  "name": "lambda-mongodb",
+  "name": "pubsub-mongodb",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "private": true,
   "dependencies": {
     "@aikidosec/guard": "file:../../library",
-    "mongodb": "^6.3.0"
+    "mongodb": "^6.3.0",
+    "@google-cloud/pubsub": "^4.3.3"
   }
 }

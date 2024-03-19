@@ -22,4 +22,7 @@ generated_docs
 # IDE's
 .idea/
 .vscode/
+
+# Credentials
 .env
+credentials.json

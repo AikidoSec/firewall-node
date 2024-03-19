@@ -7,6 +7,7 @@ import { MySQL2 } from "../sinks/MySQL2";
 import { Postgres } from "../sinks/Postgres";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
+import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { API } from "./api/API";
@@ -99,6 +100,7 @@ function getWrappers() {
     new Postgres(),
     new MySQL(),
     new MySQL2(),
+    new PubSub(),
   ];
 }
 
