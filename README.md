@@ -29,6 +29,8 @@ Aikido guard for Node.js is compatible with
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+* ✅ AWS Lambda
 
 ## Installation
 
@@ -42,6 +44,7 @@ $ yarn add --exact @aikidosec/guard
 
 * For express based apps, follow the [Express](docs/express.md) instructions
 * For AWS Lambda, follow the [AWS Lambda](docs/lambda.md) instructions
+* For `@google-cloud/pubsub`, follow the [Google Cloud Pub/Sub](docs/pubsub.md) instructions
 
 ## Reporting to Aikido
 
