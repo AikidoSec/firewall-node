@@ -1,7 +1,7 @@
-# Aikido Guard for Node.js
+# Aikido Runtime for Node.js
 
-![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fguard?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/guard-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fguard?style=flat-square)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/guard-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/guard-node/actions/workflows/end-to-end-tests.yml/badge.svg)
+![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fruntime?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/runtime-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fruntime?style=flat-square)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/end-to-end-tests.yml/badge.svg)
 
 ## Features
 
@@ -21,7 +21,7 @@ Protects your application against
 
 ## Supported libraries and frameworks
 
-Aikido guard for Node.js is compatible with
+Aikido runtime for Node.js is compatible with
 
 * ✅ [`express`](https://www.npmjs.com/package/express) 4.x
 * ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
@@ -34,10 +34,10 @@ Aikido guard for Node.js is compatible with
 
 ```shell
 # The --save-exact makes sure that you don't automatically install a newer version
-$ npm install --save-exact @aikidosec/guard
+$ npm install --save-exact @aikidosec/runtime
 
 # The --exact makes sure that you don't automatically install a newer version
-$ yarn add --exact @aikidosec/guard
+$ yarn add --exact @aikidosec/runtime
 ```
 
 * For express based apps, follow the [Express](docs/express.md) instructions
@@ -69,7 +69,7 @@ AIKIDO_TOKEN=your-token node your-app.js
 
 ## Running in dry mode
 
-If you want to test the guard without blocking any requests, you can set the `AIKIDO_NO_BLOCKING` environment variable to `true`:
+If you want to test the runtime without blocking any requests, you can set the `AIKIDO_NO_BLOCKING` environment variable to `true`:
 
 ```shell
 AIKIDO_NO_BLOCKING=true node your-app.js
@@ -81,13 +81,13 @@ See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido
 
 ## Performance
 
-We run a benchmark on every commit to make sure that the guard has a minimal impact on your application's performance.
+We run a benchmark on every commit to make sure that the runtime has a minimal impact on your application's performance.
 
-The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the guard:
+The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the runtime:
 
-| Without guard | With guard | Difference in ms |
-|---------------|------------|------------------|
-| 0.214ms       | 0.222ms    | +0.008ms         |
+| Without runtime  | With runtime  | Difference in ms |
+|------------------|---------------|------------------|
+| 0.214ms          | 0.222ms       | +0.008ms         |
 
 (Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
 

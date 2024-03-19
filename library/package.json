@@ -1,7 +1,7 @@
 {
-  "name": "@aikidosec/guard",
+  "name": "@aikidosec/runtime",
   "version": "0.0.0",
-  "description": "Aikido guard protects your application against NoSQL injections and more",
+  "description": "Aikido runtime protects your application against NoSQL injections and more",
   "repository": "https://github.com/AikidoSec/guard-node",
   "keywords": [
     "security",

@@ -3,7 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-const { protect, preventPrototypePollution } = require('@aikidosec/guard');
+const { protect, preventPrototypePollution } = require('@aikidosec/runtime');
 
 protect(); // <-- Call this before any other code or imports
 
@@ -19,18 +19,18 @@ You can read more about `preventPrototypePollution` [here](./prototype-pollution
 or ESM import style:
 
 ```js
-import { protect, preventPrototypePollution } from '@aikidosec/guard';
+import { protect, preventPrototypePollution } from '@aikidosec/runtime';
 
 // ...
 ```
 
-That's it! Your app is now protected by Aikido guard.
+That's it! Your app is now protected by Aikido runtime.
 
 If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
 
 ## Debug mode
 
-If you need to debug the guard, you can set the `debug` option to `true`:
+If you need to debug the runtime, you can set the `debug` option to `true`:
 
 ```js
 protect({ debug: true });

@@ -166,7 +166,7 @@ function wrapWithoutArgumentModification(
 
         if (agent.shouldBlock()) {
           throw new Error(
-            `Aikido guard has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)} (${result.pathToPayload})`
+            `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)} (${result.pathToPayload})`
           );
         }
       }

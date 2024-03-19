@@ -1,4 +1,4 @@
-const { lambda, preventPrototypePollution } = require("@aikidosec/guard");
+const { lambda, preventPrototypePollution } = require("@aikidosec/runtime");
 
 const protect = lambda({ debug: true });
 
