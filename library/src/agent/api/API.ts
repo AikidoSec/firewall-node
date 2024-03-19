@@ -5,7 +5,8 @@ type APIError =
   | "timeout"
   | "unknown_error"
   | "rate_limited"
-  | "max_attacks_reached";
+  | "max_attacks_reached"
+  | "invalid_token";
 
 export type APIResult =
   | {

@@ -13,6 +13,7 @@ import { API } from "./api/API";
 import { APIFetch } from "./api/APIFetch";
 import { APIRateLimitedServerSide } from "./api/APIRateLimitedServerSide";
 import { APIRateLimitedClientSide } from "./api/APIRateLimitedClientSide";
+import { APIThatValidatesToken } from "./api/APIThatValidatesToken";
 import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
@@ -24,6 +25,10 @@ function getLogger(options: Options): Logger {
   }
 
   return new LoggerNoop();
+}
+
+function validatesToken(api: API) {
+  return new APIThatValidatesToken(api);
 }
 
 function clientSideRateLimited(api: API) {
@@ -43,7 +48,9 @@ function getAPI(): API {
     url = new URL(process.env.AIKIDO_URL);
   }
 
-  return serverSideRateLimited(clientSideRateLimited(new APIFetch(url)));
+  return validatesToken(
+    serverSideRateLimited(clientSideRateLimited(new APIFetch(url)))
+  );
 }
 
 function getTokenFromEnv(): Token | undefined {

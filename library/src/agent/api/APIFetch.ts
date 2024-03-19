@@ -1,5 +1,6 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
+import type { IncomingMessage } from "node:http";
 import { API, APIResult } from "./API";
 import { Token } from "./Token";
 import { Event } from "./Event";
@@ -9,6 +10,18 @@ export class APIFetch implements API {
     private readonly reportingUrl: URL,
     private readonly timeoutInMS: number = 5000
   ) {}
+
+  private toAPIResult(response: IncomingMessage): APIResult {
+    if (response.statusCode === 429) {
+      return { success: false, error: "rate_limited" };
+    }
+
+    if (response.statusCode === 401) {
+      return { success: false, error: "invalid_token" };
+    }
+
+    return { success: true };
+  }
 
   private async fetch(
     url: string,
@@ -35,20 +48,13 @@ export class APIFetch implements API {
           headers,
           signal,
         },
-        (res) => {
-          res.on("data", () => {});
-          res.on("end", () => {
+        (response) => {
+          response.on("data", () => {});
+          response.on("end", () => {
             // We don't throw errors unless the request times out, is aborted or fails for low level reasons
             // Error objects are annoying to work with
             // That's why we use `resolve` instead of `reject`
-            if (res.statusCode === 429) {
-              resolve({
-                success: false,
-                error: "rate_limited",
-              });
-            } else {
-              resolve({ success: true });
-            }
+            resolve(this.toAPIResult(response));
           });
         }
       );
