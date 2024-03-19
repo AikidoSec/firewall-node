@@ -26,7 +26,7 @@ import { protect, preventPrototypePollution } from '@aikidosec/guard';
 
 That's it! Your app is now protected by Aikido guard.
 
-If you want to see a full example, check our [express sample app](../sample-apps/pubsub-mongodb).
+If you want to see a full example, check our [Pub/Sub sample app](../sample-apps/pubsub-mongodb).
 
 ## Debug mode
 
