@@ -1,4 +1,4 @@
-const { preventPrototypePollution, protect } = require("@aikidosec/guard");
+const { preventPrototypePollution, protect } = require("@aikidosec/runtime");
 
 protect({ debug: true });
 

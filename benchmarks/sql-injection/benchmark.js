@@ -8,7 +8,7 @@ const {
 } = require("../../library/dist/vulnerabilities/sql-injection/detectSQLInjection");
 const {
   SQLDialectMySQL,
-} = require("@aikidosec/guard/dist/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
+} = require("@aikidosec/runtime/dist/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 

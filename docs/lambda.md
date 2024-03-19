@@ -3,7 +3,7 @@
 At the very beginning of your handler.js file, add the following line:
 
 ```js
-const { lambda, preventPrototypePollution } = require("@aikidosec/guard");
+const { lambda, preventPrototypePollution } = require("@aikidosec/runtime");
 
 const protect = lambda(); // <-- Call this before any other code or imports
 
@@ -21,21 +21,21 @@ You can read more about `preventPrototypePollution` [here](./prototype-pollution
 or ESM import style:
 
 ```js
-import { lambda, preventPrototypePollution } from '@aikidosec/guard';
+import { lambda, preventPrototypePollution } from '@aikidosec/runtime';
 ```
 
-In order for the guard to work properly, we need the following event properties to be present:
+In order for the runtime to work properly, we need the following event properties to be present:
 
 * `event.body`
 * `event.headers`
 
-That's it! Your AWS Lambda function is now protected by Aikido guard.
+That's it! Your AWS Lambda function is now protected by Aikido runtime.
 
 If you want to see a full example, check our [lambda sample app](../sample-apps/lambda-mongodb).
 
 ## Debug mode
 
-If you need to debug the guard, you can set the `debug` option to `true`:
+If you need to debug the runtime, you can set the `debug` option to `true`:
 
 ```js
 protect({ debug: true });

@@ -44,4 +44,4 @@ jobs:
           file: ./library/.tap/converage/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/guard-node
+          slug: AikidoSec/runtime-node

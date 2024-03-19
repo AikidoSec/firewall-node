@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { protect, preventPrototypePollution } = require("@aikidosec/guard");
+const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
 
 protect({ debug: true });
 
@@ -64,10 +64,13 @@ async function main(port) {
     })
   );
 
-  app.get("/clear", asyncHandler(async (req, res) => {
-    await db.query("DELETE FROM cats;");
-    res.redirect("/");
-  }));
+  app.get(
+    "/clear",
+    asyncHandler(async (req, res) => {
+      await db.query("DELETE FROM cats;");
+      res.redirect("/");
+    })
+  );
 
   return new Promise((resolve, reject) => {
     try {

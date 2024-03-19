@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { protect, preventPrototypePollution } = require("@aikidosec/guard");
+const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
 
 protect({ debug: true });
 
