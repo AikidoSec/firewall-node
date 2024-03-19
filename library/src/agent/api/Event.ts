@@ -8,6 +8,9 @@ export type AgentInfo = {
   packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
+  incompatiblePackages: {
+    prototypePollution: Record<string, string>;
+  };
   os: {
     name: string;
     version: string;

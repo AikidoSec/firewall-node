@@ -346,12 +346,31 @@ t.test("it logs when failed to report event", async () => {
 });
 
 t.test("unable to prevent prototype pollution", async () => {
+  const clock = FakeTimers.install();
+
   const logger = new LoggerForTesting();
   const api = new APIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, false);
+  agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
+    "Starting agent...",
+    "Found token, reporting enabled!",
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
+
+  clock.tick(1000 * 60 * 30);
+  clock.next();
+
+  t.same(api.getEvents().length, 2);
+  const [_, heartbeat] = api.getEvents();
+  t.same(heartbeat.type, "heartbeat");
+  t.same(heartbeat.agent.incompatiblePackages, {
+    prototypePollution: {
+      mongoose: "1.0.0",
+    },
+  });
+
+  clock.uninstall();
 });
