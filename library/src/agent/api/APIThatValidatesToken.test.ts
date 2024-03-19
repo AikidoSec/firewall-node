@@ -38,7 +38,7 @@ t.test("it ignores valid tokens", async () => {
   t.same(api.getEvents(), [event, event]);
 });
 
-t.test("it invalidates invalid tokens", async () => {
+t.test("it stops sending requests if token is invalid", async () => {
   const api = new APIForTesting({ success: false, error: "invalid_token" });
   const validatesToken = new APIThatValidatesToken(api);
   const token = new Token("123");
