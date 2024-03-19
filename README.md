@@ -30,6 +30,7 @@ Aikido guard for Node.js is compatible with
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
 * ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+* ✅ AWS Lambda
 
 ## Installation
 
