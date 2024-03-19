@@ -43,7 +43,7 @@ $ yarn add --exact @aikidosec/guard
 
 * For express based apps, follow the [Express](docs/express.md) instructions
 * For AWS Lambda, follow the [AWS Lambda](docs/lambda.md) instructions
-* `@google-cloud/pubsub` is supported out of the box, no need to do anything, see [sample app for example](./sample-apps/pubsub-mongodb)
+* For `@google-cloud/pubsub`, follow the [Google Cloud Pub/Sub](docs/pubsub.md) instructions
 
 ## Reporting to Aikido
 
