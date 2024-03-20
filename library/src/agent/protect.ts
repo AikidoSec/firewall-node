@@ -1,11 +1,15 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import type { HttpFunction } from "@google-cloud/functions-framework";
 import * as shimmer from "shimmer";
 import { getOptions, Options } from "../helpers/getOptions";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
 import { Postgres } from "../sinks/Postgres";
-import { FunctionsFramework } from "../sources/FunctionsFramework";
+import {
+  createCloudFunctionWrapper,
+  FunctionsFramework,
+} from "../sources/FunctionsFramework";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -139,4 +143,19 @@ export function lambda(
   agent.start(getWrappers());
 
   return createLambdaWrapper;
+}
+
+export function cloudFunction(
+  options?: Partial<Options>
+): (handler: HttpFunction) => HttpFunction {
+  disableShimmerLogging();
+
+  const agent = getAgent({
+    options: getOptions(options),
+    serverless: true,
+  });
+
+  agent.start(getWrappers());
+
+  return createCloudFunctionWrapper;
 }
