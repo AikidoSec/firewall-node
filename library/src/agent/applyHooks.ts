@@ -6,6 +6,7 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
 import { getContext } from "./Context";
+import { BuiltinModule } from "./hooks/BuiltinModule";
 import { Hooks } from "./hooks/Hooks";
 import {
   InterceptorResult,
@@ -74,6 +75,14 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
     }
   });
 
+  hooks.getBuiltInModules().forEach((module) => {
+    const subjects = module.getSubjects();
+
+    if (subjects.length > 0) {
+      wrapBuiltInModule(module, subjects, agent);
+    }
+  });
+
   return wrapped;
 }
 
@@ -88,6 +97,19 @@ function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
         agent
       );
   });
+}
+
+function wrapBuiltInModule(
+  module: BuiltinModule,
+  subjects: WrappableSubject[],
+  agent: Agent
+) {
+  const exports = require(module.getName());
+
+  subjects.forEach(
+    (selector) => wrapSubject(exports, selector, module.getName(), agent),
+    agent
+  );
 }
 
 function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
