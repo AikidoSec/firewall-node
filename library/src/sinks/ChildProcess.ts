@@ -30,7 +30,7 @@ export class ChildProcess implements Wrapper {
         command: command,
         operation: `child_process.${name}`,
         context: context,
-        shell: shell,
+        pathToShell: shell,
       });
     }
 
