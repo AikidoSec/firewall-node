@@ -36,7 +36,7 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 
     const incompatible = pkg.getIncompatible();
     for (const name of incompatible) {
-      if (getPackageVersion(name)) {
+      if (wrapped[name]) {
         wrapped[pkg.getName()] = {
           version,
           supported: false,

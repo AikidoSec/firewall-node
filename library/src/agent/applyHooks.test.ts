@@ -149,7 +149,7 @@ t.test("it checks incompatible packages", async (t) => {
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {
     express: {
-      version: "4.17.1",
+      version: "4.18.2",
       supported: false,
     },
   });
