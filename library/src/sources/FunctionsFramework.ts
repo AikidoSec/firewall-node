@@ -30,9 +30,7 @@ export class FunctionsFramework implements Wrapper {
       .withVersion("^3.0.0");
 
     functions
-      .addSubject((exports) => {
-        return exports;
-      })
+      .addSubject((exports) => exports)
       .modifyArguments("http", (args) => {
         if (args.length === 2 && typeof args[1] === "function") {
           const httpFunction = args[1] as HttpFunction;
