@@ -3,7 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 
-export class CloudFunctionsV2 implements Wrapper {
+export class FunctionsFramework implements Wrapper {
   wrap(hooks: Hooks) {
     const functions = hooks
       .addPackage("@google-cloud/functions-framework")

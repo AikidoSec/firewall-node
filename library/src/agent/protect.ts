@@ -5,7 +5,7 @@ import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
 import { Postgres } from "../sinks/Postgres";
-import { CloudFunctionsV2 } from "../sources/CloudFunctionsV2";
+import { FunctionsFramework } from "../sources/FunctionsFramework";
 import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -102,7 +102,7 @@ function getWrappers() {
     new MySQL(),
     new MySQL2(),
     new PubSub(),
-    new CloudFunctionsV2(),
+    new FunctionsFramework(),
   ];
 }
 
