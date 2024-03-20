@@ -139,7 +139,7 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   await actualConnection.end();
 });
 
-t.test('it hooks into "dns"', async (t) => {
+t.test("it hooks into dns module", async (t) => {
   const seenDomains: string[] = [];
 
   const hooks = new Hooks();
