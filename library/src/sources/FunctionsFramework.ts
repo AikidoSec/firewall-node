@@ -15,8 +15,8 @@ export class FunctionsFramework implements Wrapper {
       })
       .modifyArguments("http", (args) => {
         if (args.length === 2 && typeof args[1] === "function") {
-          const originalFunction = args[1] as HttpFunction;
-          args[1] = wrapHandler(originalFunction);
+          const httpFunction = args[1] as HttpFunction;
+          args[1] = wrapHandler(httpFunction);
         }
 
         return args;
