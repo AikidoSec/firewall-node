@@ -45,8 +45,8 @@ $ yarn add --exact @aikidosec/runtime
 
 * For express based apps, follow the [Express](docs/express.md) instructions
 * For AWS Lambda, follow the [AWS Lambda](docs/lambda.md) instructions
+* For Google Cloud Functions, follow the [Google Cloud Functions](docs/cloud-functions.md) instructions
 * For `@google-cloud/pubsub`, follow the [Google Cloud Pub/Sub](docs/pubsub.md) instructions
-* For `@google-cloud/functions-framework`, follow the [Google Cloud Functions](docs/cloud-functions.md) instructions
 
 ## Reporting to Aikido
 
