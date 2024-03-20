@@ -1,3 +1,5 @@
+import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegments";
+
 export function detectShellInjection(
   command: string,
   userInput: string,
@@ -12,15 +14,6 @@ export function detectShellInjection(
   }
 
   return containsShellSyntax(userInput, pathToShell);
-}
-
-function getCurrentAndNextSegments<T>(
-  array: T[]
-): { currentSegment: T; nextSegment: T }[] {
-  return array.slice(0, -1).map((currentItem, index) => ({
-    currentSegment: currentItem,
-    nextSegment: array[index + 1],
-  }));
 }
 
 function containsShellSyntax(userInput: string, pathToShell: string): boolean {
