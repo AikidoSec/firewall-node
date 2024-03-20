@@ -31,3 +31,9 @@ t.test("method throws error if name is empty", async (t) => {
   t.throws(() => subject.inspect("", () => {}));
   t.throws(() => subject.modifyArguments("", (args) => args));
 });
+
+t.test("add builtin module throws if name is empty", async (t) => {
+  const hooks = new Hooks();
+
+  t.throws(() => hooks.addBuiltinModule(""));
+});

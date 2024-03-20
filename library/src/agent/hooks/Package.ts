@@ -12,7 +12,11 @@ type PackageName = string;
 export class Package {
   private versions: VersionedPackage[] = [];
 
-  constructor(private readonly packageName: PackageName) {}
+  constructor(private readonly packageName: PackageName) {
+    if (!this.packageName) {
+      throw new Error("Package name is required");
+    }
+  }
 
   getName() {
     return this.packageName;
