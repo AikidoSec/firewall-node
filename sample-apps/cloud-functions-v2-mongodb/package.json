@@ -1,0 +1,12 @@
+{
+  "name": "cloud-functions-v2-mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/runtime": "file:../../library",
+    "mongodb": "^6.3.0",
+    "@google-cloud/functions-framework": "^3.3.0"
+  }
+}

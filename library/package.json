@@ -27,6 +27,7 @@
   "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
   "devDependencies": {
+    "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",
     "@sinonjs/fake-timers": "^11.2.2",
     "@types/aws-lambda": "^8.10.131",
