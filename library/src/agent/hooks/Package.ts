@@ -1,5 +1,7 @@
 import { VersionedPackage } from "./VersionedPackage";
 
+type PackageName = string;
+
 /**
  * Represents an installed package that can have multiple versions.
  *
@@ -10,7 +12,7 @@ import { VersionedPackage } from "./VersionedPackage";
 export class Package {
   private versions: VersionedPackage[] = [];
 
-  constructor(private readonly packageName: string) {}
+  constructor(private readonly packageName: PackageName) {}
 
   getName() {
     return this.packageName;
