@@ -18,7 +18,7 @@ functions.http("handler", async (req, res) => {
 
 If you're using the `exports.handler` style, you'll need to wrap your handler manually.
 
-At the very beginning of your file that contains your handler, add the following line:
+At the very beginning of the file that contains your handler, add the following line:
 
 ```js
 const { cloudFunction, preventPrototypePollution } = require("@aikidosec/runtime");
