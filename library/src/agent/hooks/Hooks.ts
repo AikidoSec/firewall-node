@@ -6,10 +6,6 @@ export class Hooks {
   private readonly builtinModules: BuiltinModule[] = [];
 
   addPackage(packageName: string): Package {
-    if (!packageName) {
-      throw new Error("Package name is required");
-    }
-
     const pkg = new Package(packageName);
     this.packages.push(pkg);
 
@@ -17,10 +13,6 @@ export class Hooks {
   }
 
   addBuiltinModule(name: string): BuiltinModule {
-    if (!name) {
-      throw new Error("Name is required");
-    }
-
     const module = new BuiltinModule(name);
     this.builtinModules.push(module);
 
