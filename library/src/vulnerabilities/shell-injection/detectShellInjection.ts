@@ -7,28 +7,7 @@ export function detectShellInjection(
     return false;
   }
 
-  const segmentsInBetween = getCurrentAndNextSegments(command.split(userInput));
-
-  if (
-    segmentsInBetween.every(({ currentSegment, nextSegment }) => {
-      const charBeforeUserInput = currentSegment.slice(-1);
-      const charAfterUserInput = nextSegment.slice(0, 1);
-
-      if (charBeforeUserInput !== "'") {
-        return false;
-      }
-
-      if (charBeforeUserInput !== charAfterUserInput) {
-        return false;
-      }
-
-      if (userInput.includes(charBeforeUserInput)) {
-        return false;
-      }
-
-      return true;
-    })
-  ) {
+  if (isSafelyEncapsulated(command, userInput)) {
     return false;
   }
 
@@ -45,5 +24,25 @@ function getCurrentAndNextSegments<T>(
 }
 
 function containsShellSyntax(userInput: string, pathToShell: string): boolean {
+  // e.g. $(command ...args...)
   return /\$\(([^)]+)\)/.test(userInput);
+}
+
+function isSafelyEncapsulated(command: string, userInput: string) {
+  return getCurrentAndNextSegments(command.split(userInput)).every(
+    ({ currentSegment, nextSegment }) => {
+      const charBeforeUserInput = currentSegment.slice(-1);
+      const charAfterUserInput = nextSegment.slice(0, 1);
+
+      if (charBeforeUserInput !== "'") {
+        return false;
+      }
+
+      if (charBeforeUserInput !== charAfterUserInput) {
+        return false;
+      }
+
+      return !userInput.includes(charBeforeUserInput);
+    }
+  );
 }
