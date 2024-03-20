@@ -138,3 +138,26 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
 
   await actualConnection.end();
 });
+
+t.test('it hooks into "dns"', async (t) => {
+  const seenDomains: string[] = [];
+
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("dns")
+    .addSubject((exports) => exports.promises)
+    .inspect("lookup", (args, subject, agent) => {
+      if (typeof args[0] === "string") {
+        seenDomains.push(args[0]);
+      }
+    });
+
+  const { agent } = createAgent();
+  t.same(applyHooks(hooks, agent), {});
+
+  const { lookup } = require("dns/promises");
+
+  await runWithContext(context, async () => await lookup("google.com"));
+
+  t.same(seenDomains, ["google.com"]);
+});
