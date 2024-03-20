@@ -96,16 +96,13 @@ function disableShimmerLogging() {
 
 function getWrappers() {
   return [
-    // Should be higher than express
-    // As express is used by functions framework
-    new FunctionsFramework(),
-
     new Express(),
     new MongoDB(),
     new Postgres(),
     new MySQL(),
     new MySQL2(),
     new PubSub(),
+    new FunctionsFramework(),
   ];
 }
 

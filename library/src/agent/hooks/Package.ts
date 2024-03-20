@@ -11,22 +11,11 @@ type PackageName = string;
  */
 export class Package {
   private versions: VersionedPackage[] = [];
-  private incompatible: PackageName[] = [];
 
   constructor(private readonly packageName: PackageName) {}
 
   getName() {
     return this.packageName;
-  }
-
-  incompatibleWith(packageName: PackageName) {
-    if (packageName.length === 0) {
-      throw new Error("Package name cannot be empty");
-    }
-
-    this.incompatible.push(packageName);
-
-    return this;
   }
 
   withVersion(range: string): VersionedPackage {
@@ -38,9 +27,5 @@ export class Package {
 
   getVersions() {
     return this.versions;
-  }
-
-  getIncompatible() {
-    return this.incompatible;
   }
 }

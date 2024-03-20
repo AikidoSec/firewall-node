@@ -57,16 +57,9 @@ export class Express implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const express = hooks.addPackage("express");
+    const express = hooks.addPackage("express").withVersion("^4.0.0");
 
-    // Functions framework uses express under the hood
-    // For local development, we don't want to add our middleware in this case
-    // We'll use separate hooks for functions framework
-    express.incompatibleWith("@google-cloud/functions-framework");
-
-    const express4 = express.withVersion("^4.0.0");
-
-    const route = express4.addSubject((exports) => exports.Route.prototype);
+    const route = express.addSubject((exports) => exports.Route.prototype);
 
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
