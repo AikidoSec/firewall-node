@@ -1,6 +1,6 @@
 # Google Cloud Functions
 
-If you're the `@google-cloud/functions-framework` package, your cloud function will be protected by Aikido runtime automatically:
+If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Aikido runtime automatically:
 
 ```js
 const { protect } = require("@aikidosec/runtime");
