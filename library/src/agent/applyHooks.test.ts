@@ -138,3 +138,19 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
 
   await actualConnection.end();
 });
+
+t.test("it checks incompatible packages", async (t) => {
+  const hooks = new Hooks();
+  hooks.addPackage("express").withVersion("^4.0.0");
+  hooks
+    .addPackage("express")
+    .incompatibleWith("@google-cloud/functions-framework");
+
+  const { agent } = createAgent();
+  t.same(applyHooks(hooks, agent), {
+    express: {
+      version: "4.17.1",
+      supported: false,
+    },
+  });
+});

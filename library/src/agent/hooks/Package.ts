@@ -1,5 +1,7 @@
 import { VersionedPackage } from "./VersionedPackage";
 
+type PackageName = string;
+
 /**
  * Represents an installed package that can have multiple versions.
  *
@@ -9,11 +11,18 @@ import { VersionedPackage } from "./VersionedPackage";
  */
 export class Package {
   private versions: VersionedPackage[] = [];
+  private incompatible: PackageName[] = [];
 
-  constructor(private readonly packageName: string) {}
+  constructor(private readonly packageName: PackageName) {}
 
   getName() {
     return this.packageName;
+  }
+
+  incompatibleWith(packageName: PackageName) {
+    this.incompatible.push(packageName);
+
+    return this;
   }
 
   withVersion(range: string): VersionedPackage {
@@ -25,5 +34,9 @@ export class Package {
 
   getVersions() {
     return this.versions;
+  }
+
+  getIncompatible() {
+    return this.incompatible;
   }
 }
