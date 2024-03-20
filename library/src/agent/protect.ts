@@ -2,6 +2,7 @@ import type { APIGatewayProxyHandler } from "aws-lambda";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import * as shimmer from "shimmer";
 import { getOptions, Options } from "../helpers/getOptions";
+import { ChildProcess } from "../sinks/ChildProcess";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
@@ -107,6 +108,7 @@ function getWrappers() {
     new MySQL2(),
     new PubSub(),
     new FunctionsFramework(),
+    new ChildProcess(),
   ];
 }
 
