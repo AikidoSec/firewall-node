@@ -39,7 +39,7 @@ function handleMessage(handler: Function) {
       }
     }
 
-    runWithContext(
+    return runWithContext(
       {
         body: body,
         method: undefined,
@@ -50,7 +50,7 @@ function handleMessage(handler: Function) {
         query: {},
       },
       () => {
-        handler(...args);
+        return handler(...args);
       }
     );
   };
