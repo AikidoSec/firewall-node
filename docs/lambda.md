@@ -1,6 +1,6 @@
 # AWS Lambda
 
-At the very beginning of your handler.js file, add the following line:
+At the very beginning of your file that contains your handler, add the following line:
 
 ```js
 const { lambda, preventPrototypePollution } = require("@aikidosec/runtime");
