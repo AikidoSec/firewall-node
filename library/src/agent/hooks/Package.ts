@@ -20,6 +20,10 @@ export class Package {
   }
 
   incompatibleWith(packageName: PackageName) {
+    if (packageName.length === 0) {
+      throw new Error("Package name cannot be empty");
+    }
+
     this.incompatible.push(packageName);
 
     return this;

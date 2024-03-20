@@ -31,3 +31,10 @@ t.test("method throws error if name is empty", async (t) => {
   t.throws(() => subject.inspect("", () => {}));
   t.throws(() => subject.modifyArguments("", (args) => args));
 });
+
+t.test("it throws error if incompatible package name is empty", async (t) => {
+  const hooks = new Hooks();
+  const subject = hooks.addPackage("package");
+
+  t.throws(() => subject.incompatibleWith(""));
+});
