@@ -17,8 +17,8 @@ export function detectShellInjection(
 }
 
 function containsShellSyntax(userInput: string, pathToShell: string): boolean {
-  // e.g. $(command ...args...)
-  return /\$\(([^)]+)\)/.test(userInput);
+  // Check for patterns like $(command) or backticks
+  return /\$\(([^)]+)\)/.test(userInput) || /`[^`]+`/.test(userInput);
 }
 
 function isSafelyEncapsulated(command: string, userInput: string) {
