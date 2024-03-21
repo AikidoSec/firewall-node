@@ -2,6 +2,12 @@ import * as t from "tap";
 import { detectShellInjection } from "./detectShellInjection";
 import { quote } from "shell-quote";
 
+t.test("it single characters are ignored", async () => {
+  isNotShellInjection("ls `", "`");
+  isNotShellInjection("ls *", "*");
+  isNotShellInjection("ls a", "a");
+});
+
 t.test(
   "it does not detect shell injection when there is no user input",
   async () => {
