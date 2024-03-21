@@ -12,7 +12,11 @@ export class ChildProcess implements Wrapper {
     name: string,
     context: Context
   ): InterceptorResult {
+    console.log("inspecting", name, args);
+
     if (args.length > 0 && typeof args[0] === "string") {
+      console.log("has command", args[0]);
+
       const command = args[0];
       const options = args[1];
 
@@ -21,10 +25,14 @@ export class ChildProcess implements Wrapper {
         shell = options.shell;
       }
 
+      console.log("the shell is ", shell, basename(shell));
+
       const shellName = basename(shell);
       if (shellName !== "sh" && shellName !== "bash") {
         return undefined;
       }
+
+      console.log("checking for shell injection");
 
       return checkContextForShellInjection({
         command: command,
