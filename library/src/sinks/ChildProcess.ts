@@ -47,7 +47,5 @@ export class ChildProcess implements Wrapper {
       .inspect("execSync", (args, subject, agent, context) =>
         this.inspectExec(args, "execSync", context)
       );
-
-    childProcess.addSubject((exports) => exports);
   }
 }
