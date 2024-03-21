@@ -32,6 +32,7 @@ t.test("it ignores calls without args", async (t) => {
   agent.start([new ChildProcess()]);
 
   runWithContext(unsafeContext, () => {
+    // @ts-expect-error We're calling the method without arguments
     const execError = t.throws(() => exec().unref());
     if (execError instanceof Error) {
       t.same(
@@ -39,6 +40,8 @@ t.test("it ignores calls without args", async (t) => {
         'The "command" argument must be of type string. Received undefined'
       );
     }
+
+    // @ts-expect-error We're calling the method without arguments
     const execSyncError = t.throws(() => execSync());
     if (execSyncError instanceof Error) {
       t.same(
