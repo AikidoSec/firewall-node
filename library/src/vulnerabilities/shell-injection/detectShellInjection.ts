@@ -1,4 +1,5 @@
-import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegments";
+import { containsShellSyntax } from "./containsShellSyntax";
+import { isSafelyEncapsulated } from "./isSafelyEncapsulated";
 
 export function detectShellInjection(
   command: string,
@@ -19,77 +20,4 @@ export function detectShellInjection(
   }
 
   return containsShellSyntax(userInput);
-}
-
-const dangerousShellStrings = [
-  "#",
-  "!",
-  '"',
-  "$",
-  "&",
-  "'",
-  "(",
-  ")",
-  "*",
-  ",",
-  ":",
-  ";",
-  "<",
-  "=",
-  ">",
-  "?",
-  "@",
-  "[",
-  "\\",
-  "]",
-  "^",
-  "`",
-  "{",
-  "|",
-  "}",
-];
-
-function containsShellSyntax(userInput: string): boolean {
-  return dangerousShellStrings.some((shellString) =>
-    userInput.includes(shellString)
-  );
-}
-
-const escapeChars = ['"', "'"];
-const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
-
-function isSafelyEncapsulated(command: string, userInput: string) {
-  return getCurrentAndNextSegments(command.split(userInput)).every(
-    ({ currentSegment, nextSegment }) => {
-      const charBeforeUserInput = currentSegment.slice(-1);
-      const charAfterUserInput = nextSegment.slice(0, 1);
-
-      const isEscapeChar = escapeChars.find(
-        (char) => char === charBeforeUserInput
-      );
-
-      if (!isEscapeChar) {
-        return false;
-      }
-
-      if (charBeforeUserInput !== charAfterUserInput) {
-        return false;
-      }
-
-      if (userInput.includes(charBeforeUserInput)) {
-        return false;
-      }
-
-      if (
-        isEscapeChar === '"' &&
-        dangerousCharsInsideDoubleQuotes.some((char) =>
-          userInput.includes(char)
-        )
-      ) {
-        return false;
-      }
-
-      return true;
-    }
-  );
 }
