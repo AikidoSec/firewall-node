@@ -2,7 +2,7 @@ import { exec, execSync } from "child_process";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
-import { Context, getContext, runWithContext } from "../agent/Context";
+import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
 
@@ -20,7 +20,7 @@ const unsafeContext: Context = {
   cookies: {},
 };
 
-t.test("it ignores calls without args", async (t) => {
+t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -31,8 +31,9 @@ t.test("it ignores calls without args", async (t) => {
 
   agent.start([new ChildProcess()]);
 
-  runWithContext(unsafeContext, () => {
-    // @ts-expect-error We're calling the method without arguments
+  const { exec, execSync } = require("child_process");
+
+  const runCommandsWithInvalidArgs = () => {
     const execError = t.throws(() => exec().unref());
     if (execError instanceof Error) {
       t.same(
@@ -41,7 +42,6 @@ t.test("it ignores calls without args", async (t) => {
       );
     }
 
-    // @ts-expect-error We're calling the method without arguments
     const execSyncError = t.throws(() => execSync());
     if (execSyncError instanceof Error) {
       t.same(
@@ -49,50 +49,15 @@ t.test("it ignores calls without args", async (t) => {
         'The "command" argument must be of type string. Received undefined'
       );
     }
-  });
-});
-
-t.test("it allows safe commands", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new APIForTesting(),
-    undefined,
-    true
-  );
-
-  agent.start([new ChildProcess()]);
-
-  const { exec, execSync } = require("child_process");
-
-  const runCommands = () => {
-    exec("ls", (err, stdout, stderr) => {}).unref();
-    exec("ls", { shell: "/bin/bash" }, (err, stdout, stderr) => {}).unref();
-    execSync("ls", (err, stdout, stderr) => {});
-    execSync("ls", { shell: "/bin/bash" }, (err, stdout, stderr) => {});
   };
 
-  runCommands();
+  runCommandsWithInvalidArgs();
 
   runWithContext(unsafeContext, () => {
-    runCommands();
+    runCommandsWithInvalidArgs();
   });
-});
 
-t.test("it does nothing if shell is not /bin/bash or /bin/sh", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new APIForTesting(),
-    undefined,
-    true
-  );
-
-  agent.start([new ChildProcess()]);
-
-  const { exec, execSync } = require("child_process");
-
-  const runCommands = () => {
+  const runCommandsWithZSH = () => {
     exec(
       "ls `echo .`",
       { shell: "/bin/zsh" },
@@ -101,27 +66,26 @@ t.test("it does nothing if shell is not /bin/bash or /bin/sh", async (t) => {
     execSync("ls `echo .`", { shell: "/bin/zsh" }, (err, stdout, stderr) => {});
   };
 
-  runCommands();
+  runCommandsWithZSH();
 
   runWithContext(unsafeContext, () => {
-    runCommands();
+    runCommandsWithZSH();
   });
-});
 
-t.test("it detects shell injection", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new APIForTesting(),
-    undefined,
-    true
-  );
+  const runSafeCommands = () => {
+    exec("ls", (err, stdout, stderr) => {}).unref();
+    exec("ls", { shell: "/bin/bash" }, (err, stdout, stderr) => {}).unref();
+    execSync("ls", (err, stdout, stderr) => {});
+    execSync("ls", { shell: "/bin/bash" }, (err, stdout, stderr) => {});
+  };
 
-  agent.start([new ChildProcess()]);
+  runSafeCommands();
 
-  const { exec, execSync } = require("child_process");
+  runWithContext(unsafeContext, () => {
+    runSafeCommands();
+  });
 
-  const runCommands = () => {
+  runWithContext(unsafeContext, () => {
     const error1 = t.throws(() =>
       exec("ls `echo .`", (err, stdout, stderr) => {}).unref()
     );
@@ -166,9 +130,5 @@ t.test("it detects shell injection", async (t) => {
         "Aikido runtime has blocked a Shell injection: child_process.execSync(...) originating from body (.file.matches)"
       );
     }
-  };
-
-  runWithContext(unsafeContext, () => {
-    runCommands();
   });
 });
