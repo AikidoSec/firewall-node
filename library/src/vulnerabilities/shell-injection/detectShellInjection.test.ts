@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { detectShellInjection } from "./detectShellInjection";
+import { quote } from "shell-quote";
 
 t.test(
   "it does not detect shell injection when there is no user input",
@@ -39,6 +40,12 @@ t.test("it detects `command`", async () => {
 
 t.test("it checks unsafely quoted", async () => {
   isShellInjection(`ls '$(echo)`, "$(echo)");
+});
+
+t.test("it ignores escaped backticks", async () => {
+  const domain = "www.example`whoami`.com";
+  const args = ["--domain", domain];
+  isNotShellInjection(`binary ${quote(args)}`, domain);
 });
 
 function isShellInjection(command: string, userInput: string) {
