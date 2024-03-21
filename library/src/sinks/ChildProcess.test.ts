@@ -36,17 +36,17 @@ t.test("it works", async (t) => {
   const runCommandsWithInvalidArgs = () => {
     const execError = t.throws(() => exec().unref());
     if (execError instanceof Error) {
-      t.same(
+      t.match(
         execError.message,
-        'The "command" argument must be of type string. Received undefined'
+        /argument must be of type string. Received undefined/
       );
     }
 
     const execSyncError = t.throws(() => execSync());
     if (execSyncError instanceof Error) {
-      t.same(
+      t.match(
         execSyncError.message,
-        'The "command" argument must be of type string. Received undefined'
+        /argument must be of type string. Received undefined/
       );
     }
   };

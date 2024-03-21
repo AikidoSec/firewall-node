@@ -22,7 +22,6 @@ export class ChildProcess implements Wrapper {
       }
 
       const shellName = basename(shell);
-
       if (shellName !== "sh" && shellName !== "bash") {
         return undefined;
       }
