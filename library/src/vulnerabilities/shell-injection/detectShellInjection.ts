@@ -22,18 +22,37 @@ export function detectShellInjection(
   return containsShellSyntax(userInput, pathToShell);
 }
 
-function containsShellSyntax(userInput: string, pathToShell: string): boolean {
-  const dangerousShellStrings = ["!", "*", "$", "`", ";"];
+const dangerousShellStrings = [
+  "!",
+  "*",
+  "$",
+  "`",
+  ";",
+  "&&",
+  "||",
+  "|",
+  ">",
+  "<",
+  "[",
+  "]",
+  "{",
+  "}",
+  "(",
+  ")",
+  "'",
+  '"',
+];
 
+function containsShellSyntax(userInput: string, pathToShell: string): boolean {
   return dangerousShellStrings.some((shellString) =>
     userInput.includes(shellString)
   );
 }
 
-function isSafelyEncapsulated(command: string, userInput: string) {
-  const escapeChars = ['"', "'"];
-  const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
+const escapeChars = ['"', "'"];
+const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
 
+function isSafelyEncapsulated(command: string, userInput: string) {
   return getCurrentAndNextSegments(command.split(userInput)).every(
     ({ currentSegment, nextSegment }) => {
       const charBeforeUserInput = currentSegment.slice(-1);
