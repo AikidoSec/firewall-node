@@ -57,8 +57,14 @@ t.test("it ignores escaped backticks", async () => {
 t.test("it does not allow special chars inside double quotes", async () => {
   isShellInjection(`ls "whatever$"`, "whatever$");
   isShellInjection(`ls "whatever!"`, "whatever!");
-  isShellInjection(`ls "whatever\\"`, "whatever\\");
   isShellInjection(`ls "whatever\`"`, "whatever`");
+});
+
+t.test("it does not allow semi", async () => {
+  isShellInjection(`ls whatever;`, "whatever;");
+
+  isNotShellInjection(`ls "whatever;"`, "whatever;");
+  isNotShellInjection(`ls 'whatever;'`, "whatever;");
 });
 
 function isShellInjection(command: string, userInput: string) {

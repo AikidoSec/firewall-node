@@ -23,7 +23,7 @@ export function detectShellInjection(
 }
 
 function containsShellSyntax(userInput: string, pathToShell: string): boolean {
-  const dangerousShellStrings = ["!", "*", "$", "`", "\\"];
+  const dangerousShellStrings = ["!", "*", "$", "`", ";"];
 
   return dangerousShellStrings.some((shellString) =>
     userInput.includes(shellString)
