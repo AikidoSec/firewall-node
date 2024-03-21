@@ -23,17 +23,27 @@ export function detectShellInjection(
 }
 
 function containsShellSyntax(userInput: string, pathToShell: string): boolean {
-  // Check for patterns like $(command) or backticks
-  return /\$\(([^)]+)\)/.test(userInput) || /`[^`]+`/.test(userInput);
+  const dangerousShellStrings = ["!", "*", "$", "`", "\\"];
+
+  return dangerousShellStrings.some((shellString) =>
+    userInput.includes(shellString)
+  );
 }
 
 function isSafelyEncapsulated(command: string, userInput: string) {
+  const escapeChars = ['"', "'"];
+  const dangerousCharsInsideDoubleQuotes = ["$", "`", "\\", "!"];
+
   return getCurrentAndNextSegments(command.split(userInput)).every(
     ({ currentSegment, nextSegment }) => {
       const charBeforeUserInput = currentSegment.slice(-1);
       const charAfterUserInput = nextSegment.slice(0, 1);
 
-      if (charBeforeUserInput !== "'") {
+      const isEscapeChar = escapeChars.find(
+        (char) => char === charBeforeUserInput
+      );
+
+      if (!isEscapeChar) {
         return false;
       }
 
@@ -41,7 +51,20 @@ function isSafelyEncapsulated(command: string, userInput: string) {
         return false;
       }
 
-      return !userInput.includes(charBeforeUserInput);
+      if (userInput.includes(charBeforeUserInput)) {
+        return false;
+      }
+
+      if (
+        isEscapeChar === '"' &&
+        dangerousCharsInsideDoubleQuotes.some((char) =>
+          userInput.includes(char)
+        )
+      ) {
+        return false;
+      }
+
+      return true;
     }
   );
 }

@@ -54,6 +54,13 @@ t.test("it ignores escaped backticks", async () => {
   isNotShellInjection(`binary ${quote(args)}`, domain);
 });
 
+t.test("it does not allow special chars inside double quotes", async () => {
+  isShellInjection(`ls "whatever$"`, "whatever$");
+  isShellInjection(`ls "whatever!"`, "whatever!");
+  isShellInjection(`ls "whatever\\"`, "whatever\\");
+  isShellInjection(`ls "whatever\`"`, "whatever`");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput, "/bin/bash"),
