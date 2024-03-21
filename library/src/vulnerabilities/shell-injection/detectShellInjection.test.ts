@@ -48,6 +48,10 @@ t.test("it checks unsafely quoted", async () => {
   isShellInjection(`ls '$(echo)`, "$(echo)");
 });
 
+t.test("single quote between single quotes", async () => {
+  isShellInjection(`ls ''single quote''`, "'single quote'");
+});
+
 t.test("it ignores escaped backticks", async () => {
   const domain = "www.example`whoami`.com";
   const args = ["--domain", domain];
