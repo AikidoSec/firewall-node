@@ -12,18 +12,16 @@ export function checkContextForShellInjection({
   command,
   operation,
   context,
-  pathToShell,
 }: {
   command: string;
   operation: string;
   context: Context;
-  pathToShell: string;
 }): InterceptorResult {
   for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        if (detectShellInjection(command, str, pathToShell)) {
+        if (detectShellInjection(command, str)) {
           return {
             operation: operation,
             kind: "shell_injection",

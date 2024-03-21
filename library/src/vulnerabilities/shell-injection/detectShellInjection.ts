@@ -2,8 +2,7 @@ import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegmen
 
 export function detectShellInjection(
   command: string,
-  userInput: string,
-  pathToShell: string
+  userInput: string
 ): boolean {
   if (userInput.length <= 1) {
     // We ignore single characters since they don't pose a big threat.
@@ -19,7 +18,7 @@ export function detectShellInjection(
     return false;
   }
 
-  return containsShellSyntax(userInput, pathToShell);
+  return containsShellSyntax(userInput);
 }
 
 const dangerousShellStrings = [
@@ -50,7 +49,7 @@ const dangerousShellStrings = [
   "}",
 ];
 
-function containsShellSyntax(userInput: string, pathToShell: string): boolean {
+function containsShellSyntax(userInput: string): boolean {
   return dangerousShellStrings.some((shellString) =>
     userInput.includes(shellString)
   );

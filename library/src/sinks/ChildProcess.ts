@@ -22,7 +22,7 @@ export class ChildProcess implements Wrapper {
         shell = options.shell;
       }
 
-      if (!shell) {
+      if (shell !== "/bin/bash" && shell !== "/bin/sh") {
         return undefined;
       }
 
@@ -30,7 +30,6 @@ export class ChildProcess implements Wrapper {
         command: command,
         operation: `child_process.${name}`,
         context: context,
-        pathToShell: shell,
       });
     }
 

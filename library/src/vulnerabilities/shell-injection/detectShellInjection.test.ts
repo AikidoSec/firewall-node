@@ -69,7 +69,7 @@ t.test("it does not allow semi", async () => {
 
 function isShellInjection(command: string, userInput: string) {
   t.same(
-    detectShellInjection(command, userInput, "/bin/bash"),
+    detectShellInjection(command, userInput),
     true,
     `command: ${command}, userInput: ${userInput}`
   );
@@ -77,7 +77,7 @@ function isShellInjection(command: string, userInput: string) {
 
 function isNotShellInjection(command: string, userInput: string) {
   t.same(
-    detectShellInjection(command, userInput, "/bin/bash"),
+    detectShellInjection(command, userInput),
     false,
     `command: ${command}, userInput: ${userInput}`
   );
