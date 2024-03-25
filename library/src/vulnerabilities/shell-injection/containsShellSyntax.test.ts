@@ -14,4 +14,5 @@ t.test("it detects shell syntax", async (t) => {
   t.same(containsShellSyntax("\narg\n"), true);
   t.same(containsShellSyntax("arg\n"), true);
   t.same(containsShellSyntax("arg\narg"), true);
+  t.same(containsShellSyntax("rm -rf"), true);
 });
