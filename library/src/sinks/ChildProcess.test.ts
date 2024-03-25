@@ -1,4 +1,5 @@
-import { exec, execSync } from "child_process";
+import { execSync } from "child_process";
+import { Test } from "tap";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
@@ -20,6 +21,13 @@ const unsafeContext: Context = {
   cookies: {},
 };
 
+function throws(fn: () => void, wanted: string | RegExp) {
+  const error = t.throws(fn);
+  if (error instanceof Error) {
+    t.match(error.message, wanted);
+  }
+}
+
 t.test("it works", async (t) => {
   const agent = new Agent(
     true,
@@ -34,21 +42,15 @@ t.test("it works", async (t) => {
   const { exec, execSync } = require("child_process");
 
   const runCommandsWithInvalidArgs = () => {
-    const execError = t.throws(() => exec().unref());
-    if (execError instanceof Error) {
-      t.match(
-        execError.message,
-        /argument must be of type string. Received undefined/
-      );
-    }
+    throws(
+      () => exec().unref(),
+      /argument must be of type string. Received undefined/
+    );
 
-    const execSyncError = t.throws(() => execSync());
-    if (execSyncError instanceof Error) {
-      t.match(
-        execSyncError.message,
-        /argument must be of type string. Received undefined/
-      );
-    }
+    throws(
+      () => execSync(),
+      /argument must be of type string. Received undefined/
+    );
   };
 
   runCommandsWithInvalidArgs();
@@ -69,23 +71,14 @@ t.test("it works", async (t) => {
   });
 
   runWithContext(unsafeContext, () => {
-    const error1 = t.throws(() =>
-      exec("ls `echo .`", (err, stdout, stderr) => {}).unref()
+    throws(
+      () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
+      "Aikido runtime has blocked a Shell injection: child_process.exec(...) originating from body (.file.matches)"
     );
-    if (error1 instanceof Error) {
-      t.same(
-        error1.message,
-        "Aikido runtime has blocked a Shell injection: child_process.exec(...) originating from body (.file.matches)"
-      );
-    }
-    const error3 = t.throws(() =>
-      execSync("ls `echo .`", (err, stdout, stderr) => {})
+
+    throws(
+      () => execSync("ls `echo .`", (err, stdout, stderr) => {}),
+      "Aikido runtime has blocked a Shell injection: child_process.execSync(...) originating from body (.file.matches)"
     );
-    if (error3 instanceof Error) {
-      t.same(
-        error3.message,
-        "Aikido runtime has blocked a Shell injection: child_process.execSync(...) originating from body (.file.matches)"
-      );
-    }
   });
 });
