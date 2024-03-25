@@ -79,6 +79,149 @@ t.test("rm rf is flagged as shell injection", async () => {
   isShellInjection(`rm -rf`, "rm -rf");
 });
 
+t.test(
+  "it detects shell injection with chained commands using &&",
+  async () => {
+    isShellInjection("ls && rm -rf /", "&& rm -rf /");
+  }
+);
+
+t.test("it detects shell injection with OR logic using ||", async () => {
+  isShellInjection("ls || echo 'malicious code'", "|| echo 'malicious code'");
+});
+
+t.test("it detects redirection attempts", async () => {
+  isShellInjection("ls > /dev/null", "> /dev/null");
+  isShellInjection("cat file.txt > /etc/passwd", "> /etc/passwd");
+});
+
+t.test("it detects append redirection attempts", async () => {
+  isShellInjection("echo 'data' >> /etc/passwd", ">> /etc/passwd");
+});
+
+t.test("it detects pipe character as potential shell injection", async () => {
+  isShellInjection("cat file.txt | grep 'password'", "| grep 'password'");
+});
+
+t.test("it allows safe use of pipe character within quotes", async () => {
+  isNotShellInjection("echo '|'", "|");
+});
+
+t.test("it detects nested command substitution", async () => {
+  isShellInjection(`echo $(cat $(ls))`, `$(cat $(ls))`);
+});
+
+t.test("it allows safe commands within single quotes", async () => {
+  isNotShellInjection("echo 'safe command'", "safe command");
+});
+
+t.test("it detects unsafe use of variables", async () => {
+  isShellInjection("echo $USER", "$USER");
+  isShellInjection("echo ${USER}", "${USER}");
+  isShellInjection('echo "${USER}"', "${USER}");
+});
+
+t.test("it allows safe use of variables within quotes", async () => {
+  isNotShellInjection("echo '$USER'", "$USER");
+});
+
+t.test(
+  "it detects subshell execution within backticks inside double quotes",
+  async () => {
+    isShellInjection(`ls "$(echo \`whoami\`)"`, "`whoami`");
+  }
+);
+
+t.test("it detects code injection with newline characters", async () => {
+  isShellInjection("echo 'safe'\necho 'malicious'", "\necho 'malicious'");
+});
+
+t.test("it detects attempts to escape out of quotes", async () => {
+  isShellInjection('echo "safe"; echo "malicious"', '"; echo "malicious"');
+});
+
+t.test("it correctly handles whitespace in inputs", async () => {
+  isNotShellInjection("ls", "   ");
+  isShellInjection("ls ; rm -rf /", "; rm -rf /");
+});
+
+t.test("it detects file manipulation commands", async () => {
+  isShellInjection("touch /tmp/malicious", "touch /tmp/malicious");
+  isShellInjection(
+    "mv /tmp/safe /tmp/malicious",
+    "mv /tmp/safe /tmp/malicious"
+  );
+});
+
+t.test(
+  "allows commands with constants that resemble user input but are safely encapsulated",
+  async () => {
+    isNotShellInjection("echo 'userInput'", "userInput");
+  }
+);
+
+t.test(
+  "recognizes safe paths that include patterns similar to user input",
+  async () => {
+    isNotShellInjection(
+      "ls /constant/path/without/user/input/",
+      "/constant/path/without/user/input/"
+    );
+  }
+);
+
+t.test(
+  "acknowledges safe use of special characters when properly encapsulated",
+  async () => {
+    isNotShellInjection('echo ";"', ";");
+    isNotShellInjection('echo "&&"', "&&");
+    isNotShellInjection('echo "||"', "||");
+  }
+);
+
+t.test("treats encapsulated redirection and pipe symbols as safe", async () => {
+  isNotShellInjection("echo 'data > file.txt'", "data > file.txt");
+  isNotShellInjection("echo 'find | grep'", "find | grep");
+});
+
+t.test(
+  "recognizes safe inclusion of special patterns within quotes as non-injections",
+  async () => {
+    isNotShellInjection("echo '$(command)'", "$(command)");
+  }
+);
+
+t.test(
+  "considers constants with semicolons as safe when clearly non-executable",
+  async () => {
+    isNotShellInjection("echo 'text; more text'", "text; more text");
+  }
+);
+
+t.test(
+  "acknowledges commands that look dangerous but are actually safe due to quoting",
+  async () => {
+    isNotShellInjection("echo '; rm -rf /'", "; rm -rf /");
+    isNotShellInjection("echo '&& echo malicious'", "&& echo malicious");
+  }
+);
+
+t.test(
+  "recognizes commands with newline characters as safe when encapsulated",
+  async () => {
+    isNotShellInjection("echo 'line1\nline2'", "line1\nline2");
+  }
+);
+
+t.test(
+  "accepts special characters in constants as safe when they do not lead to command execution",
+  async () => {
+    isNotShellInjection("echo '*'", "*");
+    isNotShellInjection("echo '?'", "?");
+    isNotShellInjection("echo '\\' ", "\\");
+  }
+);
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
