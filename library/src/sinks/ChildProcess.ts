@@ -14,22 +14,6 @@ export class ChildProcess implements Wrapper {
   ): InterceptorResult {
     if (args.length > 0 && typeof args[0] === "string") {
       const command = args[0];
-      const options = args[1];
-
-      let shell = process.env.SHELL || "";
-      if (isPlainObject(options) && typeof options.shell === "string") {
-        shell = options.shell;
-      }
-
-      if (!shell) {
-        // Assume /bin/sh if no shell is specified
-        shell = "/bin/sh";
-      }
-
-      const shellName = basename(shell);
-      if (shellName !== "sh" && shellName !== "bash") {
-        return undefined;
-      }
 
       return checkContextForShellInjection({
         command: command,
