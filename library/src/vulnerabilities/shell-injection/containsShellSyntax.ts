@@ -76,16 +76,55 @@ const pathPrefixes = [
 
 const separators = [" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">"];
 
-const separatorsCharacterRange = `[${separators.map(escapeStringRegexp).join("")}]`;
+const commandsRegex = new RegExp(
+  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))`,
+  "g"
+);
 
-const parts = [
-  `(${dangerousChars.map(escapeStringRegexp).join("|")})`,
-  `((?<=${separatorsCharacterRange})(${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))(?=${separatorsCharacterRange})`,
-];
+function matchAll(str: string, regex: RegExp) {
+  const matches = [];
+  let match;
+  while ((match = regex.exec(str)) !== null) {
+    matches.push(match);
+  }
 
-const shellSyntaxRegex = new RegExp(`(${parts.join("|")})`, "g");
-console.log(shellSyntaxRegex);
+  return matches;
+}
 
-export function containsShellSyntax(userInput: string): boolean {
-  return shellSyntaxRegex.test(userInput);
+export function containsShellSyntax(
+  command: string,
+  userInput: string
+): boolean {
+  const allWhitespace = /^\s*$/.test(userInput);
+
+  if (allWhitespace) {
+    return false;
+  }
+
+  if (dangerousChars.find((c) => userInput.includes(c))) {
+    return true;
+  }
+
+  if (command === userInput && commands.find((c) => c === userInput)) {
+    return true;
+  }
+
+  for (const match of matchAll(command, commandsRegex)) {
+    const charBefore = command[match.index - 1];
+    const charAfter = command[match.index + match[0].length];
+
+    if (separators.includes(charBefore) && separators.includes(charAfter)) {
+      return true;
+    }
+
+    if (separators.includes(charBefore) && charAfter === undefined) {
+      return true;
+    }
+
+    if (charBefore === undefined && separators.includes(charAfter)) {
+      return true;
+    }
+  }
+
+  return false;
 }

@@ -19,5 +19,5 @@ export function detectShellInjection(
     return false;
   }
 
-  return containsShellSyntax(userInput);
+  return containsShellSyntax(command, userInput);
 }

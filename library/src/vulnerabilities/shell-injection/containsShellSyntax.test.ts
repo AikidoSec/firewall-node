@@ -19,5 +19,5 @@ t.test("it detects shell syntax", async (t) => {
 });
 
 function containsSyntax(str: string, expected: boolean) {
-  t.same(containsShellSyntax(str), expected, str);
+  t.same(containsShellSyntax(str, str), expected, str);
 }
