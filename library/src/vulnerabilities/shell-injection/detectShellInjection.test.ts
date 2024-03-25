@@ -302,11 +302,25 @@ t.test("certain commands are always flagged as dangerous", async () => {
   isShellInjection("chown root", "chown root");
 });
 
+t.test("rm being part of other commands", async () => {
+  isShellInjection(
+    `find /path/to/search -type f -name "pattern" | xargs rm`,
+    "rm"
+  );
+  isShellInjection(
+    `find /path/to/search -type f -name "pattern" -exec rm {} \\;`,
+    "rm"
+  );
+  isShellInjection("ls .|rm", "rm");
+});
+
 t.test(
   "it ignores dangerous commands if they are part of a string",
   async () => {
     isNotShellInjection("binary sleepwithme", "sleepwithme");
     isNotShellInjection("binary rm-rf", "rm-rf");
+    isNotShellInjection("term", "term");
+    isNotShellInjection("rm /files/rm.txt", "rm.txt");
   }
 );
 
