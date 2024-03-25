@@ -222,6 +222,55 @@ t.test(
   }
 );
 
+t.test(
+  "does not flag command with matching whitespace as injection",
+  async () => {
+    isNotShellInjection("ls -l", " "); // A single space is just an argument separator, not user input
+  }
+);
+
+t.test("ignores commands where multiple spaces match user input", async () => {
+  isNotShellInjection("ls   -l", "   "); // Multiple spaces between arguments should not be considered injection
+});
+
+t.test(
+  "does not consider leading whitespace in commands as user input",
+  async () => {
+    isNotShellInjection("  ls -l", "  "); // Leading spaces before the command are not user-controlled
+  }
+);
+
+t.test("treats trailing whitespace in commands as non-injection", async () => {
+  isNotShellInjection("ls -l ", " "); // Trailing space after the command is benign
+});
+
+t.test("recognizes spaces between quotes as non-injective", async () => {
+  isNotShellInjection("echo ' ' ", " "); // Space within quotes is part of the argument, not a separator
+});
+
+t.test("handles spaces within quoted arguments correctly", async () => {
+  isNotShellInjection("command 'arg with spaces'", " "); // Spaces within a quoted argument should not be flagged
+});
+
+t.test("correctly interprets spaces in mixed argument types", async () => {
+  isNotShellInjection("command arg1 'arg with spaces' arg2", " "); // Mixed argument types with internal spaces are safe
+});
+
+t.test("ignores spaces in commands with concatenated arguments", async () => {
+  isNotShellInjection("command 'arg1'arg2'arg3'", " "); // Lack of spaces in concatenated arguments is intentional and safe
+});
+
+t.test("does not flag spaces in commands with no arguments", async () => {
+  isNotShellInjection("command", " "); // No arguments mean spaces are irrelevant
+});
+
+t.test(
+  "considers spaces in environment variable assignments as safe",
+  async () => {
+    isNotShellInjection("ENV_VAR='value' command", " "); // Spaces around environment variable assignments are not injections
+  }
+);
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
