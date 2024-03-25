@@ -280,6 +280,28 @@ t.test("new lines alone are not considered injections", async () => {
   isNotShellInjection("ls\n\n", "\n\n");
 });
 
+t.test("certain commands are always flagged as dangerous", async () => {
+  isShellInjection("/bin/rm -rf", "/bin/rm -rf");
+  isShellInjection("rm -rf", "rm -rf");
+  isShellInjection("rm -rf /", "rm -rf /");
+  isShellInjection("sleep 10", "sleep 10");
+  isShellInjection("sleep 10 &", "sleep 10 &");
+  isShellInjection("shutdown -h now", "shutdown -h now");
+  isShellInjection("halt", "halt");
+  isShellInjection("poweroff", "poweroff");
+  isShellInjection("reboot", "reboot");
+  isShellInjection("reboot -f", "reboot -f");
+  isShellInjection("ifconfig", "ifconfig");
+  isShellInjection("ifconfig -a", "ifconfig -a");
+  isShellInjection("kill", "kill");
+  isShellInjection("killall", "killall");
+  isShellInjection("killall -9", "killall -9");
+  isShellInjection("chmod", "chmod");
+  isShellInjection("chmod 777", "chmod 777");
+  isShellInjection("chown", "chown");
+  isShellInjection("chown root", "chown root");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
