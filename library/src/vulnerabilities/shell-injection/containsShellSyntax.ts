@@ -26,7 +26,7 @@ const dangerousShellStrings = [
   "}",
 ];
 
-const regexForNonStandaloneSpaces = /(\b )|(\b \b)|( \b)/;
+const regexForNonStandaloneSpaces = /(\b[ \n])|(\b[ \n]\b)|([ \n]\b)/;
 
 export function containsShellSyntax(userInput: string): boolean {
   if (

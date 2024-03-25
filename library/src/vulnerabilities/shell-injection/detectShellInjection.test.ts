@@ -271,6 +271,15 @@ t.test(
   }
 );
 
+t.test("new lines in commands are considered injections", async () => {
+  isShellInjection("ls \nrm", "\nrm");
+  isShellInjection("ls \nrm -rf", "\nrm -rf");
+});
+
+t.test("new lines alone are not considered injections", async () => {
+  isNotShellInjection("ls\n\n", "\n\n");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
