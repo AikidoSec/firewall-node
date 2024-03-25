@@ -110,6 +110,10 @@ export function containsShellSyntax(
   }
 
   for (const match of matchAll(command, commandsRegex)) {
+    if (!commandsRegex.test(userInput)) {
+      continue;
+    }
+
     const charBefore = command[match.index - 1];
     const charAfter = command[match.index + match[0].length];
 
