@@ -71,6 +71,14 @@ t.test("it does not allow semi", async () => {
   isNotShellInjection(`ls 'whatever;'`, "whatever;");
 });
 
+t.test("rm rf executed by using semi colon", async () => {
+  isShellInjection(`ls; rm -rf`, "; rm -rf");
+});
+
+t.test("rm rf is flagged as shell injection", async () => {
+  isShellInjection(`rm -rf`, "rm -rf");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

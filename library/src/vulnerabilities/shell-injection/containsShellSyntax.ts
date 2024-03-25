@@ -24,6 +24,7 @@ const dangerousShellStrings = [
   "{",
   "|",
   "}",
+  " ",
 ];
 
 export function containsShellSyntax(userInput: string): boolean {
