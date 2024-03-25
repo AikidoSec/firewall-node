@@ -302,6 +302,18 @@ t.test("certain commands are always flagged as dangerous", async () => {
   isShellInjection("chown root", "chown root");
 });
 
+t.test(
+  "it does not flag domain name as argument unless it contains backticks",
+  async () => {
+    isNotShellInjection("binary --domain www.example.com", "www.example.com");
+
+    isShellInjection(
+      "binary --domain www.example`whoami`.com",
+      "www.example`whoami`.com"
+    );
+  }
+);
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
