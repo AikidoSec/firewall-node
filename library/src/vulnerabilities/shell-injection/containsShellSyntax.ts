@@ -1,6 +1,6 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 
-const dangerousShellStrings = [
+const dangerousChars = [
   "#",
   "!",
   '"',
@@ -26,6 +26,9 @@ const dangerousShellStrings = [
   "{",
   "|",
   "}",
+  " ",
+  "\n",
+  "\t",
 ];
 
 // Just whitespace characters alone are not dangerous
@@ -34,7 +37,7 @@ const dangerousShellStrings = [
 // But when a space is not standalone, it is dangerous, because the user input might start a new command or argument
 const regexForNonStandaloneSpaces = /(\b[ \n])|(\b[ \n]\b)|([ \n]\b)/;
 
-const alwaysDangerous = [
+const commands = [
   "sleep",
   "shutdown",
   "reboot",
@@ -51,14 +54,6 @@ const alwaysDangerous = [
   "telnet",
   "kill",
   "killall",
-];
-
-const regexDangerousCommands = new RegExp(
-  `\\b(${alwaysDangerous.map(escapeStringRegexp).join("|")})\\b`,
-  "g"
-);
-
-const dangerousInCombination = [
   "rm",
   "mv",
   "cp",
@@ -76,19 +71,38 @@ const dangerousInCombination = [
   "wc",
 ];
 
+const pathPrefixes = [
+  "/bin/",
+  "/sbin/",
+  "/usr/bin/",
+  "/usr/sbin/",
+  "/usr/local/bin/",
+  "/usr/local/sbin/",
+];
+
+const separators = [
+  " ",
+  "\t",
+  "\n",
+  ";",
+  "&",
+  "|",
+  "||",
+  "&&",
+  "(",
+  ")",
+  "<",
+  ">",
+];
+
+const parts = [
+  `(${dangerousChars.map(escapeStringRegexp).join("|")})`,
+  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))`,
+];
+
+const shellSyntaxRegex = new RegExp(`(${parts.join("|")})`, "g");
+console.log(shellSyntaxRegex);
+
 export function containsShellSyntax(userInput: string): boolean {
-  if (
-    dangerousShellStrings.some((shellString) => userInput.includes(shellString))
-  ) {
-    return true;
-  }
-
-  if (
-    regexDangerousCommands.test(userInput) ||
-    alwaysDangerous.find((str) => userInput === str)
-  ) {
-    return true;
-  }
-
-  return regexForNonStandaloneSpaces.test(userInput);
+  return shellSyntaxRegex.test(userInput);
 }

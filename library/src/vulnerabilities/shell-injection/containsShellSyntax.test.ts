@@ -11,6 +11,7 @@ t.test("it detects shell syntax", async (t) => {
   containsSyntax("$(command arg arg)", true);
   containsSyntax("`command`", true);
   containsSyntax("\narg", true);
+  containsSyntax("\targ", true);
   containsSyntax("\narg\n", true);
   containsSyntax("arg\n", true);
   containsSyntax("arg\narg", true);
@@ -18,5 +19,5 @@ t.test("it detects shell syntax", async (t) => {
 });
 
 function containsSyntax(str: string, expected: boolean) {
-  t.same(containsShellSyntax(str), expected);
+  t.same(containsShellSyntax(str), expected, str);
 }
