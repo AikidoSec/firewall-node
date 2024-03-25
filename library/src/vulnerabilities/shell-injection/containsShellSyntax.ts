@@ -31,12 +31,6 @@ const dangerousChars = [
   "\t",
 ];
 
-// Just whitespace characters alone are not dangerous
-// They can occur in user input without posing a threat.
-// So a space might occur in the command and in the user input (being an exact match)
-// But when a space is not standalone, it is dangerous, because the user input might start a new command or argument
-const regexForNonStandaloneSpaces = /(\b[ \n])|(\b[ \n]\b)|([ \n]\b)/;
-
 const commands = [
   "sleep",
   "shutdown",
@@ -80,24 +74,13 @@ const pathPrefixes = [
   "/usr/local/sbin/",
 ];
 
-const separators = [
-  " ",
-  "\t",
-  "\n",
-  ";",
-  "&",
-  "|",
-  "||",
-  "&&",
-  "(",
-  ")",
-  "<",
-  ">",
-];
+const separators = [" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">"];
+
+const separatorsCharacterRange = `[${separators.map(escapeStringRegexp).join("")}]`;
 
 const parts = [
   `(${dangerousChars.map(escapeStringRegexp).join("|")})`,
-  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))`,
+  `((?<=${separatorsCharacterRange})(${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))(?=${separatorsCharacterRange})`,
 ];
 
 const shellSyntaxRegex = new RegExp(`(${parts.join("|")})`, "g");
