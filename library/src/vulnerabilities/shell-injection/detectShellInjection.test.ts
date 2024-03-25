@@ -303,6 +303,14 @@ t.test("certain commands are always flagged as dangerous", async () => {
 });
 
 t.test(
+  "it ignores dangerous commands if they are part of a string",
+  async () => {
+    isNotShellInjection("binary sleepwithme", "sleepwithme");
+    isNotShellInjection("binary rm-rf", "rm-rf");
+  }
+);
+
+t.test(
   "it does not flag domain name as argument unless it contains backticks",
   async () => {
     isNotShellInjection("binary --domain www.example.com", "www.example.com");

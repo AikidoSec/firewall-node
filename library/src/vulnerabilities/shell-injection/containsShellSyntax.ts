@@ -1,3 +1,5 @@
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
+
 const dangerousShellStrings = [
   "#",
   "!",
@@ -51,6 +53,11 @@ const alwaysDangerous = [
   "killall",
 ];
 
+const regexDangerousCommands = new RegExp(
+  `\\b(${alwaysDangerous.map(escapeStringRegexp).join("|")})\\b`,
+  "g"
+);
+
 const dangerousInCombination = [
   "rm",
   "mv",
@@ -76,7 +83,10 @@ export function containsShellSyntax(userInput: string): boolean {
     return true;
   }
 
-  if (alwaysDangerous.some((command) => userInput.includes(command))) {
+  if (
+    regexDangerousCommands.test(userInput) ||
+    alwaysDangerous.find((str) => userInput === str)
+  ) {
     return true;
   }
 
