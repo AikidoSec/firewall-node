@@ -22,7 +22,7 @@ export class WrappableSubject {
     const method = new MethodInterceptor(methodName, interceptor);
     this.methods.push(method);
 
-    return method;
+    return this;
   }
 
   /**
@@ -42,7 +42,7 @@ export class WrappableSubject {
     );
     this.methods.push(method);
 
-    return method;
+    return this;
   }
 
   getSelector() {

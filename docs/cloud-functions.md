@@ -9,8 +9,6 @@ protect(); // <-- Call this before any other code or imports
 
 const functions = require("@google-cloud/functions-framework");
 
-preventPrototypePollution(); // <-- Call this after your main imports
-
 functions.http("handler", async (req, res) => {
   // ...
 });
@@ -21,30 +19,32 @@ If you're using the `exports.handler` style, you'll need to wrap your handler ma
 At the very beginning of the file that contains your handler, add the following line:
 
 ```js
-const { cloudFunction, preventPrototypePollution } = require("@aikidosec/runtime");
+const { cloudFunction } = require("@aikidosec/runtime");
 
 const protect = cloudFunction(); // <-- Call this before any other code or imports
 
 const dependency = require("dependency");
-
-preventPrototypePollution(); // <-- Call this after your main imports
 
 exports.handler = protect(async (event, context) => { // <-- Wrap your handler with protect
   // ...
 });
 ```
 
-You can read more about `preventPrototypePollution` [here](./prototype-pollution.md).
-
 or ESM import style:
 
 ```js
-import { cloudFunction, preventPrototypePollution } from '@aikidosec/runtime';
+import { cloudFunction } from '@aikidosec/runtime';
 ```
 
 That's it! Your cloud function is now protected by Aikido runtime.
 
 If you want to see a full example, check our [cloud functions sample app](../sample-apps/cloud-functions-v1-mongodb).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
 
 ## Debug mode
 
