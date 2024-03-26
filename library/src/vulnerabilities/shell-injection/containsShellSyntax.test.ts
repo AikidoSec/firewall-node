@@ -54,3 +54,11 @@ t.test("it detects commands with separator after", async (t) => {
 t.test("it checks if the same command occurs in the user input", async () => {
   t.same(containsShellSyntax("find cp", "rm"), false);
 });
+
+t.test("it treats colon as a command", async () => {
+  t.same(containsShellSyntax(":|echo", ":|"), true);
+  t.same(
+    containsShellSyntax("https://www.google.com", "https://www.google.com"),
+    false
+  );
+});

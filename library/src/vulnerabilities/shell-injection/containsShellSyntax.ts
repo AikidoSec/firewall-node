@@ -11,7 +11,6 @@ const dangerousChars = [
   ")",
   "*",
   ",",
-  ":",
   ";",
   "<",
   "=",
@@ -63,6 +62,7 @@ const commands = [
   "sort",
   "uniq",
   "wc",
+  ":",
 ];
 
 const pathPrefixes = [
