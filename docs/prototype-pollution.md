@@ -25,3 +25,13 @@ app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
 ```
+
+## WARNING: Read this before using `preventPrototypePollution`
+
+This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after calling `preventPrototypePollution`.
+
+## Incompatible packages
+
+Some packages may not work properly when `preventPrototypePollution` is called, these are some of the known packages:
+
+* [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)

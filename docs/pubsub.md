@@ -3,23 +3,28 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-const { protect, preventPrototypePollution } = require('@aikidosec/guard');
+const { protect } = require('@aikidosec/guard');
 
 protect(); // <-- Call this before any other code or imports
 
 const { PubSub } = require('@google-cloud/pubsub');
 
-preventPrototypePollution(); // <-- Call this after your main imports
+const client = new PubSub();
+const topic = client.createTopic('my-topic');
+const subscription = topic.createSubscription('my-subscription');
+
+subscription.on('message', (message) => {
+  console.log('Received message:', message.data.toString());
+  message.ack();
+});
 
 // ...
 ```
 
-You can read more about `preventPrototypePollution` [here](./prototype-pollution.md).
-
 or ESM import style:
 
 ```js
-import { protect, preventPrototypePollution } from '@aikidosec/guard';
+import { protect } from '@aikidosec/guard';
 
 // ...
 ```
@@ -27,6 +32,12 @@ import { protect, preventPrototypePollution } from '@aikidosec/guard';
 That's it! Your app is now protected by Aikido guard.
 
 If you want to see a full example, check our [Pub/Sub sample app](../sample-apps/pubsub-mongodb).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
 
 ## Debug mode
 
