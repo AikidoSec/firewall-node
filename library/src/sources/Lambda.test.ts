@@ -1,4 +1,4 @@
-import { APIGatewayProxyEvent, Context } from "aws-lambda";
+import type { APIGatewayProxyEvent, Context } from "aws-lambda";
 import * as t from "tap";
 import { getContext } from "../agent/Context";
 import { createLambdaWrapper } from "./Lambda";
