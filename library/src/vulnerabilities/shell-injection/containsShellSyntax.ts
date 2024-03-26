@@ -100,6 +100,7 @@ function matchAll(str: string, regex: RegExp) {
   return matches;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function containsShellSyntax(
   command: string,
   userInput: string
@@ -114,6 +115,10 @@ export function containsShellSyntax(
     return true;
   }
 
+  // The command is the same as the user input
+  // Rare case, but it's possible
+  // e.g. command is `shutdown` and user input is `shutdown`
+  // (`shutdown -h now` will be caught by the dangerous chars as it contains a space)
   if (command === userInput) {
     // Reset the regex so that the next call to `exec` starts from the beginning
     // As the regex is global, it will remember the last index
@@ -125,14 +130,16 @@ export function containsShellSyntax(
       : false;
   }
 
-  // Check if the command contains a dangerous command
+  // Check if the command contains a commonly used command
   for (const match of matchAll(command, commandsRegex)) {
-    // If the command doesn't contain the user input, we can skip this match
+    // We found a command like `rm` or `/sbin/shutdown` in the command
+    // Check if the command is the same as the user input
+    // If it's not the same, continue searching
     if (userInput !== match[0]) {
       continue;
     }
 
-    // Check if the command is surrounded by separators
+    // Otherwise, we'll check if the command is surrounded by separators
     // These separators are used to separate commands and arguments
     // e.g. `rm<space>-rf`
     // e.g. `ls<newline>whoami`
