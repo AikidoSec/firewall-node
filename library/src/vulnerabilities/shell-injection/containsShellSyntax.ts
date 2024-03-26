@@ -82,7 +82,8 @@ const commandsRegex = new RegExp(
 );
 
 function matchAll(str: string, regex: RegExp) {
-  // Reset the regex so that we can use it multiple times
+  // Reset the regex so that the next call to `exec` starts from the beginning
+  // As the regex is global, it will remember the last index
   regex.lastIndex = 0;
 
   const matches = [];
@@ -109,7 +110,8 @@ export function containsShellSyntax(
   }
 
   if (command === userInput) {
-    // Reset the regex so that we can use it multiple times
+    // Reset the regex so that the next call to `exec` starts from the beginning
+    // As the regex is global, it will remember the last index
     commandsRegex.lastIndex = 0;
     const match = commandsRegex.exec(command);
 
