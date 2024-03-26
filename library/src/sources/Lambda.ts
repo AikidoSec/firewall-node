@@ -64,6 +64,14 @@ function normalizeHeaders(headers: Record<string, string | undefined>) {
   return normalized;
 }
 
+function tryParseAsJSON(json: string) {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}
+
 function parseBody(event: APIGatewayProxyEvent) {
   const headers = event.headers ? normalizeHeaders(event.headers) : {};
 
@@ -71,11 +79,7 @@ function parseBody(event: APIGatewayProxyEvent) {
     return undefined;
   }
 
-  try {
-    return JSON.parse(event.body);
-  } catch {
-    return undefined;
-  }
+  return tryParseAsJSON(event.body);
 }
 
 const jsonContentTypes = [
@@ -105,12 +109,16 @@ export function createLambdaWrapper<
 
   return async (event, context) => {
     if (isSQSEvent(event)) {
+      const body: unknown[] = event.Records.map((record) =>
+        tryParseAsJSON(record.body)
+      ).filter((body) => body);
+
       return runWithContext(
         {
           url: undefined,
           method: undefined,
           remoteAddress: undefined,
-          body: event.Records, // TODO DECODE SQS RECORDS
+          body: body,
           headers: {},
           query: {},
           cookies: {},
