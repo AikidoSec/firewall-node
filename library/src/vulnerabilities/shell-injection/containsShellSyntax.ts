@@ -11,7 +11,6 @@ const dangerousChars = [
   ")",
   "*",
   ",",
-  ":",
   ";",
   "<",
   "=",
@@ -63,6 +62,11 @@ const commands = [
   "sort",
   "uniq",
   "wc",
+
+  // Colon is a null command
+  // it might occur in URLs that are passed as arguments to a binary
+  // we should flag if it's surrounded by separators
+  ":",
 ];
 
 const pathPrefixes = [

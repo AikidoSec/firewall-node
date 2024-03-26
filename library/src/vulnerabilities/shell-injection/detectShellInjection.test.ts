@@ -328,13 +328,27 @@ t.test(
   "it does not flag domain name as argument unless it contains backticks",
   async () => {
     isNotShellInjection("binary --domain www.example.com", "www.example.com");
+    isNotShellInjection(
+      "binary --domain https://www.example.com",
+      "https://www.example.com"
+    );
 
     isShellInjection(
       "binary --domain www.example`whoami`.com",
       "www.example`whoami`.com"
     );
+    isShellInjection(
+      "binary --domain https://www.example`whoami`.com",
+      "https://www.example`whoami`.com"
+    );
   }
 );
+
+t.test("it flags colon if used as a command", async () => {
+  isShellInjection(":|echo", ":|");
+  isShellInjection(":| echo", ":|");
+  isShellInjection(": | echo", ": |");
+});
 
 function isShellInjection(command: string, userInput: string) {
   t.same(
