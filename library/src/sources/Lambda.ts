@@ -4,6 +4,7 @@ import type {
   Callback,
   Context,
   Handler,
+  SQSEvent,
 } from "aws-lambda";
 import { runWithContext } from "../agent/Context";
 import { isPlainObject } from "../helpers/isPlainObject";
@@ -63,6 +64,14 @@ function normalizeHeaders(headers: Record<string, string | undefined>) {
   return normalized;
 }
 
+function tryParseAsJSON(json: string) {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}
+
 function parseBody(event: APIGatewayProxyEvent) {
   const headers = event.headers ? normalizeHeaders(event.headers) : {};
 
@@ -70,11 +79,7 @@ function parseBody(event: APIGatewayProxyEvent) {
     return undefined;
   }
 
-  try {
-    return JSON.parse(event.body);
-  } catch {
-    return undefined;
-  }
+  return tryParseAsJSON(event.body);
 }
 
 const jsonContentTypes = [
@@ -92,6 +97,10 @@ function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
   return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
+function isSQSEvent(event: unknown): event is SQSEvent {
+  return isPlainObject(event) && "Records" in event;
+}
+
 export function createLambdaWrapper<
   TEvent extends APIGatewayProxyEvent,
   TResult extends APIGatewayProxyResult,
@@ -99,23 +108,44 @@ export function createLambdaWrapper<
   const asyncHandler = convertToAsyncFunction(handler);
 
   return async (event, context) => {
-    if (!isProxyEvent(event)) {
-      return await asyncHandler(event, context);
+    if (isSQSEvent(event)) {
+      const body: unknown[] = event.Records.map((record) =>
+        tryParseAsJSON(record.body)
+      ).filter((body) => body);
+
+      return runWithContext(
+        {
+          url: undefined,
+          method: undefined,
+          remoteAddress: undefined,
+          body: body,
+          headers: {},
+          query: {},
+          cookies: {},
+        },
+        async () => {
+          return await asyncHandler(event, context);
+        }
+      );
     }
 
-    return runWithContext(
-      {
-        url: undefined,
-        method: event.httpMethod,
-        remoteAddress: event.requestContext?.identity?.sourceIp,
-        body: parseBody(event),
-        headers: event.headers,
-        query: event.queryStringParameters ? event.queryStringParameters : {},
-        cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
-      },
-      async () => {
-        return await asyncHandler(event, context);
-      }
-    );
+    if (isProxyEvent(event)) {
+      return runWithContext(
+        {
+          url: undefined,
+          method: event.httpMethod,
+          remoteAddress: event.requestContext?.identity?.sourceIp,
+          body: parseBody(event),
+          headers: event.headers,
+          query: event.queryStringParameters ? event.queryStringParameters : {},
+          cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
+        },
+        async () => {
+          return await asyncHandler(event, context);
+        }
+      );
+    }
+
+    return await asyncHandler(event, context);
   };
 }
