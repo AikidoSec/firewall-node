@@ -10,6 +10,7 @@ const { Posts, Post } = require("./posts");
 const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const { exec } = require("child_process");
 
 preventPrototypePollution();
 
@@ -82,6 +83,30 @@ async function main(port) {
       res.send(await posts.search(req.body));
     })
   );
+
+  app.post("/ls", express.json(), (req, res) => {
+    const { directory } = req.body;
+
+    if (!directory) {
+      return res.status(400).send("directory parameter is required");
+    }
+
+    // Be super careful with this endpoint
+    // You can harm your system if you're not careful
+    // It's vulnerable to command injection
+    // Do not use this code in production
+    // Try POST http://localhost:4000/ls with {"directory":"."}
+    // Try POST http://localhost:4000/ls with {"directory":"'; ls ~; echo '"}
+    // You should use execFile instead of exec
+    // or use a library like shell-quote
+    exec(`ls '${directory}'`, (error, stdout, stderr) => {
+      if (error) {
+        throw error;
+      }
+
+      res.send(stdout.split("\n"));
+    });
+  });
 
   return new Promise((resolve, reject) => {
     try {

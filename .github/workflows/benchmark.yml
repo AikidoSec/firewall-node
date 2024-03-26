@@ -37,3 +37,6 @@ jobs:
       - name: Run SQL Injection Benchmark
         id: sql_injection_benchmark
         run: cd benchmarks/sql-injection && node benchmark.js
+      - name: Run shell injection Benchmark
+        id: shell_injection_benchmark
+        run: cd benchmarks/shell-injection && node benchmark.js
