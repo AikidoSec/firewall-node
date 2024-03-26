@@ -50,6 +50,8 @@ preventPrototypePollution(); // <-- Call this after your main imports
 
 This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after calling `preventPrototypePollution`.
 
+You should enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
+
 ## Incompatible packages
 
 Some packages may not work properly when `preventPrototypePollution` is called, these are some of the known packages:
