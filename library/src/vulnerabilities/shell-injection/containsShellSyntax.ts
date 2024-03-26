@@ -76,8 +76,13 @@ const pathPrefixes = [
 
 const separators = [" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">"];
 
+// "killall" should be matched before "kill"
+function byLength(a: string, b: string) {
+  return b.length - a.length;
+}
+
 const commandsRegex = new RegExp(
-  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.join("|")}))`,
+  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.slice().sort(byLength).join("|")}))`,
   "g"
 );
 
