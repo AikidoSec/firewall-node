@@ -18,7 +18,6 @@ Protects your application against
 * [ ] Monitor outbound requests
 * [ ] Protect against path traversal attacks
 * [ ] Protect against SSRF attacks
-* [ ] Protect against shell injection attacks
 
 ## Supported libraries and frameworks
 
