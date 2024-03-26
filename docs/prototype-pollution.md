@@ -26,6 +26,26 @@ app.listen(3000, () => {
 });
 ```
 
+using CommonJS:
+
+```js
+const { preventPrototypePollution } = require('@aikidosec/runtime');
+```
+
+together with `protect`:
+
+```js
+import { protect, preventPrototypePollution } from '@aikidosec/runtime';
+
+protect(); // <-- Call this before any other code or imports
+
+import express from 'express';
+
+preventPrototypePollution(); // <-- Call this after your main imports
+
+// ...
+```
+
 ## WARNING: Read this before using `preventPrototypePollution`
 
 This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after calling `preventPrototypePollution`.
