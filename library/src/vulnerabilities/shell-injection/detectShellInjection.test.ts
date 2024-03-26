@@ -346,6 +346,8 @@ t.test(
 
 t.test("it flags colon if used as a command", async () => {
   isShellInjection(":|echo", ":|");
+  isShellInjection(":| echo", ":|");
+  isShellInjection(": | echo", ": |");
 });
 
 function isShellInjection(command: string, userInput: string) {
