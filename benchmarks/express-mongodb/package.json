@@ -5,7 +5,7 @@
     "@aikidosec/runtime": "file:../../library",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.3",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "mongodb": "^6.3.0",
     "morgan": "^1.10.0"
