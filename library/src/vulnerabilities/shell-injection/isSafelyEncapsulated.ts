@@ -25,6 +25,10 @@ export function isSafelyEncapsulated(command: string, userInput: string) {
         return false;
       }
 
+      // There are no dangerous characters inside single quotes
+      // You can use certain characters inside double quotes
+      // https://www.gnu.org/software/bash/manual/html_node/Single-Quotes.html
+      // https://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html
       if (
         isEscapeChar === '"' &&
         dangerousCharsInsideDoubleQuotes.some((char) =>
