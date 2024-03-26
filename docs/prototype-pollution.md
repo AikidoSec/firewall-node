@@ -25,3 +25,35 @@ app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
 ```
+
+using CommonJS:
+
+```js
+const { preventPrototypePollution } = require('@aikidosec/runtime');
+```
+
+together with `protect`:
+
+```js
+import { protect, preventPrototypePollution } from '@aikidosec/runtime';
+
+protect(); // <-- Call this before any other code or imports
+
+import express from 'express';
+
+preventPrototypePollution(); // <-- Call this after your main imports
+
+// ...
+```
+
+## WARNING: Read this before using `preventPrototypePollution`
+
+This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after calling `preventPrototypePollution`.
+
+You should enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
+
+## Incompatible packages
+
+Some packages may not work properly when `preventPrototypePollution` is called, these are some of the known packages:
+
+* [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)

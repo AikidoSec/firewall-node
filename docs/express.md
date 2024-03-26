@@ -3,23 +3,21 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-const { protect, preventPrototypePollution } = require('@aikidosec/runtime');
+const { protect } = require('@aikidosec/runtime');
 
 protect(); // <-- Call this before any other code or imports
 
 const express = require('express');
 
-preventPrototypePollution(); // <-- Call this after your main imports
+const app = express();
 
 // ...
 ```
 
-You can read more about `preventPrototypePollution` [here](./prototype-pollution.md).
-
 or ESM import style:
 
 ```js
-import { protect, preventPrototypePollution } from '@aikidosec/runtime';
+import { protect } from '@aikidosec/runtime';
 
 // ...
 ```
@@ -27,6 +25,12 @@ import { protect, preventPrototypePollution } from '@aikidosec/runtime';
 That's it! Your app is now protected by Aikido runtime.
 
 If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
 
 ## Debug mode
 
