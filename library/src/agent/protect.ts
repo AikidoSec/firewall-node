@@ -26,11 +26,16 @@ import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
 
 function isDebugging() {
-  return process.env.AIKIDO_DEBUG === "true";
+  return (
+    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
+  );
 }
 
 function shouldBlock() {
-  return process.env.AIKIDO_BLOCKING === "true";
+  return (
+    process.env.AIKIDO_BLOCKING === "true" ||
+    process.env.AIKIDO_BLOCKING === "1"
+  );
 }
 
 function getLogger(): Logger {
