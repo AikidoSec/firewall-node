@@ -80,7 +80,7 @@ If you want to test the runtime without blocking any requests, you can set the `
 AIKIDO_NO_BLOCKING=true node your-app.js
 ```
 
-(Or use [dotenv](dotenv) to load the token from an `.env` file)
+(Or use [dotenv](https://www.npmjs.com/package/dotenv) to load the token from an `.env` file)
 
 See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido) to learn how to send events to Aikido.
 
@@ -88,7 +88,7 @@ See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido
 
 We run a benchmark on every commit to make sure that the runtime has a minimal impact on your application's performance.
 
-The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the runtime:
+The bench runs [a simple MongoDB query](library/benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the runtime:
 
 | Without runtime  | With runtime  | Difference in ms |
 |------------------|---------------|------------------|
@@ -96,7 +96,7 @@ The bench runs [a simple MongoDB query](benchmarks/mongodb/getUser.js) to measur
 
 (Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
 
-See [benchmarks](benchmarks) for more information.
+See [benchmarks](library/benchmarks) for more information.
 
 ## Development
 
