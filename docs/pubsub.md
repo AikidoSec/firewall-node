@@ -3,7 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/runtime'); // <-- Call this before any other code or imports
+require('@aikidosec/runtime'); // <-- Include this before any other code or imports
 
 const { PubSub } = require('@google-cloud/pubsub');
 

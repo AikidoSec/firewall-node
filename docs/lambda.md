@@ -3,7 +3,7 @@
 At the very beginning of the file that contains your handler, add the following line:
 
 ```js
-const protect = require("@aikidosec/runtime/lambda"); // <-- Call this before any other code or imports
+const protect = require("@aikidosec/runtime/lambda"); // <-- Include this before any other code or imports
 
 const dependency = require("dependency");
 

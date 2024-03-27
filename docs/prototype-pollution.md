@@ -11,7 +11,7 @@ We believe that there are legitimate cases of prototype changes, but they should
 ```js
 const express = require('express');
 
-require('@aikidosec/runtime/nopp'); // <-- Call this after your main imports
+require('@aikidosec/runtime/nopp'); // <-- Include this after your main imports
 
 const app = express();
 
@@ -33,18 +33,18 @@ import '@aikidosec/runtime/nopp';
 together with `protect`:
 
 ```js
-import '@aikidosec/runtime'; // <-- Call this before any other code or imports
+import '@aikidosec/runtime'; // <-- Include this before any other code or imports
 
 import express from 'express';
 
-import '@aikidosec/runtime/nopp'; // <-- Call this after your main imports
+import '@aikidosec/runtime/nopp'; // <-- Include this after your main imports
 
 // ...
 ```
 
 ## WARNING: Read this before using `@aikidosec/runtime/nopp`
 
-This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after requiring `@aikidosec/runtime/nopp`.
+This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after including `@aikidosec/runtime/nopp`.
 
 You should enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
 

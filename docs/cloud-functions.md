@@ -3,7 +3,7 @@
 If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Aikido runtime automatically:
 
 ```js
-require("@aikidosec/runtime"); // <-- Call this before any other code or imports
+require("@aikidosec/runtime"); // <-- Include this before any other code or imports
 
 const functions = require("@google-cloud/functions-framework");
 
@@ -25,7 +25,7 @@ If you're using the `exports.handler` style, you'll need to wrap your handler ma
 At the very beginning of the file that contains your handler, add the following line:
 
 ```js
-const protect = require("@aikidosec/runtime/cloud-function"); // <-- Call this before any other code or imports
+const protect = require("@aikidosec/runtime/cloud-function"); // <-- Include this before any other code or imports
 
 const dependency = require("dependency");
 
