@@ -3,15 +3,24 @@ const percentile = require("percentile");
 
 async function runScript(scriptPath) {
   return new Promise((resolve, reject) => {
-    exec(`node ${scriptPath}`, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
+    exec(
+      `node --no-deprecation ${scriptPath}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+        }
+        if (stderr) {
+          reject(stderr);
+        }
+        resolve(stdout);
+      },
+      {
+        env: {
+          ...process.env,
+          AIKIDO_BLOCKING: "true",
+        },
       }
-      if (stderr) {
-        reject(stderr);
-      }
-      resolve(stdout);
-    });
+    );
   });
 }
 

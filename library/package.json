@@ -30,7 +30,8 @@
     ".": "./dist/exports/index.js",
     "./cloud-function": "./dist/exports/cloud-function.js",
     "./lambda": "./dist/exports/lambda.js",
-    "./nopp": "./dist/exports/nopp.js"
+    "./nopp": "./dist/exports/nopp.js",
+    "./internal": "./dist/exports/internal.js"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
