@@ -1,7 +1,5 @@
 require("dotenv").config();
-const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
-
-protect({ debug: true });
+require("@aikidosec/runtime");
 
 const mongoose = require("mongoose");
 const express = require("express");
@@ -11,7 +9,7 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 async function main(port) {
   const app = express();

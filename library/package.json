@@ -25,7 +25,13 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "dist/index.js",
+  "main": "dist/exports/index.js",
+  "exports": {
+    ".": "./dist/exports/index.js",
+    "./cloud-function": "./dist/exports/cloud-function.js",
+    "./lambda": "./dist/exports/lambda.js",
+    "./nopp": "./dist/exports/nopp.js"
+  },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",

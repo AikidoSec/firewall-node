@@ -3,9 +3,7 @@
 If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Aikido runtime automatically:
 
 ```js
-const { protect } = require("@aikidosec/runtime");
-
-protect(); // <-- Call this before any other code or imports
+require("@aikidosec/runtime"); // <-- Call this before any other code or imports
 
 const functions = require("@google-cloud/functions-framework");
 
@@ -14,14 +12,20 @@ functions.http("handler", async (req, res) => {
 });
 ```
 
+or ESM import style:
+
+```js
+import '@aikidosec/runtime';
+
+// ...
+```
+
 If you're using the `exports.handler` style, you'll need to wrap your handler manually.
 
 At the very beginning of the file that contains your handler, add the following line:
 
 ```js
-const { cloudFunction } = require("@aikidosec/runtime");
-
-const protect = cloudFunction(); // <-- Call this before any other code or imports
+const protect = require("@aikidosec/runtime/cloud-function"); // <-- Call this before any other code or imports
 
 const dependency = require("dependency");
 
@@ -33,7 +37,9 @@ exports.handler = protect(async (event, context) => { // <-- Wrap your handler w
 or ESM import style:
 
 ```js
-import { cloudFunction } from '@aikidosec/runtime';
+import protect from '@aikidosec/runtime/cloud-function';
+
+// ...
 ```
 
 That's it! Your cloud function is now protected by Aikido runtime.
@@ -48,10 +54,6 @@ Read [Protect against prototype pollution](./prototype-pollution.md) to learn ho
 
 ## Debug mode
 
-If you need to debug the runtime, you can set the `debug` option to `true`:
-
-```js
-protect({ debug: true });
-```
+If you need to debug the runtime, you can run your cloud function with the environment variable `AIKIDO_DEBUG` set to `true`.
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).

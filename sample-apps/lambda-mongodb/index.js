@@ -1,11 +1,9 @@
-const { lambda, preventPrototypePollution } = require("@aikidosec/runtime");
-
-const protect = lambda({ debug: true });
+const protect = require("@aikidosec/runtime/lambda");
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 async function main(client, event) {
   const users = new Users(client);

@@ -3,9 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-const { protect } = require('@aikidosec/runtime');
-
-protect(); // <-- Call this before any other code or imports
+require('@aikidosec/runtime'); // <-- Call this before any other code or imports
 
 const express = require('express');
 
@@ -17,7 +15,7 @@ const app = express();
 or ESM import style:
 
 ```js
-import { protect } from '@aikidosec/runtime';
+import '@aikidosec/runtime';
 
 // ...
 ```
@@ -34,10 +32,10 @@ Read [Protect against prototype pollution](./prototype-pollution.md) to learn ho
 
 ## Debug mode
 
-If you need to debug the runtime, you can set the `debug` option to `true`:
+If you need to debug the runtime, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
-```js
-protect({ debug: true });
+```sh
+AIKIDO_DEBUG=true node app.js
 ```
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
