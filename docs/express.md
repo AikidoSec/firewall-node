@@ -24,11 +24,17 @@ That's it! Your app is now protected by Aikido runtime.
 
 If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
 
-## Preventing prototype pollution
+## Blocking mode
 
-Aikido runtime can also protect your application against prototype pollution attacks.
+By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
 
-Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
+
+```sh
+AIKIDO_BLOCK=true node app.js
+```
+
+It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
 
 ## Debug mode
 
@@ -39,3 +45,9 @@ AIKIDO_DEBUG=true node app.js
 ```
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

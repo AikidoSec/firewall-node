@@ -12,7 +12,7 @@ const pathToApp = resolve(
 
 t.test("it does not crash if many attacks with big payloads", (t) => {
   const server = spawn(`node`, [pathToApp, "4000"], {
-    env: { ...process.env, AIKIDO_DEBUG: "true" },
+    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
   server.on("close", () => {

@@ -31,14 +31,20 @@ That's it! Your app is now protected by Aikido guard.
 
 If you want to see a full example, check our [Pub/Sub sample app](../sample-apps/pubsub-mongodb).
 
-## Preventing prototype pollution
+## Blocking mode
 
-Aikido runtime can also protect your application against prototype pollution attacks.
+By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
 
-Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`.
 
 ## Debug mode
 
 If you need to debug the runtime, you can run your consumer with the environment variable `AIKIDO_DEBUG` set to `true`.
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

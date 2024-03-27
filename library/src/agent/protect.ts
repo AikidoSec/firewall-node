@@ -29,8 +29,8 @@ function isDebugging() {
   return process.env.AIKIDO_DEBUG === "true";
 }
 
-function inDryMode() {
-  return process.env.AIKIDO_NO_BLOCKING === "true";
+function shouldBlock() {
+  return process.env.AIKIDO_BLOCKING === "true";
 }
 
 function getLogger(): Logger {
@@ -81,7 +81,7 @@ function getAgent({ serverless }: { serverless: boolean }) {
   }
 
   const agent = new Agent(
-    !inDryMode(),
+    shouldBlock(),
     getLogger(),
     getAPI(),
     getTokenFromEnv(),

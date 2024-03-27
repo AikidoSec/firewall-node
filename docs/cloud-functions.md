@@ -46,14 +46,22 @@ That's it! Your cloud function is now protected by Aikido runtime.
 
 If you want to see a full example, check our [cloud functions sample app](../sample-apps/cloud-functions-v1-mongodb).
 
-## Preventing prototype pollution
+## Blocking mode
 
-Aikido runtime can also protect your application against prototype pollution attacks.
+By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
 
-Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`.
+
+It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
 
 ## Debug mode
 
 If you need to debug the runtime, you can run your cloud function with the environment variable `AIKIDO_DEBUG` set to `true`.
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
+
+## Preventing prototype pollution
+
+Aikido runtime can also protect your application against prototype pollution attacks.
+
+Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
