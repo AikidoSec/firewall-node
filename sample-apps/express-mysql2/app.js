@@ -1,7 +1,5 @@
 require("dotenv").config();
-const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
-
-protect({ debug: true });
+require("@aikidosec/runtime");
 
 const Cats = require("./Cats");
 const express = require("express");
@@ -9,7 +7,7 @@ const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const mysql = require("mysql2/promise");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 function getHTMLBody(cats) {
   return `

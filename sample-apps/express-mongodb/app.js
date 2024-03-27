@@ -1,7 +1,5 @@
 require("dotenv").config();
-const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
-
-protect({ debug: true });
+require("@aikidosec/runtime");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -12,7 +10,7 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { exec } = require("child_process");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 async function getPosts() {
   // Normally you'd use environment variables for this

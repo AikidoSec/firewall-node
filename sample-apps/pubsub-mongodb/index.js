@@ -1,12 +1,10 @@
-const { preventPrototypePollution, protect } = require("@aikidosec/runtime");
-
-protect({ debug: true });
+require("@aikidosec/runtime");
 
 const { PubSub } = require("@google-cloud/pubsub");
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 async function receiveMessage(client, body) {
   const users = new Users(client);

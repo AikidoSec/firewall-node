@@ -1,12 +1,10 @@
-const { protect, preventPrototypePollution } = require("@aikidosec/runtime");
-
-protect({ debug: true });
+require("@aikidosec/runtime");
 
 const functions = require("@google-cloud/functions-framework");
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
 

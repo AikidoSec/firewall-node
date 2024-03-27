@@ -6,14 +6,12 @@ It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web
 
 > The `Object.freeze()` method freezes an object. A frozen object can no longer be changed; freezing an object prevents new properties from being added to it, existing properties from being removed, prevents changing the enumerability, configurability, or writability of existing properties, and prevents the values of existing properties from being changed.
 
-We believe that there are legitimate cases of prototype changes, but they should happen only during the initialization step. Hence, we recommend calling `preventPrototypePollution` when your application is initialised.
+We believe that there are legitimate cases of prototype changes, but they should happen only during the initialization step. Hence, we recommend requiring `@aikidosec/runtime/nopp` after your main imports.
 
 ```js
-import { preventPrototypePollution } from '@aikidosec/runtime';
+const express = require('express');
 
-import express from 'express';
-
-preventPrototypePollution(); // <-- Call this after your main imports
+require('@aikidosec/runtime/nopp'); // <-- Include this after your main imports
 
 const app = express();
 
@@ -26,34 +24,32 @@ app.listen(3000, () => {
 });
 ```
 
-using CommonJS:
+or ESM import style:
 
 ```js
-const { preventPrototypePollution } = require('@aikidosec/runtime');
+import '@aikidosec/runtime/nopp';
 ```
 
 together with `protect`:
 
 ```js
-import { protect, preventPrototypePollution } from '@aikidosec/runtime';
-
-protect(); // <-- Call this before any other code or imports
+import '@aikidosec/runtime'; // <-- Include this before any other code or imports
 
 import express from 'express';
 
-preventPrototypePollution(); // <-- Call this after your main imports
+import '@aikidosec/runtime/nopp'; // <-- Include this after your main imports
 
 // ...
 ```
 
-## WARNING: Read this before using `preventPrototypePollution`
+## WARNING: Read this before using `@aikidosec/runtime/nopp`
 
-This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after calling `preventPrototypePollution`.
+This might break your application or result in strange errors if you are using libraries that rely on changing the prototype of built-in objects after your application has started. We recommend testing your application thoroughly after including `@aikidosec/runtime/nopp`.
 
 You should enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
 
 ## Incompatible packages
 
-Some packages may not work properly when `preventPrototypePollution` is called, these are some of the known packages:
+Some packages may not work properly when `@aikidosec/runtime/nopp` is required, these are some of the known packages:
 
 * [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)

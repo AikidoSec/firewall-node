@@ -1,14 +1,9 @@
-const {
-  cloudFunction,
-  preventPrototypePollution,
-} = require("@aikidosec/runtime");
-
-const protect = cloudFunction({ debug: true });
+const protect = require("@aikidosec/runtime/cloud-function");
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-preventPrototypePollution();
+require("@aikidosec/runtime/nopp");
 
 exports.getToken = protect(async (req, res) => {
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");

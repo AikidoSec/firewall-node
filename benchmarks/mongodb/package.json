@@ -1,9 +1,0 @@
-{
-  "name": "mongodb-bench",
-  "private": true,
-  "dependencies": {
-    "@aikidosec/runtime": "file:../../library",
-    "mongodb": "^6.3.0",
-    "percentile": "^1.6.0"
-  }
-}

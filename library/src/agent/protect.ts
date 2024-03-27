@@ -1,7 +1,6 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import * as shimmer from "shimmer";
-import { getOptions, Options } from "../helpers/getOptions";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
@@ -26,8 +25,21 @@ import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
 
-function getLogger(options: Options): Logger {
-  if (options.debug) {
+function isDebugging() {
+  return (
+    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
+  );
+}
+
+function shouldBlock() {
+  return (
+    process.env.AIKIDO_BLOCKING === "true" ||
+    process.env.AIKIDO_BLOCKING === "1"
+  );
+}
+
+function getLogger(): Logger {
+  if (isDebugging()) {
     return new LoggerConsole();
   }
 
@@ -66,13 +78,7 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({
-  options,
-  serverless,
-}: {
-  options: Options;
-  serverless: boolean;
-}) {
+function getAgent({ serverless }: { serverless: boolean }) {
   const current = getInstance();
 
   if (current) {
@@ -80,8 +86,8 @@ function getAgent({
   }
 
   const agent = new Agent(
-    options.block,
-    getLogger(options),
+    shouldBlock(),
+    getLogger(),
     getAPI(),
     getTokenFromEnv(),
     serverless
@@ -112,33 +118,22 @@ function getWrappers() {
   ];
 }
 
-/**
- * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
- * @param options Options to pass along to the protect function (See type definition)
- */
-export function protect(options?: Partial<Options>) {
+export function protect() {
   disableShimmerLogging();
 
   const agent = getAgent({
-    options: getOptions(options),
     serverless: false,
   });
 
   agent.start(getWrappers());
 }
 
-/**
- * Creates an {@link Agent} and starts it. This function is used directly by the end-user.
- * @param options Options to pass along to the protect function (See type definition)
- * @returns Function that allows creation of lambda wrapper
- */
-export function lambda(
-  options?: Partial<Options>
-): (handler: APIGatewayProxyHandler) => APIGatewayProxyHandler {
+export function lambda(): (
+  handler: APIGatewayProxyHandler
+) => APIGatewayProxyHandler {
   disableShimmerLogging();
 
   const agent = getAgent({
-    options: getOptions(options),
     serverless: true,
   });
 
@@ -147,13 +142,10 @@ export function lambda(
   return createLambdaWrapper;
 }
 
-export function cloudFunction(
-  options?: Partial<Options>
-): (handler: HttpFunction) => HttpFunction {
+export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   disableShimmerLogging();
 
   const agent = getAgent({
-    options: getOptions(options),
     serverless: true,
   });
 
