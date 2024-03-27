@@ -1,9 +1,9 @@
-require("@aikidosec/runtime");
+require("../../dist/exports/index");
 
 const measure = require("./measure");
 const getUser = require("./getUser");
 const getClient = require("./getClient");
-const { runWithContext } = require("@aikidosec/runtime/internal");
+const { runWithContext } = require("../../dist/agent/Context");
 
 async function main() {
   const client = await getClient();

@@ -23,6 +23,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: "module",
   },
+  ignorePatterns: ["benchmarks/**/*"],
   plugins: ["@typescript-eslint"],
   rules: {
     "@typescript-eslint/ban-ts-comment": [

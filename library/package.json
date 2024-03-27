@@ -30,8 +30,7 @@
     ".": "./dist/exports/index.js",
     "./cloud-function": "./dist/exports/cloud-function.js",
     "./lambda": "./dist/exports/lambda.js",
-    "./nopp": "./dist/exports/nopp.js",
-    "./internal": "./dist/exports/internal.js"
+    "./nopp": "./dist/exports/nopp.js"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
@@ -61,6 +60,7 @@
     "mongodb": "^6.3.0",
     "mysql": "^2.18.1",
     "mysql2": "^3.9.2",
+    "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "prettier": "^3.2.4",
     "shell-quote": "^1.8.1",

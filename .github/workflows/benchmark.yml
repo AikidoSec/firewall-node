@@ -33,10 +33,10 @@ jobs:
       - run: make build
       - name: Run MongoDB Benchmark
         id: mongodb_benchmark
-        run: cd benchmarks/mongodb && node benchmark.js
+        run: cd library/benchmarks/mongodb && node benchmark.js
       - name: Run SQL Injection Benchmark
         id: sql_injection_benchmark
-        run: cd benchmarks/sql-injection && node benchmark.js
+        run: cd library/benchmarks/sql-injection && node benchmark.js
       - name: Run shell injection Benchmark
         id: shell_injection_benchmark
-        run: cd benchmarks/shell-injection && node benchmark.js
+        run: cd library/benchmarks/shell-injection && node benchmark.js

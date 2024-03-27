@@ -61,3 +61,8 @@ lint:
 .PHONY: end2end
 end2end:
 	cd end2end && npm run test
+
+benchmark: build
+	cd library/benchmarks/nosql-injection && node benchmark.js
+	cd library/benchmarks/shell-injection && node benchmark.js
+	cd library/benchmarks/sql-injection && node benchmark.js
