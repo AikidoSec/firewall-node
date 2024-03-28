@@ -72,17 +72,19 @@ AIKIDO_TOKEN=your-token node your-app.js
 
 (Or use [dotenv](dotenv) to load the token from an `.env` file)
 
-## Running in dry mode
+## Running in production mode (blocking)
 
-If you want to test the runtime without blocking any requests, you can set the `AIKIDO_NO_BLOCKING` environment variable to `true`:
+By default, the runtime will only detect and report attacks to Aikido.
+
+If you want to start blocking requests, you can set the `AIKIDO_BLOCKING` environment variable to `true`:
 
 ```shell
-AIKIDO_NO_BLOCKING=true node your-app.js
+AIKIDO_BLOCKING=true node your-app.js
 ```
 
 (Or use [dotenv](https://www.npmjs.com/package/dotenv) to load the token from an `.env` file)
 
-See [Reporting NoSQL injections to Aikido](#reporting-nosql-injections-to-aikido) to learn how to send events to Aikido.
+See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to Aikido.
 
 ## Performance
 
