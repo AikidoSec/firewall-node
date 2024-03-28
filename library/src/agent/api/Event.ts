@@ -34,6 +34,7 @@ type DetectedAttack = {
     url: string | undefined;
     headers: Record<string, string | string[]>;
     body: string | undefined;
+    source: string;
   };
   attack: {
     kind: Kind;
@@ -43,9 +44,6 @@ type DetectedAttack = {
     path: string;
     stack: string;
     metadata: Record<string, string>;
-  };
-  context: {
-    source: string;
   };
   agent: AgentInfo;
   time: number;

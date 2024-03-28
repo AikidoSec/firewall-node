@@ -115,7 +115,6 @@ export class Agent {
     stack,
     path,
     metadata,
-    contextSource,
   }: {
     module: string;
     kind: Kind;
@@ -125,7 +124,6 @@ export class Agent {
     stack: string;
     path: string;
     metadata: Record<string, string>;
-    contextSource: string;
   }) {
     if (this.token) {
       this.api
@@ -151,9 +149,7 @@ export class Agent {
                 : undefined,
             body: convertRequestBodyToString(request.body),
             headers: filterEmptyRequestHeaders(request.headers),
-          },
-          context: {
-            source: contextSource,
+            source: request.source,
           },
           agent: this.getAgentInfo(),
         })
