@@ -2,9 +2,7 @@ import { Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
-import { basename } from "path";
 
 export class ChildProcess implements Wrapper {
   private inspectExec(
