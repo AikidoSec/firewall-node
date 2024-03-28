@@ -17,6 +17,7 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  source: "express",
 };
 
 const safeContext = {

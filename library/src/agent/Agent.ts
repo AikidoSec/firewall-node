@@ -116,6 +116,7 @@ export class Agent {
     stack,
     path,
     metadata,
+    payload,
   }: {
     module: string;
     operation: string;
@@ -126,6 +127,7 @@ export class Agent {
     stack: string;
     path: string;
     metadata: Record<string, string>;
+    payload: unknown;
   }) {
     if (this.token) {
       this.api
@@ -141,6 +143,7 @@ export class Agent {
             source: source,
             metadata: limitLengthMetadata(metadata, 16384),
             kind: kind,
+            payload: JSON.stringify(payload).substring(0, 16384),
           },
           request: {
             method: request.method,

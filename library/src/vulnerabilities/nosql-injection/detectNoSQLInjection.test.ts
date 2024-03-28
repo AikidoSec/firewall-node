@@ -21,6 +21,7 @@ function createContext({
     headers: headers ? headers : {},
     body: body,
     cookies: cookies ? cookies : {},
+    source: "express",
   };
 }
 
@@ -94,7 +95,12 @@ t.test("using $gt in query parameter", async (t) => {
         title: { $gt: "" },
       }
     ),
-    { injection: true, source: "query", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "query",
+      pathToPayload: ".title",
+      payload: { $gt: "" },
+    }
   );
 });
 
@@ -122,7 +128,12 @@ t.test("using $ne in body", async (t) => {
         title: { $ne: null },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -136,7 +147,12 @@ t.test("using $ne in body (different name)", async (t) => {
         myTitle: { $ne: null },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -150,7 +166,12 @@ t.test("using $ne in headers with different name", async (t) => {
         someField: { $ne: null },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -171,7 +192,12 @@ t.test("using $ne inside $and", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -192,7 +218,12 @@ t.test("using $ne inside $or", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -213,7 +244,12 @@ t.test("using $ne inside $nor", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -229,7 +265,12 @@ t.test("using $ne inside $not", async (t) => {
         },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".title" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".title",
+      payload: { $ne: null },
+    }
   );
 });
 
@@ -249,6 +290,7 @@ t.test("using $ne nested in body", async (t) => {
       injection: true,
       source: "body",
       pathToPayload: ".nested.nested",
+      payload: { $ne: null },
     }
   );
 });
@@ -280,6 +322,7 @@ t.test("using $ne in JWT in headers", async (t) => {
       injection: true,
       source: "headers",
       pathToPayload: ".Authorization<jwt>.username",
+      payload: { $ne: null },
     }
   );
 });
@@ -311,6 +354,7 @@ t.test("using $ne in JWT in bearer header", async (t) => {
       injection: true,
       source: "headers",
       pathToPayload: ".Authorization<jwt>.username",
+      payload: { $ne: null },
     }
   );
 });
@@ -342,6 +386,7 @@ t.test("using $ne in JWT in cookies", async (t) => {
       injection: true,
       source: "cookies",
       pathToPayload: ".session<jwt>.username",
+      payload: { $ne: null },
     }
   );
 });
@@ -375,7 +420,12 @@ t.test("using $gt in query parameter", async (t) => {
         age: { $gt: "21" },
       }
     ),
-    { injection: true, source: "query", pathToPayload: ".age" }
+    {
+      injection: true,
+      source: "query",
+      pathToPayload: ".age",
+      payload: { $gt: "21" },
+    }
   );
 });
 
@@ -389,7 +439,12 @@ t.test("using $gt and $lt in query parameter", async (t) => {
         age: { $gt: "21", $lt: "100" },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".age" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".age",
+      payload: { $gt: "21", $lt: "100" },
+    }
   );
 });
 
@@ -403,7 +458,12 @@ t.test("using $gt and $lt in query parameter (different name)", async (t) => {
         myAge: { $gt: "21", $lt: "100" },
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".age" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".age",
+      payload: { $gt: "21", $lt: "100" },
+    }
   );
 });
 
@@ -425,7 +485,12 @@ t.test("using $gt and $lt in query parameter (nested)", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".nested.nested.age" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".nested.nested.age",
+      payload: { $gt: "21", $lt: "100" },
+    }
   );
 });
 
@@ -449,7 +514,12 @@ t.test("using $gt and $lt in query parameter (root)", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: "." }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".",
+      payload: { $and: [{ someAgeField: { $gt: "21", $lt: "100" } }] },
+    }
   );
 });
 
@@ -473,7 +543,18 @@ t.test("$where", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: "." }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".",
+      payload: {
+        $and: [
+          {
+            $where: "sleep(1000)",
+          },
+        ],
+      },
+    }
   );
 });
 
@@ -495,7 +576,12 @@ t.test("array body", async (t) => {
         ],
       }
     ),
-    { injection: true, source: "body", pathToPayload: ".[0]" }
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".[0]",
+      payload: { $where: "sleep(1000)" },
+    }
   );
 });
 

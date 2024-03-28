@@ -185,6 +185,7 @@ function wrapWithoutArgumentModification(
           path: result.pathToPayload,
           metadata: result.metadata,
           request: context,
+          payload: result.payload,
         });
 
         if (agent.shouldBlock()) {

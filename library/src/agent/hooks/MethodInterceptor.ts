@@ -9,6 +9,7 @@ export type InterceptorResult = {
   source: Source;
   pathToPayload: string;
   metadata: Record<string, string>;
+  payload: unknown;
 } | void;
 
 export type Interceptor = (

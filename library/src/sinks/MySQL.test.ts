@@ -28,6 +28,7 @@ const context: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  source: "express",
 };
 
 t.test("it detects SQL injections", async () => {

@@ -6,6 +6,7 @@ import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { APIForTesting } from "./api/APIForTesting";
 import { APIThatThrows } from "./api/APIThatThrows";
+import { Event, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
@@ -130,7 +131,10 @@ t.test("when attack detected", async () => {
       body: {},
       url: "http://localhost:4000",
       remoteAddress: "::1",
+      source: "express",
     },
+    operation: "operation",
+    payload: "payload",
     stack: "stack",
     path: ".nested",
     metadata: {
@@ -184,7 +188,10 @@ t.test("it checks if user agent is a string", async () => {
       body: {},
       url: "http://localhost:4000",
       remoteAddress: "::1",
+      source: "express",
     },
+    payload: "payload",
+    operation: "operation",
     stack: "stack",
     path: ".nested",
     metadata: {
@@ -324,9 +331,12 @@ t.test("it logs when failed to report event", async () => {
       body: {},
       url: "http://localhost:4000",
       remoteAddress: "::1",
+      source: "express",
     },
+    operation: "operation",
     stack: "stack",
     path: ".nested",
+    payload: "payload",
     metadata: {
       db: "app",
     },
@@ -373,4 +383,78 @@ t.test("unable to prevent prototype pollution", async () => {
   });
 
   clock.uninstall();
+});
+
+t.test("when payload is object", async () => {
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, false);
+
+  agent.onDetectedAttack({
+    module: "mongodb",
+    kind: "nosql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: "payload",
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+    },
+    operation: "operation",
+    payload: { $gt: "" },
+    stack: "stack",
+    path: ".nested",
+    metadata: {
+      db: "app",
+    },
+  });
+
+  agent.onDetectedAttack({
+    module: "mongodb",
+    kind: "nosql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: "payload",
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+    },
+    operation: "operation",
+    payload: "a".repeat(20000),
+    stack: "stack",
+    path: ".nested",
+    metadata: {
+      db: "app",
+    },
+  });
+
+  function isDetectedAttack(event: Event): event is DetectedAttack {
+    return event.type === "detected_attack";
+  }
+
+  t.same(
+    api
+      .getEvents()
+      .filter(isDetectedAttack)
+      .map((event) => event.attack.payload),
+    [
+      JSON.stringify({ $gt: "" }),
+      JSON.stringify("a".repeat(20000)).substring(0, 16384),
+    ]
+  );
 });

@@ -73,14 +73,18 @@ function removeKeysThatDontStartWithDollarSign(
 function findFilterPartWithOperators(
   userInput: unknown,
   partOfFilter: unknown
-): { found: false } | { found: true; pathToPayload: string } {
+): { found: false } | { found: true; pathToPayload: string; payload: unknown } {
   if (isPlainObject(partOfFilter)) {
     const object = removeKeysThatDontStartWithDollarSign(partOfFilter);
     if (Object.keys(object).length > 0) {
       const result = matchFilterPartInUser(userInput, object);
 
       if (result.match) {
-        return { found: true, pathToPayload: result.pathToPayload };
+        return {
+          found: true,
+          pathToPayload: result.pathToPayload,
+          payload: object,
+        };
       }
     }
 
@@ -88,7 +92,11 @@ function findFilterPartWithOperators(
       const result = findFilterPartWithOperators(userInput, partOfFilter[key]);
 
       if (result.found) {
-        return { found: true, pathToPayload: result.pathToPayload };
+        return {
+          found: true,
+          pathToPayload: result.pathToPayload,
+          payload: result.payload,
+        };
       }
     }
   }
@@ -98,7 +106,11 @@ function findFilterPartWithOperators(
       const result = findFilterPartWithOperators(userInput, value);
 
       if (result.found) {
-        return { found: true, pathToPayload: result.pathToPayload };
+        return {
+          found: true,
+          pathToPayload: result.pathToPayload,
+          payload: result.payload,
+        };
       }
     }
   }
@@ -107,7 +119,7 @@ function findFilterPartWithOperators(
 }
 
 type DetectionResult =
-  | { injection: true; source: Source; pathToPayload: string }
+  | { injection: true; source: Source; pathToPayload: string; payload: unknown }
   | { injection: false };
 
 export function detectNoSQLInjection(
@@ -127,6 +139,7 @@ export function detectNoSQLInjection(
           injection: true,
           source: source,
           pathToPayload: result.pathToPayload,
+          payload: result.payload,
         };
       }
     }

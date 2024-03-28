@@ -16,6 +16,7 @@ t.test("it detects shell injection", async () => {
         body: {
           domain: "www.example`whoami`.com",
         },
+        source: "express",
       },
     }),
     {
@@ -24,6 +25,7 @@ t.test("it detects shell injection", async () => {
       source: "body",
       pathToPayload: ".domain",
       metadata: {},
+      payload: "www.example`whoami`.com",
     }
   );
 });

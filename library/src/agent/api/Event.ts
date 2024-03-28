@@ -25,7 +25,7 @@ type Started = {
   time: number;
 };
 
-type DetectedAttack = {
+export type DetectedAttack = {
   type: "detected_attack";
   request: {
     method: string | undefined;
@@ -44,6 +44,7 @@ type DetectedAttack = {
     source: Source;
     path: string;
     stack: string;
+    payload: string;
     metadata: Record<string, string>;
   };
   agent: AgentInfo;
