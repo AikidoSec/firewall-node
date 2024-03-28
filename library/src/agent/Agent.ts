@@ -141,9 +141,9 @@ export class Agent {
             path: path,
             stack: stack,
             source: source,
-            metadata: limitLengthMetadata(metadata, 16384),
+            metadata: limitLengthMetadata(metadata, 4096),
             kind: kind,
-            payload: JSON.stringify(payload).substring(0, 16384),
+            payload: JSON.stringify(payload).substring(0, 4096),
           },
           request: {
             method: request.method,

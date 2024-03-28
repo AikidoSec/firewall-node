@@ -454,7 +454,7 @@ t.test("when payload is object", async () => {
       .map((event) => event.attack.payload),
     [
       JSON.stringify({ $gt: "" }),
-      JSON.stringify("a".repeat(20000)).substring(0, 16384),
+      JSON.stringify("a".repeat(20000)).substring(0, 4096),
     ]
   );
 });
