@@ -44,6 +44,9 @@ type DetectedAttack = {
     stack: string;
     metadata: Record<string, string>;
   };
+  context: {
+    source: string;
+  };
   agent: AgentInfo;
   time: number;
 };

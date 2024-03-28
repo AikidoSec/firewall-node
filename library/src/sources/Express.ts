@@ -20,6 +20,7 @@ function createMiddleware(agent: Agent): Middleware {
         query: req.query,
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
+        source: "express",
       },
       () => {
         next();

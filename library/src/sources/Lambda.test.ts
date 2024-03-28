@@ -107,6 +107,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
     cookies: {
       cookie: "value",
     },
+    source: "lambda/gateway",
   });
 });
 
@@ -157,6 +158,7 @@ t.test("json header is missing for gateway event", async (t) => {
     headers: {},
     query: { query: "value" },
     cookies: {},
+    source: "lambda/gateway",
   });
 });
 
@@ -187,6 +189,7 @@ t.test("it handles SQS event", async (t) => {
     headers: {},
     query: {},
     cookies: {},
+    source: "lambda/sqs",
   });
 });
 

@@ -72,6 +72,7 @@ t.test("it adds context from request for GET", async (t) => {
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",
+    source: "express",
   });
 });
 
@@ -81,6 +82,7 @@ t.test("it adds context from request for POST", async (t) => {
   t.match(response.body, {
     method: "POST",
     body: { title: "Title" },
+    source: "express",
   });
 });
 
@@ -92,6 +94,7 @@ t.test("it adds context from request for route", async (t) => {
     query: {},
     cookies: {},
     headers: {},
+    source: "express",
   });
 });
 
@@ -103,6 +106,7 @@ t.test("it adds context from request for all", async (t) => {
     query: {},
     cookies: {},
     headers: {},
+    source: "express",
   });
 });
 
