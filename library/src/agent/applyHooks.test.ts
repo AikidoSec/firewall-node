@@ -14,6 +14,7 @@ const context: Context = {
   headers: {},
   body: undefined,
   cookies: {},
+  source: "express",
 };
 
 function createAgent() {

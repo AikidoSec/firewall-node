@@ -19,6 +19,7 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  source: "express",
 };
 
 function throws(fn: () => void, wanted: string | RegExp) {

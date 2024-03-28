@@ -59,6 +59,7 @@ export class MongoDB implements Wrapper {
           operation: operation,
           filter: JSON.stringify(filter),
         },
+        payload: result.payload,
       };
     }
   }

@@ -18,6 +18,7 @@ t.test("it returns correct path", async () => {
         body: {
           id: "1' OR 1=1; --",
         },
+        source: "express",
       },
     }),
     {
@@ -26,6 +27,7 @@ t.test("it returns correct path", async () => {
       source: "body",
       pathToPayload: ".id",
       metadata: {},
+      payload: "1' OR 1=1; --",
     }
   );
 });

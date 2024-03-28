@@ -15,6 +15,7 @@ const context: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  source: "express",
 };
 
 t.test("it inspects query method calls and blocks if needed", async () => {

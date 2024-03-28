@@ -15,6 +15,7 @@ const dangerousContext: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  source: "express",
 };
 
 const safeContext: Context = {
@@ -25,6 +26,7 @@ const safeContext: Context = {
   headers: {},
   body: {},
   cookies: {},
+  source: "express",
 };
 
 t.test("it detects SQL injections", async () => {

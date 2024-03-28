@@ -28,6 +28,7 @@ export function checkContextForShellInjection({
             source: source,
             pathToPayload: path,
             metadata: {},
+            payload: str,
           };
         }
       }

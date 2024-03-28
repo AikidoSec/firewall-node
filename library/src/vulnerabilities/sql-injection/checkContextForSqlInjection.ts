@@ -31,6 +31,7 @@ export function checkContextForSqlInjection({
             source: source,
             pathToPayload: path,
             metadata: {},
+            payload: str,
           };
         }
       }
