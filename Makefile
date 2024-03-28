@@ -28,11 +28,11 @@ express-mariadb:
 
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
-	cd sample-apps/lambda-mongodb && npx serverless invoke local --function login --path payloads/nosql-injection-request.json
+	cd sample-apps/lambda-mongodb && npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json
 
 .PHONY: lambda-mongodb-safe
 lambda-mongodb-safe:
-	cd sample-apps/lambda-mongodb && npx serverless invoke local --function login --path payloads/safe-request.json
+	cd sample-apps/lambda-mongodb && npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/safe-request.json
 
 .PHONY: install
 install:
