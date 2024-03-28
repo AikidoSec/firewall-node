@@ -53,6 +53,7 @@ type MonitoredSinkStats = {
     total: number;
     blocked: number;
   };
+  interceptorThrewError: number;
   withoutContext: number;
   total: number;
   compressedTimings: {
