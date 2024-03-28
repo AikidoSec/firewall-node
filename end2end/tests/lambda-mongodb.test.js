@@ -6,6 +6,9 @@ const execAsync = promisify(exec);
 
 const directory = resolve(__dirname, "../../sample-apps/lambda-mongodb");
 
+// Invoking serverless functions can be slow
+t.setTimeout(60000);
+
 // Ensure the serverless CLI is installed
 t.before(async () => {
   await execAsync("npx --loglevel=error serverless --help", {
