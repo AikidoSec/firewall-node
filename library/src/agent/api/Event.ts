@@ -37,6 +37,7 @@ type DetectedAttack = {
   };
   attack: {
     kind: Kind;
+    operation: string;
     module: string;
     blocked: boolean;
     source: Source;
