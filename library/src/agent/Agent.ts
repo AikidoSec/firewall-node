@@ -152,6 +152,7 @@ export class Agent {
                 : undefined,
             body: convertRequestBodyToString(request.body),
             headers: filterEmptyRequestHeaders(request.headers),
+            source: request.source,
           },
           agent: this.getAgentInfo(),
         })

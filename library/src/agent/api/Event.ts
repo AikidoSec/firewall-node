@@ -34,6 +34,7 @@ type DetectedAttack = {
     url: string | undefined;
     headers: Record<string, string | string[]>;
     body: string | undefined;
+    source: string;
   };
   attack: {
     kind: Kind;

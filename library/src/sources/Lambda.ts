@@ -122,6 +122,7 @@ export function createLambdaWrapper<
           headers: {},
           query: {},
           cookies: {},
+          source: "lambda/sqs",
         },
         async () => {
           return await asyncHandler(event, context);
@@ -139,6 +140,7 @@ export function createLambdaWrapper<
           headers: event.headers,
           query: event.queryStringParameters ? event.queryStringParameters : {},
           cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
+          source: "lambda/gateway",
         },
         async () => {
           return await asyncHandler(event, context);
