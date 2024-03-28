@@ -6,6 +6,13 @@ const execAsync = promisify(exec);
 
 const directory = resolve(__dirname, "../../sample-apps/lambda-mongodb");
 
+// Ensure the serverless CLI is installed
+t.before(async () => {
+  await execAsync("npx --loglevel=error serverless --help", {
+    cwd: directory,
+  });
+});
+
 t.test("it does not block by default", async (t) => {
   const { stdout, stderr } = await execAsync(
     "npx --loglevel=error serverless invoke local --function login --path payloads/nosql-injection-request.json",
