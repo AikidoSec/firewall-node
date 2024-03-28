@@ -177,6 +177,7 @@ function wrapWithoutArgumentModification(
 
         agent.onDetectedAttack({
           module: module,
+          operation: result.operation,
           kind: result.kind,
           source: result.source,
           blocked: agent.shouldBlock(),
