@@ -71,7 +71,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body (.myTitle)"
+        "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 

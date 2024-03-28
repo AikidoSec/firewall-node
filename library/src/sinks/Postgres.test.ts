@@ -54,7 +54,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body (.myTitle)"
+        "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 

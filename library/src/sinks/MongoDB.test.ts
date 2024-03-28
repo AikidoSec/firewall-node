@@ -116,7 +116,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (bulkError instanceof Error) {
       t.same(
         bulkError.message,
-        "Aikido runtime has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body (.myTitle)"
+        "Aikido runtime has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
       );
     }
 
@@ -129,7 +129,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body (.myTitle)"
+        "Aikido runtime has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
       );
     }
 
