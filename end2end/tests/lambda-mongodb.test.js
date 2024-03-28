@@ -8,7 +8,7 @@ const directory = resolve(__dirname, "../../sample-apps/lambda-mongodb");
 
 t.test("it does not block by default", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx serverless invoke local --function login --path payloads/nosql-injection-request.json",
+    "npx --loglevel=error serverless invoke local --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
@@ -29,7 +29,7 @@ t.test("it does not block by default", async (t) => {
 
 t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json",
+    "npx --loglevel=error serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
@@ -43,7 +43,7 @@ t.test(
   "it does not block safe requests when AIKIDO_BLOCKING is true",
   async (t) => {
     const { stdout, stderr } = await execAsync(
-      "npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/safe-request.json",
+      "npx --loglevel=error serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/safe-request.json",
       {
         cwd: directory,
       }
