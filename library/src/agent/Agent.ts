@@ -108,6 +108,7 @@ export class Agent {
    */
   onDetectedAttack({
     module,
+    operation,
     kind,
     blocked,
     source,
@@ -117,6 +118,7 @@ export class Agent {
     metadata,
   }: {
     module: string;
+    operation: string;
     kind: Kind;
     blocked: boolean;
     source: Source;
@@ -132,6 +134,7 @@ export class Agent {
           time: Date.now(),
           attack: {
             module: module,
+            operation: operation,
             blocked: blocked,
             path: path,
             stack: stack,
