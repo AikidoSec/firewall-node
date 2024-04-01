@@ -1,6 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { join } from "path";
-import { wrap } from "shimmer";
+import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
@@ -130,13 +130,70 @@ function wrapWithoutArgumentModification(
   module: string,
   agent: Agent
 ) {
-  // @ts-expect-error We don't now the type of the subject
-  wrap(subject, method.getName(), function wrap(original: Function) {
-    return function wrap() {
-      const context = getContext();
+  try {
+    wrap(subject, method.getName(), function wrap(original: Function) {
+      return function wrap() {
+        const context = getContext();
 
-      if (!context) {
-        agent.getInspectionStatistics().inspectedCallWithoutContext(module);
+        if (!context) {
+          agent.getInspectionStatistics().inspectedCallWithoutContext(module);
+
+          return original.apply(
+            // @ts-expect-error We don't now the type of this
+            this,
+            // eslint-disable-next-line prefer-rest-params
+            arguments
+          );
+        }
+
+        // eslint-disable-next-line prefer-rest-params
+        const args = Array.from(arguments);
+        const start = performance.now();
+        let result: InterceptorResult = undefined;
+
+        try {
+          // @ts-expect-error We don't now the type of this
+          result = method.getInterceptor()(args, this, agent, context);
+        } catch (error: any) {
+          agent.getInspectionStatistics().interceptorThrewError(module);
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: method.getName(),
+            module: module,
+          });
+        }
+
+        const end = performance.now();
+        agent.getInspectionStatistics().onInspectedCall({
+          sink: module,
+          attackDetected: !!result,
+          blocked: agent.shouldBlock(),
+          durationInMs: end - start,
+        });
+
+        if (result) {
+          // Flag request as having an attack detected
+          context.attackDetected = true;
+
+          agent.onDetectedAttack({
+            module: module,
+            operation: result.operation,
+            kind: result.kind,
+            source: result.source,
+            blocked: agent.shouldBlock(),
+            stack: new Error().stack!,
+            path: result.pathToPayload,
+            metadata: result.metadata,
+            request: context,
+            payload: result.payload,
+          });
+
+          if (agent.shouldBlock()) {
+            throw new Error(
+              `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)}${result.pathToPayload}`
+            );
+          }
+        }
 
         return original.apply(
           // @ts-expect-error We don't now the type of this
@@ -144,65 +201,11 @@ function wrapWithoutArgumentModification(
           // eslint-disable-next-line prefer-rest-params
           arguments
         );
-      }
-
-      // eslint-disable-next-line prefer-rest-params
-      const args = Array.from(arguments);
-      const start = performance.now();
-      let result: InterceptorResult = undefined;
-
-      try {
-        // @ts-expect-error We don't now the type of this
-        result = method.getInterceptor()(args, this, agent, context);
-      } catch (error: any) {
-        agent.getInspectionStatistics().interceptorThrewError(module);
-        agent.onErrorThrownByInterceptor({
-          error: error,
-          method: method.getName(),
-          module: module,
-        });
-      }
-
-      const end = performance.now();
-      agent.getInspectionStatistics().onInspectedCall({
-        sink: module,
-        attackDetected: !!result,
-        blocked: agent.shouldBlock(),
-        durationInMs: end - start,
-      });
-
-      if (result) {
-        // Flag request as having an attack detected
-        context.attackDetected = true;
-
-        agent.onDetectedAttack({
-          module: module,
-          operation: result.operation,
-          kind: result.kind,
-          source: result.source,
-          blocked: agent.shouldBlock(),
-          stack: new Error().stack!,
-          path: result.pathToPayload,
-          metadata: result.metadata,
-          request: context,
-          payload: result.payload,
-        });
-
-        if (agent.shouldBlock()) {
-          throw new Error(
-            `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)}${result.pathToPayload}`
-          );
-        }
-      }
-
-      return original.apply(
-        // @ts-expect-error We don't now the type of this
-        this,
-        // eslint-disable-next-line prefer-rest-params
-        arguments
-      );
-    };
-  });
+      };
+    });
+  } catch (error) {
+    agent.onFailedToWrapMethod(module, method.getName());
+  }
 }
 
 /**
@@ -214,31 +217,34 @@ function wrapWithArgumentModification(
   module: string,
   agent: Agent
 ) {
-  // @ts-expect-error We don't now the type of the subject
-  wrap(subject, method.getName(), function wrap(original: Function) {
-    return function wrap() {
-      // eslint-disable-next-line prefer-rest-params
-      const args = Array.from(arguments);
-      let updatedArgs = args;
+  try {
+    wrap(subject, method.getName(), function wrap(original: Function) {
+      return function wrap() {
+        // eslint-disable-next-line prefer-rest-params
+        const args = Array.from(arguments);
+        let updatedArgs = args;
 
-      try {
-        // @ts-expect-error We don't now the type of this
-        updatedArgs = method.getInterceptor()(args, this, agent);
-      } catch (error: any) {
-        agent.onErrorThrownByInterceptor({
-          error: error,
-          method: method.getName(),
-          module: module,
-        });
-      }
+        try {
+          // @ts-expect-error We don't now the type of this
+          updatedArgs = method.getInterceptor()(args, this, agent);
+        } catch (error: any) {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: method.getName(),
+            module: module,
+          });
+        }
 
-      return original.apply(
-        // @ts-expect-error We don't now the type of this
-        this,
-        updatedArgs
-      );
-    };
-  });
+        return original.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          updatedArgs
+        );
+      };
+    });
+  } catch (error) {
+    agent.onFailedToWrapMethod(module, method.getName());
+  }
 }
 
 function wrapSubject(

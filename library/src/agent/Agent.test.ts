@@ -54,7 +54,7 @@ t.test("it throws error if already started", async () => {
 
 class WrapperForTesting implements Wrapper {
   wrap(hooks: Hooks) {
-    hooks.addPackage("shimmer").withVersion("^3.0.0");
+    hooks.addPackage("shell-quote").withVersion("^3.0.0");
   }
 }
 
@@ -67,7 +67,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "shimmer@1.2.1 is not supported!",
+    "shell-quote@1.8.1 is not supported!",
   ]);
 });
 

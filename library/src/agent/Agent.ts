@@ -297,4 +297,8 @@ export class Agent {
       this.startHeartbeats();
     }
   }
+
+  onFailedToWrapMethod(module: string, name: string) {
+    this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
 }
