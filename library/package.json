@@ -45,7 +45,6 @@
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
     "@types/shell-quote": "^1.7.5",
-    "@types/shimmer": "^1.0.5",
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
@@ -76,8 +75,5 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint 'src/**/*.ts'",
     "lint-tsc": "tsc --noEmit"
-  },
-  "dependencies": {
-    "shimmer": "^1.2.1"
   }
 }

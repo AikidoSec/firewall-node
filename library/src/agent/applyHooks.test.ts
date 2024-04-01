@@ -37,12 +37,12 @@ t.test("it ignores if package is not installed", async (t) => {
 
 t.test("it ignores if packages have empty selectors", async (t) => {
   const hooks = new Hooks();
-  hooks.addPackage("shimmer").withVersion("^1.0.0");
+  hooks.addPackage("shell-quote").withVersion("^1.0.0");
 
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {
-    shimmer: {
-      version: "1.2.1",
+    "shell-quote": {
+      version: "1.8.1",
       supported: false,
     },
   });
@@ -51,35 +51,60 @@ t.test("it ignores if packages have empty selectors", async (t) => {
 t.test("it ignores unknown selectors", async (t) => {
   const hooks = new Hooks();
   hooks
-    .addPackage("shimmer")
+    .addPackage("shell-quote")
     .withVersion("^1.0.0")
     .addSubject((exports) => exports.doesNotExist)
     .inspect("method", () => {});
 
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {
-    shimmer: {
-      version: "1.2.1",
+    "shell-quote": {
+      version: "1.8.1",
       supported: true,
     },
   });
 
-  // Force require to load shimmer
-  require("shimmer");
+  // Force require to load shell-quote
+  require("shell-quote");
+});
+
+t.test("it tries to wrap method that does not exist", async (t) => {
+  const hooks = new Hooks();
+  hooks
+    .addPackage("shell-quote")
+    .withVersion("^1.0.0")
+    .addSubject((exports) => exports)
+    .inspect("does_not_exist", () => {})
+    .modifyArguments("another_method_that_does_not_exist", (args) => {
+      return args;
+    });
+
+  const { agent, logger } = createAgent();
+  t.same(applyHooks(hooks, agent), {
+    "shell-quote": {
+      version: "1.8.1",
+      supported: true,
+    },
+  });
+
+  t.same(logger.getMessages(), [
+    "Failed to wrap method does_not_exist in module shell-quote",
+    "Failed to wrap method another_method_that_does_not_exist in module shell-quote",
+  ]);
 });
 
 t.test("it ignores if version is not supported", async (t) => {
   const hooks = new Hooks();
   hooks
-    .addPackage("shimmer")
+    .addPackage("shell-quote")
     .withVersion("^2.0.0")
     .addSubject((exports) => exports)
     .inspect("method", () => {});
 
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {
-    shimmer: {
-      version: "1.2.1",
+    "shell-quote": {
+      version: "1.8.1",
       supported: false,
     },
   });

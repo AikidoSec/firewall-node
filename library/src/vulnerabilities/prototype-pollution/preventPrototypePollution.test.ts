@@ -13,10 +13,13 @@ t.test(
   "it does not freeze builtins if incompatible package is found",
   async (t) => {
     t.same(
-      freezeBuiltinsIfPossible({ shimmer: "^1.0.0", notInstalled: "^1.0.0" }),
+      freezeBuiltinsIfPossible({
+        "shell-quote": "^1.0.0",
+        notInstalled: "^1.0.0",
+      }),
       {
         success: false,
-        incompatiblePackages: { shimmer: "1.2.1" },
+        incompatiblePackages: { "shell-quote": "1.8.1" },
       }
     );
   }

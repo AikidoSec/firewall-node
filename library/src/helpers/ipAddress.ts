@@ -37,7 +37,7 @@ function matchName(
 }
 /* c8 ignore stop */
 
-export function getInterfaceAddress(family?: string, name?: string) {
+function getInterfaceAddress(family?: string, name?: string) {
   const interfaces = os.networkInterfaces();
   const noName = !name;
   name = name || getDefaultInterfaceName();

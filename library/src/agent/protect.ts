@@ -1,6 +1,5 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import type { HttpFunction } from "@google-cloud/functions-framework";
-import * as shimmer from "shimmer";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
@@ -98,13 +97,6 @@ function getAgent({ serverless }: { serverless: boolean }) {
   return agent;
 }
 
-/**
- * This function **disables** logging from the "shimmer" package - this avoids logs whenever a function doesn't exist
- */
-function disableShimmerLogging() {
-  shimmer({ logger: () => {} });
-}
-
 function getWrappers() {
   return [
     new Express(),
@@ -119,8 +111,6 @@ function getWrappers() {
 }
 
 export function protect() {
-  disableShimmerLogging();
-
   const agent = getAgent({
     serverless: false,
   });
@@ -131,8 +121,6 @@ export function protect() {
 export function lambda(): (
   handler: APIGatewayProxyHandler
 ) => APIGatewayProxyHandler {
-  disableShimmerLogging();
-
   const agent = getAgent({
     serverless: true,
   });
@@ -143,8 +131,6 @@ export function lambda(): (
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
-  disableShimmerLogging();
-
   const agent = getAgent({
     serverless: true,
   });

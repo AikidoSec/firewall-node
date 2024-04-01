@@ -1,5 +1,6 @@
 import * as t from "tap";
-import { wrap } from "shimmer";
+import { wrap } from "./wrap";
+import { ip } from "./ipAddress";
 
 const os = require("os");
 
@@ -11,8 +12,6 @@ wrap(os, "networkInterfaces", function wrap() {
     };
   };
 });
-
-import { getInterfaceAddress, ip } from "./ipAddress";
 
 t.test("it works", async () => {
   t.same(ip(), "10.206.52.79");
