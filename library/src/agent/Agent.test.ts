@@ -13,6 +13,13 @@ import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
 
+t.test("it throws error if serverless is empty string", async () => {
+  t.throws(
+    () => new Agent(true, new LoggerNoop(), new APIForTesting(), undefined, ""),
+    "Serverless cannot be an empty string"
+  );
+});
+
 t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new APIForTesting();
