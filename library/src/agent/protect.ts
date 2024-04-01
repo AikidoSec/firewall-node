@@ -1,4 +1,3 @@
-import type { APIGatewayProxyHandler } from "aws-lambda";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { MongoDB } from "../sinks/MongoDB";
@@ -10,7 +9,11 @@ import {
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
 import { Express } from "../sources/Express";
-import { createLambdaWrapper } from "../sources/Lambda";
+import {
+  AsyncOrCallbackHandler,
+  createLambdaWrapper,
+  InputEvents,
+} from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
@@ -119,8 +122,8 @@ export function protect() {
 }
 
 export function lambda(): (
-  handler: APIGatewayProxyHandler
-) => APIGatewayProxyHandler {
+  handler: AsyncOrCallbackHandler<InputEvents, unknown>
+) => AsyncOrCallbackHandler<InputEvents, unknown> {
   const agent = getAgent({
     serverless: "lambda",
   });
