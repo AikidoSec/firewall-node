@@ -1,13 +1,11 @@
-import type { APIGatewayProxyEvent, Context } from "aws-lambda";
+import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { getContext } from "../agent/Context";
-import { createLambdaWrapper } from "./Lambda";
+import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
   body: "body",
-  path: "/",
   httpMethod: "GET",
-  pathParameters: {},
   queryStringParameters: {
     query: "value",
   },
@@ -15,54 +13,11 @@ const gatewayEvent: APIGatewayProxyEvent = {
     "content-type": "application/json",
     cookie: "cookie=value",
   },
-  multiValueHeaders: {},
-  isBase64Encoded: false,
-  multiValueQueryStringParameters: {},
-  stageVariables: {},
   requestContext: {
-    accountId: "",
-    apiId: "",
-    authorizer: {},
-    domainName: "",
-    domainPrefix: "",
-    extendedRequestId: "",
-    httpMethod: "",
     identity: {
-      clientCert: {
-        clientCertPem: "",
-        subjectDN: "",
-        issuerDN: "",
-        serialNumber: "",
-        validity: {
-          notAfter: "",
-          notBefore: "",
-        },
-      },
-      accessKey: "",
-      accountId: "",
-      apiKey: "",
-      apiKeyId: "",
-      caller: "",
-      cognitoAuthenticationProvider: "",
-      cognitoAuthenticationType: "",
-      cognitoIdentityId: "",
-      cognitoIdentityPoolId: "",
-      principalOrgId: "",
       sourceIp: "1.2.3.4",
-      user: "",
-      userAgent: "",
-      userArn: "",
     },
-    path: "",
-    protocol: "",
-    requestId: "",
-    requestTime: "",
-    requestTimeEpoch: 0,
-    resourceId: "",
-    resourcePath: "",
-    stage: "",
   },
-  resource: "",
 };
 
 const lambdaContext: Context = {
@@ -167,19 +122,17 @@ t.test("it handles SQS event", async (t) => {
     return getContext();
   });
 
-  const result = await handler(
-    {
-      Records: [
-        {
-          body: JSON.stringify({
-            key: "value",
-          }),
-        },
-      ],
-    },
-    lambdaContext,
-    () => {}
-  );
+  const event: SQSEvent = {
+    Records: [
+      {
+        body: JSON.stringify({
+          key: "value",
+        }),
+      },
+    ],
+  };
+
+  const result = await handler(event, lambdaContext, () => {});
 
   t.same(result, {
     url: undefined,

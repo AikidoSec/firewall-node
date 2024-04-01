@@ -1,11 +1,4 @@
-import type {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Callback,
-  Context,
-  Handler,
-  SQSEvent,
-} from "aws-lambda";
+import type { Callback, Context, Handler } from "aws-lambda";
 import { runWithContext } from "../agent/Context";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
@@ -21,7 +14,7 @@ type AsyncHandler<TEvent, TResult> = (
   context: Context
 ) => Promise<TResult>;
 
-type AsyncOrCallbackHandler<TEvent, TResult> =
+export type AsyncOrCallbackHandler<TEvent, TResult> =
   | AsyncHandler<TEvent, TResult>
   | CallbackHandler<TEvent, TResult>;
 
@@ -93,18 +86,37 @@ function isJsonContentType(contentType: string) {
   return jsonContentTypes.some((type) => contentType.includes(type));
 }
 
+export type APIGatewayProxyEvent = {
+  httpMethod: string;
+  headers: Record<string, string | undefined>;
+  queryStringParameters?: Record<string, string>;
+  requestContext?: {
+    identity?: {
+      sourceIp?: string;
+    };
+  };
+  body?: string;
+};
+
 function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
   return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
+
+export type SQSEvent = {
+  Records: Array<{
+    body: string;
+  }>;
+};
 
 function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-export function createLambdaWrapper<
-  TEvent extends APIGatewayProxyEvent,
-  TResult extends APIGatewayProxyResult,
->(handler: AsyncOrCallbackHandler<TEvent, TResult>): Handler<TEvent, TResult> {
+export type InputEvents = APIGatewayProxyEvent | SQSEvent;
+
+export function createLambdaWrapper<TEvent extends InputEvents, TResult>(
+  handler: AsyncOrCallbackHandler<TEvent, TResult>
+): Handler<TEvent, TResult> {
   const asyncHandler = convertToAsyncFunction(handler);
 
   return async (event, context) => {
