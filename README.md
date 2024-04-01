@@ -64,25 +64,15 @@ Here's how:
 * Choose a name for your service
 * Click on "Generate token"
 * Copy the token
-* Set the token as an environment variable:
+* Set the token as an environment variable: `AIKIDO_TOKEN`
 
-```shell
-AIKIDO_TOKEN=your-token node your-app.js
-```
-
-(Or use [dotenv](dotenv) to load the token from an `.env` file)
+(You can use [dotenv](dotenv) to load the token from an `.env` file)
 
 ## Running in production mode (blocking)
 
 By default, the runtime will only detect and report attacks to Aikido.
 
-If you want to start blocking requests, you can set the `AIKIDO_BLOCKING` environment variable to `true`:
-
-```shell
-AIKIDO_BLOCKING=true node your-app.js
-```
-
-(Or use [dotenv](https://www.npmjs.com/package/dotenv) to load the token from an `.env` file)
+If you want to start blocking requests, you can set the `AIKIDO_BLOCKING` environment variable to `true`.
 
 See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to Aikido.
 
