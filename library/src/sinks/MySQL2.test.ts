@@ -35,7 +35,7 @@ t.test("it detects SQL injections", async () => {
     new LoggerNoop(),
     new APIForTesting(),
     undefined,
-    true
+    "lambda"
   );
   agent.start([new MySQL2()]);
 

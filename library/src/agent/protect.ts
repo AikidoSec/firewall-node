@@ -78,7 +78,7 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: boolean }) {
+function getAgent({ serverless }: { serverless: string | undefined }) {
   const current = getInstance();
 
   if (current) {
@@ -122,7 +122,7 @@ export function protect() {
   disableShimmerLogging();
 
   const agent = getAgent({
-    serverless: false,
+    serverless: undefined,
   });
 
   agent.start(getWrappers());
@@ -134,7 +134,7 @@ export function lambda(): (
   disableShimmerLogging();
 
   const agent = getAgent({
-    serverless: true,
+    serverless: "lambda",
   });
 
   agent.start(getWrappers());
@@ -146,7 +146,7 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   disableShimmerLogging();
 
   const agent = getAgent({
-    serverless: true,
+    serverless: "gcp",
   });
 
   agent.start(getWrappers());

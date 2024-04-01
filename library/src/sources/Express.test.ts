@@ -10,7 +10,7 @@ const agent = new Agent(
   new LoggerNoop(),
   new APIForTesting(),
   undefined,
-  true
+  "lambda"
 );
 agent.start([new Express()]);
 

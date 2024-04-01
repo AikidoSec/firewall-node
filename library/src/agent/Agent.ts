@@ -38,8 +38,12 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: API,
     private readonly token: Token | undefined,
-    private readonly serverless: boolean
-  ) {}
+    private readonly serverless: string | undefined
+  ) {
+    if (typeof this.serverless === "string" && this.serverless.length === 0) {
+      throw new Error("Serverless cannot be an empty string");
+    }
+  }
 
   shouldBlock() {
     return this.block;
@@ -247,7 +251,8 @@ export class Agent {
       },
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
-      serverless: this.serverless,
+      serverless: !!this.serverless,
+      stack: this.serverless ? [this.serverless] : [],
       os: {
         name: platform(),
         version: release(),

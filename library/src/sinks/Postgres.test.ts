@@ -24,7 +24,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     new LoggerNoop(),
     new APIForTesting(),
     undefined,
-    true
+    "lambda"
   );
   agent.start([new Postgres()]);
 
