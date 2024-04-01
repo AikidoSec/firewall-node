@@ -19,7 +19,13 @@ const context: Context = {
 
 function createAgent() {
   const logger = new LoggerForTesting();
-  const agent = new Agent(true, logger, new APIForTesting(), undefined, true);
+  const agent = new Agent(
+    true,
+    logger,
+    new APIForTesting(),
+    undefined,
+    "lambda"
+  );
 
   return {
     agent,

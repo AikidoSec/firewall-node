@@ -17,6 +17,7 @@ export type AgentInfo = {
   };
   nodeEnv: string;
   serverless: boolean;
+  stack: string[];
 };
 
 type Started = {

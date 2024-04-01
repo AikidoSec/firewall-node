@@ -35,7 +35,7 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new APIForTesting(),
     undefined,
-    true
+    "lambda"
   );
 
   agent.start([new ChildProcess()]);

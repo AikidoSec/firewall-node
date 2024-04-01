@@ -77,7 +77,7 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: boolean }) {
+function getAgent({ serverless }: { serverless: string | undefined }) {
   const current = getInstance();
 
   if (current) {
@@ -112,7 +112,7 @@ function getWrappers() {
 
 export function protect() {
   const agent = getAgent({
-    serverless: false,
+    serverless: undefined,
   });
 
   agent.start(getWrappers());
@@ -122,7 +122,7 @@ export function lambda(): (
   handler: APIGatewayProxyHandler
 ) => APIGatewayProxyHandler {
   const agent = getAgent({
-    serverless: true,
+    serverless: "lambda",
   });
 
   agent.start(getWrappers());
@@ -132,7 +132,7 @@ export function lambda(): (
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   const agent = getAgent({
-    serverless: true,
+    serverless: "gcp",
   });
 
   agent.start(getWrappers());
