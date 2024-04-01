@@ -25,12 +25,33 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "dist/exports/index.js",
+  "main": "./dist/exports/index.js",
+  "types": "./dist/exports/index.d.ts",
   "exports": {
-    ".": "./dist/exports/index.js",
-    "./cloud-function": "./dist/exports/cloud-function.js",
-    "./lambda": "./dist/exports/lambda.js",
-    "./nopp": "./dist/exports/nopp.js"
+    ".": {
+      "require": {
+        "default": "./dist/exports/index.js",
+        "types": "./dist/exports/index.d.ts"
+      }
+    },
+    "./cloud-function": {
+      "require": {
+        "default": "./dist/exports/cloud-function.js",
+        "types": "./dist/exports/cloud-function.d.ts"
+      }
+    },
+    "./lambda": {
+      "require": {
+        "default": "./dist/exports/lambda.js",
+        "types": "./dist/exports/lambda.d.ts"
+      }
+    },
+    "./nopp": {
+      "require": {
+        "default": "./dist/exports/nopp.js",
+        "types": "./dist/exports/nopp.d.ts"
+      }
+    }
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
