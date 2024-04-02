@@ -205,4 +205,10 @@ export class InspectionStatistics {
       }
     }
   }
+
+  forceCompress() {
+    for (const sink in this.stats) {
+      this.compressPerfSamples(sink);
+    }
+  }
 }

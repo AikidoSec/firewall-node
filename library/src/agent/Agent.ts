@@ -9,7 +9,7 @@ import { API } from "./api/API";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Context } from "./Context";
+import { Context, getContext } from "./Context";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
@@ -173,26 +173,28 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat() {
+    this.sendHeartbeat().catch(() => {
+      this.logger.log("Failed to do heartbeat");
+    });
+  }
+
+  private async sendHeartbeat() {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      this.api
-        .report(this.token, {
-          type: "heartbeat",
-          time: Date.now(),
-          agent: this.getAgentInfo(),
-          stats: {
-            sinks: stats.sinks,
-            startedAt: stats.startedAt,
-            endedAt: endedAt,
-            requests: stats.requests,
-          },
-        })
-        .catch(() => {
-          this.logger.log("Failed to do heartbeat");
-        });
+      await this.api.report(this.token, {
+        type: "heartbeat",
+        time: Date.now(),
+        agent: this.getAgentInfo(),
+        stats: {
+          sinks: stats.sinks,
+          startedAt: stats.startedAt,
+          endedAt: endedAt,
+          requests: stats.requests,
+        },
+      });
     }
   }
 
@@ -305,5 +307,17 @@ export class Agent {
 
   onFailedToWrapMethod(module: string, name: string) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
+
+  async onInvokedServerless(context: Context) {
+    this.statistics.onRequest({
+      blocked: this.block,
+      attackDetected: !!context.attackDetected,
+    });
+
+    if (this.statistics.getStats().requests.total >= 100) {
+      this.statistics.forceCompress();
+      await this.sendHeartbeat();
+    }
   }
 }
