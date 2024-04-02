@@ -57,7 +57,7 @@ async function main(port) {
 }
 
 function getBaseDir() {
-  const folderName =  "C:\Temp\Safe";
+  const folderName =  "C:\\Temp\\Safe";
 
   try {
     if (!fs.existsSync(folderName)) {
