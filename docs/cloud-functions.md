@@ -46,6 +46,22 @@ That's it! Your cloud function is now protected by Aikido runtime.
 
 If you want to see a full example, check our [cloud functions sample app](../sample-apps/cloud-functions-v1-mongodb).
 
+## TypeScript
+
+> TS2307: Cannot find module @aikidosec/runtime/cloud-function or its corresponding type declarations.
+
+If you encounter this error, you can use `node16` or `nodenext` as module resolution in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node16"
+  }
+}
+```
+
+(This is because the `@aikidosec/runtime` package uses `exports` field in `package.json`)
+
 ## Blocking mode
 
 By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.

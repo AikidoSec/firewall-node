@@ -53,3 +53,19 @@ You should enable this on your staging environment for a considerable amount of 
 Some packages may not work properly when `@aikidosec/runtime/nopp` is required, these are some of the known packages:
 
 * [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)
+
+## TypeScript
+
+> TS2307: Cannot find module @aikidosec/runtime/nopp or its corresponding type declarations.
+
+If you encounter this error, you can use `node16` or `nodenext` as module resolution in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node16"
+  }
+}
+```
+
+(This is because the `@aikidosec/runtime` package uses `exports` field in `package.json`)
