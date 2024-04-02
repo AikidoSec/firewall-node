@@ -242,3 +242,36 @@ t.test("it sends heartbeat after 100 invokes", async () => {
 
   clock.uninstall();
 });
+
+t.test(
+  "it keeps working if token is not set (no reset happening)",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const testing = new APIForTesting();
+    const agent = new Agent(false, logger, testing, undefined, "lambda");
+    agent.start([]);
+    setInstance(agent);
+
+    const handler = createLambdaWrapper(async (event, context) => {
+      return getContext();
+    });
+
+    testing.clear();
+
+    for (let i = 0; i < 100; i++) {
+      agent.getInspectionStatistics().onInspectedCall({
+        sink: "mongodb",
+        blocked: false,
+        durationInMs: 0.1,
+        attackDetected: false,
+      });
+      await handler(gatewayEvent, lambdaContext, () => {});
+    }
+
+    t.same(testing.getEvents(), []);
+
+    clock.uninstall();
+  }
+);
