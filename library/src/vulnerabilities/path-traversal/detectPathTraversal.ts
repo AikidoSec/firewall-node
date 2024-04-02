@@ -13,7 +13,10 @@ export function detectPathTraversal(
     // TODO: evaluate if relevant/desired for path traversal
     return false;
   }
-
+ 
+  // TODO: logic below is not enough, since the filePath passed to fs can already have been resolved,
+  // and will no longer match with userinput
+  
   if (!filePath.includes(userInput)) {
     console.log("userinput not detected in filePath");
 

@@ -6,18 +6,15 @@ import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/
 
 const morgan = require("morgan");
 
-
 export class PathTraversal implements Wrapper {
   private inspectWriteFileSync(
     args: unknown[],
     name: string,
     context: Context
   ): InterceptorResult {
-
     console.log(`inspectWriteFileSync called`);
     if (args.length > 0 && typeof args[0] === "string") {
       const path = args[0];
-
       return checkContextForPathTraversal({
         filename: path,
         operation: `fs.${name}`,

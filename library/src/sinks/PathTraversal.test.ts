@@ -59,7 +59,7 @@ t.test("it works", async (t) => {
   });
 
   const runSafeCommands = () => {
-    writeFile(".\\test.txt", "some file content to test with", err => {});
+    writeFile(".\\test.txt", "some file content to test with", (err) => {});
     writeFileSync(".\\test.txt", "some other file content to test with");
   };
 
@@ -71,7 +71,7 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeContext, () => {
     throws(
-      () => writeFile("..\\..\\test.txt", "some file content to test with", err => {}),
+      () => writeFile("..\\..\\test.txt", "some file content to test with", (err) => {}),
       "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
     );
 
