@@ -26,6 +26,7 @@ import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
+import { PathTraversal } from "../sinks/PathTraversal";
 
 function isDebugging() {
   return (
@@ -110,6 +111,7 @@ function getWrappers() {
     new PubSub(),
     new FunctionsFramework(),
     new ChildProcess(),
+    new PathTraversal(),
   ];
 }
 
