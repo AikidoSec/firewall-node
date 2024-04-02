@@ -5,13 +5,10 @@ export function detectPathTraversal(
   userInput: string
 ): boolean {
   if (userInput.length <= 1) {
-    console.log("userinput too short");
-
     // We ignore single characters since they don't pose a big threat.
     // TODO: evaluate if relevant/desired for path traversal
     return false;
   }
- 
   // TODO: logic below is not enough, since the filePath passed to fs can already have been resolved,
   // and will no longer match with userinput
   if (!filePath.includes(userInput)) {

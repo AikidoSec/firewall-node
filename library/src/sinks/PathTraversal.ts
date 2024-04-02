@@ -25,7 +25,6 @@ export class PathTraversal implements Wrapper {
   wrap(hooks: Hooks) {
     // TODO: hook on other fs operations (readFile, readFileync, readdir, readdirSync, resolve, join,...)
     const fs = hooks.addBuiltinModule("fs");
-
     fs
       .addSubject((exports) => exports)
       .inspect("writeFileSync", (args, subject, agent, context) =>
