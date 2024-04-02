@@ -9,6 +9,6 @@
     "strict": true,
     "allowJs": false
   },
-  "include": ["src"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.test.ts", "benchmarks"]
 }

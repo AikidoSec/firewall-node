@@ -68,7 +68,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
-    "lint-eslint": "eslint 'src/**/*.ts'",
+    "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
   }
 }
