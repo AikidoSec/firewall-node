@@ -59,8 +59,8 @@ t.test("it works", async (t) => {
   });
 
   const runSafeCommands = () => {
-    writeFile(".\\test.txt", "some file content to test with", (err) => {});
-    writeFileSync(".\\test.txt", "some other file content to test with");
+    writeFile("./test.txt", "some file content to test with", (err) => {});
+    writeFileSync("./test.txt", "some other file content to test with");
   };
 
   runSafeCommands();

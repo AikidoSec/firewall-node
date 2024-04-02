@@ -26,3 +26,6 @@ generated_docs
 # Credentials
 .env
 credentials.json
+
+# Test files
+library/test.txt
