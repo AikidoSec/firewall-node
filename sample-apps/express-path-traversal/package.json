@@ -1,0 +1,15 @@
+{
+  "name": "express-path-traversal",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SQL Injection with mysql",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/runtime": "file:../../library",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2",
+    "express-async-handler": "^1.2.0",
+    "morgan": "^1.10.0",
+    "mysql": "^2.18.1"
+  }
+}
