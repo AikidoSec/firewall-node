@@ -42,7 +42,6 @@ t.test("it works", async (t) => {
 
   const runCommandsWithInvalidArgs = () => {
     throws(() => writeFile(), /Received undefined/);
-
     throws(() => writeFileSync(), /Received undefined/);
   };
 

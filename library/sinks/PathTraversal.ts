@@ -4,8 +4,47 @@ import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
+const functionsWithPath = [
+  "access",
+  "appendFile",
+  "chmod",
+  "chown",
+  "createReadStream",
+  "createWriteStream",
+  "exists",
+  "lchmod",
+  "lchown",
+  "lutimes",
+  "lstat",
+  "mkdir",
+  "open",
+  "openAsBlob",
+  "opendir",
+  "readdir",
+  "readFile",
+  "readlink",
+  "realpath",
+  "rename",
+  "rmdir",
+  "rm",
+  "stat",
+  "statfs",
+  "truncate",
+  "utimes",
+  "writeFile",
+];
+
+const noSync = ["createReadStream", "createWriteStream", "openAsBlob"];
+
+const noPromise = [
+  "createReadStream",
+  "createWriteStream",
+  "exists",
+  "openAsBlob",
+];
+
 export class PathTraversal implements Wrapper {
-  private inspectWriteFileSync(
+  private inspectPath(
     args: unknown[],
     name: string,
     context: Context
@@ -23,15 +62,35 @@ export class PathTraversal implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    // TODO: hook on other fs operations (readFile, readFileync, readdir, readdirSync, resolve, join,...)
-    const fs = hooks.addBuiltinModule("fs");
+    const callbackStyle = hooks
+      .addBuiltinModule("fs")
+      .addSubject((exports) => exports);
 
-    fs.addSubject((exports) => exports)
-      .inspect("writeFileSync", (args, subject, agent, context) =>
-        this.inspectWriteFileSync(args, "writeFileSync", context)
-      )
-      .inspect("writeFile", (args, subject, agent, context) =>
-        this.inspectWriteFileSync(args, "writeFile", context)
+    functionsWithPath.forEach((name) => {
+      callbackStyle.inspect(name, (args, subject, agent, context) =>
+        this.inspectPath(args, name, context)
       );
+    });
+
+    functionsWithPath
+      .filter((name) => !noSync.includes(name))
+      .forEach((name) => {
+        const syncName = `${name}Sync`;
+        callbackStyle.inspect(syncName, (args, subject, agent, context) =>
+          this.inspectPath(args, syncName, context)
+        );
+      });
+
+    const promiseStyle = hooks
+      .addBuiltinModule("fs/promises")
+      .addSubject((exports) => exports);
+
+    functionsWithPath
+      .filter((name) => !noPromise.includes(name))
+      .forEach((name) => {
+        promiseStyle.inspect(name, (args, subject, agent, context) =>
+          this.inspectPath(args, name, context)
+        );
+      });
   }
 }

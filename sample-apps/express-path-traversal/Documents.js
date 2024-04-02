@@ -1,28 +1,27 @@
-const fs = require('fs')
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 class Documents {
-  constructor(folderName){
-    this.directory=folderName;
+  constructor(folderName) {
+    this.directory = folderName;
   }
 
   async add(filename, content) {
-    console.log(`add called`);
     return new Promise((resolve, reject) => {
       try {
-        const absolutePath = path.resolve(this.directory, filename);
-        // const absolutePath = this.directory+filename;
-          fs.writeFileSync(absolutePath, content);
-          resolve(true);
+        // This code is vulnerable to path traversal
+        // An attacker can pass a filename like ../../../../etc/passwd
+        // And write to any file on the system
+        // Do not use this code in production
+        fs.writeFileSync(this.directory + filename, content, "utf8");
+        resolve(true);
       } catch (err) {
-          reject(err);
+        reject(err);
       }
     });
   }
 
   async getAll() {
-    console.log(`getAll called`);
-
     return new Promise((resolve, reject) => {
       try {
         resolve(fs.readdirSync(this.directory));

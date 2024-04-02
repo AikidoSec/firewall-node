@@ -5,7 +5,7 @@ const Documents = require("./Documents");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
-const fs = require('node:fs')
+const { join } = require("path");
 
 require("@aikidosec/runtime/nopp");
 
@@ -25,9 +25,8 @@ function getHTMLBody(documents) {
 </html>`;
 }
 
-
 async function main(port) {
-  const documents = new Documents(getBaseDir());
+  const documents = new Documents(join(__dirname, "documents"));
 
   const app = express();
 
@@ -54,21 +53,6 @@ async function main(port) {
       reject(err);
     }
   });
-}
-
-function getBaseDir() {
-  const folderName =  "C:\\Temp\\Safe";
-
-  try {
-    if (!fs.existsSync(folderName)) {
-      fs.mkdirSync(folderName);
-    }
-  } catch (err) {
-    console.error("Invalid folder");
-    console.error(err);
-    process.exit(1);  
-  }
-  return folderName;
 }
 
 function getPort() {
