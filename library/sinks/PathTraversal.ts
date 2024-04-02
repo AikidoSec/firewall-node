@@ -43,6 +43,9 @@ const noPromise = [
   "openAsBlob",
 ];
 
+// TODO: Add support for multiple paths
+const withMultiplePaths = ["readdir", "rm"];
+
 export class PathTraversal implements Wrapper {
   private inspectPath(
     args: unknown[],
