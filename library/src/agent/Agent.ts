@@ -9,7 +9,7 @@ import { API } from "./api/API";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Context, getContext } from "./Context";
+import { Context } from "./Context";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
