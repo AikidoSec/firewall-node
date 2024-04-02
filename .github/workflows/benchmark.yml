@@ -32,8 +32,8 @@ jobs:
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
-        run: cd library/benchmarks/nosql-injection && node benchmark.js
+        run: cd benchmarks/nosql-injection && node benchmark.js
       - name: Run SQL Injection Benchmark
-        run: cd library/benchmarks/sql-injection && node benchmark.js
+        run: cd benchmarks/sql-injection && node benchmark.js
       - name: Run shell injection Benchmark
-        run: cd library/benchmarks/shell-injection && node benchmark.js
+        run: cd benchmarks/shell-injection && node benchmark.js
