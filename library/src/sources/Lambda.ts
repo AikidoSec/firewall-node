@@ -14,7 +14,7 @@ type AsyncHandler<TEvent, TResult> = (
   context: Context
 ) => Promise<TResult>;
 
-export type AsyncOrCallbackHandler<TEvent, TResult> =
+type AsyncOrCallbackHandler<TEvent, TResult> =
   | AsyncHandler<TEvent, TResult>
   | CallbackHandler<TEvent, TResult>;
 
@@ -112,11 +112,7 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-export type InputEvents = APIGatewayProxyEvent | SQSEvent;
-
-export function createLambdaWrapper<TEvent extends InputEvents, TResult>(
-  handler: AsyncOrCallbackHandler<TEvent, TResult>
-): Handler<TEvent, TResult> {
+export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
 
   return async (event, context) => {
