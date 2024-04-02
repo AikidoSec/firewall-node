@@ -36,8 +36,8 @@ lambda-mongodb-safe:
 
 .PHONY: install
 install:
-	mkdir -p build
-	cp library/package.json build/package.json
+	mkdir -p build && cp library/package.json build/package.json
+	touch build/index.js
 	npm install --workspaces
 
 .PHONY: build
