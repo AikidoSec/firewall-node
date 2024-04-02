@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/runtime": "file:../../library",
+    "@aikidosec/runtime": "file:../../build",
     "mongodb": "^6.3.0",
     "@google-cloud/functions-framework": "^3.3.0"
   }
