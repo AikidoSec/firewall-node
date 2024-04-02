@@ -71,12 +71,21 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeContext, () => {
     throws(
-      () => writeFile("..\\..\\test.txt", "some file content to test with", (err) => {}),
+      () =>
+        writeFile(
+          "..\\..\\test.txt",
+          "some file content to test with",
+          (err) => {}
+        ),
       "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
     );
 
     throws(
-      () => writeFileSync("..\\..\\test.txt", "some other file content to test with"),
+      () =>
+        writeFileSync(
+          "..\\..\\test.txt",
+          "some other file content to test with"
+        ),
       "Aikido runtime has blocked a Path traversal: fs.writeFileSync(...) originating from body.file.matches"
     );
   });

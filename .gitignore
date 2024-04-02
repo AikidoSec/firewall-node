@@ -16,7 +16,7 @@ node_modules/
 ../package-lock.json
 
 # Built files
-dist
+build/
 generated_docs
 
 # IDE's

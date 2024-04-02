@@ -1,4 +1,5 @@
 import type { HttpFunction } from "@google-cloud/functions-framework";
+import type { Handler } from "aws-lambda";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
@@ -9,11 +10,7 @@ import {
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
 import { Express } from "../sources/Express";
-import {
-  AsyncOrCallbackHandler,
-  createLambdaWrapper,
-  InputEvents,
-} from "../sources/Lambda";
+import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
@@ -123,9 +120,7 @@ export function protect() {
   agent.start(getWrappers());
 }
 
-export function lambda(): (
-  handler: AsyncOrCallbackHandler<InputEvents, any>
-) => AsyncOrCallbackHandler<InputEvents, any> {
+export function lambda(): (handler: Handler) => Handler {
   const agent = getAgent({
     serverless: "lambda",
   });

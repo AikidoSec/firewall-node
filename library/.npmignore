@@ -1,9 +1,0 @@
-# Whitelist instead of blacklist. Always safer to add forgotten
-# files then not knowing about files that should be excluded
-*
-
-# Allowed files
-!/README.md
-!/LICENSE
-!/package.json
-!/dist/**/*
