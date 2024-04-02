@@ -1,4 +1,8 @@
-export type Kind = "nosql_injection" | "sql_injection" | "shell_injection" | "path_traversal";
+export type Kind =
+  | "nosql_injection"
+  | "sql_injection"
+  | "shell_injection"
+  | "path_traversal";
 
 export function attackKindHumanName(kind: Kind) {
   switch (kind) {

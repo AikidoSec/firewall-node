@@ -1,6 +1,11 @@
 const dangerousPathParts = [".."];
 
 export function containsUnsafePathParts(filePath: string) {
-  const containsDangerousParts = dangerousPathParts.map(dangerousPart => filePath.includes(dangerousPart));
-  return containsDangerousParts.reduce((a, b) => a || b);
+  for (const dangerousPart of dangerousPathParts) {
+    if (filePath.includes(dangerousPart)) {
+      return true;
+    }
+  }
+
+  return false;
 }
