@@ -40,11 +40,16 @@ install:
 
 .PHONY: build
 build:
-	cd library && mkdir -p ./dist && rm -r ./dist && npm run build
+	mkdir -p build
+	rm -r build
+	cd library && npm run build
+	cp README.md build/README.md
+	cp LICENSE build/LICENSE
+	cp library/package.json build/package.json
 
 .PHONY: watch
-watch:
-	cd library && mkdir -p ./dist && rm -r ./dist && npm run build:watch
+watch: build
+	cd library && npm run build:watch
 
 .PHONY: test
 test:

@@ -4,11 +4,11 @@
     "lib": ["ES2019", "DOM"],
     "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "./dist",
+    "outDir": "../build",
     "declaration": true,
     "strict": true,
     "allowJs": false
   },
-  "include": ["src"],
-  "exclude": ["**/*.test.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.test.ts", "benchmarks"]
 }
