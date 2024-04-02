@@ -122,8 +122,8 @@ export function protect() {
 }
 
 export function lambda(): (
-  handler: AsyncOrCallbackHandler<InputEvents, unknown>
-) => AsyncOrCallbackHandler<InputEvents, unknown> {
+  handler: AsyncOrCallbackHandler<InputEvents, any>
+) => AsyncOrCallbackHandler<InputEvents, any> {
   const agent = getAgent({
     serverless: "lambda",
   });
