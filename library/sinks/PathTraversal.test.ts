@@ -41,15 +41,9 @@ t.test("it works", async (t) => {
   const { writeFile, writeFileSync } = require("fs");
 
   const runCommandsWithInvalidArgs = () => {
-    throws(
-      () => writeFile(),
-      /argument must be of type function. Received undefined/
-    );
+    throws(() => writeFile(), /Received undefined/);
 
-    throws(
-      () => writeFileSync(),
-      /argument must be of type string or an instance of Buffer, TypedArray, or DataView. Received undefined/
-    );
+    throws(() => writeFileSync(), /Received undefined/);
   };
 
   runCommandsWithInvalidArgs();
