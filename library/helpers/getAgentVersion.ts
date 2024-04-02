@@ -1,7 +1,6 @@
 import { resolve } from "path";
 
 export function getAgentVersion(): string {
-  // You would expect ../../package.json, but the build process moves the file
   const json = require(resolve(__dirname, "../package.json"));
 
   /* c8 ignore start */

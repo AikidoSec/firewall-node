@@ -5,10 +5,10 @@ const fs = require("fs");
 const { join } = require("path");
 const {
   detectSQLInjection,
-} = require("../../dist/vulnerabilities/sql-injection/detectSQLInjection");
+} = require("../../build/vulnerabilities/sql-injection/detectSQLInjection");
 const {
   SQLDialectMySQL,
-} = require("../../dist/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
+} = require("../../build/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 
@@ -55,22 +55,22 @@ function fetchSqlStatements() {
   const files = [
     join(
       __dirname,
-      "../../src/vulnerabilities/sql-injection/payloads",
+      "../../library/vulnerabilities/sql-injection/payloads",
       "Auth_Bypass.txt"
     ),
     join(
       __dirname,
-      "../../src/vulnerabilities/sql-injection/payloads",
+      "../../library/vulnerabilities/sql-injection/payloads",
       "postgres.txt"
     ),
     join(
       __dirname,
-      "../../src/vulnerabilities/sql-injection/payloads",
+      "../../library/vulnerabilities/sql-injection/payloads",
       "mysql.txt"
     ),
     join(
       __dirname,
-      "../../src/vulnerabilities/sql-injection/payloads",
+      "../../library/vulnerabilities/sql-injection/payloads",
       "mssql_and_db2.txt"
     ),
   ];

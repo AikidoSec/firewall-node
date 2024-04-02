@@ -36,6 +36,9 @@ lambda-mongodb-safe:
 
 .PHONY: install
 install:
+	mkdir -p build && cp library/package.json build/package.json
+	touch build/index.js
+	npm install --workspaces || true
 	npm install --workspaces
 
 .PHONY: build
@@ -68,6 +71,6 @@ end2end:
 	cd end2end && npm run test
 
 benchmark: build
-	cd library/benchmarks/nosql-injection && node benchmark.js
-	cd library/benchmarks/shell-injection && node benchmark.js
-	cd library/benchmarks/sql-injection && node benchmark.js
+	cd benchmarks/nosql-injection && node benchmark.js
+	cd benchmarks/shell-injection && node benchmark.js
+	cd benchmarks/sql-injection && node benchmark.js

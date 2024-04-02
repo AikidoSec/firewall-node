@@ -10,5 +10,5 @@
     "allowJs": false
   },
   "include": ["**/*.ts"],
-  "exclude": ["**/*.test.ts", "benchmarks"]
+  "exclude": ["**/*.test.ts"]
 }
