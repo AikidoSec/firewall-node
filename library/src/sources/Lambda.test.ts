@@ -144,7 +144,15 @@ t.test("it handles SQS event", async (t) => {
     url: undefined,
     method: undefined,
     remoteAddress: undefined,
-    body: [{ key: "value" }],
+    body: {
+      Records: [
+        {
+          body: {
+            key: "value",
+          },
+        },
+      ],
+    },
     headers: {},
     query: {},
     cookies: {},

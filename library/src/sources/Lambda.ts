@@ -129,7 +129,11 @@ export function createLambdaWrapper(handler: Handler): Handler {
         url: undefined,
         method: undefined,
         remoteAddress: undefined,
-        body: body,
+        body: {
+          Records: body.map((record) => ({
+            body: record,
+          })),
+        },
         headers: {},
         query: {},
         cookies: {},
