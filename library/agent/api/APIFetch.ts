@@ -60,10 +60,6 @@ export class APIFetch implements API {
         reject(error);
       });
 
-      req.on("socket", (socket) => {
-        socket.unref();
-      });
-
       req.write(body);
       req.end();
     });
