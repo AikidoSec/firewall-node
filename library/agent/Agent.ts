@@ -181,7 +181,7 @@ export class Agent {
   /**
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
-  private heartbeat(timeoutInMS: number = this.timeoutInMS) {
+  private heartbeat(timeoutInMS = this.timeoutInMS) {
     this.sendHeartbeat(timeoutInMS).catch(() => {
       this.logger.log("Failed to do heartbeat");
     });
