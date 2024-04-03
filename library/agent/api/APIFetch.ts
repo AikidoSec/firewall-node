@@ -8,7 +8,7 @@ import { Event } from "./Event";
 export class APIFetch implements API {
   constructor(
     private readonly reportingUrl: URL,
-    private readonly timeoutInMS: number = 2000
+    private readonly timeoutInMS: number = 5000
   ) {}
 
   private toAPIResult(response: IncomingMessage): APIResult {
