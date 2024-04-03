@@ -203,7 +203,7 @@ t.test("it sends heartbeat after 100 invokes", async () => {
 
   t.same(testing.getEvents(), []);
 
-  await agent.flushStats();
+  agent.flushStats(1000);
 
   t.same(testing.getEvents(), [
     {

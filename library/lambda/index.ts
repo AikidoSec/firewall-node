@@ -10,5 +10,5 @@ process.on("SIGTERM", () => {
     throw new Error("Agent not found!");
   }
 
-  agent.flushStats();
+  agent.flushStats(1000);
 });

@@ -6,10 +6,7 @@ import { Token } from "./Token";
 import { Event } from "./Event";
 
 export class APIFetch implements API {
-  constructor(
-    private readonly reportingUrl: URL,
-    private readonly timeoutInMS: number = 5000
-  ) {}
+  constructor(private readonly reportingUrl: URL) {}
 
   private toAPIResult(response: IncomingMessage): APIResult {
     if (response.statusCode === 429) {
@@ -63,12 +60,20 @@ export class APIFetch implements API {
         reject(error);
       });
 
+      req.on("socket", (socket) => {
+        socket.unref();
+      });
+
       req.write(body);
       req.end();
     });
   }
 
-  async report(token: Token, event: Event): Promise<APIResult> {
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<APIResult> {
     const abort = new AbortController();
 
     return await Promise.race([
@@ -85,7 +90,7 @@ export class APIFetch implements API {
         setTimeout(() => {
           abort.abort();
           resolve({ success: false, error: "timeout" });
-        }, this.timeoutInMS)
+        }, timeoutInMS)
       ),
     ]);
   }

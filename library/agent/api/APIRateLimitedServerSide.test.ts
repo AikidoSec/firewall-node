@@ -21,6 +21,10 @@ function generateStartedEvent(): Event {
         name: "os",
         version: "version",
       },
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
       serverless: false,
     },
   };
@@ -33,19 +37,19 @@ t.test("it stops sending requests if rate limited", async (t) => {
   const rateLimitedAPI = new APIRateLimitedServerSide(api);
   const token = new Token("token");
 
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
   });
   t.match(api.getEvents(), [{ type: "started" }]);
 
   api.setResult({ success: false, error: "timeout" });
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "timeout",
   });
   t.match(api.getEvents(), [{ type: "started" }, { type: "started" }]);
 
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "timeout",
   });
@@ -56,7 +60,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
   ]);
 
   api.setResult({ success: false, error: "rate_limited" });
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "rate_limited",
   });
@@ -67,7 +71,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
     { type: "started" },
   ]);
 
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "rate_limited",
   });
@@ -80,7 +84,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
 
   clock.tick(30 * 60 * 1000);
   api.setResult({ success: true });
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
   });
   t.match(api.getEvents(), [
@@ -92,7 +96,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
   ]);
 
   api.setResult({ success: false, error: "rate_limited" });
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "rate_limited",
   });
@@ -104,7 +108,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
     { type: "started" },
   ]);
 
-  t.same(await rateLimitedAPI.report(token, generateStartedEvent()), {
+  t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: false,
     error: "rate_limited",
   });

@@ -11,7 +11,11 @@ export class APIForTesting implements API {
     this.result = result;
   }
 
-  async report(token: Token, event: Event) {
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<APIResult> {
     this.events.push(event);
 
     return this.result;

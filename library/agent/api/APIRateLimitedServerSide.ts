@@ -8,7 +8,11 @@ export class APIRateLimitedServerSide implements API {
 
   constructor(private readonly api: API) {}
 
-  async report(token: Token, event: Event): Promise<APIResult> {
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<APIResult> {
     if (
       typeof this.rateLimitedAt === "number" &&
       Date.now() - this.rateLimitedAt < this.stopSendingForInMilliseconds
@@ -16,7 +20,7 @@ export class APIRateLimitedServerSide implements API {
       return { success: false, error: "rate_limited" };
     }
 
-    const result = await this.api.report(token, event);
+    const result = await this.api.report(token, event, timeoutInMS);
 
     if (!result.success && result.error === "rate_limited") {
       this.rateLimitedAt = Date.now();

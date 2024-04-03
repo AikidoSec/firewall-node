@@ -20,6 +20,10 @@ function generateStartedEvent(): Event {
         name: "os",
         version: "version",
       },
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
       serverless: false,
     },
   };
@@ -31,10 +35,10 @@ t.test("it ignores valid tokens", async () => {
   const token = new Token("123");
 
   const event = generateStartedEvent();
-  t.same(await validatesToken.report(token, event), { success: true });
+  t.same(await validatesToken.report(token, event, 5000), { success: true });
   t.same(api.getEvents(), [event]);
 
-  t.same(await validatesToken.report(token, event), { success: true });
+  t.same(await validatesToken.report(token, event, 5000), { success: true });
   t.same(api.getEvents(), [event, event]);
 });
 
@@ -44,13 +48,13 @@ t.test("it stops sending requests if token is invalid", async () => {
   const token = new Token("123");
 
   const event = generateStartedEvent();
-  t.same(await validatesToken.report(token, event), {
+  t.same(await validatesToken.report(token, event, 5000), {
     success: false,
     error: "invalid_token",
   });
   t.same(api.getEvents(), [event]);
 
-  t.same(await validatesToken.report(token, event), {
+  t.same(await validatesToken.report(token, event, 5000), {
     success: false,
     error: "invalid_token",
   });
@@ -63,13 +67,13 @@ t.test("it ignores other errors", async () => {
   const token = new Token("123");
 
   const event = generateStartedEvent();
-  t.same(await validatesToken.report(token, event), {
+  t.same(await validatesToken.report(token, event, 5000), {
     success: false,
     error: "timeout",
   });
   t.same(api.getEvents(), [event]);
 
-  t.same(await validatesToken.report(token, event), {
+  t.same(await validatesToken.report(token, event, 5000), {
     success: false,
     error: "timeout",
   });

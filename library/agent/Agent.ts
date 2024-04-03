@@ -28,6 +28,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private timeoutInMS = 5000;
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -82,11 +83,15 @@ export class Agent {
   onStart() {
     if (this.token) {
       this.api
-        .report(this.token, {
-          type: "started",
-          time: Date.now(),
-          agent: this.getAgentInfo(),
-        })
+        .report(
+          this.token,
+          {
+            type: "started",
+            time: Date.now(),
+            agent: this.getAgentInfo(),
+          },
+          this.timeoutInMS
+        )
         .catch(() => {
           this.logger.log("Failed to report started event");
         });
@@ -135,34 +140,38 @@ export class Agent {
   }) {
     if (this.token) {
       this.api
-        .report(this.token, {
-          type: "detected_attack",
-          time: Date.now(),
-          attack: {
-            module: module,
-            operation: operation,
-            blocked: blocked,
-            path: path,
-            stack: stack,
-            source: source,
-            metadata: limitLengthMetadata(metadata, 4096),
-            kind: kind,
-            payload: JSON.stringify(payload).substring(0, 4096),
+        .report(
+          this.token,
+          {
+            type: "detected_attack",
+            time: Date.now(),
+            attack: {
+              module: module,
+              operation: operation,
+              blocked: blocked,
+              path: path,
+              stack: stack,
+              source: source,
+              metadata: limitLengthMetadata(metadata, 4096),
+              kind: kind,
+              payload: JSON.stringify(payload).substring(0, 4096),
+            },
+            request: {
+              method: request.method,
+              url: request.url,
+              ipAddress: request.remoteAddress,
+              userAgent:
+                typeof request.headers["user-agent"] === "string"
+                  ? request.headers["user-agent"]
+                  : undefined,
+              body: convertRequestBodyToString(request.body),
+              headers: filterEmptyRequestHeaders(request.headers),
+              source: request.source,
+            },
+            agent: this.getAgentInfo(),
           },
-          request: {
-            method: request.method,
-            url: request.url,
-            ipAddress: request.remoteAddress,
-            userAgent:
-              typeof request.headers["user-agent"] === "string"
-                ? request.headers["user-agent"]
-                : undefined,
-            body: convertRequestBodyToString(request.body),
-            headers: filterEmptyRequestHeaders(request.headers),
-            source: request.source,
-          },
-          agent: this.getAgentInfo(),
-        })
+          this.timeoutInMS
+        )
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -172,29 +181,33 @@ export class Agent {
   /**
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
-  private heartbeat() {
-    this.sendHeartbeat().catch(() => {
+  private heartbeat(timeoutInMS: number = this.timeoutInMS) {
+    this.sendHeartbeat(timeoutInMS).catch(() => {
       this.logger.log("Failed to do heartbeat");
     });
   }
 
-  private async sendHeartbeat() {
+  private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      await this.api.report(this.token, {
-        type: "heartbeat",
-        time: Date.now(),
-        agent: this.getAgentInfo(),
-        stats: {
-          sinks: stats.sinks,
-          startedAt: stats.startedAt,
-          endedAt: endedAt,
-          requests: stats.requests,
+      await this.api.report(
+        this.token,
+        {
+          type: "heartbeat",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+          stats: {
+            sinks: stats.sinks,
+            startedAt: stats.startedAt,
+            endedAt: endedAt,
+            requests: stats.requests,
+          },
         },
-      });
+        timeoutInMS
+      );
     }
   }
 
@@ -311,8 +324,8 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
-  flushStats() {
+  flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
-    this.heartbeat();
+    this.heartbeat(timeoutInMS);
   }
 }

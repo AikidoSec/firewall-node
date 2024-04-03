@@ -17,7 +17,11 @@ export class APIRateLimitedClientSide implements API {
     this.intervalInMs = intervalInMs;
   }
 
-  async report(token: Token, event: Event): Promise<APIResult> {
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<APIResult> {
     if (event.type === "detected_attack") {
       const currentTime = Date.now();
 
@@ -36,6 +40,6 @@ export class APIRateLimitedClientSide implements API {
       this.events.push(event);
     }
 
-    return await this.api.report(token, event);
+    return await this.api.report(token, event, timeoutInMS);
   }
 }
