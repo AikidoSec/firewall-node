@@ -153,6 +153,9 @@ export function createLambdaWrapper(handler: Handler): Handler {
     }
 
     if (!agentContext) {
+      // We don't know what the type of the event is
+      // We can't provide any context for the underlying sinks
+      // So we just run the handler without any context
       return await asyncHandler(event, context);
     }
 
