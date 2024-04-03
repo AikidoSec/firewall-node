@@ -252,7 +252,9 @@ export class Agent {
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
       serverless: !!this.serverless,
-      stack: this.serverless ? [this.serverless] : [],
+      stack: Object.keys(this.wrappedPackages).concat(
+        this.serverless ? [this.serverless] : []
+      ),
       os: {
         name: platform(),
         version: release(),
