@@ -1,5 +1,3 @@
-import { execSync } from "child_process";
-import { Test } from "tap";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";

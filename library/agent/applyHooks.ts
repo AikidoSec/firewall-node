@@ -16,7 +16,6 @@ import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsI
 import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
-import { sourceHumanName } from "./Source";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -190,7 +189,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${sourceHumanName(result.source)}${result.pathToPayload}`
+              `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
             );
           }
         }
