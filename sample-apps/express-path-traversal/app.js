@@ -20,7 +20,7 @@ function getHTMLBody(documents) {
       <input type="text" content="content">
       <input type="submit" value="Add" />
     </form>
-    <a href="http://localhost:4000/?content=blablabla&filename=../TestDoc.txt">Test unsafe file creation</a>
+    <a href="http://localhost:4000/?content=blablabla&filename=/../TestDoc.txt">Test unsafe file creation</a>
   </body>
 </html>`;
 }

@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs/promises");
 const path = require("path");
 
 class Documents {
@@ -7,28 +7,11 @@ class Documents {
   }
 
   async add(filename, content) {
-    return new Promise((resolve, reject) => {
-      try {
-        // This code is vulnerable to path traversal
-        // An attacker can pass a filename like ../../../../etc/passwd
-        // And write to any file on the system
-        // Do not use this code in production
-        fs.writeFileSync(this.directory + filename, content, "utf8");
-        resolve(true);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    await fs.writeFile(this.directory + filename, content, "utf8");
   }
 
   async getAll() {
-    return new Promise((resolve, reject) => {
-      try {
-        resolve(fs.readdirSync(this.directory));
-      } catch (err) {
-        reject(err);
-      }
-    });
+    return await fs.readdir(this.directory);
   }
 }
 
