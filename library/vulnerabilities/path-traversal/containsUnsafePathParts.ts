@@ -1,4 +1,4 @@
-const dangerousPathParts = [".."];
+const dangerousPathParts = ["../", "..\\"];
 
 export function containsUnsafePathParts(filePath: string) {
   for (const dangerousPart of dangerousPathParts) {

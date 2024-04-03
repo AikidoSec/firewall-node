@@ -13,7 +13,7 @@ const unsafeContext: Context = {
   headers: {},
   body: {
     file: {
-      matches: "..\\..\\test.txt",
+      matches: "../test.txt",
     },
   },
   cookies: {},
@@ -38,7 +38,8 @@ t.test("it works", async (t) => {
 
   agent.start([new FileSystem()]);
 
-  const { writeFile, writeFileSync } = require("fs");
+  const { writeFile, writeFileSync, rename } = require("fs");
+  const { writeFile: writeFilePromise } = require("fs/promises");
 
   const runCommandsWithInvalidArgs = () => {
     throws(() => writeFile(), /Received undefined/);
@@ -51,23 +52,37 @@ t.test("it works", async (t) => {
     runCommandsWithInvalidArgs();
   });
 
-  const runSafeCommands = () => {
-    writeFile("./test.txt", "some file content to test with", (err) => {});
-    writeFileSync("./test.txt", "some other file content to test with");
+  const runSafeCommands = async () => {
+    writeFile(
+      "./test.txt",
+      "some file content to test with",
+      { encoding: "utf-8" },
+      (err) => {}
+    );
+    writeFileSync("./test.txt", "some other file content to test with", {
+      encoding: "utf-8",
+    });
+    await writeFilePromise(
+      "./test.txt",
+      "some other file content to test with",
+      { encoding: "utf-8" }
+    );
+    rename("./test.txt", "./test2.txt", (err) => {});
   };
 
-  runSafeCommands();
+  await runSafeCommands();
 
-  runWithContext(unsafeContext, () => {
-    runSafeCommands();
+  await runWithContext(unsafeContext, async () => {
+    await runSafeCommands();
   });
 
-  runWithContext(unsafeContext, () => {
+  await runWithContext(unsafeContext, async () => {
     throws(
       () =>
         writeFile(
-          "..\\..\\test.txt",
+          "../../test.txt",
           "some file content to test with",
+          { encoding: "utf-8" },
           (err) => {}
         ),
       "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
@@ -76,10 +91,36 @@ t.test("it works", async (t) => {
     throws(
       () =>
         writeFileSync(
-          "..\\..\\test.txt",
-          "some other file content to test with"
+          "../../test.txt",
+          "some other file content to test with",
+          { encoding: "utf-8" }
         ),
       "Aikido runtime has blocked a Path traversal: fs.writeFileSync(...) originating from body.file.matches"
+    );
+
+    const error = await t.rejects(() =>
+      writeFilePromise(
+        "../../test.txt",
+        "some other file content to test with",
+        { encoding: "utf-8" }
+      )
+    );
+
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
+      );
+    }
+
+    throws(
+      () => rename("../../test.txt", "./test2.txt", (err) => {}),
+      "Aikido runtime has blocked a Path traversal: fs.rename(...) originating from body.file.matches"
+    );
+
+    throws(
+      () => rename("./test.txt", "../../test.txt", (err) => {}),
+      "Aikido runtime has blocked a Path traversal: fs.rename(...) originating from body.file.matches"
     );
   });
 });

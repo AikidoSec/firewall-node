@@ -32,6 +32,8 @@ const functionsWithPath = [
   "truncate",
   "utimes",
   "writeFile",
+  "copyFile",
+  "cp",
 ];
 
 const noSync = ["createReadStream", "createWriteStream", "openAsBlob"];
@@ -43,22 +45,27 @@ const noPromise = [
   "openAsBlob",
 ];
 
-// TODO: Add support for multiple paths
-const withMultiplePaths = ["readdir", "rm"];
+const withSecondPathArgument = ["copyFile", "cp", "link", "rename", "symlink"];
 
 export class FileSystem implements Wrapper {
   private inspectPath(
     args: unknown[],
     name: string,
-    context: Context
+    context: Context,
+    amountOfPathArgs: number
   ): InterceptorResult {
-    if (args.length > 0 && typeof args[0] === "string") {
-      const path = args[0];
-      return checkContextForPathTraversal({
-        filename: path,
-        operation: `fs.${name}`,
-        context: context,
-      });
+    for (const path of args.slice(0, amountOfPathArgs)) {
+      if (typeof path === "string") {
+        const result = checkContextForPathTraversal({
+          filename: path,
+          operation: `fs.${name}`,
+          context: context,
+        });
+
+        if (result) {
+          return result;
+        }
+      }
     }
 
     return undefined;
@@ -70,18 +77,28 @@ export class FileSystem implements Wrapper {
       .addSubject((exports) => exports);
 
     functionsWithPath.forEach((name) => {
-      callbackStyle.inspect(name, (args, subject, agent, context) =>
-        this.inspectPath(args, name, context)
-      );
+      callbackStyle.inspect(name, (args, subject, agent, context) => {
+        return this.inspectPath(
+          args,
+          name,
+          context,
+          withSecondPathArgument.includes(name) ? 2 : 1
+        );
+      });
     });
 
     functionsWithPath
       .filter((name) => !noSync.includes(name))
       .forEach((name) => {
         const syncName = `${name}Sync`;
-        callbackStyle.inspect(syncName, (args, subject, agent, context) =>
-          this.inspectPath(args, syncName, context)
-        );
+        callbackStyle.inspect(syncName, (args, subject, agent, context) => {
+          return this.inspectPath(
+            args,
+            syncName,
+            context,
+            withSecondPathArgument.includes(name) ? 2 : 1
+          );
+        });
       });
 
     const promiseStyle = hooks
@@ -91,9 +108,14 @@ export class FileSystem implements Wrapper {
     functionsWithPath
       .filter((name) => !noPromise.includes(name))
       .forEach((name) => {
-        promiseStyle.inspect(name, (args, subject, agent, context) =>
-          this.inspectPath(args, name, context)
-        );
+        promiseStyle.inspect(name, (args, subject, agent, context) => {
+          return this.inspectPath(
+            args,
+            name,
+            context,
+            withSecondPathArgument.includes(name) ? 2 : 1
+          );
+        });
       });
   }
 }
