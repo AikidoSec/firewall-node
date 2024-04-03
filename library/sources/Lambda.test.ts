@@ -199,10 +199,11 @@ t.test("it sends heartbeat after 100 invokes", async () => {
       attackDetected: false,
     });
     await handler(gatewayEvent, lambdaContext, () => {});
-    if (i === 0) {
-      t.same(testing.getEvents(), []);
-    }
   }
+
+  t.same(testing.getEvents(), []);
+
+  await agent.flushStats();
 
   t.same(testing.getEvents(), [
     {
