@@ -1,12 +1,11 @@
 {
-  "name": "pubsub-mongodb",
+  "name": "nosql-injection-benchmark",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "benchmark.js",
   "private": true,
   "dependencies": {
     "@aikidosec/runtime": "file:../../build",
-    "mongodb": "^6.3.0",
-    "@google-cloud/pubsub": "^4.3.3"
+    "mongodb": "^6.3.0"
   }
 }

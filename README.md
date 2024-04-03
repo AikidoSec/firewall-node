@@ -80,7 +80,7 @@ See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to A
 
 We run a benchmark on every commit to make sure that the runtime has a minimal impact on your application's performance.
 
-The bench runs [a simple MongoDB query](library/benchmarks/mongodb/getUser.js) to measure the difference between two runs with and without the runtime:
+The bench runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without the runtime:
 
 | Without runtime  | With runtime  | Difference in ms |
 |------------------|---------------|------------------|
@@ -88,7 +88,7 @@ The bench runs [a simple MongoDB query](library/benchmarks/mongodb/getUser.js) t
 
 (Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
 
-See [benchmarks](library/benchmarks) for more information.
+See [benchmarks](benchmarks) for more information.
 
 ## Development
 

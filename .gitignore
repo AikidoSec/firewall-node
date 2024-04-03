@@ -16,7 +16,7 @@ node_modules/
 ../package-lock.json
 
 # Built files
-dist
+build/
 generated_docs
 
 # IDE's
@@ -26,3 +26,7 @@ generated_docs
 # Credentials
 .env
 credentials.json
+
+# Test files
+library/test.txt
+library/test2.txt

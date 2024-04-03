@@ -26,6 +26,10 @@ express-mysql2:
 express-mariadb:
 	cd sample-apps/express-mariadb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: express-path-traversal
+express-path-traversal:
+	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json
@@ -36,15 +40,23 @@ lambda-mongodb-safe:
 
 .PHONY: install
 install:
+	mkdir -p build && cp library/package.json build/package.json
+	touch build/index.js
+	npm install --workspaces || true
 	npm install --workspaces
 
 .PHONY: build
 build:
-	cd library && mkdir -p ./dist && rm -r ./dist && npm run build
+	mkdir -p build
+	rm -r build
+	cd library && npm run build
+	cp README.md build/README.md
+	cp LICENSE build/LICENSE
+	cp library/package.json build/package.json
 
 .PHONY: watch
-watch:
-	cd library && mkdir -p ./dist && rm -r ./dist && npm run build:watch
+watch: build
+	cd library && npm run build:watch
 
 .PHONY: test
 test:
@@ -63,6 +75,6 @@ end2end:
 	cd end2end && npm run test
 
 benchmark: build
-	cd library/benchmarks/nosql-injection && node benchmark.js
-	cd library/benchmarks/shell-injection && node benchmark.js
-	cd library/benchmarks/sql-injection && node benchmark.js
+	cd benchmarks/nosql-injection && node benchmark.js
+	cd benchmarks/shell-injection && node benchmark.js
+	cd benchmarks/sql-injection && node benchmark.js

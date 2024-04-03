@@ -1,0 +1,10 @@
+{
+  "name": "sql-injection-benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "benchmark.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/runtime": "file:../../build"
+  }
+}
