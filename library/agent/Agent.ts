@@ -311,13 +311,6 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
-  async onInvokedServerless(context: Context) {
-    this.statistics.onRequest({
-      blocked: this.block,
-      attackDetected: !!context.attackDetected,
-    });
-  }
-
   async flushStats() {
     this.statistics.forceCompress();
     await this.sendHeartbeat();

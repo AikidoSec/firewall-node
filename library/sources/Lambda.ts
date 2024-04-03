@@ -160,7 +160,12 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return await asyncHandler(event, context);
     });
 
-    await agent?.onInvokedServerless(agentContext);
+    if (agent) {
+      agent.getInspectionStatistics().onRequest({
+        blocked: agent.shouldBlock(),
+        attackDetected: !!agentContext.attackDetected,
+      });
+    }
 
     return result;
   };
