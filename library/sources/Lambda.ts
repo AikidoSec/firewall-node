@@ -99,7 +99,7 @@ export type APIGatewayProxyEvent = {
   body?: string;
 };
 
-function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
+function isGatewayEvent(event: unknown): event is APIGatewayProxyEvent {
   return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
@@ -139,7 +139,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         cookies: {},
         source: "lambda/sqs",
       };
-    } else if (isProxyEvent(event)) {
+    } else if (isGatewayEvent(event)) {
       agentContext = {
         url: undefined,
         method: event.httpMethod,
