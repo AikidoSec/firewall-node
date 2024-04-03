@@ -41,6 +41,7 @@ t.test("it sends started event", async (t) => {
         preventedPrototypePollution: false,
         nodeEnv: "",
         serverless: false,
+        stack: ["mongodb"],
         os: {
           name: platform(),
           version: release(),
@@ -103,6 +104,7 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
+        stack: ["lambda"],
       },
     },
   ]);
