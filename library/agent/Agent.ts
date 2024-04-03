@@ -316,10 +316,10 @@ export class Agent {
       blocked: this.block,
       attackDetected: !!context.attackDetected,
     });
+  }
 
-    if (this.statistics.getStats().requests.total >= 100) {
-      this.statistics.forceCompress();
-      await this.sendHeartbeat();
-    }
+  async flushStats() {
+    this.statistics.forceCompress();
+    await this.sendHeartbeat();
   }
 }
