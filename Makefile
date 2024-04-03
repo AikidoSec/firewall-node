@@ -26,6 +26,10 @@ express-mysql2:
 express-mariadb:
 	cd sample-apps/express-mariadb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: express-path-traversal
+express-path-traversal:
+	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json

@@ -1,0 +1,14 @@
+{
+  "name": "express-path-traversal",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test path traversal attacks",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/runtime": "file:../../build",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2",
+    "express-async-handler": "^1.2.0",
+    "morgan": "^1.10.0"
+  }
+}
