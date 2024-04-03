@@ -46,7 +46,7 @@ const noPromise = [
 // TODO: Add support for multiple paths
 const withMultiplePaths = ["readdir", "rm"];
 
-export class PathTraversal implements Wrapper {
+export class FileSystem implements Wrapper {
   private inspectPath(
     args: unknown[],
     name: string,

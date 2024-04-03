@@ -3,7 +3,7 @@ import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
-import { PathTraversal } from "./PathTraversal";
+import { FileSystem } from "./FileSystem";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -36,7 +36,7 @@ t.test("it works", async (t) => {
     "lambda"
   );
 
-  agent.start([new PathTraversal()]);
+  agent.start([new FileSystem()]);
 
   const { writeFile, writeFileSync } = require("fs");
 
