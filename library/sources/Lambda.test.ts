@@ -321,17 +321,25 @@ t.test("if handler throws it still sends heartbeat", async () => {
 
   const logger = new LoggerNoop();
   const testing = new APIForTesting();
-  const agent = new Agent(false, logger, testing, undefined, "lambda");
+  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);
+
+  testing.clear();
 
   const handler = createLambdaWrapper(async (event, context) => {
     throw new Error("error");
   });
 
-  await t.rejects(
+  const error = await t.rejects(
     async () => await handler(gatewayEvent, lambdaContext, () => {})
   );
+
+  if (error instanceof Error) {
+    t.same(error.message, "error");
+  }
+
+  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
 
   clock.uninstall();
 });

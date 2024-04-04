@@ -113,13 +113,13 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-let lastFlushStats: number | undefined = undefined;
-const flushEveryMS = 10 * 60 * 1000;
-
 // eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
+
+  let lastFlushStats: number | undefined = undefined;
+  const flushEveryMS = 10 * 60 * 1000;
 
   // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
