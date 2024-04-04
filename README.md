@@ -11,6 +11,7 @@ Protects your application against
 * 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
+* 🛡 [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🔥 More to come (See roadmap below)
 
 ## Roadmap
