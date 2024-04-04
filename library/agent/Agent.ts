@@ -324,8 +324,8 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
-  flushStats(timeoutInMS: number) {
+  async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
-    this.heartbeat(timeoutInMS);
+    await this.sendHeartbeat(timeoutInMS);
   }
 }
