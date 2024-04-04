@@ -7,7 +7,7 @@ process.on("SIGTERM", () => {
   const agent = getInstance();
 
   if (!agent) {
-    throw new Error("Agent not found!");
+    return;
   }
 
   agent.flushStats(1000);
