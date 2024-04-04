@@ -1,6 +1,12 @@
+import * as FakeTimers from "@sinonjs/fake-timers";
 import type { Context } from "aws-lambda";
 import * as t from "tap";
+import { Agent } from "../agent/Agent";
+import { setInstance } from "../agent/AgentSingleton";
+import { APIForTesting } from "../agent/api/APIForTesting";
+import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
+import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
@@ -138,7 +144,15 @@ t.test("it handles SQS event", async (t) => {
     url: undefined,
     method: undefined,
     remoteAddress: undefined,
-    body: [{ key: "value" }],
+    body: {
+      Records: [
+        {
+          body: {
+            key: "value",
+          },
+        },
+      ],
+    },
     headers: {},
     query: {},
     cookies: {},
@@ -161,3 +175,112 @@ t.test("it passes through unknown types of events", async () => {
 
   t.same(result, undefined);
 });
+
+t.test("it sends heartbeat after 100 invokes", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const testing = new APIForTesting();
+  const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
+  agent.start([]);
+  setInstance(agent);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  testing.clear();
+
+  for (let i = 0; i < 100; i++) {
+    agent.getInspectionStatistics().onInspectedCall({
+      sink: "mongodb",
+      blocked: false,
+      durationInMs: 0.1,
+      attackDetected: false,
+    });
+    await handler(gatewayEvent, lambdaContext, () => {});
+  }
+
+  t.same(testing.getEvents(), []);
+
+  agent.flushStats(1000);
+
+  t.same(testing.getEvents(), [
+    {
+      type: "heartbeat",
+      time: Date.now(),
+      // @ts-expect-error AgentInfo is private
+      agent: agent.getAgentInfo(),
+      stats: {
+        sinks: {
+          mongodb: {
+            total: 100,
+            attacksDetected: {
+              total: 0,
+              blocked: 0,
+            },
+            interceptorThrewError: 0,
+            withoutContext: 0,
+            compressedTimings: [
+              {
+                averageInMS: 0.09999999999999981,
+                percentiles: {
+                  50: 0.1,
+                  75: 0.1,
+                  90: 0.1,
+                  95: 0.1,
+                  99: 0.1,
+                },
+                compressedAt: 0,
+              },
+            ],
+          },
+        },
+        startedAt: 0,
+        endedAt: 0,
+        requests: {
+          total: 100,
+          attacksDetected: {
+            total: 0,
+            blocked: 0,
+          },
+        },
+      },
+    },
+  ]);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it keeps working if token is not set (no reset happening)",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const testing = new APIForTesting();
+    const agent = new Agent(false, logger, testing, undefined, "lambda");
+    agent.start([]);
+    setInstance(agent);
+
+    const handler = createLambdaWrapper(async (event, context) => {
+      return getContext();
+    });
+
+    testing.clear();
+
+    for (let i = 0; i < 100; i++) {
+      agent.getInspectionStatistics().onInspectedCall({
+        sink: "mongodb",
+        blocked: false,
+        durationInMs: 0.1,
+        attackDetected: false,
+      });
+      await handler(gatewayEvent, lambdaContext, () => {});
+    }
+
+    t.same(testing.getEvents(), []);
+
+    clock.uninstall();
+  }
+);

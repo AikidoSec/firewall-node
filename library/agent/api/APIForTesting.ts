@@ -3,7 +3,7 @@ import { Event } from "./Event";
 import { API, APIResult } from "./API";
 
 export class APIForTesting implements API {
-  private readonly events: Event[] = [];
+  private events: Event[] = [];
 
   constructor(private result: APIResult = { success: true }) {}
 
@@ -11,10 +11,18 @@ export class APIForTesting implements API {
     this.result = result;
   }
 
-  async report(token: Token, event: Event) {
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<APIResult> {
     this.events.push(event);
 
     return this.result;
+  }
+
+  clear() {
+    this.events = [];
   }
 
   getEvents() {

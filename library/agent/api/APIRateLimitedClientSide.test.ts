@@ -15,6 +15,7 @@ function generateAttackEvent(): Event {
       userAgent: undefined,
       headers: undefined,
       body: undefined,
+      source: "express",
     },
     attack: {
       module: "module",
@@ -24,6 +25,8 @@ function generateAttackEvent(): Event {
       stack: "stack",
       kind: "nosql_injection",
       metadata: {},
+      operation: "operation",
+      payload: "payload",
     },
     agent: {
       version: "1.0.0",
@@ -38,6 +41,10 @@ function generateAttackEvent(): Event {
         version: "version",
       },
       serverless: false,
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
     },
   };
 }
@@ -52,21 +59,21 @@ t.test("it throttles attack events", async () => {
   });
 
   t.same(api.getEvents().length, 0);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 1);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 2);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 3);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 4);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 5);
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 5);
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  await throttled.report(token, generateAttackEvent());
+  await throttled.report(token, generateAttackEvent(), 5000);
   t.same(api.getEvents().length, 6);
 });
 
@@ -86,6 +93,10 @@ function generateStartedEvent(): Event {
         name: "os",
         version: "version",
       },
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
       serverless: false,
     },
   };
@@ -101,17 +112,17 @@ t.test("it always allows started events", async () => {
   });
 
   t.same(api.getEvents().length, 0);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 1);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 2);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 3);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 4);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 5);
-  await throttled.report(token, generateStartedEvent());
+  await throttled.report(token, generateStartedEvent(), 5000);
   t.same(api.getEvents().length, 6);
 });
 
@@ -144,6 +155,10 @@ function generateHeartbeatEvent(): Event {
         version: "version",
       },
       serverless: false,
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
     },
   };
 }
@@ -158,17 +173,17 @@ t.test("it always allows heartbeat events", async () => {
   });
 
   t.same(api.getEvents().length, 0);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 1);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 2);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 3);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 4);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 5);
-  await throttled.report(token, generateHeartbeatEvent());
+  await throttled.report(token, generateHeartbeatEvent(), 5000);
   t.same(api.getEvents().length, 6);
 });
 
@@ -181,13 +196,13 @@ t.test("it does not blow memory", async () => {
   });
 
   for (let i = 0; i < 10; i++) {
-    t.same(await throttled.report(token, generateAttackEvent()), {
+    t.same(await throttled.report(token, generateAttackEvent(), 5000), {
       success: true,
     });
   }
 
   for (let i = 0; i < 100; i++) {
-    const result = await throttled.report(token, generateAttackEvent());
+    const result = await throttled.report(token, generateAttackEvent(), 5000);
     if (result.success) {
       t.fail(
         `Expected to be rate limited at index ${i}: ${JSON.stringify(result)}`

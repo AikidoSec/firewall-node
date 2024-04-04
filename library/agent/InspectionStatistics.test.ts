@@ -382,3 +382,44 @@ t.test("it keeps track of requests", async () => {
 
   clock.uninstall();
 });
+
+t.test("it force compresses stats", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  stats.onRequest({
+    attackDetected: false,
+    blocked: false,
+  });
+
+  stats.onInspectedCall({
+    sink: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
+
+  t.same(stats.hasCompressedStats(), false);
+
+  stats.forceCompress();
+
+  t.same(stats.hasCompressedStats(), true);
+
+  clock.uninstall();
+});

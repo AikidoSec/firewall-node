@@ -316,14 +316,23 @@ t.test("it sends heartbeat when reached max timings", async () => {
 });
 
 t.test("it logs when failed to report event", async () => {
+  async function waitForCalls() {
+    // API calls are async, wait for them to finish
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
   const logger = new LoggerForTesting();
   const api = new APIThatThrows();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
+  await waitForCalls();
+
   // @ts-expect-error Private method
   agent.heartbeat();
+
+  await waitForCalls();
 
   agent.onDetectedAttack({
     module: "mongodb",
@@ -351,14 +360,13 @@ t.test("it logs when failed to report event", async () => {
     },
   });
 
-  // API calls are async, wait for them to finish
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await waitForCalls();
 
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Heartbeat...",
     "Failed to report started event",
+    "Heartbeat...",
     "Failed to do heartbeat",
     "Failed to report attack",
   ]);

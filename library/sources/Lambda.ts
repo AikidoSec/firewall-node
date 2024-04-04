@@ -1,5 +1,6 @@
 import type { Callback, Context, Handler } from "aws-lambda";
-import { runWithContext } from "../agent/Context";
+import { getInstance } from "../agent/AgentSingleton";
+import { runWithContext, Context as AgentContext } from "../agent/Context";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
 
@@ -98,7 +99,7 @@ export type APIGatewayProxyEvent = {
   body?: string;
 };
 
-function isProxyEvent(event: unknown): event is APIGatewayProxyEvent {
+function isGatewayEvent(event: unknown): event is APIGatewayProxyEvent {
   return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
@@ -112,50 +113,64 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
+  const agent = getInstance();
 
   return async (event, context) => {
+    let agentContext: AgentContext | undefined = undefined;
+
     if (isSQSEvent(event)) {
       const body: unknown[] = event.Records.map((record) =>
         tryParseAsJSON(record.body)
       ).filter((body) => body);
 
-      return runWithContext(
-        {
-          url: undefined,
-          method: undefined,
-          remoteAddress: undefined,
-          body: body,
-          headers: {},
-          query: {},
-          cookies: {},
-          source: "lambda/sqs",
+      agentContext = {
+        url: undefined,
+        method: undefined,
+        remoteAddress: undefined,
+        body: {
+          Records: body.map((record) => ({
+            body: record,
+          })),
         },
-        async () => {
-          return await asyncHandler(event, context);
-        }
-      );
+        headers: {},
+        query: {},
+        cookies: {},
+        source: "lambda/sqs",
+      };
+    } else if (isGatewayEvent(event)) {
+      agentContext = {
+        url: undefined,
+        method: event.httpMethod,
+        remoteAddress: event.requestContext?.identity?.sourceIp,
+        body: parseBody(event),
+        headers: event.headers,
+        query: event.queryStringParameters ? event.queryStringParameters : {},
+        cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
+        source: "lambda/gateway",
+      };
     }
 
-    if (isProxyEvent(event)) {
-      return runWithContext(
-        {
-          url: undefined,
-          method: event.httpMethod,
-          remoteAddress: event.requestContext?.identity?.sourceIp,
-          body: parseBody(event),
-          headers: event.headers,
-          query: event.queryStringParameters ? event.queryStringParameters : {},
-          cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
-          source: "lambda/gateway",
-        },
-        async () => {
-          return await asyncHandler(event, context);
-        }
-      );
+    if (!agentContext) {
+      // We don't know what the type of the event is
+      // We can't provide any context for the underlying sinks
+      // So we just run the handler without any context
+      return await asyncHandler(event, context);
     }
 
-    return await asyncHandler(event, context);
+    const result = await runWithContext(agentContext, async () => {
+      return await asyncHandler(event, context);
+    });
+
+    if (agent) {
+      agent.getInspectionStatistics().onRequest({
+        blocked: agent.shouldBlock(),
+        attackDetected: !!agentContext.attackDetected,
+      });
+    }
+
+    return result;
   };
 }
