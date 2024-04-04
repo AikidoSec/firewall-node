@@ -24,6 +24,9 @@ function createMiddleware(agent: Agent): Middleware {
       },
       () => {
         try {
+          // Run the user's middleware
+          // Regardless of whether the middleware throws an error or not
+          // We want to count the request
           next();
         } finally {
           const context = getContext();
