@@ -25,6 +25,10 @@ t.test(
   }
 );
 
+t.test("user input is longer than the command", async () => {
+  isNotShellInjection("`ls`", "`ls` `ls`");
+});
+
 t.test("it detects $(command)", async () => {
   isShellInjection(`ls $(echo)`, "$(echo)");
   isShellInjection(`ls "$(echo)"`, "$(echo)");

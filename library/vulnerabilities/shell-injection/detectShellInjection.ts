@@ -11,6 +11,12 @@ export function detectShellInjection(
     return false;
   }
 
+  if (userInput.length > command.length) {
+    // We ignore cases where the user input is longer than the command.
+    // Because the user input can't be part of the command.
+    return false;
+  }
+
   if (!command.includes(userInput)) {
     return false;
   }
