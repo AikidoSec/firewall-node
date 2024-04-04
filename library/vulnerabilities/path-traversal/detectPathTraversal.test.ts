@@ -63,3 +63,7 @@ t.test("it flags ../../../../", async () => {
 t.test("it flags ..\\..\\..\\", async () => {
   t.same(detectPathTraversal("..\\..\\..\\test.txt", "..\\..\\..\\"), true);
 });
+
+t.test("user input is longer than file path", async () => {
+  t.same(detectPathTraversal("../file.txt", "../../file.txt"), false);
+});

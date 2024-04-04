@@ -14,6 +14,12 @@ export function detectSQLInjection(
     return false;
   }
 
+  if (userInput.length > query.length) {
+    // We ignore cases where the user input is longer than the query.
+    // Because the user input can't be part of the query.
+    return false;
+  }
+
   if (!queryContainsUserInput(query, userInput)) {
     // If the user input is not part of the query, return false (No need to check)
     return false;

@@ -9,5 +9,11 @@ export function detectPathTraversal(
     return false;
   }
 
+  if (userInput.length > filePath.length) {
+    // We ignore cases where the user input is longer than the file path.
+    // Because the user input can't be part of the file path.
+    return false;
+  }
+
   return filePath.includes(userInput) && containsUnsafePathParts(filePath);
 }

@@ -158,6 +158,13 @@ c`
   );
 });
 
+t.test("user input is longer than query", async () => {
+  isNotSqlInjection(
+    `SELECT * FROM users`,
+    `SELECT * FROM users WHERE id = 'a'`
+  );
+});
+
 t.test("It flags multiline queries correctly", async () => {
   isSqlInjection(
     `
