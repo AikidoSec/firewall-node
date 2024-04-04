@@ -23,13 +23,19 @@ function createMiddleware(agent: Agent): Middleware {
         source: "express",
       },
       () => {
-        next();
-        const context = getContext();
-        if (context) {
-          agent.getInspectionStatistics().onRequest({
-            blocked: agent.shouldBlock(),
-            attackDetected: !!context.attackDetected,
-          });
+        try {
+          // Run the user's middleware
+          // Regardless of whether the middleware throws an error or not
+          // We want to count the request
+          next();
+        } finally {
+          const context = getContext();
+          if (context) {
+            agent.getInspectionStatistics().onRequest({
+              blocked: agent.shouldBlock(),
+              attackDetected: !!context.attackDetected,
+            });
+          }
         }
       }
     );
