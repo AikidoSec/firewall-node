@@ -23,13 +23,16 @@ function createMiddleware(agent: Agent): Middleware {
         source: "express",
       },
       () => {
-        next();
-        const context = getContext();
-        if (context) {
-          agent.getInspectionStatistics().onRequest({
-            blocked: agent.shouldBlock(),
-            attackDetected: !!context.attackDetected,
-          });
+        try {
+          next();
+        } finally {
+          const context = getContext();
+          if (context) {
+            agent.getInspectionStatistics().onRequest({
+              blocked: agent.shouldBlock(),
+              attackDetected: !!context.attackDetected,
+            });
+          }
         }
       }
     );

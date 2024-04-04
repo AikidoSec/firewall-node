@@ -23,6 +23,7 @@ function getApp() {
   const app = express();
 
   app.set("trust proxy", true);
+  app.set("env", "test");
   app.use(cookieParser());
 
   app.get("/", (req, res) => {
@@ -54,6 +55,10 @@ function getApp() {
     context.attackDetected = true;
 
     res.send(context);
+  });
+
+  app.get("/throws", (req, res) => {
+    throw new Error("test");
   });
 
   return app;
@@ -134,6 +139,20 @@ t.test("it counts attacks detected", async (t) => {
       attacksDetected: {
         total: 1,
         blocked: 1,
+      },
+    },
+  });
+});
+
+t.test("it counts request with error", async (t) => {
+  agent.getInspectionStatistics().reset();
+  await request(getApp()).get("/throws");
+  t.match(agent.getInspectionStatistics().getStats(), {
+    requests: {
+      total: 1,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
       },
     },
   });
