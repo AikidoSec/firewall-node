@@ -176,7 +176,7 @@ t.test("it passes through unknown types of events", async () => {
   t.same(result, undefined);
 });
 
-t.test("it sends heartbeat after 100 invokes", async () => {
+t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
@@ -191,19 +191,50 @@ t.test("it sends heartbeat after 100 invokes", async () => {
 
   testing.clear();
 
-  for (let i = 0; i < 100; i++) {
+  t.same(testing.getEvents(), []);
+
+  for (let i = 0; i < 99; i++) {
     agent.getInspectionStatistics().onInspectedCall({
       sink: "mongodb",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
     });
+
     await handler(gatewayEvent, lambdaContext, () => {});
+
+    if (i === 0) {
+      t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+    }
   }
+
+  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+
+  testing.clear();
+
+  clock.tick(1);
+
+  agent.getInspectionStatistics().onInspectedCall({
+    sink: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
+
+  await handler(gatewayEvent, lambdaContext, () => {});
 
   t.same(testing.getEvents(), []);
 
-  agent.flushStats(1000);
+  clock.tick(60 * 1000 * 10);
+
+  agent.getInspectionStatistics().onInspectedCall({
+    sink: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
+
+  await handler(gatewayEvent, lambdaContext, () => {});
 
   t.same(testing.getEvents(), [
     {
@@ -231,13 +262,13 @@ t.test("it sends heartbeat after 100 invokes", async () => {
                   95: 0.1,
                   99: 0.1,
                 },
-                compressedAt: 0,
+                compressedAt: 60 * 1000 * 10 + 1,
               },
             ],
           },
         },
         startedAt: 0,
-        endedAt: 0,
+        endedAt: 60 * 1000 * 10 + 1,
         requests: {
           total: 100,
           attacksDetected: {
@@ -284,3 +315,23 @@ t.test(
     clock.uninstall();
   }
 );
+
+t.test("if handler throws it still sends heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const testing = new APIForTesting();
+  const agent = new Agent(false, logger, testing, undefined, "lambda");
+  agent.start([]);
+  setInstance(agent);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    throw new Error("error");
+  });
+
+  await t.rejects(
+    async () => await handler(gatewayEvent, lambdaContext, () => {})
+  );
+
+  clock.uninstall();
+});

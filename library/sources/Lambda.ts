@@ -121,6 +121,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
+  // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
     let agentContext: AgentContext | undefined = undefined;
 
@@ -163,25 +164,25 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return await asyncHandler(event, context);
     }
 
-    const result = await runWithContext(agentContext, async () => {
-      return await asyncHandler(event, context);
-    });
-
-    if (agent) {
-      agent.getInspectionStatistics().onRequest({
-        blocked: agent.shouldBlock(),
-        attackDetected: !!agentContext.attackDetected,
+    try {
+      return await runWithContext(agentContext, async () => {
+        return await asyncHandler(event, context);
       });
+    } finally {
+      if (agent) {
+        agent.getInspectionStatistics().onRequest({
+          blocked: agent.shouldBlock(),
+          attackDetected: !!agentContext.attackDetected,
+        });
 
-      if (
-        lastFlushStats === undefined ||
-        lastFlushStats + flushEveryMS < Date.now()
-      ) {
-        agent.flushStats(1000);
-        lastFlushStats = Date.now();
+        if (
+          lastFlushStats === undefined ||
+          lastFlushStats + flushEveryMS < Date.now()
+        ) {
+          agent.flushStats(1000);
+          lastFlushStats = Date.now();
+        }
       }
     }
-
-    return result;
   };
 }
