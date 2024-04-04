@@ -17,7 +17,6 @@ Protects your application against
 ## Roadmap
 
 * [ ] Monitor outbound requests
-* [ ] Protect against path traversal attacks
 * [ ] Protect against SSRF attacks
 
 ## Supported libraries and frameworks
