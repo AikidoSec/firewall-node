@@ -118,7 +118,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
-  let lastFlushStats: number | undefined = undefined;
+  let lastFlushStatsAt: number | undefined = undefined;
   const flushEveryMS = 10 * 60 * 1000;
 
   // eslint-disable-next-line max-lines-per-function
@@ -176,11 +176,11 @@ export function createLambdaWrapper(handler: Handler): Handler {
         });
 
         if (
-          lastFlushStats === undefined ||
-          lastFlushStats + flushEveryMS < Date.now()
+          lastFlushStatsAt === undefined ||
+          lastFlushStatsAt + flushEveryMS < Date.now()
         ) {
           agent.flushStats(1000);
-          lastFlushStats = Date.now();
+          lastFlushStatsAt = Date.now();
         }
       }
     }
