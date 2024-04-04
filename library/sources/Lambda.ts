@@ -113,6 +113,9 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
+let lastFlushStats: number | undefined = undefined;
+const flushEveryMS = 10 * 60 * 1000;
+
 // eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
@@ -169,6 +172,14 @@ export function createLambdaWrapper(handler: Handler): Handler {
         blocked: agent.shouldBlock(),
         attackDetected: !!agentContext.attackDetected,
       });
+
+      if (
+        lastFlushStats === undefined ||
+        lastFlushStats + flushEveryMS < Date.now()
+      ) {
+        agent.flushStats(1000);
+        lastFlushStats = Date.now();
+      }
     }
 
     return result;
