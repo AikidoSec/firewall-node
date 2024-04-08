@@ -27,6 +27,9 @@
   "license": "AGPL-3.0-or-later",
   "main": "index.js",
   "types": "index.d.ts",
+  "engines": {
+    "node": ">=16"
+  },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",
