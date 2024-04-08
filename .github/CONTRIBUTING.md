@@ -1,4 +1,4 @@
-# Contributing to runtime for Node.js
+# Contributing to Aikido Security's runtime for Node.js
 
 First off, thanks for taking the time to contribute! ❤️
 
