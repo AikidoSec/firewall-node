@@ -18,7 +18,7 @@ Protects your application against
 
 ## Supported libraries and frameworks
 
-Aikido runtime for Node.js is compatible with
+Aikido runtime for Node.js 16+ is compatible with
 
 * ✅ [`express`](https://www.npmjs.com/package/express) 4.x
 * ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
