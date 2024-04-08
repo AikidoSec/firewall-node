@@ -45,7 +45,7 @@ $ yarn add --exact @aikidosec/runtime
 * For Google Cloud Functions, follow the [Google Cloud Functions](docs/cloud-functions.md) instructions
 * For `@google-cloud/pubsub`, follow the [Google Cloud Pub/Sub](docs/pubsub.md) instructions
 
-## Reporting to Aikido
+## Reporting to Aikido Security dashboard
 
 > Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
 
