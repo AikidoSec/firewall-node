@@ -1,11 +1,17 @@
-import { runWithContext } from "../agent/Context";
+import { getInstance } from "../agent/AgentSingleton";
+import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 
 export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
-  return (req, res) => {
-    runWithContext(
+  const agent = getInstance();
+
+  let lastFlushStatsAt: number | undefined = undefined;
+  const flushEveryMS = 10 * 60 * 1000;
+
+  return async (req, res) => {
+    return await runWithContext(
       {
         method: req.method,
         remoteAddress: req.ip,
@@ -17,8 +23,26 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         cookies: req.cookies ? req.cookies : {},
         source: "cloud-function/http",
       },
-      () => {
-        return fn(req, res);
+      async () => {
+        try {
+          return await fn(req, res);
+        } finally {
+          const context = getContext();
+          if (agent && context) {
+            agent.getInspectionStatistics().onRequest({
+              blocked: agent.shouldBlock(),
+              attackDetected: !!context.attackDetected,
+            });
+
+            if (
+              lastFlushStatsAt === undefined ||
+              lastFlushStatsAt + flushEveryMS < Date.now()
+            ) {
+              await agent.flushStats(1000);
+              lastFlushStatsAt = Date.now();
+            }
+          }
+        }
       }
     );
   };

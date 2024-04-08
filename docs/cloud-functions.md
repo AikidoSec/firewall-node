@@ -3,7 +3,7 @@
 If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Aikido runtime automatically:
 
 ```js
-require("@aikidosec/runtime"); // <-- Include this before any other code or imports
+require("@aikidosec/runtime/cloud-function"); // <-- Include this before any other code or imports
 
 const functions = require("@google-cloud/functions-framework");
 
@@ -15,7 +15,7 @@ functions.http("handler", async (req, res) => {
 or ESM import style:
 
 ```js
-import '@aikidosec/runtime';
+import '@aikidosec/runtime/cloud-function';
 
 // ...
 ```
@@ -50,7 +50,7 @@ If you want to see a full example, check our [cloud functions sample app](../sam
 
 By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
 
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`.
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`.
 
 It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
 
