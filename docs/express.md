@@ -28,10 +28,10 @@ If you want to see a full example, check our [express sample app](../sample-apps
 
 By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
 
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`:
 
 ```sh
-AIKIDO_BLOCK=true node app.js
+AIKIDO_BLOCKING=true node app.js
 ```
 
 It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
