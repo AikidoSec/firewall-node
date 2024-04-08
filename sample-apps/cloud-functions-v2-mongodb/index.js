@@ -1,4 +1,4 @@
-require("@aikidosec/runtime");
+require("@aikidosec/runtime/cloud-function");
 
 const functions = require("@google-cloud/functions-framework");
 const { MongoClient } = require("mongodb");
