@@ -76,6 +76,17 @@ If you want to start blocking requests, you can set the `AIKIDO_BLOCKING` enviro
 
 See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to Aikido.
 
+## License
+
+This program is offered under a commercial and under the AGPL license.
+You can be released from the requirements of the AGPL license by purchasing
+a commercial license. Buying such a license is mandatory as soon as you
+develop commercial activities involving the Aikido Runtime software without
+disclosing the source code of your own applications. 
+
+For more information, please contact Aikido Security at this
+address: support@aikido.dev or create an account at https://app.aikido.dev.
+
 ## Performance
 
 We run a benchmark on every commit to make sure that the runtime has a minimal impact on your application's performance.
