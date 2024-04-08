@@ -1,5 +1,3 @@
-import http from "http";
-import https from "https";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";

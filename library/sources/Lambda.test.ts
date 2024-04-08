@@ -242,6 +242,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       time: Date.now(),
       // @ts-expect-error AgentInfo is private
       agent: agent.getAgentInfo(),
+      domains: [],
       stats: {
         sinks: {
           mongodb: {

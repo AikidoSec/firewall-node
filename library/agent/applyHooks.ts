@@ -82,6 +82,26 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
     }
   });
 
+  hooks.getGlobals().forEach((g) => {
+    const name = g.getName();
+
+    if (!(global as Record<string, unknown>)[name]) {
+      return;
+    }
+
+    const interceptor = g.getMethodInterceptor();
+
+    if (!interceptor) {
+      return;
+    }
+
+    if (interceptor instanceof ModifyingArgumentsMethodInterceptor) {
+      wrapWithArgumentModification(global, interceptor, "global", agent);
+    } else {
+      wrapWithoutArgumentModification(global, interceptor, "global", agent);
+    }
+  });
+
   return wrapped;
 }
 
