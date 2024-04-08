@@ -14,8 +14,6 @@ Protects your application against
 * 🛡 [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🚀 More to come. See [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1)
 
-
-
 ## Supported libraries and frameworks
 
 Aikido runtime for Node.js 16+ is compatible with
@@ -98,11 +96,14 @@ The bench runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) t
 
 See [benchmarks](benchmarks) for more information.
 
-## Development
+## Contributing
 
-* `$ make install` to install dependencies
-* `$ make build` to build the library
-* `$ make watch` to watch for changes and rebuild the library
-* `$ make test` to run tests using tap
-* `$ make end2end` to run end-to-end tests using tap
-* `$ make lint` to run ESLint
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more information.
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) for more information.
+
+## Security
+
+See [SECURITY.md](.github/SECURITY.md) for more information.
