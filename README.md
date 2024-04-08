@@ -12,11 +12,9 @@ Protects your application against
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡 [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
-* 🔥 More to come (See roadmap below)
+* 🚀 More to come. See [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1)
 
-## Roadmap
 
-* 🚀 [Public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1)
 
 ## Supported libraries and frameworks
 
