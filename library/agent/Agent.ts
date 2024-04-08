@@ -10,6 +10,7 @@ import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Context } from "./Context";
+import { Domains } from "./Domains";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Source } from "./Source";
@@ -29,6 +30,7 @@ export class Agent {
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
+  private domains = new Domains(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -48,6 +50,10 @@ export class Agent {
 
   shouldBlock() {
     return this.block;
+  }
+
+  getDomains() {
+    return this.domains;
   }
 
   getInspectionStatistics() {
@@ -205,6 +211,7 @@ export class Agent {
             endedAt: endedAt,
             requests: stats.requests,
           },
+          domains: this.domains.getDomains(),
         },
         timeoutInMS
       );
@@ -322,6 +329,10 @@ export class Agent {
 
   onFailedToWrapMethod(module: string, name: string) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
+
+  onConnectDomain(domain: string) {
+    this.domains.add(domain);
   }
 
   async flushStats(timeoutInMS: number) {

@@ -81,6 +81,7 @@ type Heartbeat = {
       };
     };
   };
+  domains: string[];
   agent: AgentInfo;
   time: number;
 };
