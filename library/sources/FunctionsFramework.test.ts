@@ -4,6 +4,7 @@ import * as request from "supertest";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { APIForTesting } from "../agent/api/APIForTesting";
+import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { createCloudFunctionWrapper } from "./FunctionsFramework";
@@ -87,4 +88,24 @@ t.test("it counts request if error", async (t) => {
     total: 1,
     attacksDetected: { total: 0, blocked: 0 },
   });
+});
+
+t.test("it flushes stats first invoke", async (t) => {
+  const logger = new LoggerForTesting();
+  const api = new APIForTesting();
+  const agent = new Agent(true, logger, api, new Token("123"), "gcp");
+  agent.start([]);
+  setInstance(agent);
+
+  api.clear();
+
+  const app = getExpressApp();
+
+  await request(app).get("/");
+
+  t.match(api.getEvents(), [{ type: "heartbeat" }]);
+
+  await request(app).get("/");
+
+  t.same(api.getEvents().length, 1);
 });
