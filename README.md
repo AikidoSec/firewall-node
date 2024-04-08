@@ -16,8 +16,7 @@ Protects your application against
 
 ## Roadmap
 
-* [ ] Monitor outbound requests
-* [ ] Protect against SSRF attacks
+* 🚀 [Public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1)
 
 ## Supported libraries and frameworks
 
