@@ -18,15 +18,33 @@ Protects your application against
 
 Aikido runtime for Node.js 16+ is compatible with
 
+### Web frameworks
+
 * ✅ [`express`](https://www.npmjs.com/package/express) 4.x
+
+### Database drivers
+
 * ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
 * ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) 8.x, 7.x and 6.x
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
-* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+
+### Cloud providers
+
 * ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 3.x
+* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+* ✅ Google Cloud Functions
 * ✅ AWS Lambda
+
+### ORMs and query builders
+
+See list above for supported database drivers.
+
+* ✅ [`sequelize`](https://www.npmjs.com/package/sequelize)
+* ✅ [`knex`](https://www.npmjs.com/package/knex)
+* ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
+* ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 
 ## Installation
 
