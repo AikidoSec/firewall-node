@@ -10,6 +10,17 @@ export class ChildProcess implements Wrapper {
     name: string,
     context: Context
   ): InterceptorResult {
+    // Ignore calls to spawn or spawnSync if shell option is not enabled
+    if (name === "spawn" || name === "spawnSync") {
+      const shellOption = args.find(
+        (arg) => typeof arg === "object" && arg !== null && "shell" in arg
+      );
+
+      if (!shellOption) {
+        return undefined;
+      }
+    }
+
     if (args.length > 0 && typeof args[0] === "string") {
       const command = args[0];
 
@@ -33,6 +44,12 @@ export class ChildProcess implements Wrapper {
       )
       .inspect("execSync", (args, subject, agent, context) =>
         this.inspectExec(args, "execSync", context)
+      )
+      .inspect("spawn", (args, subject, agent, context) =>
+        this.inspectExec(args, "spawn", context)
+      )
+      .inspect("spawnSync", (args, subject, agent, context) =>
+        this.inspectExec(args, "spawnSync", context)
       );
   }
 }
