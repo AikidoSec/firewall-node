@@ -13,11 +13,14 @@ export class ChildProcess implements Wrapper {
   ): InterceptorResult {
     // Ignore calls to spawn or spawnSync if shell option is not enabled
     if (name === "spawn" || name === "spawnSync") {
-      const shellOption = args.find(
-        (arg) => isPlainObject(arg) && "shell" in arg
+      const unsafeShellOption = args.find(
+        (arg) =>
+          isPlainObject(arg) &&
+          "shell" in arg &&
+          (arg.shell === true || typeof arg.shell === "string")
       );
 
-      if (!shellOption) {
+      if (!unsafeShellOption) {
         return undefined;
       }
     }
