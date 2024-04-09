@@ -1,10 +1,13 @@
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import type { Handler } from "aws-lambda";
 import { ChildProcess } from "../sinks/ChildProcess";
+import { Fetch } from "../sinks/Fetch";
+import { HTTPRequest } from "../sinks/HTTPRequest";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
 import { Postgres } from "../sinks/Postgres";
+import { Undici } from "../sinks/Undici";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
@@ -109,6 +112,9 @@ function getWrappers() {
     new FunctionsFramework(),
     new ChildProcess(),
     new FileSystem(),
+    new HTTPRequest(),
+    new Fetch(),
+    new Undici(),
   ];
 }
 

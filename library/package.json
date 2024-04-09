@@ -63,7 +63,8 @@
     "shell-quote": "^1.8.1",
     "supertest": "^6.3.4",
     "tap": "^18.6.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "undici": "^6.12.0"
   },
   "scripts": {
     "test": "tap --allow-incomplete-coverage",
