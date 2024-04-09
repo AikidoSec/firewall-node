@@ -1,4 +1,4 @@
-import { Context } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
@@ -51,9 +51,14 @@ export class FileSystem implements Wrapper {
   private inspectPath(
     args: unknown[],
     name: string,
-    context: Context,
     amountOfPathArgs: number
   ): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     for (const path of args.slice(0, amountOfPathArgs)) {
       if (typeof path === "string") {
         const result = checkContextForPathTraversal({
@@ -77,11 +82,10 @@ export class FileSystem implements Wrapper {
       .addSubject((exports) => exports);
 
     functionsWithPath.forEach((name) => {
-      callbackStyle.inspect(name, (args, subject, agent, context) => {
+      callbackStyle.inspect(name, (args) => {
         return this.inspectPath(
           args,
           name,
-          context,
           withSecondPathArgument.includes(name) ? 2 : 1
         );
       });
@@ -91,11 +95,10 @@ export class FileSystem implements Wrapper {
       .filter((name) => !noSync.includes(name))
       .forEach((name) => {
         const syncName = `${name}Sync`;
-        callbackStyle.inspect(syncName, (args, subject, agent, context) => {
+        callbackStyle.inspect(syncName, (args) => {
           return this.inspectPath(
             args,
             syncName,
-            context,
             withSecondPathArgument.includes(name) ? 2 : 1
           );
         });
@@ -108,11 +111,10 @@ export class FileSystem implements Wrapper {
     functionsWithPath
       .filter((name) => !noPromise.includes(name))
       .forEach((name) => {
-        promiseStyle.inspect(name, (args, subject, agent, context) => {
+        promiseStyle.inspect(name, (args) => {
           return this.inspectPath(
             args,
             name,
-            context,
             withSecondPathArgument.includes(name) ? 2 : 1
           );
         });

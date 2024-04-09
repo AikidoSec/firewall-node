@@ -32,27 +32,22 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), []);
 
-    await runWithContext(context, async () => {
-      await fetch("http://aikido.dev");
-    });
+    await fetch("http://aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 80 },
     ]);
     agent.getHostnames().clear();
 
-    await runWithContext(context, async () => {
-      await fetch(new URL("https://aikido.dev"));
-    });
+    await fetch(new URL("https://aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 443 },
     ]);
     agent.getHostnames().clear();
 
-    await runWithContext(context, async () => {
-      await t.rejects(() => fetch(""));
-    });
+    await t.rejects(() => fetch(""));
+    await t.rejects(() => fetch("invalid url"));
 
     t.same(agent.getHostnames().asArray(), []);
     agent.getHostnames().clear();

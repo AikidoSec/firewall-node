@@ -40,23 +40,11 @@ export class Undici implements Wrapper {
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .addSubject((exports) => exports)
-      .inspect("request", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      )
-      .inspect("stream", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      )
-      .inspect("pipeline", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      )
-      .inspect("connect", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      )
-      .inspect("fetch", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      )
-      .inspect("upgrade", (args, subject, agent, context) =>
-        this.inspect(args, agent)
-      );
+      .inspect("request", (args, subject, agent) => this.inspect(args, agent))
+      .inspect("stream", (args, subject, agent) => this.inspect(args, agent))
+      .inspect("pipeline", (args, subject, agent) => this.inspect(args, agent))
+      .inspect("connect", (args, subject, agent) => this.inspect(args, agent))
+      .inspect("fetch", (args, subject, agent) => this.inspect(args, agent))
+      .inspect("upgrade", (args, subject, agent) => this.inspect(args, agent));
   }
 }

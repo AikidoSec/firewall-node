@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { fetch, request } from "undici";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Token } from "../agent/api/Token";
@@ -37,18 +38,37 @@ t.test(
 
     const { request, fetch } = require("undici");
 
-    await runWithContext(context, async () => {
-      await request("https://aikido.dev");
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "aikido.dev", port: 443 },
-      ]);
-      agent.getHostnames().clear();
+    await request("https://aikido.dev");
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
 
-      await fetch("https://aikido.dev");
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "aikido.dev", port: 443 },
-      ]);
-      agent.getHostnames().clear();
-    });
+    await fetch("https://aikido.dev");
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({ protocol: "https:", hostname: "aikido.dev", port: 443 });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({ protocol: "https:", hostname: "aikido.dev", port: "443" });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: undefined },
+    ]);
+    agent.getHostnames().clear();
+
+    await request(new URL("https://aikido.dev"));
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
+
+    await t.rejects(() => request("invalid url"));
+    await t.rejects(() => request({ hostname: "" }));
   }
 );

@@ -47,36 +47,41 @@ t.test("it works", async (t) => {
     const google = https.request("https://aikido.dev");
     google.end();
   });
-
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
-    const google = https.request(new URL("https://aikido.dev"));
-    google.end();
-  });
-
+  const google = https.request(new URL("https://aikido.dev"));
+  google.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
-    const google = https.request({ hostname: "aikido.dev" });
-    google.end();
-  });
-
+  const google2 = https.request({ hostname: "aikido.dev" });
+  google2.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: undefined },
   ]);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
-    t.throws(() => https.request(""));
-  });
+  const withPort = https.request({ hostname: "aikido.dev", port: 443 });
+  withPort.end();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443 },
+  ]);
+  agent.getHostnames().clear();
 
+  const another = https.request({ hostname: "aikido.dev", port: "443" });
+  another.end();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: undefined },
+  ]);
+  agent.getHostnames().clear();
+
+  t.throws(() => https.request(""));
+  t.throws(() => https.request("invalid url"));
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
 });

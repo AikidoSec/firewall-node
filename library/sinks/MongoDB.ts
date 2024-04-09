@@ -4,7 +4,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { Context } from "../agent/Context";
+import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 
 const OPERATIONS_WITH_FILTER = [
@@ -86,11 +86,13 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
-  private inspectBulkWrite(
-    args: unknown[],
-    collection: Collection,
-    context: Context
-  ) {
+  private inspectBulkWrite(args: unknown[], collection: Collection) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     if (Array.isArray(args[0]) && args[0].length > 0) {
       const operations: BulkWriteOperation[] = args[0];
 
@@ -113,9 +115,14 @@ export class MongoDB implements Wrapper {
   private inspectOperation(
     operation: string,
     args: unknown[],
-    collection: Collection,
-    context: Context
+    collection: Collection
   ): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     if (args.length > 0 && isPlainObject(args[0])) {
       const filter = args[0];
 
@@ -141,18 +148,13 @@ export class MongoDB implements Wrapper {
     );
 
     OPERATIONS_WITH_FILTER.forEach((operation) => {
-      collection.inspect(operation, (args, collection, agent, context) =>
-        this.inspectOperation(
-          operation,
-          args,
-          collection as Collection,
-          context
-        )
+      collection.inspect(operation, (args, collection) =>
+        this.inspectOperation(operation, args, collection as Collection)
       );
     });
 
-    collection.inspect("bulkWrite", (args, collection, agent, context) =>
-      this.inspectBulkWrite(args, collection as Collection, context)
+    collection.inspect("bulkWrite", (args, collection) =>
+      this.inspectBulkWrite(args, collection as Collection)
     );
   }
 }

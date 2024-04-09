@@ -178,7 +178,7 @@ t.test("it hooks into dns module", async (t) => {
   hooks
     .addBuiltinModule("dns")
     .addSubject((exports) => exports.promises)
-    .inspect("lookup", (args, subject, agent) => {
+    .inspect("lookup", (args) => {
       if (typeof args[0] === "string") {
         seenDomains.push(args[0]);
       }
@@ -211,6 +211,12 @@ t.test(
 
       return args;
     });
+
+    // Unknown global
+    hooks.addGlobal("unknown").inspect(() => {});
+
+    // Without interceptor
+    hooks.addGlobal("setTimeout");
 
     const { agent, logger } = createAgent();
     t.same(applyHooks(hooks, agent), {});

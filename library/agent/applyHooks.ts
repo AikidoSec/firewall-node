@@ -152,21 +152,9 @@ function wrapWithoutArgumentModification(
   try {
     wrap(subject, method.getName(), function wrap(original: Function) {
       return function wrap() {
-        const context = getContext();
-
-        if (!context) {
-          agent.getInspectionStatistics().inspectedCallWithoutContext(module);
-
-          return original.apply(
-            // @ts-expect-error We don't now the type of this
-            this,
-            // eslint-disable-next-line prefer-rest-params
-            arguments
-          );
-        }
-
         // eslint-disable-next-line prefer-rest-params
         const args = Array.from(arguments);
+        const context = getContext();
         const start = performance.now();
         let result: InterceptorResult = undefined;
 
@@ -188,9 +176,10 @@ function wrapWithoutArgumentModification(
           attackDetected: !!result,
           blocked: agent.shouldBlock(),
           durationInMs: end - start,
+          withoutContext: !context,
         });
 
-        if (result) {
+        if (result && context) {
           // Flag request as having an attack detected
           context.attackDetected = true;
 

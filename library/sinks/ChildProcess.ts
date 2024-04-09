@@ -1,15 +1,17 @@
-import { Context } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
 export class ChildProcess implements Wrapper {
-  private inspectExec(
-    args: unknown[],
-    name: string,
-    context: Context
-  ): InterceptorResult {
+  private inspectExec(args: unknown[], name: string): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     if (args.length > 0 && typeof args[0] === "string") {
       const command = args[0];
 
@@ -28,11 +30,7 @@ export class ChildProcess implements Wrapper {
 
     childProcess
       .addSubject((exports) => exports)
-      .inspect("exec", (args, subject, agent, context) =>
-        this.inspectExec(args, "exec", context)
-      )
-      .inspect("execSync", (args, subject, agent, context) =>
-        this.inspectExec(args, "execSync", context)
-      );
+      .inspect("exec", (args) => this.inspectExec(args, "exec"))
+      .inspect("execSync", (args) => this.inspectExec(args, "execSync"));
   }
 }
