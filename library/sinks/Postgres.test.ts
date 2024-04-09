@@ -80,6 +80,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         headers: {},
         body: {},
         cookies: {},
+        source: "express",
       },
       () => {
         return client.query("-- This is a comment");
