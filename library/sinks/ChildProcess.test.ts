@@ -95,12 +95,24 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeContext, () => {
     throws(
-      () => spawn("ls `echo .`", [], {shell: true}, (err, stdout, stderr) => {}).unref(),
+      () =>
+        spawn(
+          "ls `echo .`",
+          [],
+          { shell: true },
+          (err, stdout, stderr) => {}
+        ).unref(),
       "Aikido runtime has blocked a Shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
     throws(
-      () => spawnSync("ls `echo .`", [], {shell: true}, (err, stdout, stderr) => {}),
+      () =>
+        spawnSync(
+          "ls `echo .`",
+          [],
+          { shell: true },
+          (err, stdout, stderr) => {}
+        ),
       "Aikido runtime has blocked a Shell injection: child_process.spawnSync(...) originating from body.file.matches"
     );
   });
