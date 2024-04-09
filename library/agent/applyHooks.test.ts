@@ -212,9 +212,11 @@ t.test("it hooks into globals", async () => {
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {});
 
-  await fetch("https://aikido.dev");
-  t.same(modifyCalled, true);
+  await runWithContext(context, async () => {
+    await fetch("https://aikido.dev");
+    t.same(modifyCalled, true);
 
-  atob("aGVsbG8gd29ybGQ=");
-  t.same(inspectCalled, true);
+    atob("aGVsbG8gd29ybGQ=");
+    t.same(inspectCalled, true);
+  });
 });
