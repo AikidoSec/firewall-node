@@ -2,6 +2,7 @@ import { Context } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
 export class ChildProcess implements Wrapper {
@@ -13,7 +14,7 @@ export class ChildProcess implements Wrapper {
     // Ignore calls to spawn or spawnSync if shell option is not enabled
     if (name === "spawn" || name === "spawnSync") {
       const shellOption = args.find(
-        (arg) => typeof arg === "object" && arg !== null && "shell" in arg
+        (arg) => isPlainObject(arg) && "shell" in arg
       );
 
       if (!shellOption) {
