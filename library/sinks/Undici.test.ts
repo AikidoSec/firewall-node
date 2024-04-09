@@ -19,7 +19,11 @@ const context: Context = {
 
 t.test(
   "it works",
-  { skip: !ReadableStream ? "ReadableStream is not available" : false },
+  {
+    skip: process.version.startsWith("v16")
+      ? "ReadableStream is not available"
+      : false,
+  },
   async () => {
     const agent = new Agent(
       true,
