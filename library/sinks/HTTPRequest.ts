@@ -1,6 +1,7 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
+import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 
 export class HTTPRequest implements Wrapper {
@@ -10,7 +11,7 @@ export class HTTPRequest implements Wrapper {
         try {
           const url = new URL(args[0]);
           if (url.hostname.length > 0) {
-            agent.onConnectDomain(url.hostname);
+            agent.onConnectHostname(url.hostname, getPortFromURL(url));
           }
         } catch (e) {
           // Ignore
@@ -18,7 +19,7 @@ export class HTTPRequest implements Wrapper {
       }
 
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        agent.onConnectDomain(args[0].hostname);
+        agent.onConnectHostname(args[0].hostname, getPortFromURL(args[0]));
       }
 
       if (
@@ -26,7 +27,10 @@ export class HTTPRequest implements Wrapper {
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
-        agent.onConnectDomain(args[0].hostname);
+        agent.onConnectHostname(
+          args[0].hostname,
+          typeof args[0].port === "number" ? args[0].port : undefined
+        );
       }
     }
   }

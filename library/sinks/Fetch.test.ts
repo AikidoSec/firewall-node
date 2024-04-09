@@ -30,27 +30,31 @@ t.test(
     );
     agent.start([new Fetch()]);
 
-    t.same(agent.getDomains().getDomains(), []);
+    t.same(agent.getHostnames().asArray(), []);
 
     await runWithContext(context, async () => {
       await fetch("http://aikido.dev");
     });
 
-    t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-    agent.getDomains().clear();
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 80 },
+    ]);
+    agent.getHostnames().clear();
 
     await runWithContext(context, async () => {
-      await fetch(new URL("http://aikido.dev"));
+      await fetch(new URL("https://aikido.dev"));
     });
 
-    t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-    agent.getDomains().clear();
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
 
     await runWithContext(context, async () => {
       await t.rejects(() => fetch(""));
     });
 
-    t.same(agent.getDomains().getDomains(), []);
-    agent.getDomains().clear();
+    t.same(agent.getHostnames().asArray(), []);
+    agent.getHostnames().clear();
   }
 );

@@ -27,7 +27,7 @@ t.test("it works", async (t) => {
   );
   agent.start([new HTTPRequest()]);
 
-  t.same(agent.getDomains().getDomains(), []);
+  t.same(agent.getHostnames().asArray(), []);
 
   const http = require("http");
 
@@ -36,8 +36,10 @@ t.test("it works", async (t) => {
     google.end();
   });
 
-  t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-  agent.getDomains().clear();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 80 },
+  ]);
+  agent.getHostnames().clear();
 
   const https = require("https");
 
@@ -46,29 +48,35 @@ t.test("it works", async (t) => {
     google.end();
   });
 
-  t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-  agent.getDomains().clear();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443 },
+  ]);
+  agent.getHostnames().clear();
 
   runWithContext(context, () => {
     const google = https.request(new URL("https://aikido.dev"));
     google.end();
   });
 
-  t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-  agent.getDomains().clear();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443 },
+  ]);
+  agent.getHostnames().clear();
 
   runWithContext(context, () => {
     const google = https.request({ hostname: "aikido.dev" });
     google.end();
   });
 
-  t.same(agent.getDomains().getDomains(), ["aikido.dev"]);
-  agent.getDomains().clear();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: undefined },
+  ]);
+  agent.getHostnames().clear();
 
   runWithContext(context, () => {
     t.throws(() => https.request(""));
   });
 
-  t.same(agent.getDomains().getDomains(), []);
-  agent.getDomains().clear();
+  t.same(agent.getHostnames().asArray(), []);
+  agent.getHostnames().clear();
 });
