@@ -1,5 +1,11 @@
 import { WrappableSubject } from "./WrappableSubject";
 
+/*
+ * We want to be notified whenever a new instance of S3 is created
+ *
+ * const AWS = require("aws-sdk");
+ * new AWS.S3();
+ */
 export class ConstructorInterceptor {
   private readonly subjects: WrappableSubject[] = [];
 
