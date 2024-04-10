@@ -40,9 +40,10 @@ t.test("add builtin module throws if name is empty", async (t) => {
 
 t.test("it throws if name is empty", async () => {
   const hooks = new Hooks();
-  hooks
+  const subject = hooks
     .addPackage("package")
     .withVersion("^1.0.0")
-    .addSubject((exports) => exports)
-    .inspectNewInstance("");
+    .addSubject((exports) => exports);
+
+  t.throws(() => subject.inspectNewInstance(""));
 });
