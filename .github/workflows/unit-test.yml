@@ -47,7 +47,7 @@ jobs:
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
         with:
-          file: ./library/.tap/converage/report/lcov.info
+          file: ./library/.tap/coverage/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/runtime-node
