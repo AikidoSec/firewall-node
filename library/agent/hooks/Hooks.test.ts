@@ -43,3 +43,13 @@ t.test("it throws error if global name is empty", async () => {
 
   t.throws(() => hooks.addGlobal(""));
 });
+
+t.test("it throws if name is empty", async () => {
+  const hooks = new Hooks();
+  const subject = hooks
+    .addPackage("package")
+    .withVersion("^1.0.0")
+    .addSubject((exports) => exports);
+
+  t.throws(() => subject.inspectNewInstance(""));
+});

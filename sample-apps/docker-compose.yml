@@ -1,4 +1,10 @@
 services:
+  s3mock:
+    image: adobe/s3mock:3.5.2
+    environment:
+      - initialBuckets=bucket
+    ports:
+      - "9090:9090"
   mongodb:
     image: mongo:5
     restart: always
