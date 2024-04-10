@@ -4,6 +4,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
+      s3:
+        image: adobe/s3mock
+        env:
+          "initialBuckets": "bucket"
+        ports:
+          - "9090:9090"
       mongodb:
         image: mongo:5
         env:
@@ -41,7 +47,7 @@ jobs:
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
         with:
-          file: ./library/.tap/converage/report/lcov.info
+          file: ./library/.tap/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/runtime-node

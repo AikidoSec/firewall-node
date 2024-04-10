@@ -1,3 +1,4 @@
+import { ConstructorInterceptor } from "./ConstructorInterceptor";
 import { Interceptor, MethodInterceptor } from "./MethodInterceptor";
 import {
   ModifyingArgumentsInterceptor,
@@ -8,8 +9,11 @@ import {
  * A subject represents an object from package exports that we want to hook into.
  */
 export class WrappableSubject {
-  private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
-    [];
+  private methods: (
+    | MethodInterceptor
+    | ModifyingArgumentsMethodInterceptor
+    | ConstructorInterceptor
+  )[] = [];
 
   constructor(private readonly selector: (exports: unknown) => unknown) {}
 
@@ -43,6 +47,13 @@ export class WrappableSubject {
     this.methods.push(method);
 
     return this;
+  }
+
+  inspectNewInstance(name: string) {
+    const construct = new ConstructorInterceptor(name);
+    this.methods.push(construct);
+
+    return construct;
   }
 
   getSelector() {
