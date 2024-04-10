@@ -20,7 +20,7 @@ const unsafeContext: Context = {
   source: "express",
 };
 
-const safeContext = {
+const safeContext: Context = {
   remoteAddress: "::1",
   method: "POST",
   url: "http://localhost:4000",
@@ -28,6 +28,7 @@ const safeContext = {
   headers: {},
   body: {},
   cookies: {},
+  source: "express",
 };
 
 t.test("it inspects method calls and blocks if needed", async (t) => {
@@ -164,6 +165,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
         headers: {},
         body: {},
         cookies: {},
+        source: "express",
       },
       () => {
         return collection.find({ title: { $ne: null } }).toArray();
