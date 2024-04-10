@@ -5,6 +5,34 @@ import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
+const operationsWithKey = [
+  "putObject",
+  "getObject",
+  "deleteObject",
+  "copyObject",
+  "getObjectAcl",
+  "putObjectAcl",
+  "restoreObject",
+  "headObject",
+  "deleteObjectTagging",
+  "getObjectTagging",
+  "putObjectTagging",
+  "upload",
+  "createMultipartUpload",
+  "uploadPart",
+  "uploadPartCopy",
+  "completeMultipartUpload",
+  "abortMultipartUpload",
+  "listParts",
+  "listMultipartUploads",
+  "putObjectRetention",
+  "getObjectRetention",
+  "putObjectLegalHold",
+  "getObjectLegalHold",
+  "selectObjectContent",
+  "getSignedUrl",
+];
+
 export class AwsSDKVersion2 implements Wrapper {
   private inspectS3Operation(
     args: unknown[],
@@ -16,10 +44,15 @@ export class AwsSDKVersion2 implements Wrapper {
       return undefined;
     }
 
-    if (args.length > 0 && isPlainObject(args[0])) {
-      if (typeof args[0].Key === "string" && args[0].Key.length > 0) {
+    for (const arg of args) {
+      if (
+        isPlainObject(arg) &&
+        arg.Key &&
+        typeof arg.Key === "string" &&
+        arg.Key.length > 0
+      ) {
         const result = checkContextForPathTraversal({
-          filename: args[0].Key,
+          filename: arg.Key,
           operation: `S3.${operation}`,
           context: context,
         });
@@ -34,14 +67,15 @@ export class AwsSDKVersion2 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
+    const s3 = hooks
       .addPackage("aws-sdk")
       .withVersion("^2.0.0")
       .addSubject((exports) => exports)
       .inspectNewInstance("S3")
-      .addSubject((exports) => exports)
-      .inspect("putObject", (args) =>
-        this.inspectS3Operation(args, "putObject")
-      );
+      .addSubject((exports) => exports);
+
+    operationsWithKey.forEach((operation) => {
+      s3.inspect(operation, (args) => this.inspectS3Operation(args, operation));
+    });
   }
 }

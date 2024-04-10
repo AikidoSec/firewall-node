@@ -45,12 +45,23 @@ t.test("it works", async (t) => {
   });
 
   async function safeOperation() {
-    await s3
+    const put = await s3
       .putObject({
         Bucket: "bucket",
         Key: "test.txt",
       })
       .promise();
+
+    t.same(put.$response.httpResponse.statusCode, 200);
+  }
+
+  function safeSignedURL() {
+    const url = s3.getSignedUrl("getObject", {
+      Bucket: "bucket",
+      Key: "test.txt",
+    });
+
+    t.same(url.startsWith("http://localhost:9090/bucket/test.txt"), true);
   }
 
   async function unsafeOperation() {
@@ -62,8 +73,18 @@ t.test("it works", async (t) => {
       .promise();
   }
 
+  function unsafeSignedURL() {
+    s3.getSignedUrl("getObject", {
+      Bucket: "bucket",
+      Key: "test/../test.txt",
+    });
+  }
+
+  // No context
   await safeOperation();
   await unsafeOperation();
+  safeSignedURL();
+  unsafeSignedURL();
 
   await runWithContext(unsafeContext, async () => {
     await safeOperation();
@@ -72,6 +93,15 @@ t.test("it works", async (t) => {
       t.same(
         error.message,
         "Aikido runtime has blocked a Path traversal: S3.putObject(...) originating from body.file.matches"
+      );
+    }
+
+    safeSignedURL();
+    const signedURLError = t.throws(() => unsafeSignedURL());
+    if (signedURLError instanceof Error) {
+      t.same(
+        signedURLError.message,
+        "Aikido runtime has blocked a Path traversal: S3.getSignedUrl(...) originating from body.file.matches"
       );
     }
   });
