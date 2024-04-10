@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       s3:
-        image: abode/s3mock
+        image: adobe/s3mock
         env:
           "initialBuckets": "bucket"
         ports:
