@@ -5,17 +5,10 @@ import { API, APIResult } from "./API";
 export class APIForTesting implements API {
   private events: Event[] = [];
 
-  constructor(
-    private result: APIResult = { success: true },
-    private readonly reportingURL = new URL("https://guard.aikido.dev")
-  ) {}
+  constructor(private result: APIResult = { success: true }) {}
 
   setResult(result: APIResult) {
     this.result = result;
-  }
-
-  getReportingURL(): URL {
-    return this.reportingURL;
   }
 
   async report(

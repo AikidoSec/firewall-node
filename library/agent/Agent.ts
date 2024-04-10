@@ -332,13 +332,6 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number | undefined) {
-    const reportingURL = this.api.getReportingURL();
-
-    // We don't want to report the reporting domain (guard.aikido.dev)
-    if (reportingURL.hostname === hostname) {
-      return;
-    }
-
     this.hostnames.add(hostname, port);
   }
 

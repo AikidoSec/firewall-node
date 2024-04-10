@@ -20,10 +20,6 @@ export class APIFetch implements API {
     return { success: true };
   }
 
-  getReportingURL(): URL {
-    return this.reportingUrl;
-  }
-
   private async fetch(
     url: string,
     {

@@ -81,7 +81,6 @@ t.test("it detects SQL injections", async () => {
         headers: {},
         body: {},
         cookies: {},
-        source: "express",
       },
       () => {
         return client.query("-- This is a comment");

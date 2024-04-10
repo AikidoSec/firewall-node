@@ -247,7 +247,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
-      withoutContext: false,
     });
   }
   t.match(api.getEvents(), [
@@ -261,7 +260,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
-      withoutContext: false,
     });
   }
 
@@ -476,23 +474,4 @@ t.test("when payload is object", async () => {
       JSON.stringify("a".repeat(20000)).substring(0, 4096),
     ]
   );
-});
-
-t.test("it does not add reporting URL domain to hostnames", async () => {
-  const logger = new LoggerNoop();
-  const api = new APIForTesting(
-    { success: true },
-    new URL("https://guard.aikido.dev")
-  );
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
-  agent.start([]);
-  agent.onConnectHostname("aikido.dev", 443);
-  agent.onConnectHostname("guard.aikido.dev", 443);
-  t.same(agent.getHostnames().asArray(), [
-    {
-      hostname: "aikido.dev",
-      port: 443,
-    },
-  ]);
 });
