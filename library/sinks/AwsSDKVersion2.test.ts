@@ -44,19 +44,35 @@ t.test("it works", async (t) => {
     s3ForcePathStyle: true,
   });
 
-  await s3
-    .putObject({
-      Bucket: "bucket",
-      Key: "test",
-    })
-    .promise();
-
-  await runWithContext(unsafeContext, async () => {
+  async function safeOperation() {
     await s3
       .putObject({
         Bucket: "bucket",
-        Key: "test",
+        Key: "test.txt",
       })
       .promise();
+  }
+
+  async function unsafeOperation() {
+    await s3
+      .putObject({
+        Bucket: "bucket",
+        Key: "test/../test.txt",
+      })
+      .promise();
+  }
+
+  await safeOperation();
+  await unsafeOperation();
+
+  await runWithContext(unsafeContext, async () => {
+    await safeOperation();
+    const error = await t.rejects(() => unsafeOperation());
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Aikido runtime has blocked a Path traversal: S3.putObject(...) originating from body.file.matches"
+      );
+    }
   });
 });
