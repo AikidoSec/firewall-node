@@ -61,39 +61,3 @@ t.test("it works", async (t) => {
       .promise();
   });
 });
-
-/*
-t.test("it works", async () => {
-  const logger = new LoggerForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    new APIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new AwsSDK()]);
-  console.log(logger.getMessages());
-
-  const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-  const s3 = new S3Client({
-    region: "us-east-1",
-    endpoint: "http://localhost:9090",
-    credentials: {
-      accessKeyId: "test",
-      secretAccessKey: "test",
-    },
-    forcePathStyle: true,
-  });
-
-  console.log(s3);
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: "bucket",
-      Key: "test",
-      Body: "test",
-    })
-  );
-});
-*/
