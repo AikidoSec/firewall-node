@@ -31,7 +31,6 @@ t.test("it works", async (t) => {
   );
 
   agent.start([new AwsSDKVersion2()]);
-  console.log(logger.getMessages());
 
   const AWS = require("aws-sdk");
 
