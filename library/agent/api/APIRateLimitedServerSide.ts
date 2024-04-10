@@ -8,6 +8,10 @@ export class APIRateLimitedServerSide implements API {
 
   constructor(private readonly api: API) {}
 
+  getReportingURL() {
+    return this.api.getReportingURL();
+  }
+
   async report(
     token: Token,
     event: Event,

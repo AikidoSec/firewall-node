@@ -17,6 +17,10 @@ export class APIRateLimitedClientSide implements API {
     this.intervalInMs = intervalInMs;
   }
 
+  getReportingURL() {
+    return this.api.getReportingURL();
+  }
+
   async report(
     token: Token,
     event: Event,

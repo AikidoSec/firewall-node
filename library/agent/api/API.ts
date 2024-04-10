@@ -19,4 +19,5 @@ export type APIResult =
 
 export interface API {
   report(token: Token, event: Event, timeoutInMS: number): Promise<APIResult>;
+  getReportingURL(): URL;
 }
