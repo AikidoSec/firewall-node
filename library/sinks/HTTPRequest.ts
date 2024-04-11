@@ -77,6 +77,8 @@ export class HTTPRequest implements Wrapper {
         }
       }
     }
+
+    return undefined;
   }
 
   wrap(hooks: Hooks) {

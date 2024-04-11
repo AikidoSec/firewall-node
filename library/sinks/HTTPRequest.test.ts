@@ -12,7 +12,9 @@ const context: Context = {
   url: "http://localhost:4000",
   query: {},
   headers: {},
-  body: {},
+  body: {
+    image: "http://localhost:4000/api/internal",
+  },
   cookies: {},
   source: "express",
 };
@@ -84,4 +86,19 @@ t.test("it works", async (t) => {
   t.throws(() => https.request("invalid url"));
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
+
+  runWithContext(context, () => {
+    const google = https.request("https://google.com");
+    google.end();
+
+    const error = t.throws(() =>
+      https.request("http://localhost:4000/api/internal")
+    );
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+  });
 });

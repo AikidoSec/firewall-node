@@ -1,8 +1,10 @@
 import { Agent } from "../agent/Agent";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
+import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 
 export class Fetch implements Wrapper {
   private onConnectHostname(
@@ -11,8 +13,17 @@ export class Fetch implements Wrapper {
     port: number | undefined
   ): InterceptorResult {
     agent.onConnectHostname(hostname, port);
+    const context = getContext();
 
-    return undefined;
+    if (!context) {
+      return undefined;
+    }
+
+    return checkContextForSSRF({
+      hostname,
+      operation: "fetch",
+      context,
+    });
   }
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
@@ -46,6 +57,8 @@ export class Fetch implements Wrapper {
         }
       }
     }
+
+    return undefined;
   }
 
   wrap(hooks: Hooks) {

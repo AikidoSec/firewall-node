@@ -12,7 +12,9 @@ const context: Context = {
   url: "http://localhost:4000",
   query: {},
   headers: {},
-  body: {},
+  body: {
+    image: "http://localhost:4000/api/internal",
+  },
   cookies: {},
   source: "express",
 };
@@ -25,7 +27,7 @@ t.test(
       true,
       new LoggerNoop(),
       new APIForTesting(),
-      new Token("123"),
+      undefined,
       undefined
     );
     agent.start([new Fetch()]);
@@ -51,5 +53,18 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), []);
     agent.getHostnames().clear();
+
+    await runWithContext(context, async () => {
+      await fetch("https://google.com");
+      const error = await t.rejects(() =>
+        fetch("http://localhost:4000/api/internal")
+      );
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Aikido runtime has blocked a Server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
+    });
   }
 );

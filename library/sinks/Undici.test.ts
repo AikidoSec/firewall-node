@@ -1,5 +1,4 @@
 import * as t from "tap";
-import { fetch, request } from "undici";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Token } from "../agent/api/Token";
@@ -13,7 +12,9 @@ const context: Context = {
   url: "http://localhost:4000",
   query: {},
   headers: {},
-  body: {},
+  body: {
+    image: "http://localhost:4000/api/internal",
+  },
   cookies: {},
   source: "express",
 };
@@ -70,5 +71,10 @@ t.test(
 
     await t.rejects(() => request("invalid url"));
     await t.rejects(() => request({ hostname: "" }));
+
+    await runWithContext(context, async () => {
+      await request("https://google.com");
+      await t.rejects(() => request("http://localhost:4000/api/internal"));
+    });
   }
 );
