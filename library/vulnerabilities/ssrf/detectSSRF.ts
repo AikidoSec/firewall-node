@@ -1,5 +1,4 @@
-import { isIP } from "net";
-import { BlockList } from "node:net";
+import { isIP, BlockList } from "net";
 
 const PRIVATE_IP_RANGES = [
   "0.0.0.0/8",
