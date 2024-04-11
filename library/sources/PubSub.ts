@@ -12,7 +12,7 @@ export class PubSub implements Wrapper {
     pubSub
       .addFile("build/src/subscription.js")
       .addSubject((exports) => exports.Subscription.prototype)
-      .modifyArguments("on", (args, subject, agent) => {
+      .modifyArguments("on", (args) => {
         if (
           args.length > 0 &&
           typeof args[0] === "string" &&

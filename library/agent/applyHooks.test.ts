@@ -178,7 +178,7 @@ t.test("it hooks into dns module", async (t) => {
   hooks
     .addBuiltinModule("dns")
     .addSubject((exports) => exports.promises)
-    .inspect("lookup", (args, subject, agent) => {
+    .inspect("lookup", (args) => {
       if (typeof args[0] === "string") {
         seenDomains.push(args[0]);
       }
@@ -193,3 +193,40 @@ t.test("it hooks into dns module", async (t) => {
 
   t.same(seenDomains, ["google.com"]);
 });
+
+t.test(
+  "it hooks into globals",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async () => {
+    const hooks = new Hooks();
+
+    let modifyCalled = false;
+    hooks.addGlobal("fetch").inspect((args) => {
+      modifyCalled = true;
+    });
+
+    let inspectCalled = false;
+    hooks.addGlobal("atob").modifyArguments((args) => {
+      inspectCalled = true;
+
+      return args;
+    });
+
+    // Unknown global
+    hooks.addGlobal("unknown").inspect(() => {});
+
+    // Without interceptor
+    hooks.addGlobal("setTimeout");
+
+    const { agent, logger } = createAgent();
+    t.same(applyHooks(hooks, agent), {});
+
+    await runWithContext(context, async () => {
+      await fetch("https://aikido.dev");
+      t.same(modifyCalled, true);
+
+      atob("aGVsbG8gd29ybGQ=");
+      t.same(inspectCalled, true);
+    });
+  }
+);

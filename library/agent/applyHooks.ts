@@ -7,6 +7,7 @@ import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
 import { getContext } from "./Context";
 import { BuiltinModule } from "./hooks/BuiltinModule";
+import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
 import {
   InterceptorResult,
@@ -82,6 +83,26 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
     }
   });
 
+  hooks.getGlobals().forEach((g) => {
+    const name = g.getName();
+
+    if (!(global as Record<string, unknown>)[name]) {
+      return;
+    }
+
+    const interceptor = g.getMethodInterceptor();
+
+    if (!interceptor) {
+      return;
+    }
+
+    if (interceptor instanceof ModifyingArgumentsMethodInterceptor) {
+      wrapWithArgumentModification(global, interceptor, "global", agent);
+    } else {
+      wrapWithoutArgumentModification(global, interceptor, "global", agent);
+    }
+  });
+
   return wrapped;
 }
 
@@ -132,21 +153,9 @@ function wrapWithoutArgumentModification(
   try {
     wrap(subject, method.getName(), function wrap(original: Function) {
       return function wrap() {
-        const context = getContext();
-
-        if (!context) {
-          agent.getInspectionStatistics().inspectedCallWithoutContext(module);
-
-          return original.apply(
-            // @ts-expect-error We don't now the type of this
-            this,
-            // eslint-disable-next-line prefer-rest-params
-            arguments
-          );
-        }
-
         // eslint-disable-next-line prefer-rest-params
         const args = Array.from(arguments);
+        const context = getContext();
         const start = performance.now();
         let result: InterceptorResult = undefined;
 
@@ -168,9 +177,10 @@ function wrapWithoutArgumentModification(
           attackDetected: !!result,
           blocked: agent.shouldBlock(),
           durationInMs: end - start,
+          withoutContext: !context,
         });
 
-        if (result) {
+        if (result && context) {
           // Flag request as having an attack detected
           context.attackDetected = true;
 
@@ -246,6 +256,38 @@ function wrapWithArgumentModification(
   }
 }
 
+function wrapNewInstance(
+  subject: unknown,
+  constructor: ConstructorInterceptor,
+  module: string,
+  agent: Agent
+) {
+  const subjects = constructor.getSubjects();
+
+  if (subjects.length === 0) {
+    return;
+  }
+
+  try {
+    wrap(subject, constructor.getName(), function wrap(original: Function) {
+      return function wrap() {
+        // eslint-disable-next-line prefer-rest-params
+        const args = Array.from(arguments);
+
+        // @ts-expect-error It's a constructor
+        const newInstance = new original(...args);
+        subjects.forEach((subject) => {
+          wrapSubject(newInstance, subject, module, agent);
+        });
+
+        return newInstance;
+      };
+    });
+  } catch (error) {
+    agent.onFailedToWrapMethod(module, constructor.getName());
+  }
+}
+
 function wrapSubject(
   exports: unknown,
   subject: WrappableSubject,
@@ -261,8 +303,10 @@ function wrapSubject(
   subject.getMethodInterceptors().forEach((method) => {
     if (method instanceof ModifyingArgumentsMethodInterceptor) {
       wrapWithArgumentModification(theSubject, method, module, agent);
-    } else {
+    } else if (method instanceof MethodInterceptor) {
       wrapWithoutArgumentModification(theSubject, method, module, agent);
+    } else {
+      wrapNewInstance(theSubject, method, module, agent);
     }
   });
 }

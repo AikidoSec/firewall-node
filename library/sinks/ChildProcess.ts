@@ -1,4 +1,4 @@
-import { Context } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
@@ -6,11 +6,13 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
 export class ChildProcess implements Wrapper {
-  private inspectExec(
-    args: unknown[],
-    name: string,
-    context: Context
-  ): InterceptorResult {
+  private inspectExec(args: unknown[], name: string): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     // Ignore calls to spawn or spawnSync if shell option is not enabled
     if (name === "spawn" || name === "spawnSync") {
       const unsafeShellOption = args.find(
@@ -43,17 +45,9 @@ export class ChildProcess implements Wrapper {
 
     childProcess
       .addSubject((exports) => exports)
-      .inspect("exec", (args, subject, agent, context) =>
-        this.inspectExec(args, "exec", context)
-      )
-      .inspect("execSync", (args, subject, agent, context) =>
-        this.inspectExec(args, "execSync", context)
-      )
-      .inspect("spawn", (args, subject, agent, context) =>
-        this.inspectExec(args, "spawn", context)
-      )
-      .inspect("spawnSync", (args, subject, agent, context) =>
-        this.inspectExec(args, "spawnSync", context)
-      );
+      .inspect("exec", (args) => this.inspectExec(args, "exec"))
+      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
+      .inspect("spawn", (args) => this.inspectExec(args, "spawn"))
+      .inspect("spawnSync", (args) => this.inspectExec(args, "spawnSync"));
   }
 }
