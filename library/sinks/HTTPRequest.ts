@@ -1,22 +1,34 @@
 import { Agent } from "../agent/Agent";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 
 export class HTTPRequest implements Wrapper {
   private onConnectHostname(
     agent: Agent,
     hostname: string,
-    port: number | undefined
+    port: number | undefined,
+    module: string
   ): InterceptorResult {
     agent.onConnectHostname(hostname, port);
+    const context = getContext();
 
-    return undefined;
+    if (!context) {
+      return undefined;
+    }
+
+    return checkContextForSSRF({
+      hostname,
+      operation: `${module}.request`,
+      context,
+    });
   }
 
-  inspectHttpRequest(args: unknown[], agent: Agent) {
+  inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {
@@ -25,7 +37,8 @@ export class HTTPRequest implements Wrapper {
             const result = this.onConnectHostname(
               agent,
               url.hostname,
-              getPortFromURL(url)
+              getPortFromURL(url),
+              module
             );
             if (result) {
               return result;
@@ -40,7 +53,8 @@ export class HTTPRequest implements Wrapper {
         const result = this.onConnectHostname(
           agent,
           args[0].hostname,
-          getPortFromURL(args[0])
+          getPortFromURL(args[0]),
+          module
         );
         if (result) {
           return result;
@@ -55,7 +69,8 @@ export class HTTPRequest implements Wrapper {
         const result = this.onConnectHostname(
           agent,
           args[0].hostname,
-          typeof args[0].port === "number" ? args[0].port : undefined
+          typeof args[0].port === "number" ? args[0].port : undefined,
+          module
         );
         if (result) {
           return result;
@@ -69,14 +84,14 @@ export class HTTPRequest implements Wrapper {
       .addBuiltinModule("http")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent)
+        this.inspectHttpRequest(args, agent, "http")
       );
 
     hooks
       .addBuiltinModule("https")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent)
+        this.inspectHttpRequest(args, agent, "https")
       );
   }
 }
