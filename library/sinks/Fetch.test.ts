@@ -65,6 +65,15 @@ t.test(
           "Aikido runtime has blocked a Server-side request forgery: fetch(...) originating from body.image"
         );
       }
+      const error2 = await t.rejects(() =>
+        fetch(new URL("http://localhost:4000/api/internal"))
+      );
+      if (error2 instanceof Error) {
+        t.same(
+          error2.message,
+          "Aikido runtime has blocked a Server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
     });
   }
 );

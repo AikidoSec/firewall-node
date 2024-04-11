@@ -100,5 +100,28 @@ t.test("it works", async (t) => {
         "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
       );
     }
+    const error2 = t.throws(() =>
+      https.request(new URL("http://localhost:4000/api/internal"))
+    );
+    if (error2 instanceof Error) {
+      t.match(
+        error2.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+    const error3 = t.throws(() =>
+      https.request({
+        protocol: "http:",
+        hostname: "localhost",
+        port: 4000,
+        path: "/api/internal",
+      })
+    );
+    if (error3 instanceof Error) {
+      t.match(
+        error3.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
   });
 });

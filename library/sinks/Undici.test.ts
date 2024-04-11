@@ -74,7 +74,38 @@ t.test(
 
     await runWithContext(context, async () => {
       await request("https://google.com");
-      await t.rejects(() => request("http://localhost:4000/api/internal"));
+      const error = await t.rejects(() =>
+        request("http://localhost:4000/api/internal")
+      );
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+        );
+      }
+      const error2 = await t.rejects(() =>
+        request(new URL("http://localhost:4000/api/internal"))
+      );
+      if (error2 instanceof Error) {
+        t.same(
+          error2.message,
+          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+        );
+      }
+      const error3 = await t.rejects(() =>
+        request({
+          protocol: "http:",
+          hostname: "localhost",
+          port: 4000,
+          path: "/api/internal",
+        })
+      );
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+        );
+      }
     });
   }
 );
