@@ -11,6 +11,7 @@ t.test("it resets stats", async () => {
   });
 
   stats.onInspectedCall({
+    withoutContext: false,
     sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
@@ -80,6 +81,7 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
+    withoutContext: false,
     sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
@@ -109,7 +111,13 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  stats.inspectedCallWithoutContext("mongodb");
+  stats.onInspectedCall({
+    withoutContext: true,
+    sink: "mongodb",
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+  });
 
   t.same(stats.getStats(), {
     sinks: {
@@ -160,6 +168,7 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
+    withoutContext: false,
     sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
@@ -190,6 +199,7 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   stats.onInspectedCall({
+    withoutContext: false,
     sink: "mongodb",
     blocked: true,
     durationInMs: 0.3,
@@ -225,6 +235,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   for (let i = 0; i < maxPerfSamplesInMemory; i++) {
     stats.onInspectedCall({
+      withoutContext: false,
       sink: "mongodb",
       blocked: false,
       durationInMs: i * 0.1,
@@ -277,6 +288,7 @@ t.test("it keeps track of amount of calls", async () => {
     i++
   ) {
     stats.onInspectedCall({
+      withoutContext: false,
       sink: "mongodb",
       blocked: false,
       durationInMs: i * 0.1,
@@ -409,6 +421,7 @@ t.test("it force compresses stats", async () => {
   });
 
   stats.onInspectedCall({
+    withoutContext: false,
     sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,

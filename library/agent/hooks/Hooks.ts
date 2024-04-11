@@ -1,15 +1,24 @@
 import { BuiltinModule } from "./BuiltinModule";
+import { Global } from "./Global";
 import { Package } from "./Package";
 
 export class Hooks {
   private readonly packages: Package[] = [];
   private readonly builtinModules: BuiltinModule[] = [];
+  private readonly globals: Global[] = [];
 
   addPackage(packageName: string): Package {
     const pkg = new Package(packageName);
     this.packages.push(pkg);
 
     return pkg;
+  }
+
+  addGlobal(name: string): Global {
+    const global = new Global(name);
+    this.globals.push(global);
+
+    return global;
   }
 
   addBuiltinModule(name: string): BuiltinModule {
@@ -25,5 +34,9 @@ export class Hooks {
 
   getBuiltInModules() {
     return this.builtinModules;
+  }
+
+  getGlobals() {
+    return this.globals;
   }
 }

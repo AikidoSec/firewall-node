@@ -149,12 +149,6 @@ export class InspectionStatistics {
     this.stats[sink].durations = [];
   }
 
-  inspectedCallWithoutContext(sink: string) {
-    this.ensureSinkStats(sink);
-    this.stats[sink].total += 1;
-    this.stats[sink].withoutContext += 1;
-  }
-
   interceptorThrewError(sink: string) {
     this.ensureSinkStats(sink);
     this.stats[sink].total += 1;
@@ -182,15 +176,22 @@ export class InspectionStatistics {
     blocked,
     attackDetected,
     durationInMs,
+    withoutContext,
   }: {
     sink: string;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
+    withoutContext: boolean;
   }) {
     this.ensureSinkStats(sink);
 
     this.stats[sink].total += 1;
+
+    if (withoutContext) {
+      this.stats[sink].withoutContext += 1;
+      return;
+    }
 
     if (this.stats[sink].durations.length >= this.maxPerfSamplesInMemory) {
       this.compressPerfSamples(sink);

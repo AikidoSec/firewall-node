@@ -1,5 +1,4 @@
-import { Agent } from "../agent/Agent";
-import { Context } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
@@ -10,11 +9,13 @@ import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDi
 export class MySQL implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
 
-  private inspectQuery(
-    args: unknown[],
-    agent: Agent,
-    context: Context
-  ): InterceptorResult {
+  private inspectQuery(args: unknown[]): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
 
@@ -25,6 +26,8 @@ export class MySQL implements Wrapper {
         dialect: this.dialect,
       });
     }
+
+    return undefined;
   }
 
   wrap(hooks: Hooks) {
@@ -34,8 +37,6 @@ export class MySQL implements Wrapper {
       .addFile("lib/Connection")
       .addSubject((exports) => exports.prototype);
 
-    connection.inspect("query", (args, subject, agent, context) =>
-      this.inspectQuery(args, agent, context)
-    );
+    connection.inspect("query", (args) => this.inspectQuery(args));
   }
 }
