@@ -89,17 +89,11 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
     return false;
   }
 
-  if (!userInput.includes(hostname)) {
-    return false;
+  // e.g. ftp://localhost or https://domain.com
+  const parts = userInput.split("://");
+  if (parts.length > 1 && parts[1].startsWith(hostname)) {
+    return isPrivateHostname(hostname);
   }
 
-  const variants = [userInput, `http://${userInput}`];
-  for (const variant of variants) {
-    const url = tryParseURL(variant);
-    if (url && url.hostname === hostname && isPrivateHostname(url.hostname)) {
-      return true;
-    }
-  }
-
-  return false;
+  return userInput.startsWith(hostname) && isPrivateHostname(hostname);
 }
