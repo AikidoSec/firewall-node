@@ -1,5 +1,6 @@
 import { isIP, BlockList } from "net";
 
+// Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
   "0.0.0.0/8",
   "10.0.0.0/8",
@@ -33,6 +34,40 @@ PRIVATE_IP_RANGES.forEach((range) => {
   privateIp.addSubnet(ip, parseInt(mask, 10));
 });
 
+function isPrivateIPv6(ip: string) {
+  return (
+    /^::$/.test(ip) ||
+    /^::1$/.test(ip) ||
+    /^::f{4}:([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
+      ip
+    ) ||
+    /^::f{4}:0.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
+      ip
+    ) ||
+    /^64:ff9b::([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
+      ip
+    ) ||
+    /^100::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
+      ip
+    ) ||
+    /^2001::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
+      ip
+    ) ||
+    /^2001:2[0-9a-fA-F]:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
+      ip
+    ) ||
+    /^2001:db8:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
+      ip
+    ) ||
+    /^2002:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
+      ip
+    ) ||
+    /^f[c-d]([0-9a-fA-F]{2,2}):/i.test(ip) ||
+    /^fe[8-9a-bA-B][0-9a-fA-F]:/i.test(ip) ||
+    /^ff([0-9a-fA-F]{2,2}):/i.test(ip)
+  );
+}
+
 export function detectSSRF(userInput: string, hostname: string): boolean {
   if (userInput.length <= 1) {
     return false;
@@ -42,8 +77,18 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
     return false;
   }
 
-  if (isIP(hostname) === 4 && privateIp.check(hostname)) {
-    return true;
+  const version = isIP(hostname);
+  switch (version) {
+    case 4:
+      if (privateIp.check(hostname)) {
+        return true;
+      }
+      break;
+    case 6:
+      if (isPrivateIPv6(hostname)) {
+        return true;
+      }
+      break;
   }
 
   return hostname === "localhost";

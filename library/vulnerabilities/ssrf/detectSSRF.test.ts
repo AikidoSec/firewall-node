@@ -25,10 +25,35 @@ t.test("it ignores invalid URLs", async (t) => {
   t.same(detectSSRF("http://", "localhost"), false);
 });
 
-t.test("it checks for private IP addresses", async (t) => {
+t.test("it detects private IPv4 address", async (t) => {
   t.same(detectSSRF("http://10.0.0.1", "10.0.0.1"), true);
 });
 
-t.test("it checks for private IP addresses", async (t) => {
+t.test("it ignores public IPv4 address", async (t) => {
   t.same(detectSSRF("http://74.125.133.99", "74.125.133.99"), false);
+});
+
+t.test("it checks for private IPv6 address", async (t) => {
+  t.same(
+    detectSSRF(
+      "http://febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+      "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    ),
+    true
+  );
+  t.same(detectSSRF("http://fe80::1", "fe80::1"), true);
+});
+
+t.test("it ignores public IPv6 address", async (t) => {
+  t.same(
+    detectSSRF(
+      "http://2001:2:ffff:ffff:ffff:ffff:ffff:ffff",
+      "2001:2:ffff:ffff:ffff:ffff:ffff:ffff"
+    ),
+    false
+  );
+});
+
+t.test("user input is smaller than hostname", async (t) => {
+  t.same(detectSSRF("localhost", "localhost localhost"), false);
 });
