@@ -1,5 +1,4 @@
-import { isIP, BlockList, isIPv6 } from "net";
-import { isIPv4 } from "node:net";
+import { BlockList, isIPv6, isIPv4 } from "net";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
