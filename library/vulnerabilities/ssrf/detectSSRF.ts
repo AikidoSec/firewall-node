@@ -1,4 +1,5 @@
-import { BlockList, isIPv6, isIPv4 } from "net";
+import { BlockList, isIPv4, isIPv6 } from "net";
+import { tryParseURL } from "../../helpers/tryParseURL";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
@@ -66,14 +67,6 @@ function isPrivateIPv6(ip: string) {
     /^fe[8-9a-bA-B][0-9a-fA-F]:/i.test(ip) ||
     /^ff([0-9a-fA-F]{2,2}):/i.test(ip)
   );
-}
-
-function tryParseURL(url: string): URL | undefined {
-  try {
-    return new URL(url);
-  } catch {
-    return undefined;
-  }
 }
 
 function isPrivateHostname(hostname: string): boolean {
