@@ -1,4 +1,5 @@
 import { BlockList, isIPv4, isIPv6 } from "net";
+import { tryParseURL } from "../../helpers/tryParseURL";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
@@ -88,16 +89,16 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
     return false;
   }
 
-  if (userInput.startsWith(hostname) && isPrivateHostname(hostname)) {
-    return true;
+  if (!userInput.includes(hostname)) {
+    return false;
   }
 
-  // e.g. ftp://localhost or https://domain.com or http:/localhost
-  const parts = userInput.split("/").filter((part) => part.length > 0);
-  if (parts.length > 1) {
-    const withoutProtocol = parts[1];
-
-    return withoutProtocol.startsWith(hostname) && isPrivateHostname(hostname);
+  const variants = [userInput, `http://${userInput}`];
+  for (const variant of variants) {
+    const url = tryParseURL(variant);
+    if (url && url.hostname === hostname && isPrivateHostname(url.hostname)) {
+      return true;
+    }
   }
 
   return false;
