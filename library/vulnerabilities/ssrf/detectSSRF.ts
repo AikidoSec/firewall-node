@@ -78,13 +78,9 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
     return false;
   }
 
-  if (
-    hostname.startsWith("[") &&
-    hostname.endsWith("]") &&
-    isIPv6(hostname.substring(1, hostname.length - 1))
-  ) {
+  if (hostname.startsWith("[") && hostname.endsWith("]")) {
     const ipv6 = hostname.substring(1, hostname.length - 1);
-    if (isPrivateIPv6(ipv6)) {
+    if (isIPv6(ipv6) && isPrivateIPv6(ipv6)) {
       return true;
     }
   }
