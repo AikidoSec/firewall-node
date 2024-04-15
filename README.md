@@ -1,7 +1,4 @@
 <h1 align="center">Aikido Runtime Protection for Node.js</h1>
-<div align="center">
-An autonomous, embedded security engine for protecting Node.js apps against common and critical attacks.
-</div>
 <br />
 <div align="center">
 
@@ -11,7 +8,9 @@ An autonomous, embedded security engine for protecting Node.js apps against comm
 </div>
 </br>
 
-Runtime protects your Node.js apps by preventing situations, like user input containing dangerous strings, which allow injection, pollution, and path traversal attacks in the first place. It runs autonomously on the same server as your Node.js app for simple [installation](#installation) and truly zero-friction maintenance.
+Runtime is an embedded security engine for autonomously protecting Node.js apps against common and critical attacks.
+
+Runtime protects your Node.js apps by preventing situations, like user input containing dangerous strings, which allow injection, pollution, and path traversal attacks in the first place. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
 
 ## Features
 
