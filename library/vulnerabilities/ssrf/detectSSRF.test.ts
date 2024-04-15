@@ -17,6 +17,24 @@ t.test("it parses hostname from user input", async (t) => {
   t.same(detectSSRF("http://localhost", "localhost"), true);
 });
 
+t.test("it parses hostname from user input with path behind it", async (t) => {
+  t.same(detectSSRF("http://localhost/path", "localhost"), true);
+});
+
+t.test(
+  "it parses hostname from user input with misspelled protocol",
+  async (t) => {
+    t.same(detectSSRF("http:/localhost", "localhost"), true);
+  }
+);
+
+t.test(
+  "it parses hostname from user input with misspelled protocol and path behind it",
+  async (t) => {
+    t.same(detectSSRF("http:/localhost/path/path", "localhost"), true);
+  }
+);
+
 t.test("it flags FTP as protocol", async (t) => {
   t.same(detectSSRF("ftp://localhost", "localhost"), true);
 });
