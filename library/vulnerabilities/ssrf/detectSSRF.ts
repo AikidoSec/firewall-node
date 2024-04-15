@@ -1,4 +1,5 @@
-import { isIP, BlockList } from "net";
+import { isIP, BlockList, isIPv6 } from "net";
+import { isIPv4 } from "node:net";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
@@ -77,18 +78,19 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
     return false;
   }
 
-  const version = isIP(hostname);
-  switch (version) {
-    case 4:
-      if (privateIp.check(hostname)) {
-        return true;
-      }
-      break;
-    case 6:
-      if (isPrivateIPv6(hostname)) {
-        return true;
-      }
-      break;
+  if (
+    hostname.startsWith("[") &&
+    hostname.endsWith("]") &&
+    isIPv6(hostname.substring(1, hostname.length - 1))
+  ) {
+    const ipv6 = hostname.substring(1, hostname.length - 1);
+    if (isPrivateIPv6(ipv6)) {
+      return true;
+    }
+  }
+
+  if (isIPv4(hostname) && privateIp.check(hostname)) {
+    return true;
   }
 
   return hostname === "localhost";

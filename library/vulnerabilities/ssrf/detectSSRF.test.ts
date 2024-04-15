@@ -27,6 +27,14 @@ t.test("it ignores invalid URLs", async (t) => {
 
 t.test("it detects private IPv4 address", async (t) => {
   t.same(detectSSRF("http://10.0.0.1", "10.0.0.1"), true);
+  t.same(detectSSRF("http://169.254.169.254", "169.254.169.254"), true);
+});
+
+t.test("it detects private IPv4 address inside URL", async () => {
+  t.same(
+    detectSSRF("http://169.254.169.254/latest/meta-data/", "169.254.169.254"),
+    true
+  );
 });
 
 t.test("it ignores public IPv4 address", async (t) => {
@@ -36,19 +44,20 @@ t.test("it ignores public IPv4 address", async (t) => {
 t.test("it checks for private IPv6 address", async (t) => {
   t.same(
     detectSSRF(
-      "http://febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-      "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+      "http://[febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff]",
+      "[febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff]"
     ),
     true
   );
-  t.same(detectSSRF("http://fe80::1", "fe80::1"), true);
+  t.same(detectSSRF("http://[fe80::1]", "[fe80::1]"), true);
+  t.same(detectSSRF("http://[fd00:ec2::254]", "[fd00:ec2::254]"), true);
 });
 
 t.test("it ignores public IPv6 address", async (t) => {
   t.same(
     detectSSRF(
-      "http://2001:2:ffff:ffff:ffff:ffff:ffff:ffff",
-      "2001:2:ffff:ffff:ffff:ffff:ffff:ffff"
+      "http://[2001:2:ffff:ffff:ffff:ffff:ffff:ffff]",
+      "[2001:2:ffff:ffff:ffff:ffff:ffff:ffff]"
     ),
     false
   );
