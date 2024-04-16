@@ -21,6 +21,7 @@ export class Fetch implements Wrapper {
 
     return checkContextForSSRF({
       hostname,
+      ipAddress: hostname,
       operation: "fetch",
       context,
     });

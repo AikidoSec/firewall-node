@@ -69,7 +69,15 @@ function isPrivateIPv6(ip: string) {
   );
 }
 
-function isPrivateHostname(hostname: string): boolean {
+export function isPrivateIP(ip: string): boolean {
+  if (isIPv4(ip) && privateIp.check(ip)) {
+    return true;
+  }
+
+  return isIPv6(ip) && isPrivateIPv6(ip);
+}
+
+export function isPrivateHostname(hostname: string): boolean {
   if (hostname.startsWith("[") && hostname.endsWith("]")) {
     const ipv6 = hostname.substring(1, hostname.length - 1);
     if (isIPv6(ipv6) && isPrivateIPv6(ipv6)) {
@@ -84,7 +92,10 @@ function isPrivateHostname(hostname: string): boolean {
   return hostname === "localhost";
 }
 
-export function detectSSRF(userInput: string, hostname: string): boolean {
+export function findHostnameInUserInput(
+  userInput: string,
+  hostname: string
+): boolean {
   if (userInput.length <= 1) {
     return false;
   }
@@ -96,10 +107,16 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
   const variants = [userInput, `http://${userInput}`];
   for (const variant of variants) {
     const url = tryParseURL(variant);
-    if (url && url.hostname === hostname && isPrivateHostname(url.hostname)) {
+    if (url && url.hostname === hostname) {
       return true;
     }
   }
 
   return false;
+}
+
+export function detectSSRF(userInput: string, hostname: string): boolean {
+  const found = findHostnameInUserInput(userInput, hostname);
+
+  return found && isPrivateHostname(hostname);
 }

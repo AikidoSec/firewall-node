@@ -32,6 +32,7 @@ export class Undici implements Wrapper {
 
     return checkContextForSSRF({
       hostname,
+      ipAddress: hostname,
       operation: `undici.${method}`,
       context,
     });
