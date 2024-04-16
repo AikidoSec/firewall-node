@@ -5,7 +5,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 
 export class HTTPRequest implements Wrapper {
-  inspectHttpRequest(args: unknown[], agent: Agent) {
+  inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {
@@ -27,10 +27,17 @@ export class HTTPRequest implements Wrapper {
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
-        agent.onConnectHostname(
-          args[0].hostname,
-          typeof args[0].port === "number" ? args[0].port : undefined
-        );
+        let port = module === "http" ? 80 : 443;
+        if (typeof args[0].port === "number") {
+          port = args[0].port;
+        } else if (
+          typeof args[0].port === "string" &&
+          Number.isInteger(parseInt(args[0].port, 10))
+        ) {
+          port = parseInt(args[0].port, 10);
+        }
+
+        agent.onConnectHostname(args[0].hostname, port);
       }
     }
   }
@@ -40,14 +47,14 @@ export class HTTPRequest implements Wrapper {
       .addBuiltinModule("http")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent)
+        this.inspectHttpRequest(args, agent, "http")
       );
 
     hooks
       .addBuiltinModule("https")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent)
+        this.inspectHttpRequest(args, agent, "https")
       );
   }
 }
