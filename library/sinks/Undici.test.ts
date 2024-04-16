@@ -58,7 +58,37 @@ t.test(
 
     await request({ protocol: "https:", hostname: "aikido.dev", port: "443" });
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: undefined },
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      protocol: "https:",
+      hostname: "aikido.dev",
+      port: undefined,
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      protocol: "http:",
+      hostname: "aikido.dev",
+      port: undefined,
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 80 },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      protocol: "https:",
+      hostname: "aikido.dev",
+      port: "443",
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
     ]);
     agent.getHostnames().clear();
 
