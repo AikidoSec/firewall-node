@@ -13,6 +13,12 @@ export function userInputContainsSQLSyntax(
   userInput: string,
   dialect: SQLDialect
 ): boolean {
+  if (
+    SQL_KEYWORDS.concat(dialect.getKeywords()).includes(userInput.toUpperCase())
+  ) {
+    return false;
+  }
+
   let regex = cachedRegexes.get(dialect.constructor.name);
 
   if (!regex) {
