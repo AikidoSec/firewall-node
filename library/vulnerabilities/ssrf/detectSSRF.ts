@@ -58,16 +58,15 @@ export function isPrivateIP(ip: string): boolean {
     return true;
   }
 
-  return isIPv6(ip) && privateIp.check(ip, 'ipv6');
+  return isIPv6(ip) && privateIp.check(ip, "ipv6");
 }
-
 
 export function isPrivateHostname(hostname: string): boolean {
   if (hostname.startsWith("[") && hostname.endsWith("]")) {
     const ipv6 = hostname.substring(1, hostname.length - 1);
     if (isIPv6(ipv6)) {
       hostname = IPv6Parser.normalizeIPAddress(ipv6);
-      if (hostname && privateIp.check(hostname), "ipv6") {
+      if ((hostname && privateIp.check(hostname), "ipv6")) {
         return true;
       }
     }
