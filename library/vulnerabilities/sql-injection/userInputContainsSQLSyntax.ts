@@ -27,6 +27,7 @@ function buildRegex(dialect: SQLDialect) {
   const matchSqlKeywords =
     "(?<![a-z])(" + // Lookbehind : if the keywords are preceded by one or more letters, it should not match
     SQL_KEYWORDS.concat(dialect.getKeywords())
+      .map((keyword) => keyword.keyword)
       .map(escapeStringRegexp)
       .join("|") + // Look for SQL Keywords
     ")(?![a-z])"; // Lookahead : if the keywords are followed by one or more letters, it should not match
