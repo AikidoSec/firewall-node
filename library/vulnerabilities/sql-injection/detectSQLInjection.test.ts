@@ -60,7 +60,7 @@ const IS_NOT_INJECTION = [
 ];
 
 const IS_INJECTION = [
-  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
+  [`'NOT UNION'  is NOT UNION`, "NOT UNION"], // String not always encapsulated
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
