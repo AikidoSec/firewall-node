@@ -117,6 +117,13 @@ t.test("It checks whether the string is safely escaped", async () => {
   isNotSqlInjection("SELECT * FROM `comm'ents`", "comm'ents");
 });
 
+t.test(
+  "it does not flag queries starting with SELECT and having select in user input",
+  async () => {
+    isNotSqlInjection("SELECT * FROM users WHERE id = 1", "SELECT");
+  }
+);
+
 t.test("It does not flag escaped # as SQL injection", async () => {
   isNotSqlInjection(
     "SELECT * FROM hashtags WHERE name = '#hashtag'",
