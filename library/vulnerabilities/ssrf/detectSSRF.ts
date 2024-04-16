@@ -72,12 +72,14 @@ export function isPrivateHostname(hostname: string): boolean {
     }
   }
 
-  if (isIPv4(hostname)) {
+  try {
     hostname = IPv4Parser.normalizeIPAddress(hostname);
-    if (hostname && privateIp.check(hostname)) {
-      return true;
-    }
+  } catch (error) {
+    // IP could not be normalized, assuming that it can not be resolved by fetch/http either
+    return false; 
+  }
 
+  if (hostname && privateIp.check(hostname)) {
     return true;
   }
 
