@@ -1,5 +1,10 @@
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS, SQL_OPERATORS } from "./config";
+import {
+  COMMON_SQL_KEYWORDS,
+  SQL_DANGEROUS_IN_STRING,
+  SQL_KEYWORDS,
+  SQL_OPERATORS,
+} from "./config";
 import { SQLDialect } from "./dialects/SQLDialect";
 
 const cachedRegexes = new Map<string, RegExp>();
@@ -13,8 +18,14 @@ export function userInputContainsSQLSyntax(
   userInput: string,
   dialect: SQLDialect
 ): boolean {
+  // e.g. SELECT * FROM table WHERE column = 'value' LIMIT 1
+  // If a query parameter is ?LIMIT=1 it would be blocked
+  // If the body contains "LIMIT" or "SELECT" it would be blocked
+  // These are common SQL keywords and appear in almost any SQL query
   if (
-    SQL_KEYWORDS.concat(dialect.getKeywords()).includes(userInput.toUpperCase())
+    COMMON_SQL_KEYWORDS.concat(dialect.getKeywords()).includes(
+      userInput.toUpperCase()
+    )
   ) {
     return false;
   }
