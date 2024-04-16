@@ -1,6 +1,7 @@
 import { BlockList, isIPv4, isIPv6 } from "net";
 import { tryParseURL } from "../../helpers/tryParseURL";
-import { IPv4, IPv4Parser } from "./IPv4";
+import { IPv4 } from "./IPv4";
+import { IPv6 } from "./IPv6";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
