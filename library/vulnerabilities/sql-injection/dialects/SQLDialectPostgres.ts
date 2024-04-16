@@ -9,10 +9,10 @@ export class SQLDialectPostgres implements SQLDialect {
     ];
   }
 
-  getKeywords(): { keyword: string; ignoreExact: boolean }[] {
+  getKeywords(): string[] {
     return [
       // https://www.postgresql.org/docs/current/sql-set.html
-      { keyword: "CLIENT_ENCODING", ignoreExact: false },
+      "CLIENT_ENCODING",
     ];
   }
 }

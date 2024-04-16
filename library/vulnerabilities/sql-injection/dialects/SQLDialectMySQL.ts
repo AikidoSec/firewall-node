@@ -6,19 +6,19 @@ export class SQLDialectMySQL implements SQLDialect {
     return [];
   }
 
-  getKeywords(): { keyword: string; ignoreExact: boolean }[] {
+  getKeywords(): string[] {
     return [
       // https://dev.mysql.com/doc/refman/8.0/en/set-variable.html
-      { keyword: "GLOBAL", ignoreExact: false },
-      { keyword: "SESSION", ignoreExact: false },
-      { keyword: "PERSIST", ignoreExact: false },
-      { keyword: "PERSIST_ONLY", ignoreExact: false },
-      { keyword: "@@GLOBAL", ignoreExact: false },
-      { keyword: "@@SESSION", ignoreExact: false },
+      "GLOBAL",
+      "SESSION",
+      "PERSIST",
+      "PERSIST_ONLY",
+      "@@GLOBAL",
+      "@@SESSION",
 
       // https://dev.mysql.com/doc/refman/8.0/en/set-character-set.html
-      { keyword: "CHARACTER SET", ignoreExact: false },
-      { keyword: "CHARSET", ignoreExact: false },
+      "CHARACTER SET",
+      "CHARSET",
     ];
   }
 }
