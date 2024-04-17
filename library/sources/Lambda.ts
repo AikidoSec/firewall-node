@@ -143,6 +143,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         query: {},
         cookies: {},
         source: "lambda/sqs",
+        route: undefined,
       };
     } else if (isGatewayEvent(event)) {
       agentContext = {
@@ -154,6 +155,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
         source: "lambda/gateway",
+        route: undefined,
       };
     }
 

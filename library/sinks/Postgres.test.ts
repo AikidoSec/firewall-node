@@ -16,6 +16,7 @@ const context: Context = {
   },
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it inspects query method calls and blocks if needed", async () => {

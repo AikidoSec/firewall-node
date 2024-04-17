@@ -22,6 +22,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
         source: "cloud-function/http",
+        route: undefined,
       },
       async () => {
         try {

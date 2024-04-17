@@ -36,6 +36,7 @@ export type DetectedAttack = {
     headers: Record<string, string | string[]>;
     body: string | undefined;
     source: string;
+    route: string | undefined;
   };
   attack: {
     kind: Kind;

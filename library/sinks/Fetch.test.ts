@@ -2,20 +2,8 @@ import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Token } from "../agent/api/Token";
-import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Fetch } from "./Fetch";
-
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {},
-  cookies: {},
-  source: "express",
-};
 
 t.test(
   "it works",

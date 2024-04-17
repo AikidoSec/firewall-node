@@ -11,6 +11,7 @@ export type Context = {
   cookies: Record<string, string>;
   attackDetected?: boolean;
   source: string;
+  route: string | undefined;
 };
 
 const requestContext = new AsyncLocalStorage<Context>();

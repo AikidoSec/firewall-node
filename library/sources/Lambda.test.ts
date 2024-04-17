@@ -157,6 +157,7 @@ t.test("it handles SQS event", async (t) => {
     query: {},
     cookies: {},
     source: "lambda/sqs",
+    route: undefined,
   });
 });
 
@@ -199,6 +200,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
 
     await handler(gatewayEvent, lambdaContext, () => {});
@@ -219,6 +221,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -232,6 +235,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -307,6 +311,7 @@ t.test(
         blocked: false,
         durationInMs: 0.1,
         attackDetected: false,
+        withoutContext: false,
       });
       await handler(gatewayEvent, lambdaContext, () => {});
     }

@@ -16,6 +16,7 @@ const dangerousContext: Context = {
   },
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 const safeContext: Context = {
@@ -27,6 +28,7 @@ const safeContext: Context = {
   body: {},
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it detects SQL injections", async () => {

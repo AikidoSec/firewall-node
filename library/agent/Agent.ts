@@ -173,6 +173,7 @@ export class Agent {
               body: convertRequestBodyToString(request.body),
               headers: filterEmptyRequestHeaders(request.headers),
               source: request.source,
+              route: request.route,
             },
             agent: this.getAgentInfo(),
           },

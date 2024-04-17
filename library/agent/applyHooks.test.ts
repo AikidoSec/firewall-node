@@ -15,6 +15,7 @@ const context: Context = {
   body: undefined,
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 function createAgent() {

@@ -18,6 +18,7 @@ const unsafeContext: Context = {
   },
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 const safeContext: Context = {
@@ -29,6 +30,7 @@ const safeContext: Context = {
   body: {},
   cookies: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it inspects method calls and blocks if needed", async (t) => {

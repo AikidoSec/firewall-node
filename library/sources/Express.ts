@@ -21,6 +21,7 @@ function createMiddleware(agent: Agent): Middleware {
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
         source: "express",
+        route: req.route.path,
       },
       () => {
         try {
