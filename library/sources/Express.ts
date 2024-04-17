@@ -10,6 +10,8 @@ type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
 function createMiddleware(agent: Agent): Middleware {
   return (req, resp, next) => {
+    agent.onRouteExecute(req.method, req.route.path);
+
     runWithContext(
       {
         method: req.method,

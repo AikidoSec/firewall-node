@@ -83,6 +83,7 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
+  routes: { path: string; method: string }[];
   agent: AgentInfo;
   time: number;
 };

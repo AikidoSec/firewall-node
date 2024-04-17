@@ -31,6 +31,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
+  private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -213,6 +214,7 @@ export class Agent {
             requests: stats.requests,
           },
           hostnames: this.hostnames.asArray(),
+          routes: Array.from(this.routes.values()),
         },
         timeoutInMS
       );
@@ -334,6 +336,11 @@ export class Agent {
 
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
+  }
+
+  onRouteExecute(method: string, path: string) {
+    const key = `${method}:${path}`;
+    this.routes.set(key, { method, path });
   }
 
   async flushStats(timeoutInMS: number) {
