@@ -59,6 +59,14 @@ t.test("it inspects query method calls and blocks if needed", async () => {
       ).rows,
       []
     );
+    t.same(
+      (
+        await runWithContext(context, () => {
+          return client.query({ text: "SELECT petname FROM cats;" });
+        })
+      ).rows,
+      []
+    );
 
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {
