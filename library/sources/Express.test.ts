@@ -61,6 +61,10 @@ function getApp() {
     throw new Error("test");
   });
 
+  app.get(/.*fly$/, (req, res) => {
+    res.send("hello fly");
+  });
+
   return app;
 }
 
@@ -160,4 +164,9 @@ t.test("it counts request with error", async (t) => {
       },
     },
   });
+});
+
+t.test("it deals with regex routes", async (t) => {
+  const response = await request(getApp()).get("/butterfly");
+  t.same(response.text, "hello fly");
 });

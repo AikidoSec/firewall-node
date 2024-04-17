@@ -10,7 +10,11 @@ type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
 function createMiddleware(agent: Agent): Middleware {
   return (req, resp, next) => {
-    agent.onRouteExecute(req.method, req.route.path);
+    if (typeof req.route.path === "string") {
+      agent.onRouteExecute(req.method, req.route.path);
+    } else if (req.route.path instanceof RegExp) {
+      agent.onRouteExecute(req.method, req.route.path.source);
+    }
 
     runWithContext(
       {
