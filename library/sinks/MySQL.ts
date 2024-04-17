@@ -29,6 +29,7 @@ export class MySQL implements Wrapper {
     }
 
     if (
+      args.length > 0 &&
       isPlainObject(args[0]) &&
       args[0].sql &&
       typeof args[0].sql === "string"

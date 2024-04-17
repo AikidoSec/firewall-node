@@ -29,6 +29,7 @@ export class Postgres implements Wrapper {
     }
 
     if (
+      args.length > 0 &&
       isPlainObject(args[0]) &&
       args[0].text &&
       typeof args[0].text === "string"
