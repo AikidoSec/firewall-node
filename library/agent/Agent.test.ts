@@ -141,6 +141,7 @@ t.test("when attack detected", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
     },
     operation: "operation",
     payload: "payload",
@@ -172,6 +173,7 @@ t.test("when attack detected", async () => {
         url: "http://localhost:4000",
         headers: {},
         body: "{}",
+        route: "/posts/:id",
       },
     },
   ]);
@@ -198,6 +200,7 @@ t.test("it checks if user agent is a string", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
     },
     payload: "payload",
     operation: "operation",
@@ -247,6 +250,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
   }
   t.match(api.getEvents(), [
@@ -260,6 +264,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
   }
 
@@ -350,6 +355,7 @@ t.test("it logs when failed to report event", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
     },
     operation: "operation",
     stack: "stack",
@@ -424,6 +430,7 @@ t.test("when payload is object", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
     },
     operation: "operation",
     payload: { $gt: "" },
@@ -450,6 +457,7 @@ t.test("when payload is object", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
     },
     operation: "operation",
     payload: "a".repeat(20000),
@@ -474,4 +482,58 @@ t.test("when payload is object", async () => {
       JSON.stringify("a".repeat(20000)).substring(0, 4096),
     ]
   );
+});
+
+t.test("it sends hostnames and routes along with heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new APIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
+
+  agent.onConnectHostname("aikido.dev", 443);
+  agent.onConnectHostname("aikido.dev", 80);
+  agent.onConnectHostname("google.com", 443);
+  agent.onRouteExecute("POST", "/posts/:id");
+  agent.onRouteExecute("POST", "/posts/:id");
+  agent.onRouteExecute("GET", "/posts/:id");
+  agent.onRouteExecute("GET", "/");
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      hostnames: [
+        {
+          hostname: "aikido.dev",
+          port: 443,
+        },
+        {
+          hostname: "google.com",
+          port: 443,
+        },
+      ],
+      routes: [
+        {
+          method: "POST",
+          path: "/posts/:id",
+        },
+        {
+          method: "GET",
+          path: "/posts/:id",
+        },
+        {
+          method: "GET",
+          path: "/",
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
 });

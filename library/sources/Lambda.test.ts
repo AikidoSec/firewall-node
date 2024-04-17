@@ -247,6 +247,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       // @ts-expect-error AgentInfo is private
       agent: agent.getAgentInfo(),
       hostnames: [],
+      routes: [],
       stats: {
         sinks: {
           mongodb: {
