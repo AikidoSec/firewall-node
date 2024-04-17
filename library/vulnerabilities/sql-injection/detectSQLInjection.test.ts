@@ -91,12 +91,13 @@ t.test("It allows escape sequences", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\tusers'", "\tusers");
 });
 
-t.test("It allows numbers inside IN (...)", async () => {
+t.test("user input inside IN (...)", async () => {
   isSqlInjection("SELECT * FROM users WHERE id IN ('123')", "'123'");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123)", "123");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123, 456)", "123");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123, 456)", "456");
   isNotSqlInjection("SELECT * FROM users WHERE id IN ('123')", "123");
+  isNotSqlInjection("SELECT * FROM users WHERE id IN (13,14,15)", "13,14,15");
 });
 
 t.test("It checks whether the string is safely escaped", async () => {
