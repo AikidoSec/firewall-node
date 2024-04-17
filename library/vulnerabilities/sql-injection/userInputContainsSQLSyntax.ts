@@ -22,11 +22,7 @@ export function userInputContainsSQLSyntax(
   // If a query parameter is ?LIMIT=1 it would be blocked
   // If the body contains "LIMIT" or "SELECT" it would be blocked
   // These are common SQL keywords and appear in almost any SQL query
-  if (
-    COMMON_SQL_KEYWORDS.concat(dialect.getKeywords()).includes(
-      userInput.toUpperCase()
-    )
-  ) {
+  if (COMMON_SQL_KEYWORDS.includes(userInput.toUpperCase())) {
     return false;
   }
 
