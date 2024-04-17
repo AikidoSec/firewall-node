@@ -78,6 +78,15 @@ t.test("it detects SQL injections", async () => {
       await queryViaOptions({ sql: "SELECT petname FROM `cats`;" }, connection),
       []
     );
+    t.same(
+      await runWithContext(context, () => {
+        return queryViaOptions(
+          { sql: "SELECT petname FROM `cats`;" },
+          connection
+        );
+      }),
+      []
+    );
 
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {

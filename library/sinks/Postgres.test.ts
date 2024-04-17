@@ -45,9 +45,14 @@ t.test("it inspects query method calls and blocks if needed", async () => {
       );
     `);
     await client.query("TRUNCATE cats");
+
     t.same((await client.query("SELECT petname FROM cats;")).rows, []);
     t.same(
-      (await client.query({ text: "SELECT petname FROM cats;" })).rows,
+      (
+        await runWithContext(context, () => {
+          return client.query("SELECT petname FROM cats;");
+        })
+      ).rows,
       []
     );
 
