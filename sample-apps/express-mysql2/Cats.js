@@ -5,9 +5,7 @@ class Cats {
 
   async add(name) {
     // This is unsafe! This is for demo purposes only, you should use parameterized queries.
-    await this.db.query("SELECT petname FROM `cats` WHERE `name` = ?",
-      [name]
-    );
+    await this.db.query(`INSERT INTO cats(petname) VALUES ('${name}');`);
   }
 
   async getAll() {
