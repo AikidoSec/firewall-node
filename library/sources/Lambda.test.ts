@@ -10,6 +10,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
+  path: "/dev/{proxy+}",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
@@ -69,6 +70,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
       cookie: "value",
     },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -120,6 +122,7 @@ t.test("json header is missing for gateway event", async (t) => {
     query: { query: "value" },
     cookies: {},
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
