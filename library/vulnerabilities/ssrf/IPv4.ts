@@ -1,4 +1,4 @@
-// Taken from https://github.com/whitequark/ipaddr.js/blob/main/lib/ipaddr.js
+// Taken from https://github.com/whitequark/ipaddr.js/blob/32c4f03d1f392ff8e6e5307c8131762881f9077c/lib/ipaddr.js
 export class IPv4 {
   private ipv4Part = "(0?\\d+|0x[a-f0-9]+)";
   private ipv4Regexes = {
