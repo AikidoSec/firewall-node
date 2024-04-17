@@ -2,6 +2,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
@@ -18,6 +19,21 @@ export class MySQL implements Wrapper {
 
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
+
+      return checkContextForSqlInjection({
+        sql: sql,
+        context: context,
+        operation: "MySQL.query",
+        dialect: this.dialect,
+      });
+    }
+
+    if (
+      isPlainObject(args[0]) &&
+      args[0].sql &&
+      typeof args[0].sql === "string"
+    ) {
+      const sql = args[0].sql;
 
       return checkContextForSqlInjection({
         sql: sql,

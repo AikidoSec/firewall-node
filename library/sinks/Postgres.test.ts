@@ -46,6 +46,10 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     `);
     await client.query("TRUNCATE cats");
     t.same((await client.query("SELECT petname FROM cats;")).rows, []);
+    t.same(
+      (await client.query({ text: "SELECT petname FROM cats;" })).rows,
+      []
+    );
 
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {
@@ -55,6 +59,18 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
+        "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error2 = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return client.query({ text: "-- should be blocked" });
+      });
+    });
+    if (error2 instanceof Error) {
+      t.same(
+        error2.message,
         "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
