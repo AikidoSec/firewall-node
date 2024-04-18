@@ -23,6 +23,7 @@ const functionsWithPath = [
   "readdir",
   "readFile",
   "readlink",
+  "unlink",
   "realpath",
   "rename",
   "rmdir",
