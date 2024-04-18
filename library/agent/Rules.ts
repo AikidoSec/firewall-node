@@ -3,7 +3,7 @@ import { Rule } from "./api/API";
 export class Rules {
   private optimised: Map<
     string,
-    { method: string; route: string; force_protection_off: boolean }
+    { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
   constructor(rules: Rule[] = []) {
@@ -11,7 +11,7 @@ export class Rules {
       this.optimised.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
         route: rule.route,
-        force_protection_off: rule.force_protection_off,
+        forceProtectionOff: rule.forceProtectionOff,
       });
     });
   }
@@ -30,15 +30,20 @@ export class Rules {
 
     this.optimised.forEach((rule, key) => {
       if (!oldRules.optimised.has(key)) {
-        diff.push(rule);
+        diff.push({
+          method: rule.method,
+          route: rule.route,
+          forceProtectionOff: rule.forceProtectionOff,
+        });
       } else {
         const oldRule = oldRules.optimised.get(key);
 
-        if (
-          oldRule &&
-          oldRule.force_protection_off !== rule.force_protection_off
-        ) {
-          diff.push(rule);
+        if (oldRule && oldRule.forceProtectionOff !== rule.forceProtectionOff) {
+          diff.push({
+            method: rule.method,
+            route: rule.route,
+            forceProtectionOff: rule.forceProtectionOff,
+          });
         }
       }
     });
@@ -57,6 +62,6 @@ export class Rules {
       return true;
     }
 
-    return rule.force_protection_off;
+    return rule.forceProtectionOff;
   }
 }

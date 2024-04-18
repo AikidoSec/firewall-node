@@ -213,7 +213,7 @@ export class Agent {
       diff.forEach((rule) => {
         this.logger.log(
           `${rule.method} ${rule.route} is now ${
-            rule.force_protection_off ? "unprotected" : "protected"
+            rule.forceProtectionOff ? "unprotected" : "protected"
           }`
         );
       });
