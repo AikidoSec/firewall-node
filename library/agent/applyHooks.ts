@@ -161,7 +161,7 @@ function wrapWithoutArgumentModification(
           context &&
           context.method &&
           context.route &&
-          !agent.getRules().shouldIgnore(context.method, context.route)
+          agent.getRules().shouldIgnore(context.method, context.route)
         ) {
           return original.apply(
             // @ts-expect-error We don't now the type of this

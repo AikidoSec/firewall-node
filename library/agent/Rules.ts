@@ -6,7 +6,7 @@ export class Rules {
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
-  constructor(rules: Rule[] = []) {
+  constructor(rules: Rule[]) {
     rules.forEach((rule) => {
       this.optimised.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
@@ -20,35 +20,28 @@ export class Rules {
     return `${method}:${route}`;
   }
 
-  diff(oldRules: Rules): Rule[] {
-    const diff: Rule[] = [];
-    oldRules.optimised.forEach((rule, key) => {
-      if (!this.optimised.has(key)) {
-        diff.push(rule);
+  hasChanges(oldRules: Rules): boolean {
+    for (const rule of oldRules.optimised.values()) {
+      if (!this.optimised.has(this.getKey(rule.method, rule.route))) {
+        return true;
       }
-    });
+    }
 
-    this.optimised.forEach((rule, key) => {
-      if (!oldRules.optimised.has(key)) {
-        diff.push({
-          method: rule.method,
-          route: rule.route,
-          forceProtectionOff: rule.forceProtectionOff,
-        });
-      } else {
-        const oldRule = oldRules.optimised.get(key);
+    for (const rule of this.optimised.values()) {
+      const oldRule = oldRules.optimised.get(
+        this.getKey(rule.method, rule.route)
+      );
 
-        if (oldRule && oldRule.forceProtectionOff !== rule.forceProtectionOff) {
-          diff.push({
-            method: rule.method,
-            route: rule.route,
-            forceProtectionOff: rule.forceProtectionOff,
-          });
-        }
+      if (!oldRule) {
+        return true;
       }
-    });
 
-    return diff;
+      if (oldRule.forceProtectionOff !== rule.forceProtectionOff) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   shouldIgnore(method: string, route: string | RegExp) {
@@ -59,7 +52,7 @@ export class Rules {
     const rule = this.optimised.get(key);
 
     if (!rule) {
-      return true;
+      return false;
     }
 
     return rule.forceProtectionOff;

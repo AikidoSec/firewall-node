@@ -32,7 +32,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private rules = new Rules();
+  private rules = new Rules([]);
   private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -206,17 +206,9 @@ export class Agent {
   private updateRules(result: APIResult) {
     if (result.success && result.rules) {
       const newRules = new Rules(result.rules);
-      const diff = newRules.diff(this.rules);
-      if (diff.length > 0) {
-        this.logger.log("Updated rules:");
+      if (newRules.hasChanges(this.rules)) {
+        this.logger.log("Updated rules!");
       }
-      diff.forEach((rule) => {
-        this.logger.log(
-          `${rule.method} ${rule.route} is now ${
-            rule.forceProtectionOff ? "unprotected" : "protected"
-          }`
-        );
-      });
       this.rules = newRules;
     }
   }
