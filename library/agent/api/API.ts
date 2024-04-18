@@ -11,7 +11,7 @@ type APIError =
 export type Rule = {
   method: string;
   route: string;
-  protected: boolean;
+  force_protection_off: boolean;
 };
 
 export type APIResult =

@@ -3,7 +3,7 @@ import { Rule } from "./api/API";
 export class Rules {
   private optimised: Map<
     string,
-    { method: string; route: string; protected: boolean }
+    { method: string; route: string; force_protection_off: boolean }
   > = new Map();
 
   constructor(rules: Rule[] = []) {
@@ -11,7 +11,7 @@ export class Rules {
       this.optimised.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
         route: rule.route,
-        protected: rule.protected,
+        force_protection_off: rule.force_protection_off,
       });
     });
   }
@@ -34,7 +34,10 @@ export class Rules {
       } else {
         const oldRule = oldRules.optimised.get(key);
 
-        if (oldRule && oldRule.protected !== rule.protected) {
+        if (
+          oldRule &&
+          oldRule.force_protection_off !== rule.force_protection_off
+        ) {
           diff.push(rule);
         }
       }
@@ -43,7 +46,7 @@ export class Rules {
     return diff;
   }
 
-  isProtected(method: string, route: string | RegExp) {
+  shouldIgnore(method: string, route: string | RegExp) {
     const key = this.getKey(
       method,
       typeof route === "string" ? route : route.source
@@ -54,6 +57,6 @@ export class Rules {
       return true;
     }
 
-    return rule.protected;
+    return rule.force_protection_off;
   }
 }
