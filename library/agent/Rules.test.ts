@@ -10,11 +10,13 @@ t.test("it works", async () => {
   const rules = new Rules([
     { method: "GET", route: "/foo", forceProtectionOff: false },
     { method: "POST", route: "/foo", forceProtectionOff: true },
+    { method: "POST", route: /fly+/.source, forceProtectionOff: true },
   ]);
 
   t.same(rules.shouldIgnore("GET", "/foo"), false);
   t.same(rules.shouldIgnore("POST", "/foo"), true);
   t.same(rules.shouldIgnore("GET", "/unknown"), false);
+  t.same(rules.shouldIgnore("POST", /fly+/), true);
 });
 
 t.test("it diffs old and new rules", async () => {
