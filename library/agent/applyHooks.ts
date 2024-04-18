@@ -156,6 +156,21 @@ function wrapWithoutArgumentModification(
         // eslint-disable-next-line prefer-rest-params
         const args = Array.from(arguments);
         const context = getContext();
+
+        if (
+          context &&
+          context.method &&
+          context.route &&
+          !agent.getRules().isProtected(context.method, context.route)
+        ) {
+          return original.apply(
+            // @ts-expect-error We don't now the type of this
+            this,
+            // eslint-disable-next-line prefer-rest-params
+            arguments
+          );
+        }
+
         const start = performance.now();
         let result: InterceptorResult = undefined;
 

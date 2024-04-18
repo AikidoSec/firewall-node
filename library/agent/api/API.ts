@@ -8,9 +8,16 @@ type APIError =
   | "max_attacks_reached"
   | "invalid_token";
 
+export type Rule = {
+  method: string;
+  route: string;
+  protected: boolean;
+};
+
 export type APIResult =
   | {
       success: true;
+      rules?: Rule[];
     }
   | {
       success: false;
