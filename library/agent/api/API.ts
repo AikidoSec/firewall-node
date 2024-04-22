@@ -8,7 +8,7 @@ type APIError =
   | "max_attacks_reached"
   | "invalid_token";
 
-export type Rule = {
+export type Endpoint = {
   method: string;
   route: string;
   forceProtectionOff: boolean;
@@ -17,7 +17,7 @@ export type Rule = {
 export type APIResult =
   | {
       success: true;
-      rules?: Rule[];
+      rules?: Endpoint[];
     }
   | {
       success: false;

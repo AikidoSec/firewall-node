@@ -1,14 +1,14 @@
-import { Rule } from "./api/API";
+import { Endpoint } from "./api/API";
 
-export class Rules {
-  private optimised: Map<
+export class Endpoints {
+  private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
-  constructor(rules: Rule[]) {
-    rules.forEach((rule) => {
-      this.optimised.set(this.getKey(rule.method, rule.route), {
+  constructor(endpoints: Endpoint[]) {
+    endpoints.forEach((rule) => {
+      this.endpoints.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
         route: rule.route,
         forceProtectionOff: rule.forceProtectionOff,
@@ -20,15 +20,15 @@ export class Rules {
     return `${method}:${route}`;
   }
 
-  hasChanges(oldRules: Rules): boolean {
-    for (const rule of oldRules.optimised.values()) {
-      if (!this.optimised.has(this.getKey(rule.method, rule.route))) {
+  hasChanges(oldEndpoints: Endpoints): boolean {
+    for (const rule of oldEndpoints.endpoints.values()) {
+      if (!this.endpoints.has(this.getKey(rule.method, rule.route))) {
         return true;
       }
     }
 
-    for (const rule of this.optimised.values()) {
-      const oldRule = oldRules.optimised.get(
+    for (const rule of this.endpoints.values()) {
+      const oldRule = oldEndpoints.endpoints.get(
         this.getKey(rule.method, rule.route)
       );
 
@@ -49,7 +49,7 @@ export class Rules {
       method,
       typeof route === "string" ? route : route.source
     );
-    const rule = this.optimised.get(key);
+    const rule = this.endpoints.get(key);
 
     if (!rule) {
       return false;

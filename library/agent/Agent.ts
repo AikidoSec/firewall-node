@@ -13,7 +13,7 @@ import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
-import { Rules } from "./Rules";
+import { Endpoints } from "./Endpoints";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -32,7 +32,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private rules = new Rules([]);
+  private rules = new Endpoints([]);
   private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -205,7 +205,7 @@ export class Agent {
 
   private updateRules(result: APIResult) {
     if (result.success && result.rules) {
-      const newRules = new Rules(result.rules);
+      const newRules = new Endpoints(result.rules);
       if (newRules.hasChanges(this.rules)) {
         this.logger.log("Updated rules!");
       }

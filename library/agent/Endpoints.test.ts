@@ -1,13 +1,13 @@
 import * as t from "tap";
-import { Rules } from "./Rules";
+import { Endpoints } from "./Endpoints";
 
 t.test("it returns false if empty rules", async () => {
-  const rules = new Rules([]);
+  const rules = new Endpoints([]);
   t.same(rules.shouldIgnore("GET", "/foo"), false);
 });
 
 t.test("it works", async () => {
-  const rules = new Rules([
+  const rules = new Endpoints([
     { method: "GET", route: "/foo", forceProtectionOff: false },
     { method: "POST", route: "/foo", forceProtectionOff: true },
     { method: "POST", route: /fly+/.source, forceProtectionOff: true },
@@ -19,41 +19,47 @@ t.test("it works", async () => {
   t.same(rules.shouldIgnore("POST", /fly+/), true);
 });
 
-t.test("it diffs old and new rules", async () => {
-  t.same(new Rules([]).hasChanges(new Rules([])), false);
+t.test("it diffs old and new endpoints", async () => {
+  t.same(new Endpoints([]).hasChanges(new Endpoints([])), false);
   t.same(
-    new Rules([
+    new Endpoints([
       { method: "GET", route: "/foo", forceProtectionOff: false },
     ]).hasChanges(
-      new Rules([{ method: "GET", route: "/foo", forceProtectionOff: false }])
+      new Endpoints([
+        { method: "GET", route: "/foo", forceProtectionOff: false },
+      ])
     ),
     false
   );
   t.same(
-    new Rules([
+    new Endpoints([
       { method: "GET", route: "/foo", forceProtectionOff: false },
     ]).hasChanges(
-      new Rules([{ method: "GET", route: "/foo", forceProtectionOff: true }])
+      new Endpoints([
+        { method: "GET", route: "/foo", forceProtectionOff: true },
+      ])
     ),
     true
   );
   t.same(
-    new Rules([
+    new Endpoints([
       { method: "GET", route: "/foo", forceProtectionOff: false },
-    ]).hasChanges(new Rules([])),
+    ]).hasChanges(new Endpoints([])),
     true
   );
   t.same(
-    new Rules([]).hasChanges(
-      new Rules([{ method: "GET", route: "/foo", forceProtectionOff: false }])
+    new Endpoints([]).hasChanges(
+      new Endpoints([
+        { method: "GET", route: "/foo", forceProtectionOff: false },
+      ])
     ),
     true
   );
   t.same(
-    new Rules([
+    new Endpoints([
       { method: "GET", route: "/foo", forceProtectionOff: false },
     ]).hasChanges(
-      new Rules([
+      new Endpoints([
         { method: "GET", route: "/foo", forceProtectionOff: false },
         { method: "POST", route: "/foo", forceProtectionOff: false },
       ])
@@ -61,10 +67,10 @@ t.test("it diffs old and new rules", async () => {
     true
   );
   t.same(
-    new Rules([
+    new Endpoints([
       { method: "GET", route: "/foo", forceProtectionOff: false },
     ]).hasChanges(
-      new Rules([
+      new Endpoints([
         { method: "GET", route: "/foo", forceProtectionOff: false },
         { method: "POST", route: "/foo", forceProtectionOff: true },
       ])
