@@ -71,6 +71,27 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/cats/:name",
+    asyncHandler(async (req, res) => {
+      const found = await cats.byName(req.params.name);
+
+      if (found.length === 0) {
+        return res.status(404).send("Cat not found");
+      }
+
+      const cat = found[0];
+
+      res.send(`
+        <html lang="en">
+          <body>
+            <h1>${escape(cat)}</h1>
+          </body>
+        </html>
+      `);
+    })
+  );
+
   return new Promise((resolve, reject) => {
     try {
       app.listen(port, () => {
