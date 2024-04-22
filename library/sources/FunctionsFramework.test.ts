@@ -3,7 +3,7 @@ import * as express from "express";
 import * as request from "supertest";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
@@ -62,7 +62,13 @@ t.test("it sets context", async (t) => {
 
 t.test("it counts requests", async (t) => {
   const logger = new LoggerForTesting();
-  const agent = new Agent(true, logger, new APIForTesting(), undefined, "gcp");
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -77,7 +83,13 @@ t.test("it counts requests", async (t) => {
 
 t.test("it counts request if error", async (t) => {
   const logger = new LoggerForTesting();
-  const agent = new Agent(true, logger, new APIForTesting(), undefined, "gcp");
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -92,7 +104,7 @@ t.test("it counts request if error", async (t) => {
 
 t.test("it flushes stats first invoke", async (t) => {
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const agent = new Agent(true, logger, api, new Token("123"), "gcp");
   agent.start([]);
   setInstance(agent);

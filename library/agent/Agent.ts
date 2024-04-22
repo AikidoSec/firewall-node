@@ -5,7 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
-import { API, APIResult } from "./api/API";
+import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -42,7 +42,7 @@ export class Agent {
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
-    private readonly api: API,
+    private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined
   ) {
@@ -203,7 +203,7 @@ export class Agent {
     return this.endpoints;
   }
 
-  private updateEndpoints(result: APIResult) {
+  private updateEndpoints(result: ReportingAPIResponse) {
     if (result.success && result.endpoints) {
       const newEndpoints = new Endpoints(result.endpoints);
       if (newEndpoints.hasChanges(this.endpoints)) {
