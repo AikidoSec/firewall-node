@@ -61,6 +61,7 @@ See list above for supported database drivers.
 * ✅ [`knex`](https://www.npmjs.com/package/knex)
 * ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 * ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
+* ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
 
 ## Installation
 
