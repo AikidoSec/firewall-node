@@ -88,7 +88,7 @@ function isJsonContentType(contentType: string) {
 }
 
 export type APIGatewayProxyEvent = {
-  path: string;
+  resource: string;
   httpMethod: string;
   headers: Record<string, string | undefined>;
   queryStringParameters?: Record<string, string>;
@@ -156,7 +156,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
         source: "lambda/gateway",
-        route: event.path ? event.path : undefined,
+        route: event.resource ? event.resource : undefined,
       };
     }
 
