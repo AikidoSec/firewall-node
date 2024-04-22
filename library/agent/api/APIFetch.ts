@@ -20,7 +20,7 @@ export class APIFetch implements API {
     try {
       return JSON.parse(data);
     } catch {
-      return { success: true };
+      return { success: false, error: "unknown_error" };
     }
   }
 
