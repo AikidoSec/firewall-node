@@ -101,7 +101,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateEndpoints(result))
+        .then((result) => this.updateConfig(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -183,7 +183,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateEndpoints(result))
+        .then((result) => this.updateConfig(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -203,11 +203,11 @@ export class Agent {
     return this.endpoints;
   }
 
-  private updateEndpoints(result: ReportingAPIResponse) {
+  private updateConfig(result: ReportingAPIResponse) {
     if (result.success && result.endpoints) {
       const newEndpoints = new Endpoints(result.endpoints);
       if (newEndpoints.hasChanges(this.endpoints)) {
-        this.logger.log("Updated endpoints!");
+        this.logger.log("Updated config!");
       }
       this.endpoints = newEndpoints;
     }
@@ -219,25 +219,24 @@ export class Agent {
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      this.updateEndpoints(
-        await this.api.report(
-          this.token,
-          {
-            type: "heartbeat",
-            time: Date.now(),
-            agent: this.getAgentInfo(),
-            stats: {
-              sinks: stats.sinks,
-              startedAt: stats.startedAt,
-              endedAt: endedAt,
-              requests: stats.requests,
-            },
-            hostnames: this.hostnames.asArray(),
-            routes: Array.from(this.routes.values()),
+      const response = await this.api.report(
+        this.token,
+        {
+          type: "heartbeat",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+          stats: {
+            sinks: stats.sinks,
+            startedAt: stats.startedAt,
+            endedAt: endedAt,
+            requests: stats.requests,
           },
-          timeoutInMS
-        )
+          hostnames: this.hostnames.asArray(),
+          routes: Array.from(this.routes.values()),
+        },
+        timeoutInMS
       );
+      this.updateConfig(response);
     }
   }
 
