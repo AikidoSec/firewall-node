@@ -5,7 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
-import { API } from "./api/API";
+import { API, APIResult } from "./api/API";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -13,6 +13,7 @@ import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
+import { Rules } from "./Rules";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -31,6 +32,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
+  private rules = new Rules([]);
   private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -99,7 +101,8 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .catch(() => {
+        .then((result) => this.updateRules(result))
+        .catch((error) => {
           this.logger.log("Failed to report started event");
         });
     }
@@ -180,6 +183,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
+        .then((result) => this.updateRules(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -195,28 +199,44 @@ export class Agent {
     });
   }
 
+  getRules() {
+    return this.rules;
+  }
+
+  private updateRules(result: APIResult) {
+    if (result.success && result.rules) {
+      const newRules = new Rules(result.rules);
+      if (newRules.hasChanges(this.rules)) {
+        this.logger.log("Updated rules!");
+      }
+      this.rules = newRules;
+    }
+  }
+
   private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      await this.api.report(
-        this.token,
-        {
-          type: "heartbeat",
-          time: Date.now(),
-          agent: this.getAgentInfo(),
-          stats: {
-            sinks: stats.sinks,
-            startedAt: stats.startedAt,
-            endedAt: endedAt,
-            requests: stats.requests,
+      this.updateRules(
+        await this.api.report(
+          this.token,
+          {
+            type: "heartbeat",
+            time: Date.now(),
+            agent: this.getAgentInfo(),
+            stats: {
+              sinks: stats.sinks,
+              startedAt: stats.startedAt,
+              endedAt: endedAt,
+              requests: stats.requests,
+            },
+            hostnames: this.hostnames.asArray(),
+            routes: Array.from(this.routes.values()),
           },
-          hostnames: this.hostnames.asArray(),
-          routes: Array.from(this.routes.values()),
-        },
-        timeoutInMS
+          timeoutInMS
+        )
       );
     }
   }

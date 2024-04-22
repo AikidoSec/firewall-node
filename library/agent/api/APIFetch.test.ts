@@ -38,14 +38,19 @@ function createTestEndpoint({
   statusCode,
   sleepInMs,
   port,
+  rules,
+  throwError,
 }: {
   sleepInMs?: number;
   statusCode?: number;
   port: number;
+  rules?: { route: string; method: string; forceProtectionOff: boolean }[];
+  throwError?: boolean;
 }): Promise<StopServer> {
   const seen: SeenPayload[] = [];
 
   const app = express();
+  app.set("env", "test");
   app.use(json());
   app.post(
     "*",
@@ -59,11 +64,18 @@ function createTestEndpoint({
         body: req.body,
       });
 
+      if (throwError) {
+        throw new Error("500");
+      }
+
       if (statusCode) {
         res.status(statusCode);
       }
 
-      res.send({ success: true });
+      res.send({
+        success: true,
+        rules: rules,
+      });
     })
   );
 
@@ -123,6 +135,29 @@ t.test("it deals with 401", async () => {
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "invalid_token",
+  });
+  await stop();
+});
+
+t.test("it parses JSON", async () => {
+  const stop = await createTestEndpoint({
+    port: 3004,
+    rules: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+  });
+  const api = new APIFetch(new URL("http://localhost:3004"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: true,
+    rules: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+  });
+  await stop();
+});
+
+t.test("it deals with malformed JSON", async () => {
+  const stop = await createTestEndpoint({ port: 3005, throwError: true });
+  const api = new APIFetch(new URL("http://localhost:3005"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: false,
+    error: "unknown_error",
   });
   await stop();
 });
