@@ -1,16 +1,16 @@
-import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
+import { API, APIResult } from "./API";
 import { Token } from "./Token";
 import { Event } from "./Event";
 
 type ThrottleOptions = { maxEventsPerInterval: number; intervalInMs: number };
 
-export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
+export class APIRateLimitedClientSide implements API {
   private readonly maxEventsPerInterval: number;
   private readonly intervalInMs: number;
   private events: Event[] = [];
 
   constructor(
-    private readonly api: ReportingAPI,
+    private readonly api: API,
     { maxEventsPerInterval, intervalInMs }: ThrottleOptions
   ) {
     this.maxEventsPerInterval = maxEventsPerInterval;
@@ -21,7 +21,7 @@ export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  ): Promise<APIResult> {
     if (event.type === "detected_attack") {
       const currentTime = Date.now();
 

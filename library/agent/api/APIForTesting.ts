@@ -1,13 +1,13 @@
 import { Token } from "./Token";
 import { Event } from "./Event";
-import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
+import { API, APIResult } from "./API";
 
-export class ReportingAPIForTesting implements ReportingAPI {
+export class APIForTesting implements API {
   private events: Event[] = [];
 
-  constructor(private result: ReportingAPIResponse = { success: true }) {}
+  constructor(private result: APIResult = { success: true }) {}
 
-  setResult(result: ReportingAPIResponse) {
+  setResult(result: APIResult) {
     this.result = result;
   }
 
@@ -15,7 +15,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  ): Promise<APIResult> {
     this.events.push(event);
 
     return this.result;

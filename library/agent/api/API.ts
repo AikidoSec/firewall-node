@@ -1,7 +1,7 @@
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-type ReportingAPIError =
+type APIError =
   | "timeout"
   | "unknown_error"
   | "rate_limited"
@@ -14,20 +14,16 @@ export type Endpoint = {
   forceProtectionOff: boolean;
 };
 
-export type ReportingAPIResponse =
+export type APIResult =
   | {
       success: true;
       endpoints?: Endpoint[];
     }
   | {
       success: false;
-      error: ReportingAPIError;
+      error: APIError;
     };
 
-export interface ReportingAPI {
-  report(
-    token: Token,
-    event: Event,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse>;
+export interface API {
+  report(token: Token, event: Event, timeoutInMS: number): Promise<APIResult>;
 }

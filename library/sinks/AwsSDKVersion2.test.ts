@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { APIForTesting } from "../agent/api/APIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
@@ -26,7 +26,7 @@ t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     logger,
-    new ReportingAPIForTesting(),
+    new APIForTesting(),
     undefined,
     undefined
   );

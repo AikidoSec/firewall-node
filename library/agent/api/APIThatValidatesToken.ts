@@ -1,17 +1,17 @@
-import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
+import { API, APIResult } from "./API";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-export class ReportingAPIThatValidatesToken implements ReportingAPI {
+export class APIThatValidatesToken implements API {
   private tokenIsInvalid = false;
 
-  constructor(private readonly api: ReportingAPI) {}
+  constructor(private readonly api: API) {}
 
   async report(
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  ): Promise<APIResult> {
     if (this.tokenIsInvalid) {
       return { success: false, error: "invalid_token" };
     }

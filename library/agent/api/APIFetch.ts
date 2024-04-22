@@ -1,17 +1,14 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import type { IncomingMessage } from "node:http";
-import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
+import { API, APIResult } from "./API";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-export class ReportingAPINodeHTTP implements ReportingAPI {
+export class APIFetch implements API {
   constructor(private readonly reportingUrl: URL) {}
 
-  private toAPIResponse(
-    response: IncomingMessage,
-    data: string
-  ): ReportingAPIResponse {
+  private toAPIResult(response: IncomingMessage, data: string): APIResult {
     if (response.statusCode === 429) {
       return { success: false, error: "rate_limited" };
     }
@@ -40,7 +37,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
       headers: Record<string, string>;
       body: string;
     }
-  ): Promise<ReportingAPIResponse> {
+  ): Promise<APIResult> {
     /* c8 ignore next */
     const request = url.startsWith("https://") ? requestHttps : requestHttp;
 
@@ -61,7 +58,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
             // We don't throw errors unless the request times out, is aborted or fails for low level reasons
             // Error objects are annoying to work with
             // That's why we use `resolve` instead of `reject`
-            resolve(this.toAPIResponse(response, data));
+            resolve(this.toAPIResult(response, data));
           });
         }
       );
@@ -79,7 +76,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  ): Promise<APIResult> {
     const abort = new AbortController();
 
     return await Promise.race([
@@ -92,7 +89,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
         },
         body: JSON.stringify(event),
       }),
-      new Promise<ReportingAPIResponse>((resolve) =>
+      new Promise<APIResult>((resolve) =>
         setTimeout(() => {
           abort.abort();
           resolve({ success: false, error: "timeout" });

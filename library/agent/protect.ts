@@ -17,11 +17,11 @@ import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
-import { ReportingAPI } from "./api/ReportingAPI";
-import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
-import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
-import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
-import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
+import { API } from "./api/API";
+import { APIFetch } from "./api/APIFetch";
+import { APIRateLimitedServerSide } from "./api/APIRateLimitedServerSide";
+import { APIRateLimitedClientSide } from "./api/APIRateLimitedClientSide";
+import { APIThatValidatesToken } from "./api/APIThatValidatesToken";
 import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
@@ -49,29 +49,29 @@ function getLogger(): Logger {
   return new LoggerNoop();
 }
 
-function validatesToken(api: ReportingAPI) {
-  return new ReportingAPIThatValidatesToken(api);
+function validatesToken(api: API) {
+  return new APIThatValidatesToken(api);
 }
 
-function clientSideRateLimited(api: ReportingAPI) {
-  return new ReportingAPIRateLimitedClientSide(api, {
+function clientSideRateLimited(api: API) {
+  return new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 100,
     intervalInMs: 60 * 60 * 1000,
   });
 }
 
-function serverSideRateLimited(api: ReportingAPI) {
-  return new ReportingAPIRateLimitedServerSide(api);
+function serverSideRateLimited(api: API) {
+  return new APIRateLimitedServerSide(api);
 }
 
-function getAPI(): ReportingAPI {
+function getAPI(): API {
   let url = new URL("https://guard.aikido.dev/api/runtime/events");
   if (process.env.AIKIDO_URL) {
     url = new URL(process.env.AIKIDO_URL);
   }
 
   return validatesToken(
-    serverSideRateLimited(clientSideRateLimited(new ReportingAPINodeHTTP(url)))
+    serverSideRateLimited(clientSideRateLimited(new APIFetch(url)))
   );
 }
 

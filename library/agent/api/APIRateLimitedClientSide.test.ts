@@ -1,6 +1,6 @@
 import * as t from "tap";
-import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
-import { ReportingAPIRateLimitedClientSide } from "./ReportingAPIRateLimitedClientSide";
+import { APIForTesting } from "./APIForTesting";
+import { APIRateLimitedClientSide } from "./APIRateLimitedClientSide";
 import { Token } from "./Token";
 import { Event } from "./Event";
 
@@ -16,7 +16,6 @@ function generateAttackEvent(): Event {
       headers: undefined,
       body: undefined,
       source: "express",
-      route: "/posts/:id",
     },
     attack: {
       module: "module",
@@ -51,10 +50,10 @@ function generateAttackEvent(): Event {
 }
 
 t.test("it throttles attack events", async () => {
-  const api = new ReportingAPIForTesting();
+  const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });
@@ -104,10 +103,10 @@ function generateStartedEvent(): Event {
 }
 
 t.test("it always allows started events", async () => {
-  const api = new ReportingAPIForTesting();
+  const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });
@@ -161,16 +160,14 @@ function generateHeartbeatEvent(): Event {
       },
       stack: [],
     },
-    hostnames: [],
-    routes: [],
   };
 }
 
 t.test("it always allows heartbeat events", async () => {
-  const api = new ReportingAPIForTesting();
+  const api = new APIForTesting();
   const token = new Token("123");
 
-  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 5,
     intervalInMs: 1000,
   });
@@ -191,9 +188,9 @@ t.test("it always allows heartbeat events", async () => {
 });
 
 t.test("it does not blow memory", async () => {
-  const api = new ReportingAPIForTesting();
+  const api = new APIForTesting();
   const token = new Token("123");
-  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+  const throttled = new APIRateLimitedClientSide(api, {
     maxEventsPerInterval: 10,
     intervalInMs: 60000,
   });

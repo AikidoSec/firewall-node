@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../../agent/Agent";
 import { setInstance } from "../../agent/AgentSingleton";
-import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
+import { APIForTesting } from "../../agent/api/APIForTesting";
 import { Token } from "../../agent/api/Token";
 import { LoggerForTesting } from "../../agent/logger/LoggerForTesting";
 import {
@@ -44,7 +44,7 @@ t.test("it lets agent know", async () => {
   const agent = new Agent(
     true,
     logger,
-    new ReportingAPIForTesting(),
+    new APIForTesting(),
     new Token("123"),
     undefined
   );

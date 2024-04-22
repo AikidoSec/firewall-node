@@ -1,6 +1,6 @@
 import * as t from "tap";
-import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
-import { ReportingAPIThatValidatesToken } from "./ReportingAPIThatValidatesToken";
+import { APIForTesting } from "./APIForTesting";
+import { APIThatValidatesToken } from "./APIThatValidatesToken";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
@@ -30,8 +30,8 @@ function generateStartedEvent(): Event {
 }
 
 t.test("it ignores valid tokens", async () => {
-  const api = new ReportingAPIForTesting();
-  const validatesToken = new ReportingAPIThatValidatesToken(api);
+  const api = new APIForTesting();
+  const validatesToken = new APIThatValidatesToken(api);
   const token = new Token("123");
 
   const event = generateStartedEvent();
@@ -43,11 +43,8 @@ t.test("it ignores valid tokens", async () => {
 });
 
 t.test("it stops sending requests if token is invalid", async () => {
-  const api = new ReportingAPIForTesting({
-    success: false,
-    error: "invalid_token",
-  });
-  const validatesToken = new ReportingAPIThatValidatesToken(api);
+  const api = new APIForTesting({ success: false, error: "invalid_token" });
+  const validatesToken = new APIThatValidatesToken(api);
   const token = new Token("123");
 
   const event = generateStartedEvent();
@@ -65,8 +62,8 @@ t.test("it stops sending requests if token is invalid", async () => {
 });
 
 t.test("it ignores other errors", async () => {
-  const api = new ReportingAPIForTesting({ success: false, error: "timeout" });
-  const validatesToken = new ReportingAPIThatValidatesToken(api);
+  const api = new APIForTesting({ success: false, error: "timeout" });
+  const validatesToken = new APIThatValidatesToken(api);
   const token = new Token("123");
 
   const event = generateStartedEvent();
