@@ -1,12 +1,9 @@
-<h1 align="center">Aikido Runtime Protection for Node.js</h1>
-<br />
-<div align="center">
+![Aikido Runtime Protection for Node.js](./docs/banner.svg)
+
+# Aikido Runtime Protection for Node.js
 
 ![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fruntime?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/runtime-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fruntime?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/end-to-end-tests.yml/badge.svg)
-
-</div>
-</br>
 
 Runtime is an embedded security engine for autonomously protecting Node.js apps against common and critical attacks.
 
@@ -20,7 +17,7 @@ Runtime autonomously protects your Node.js applications against:
 * 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
-* &#x1f6e1;&#xfe0f; [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
+* 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🚀 More to come (see the [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1))!
 
 Runtime operates autonomously on the same server as your Node.js app to:
