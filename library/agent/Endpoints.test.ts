@@ -2,21 +2,21 @@ import * as t from "tap";
 import { Endpoints } from "./Endpoints";
 
 t.test("it returns false if empty rules", async () => {
-  const rules = new Endpoints([]);
-  t.same(rules.shouldIgnore("GET", "/foo"), false);
+  const endpoints = new Endpoints([]);
+  t.same(endpoints.shouldIgnore("GET", "/foo"), false);
 });
 
 t.test("it works", async () => {
-  const rules = new Endpoints([
+  const endpoints = new Endpoints([
     { method: "GET", route: "/foo", forceProtectionOff: false },
     { method: "POST", route: "/foo", forceProtectionOff: true },
     { method: "POST", route: /fly+/.source, forceProtectionOff: true },
   ]);
 
-  t.same(rules.shouldIgnore("GET", "/foo"), false);
-  t.same(rules.shouldIgnore("POST", "/foo"), true);
-  t.same(rules.shouldIgnore("GET", "/unknown"), false);
-  t.same(rules.shouldIgnore("POST", /fly+/), true);
+  t.same(endpoints.shouldIgnore("GET", "/foo"), false);
+  t.same(endpoints.shouldIgnore("POST", "/foo"), true);
+  t.same(endpoints.shouldIgnore("GET", "/unknown"), false);
+  t.same(endpoints.shouldIgnore("POST", /fly+/), true);
 });
 
 t.test("it diffs old and new endpoints", async () => {

@@ -32,7 +32,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private rules = new Endpoints([]);
+  private endpoints = new Endpoints([]);
   private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -101,7 +101,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateRules(result))
+        .then((result) => this.updateEndpoints(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -183,7 +183,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateRules(result))
+        .then((result) => this.updateEndpoints(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -199,17 +199,17 @@ export class Agent {
     });
   }
 
-  getRules() {
-    return this.rules;
+  getEndpoints() {
+    return this.endpoints;
   }
 
-  private updateRules(result: APIResult) {
-    if (result.success && result.rules) {
-      const newRules = new Endpoints(result.rules);
-      if (newRules.hasChanges(this.rules)) {
-        this.logger.log("Updated rules!");
+  private updateEndpoints(result: APIResult) {
+    if (result.success && result.endpoints) {
+      const newEndpoints = new Endpoints(result.endpoints);
+      if (newEndpoints.hasChanges(this.endpoints)) {
+        this.logger.log("Updated endpoints!");
       }
-      this.rules = newRules;
+      this.endpoints = newEndpoints;
     }
   }
 
@@ -219,7 +219,7 @@ export class Agent {
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      this.updateRules(
+      this.updateEndpoints(
         await this.api.report(
           this.token,
           {

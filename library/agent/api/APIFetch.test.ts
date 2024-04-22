@@ -38,13 +38,13 @@ function createTestEndpoint({
   statusCode,
   sleepInMs,
   port,
-  rules,
+  endpoints,
   throwError,
 }: {
   sleepInMs?: number;
   statusCode?: number;
   port: number;
-  rules?: { route: string; method: string; forceProtectionOff: boolean }[];
+  endpoints?: { route: string; method: string; forceProtectionOff: boolean }[];
   throwError?: boolean;
 }): Promise<StopServer> {
   const seen: SeenPayload[] = [];
@@ -74,7 +74,7 @@ function createTestEndpoint({
 
       res.send({
         success: true,
-        rules: rules,
+        endpoints: endpoints,
       });
     })
   );
@@ -142,12 +142,12 @@ t.test("it deals with 401", async () => {
 t.test("it parses JSON", async () => {
   const stop = await createTestEndpoint({
     port: 3004,
-    rules: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+    endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
   });
   const api = new APIFetch(new URL("http://localhost:3004"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: true,
-    rules: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+    endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
   });
   await stop();
 });

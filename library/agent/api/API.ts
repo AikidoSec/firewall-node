@@ -17,7 +17,7 @@ export type Endpoint = {
 export type APIResult =
   | {
       success: true;
-      rules?: Endpoint[];
+      endpoints?: Endpoint[];
     }
   | {
       success: false;

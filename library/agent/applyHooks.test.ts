@@ -245,7 +245,7 @@ t.test("it ignores route if force protection is off", async (t) => {
 
   api.setResult({
     success: true,
-    rules: [{ method: "GET", route: "/route", forceProtectionOff: true }],
+    endpoints: [{ method: "GET", route: "/route", forceProtectionOff: true }],
   });
 
   // Read rules from API
