@@ -203,9 +203,9 @@ export class Agent {
     return this.endpoints;
   }
 
-  private updateConfig(result: ReportingAPIResponse) {
-    if (result.success && result.endpoints) {
-      const newEndpoints = new Endpoints(result.endpoints);
+  private updateConfig(response: ReportingAPIResponse) {
+    if (response.success && response.endpoints) {
+      const newEndpoints = new Endpoints(response.endpoints);
       if (newEndpoints.hasChanges(this.endpoints)) {
         this.logger.log("Updated config!");
       }
