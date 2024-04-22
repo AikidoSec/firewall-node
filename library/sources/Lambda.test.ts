@@ -3,7 +3,7 @@ import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
@@ -184,7 +184,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
   agent.start([]);
   setInstance(agent);
@@ -298,7 +298,7 @@ t.test(
     const clock = FakeTimers.install();
 
     const logger = new LoggerNoop();
-    const testing = new APIForTesting();
+    const testing = new ReportingAPIForTesting();
     const agent = new Agent(false, logger, testing, undefined, "lambda");
     agent.start([]);
     setInstance(agent);
@@ -330,7 +330,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);

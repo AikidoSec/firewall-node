@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "./Agent";
-import { APIForTesting } from "./api/APIForTesting";
+import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { Token } from "./api/Token";
 import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
@@ -21,7 +21,7 @@ const context: Context = {
 
 function createAgent() {
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const agent = new Agent(true, logger, api, new Token("123"), "lambda");
 
   return {

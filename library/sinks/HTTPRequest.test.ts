@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
@@ -22,7 +22,7 @@ t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     new Token("123"),
     undefined
   );

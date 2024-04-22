@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 
@@ -8,7 +8,7 @@ import { Express } from "./Express";
 const agent = new Agent(
   true,
   new LoggerNoop(),
-  new APIForTesting(),
+  new ReportingAPIForTesting(),
   undefined,
   "lambda"
 );
