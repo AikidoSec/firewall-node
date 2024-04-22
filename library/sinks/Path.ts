@@ -33,6 +33,7 @@ export class Path implements Wrapper {
       .addBuiltinModule("path")
       .addSubject((exports) => exports)
       .inspect("join", (args) => this.inspectPath(args, "join"))
-      .inspect("resolve", (args) => this.inspectPath(args, "resolve"));
+      .inspect("resolve", (args) => this.inspectPath(args, "resolve"))
+      .inspect("normalize", (args) => this.inspectPath(args, "normalize"));
   }
 }
