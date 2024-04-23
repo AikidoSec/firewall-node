@@ -331,7 +331,7 @@ for (const file of files) {
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection (in query)`,
       async () => {
-        isSqlInjection(`SELECT * FROM users ${sql}`, sql);
+        isSqlInjection(`SELECT * FROM users WHERE id = ${sql}`, sql);
       }
     );
 
@@ -339,7 +339,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "'");
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
 
@@ -347,7 +347,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "'", true);
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
 
@@ -355,7 +355,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"');
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
 
@@ -363,7 +363,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"', true);
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
 
@@ -371,7 +371,7 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with backticks)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "`");
-        isNotSqlInjection("SELECT * FROM ${escaped}", sql);
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
   }
