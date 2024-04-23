@@ -15,6 +15,7 @@ const dangerousContext: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 
@@ -26,6 +27,7 @@ const safeContext: Context = {
   headers: {},
   body: {},
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 

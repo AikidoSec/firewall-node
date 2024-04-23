@@ -40,6 +40,7 @@ const context: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 

@@ -15,6 +15,9 @@ const gatewayEvent: APIGatewayProxyEvent = {
   queryStringParameters: {
     query: "value",
   },
+  pathParameters: {
+    parameter: "value",
+  },
   headers: {
     "content-type": "application/json",
     cookie: "cookie=value",
@@ -68,6 +71,9 @@ t.test("it transforms callback handler to async handler", async (t) => {
     cookies: {
       cookie: "value",
     },
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
   });
 });
@@ -119,6 +125,9 @@ t.test("json header is missing for gateway event", async (t) => {
     headers: {},
     query: { query: "value" },
     cookies: {},
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
   });
 });
@@ -156,6 +165,7 @@ t.test("it handles SQS event", async (t) => {
     headers: {},
     query: {},
     cookies: {},
+    routeParams: {},
     source: "lambda/sqs",
   });
 });
@@ -361,6 +371,7 @@ t.test("undefined values", async () => {
       requestContext: undefined,
       queryStringParameters: undefined,
       cookies: undefined,
+      pathParameters: undefined,
     },
     lambdaContext,
     () => {}
@@ -374,6 +385,7 @@ t.test("undefined values", async () => {
     headers: undefined,
     query: {},
     cookies: {},
+    routeParams: {},
     source: "lambda/gateway",
   });
 });

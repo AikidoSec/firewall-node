@@ -1,1 +1,1 @@
-export type Source = "query" | "body" | "headers" | "cookies";
+export type Source = "query" | "body" | "headers" | "cookies" | "routeParams";

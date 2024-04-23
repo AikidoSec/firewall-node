@@ -91,6 +91,7 @@ export type APIGatewayProxyEvent = {
   httpMethod: string;
   headers: Record<string, string | undefined>;
   queryStringParameters?: Record<string, string>;
+  pathParameters?: Record<string, string>;
   requestContext?: {
     identity?: {
       sourceIp?: string;
@@ -139,6 +140,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
             body: record,
           })),
         },
+        routeParams: {},
         headers: {},
         query: {},
         cookies: {},
@@ -151,6 +153,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         remoteAddress: event.requestContext?.identity?.sourceIp,
         body: parseBody(event),
         headers: event.headers,
+        routeParams: event.pathParameters ? event.pathParameters : {},
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
         source: "lambda/gateway",
