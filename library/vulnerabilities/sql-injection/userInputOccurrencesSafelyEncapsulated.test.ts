@@ -75,3 +75,23 @@ t.test(
     );
   }
 );
+
+t.test("starts with single quote", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = '\\' or true--'`,
+      "' or true--"
+    ),
+    true
+  );
+});
+
+t.test("starts with single quote without SQL syntax", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = '\\' hello world'`,
+      "' hello world"
+    ),
+    true
+  );
+});
