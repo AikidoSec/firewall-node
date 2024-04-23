@@ -366,6 +366,7 @@ t.test("undefined values", async () => {
       requestContext: undefined,
       queryStringParameters: undefined,
       cookies: undefined,
+      resource: undefined,
     },
     lambdaContext,
     () => {}
@@ -373,7 +374,7 @@ t.test("undefined values", async () => {
 
   t.same(result, {
     url: undefined,
-    route: "/dev/{proxy+}",
+    route: undefined,
     method: "GET",
     remoteAddress: undefined,
     body: undefined,
