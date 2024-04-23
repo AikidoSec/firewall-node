@@ -57,6 +57,12 @@ function getApp() {
     res.send(context);
   });
 
+  app.get("/posts/:id", (req, res) => {
+    const context = getContext();
+
+    res.send(context);
+  });
+
   app.get("/throws", (req, res) => {
     throw new Error("test");
   });
@@ -163,6 +169,16 @@ t.test("it counts request with error", async (t) => {
         blocked: 0,
       },
     },
+  });
+});
+
+t.test("it adds context from request for route with params", async (t) => {
+  const response = await request(getApp()).get("/posts/123");
+
+  t.match(response.body, {
+    method: "GET",
+    routeParams: { id: "123" },
+    source: "express",
   });
 });
 

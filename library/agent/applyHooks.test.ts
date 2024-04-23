@@ -15,6 +15,7 @@ const context: Context = {
   headers: {},
   body: undefined,
   cookies: {},
+  routeParams: {},
   source: "express",
   route: "/posts/:id",
 };
