@@ -1,6 +1,6 @@
 import { Endpoint } from "./api/API";
 
-export class Endpoints {
+export class ServiceConfig {
   private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }
@@ -20,31 +20,7 @@ export class Endpoints {
     return `${method}:${route}`;
   }
 
-  hasChanges(oldEndpoints: Endpoints): boolean {
-    for (const rule of oldEndpoints.endpoints.values()) {
-      if (!this.endpoints.has(this.getKey(rule.method, rule.route))) {
-        return true;
-      }
-    }
-
-    for (const rule of this.endpoints.values()) {
-      const oldRule = oldEndpoints.endpoints.get(
-        this.getKey(rule.method, rule.route)
-      );
-
-      if (!oldRule) {
-        return true;
-      }
-
-      if (oldRule.forceProtectionOff !== rule.forceProtectionOff) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  shouldIgnore(method: string, route: string | RegExp) {
+  shouldProtectEndpoint(method: string, route: string | RegExp) {
     const key = this.getKey(
       method,
       typeof route === "string" ? route : route.source
@@ -52,9 +28,9 @@ export class Endpoints {
     const rule = this.endpoints.get(key);
 
     if (!rule) {
-      return false;
+      return true;
     }
 
-    return rule.forceProtectionOff;
+    return !rule.forceProtectionOff;
   }
 }

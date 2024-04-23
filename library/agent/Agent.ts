@@ -13,7 +13,7 @@ import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
-import { Endpoints } from "./Endpoints";
+import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -32,7 +32,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private endpoints = new Endpoints([]);
+  private serviceConfig = new ServiceConfig([]);
   private routes: Map<string, { method: string; path: string }> = new Map();
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -101,7 +101,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateConfig(result))
+        .then((result) => this.updateServiceConfig(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -183,7 +183,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateConfig(result))
+        .then((result) => this.updateServiceConfig(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -199,17 +199,13 @@ export class Agent {
     });
   }
 
-  getEndpoints() {
-    return this.endpoints;
+  getConfig() {
+    return this.serviceConfig;
   }
 
-  private updateConfig(result: APIResult) {
+  private updateServiceConfig(result: APIResult) {
     if (result.success && result.endpoints) {
-      const newEndpoints = new Endpoints(result.endpoints);
-      if (newEndpoints.hasChanges(this.endpoints)) {
-        this.logger.log("Updated config!");
-      }
-      this.endpoints = newEndpoints;
+      this.serviceConfig = new ServiceConfig(result.endpoints);
     }
   }
 
@@ -236,7 +232,7 @@ export class Agent {
         },
         timeoutInMS
       );
-      this.updateConfig(response);
+      this.updateServiceConfig(response);
     }
   }
 
