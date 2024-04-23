@@ -373,6 +373,7 @@ t.test("undefined values", async () => {
 
   t.same(result, {
     url: undefined,
+    route: "/dev/{proxy+}",
     method: "GET",
     remoteAddress: undefined,
     body: undefined,
