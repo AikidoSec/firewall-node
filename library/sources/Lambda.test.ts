@@ -199,6 +199,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
 
     await handler(gatewayEvent, lambdaContext, () => {});
@@ -219,6 +220,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -232,6 +234,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -307,6 +310,7 @@ t.test(
         blocked: false,
         durationInMs: 0.1,
         attackDetected: false,
+        withoutContext: false,
       });
       await handler(gatewayEvent, lambdaContext, () => {});
     }
@@ -343,4 +347,52 @@ t.test("if handler throws it still sends heartbeat", async () => {
   t.match(testing.getEvents(), [{ type: "heartbeat" }]);
 
   clock.uninstall();
+});
+
+t.test("undefined values", async () => {
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const result = await handler(
+    {
+      ...gatewayEvent,
+      headers: undefined,
+      requestContext: undefined,
+      queryStringParameters: undefined,
+      cookies: undefined,
+    },
+    lambdaContext,
+    () => {}
+  );
+
+  t.same(result, {
+    url: undefined,
+    method: "GET",
+    remoteAddress: undefined,
+    body: undefined,
+    headers: undefined,
+    query: {},
+    cookies: {},
+    source: "lambda/gateway",
+  });
+});
+
+t.test("no cookie header", async () => {
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const result = await handler(
+    {
+      ...gatewayEvent,
+      headers: {},
+    },
+    lambdaContext,
+    () => {}
+  );
+
+  t.match(result, {
+    cookies: {},
+  });
 });
