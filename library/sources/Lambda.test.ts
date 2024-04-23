@@ -15,6 +15,9 @@ const gatewayEvent: APIGatewayProxyEvent = {
   queryStringParameters: {
     query: "value",
   },
+  pathParameters: {
+    parameter: "value",
+  },
   headers: {
     "content-type": "application/json",
     cookie: "cookie=value",
@@ -68,6 +71,9 @@ t.test("it transforms callback handler to async handler", async (t) => {
     cookies: {
       cookie: "value",
     },
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
   });
 });
@@ -119,6 +125,9 @@ t.test("json header is missing for gateway event", async (t) => {
     headers: {},
     query: { query: "value" },
     cookies: {},
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
   });
 });
@@ -156,6 +165,7 @@ t.test("it handles SQS event", async (t) => {
     headers: {},
     query: {},
     cookies: {},
+    routeParams: {},
     source: "lambda/sqs",
   });
 });
@@ -199,6 +209,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
 
     await handler(gatewayEvent, lambdaContext, () => {});
@@ -219,6 +230,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -232,6 +244,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    withoutContext: false,
   });
 
   await handler(gatewayEvent, lambdaContext, () => {});
@@ -307,6 +320,7 @@ t.test(
         blocked: false,
         durationInMs: 0.1,
         attackDetected: false,
+        withoutContext: false,
       });
       await handler(gatewayEvent, lambdaContext, () => {});
     }

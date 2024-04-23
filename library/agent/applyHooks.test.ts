@@ -14,6 +14,7 @@ const context: Context = {
   headers: {},
   body: undefined,
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 

@@ -21,6 +21,7 @@ function createContext({
     headers: headers ? headers : {},
     body: body,
     cookies: cookies ? cookies : {},
+    routeParams: {},
     source: "express",
   };
 }
