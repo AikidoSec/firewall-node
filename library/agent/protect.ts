@@ -6,6 +6,7 @@ import { HTTPRequest } from "../sinks/HTTPRequest";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
+import { Path } from "../sinks/Path";
 import { Postgres } from "../sinks/Postgres";
 import { Undici } from "../sinks/Undici";
 import {
@@ -115,6 +116,7 @@ function getWrappers() {
     new HTTPRequest(),
     new Fetch(),
     new Undici(),
+    new Path(),
   ];
 }
 

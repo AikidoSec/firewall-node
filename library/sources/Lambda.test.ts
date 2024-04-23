@@ -10,7 +10,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
-  path: "/dev/{proxy+}",
+  resource: "/dev/{proxy+}",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {

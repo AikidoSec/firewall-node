@@ -5,6 +5,7 @@ import { getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -21,6 +22,22 @@ export class Postgres implements Wrapper {
 
       return checkContextForSqlInjection({
         sql: sql,
+        context: context,
+        operation: "pg.query",
+        dialect: this.dialect,
+      });
+    }
+
+    if (
+      args.length > 0 &&
+      isPlainObject(args[0]) &&
+      args[0].text &&
+      typeof args[0].text === "string"
+    ) {
+      const text = args[0].text;
+
+      return checkContextForSqlInjection({
+        sql: text,
         context: context,
         operation: "pg.query",
         dialect: this.dialect,
