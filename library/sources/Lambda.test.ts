@@ -384,6 +384,9 @@ t.test("undefined values", async () => {
     headers: undefined,
     query: {},
     cookies: {},
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
   });
 });
