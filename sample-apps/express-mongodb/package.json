@@ -6,6 +6,8 @@
   "private": true,
   "dependencies": {
     "@aikidosec/runtime": "file:../../build",
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.44.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
