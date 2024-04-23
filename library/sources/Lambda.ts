@@ -155,7 +155,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         headers: event.headers,
         routeParams: event.pathParameters ? event.pathParameters : {},
         query: event.queryStringParameters ? event.queryStringParameters : {},
-        cookies: event.headers?.cookie ? parse(event.headers?.cookie) : {},
+        cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
         source: "lambda/gateway",
       };
     }

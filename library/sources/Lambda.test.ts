@@ -358,3 +358,51 @@ t.test("if handler throws it still sends heartbeat", async () => {
 
   clock.uninstall();
 });
+
+t.test("undefined values", async () => {
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const result = await handler(
+    {
+      ...gatewayEvent,
+      headers: undefined,
+      requestContext: undefined,
+      queryStringParameters: undefined,
+      cookies: undefined,
+    },
+    lambdaContext,
+    () => {}
+  );
+
+  t.same(result, {
+    url: undefined,
+    method: "GET",
+    remoteAddress: undefined,
+    body: undefined,
+    headers: undefined,
+    query: {},
+    cookies: {},
+    source: "lambda/gateway",
+  });
+});
+
+t.test("no cookie header", async () => {
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const result = await handler(
+    {
+      ...gatewayEvent,
+      headers: {},
+    },
+    lambdaContext,
+    () => {}
+  );
+
+  t.match(result, {
+    cookies: {},
+  });
+});
