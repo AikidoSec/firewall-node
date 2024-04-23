@@ -371,6 +371,7 @@ t.test("undefined values", async () => {
       requestContext: undefined,
       queryStringParameters: undefined,
       cookies: undefined,
+      pathParameters: undefined,
     },
     lambdaContext,
     () => {}
@@ -384,9 +385,7 @@ t.test("undefined values", async () => {
     headers: undefined,
     query: {},
     cookies: {},
-    routeParams: {
-      parameter: "value",
-    },
+    routeParams: {},
     source: "lambda/gateway",
   });
 });
