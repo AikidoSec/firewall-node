@@ -17,6 +17,7 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  routeParams: {},
   source: "express",
   route: "/posts/:id",
 };
@@ -29,6 +30,7 @@ const safeContext: Context = {
   headers: {},
   body: {},
   cookies: {},
+  routeParams: {},
   source: "express",
   route: "/posts/:id",
 };

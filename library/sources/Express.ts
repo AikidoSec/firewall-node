@@ -23,6 +23,7 @@ function createMiddleware(agent: Agent): Middleware {
         body: req.body ? req.body : undefined,
         url: req.protocol + "://" + req.get("host") + req.originalUrl,
         headers: req.headers,
+        routeParams: req.params,
         query: req.query,
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},

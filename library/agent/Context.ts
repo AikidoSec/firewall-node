@@ -6,6 +6,7 @@ export type Context = {
   method: string | undefined;
   query: ParsedQs;
   headers: Record<string, string | string[] | undefined>;
+  routeParams: Record<string, string> | undefined;
   remoteAddress: string | undefined;
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
