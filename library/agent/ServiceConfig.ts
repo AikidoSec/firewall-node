@@ -1,4 +1,4 @@
-import { Endpoint } from "./api/API";
+import { Endpoint } from "./api/ReportingAPI";
 
 export class ServiceConfig {
   private endpoints: Map<

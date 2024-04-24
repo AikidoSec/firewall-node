@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Fetch } from "./Fetch";
@@ -12,7 +12,7 @@ t.test(
     const agent = new Agent(
       true,
       new LoggerNoop(),
-      new APIForTesting(),
+      new ReportingAPIForTesting(),
       new Token("123"),
       undefined
     );

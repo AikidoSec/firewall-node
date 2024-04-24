@@ -1,18 +1,18 @@
-import { API, APIResult } from "./API";
+import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-export class APIRateLimitedServerSide implements API {
+export class ReportingAPIRateLimitedServerSide implements ReportingAPI {
   private readonly stopSendingForInMilliseconds = 30 * 60 * 1000;
   private rateLimitedAt: number | null = null;
 
-  constructor(private readonly api: API) {}
+  constructor(private readonly api: ReportingAPI) {}
 
   async report(
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<APIResult> {
+  ): Promise<ReportingAPIResponse> {
     if (
       typeof this.rateLimitedAt === "number" &&
       Date.now() - this.rateLimitedAt < this.stopSendingForInMilliseconds
