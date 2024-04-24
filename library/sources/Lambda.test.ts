@@ -10,6 +10,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
+  resource: "/dev/{proxy+}",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
@@ -75,6 +76,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
       parameter: "value",
     },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -129,6 +131,7 @@ t.test("json header is missing for gateway event", async (t) => {
       parameter: "value",
     },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -167,6 +170,7 @@ t.test("it handles SQS event", async (t) => {
     cookies: {},
     routeParams: {},
     source: "lambda/sqs",
+    route: undefined,
   });
 });
 
@@ -256,6 +260,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       // @ts-expect-error AgentInfo is private
       agent: agent.getAgentInfo(),
       hostnames: [],
+      routes: [],
       stats: {
         sinks: {
           mongodb: {
@@ -372,6 +377,7 @@ t.test("undefined values", async () => {
       queryStringParameters: undefined,
       cookies: undefined,
       pathParameters: undefined,
+      resource: undefined,
     },
     lambdaContext,
     () => {}
@@ -379,6 +385,7 @@ t.test("undefined values", async () => {
 
   t.same(result, {
     url: undefined,
+    route: undefined,
     method: "GET",
     remoteAddress: undefined,
     body: undefined,

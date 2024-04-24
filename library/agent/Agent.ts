@@ -5,7 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
-import { API } from "./api/API";
+import { API, APIResult } from "./api/API";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
@@ -13,6 +13,8 @@ import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
+import { Routes } from "./Routes";
+import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -31,6 +33,8 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
+  private serviceConfig = new ServiceConfig([]);
+  private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -98,7 +102,8 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .catch(() => {
+        .then((result) => this.updateServiceConfig(result))
+        .catch((error) => {
           this.logger.log("Failed to report started event");
         });
     }
@@ -173,6 +178,7 @@ export class Agent {
               body: convertRequestBodyToString(request.body),
               headers: filterEmptyRequestHeaders(request.headers),
               source: request.source,
+              route: request.route,
             },
             agent: this.getAgentInfo(),
           },
@@ -193,13 +199,23 @@ export class Agent {
     });
   }
 
+  getConfig() {
+    return this.serviceConfig;
+  }
+
+  private updateServiceConfig(result: APIResult) {
+    if (result.success && result.endpoints) {
+      this.serviceConfig = new ServiceConfig(result.endpoints);
+    }
+  }
+
   private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      await this.api.report(
+      const response = await this.api.report(
         this.token,
         {
           type: "heartbeat",
@@ -212,9 +228,11 @@ export class Agent {
             requests: stats.requests,
           },
           hostnames: this.hostnames.asArray(),
+          routes: this.routes.asArray(),
         },
         timeoutInMS
       );
+      this.updateServiceConfig(response);
     }
   }
 
@@ -333,6 +351,10 @@ export class Agent {
 
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
+  }
+
+  onRouteExecute(method: string, path: string) {
+    this.routes.addRoute(method, path);
   }
 
   async flushStats(timeoutInMS: number) {
