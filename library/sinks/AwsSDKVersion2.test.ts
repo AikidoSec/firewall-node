@@ -5,6 +5,9 @@ import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
 
+// Suppress upgrade to SDK v3 notice
+require("aws-sdk/lib/maintenance_mode_message").suppress = true;
+
 const unsafeContext: Context = {
   remoteAddress: "::1",
   method: "POST",
@@ -17,6 +20,7 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 

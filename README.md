@@ -1,22 +1,35 @@
-# Aikido Runtime for Node.js
+![Aikido Runtime Protection for Node.js](./docs/banner.svg)
+
+# Aikido Runtime Protection for Node.js
 
 ![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fruntime?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/runtime-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fruntime?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/end-to-end-tests.yml/badge.svg)
 
+Runtime is an embedded security engine for autonomously protecting Node.js apps against common and critical attacks.
+
+Runtime protects your Node.js apps by preventing situations, like user input containing dangerous strings, which allow injection, pollution, and path traversal attacks in the first place. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
+
 ## Features
 
-Protects your application against
+Runtime autonomously protects your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
 * 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
-* 🛡 [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
-* 🚀 More to come. See [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1)
+* 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
+* 🚀 More to come (see the [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1))!
+
+Runtime operates autonomously on the same server as your Node.js app to:
+
+* ✅ Secure your database similar to a web application firewall (WAF) with none of the infrastructure or cost.
+* ✅ [Minimize impact](#performance) on production with a tiny footprint and no additional dependencies.
+* ✅ Support a developer-first local development and testing experience.
+* ✅ Save security operators and development teams hours rooting out vulnerabilities, testing exploits, and coding remediations.
 
 ## Supported libraries and frameworks
 
-Aikido runtime for Node.js 16+ is compatible with
+Aikido Runtime for Node.js 16+ is compatible with:
 
 ### Web frameworks
 
@@ -45,6 +58,7 @@ See list above for supported database drivers.
 * ✅ [`knex`](https://www.npmjs.com/package/knex)
 * ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 * ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
+* ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
 
 ## Installation
 
@@ -56,36 +70,36 @@ $ npm install --save-exact @aikidosec/runtime
 $ yarn add --exact @aikidosec/runtime
 ```
 
-* For express based apps, follow the [Express](docs/express.md) instructions
-* For AWS Lambda, follow the [AWS Lambda](docs/lambda.md) instructions
-* For Google Cloud Functions, follow the [Google Cloud Functions](docs/cloud-functions.md) instructions
-* For `@google-cloud/pubsub`, follow the [Google Cloud Pub/Sub](docs/pubsub.md) instructions
+For framework- and provider- specific instructions, check out our docs:
 
-## Reporting to Aikido Security dashboard
+- [Express.js-based apps](docs/express.md)
+- [AWS Lambda](docs/lambda.md)
+- [Google Cloud Functions](docs/cloud-functions.md)
+- [Google Cloud Pub/Sub](docs/pubsub.md)
+
+## Reporting to your Aikido Security dashboard
 
 > Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
 
-You can use some of this library's features without Aikido, but you will get the most value when using it with Aikido.
+You can use some of Runtimes's features without Aikido, but you will get the most value by reporting your data to Aikido.
 
 You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login).
 
 Here's how:
-* [Login to your Aikido account](https://app.aikido.dev/login)
-* Go to [Runtime protection](https://app.aikido.dev/runtime)
-* Go to services
-* Click on "Add service"
-* Choose a name for your service
-* Click on "Generate token"
-* Copy the token
-* Set the token as an environment variable: `AIKIDO_TOKEN`
+* [Log in to your Aikido account](https://app.aikido.dev/login).
+* Go to [Runtime protection](https://app.aikido.dev/runtime).
+* Go to services.
+* Click on **Add service**.
+* Choose a name for your service.
+* Click **Generate token**.
+* Copy the token.
+* Set the token as an environment variable, `AIKIDO_TOKEN`, using [dotenv](https://github.com/motdotla/dotenv) or another method of your choosing.
 
-(You can use [dotenv](dotenv) to load the token from an `.env` file)
+## Running in production (blocking) mode
 
-## Running in production mode (blocking)
+By default, Runtime will only detect and report attacks to Aikido.
 
-By default, the runtime will only detect and report attacks to Aikido.
-
-If you want to start blocking requests, you can set the `AIKIDO_BLOCKING` environment variable to `true`.
+To block requests, set the `AIKIDO_BLOCKING` environment variable to `true`.
 
 See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to Aikido.
 
@@ -102,15 +116,15 @@ address: support@aikido.dev or create an account at https://app.aikido.dev.
 
 ## Performance
 
-We run a benchmark on every commit to make sure that the runtime has a minimal impact on your application's performance.
+We run a benchmark on every commit to ensure Runtime has a minimal impact on your application's performance.
 
-The bench runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without the runtime:
+The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Runtime:
 
-| Without runtime  | With runtime  | Difference in ms |
+| Without Runtime  | With Runtime  | Difference in ms |
 |------------------|---------------|------------------|
 | 0.214ms          | 0.222ms       | +0.008ms         |
 
-(Using Node.js 18.x and MongoDB 6.3.x, results will vary depending on your hardware)
+(Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
 
 See [benchmarks](benchmarks) for more information.
 

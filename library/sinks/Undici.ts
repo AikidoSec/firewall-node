@@ -76,10 +76,23 @@ export class Undici implements Wrapper {
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
+        let port = 80;
+        if (typeof args[0].protocol === "string") {
+          port = args[0].protocol === "https:" ? 443 : 80;
+        }
+        if (typeof args[0].port === "number") {
+          port = args[0].port;
+        } else if (
+          typeof args[0].port === "string" &&
+          Number.isInteger(parseInt(args[0].port, 10))
+        ) {
+          port = parseInt(args[0].port, 10);
+        }
+
         const result = this.onConnectHostname(
           agent,
           args[0].hostname,
-          typeof args[0].port === "number" ? args[0].port : undefined,
+          port,
           method
         );
         if (result) {

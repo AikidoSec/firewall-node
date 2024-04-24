@@ -18,6 +18,18 @@ function query(sql: string, connection: Connection) {
   });
 }
 
+function queryViaOptions(sql: { sql: string }, connection: Connection) {
+  return new Promise((resolve, reject) => {
+    connection.query(sql, (error, results) => {
+      if (error) {
+        return reject(error);
+      }
+
+      resolve(results);
+    });
+  });
+}
+
 const context: Context = {
   remoteAddress: "::1",
   method: "POST",
@@ -28,6 +40,7 @@ const context: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 
@@ -62,6 +75,25 @@ t.test("it detects SQL injections", async () => {
     );
     await query("TRUNCATE cats", connection);
     t.same(await query("SELECT petname FROM `cats`;", connection), []);
+    t.same(
+      await queryViaOptions({ sql: "SELECT petname FROM `cats`;" }, connection),
+      []
+    );
+    t.same(
+      await runWithContext(context, () => {
+        return query("SELECT petname FROM `cats`;", connection);
+      }),
+      []
+    );
+    t.same(
+      await runWithContext(context, () => {
+        return queryViaOptions(
+          { sql: "SELECT petname FROM `cats`;" },
+          connection
+        );
+      }),
+      []
+    );
 
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {
@@ -72,6 +104,19 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
+        "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error2 = await t.rejects(async () => {
+      await runWithContext(context, () => {
+        return connection.query({ sql: "-- should be blocked" });
+      });
+    });
+
+    if (error2 instanceof Error) {
+      t.same(
+        error2.message,
         "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }

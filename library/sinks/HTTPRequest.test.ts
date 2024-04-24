@@ -16,6 +16,7 @@ const context: Context = {
     image: "http://localhost:4000/api/internal",
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 
@@ -61,10 +62,23 @@ t.test("it works", (t) => {
   ]);
   agent.getHostnames().clear();
 
-  const google2 = https.request({ hostname: "aikido.dev" });
-  google2.end();
+  const withoutPort = https.request({
+    hostname: "aikido.dev",
+    port: undefined,
+  });
+  withoutPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: undefined },
+    { hostname: "aikido.dev", port: 443 },
+  ]);
+  agent.getHostnames().clear();
+
+  const httpWithoutPort = http.request({
+    hostname: "aikido.dev",
+    port: undefined,
+  });
+  httpWithoutPort.end();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 80 },
   ]);
   agent.getHostnames().clear();
 
@@ -75,10 +89,10 @@ t.test("it works", (t) => {
   ]);
   agent.getHostnames().clear();
 
-  const another = https.request({ hostname: "aikido.dev", port: "443" });
-  another.end();
+  const withStringPort = https.request({ hostname: "aikido.dev", port: "443" });
+  withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: undefined },
+    { hostname: "aikido.dev", port: "443" },
   ]);
   agent.getHostnames().clear();
 

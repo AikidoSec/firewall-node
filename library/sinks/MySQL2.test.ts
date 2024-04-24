@@ -15,6 +15,7 @@ const dangerousContext: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 
@@ -26,6 +27,7 @@ const safeContext: Context = {
   headers: {},
   body: {},
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 
@@ -61,16 +63,31 @@ t.test("it detects SQL injections", async () => {
     await connection.execute("TRUNCATE cats");
     const [rows] = await connection.query("SELECT petname FROM `cats`;");
     t.same(rows, []);
+    const [moreRows] = await connection.query({
+      sql: "SELECT petname FROM `cats`",
+    });
+    t.same(moreRows, []);
 
     const error = await t.rejects(async () => {
       await runWithContext(dangerousContext, () => {
         return connection.query("-- should be blocked");
       });
     });
-
     if (error instanceof Error) {
       t.same(
         error.message,
+        "Aikido runtime has blocked a SQL injection: mysql2.query(...) originating from body.myTitle"
+      );
+    }
+
+    const error2 = await t.rejects(async () => {
+      await runWithContext(dangerousContext, () => {
+        return connection.query({ sql: "-- should be blocked" });
+      });
+    });
+    if (error2 instanceof Error) {
+      t.same(
+        error2.message,
         "Aikido runtime has blocked a SQL injection: mysql2.query(...) originating from body.myTitle"
       );
     }

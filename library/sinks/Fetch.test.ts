@@ -16,6 +16,7 @@ const context: Context = {
     image: "http://localhost:4000/api/internal",
   },
   cookies: {},
+  routeParams: {},
   source: "express",
 };
 

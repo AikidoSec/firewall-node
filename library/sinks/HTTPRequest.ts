@@ -19,7 +19,7 @@ export class HTTPRequest implements Wrapper {
     agent.onConnectHostname(hostname, port);
   }
 
-  inspectHttpRequest(args: unknown[], agent: Agent) {
+  inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {
@@ -55,11 +55,17 @@ export class HTTPRequest implements Wrapper {
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
-        const result = this.onConnectHostname(
-          agent,
-          args[0].hostname,
-          typeof args[0].port === "number" ? args[0].port : undefined
-        );
+        let port = module === "http" ? 80 : 443;
+        if (typeof args[0].port === "number") {
+          port = args[0].port;
+        } else if (
+          typeof args[0].port === "string" &&
+          Number.isInteger(parseInt(args[0].port, 10))
+        ) {
+          port = parseInt(args[0].port, 10);
+        }
+
+        const result = this.onConnectHostname(agent, args[0].hostname, port);
         if (result) {
           return result;
         }
@@ -169,7 +175,7 @@ export class HTTPRequest implements Wrapper {
       .addBuiltinModule("http")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) => {
-        this.inspectHttpRequest(args, agent);
+        this.inspectHttpRequest(args, agent, "http");
       })
       .modifyArguments("request", (args, subject, agent) =>
         this.monitorDNSLookups(args, agent, "http")
@@ -179,7 +185,7 @@ export class HTTPRequest implements Wrapper {
       .addBuiltinModule("https")
       .addSubject((exports) => exports)
       .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent)
+        this.inspectHttpRequest(args, agent, "https")
       )
       .modifyArguments("request", (args, subject, agent) =>
         this.monitorDNSLookups(args, agent, "https")

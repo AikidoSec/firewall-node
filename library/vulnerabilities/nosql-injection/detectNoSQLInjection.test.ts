@@ -7,11 +7,13 @@ function createContext({
   headers,
   body,
   cookies,
+  routeParams,
 }: {
   query?: Context["query"];
   body?: Context["body"];
   headers?: Context["headers"];
   cookies?: Context["cookies"];
+  routeParams?: Context["routeParams"];
 }): Context {
   return {
     remoteAddress: "::1",
@@ -21,6 +23,7 @@ function createContext({
     headers: headers ? headers : {},
     body: body,
     cookies: cookies ? cookies : {},
+    routeParams: routeParams ? routeParams : {},
     source: "express",
   };
 }
@@ -597,6 +600,20 @@ t.test("safe email + password", async (t) => {
       {
         email: "email",
         password: "password",
+      }
+    ),
+    { injection: false }
+  );
+});
+
+t.test("it checks route params", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        routeParams: { id: "123" },
+      }),
+      {
+        id: "123",
       }
     ),
     { injection: false }

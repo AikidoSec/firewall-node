@@ -42,13 +42,20 @@ t.test("it blocks in blocking mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(
+          `http://localhost:4000/cats/${encodeURIComponent("Njuska'; DELETE FROM cats;-- H")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
         fetch("http://localhost:4000/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 500);
+    .then(([sqlInjection, sqlInjection2, normalSearch]) => {
+      t.equal(sqlInjection.status, 500);
+      t.equal(sqlInjection2.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido runtime has blocked a SQL injection/);
@@ -90,13 +97,20 @@ t.test("it does not block in dry mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(
+          `http://localhost:4001/cats/${encodeURIComponent("Njuska'; DELETE FROM cats;-- H")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
         fetch("http://localhost:4001/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
     )
-    .then(([noSQLInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 200);
+    .then(([sqlInjection, sqlInjection2, normalSearch]) => {
+      t.equal(sqlInjection.status, 200);
+      t.equal(sqlInjection2.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Aikido runtime has blocked a SQL injection/);
