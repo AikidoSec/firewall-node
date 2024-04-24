@@ -73,8 +73,25 @@ t.test(
       ),
       true
     );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM users WHERE id = '\\'hello'`,
+        "'hello'"
+      ),
+      false
+    );
   }
 );
+
+t.test("starts with single quote", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = '\\'hello\\''`,
+      "'hello'"
+    ),
+    true
+  );
+});
 
 t.test("starts with single quote", async () => {
   t.same(
@@ -91,6 +108,23 @@ t.test("starts with single quote without SQL syntax", async () => {
     userInputOccurrencesSafelyEncapsulated(
       `SELECT * FROM users WHERE id = '\\' hello world'`,
       "' hello world"
+    ),
+    true
+  );
+});
+
+t.test("starts with single quote (multiple occurrences)", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = '\\'hello' AND id = '\\'hello'`,
+      "'hello"
+    ),
+    true
+  );
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = 'hello' AND id = '\\'hello'`,
+      "'hello"
     ),
     true
   );
