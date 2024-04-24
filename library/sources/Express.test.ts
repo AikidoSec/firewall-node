@@ -68,7 +68,9 @@ function getApp() {
   });
 
   app.get(/.*fly$/, (req, res) => {
-    res.send("hello fly");
+    const context = getContext();
+
+    res.send(context);
   });
 
   return app;
@@ -179,10 +181,19 @@ t.test("it adds context from request for route with params", async (t) => {
     method: "GET",
     routeParams: { id: "123" },
     source: "express",
+    route: "/posts/:id",
   });
 });
 
 t.test("it deals with regex routes", async (t) => {
   const response = await request(getApp()).get("/butterfly");
-  t.same(response.text, "hello fly");
+
+  t.match(response.body, {
+    method: "GET",
+    query: {},
+    cookies: {},
+    headers: {},
+    source: "express",
+    route: "/.*fly$",
+  });
 });

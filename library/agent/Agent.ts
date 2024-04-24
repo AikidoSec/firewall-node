@@ -13,7 +13,8 @@ import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
-import { Endpoints } from "./Endpoints";
+import { Routes } from "./Routes";
+import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -32,8 +33,8 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private endpoints = new Endpoints([]);
-  private routes: Map<string, { method: string; path: string }> = new Map();
+  private serviceConfig = new ServiceConfig([]);
+  private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -101,7 +102,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateConfig(result))
+        .then((result) => this.updateServiceConfig(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -183,7 +184,6 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateConfig(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
@@ -199,17 +199,13 @@ export class Agent {
     });
   }
 
-  getEndpoints() {
-    return this.endpoints;
+  getConfig() {
+    return this.serviceConfig;
   }
 
-  private updateConfig(response: ReportingAPIResponse) {
+  private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success && response.endpoints) {
-      const newEndpoints = new Endpoints(response.endpoints);
-      if (newEndpoints.hasChanges(this.endpoints)) {
-        this.logger.log("Updated config!");
-      }
-      this.endpoints = newEndpoints;
+      this.serviceConfig = new ServiceConfig(response.endpoints);
     }
   }
 
@@ -232,11 +228,11 @@ export class Agent {
             requests: stats.requests,
           },
           hostnames: this.hostnames.asArray(),
-          routes: Array.from(this.routes.values()),
+          routes: this.routes.asArray(),
         },
         timeoutInMS
       );
-      this.updateConfig(response);
+      this.updateServiceConfig(response);
     }
   }
 
@@ -358,8 +354,7 @@ export class Agent {
   }
 
   onRouteExecute(method: string, path: string) {
-    const key = `${method}:${path}`;
-    this.routes.set(key, { method, path });
+    this.routes.addRoute(method, path);
   }
 
   async flushStats(timeoutInMS: number) {

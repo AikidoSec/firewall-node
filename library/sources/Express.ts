@@ -10,10 +10,15 @@ type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
 function createMiddleware(agent: Agent): Middleware {
   return (req, resp, next) => {
+    let route = undefined;
     if (typeof req.route.path === "string") {
-      agent.onRouteExecute(req.method, req.route.path);
+      route = req.route.path;
     } else if (req.route.path instanceof RegExp) {
-      agent.onRouteExecute(req.method, req.route.path.source);
+      route = req.route.path.toString();
+    }
+
+    if (route) {
+      agent.onRouteExecute(req.method, req.route.path);
     }
 
     runWithContext(
@@ -28,7 +33,7 @@ function createMiddleware(agent: Agent): Middleware {
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
         source: "express",
-        route: req.route.path,
+        route: route,
       },
       () => {
         try {
