@@ -130,7 +130,13 @@ export function detectNoSQLInjection(
     return { injection: false };
   }
 
-  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
+  for (const source of [
+    "body",
+    "query",
+    "headers",
+    "cookies",
+    "routeParams",
+  ] as Source[]) {
     if (request[source]) {
       const result = findFilterPartWithOperators(request[source], filter);
 
