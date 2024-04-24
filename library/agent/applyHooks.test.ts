@@ -230,7 +230,7 @@ t.test(
   }
 );
 
-t.test("it ignores route if force protection is off", async (t) => {
+t.test("it ignores route if force protection off is on", async (t) => {
   const inspectionCalls: { args: unknown[] }[] = [];
 
   const hooks = new Hooks();
