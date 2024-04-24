@@ -80,14 +80,31 @@ t.test(
       ),
       false
     );
+    t.same(
+      userInputOccurrencesSafelyEncapsulated(
+        `SELECT * FROM users WHERE id = "\\"hello"`,
+        '"hello"'
+      ),
+      false
+    );
   }
 );
 
-t.test("starts with single quote", async () => {
+t.test("surrounded with single quotes", async () => {
   t.same(
     userInputOccurrencesSafelyEncapsulated(
       `SELECT * FROM users WHERE id = '\\'hello\\''`,
       "'hello'"
+    ),
+    true
+  );
+});
+
+t.test("surrounded with double quotes", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = "\\"hello\\""`,
+      '"hello"'
     ),
     true
   );
@@ -103,11 +120,31 @@ t.test("starts with single quote", async () => {
   );
 });
 
+t.test("starts with double quote", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = "\\" or true--"`,
+      '" or true--'
+    ),
+    true
+  );
+});
+
 t.test("starts with single quote without SQL syntax", async () => {
   t.same(
     userInputOccurrencesSafelyEncapsulated(
       `SELECT * FROM users WHERE id = '\\' hello world'`,
       "' hello world"
+    ),
+    true
+  );
+});
+
+t.test("starts with double quote without SQL syntax", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = "\\" hello world"`,
+      '" hello world'
     ),
     true
   );
@@ -126,6 +163,33 @@ t.test("starts with single quote (multiple occurrences)", async () => {
       `SELECT * FROM users WHERE id = 'hello' AND id = '\\'hello'`,
       "'hello"
     ),
+    false
+  );
+});
+
+t.test("starts with double quote (multiple occurrences)", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = "\\"hello" AND id = "\\"hello"`,
+      '"hello'
+    ),
     true
+  );
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = "hello" AND id = "\\"hello"`,
+      '"hello'
+    ),
+    false
+  );
+});
+
+t.test("single quotes escaped with single quotes", async () => {
+  t.same(
+    userInputOccurrencesSafelyEncapsulated(
+      `SELECT * FROM users WHERE id = '''&'''`,
+      "'&'"
+    ),
+    false
   );
 });

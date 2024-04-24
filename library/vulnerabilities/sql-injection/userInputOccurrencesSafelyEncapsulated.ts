@@ -27,7 +27,7 @@ export function userInputOccurrencesSafelyEncapsulated(
     // `SELECT * FROM table WHERE column = '\'value'`
     // Into [`SELECT * FROM table WHERE column = '\`, `'`]
     // The char before the user input will be `\` and the char after the user input will be `'`
-    for (const char of SQL_STRING_CHARS) {
+    for (const char of ['"', "'"]) {
       if (
         !quoteChar &&
         input.startsWith(char) &&
