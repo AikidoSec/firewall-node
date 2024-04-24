@@ -14,7 +14,9 @@ export function userInputOccurrencesSafelyEncapsulated(
   const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
 
   return segmentsInBetween.every(({ currentSegment, nextSegment }) => {
+    let input = userInput;
     let charBeforeUserInput = currentSegment.slice(-1);
+    const charAfterUserInput = nextSegment.slice(0, 1);
     let quoteChar = SQL_STRING_CHARS.find(
       (char) => char === charBeforeUserInput
     );
@@ -25,31 +27,33 @@ export function userInputOccurrencesSafelyEncapsulated(
     // `SELECT * FROM table WHERE column = '\'value'`
     // Into [`SELECT * FROM table WHERE column = '\`, `'`]
     // The char before the user input will be `\` and the char after the user input will be `'`
-    if (
-      !quoteChar &&
-      userInput.startsWith("'") &&
-      currentSegment.slice(-2) === "'\\"
-    ) {
-      quoteChar = "'";
-      charBeforeUserInput = currentSegment.slice(-2, -1);
-      userInput = userInput.slice(1);
+    for (const char of SQL_STRING_CHARS) {
+      if (
+        !quoteChar &&
+        input.startsWith(char) &&
+        currentSegment.slice(-2) === `${char}\\` &&
+        charAfterUserInput === char
+      ) {
+        quoteChar = char;
+        charBeforeUserInput = currentSegment.slice(-2, -1);
+        input = input.slice(1);
+        break;
+      }
     }
 
     if (!quoteChar) {
       return false;
     }
 
-    const charAfterUserInput = nextSegment.slice(0, 1);
-
     if (charBeforeUserInput !== charAfterUserInput) {
       return false;
     }
 
-    if (userInput.includes(charBeforeUserInput)) {
+    if (input.includes(charBeforeUserInput)) {
       return false;
     }
 
-    const withoutEscapeSequences = userInput.replace(escapeSequencesRegex, "");
+    const withoutEscapeSequences = input.replace(escapeSequencesRegex, "");
 
     return !withoutEscapeSequences.includes("\\");
   });
