@@ -1,6 +1,7 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
@@ -303,7 +304,16 @@ const files = [
 ];
 
 function escapeLikeDatabase(str: string, char: string) {
-  return char + str.replace(new RegExp(char, "g"), "\\" + char) + char;
+  // Replace all occurrences of the char with \\char
+  // Replace all occurrences of \ with \\
+  return (
+    char +
+    str.replace(
+      new RegExp(`${char}|${escapeStringRegexp("\\")}`, "g"),
+      "\\" + char
+    ) +
+    char
+  );
 }
 
 for (const file of files) {
