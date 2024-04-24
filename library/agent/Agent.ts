@@ -183,7 +183,6 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateServiceConfig(result))
         .catch(() => {
           this.logger.log("Failed to report attack");
         });
