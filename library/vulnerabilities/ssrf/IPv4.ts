@@ -18,10 +18,11 @@ export class IPv4 {
   private hexRegex = new RegExp(`^0x[a-f0-9]+$`, "i");
 
   private parseIntAuto(string: string): number {
-    // Hexadedimal base 16 (0x#)
+    // Hexadecimal base 16 (0x#)
     if (this.hexRegex.test(string)) {
       return parseInt(string, 16);
     }
+
     // While octal representation is discouraged by ECMAScript 3
     // and forbidden by ECMAScript 5, we silently allow it to
     // work only if the rest of the string has numbers less than 8.
@@ -31,11 +32,13 @@ export class IPv4 {
       }
       throw new Error(`ipaddr: cannot parse ${string} as octal`);
     }
+
     // Always include the base 10 radix!
     return parseInt(string, 10);
   }
 
-  private parse(string: string): any {
+  // eslint-disable-next-line max-lines-per-function
+  private parse(string: string): number[] | null {
     let match, part, value;
 
     // parseInt recognizes all that octal & hexadecimal weirdness for us
@@ -53,6 +56,7 @@ export class IPv4 {
         return null;
       }
 
+      // eslint-disable-next-line func-names
       return (function () {
         const results = [];
         let shift;
@@ -98,12 +102,12 @@ export class IPv4 {
     }
   }
 
-  normalizeIPAddress(ip: string): any {
+  normalizeIPAddress(ip: string): string | null {
     const parsedIp = this.parse(ip);
     if (parsedIp == null) {
       return null;
     }
 
-    return parsedIp.parts.join(".");
+    return parsedIp.join(".");
   }
 }

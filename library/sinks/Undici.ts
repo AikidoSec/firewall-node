@@ -38,7 +38,12 @@ export class Undici implements Wrapper {
     });
   }
 
-  inspect(args: unknown[], agent: Agent, method: string): InterceptorResult {
+  // eslint-disable-next-line max-lines-per-function
+  private inspect(
+    args: unknown[],
+    agent: Agent,
+    method: string
+  ): InterceptorResult {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {

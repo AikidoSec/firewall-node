@@ -66,17 +66,20 @@ export function isPrivateHostname(hostname: string): boolean {
     const ipv6 = hostname.substring(1, hostname.length - 1);
     if (isIPv6(ipv6)) {
       hostname = IPv6Parser.normalizeIPAddress(ipv6);
-      if ((hostname && privateIp.check(hostname), "ipv6")) {
+      if (hostname && privateIp.check(hostname, "ipv6")) {
         return true;
       }
     }
   }
 
   try {
-    hostname = IPv4Parser.normalizeIPAddress(hostname);
+    const normalized = IPv4Parser.normalizeIPAddress(hostname);
+    if (normalized) {
+      hostname = normalized;
+    }
   } catch (error) {
     // IP could not be normalized, assuming that it can not be resolved by fetch/http either
-    return false; 
+    return false;
   }
 
   if (hostname && privateIp.check(hostname)) {

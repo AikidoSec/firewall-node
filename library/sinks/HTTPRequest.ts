@@ -19,7 +19,8 @@ export class HTTPRequest implements Wrapper {
     agent.onConnectHostname(hostname, port);
   }
 
-  inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
+  // eslint-disable-next-line max-lines-per-function
+  private inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {
@@ -75,6 +76,7 @@ export class HTTPRequest implements Wrapper {
     return undefined;
   }
 
+  // eslint-disable-next-line max-lines-per-function
   private monitorDNSLookups(
     args: unknown[],
     agent: Agent,
@@ -86,13 +88,12 @@ export class HTTPRequest implements Wrapper {
       return args;
     }
 
+    // eslint-disable-next-line max-lines-per-function
     const wrappedLookup = (
       hostname: string,
       options: LookupOptions,
       callback: Function
     ) => {
-      console.log("lookup", hostname, options);
-
       lookup(hostname, options, (err, address, family) => {
         if (err) {
           return callback(err);
@@ -112,9 +113,11 @@ export class HTTPRequest implements Wrapper {
           }
         );
 
-        console.log("toCheck", toCheck);
-
         for (const ip of toCheck) {
+          if (!ip) {
+            continue;
+          }
+
           const detect = checkContextForSSRF({
             hostname: hostname,
             operation: `${module}.request`,

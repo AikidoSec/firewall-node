@@ -24,8 +24,9 @@ export class IPv6 {
     ),
   };
 
-  private expandIPv6(string: string, parts: number): any {
-    // More than one '::' means invalid adddress
+  // eslint-disable-next-line max-lines-per-function
+  private expandIPv6(string: string, parts: number) {
+    // More than one '::' means invalid address
     if (string.indexOf("::") !== string.lastIndexOf("::")) {
       return null;
     }
@@ -71,7 +72,7 @@ export class IPv6 {
     string = string.replace("::", replacement);
 
     // Trim any garbage which may be hanging around if :: was at the edge in
-    // the source strin
+    // the source string
     if (string[0] === ":") {
       string = string.slice(1);
     }
@@ -97,15 +98,19 @@ export class IPv6 {
     };
   }
 
-  private parse(string: string): any {
+  private parse(
+    string: string
+  ): { parts: number[]; zoneId: string | undefined } | null | undefined {
     let addr, i, match, octet, octets, zoneId;
 
     if ((match = string.match(this.ipv6Regexes.deprecatedTransitional))) {
       return this.parse(`::ffff:${match[1]}`);
     }
+
     if (this.ipv6Regexes.native.test(string)) {
       return this.expandIPv6(string, 8);
     }
+
     if ((match = string.match(this.ipv6Regexes.transitional))) {
       zoneId = match[6] || "";
       addr = match[1];
@@ -130,12 +135,15 @@ export class IPv6 {
 
         addr.parts.push((octets[0] << 8) | octets[1]);
         addr.parts.push((octets[2] << 8) | octets[3]);
+
         return {
           parts: addr.parts,
           zoneId: addr.zoneId,
         };
       }
     }
+
+    return undefined;
   }
 
   normalizeIPAddress(ip: string): any {
