@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Routes } from "./Routes";
 
-t.test("Route Manager Tests", async (t) => {
+t.test("it works", async (t) => {
   const routes = new Routes(3);
   t.same(routes.asArray(), []);
 
@@ -34,7 +34,4 @@ t.test("Route Manager Tests", async (t) => {
     { method: "PUT", path: "/users/1" },
     { method: "DELETE", path: "/users/1" },
   ]);
-
-  routes.clear();
-  t.same(routes.asArray(), []);
 });

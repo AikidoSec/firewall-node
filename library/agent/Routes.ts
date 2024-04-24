@@ -1,7 +1,7 @@
 export class Routes {
   private routes: Map<string, { method: string; path: string }> = new Map();
 
-  constructor(private readonly maxEntries: number = 200) {}
+  constructor(private readonly maxEntries: number = 1000) {}
 
   addRoute(method: string, path: string) {
     const key = `${method}:${path}`;
@@ -25,9 +25,5 @@ export class Routes {
         path: route.path,
       };
     });
-  }
-
-  clear() {
-    this.routes.clear();
   }
 }
