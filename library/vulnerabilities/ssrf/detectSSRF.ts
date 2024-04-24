@@ -1,5 +1,7 @@
 import { BlockList, isIPv4, isIPv6 } from "net";
 import { tryParseURL } from "../../helpers/tryParseURL";
+import { IPv4 } from "./IPv4";
+import { IPv6 } from "./IPv6";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
@@ -29,62 +31,65 @@ const PRIVATE_IP_RANGES = [
   "255.255.255.255/32",
 ];
 
+const PRIVATE_IPV6_RANGES = [
+  "::/128",
+  "::1/128",
+  "fe80::/64",
+  "ff00::/8",
+  "fc00::/7",
+];
+
 const privateIp = new BlockList();
+const IPv4Parser = new IPv4();
+const IPv6Parser = new IPv6();
+
 PRIVATE_IP_RANGES.forEach((range) => {
   const [ip, mask] = range.split("/");
   privateIp.addSubnet(ip, parseInt(mask, 10));
 });
 
-function isPrivateIPv6(ip: string) {
-  return (
-    /^::$/.test(ip) ||
-    /^::1$/.test(ip) ||
-    /^::f{4}:([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
-      ip
-    ) ||
-    /^::f{4}:0.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
-      ip
-    ) ||
-    /^64:ff9b::([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(
-      ip
-    ) ||
-    /^100::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
-      ip
-    ) ||
-    /^2001::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
-      ip
-    ) ||
-    /^2001:2[0-9a-fA-F]:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
-      ip
-    ) ||
-    /^2001:db8:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
-      ip
-    ) ||
-    /^2002:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(
-      ip
-    ) ||
-    /^f[c-d]([0-9a-fA-F]{2,2}):/i.test(ip) ||
-    /^fe[8-9a-bA-B][0-9a-fA-F]:/i.test(ip) ||
-    /^ff([0-9a-fA-F]{2,2}):/i.test(ip)
-  );
-}
+PRIVATE_IPV6_RANGES.forEach((range) => {
+  const [ip, mask] = range.split("/");
+  privateIp.addSubnet(ip, parseInt(mask, 10), "ipv6");
+});
 
-function isPrivateHostname(hostname: string): boolean {
-  if (hostname.startsWith("[") && hostname.endsWith("]")) {
-    const ipv6 = hostname.substring(1, hostname.length - 1);
-    if (isIPv6(ipv6) && isPrivateIPv6(ipv6)) {
-      return true;
-    }
-  }
-
-  if (isIPv4(hostname) && privateIp.check(hostname)) {
+export function isPrivateIP(ip: string): boolean {
+  if (isIPv4(ip) && privateIp.check(ip)) {
     return true;
   }
 
-  return hostname === "localhost";
+  return isIPv6(ip) && privateIp.check(ip, "ipv6");
 }
 
-export function detectSSRF(userInput: string, hostname: string): boolean {
+export function isPrivateHostname(hostname: string): boolean {
+  if (hostname.startsWith("[") && hostname.endsWith("]")) {
+    const ipv6 = hostname.substring(1, hostname.length - 1);
+    if (isIPv6(ipv6)) {
+      hostname = IPv6Parser.normalizeIPAddress(ipv6);
+      if ((hostname && privateIp.check(hostname), "ipv6")) {
+        return true;
+      }
+    }
+  }
+
+  try {
+    hostname = IPv4Parser.normalizeIPAddress(hostname);
+  } catch (error) {
+    // IP could not be normalized, assuming that it can not be resolved by fetch/http either
+    return false; 
+  }
+
+  if (hostname && privateIp.check(hostname)) {
+    return true;
+  }
+
+  return false;
+}
+
+export function findHostnameInUserInput(
+  userInput: string,
+  hostname: string
+): boolean {
   if (userInput.length <= 1) {
     return false;
   }
@@ -96,10 +101,16 @@ export function detectSSRF(userInput: string, hostname: string): boolean {
   const variants = [userInput, `http://${userInput}`];
   for (const variant of variants) {
     const url = tryParseURL(variant);
-    if (url && url.hostname === hostname && isPrivateHostname(url.hostname)) {
+    if (url && url.hostname === hostname) {
       return true;
     }
   }
 
   return false;
+}
+
+export function detectSSRF(userInput: string, hostname: string): boolean {
+  const found = findHostnameInUserInput(userInput, hostname);
+
+  return found && isPrivateHostname(hostname);
 }

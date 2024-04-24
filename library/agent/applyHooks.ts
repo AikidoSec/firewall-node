@@ -300,13 +300,16 @@ function wrapSubject(
     return;
   }
 
-  subject.getMethodInterceptors().forEach((method) => {
-    if (method instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(theSubject, method, module, agent);
-    } else if (method instanceof MethodInterceptor) {
-      wrapWithoutArgumentModification(theSubject, method, module, agent);
-    } else {
-      wrapNewInstance(theSubject, method, module, agent);
-    }
-  });
+  subject
+    .getMethodInterceptors()
+    .reverse() // Reverse to make sure we wrap in the order they were added
+    .forEach((method) => {
+      if (method instanceof ModifyingArgumentsMethodInterceptor) {
+        wrapWithArgumentModification(theSubject, method, module, agent);
+      } else if (method instanceof MethodInterceptor) {
+        wrapWithoutArgumentModification(theSubject, method, module, agent);
+      } else {
+        wrapNewInstance(theSubject, method, module, agent);
+      }
+    });
 }
