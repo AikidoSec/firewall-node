@@ -1,14 +1,13 @@
-import { lookup, LookupOptions } from "dns";
+import { lookup } from "dns";
 import type { RequestOptions } from "http";
 import { Agent } from "../agent/Agent";
-import { attackKindHumanName } from "../agent/Attack";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 
 export class HTTPRequest implements Wrapper {
   private onConnectHostname(
@@ -88,87 +87,31 @@ export class HTTPRequest implements Wrapper {
       return args;
     }
 
-    // eslint-disable-next-line max-lines-per-function
-    const wrappedLookup = (
-      hostname: string,
-      options: LookupOptions,
-      callback: Function
-    ) => {
-      lookup(hostname, options, (err, address, family) => {
-        if (err) {
-          return callback(err);
-        }
-
-        const toCheck = (Array.isArray(address) ? address : [address]).map(
-          (address) => {
-            if (typeof address === "string") {
-              return address;
-            }
-
-            if (isPlainObject(address) && address.address) {
-              return address.address;
-            }
-
-            return undefined;
-          }
-        );
-
-        for (const ip of toCheck) {
-          if (!ip) {
-            continue;
-          }
-
-          const detect = checkContextForSSRF({
-            hostname: hostname,
-            operation: `${module}.request`,
-            ipAddress: ip,
-            context: context,
-          });
-
-          if (detect) {
-            agent.onDetectedAttack({
-              module,
-              operation: detect.operation,
-              kind: detect.kind,
-              source: detect.source,
-              blocked: agent.shouldBlock(),
-              stack: new Error().stack!,
-              path: detect.pathToPayload,
-              metadata: detect.metadata,
-              request: context,
-              payload: detect.payload,
-            });
-
-            if (agent.shouldBlock()) {
-              const error = new Error(
-                `Aikido runtime has blocked a ${attackKindHumanName(detect.kind)}: ${detect.operation}(...) originating from ${detect.source}${detect.pathToPayload}`
-              );
-              callback(error);
-              return;
-            }
-          }
-        }
-
-        callback(err, address, family);
-      });
-    };
-
-    const optionObj = args.find((arg) => isPlainObject(arg));
+    const optionObj = args.find((arg): arg is RequestOptions =>
+      isPlainObject(arg)
+    );
 
     if (!optionObj) {
       return args.concat([
         {
-          lookup: wrappedLookup,
+          lookup: inspectLookupCalls(lookup, agent, `${module}.request`),
         },
       ]);
     }
 
-    // @ts-expect-error We don't know the type of this
     if (optionObj.lookup) {
-      // TODO: Use the passed lookup function to wrap it
+      optionObj.lookup = inspectLookupCalls(
+        optionObj.lookup,
+        agent,
+        `${module}.request`
+      ) as RequestOptions["lookup"];
+    } else {
+      optionObj.lookup = inspectLookupCalls(
+        lookup,
+        agent,
+        `${module}.request`
+      ) as RequestOptions["lookup"];
     }
-
-    (optionObj as RequestOptions).lookup = wrappedLookup;
 
     return args;
   }
