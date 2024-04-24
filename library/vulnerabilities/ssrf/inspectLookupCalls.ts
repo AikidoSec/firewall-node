@@ -9,10 +9,11 @@ import { checkContextForSSRF } from "./checkContextForSSRF";
 function wrapCallback(
   callback: Function,
   hostname: string,
+  module: string,
   agent: Agent,
   operation: string
 ): Function {
-  return function (
+  return function wrappedLookup(
     err: Error,
     addresses: string | LookupAddress[],
     family: number
@@ -49,7 +50,7 @@ function wrapCallback(
 
       if (detect) {
         agent.onDetectedAttack({
-          module: "dns",
+          module: module,
           operation: detect.operation,
           kind: detect.kind,
           source: detect.source,
@@ -64,7 +65,7 @@ function wrapCallback(
         if (agent.shouldBlock()) {
           callback(
             new Error(
-              `Aikido runtime has blocked a ${attackKindHumanName(detect.kind)}: dns.lookup(...) originating from ${detect.source}${detect.pathToPayload}`
+              `Aikido runtime has blocked a ${attackKindHumanName(detect.kind)}: ${operation}(...) originating from ${detect.source}${detect.pathToPayload}`
             )
           );
           return;
@@ -79,6 +80,7 @@ function wrapCallback(
 export function inspectLookupCalls(
   lookup: Function,
   agent: Agent,
+  module: string,
   operation: string
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
@@ -98,13 +100,25 @@ export function inspectLookupCalls(
       ? [
           hostname,
           options,
-          wrapCallback(callback as Function, hostname, agent, operation),
+          wrapCallback(
+            callback as Function,
+            hostname,
+            module,
+            agent,
+            operation
+          ),
         ]
       : [
           hostname,
-          wrapCallback(callback as Function, hostname, agent, operation),
+          wrapCallback(
+            callback as Function,
+            hostname,
+            module,
+            agent,
+            operation
+          ),
         ];
 
-    lookup.apply(null, argsToApply);
+    lookup(...argsToApply);
   };
 }

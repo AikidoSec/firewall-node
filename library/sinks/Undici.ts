@@ -1,3 +1,4 @@
+import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -6,6 +7,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 
 const methods = [
   "request",
@@ -17,6 +19,8 @@ const methods = [
 ];
 
 export class Undici implements Wrapper {
+  private patchedGlobalDispatcher = false;
+
   private onConnectHostname(
     agent: Agent,
     hostname: string,
@@ -116,9 +120,34 @@ export class Undici implements Wrapper {
       .addSubject((exports) => exports);
 
     methods.forEach((method) => {
-      undici.inspect(method, (args, subject, agent) =>
-        this.inspect(args, agent, method)
-      );
+      undici
+        .inspect(method, (args, subject, agent) =>
+          this.inspect(args, agent, method)
+        )
+        .modifyArguments(method, (args, subject, agent) => {
+          const undici = require("undici");
+
+          if (this.patchedGlobalDispatcher) {
+            return args;
+          }
+
+          undici.setGlobalDispatcher(
+            new undici.Agent({
+              connect: {
+                lookup: inspectLookupCalls(
+                  lookup,
+                  agent,
+                  "undici",
+                  `undici.${method}`
+                ),
+              },
+            })
+          );
+
+          this.patchedGlobalDispatcher = true;
+
+          return args;
+        });
     });
   }
 }

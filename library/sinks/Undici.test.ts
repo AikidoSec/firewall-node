@@ -138,5 +138,18 @@ t.test(
         );
       }
     });
+
+    await runWithContext(
+      { ...context, routeParams: { param: "http://0" } },
+      async () => {
+        const error = await t.rejects(() => request("http://0"));
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+          );
+        }
+      }
+    );
   }
 );

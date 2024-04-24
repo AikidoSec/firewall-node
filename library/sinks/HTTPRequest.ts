@@ -75,7 +75,6 @@ export class HTTPRequest implements Wrapper {
     return undefined;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private monitorDNSLookups(
     args: unknown[],
     agent: Agent,
@@ -94,7 +93,12 @@ export class HTTPRequest implements Wrapper {
     if (!optionObj) {
       return args.concat([
         {
-          lookup: inspectLookupCalls(lookup, agent, `${module}.request`),
+          lookup: inspectLookupCalls(
+            lookup,
+            agent,
+            module,
+            `${module}.request`
+          ),
         },
       ]);
     }
@@ -103,12 +107,14 @@ export class HTTPRequest implements Wrapper {
       optionObj.lookup = inspectLookupCalls(
         optionObj.lookup,
         agent,
+        module,
         `${module}.request`
       ) as RequestOptions["lookup"];
     } else {
       optionObj.lookup = inspectLookupCalls(
         lookup,
         agent,
+        module,
         `${module}.request`
       ) as RequestOptions["lookup"];
     }
