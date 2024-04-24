@@ -26,8 +26,4 @@ export class Routes {
       };
     });
   }
-
-  clear() {
-    this.routes.clear();
-  }
 }
