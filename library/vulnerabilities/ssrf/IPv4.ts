@@ -1,3 +1,6 @@
+// License and copyright notice for this specific file, as required by the MIT license of ipaddr.js:
+// Copyright (C) 2011-2017 whitequark <whitequark@whitequark.org>
+// https://github.com/whitequark/ipaddr.js/blob/32c4f03d1f392ff8e6e5307c8131762881f9077c/LICENSE
 // Taken from https://github.com/whitequark/ipaddr.js/blob/32c4f03d1f392ff8e6e5307c8131762881f9077c/lib/ipaddr.js
 export class IPv4 {
   private ipv4Part = "(0?\\d+|0x[a-f0-9]+)";
