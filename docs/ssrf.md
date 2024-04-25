@@ -25,11 +25,11 @@ We don't protect against stored SSRF attacks, where an attacker injects a malici
 ## Which built-in modules are protected?
 
 Runtime protects against SSRF attacks in the following built-in modules:
-* `http.request`
-* `https.request`
+* `http`
+* `https`
 * `undici`
 
-Limited protection is available for the following modules:
+Limited protection is available for the following:
 * `fetch` (If the attacker uses a domain that resolves to a private IP, we can't block it due to limitations in the `fetch` API)
 
 (`fetch`is available in Node.js 18+)
