@@ -156,6 +156,43 @@ t.test(
   }
 );
 
+t.test(
+  "it does not block resolved private IP if endpoint protection is turned off",
+  (t) => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [
+        {
+          method: "POST",
+          route: "/posts/:id",
+          forceProtectionOff: true,
+        },
+      ],
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+    api.clear();
+
+    const wrappedLookup = inspectLookupCalls(
+      lookup,
+      agent,
+      "module",
+      "operation"
+    );
+
+    runWithContext(context, () => {
+      wrappedLookup("localhost", (err, address) => {
+        t.same(err, null);
+        t.same(address, "::1");
+        t.same(api.getEvents(), []);
+        t.end();
+      });
+    });
+  }
+);
+
 t.test("it blocks lookup in blocking mode with all option", (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();

@@ -83,7 +83,14 @@ function wrapCallback(
       return callback(err, addresses, family);
     }
 
-    // Todo: check service config for endpoint protection
+    if (
+      context.method &&
+      context.route &&
+      !agent.getConfig().shouldProtectEndpoint(context.method, context.route)
+    ) {
+      return callback(err, addresses, family);
+    }
+
     agent.onDetectedAttack({
       module: module,
       operation: operation,
