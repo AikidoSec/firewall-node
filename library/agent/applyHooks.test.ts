@@ -95,8 +95,8 @@ t.test("it tries to wrap method that does not exist", async (t) => {
   });
 
   t.same(logger.getMessages(), [
-    "Failed to wrap method does_not_exist in module shell-quote",
     "Failed to wrap method another_method_that_does_not_exist in module shell-quote",
+    "Failed to wrap method does_not_exist in module shell-quote",
   ]);
 });
 
