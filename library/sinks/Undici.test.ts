@@ -152,7 +152,7 @@ t.test(
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+            "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from routeParams.param"
           );
         }
       }

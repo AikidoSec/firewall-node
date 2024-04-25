@@ -8,10 +8,6 @@ export function findHostnameInUserInput(
     return false;
   }
 
-  if (!userInput.includes(hostname)) {
-    return false;
-  }
-
   const hostnameURL = tryParseURL(`http://${hostname}`);
   if (!hostnameURL) {
     return false;

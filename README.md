@@ -18,6 +18,7 @@ Runtime autonomously protects your Node.js applications against:
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
+* 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 * 🚀 More to come (see the [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1))!
 
 Runtime operates autonomously on the same server as your Node.js app to:
