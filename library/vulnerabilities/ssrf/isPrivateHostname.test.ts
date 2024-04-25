@@ -172,6 +172,10 @@ const privateIPs = [
   "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
   "2130706433",
   "0x7f000001",
+
+  // AWS metadata
+  "fd00:ec2::254",
+  "169.254.169.254",
 ];
 
 const invalidIPs = [
