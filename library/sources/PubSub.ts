@@ -50,6 +50,7 @@ function handleMessage(handler: Function) {
         query: {},
         routeParams: {},
         source: "pubsub",
+        route: undefined,
       },
       () => {
         return handler(...args);

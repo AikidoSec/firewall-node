@@ -3,13 +3,14 @@ import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
+  resource: "/dev/{proxy+}",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
@@ -75,6 +76,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
       parameter: "value",
     },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -129,6 +131,7 @@ t.test("json header is missing for gateway event", async (t) => {
       parameter: "value",
     },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -167,6 +170,7 @@ t.test("it handles SQS event", async (t) => {
     cookies: {},
     routeParams: {},
     source: "lambda/sqs",
+    route: undefined,
   });
 });
 
@@ -190,7 +194,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
   agent.start([]);
   setInstance(agent);
@@ -256,6 +260,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       // @ts-expect-error AgentInfo is private
       agent: agent.getAgentInfo(),
       hostnames: [],
+      routes: [],
       stats: {
         sinks: {
           mongodb: {
@@ -303,7 +308,7 @@ t.test(
     const clock = FakeTimers.install();
 
     const logger = new LoggerNoop();
-    const testing = new APIForTesting();
+    const testing = new ReportingAPIForTesting();
     const agent = new Agent(false, logger, testing, undefined, "lambda");
     agent.start([]);
     setInstance(agent);
@@ -335,7 +340,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);
@@ -372,6 +377,7 @@ t.test("undefined values", async () => {
       queryStringParameters: undefined,
       cookies: undefined,
       pathParameters: undefined,
+      resource: undefined,
     },
     lambdaContext,
     () => {}
@@ -379,6 +385,7 @@ t.test("undefined values", async () => {
 
   t.same(result, {
     url: undefined,
+    route: undefined,
     method: "GET",
     remoteAddress: undefined,
     body: undefined,

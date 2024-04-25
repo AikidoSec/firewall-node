@@ -1,14 +1,17 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import type { IncomingMessage } from "node:http";
-import { API, APIResult } from "./API";
-import { Token } from "./Token";
+import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
+import { Token } from "./Token";
 
-export class APIFetch implements API {
+export class ReportingAPINodeHTTP implements ReportingAPI {
   constructor(private readonly reportingUrl: URL) {}
 
-  private toAPIResult(response: IncomingMessage): APIResult {
+  private toAPIResponse(
+    response: IncomingMessage,
+    data: string
+  ): ReportingAPIResponse {
     if (response.statusCode === 429) {
       return { success: false, error: "rate_limited" };
     }
@@ -17,7 +20,11 @@ export class APIFetch implements API {
       return { success: false, error: "invalid_token" };
     }
 
-    return { success: true };
+    try {
+      return JSON.parse(data);
+    } catch {
+      return { success: false, error: "unknown_error" };
+    }
   }
 
   private async fetch(
@@ -33,7 +40,7 @@ export class APIFetch implements API {
       headers: Record<string, string>;
       body: string;
     }
-  ): Promise<APIResult> {
+  ): Promise<ReportingAPIResponse> {
     /* c8 ignore next */
     const request = url.startsWith("https://") ? requestHttps : requestHttp;
 
@@ -46,12 +53,15 @@ export class APIFetch implements API {
           signal,
         },
         (response) => {
-          response.on("data", () => {});
+          let data = "";
+          response.on("data", (chunk) => {
+            data += chunk;
+          });
           response.on("end", () => {
             // We don't throw errors unless the request times out, is aborted or fails for low level reasons
             // Error objects are annoying to work with
             // That's why we use `resolve` instead of `reject`
-            resolve(this.toAPIResult(response));
+            resolve(this.toAPIResponse(response, data));
           });
         }
       );
@@ -69,7 +79,7 @@ export class APIFetch implements API {
     token: Token,
     event: Event,
     timeoutInMS: number
-  ): Promise<APIResult> {
+  ): Promise<ReportingAPIResponse> {
     const abort = new AbortController();
 
     return await Promise.race([
@@ -82,7 +92,7 @@ export class APIFetch implements API {
         },
         body: JSON.stringify(event),
       }),
-      new Promise<APIResult>((resolve) =>
+      new Promise<ReportingAPIResponse>((resolve) =>
         setTimeout(() => {
           abort.abort();
           resolve({ success: false, error: "timeout" });

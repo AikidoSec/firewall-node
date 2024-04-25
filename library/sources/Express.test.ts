@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 
@@ -8,7 +8,7 @@ import { Express } from "./Express";
 const agent = new Agent(
   true,
   new LoggerNoop(),
-  new APIForTesting(),
+  new ReportingAPIForTesting(),
   undefined,
   "lambda"
 );
@@ -67,6 +67,12 @@ function getApp() {
     throw new Error("test");
   });
 
+  app.get(/.*fly$/, (req, res) => {
+    const context = getContext();
+
+    res.send(context);
+  });
+
   return app;
 }
 
@@ -84,6 +90,7 @@ t.test("it adds context from request for GET", async (t) => {
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",
     source: "express",
+    route: "/",
   });
 });
 
@@ -94,6 +101,7 @@ t.test("it adds context from request for POST", async (t) => {
     method: "POST",
     body: { title: "Title" },
     source: "express",
+    route: "/",
   });
 });
 
@@ -106,6 +114,7 @@ t.test("it adds context from request for route", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
+    route: "/route",
   });
 });
 
@@ -118,6 +127,7 @@ t.test("it adds context from request for all", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
+    route: "/all",
   });
 });
 
@@ -171,5 +181,19 @@ t.test("it adds context from request for route with params", async (t) => {
     method: "GET",
     routeParams: { id: "123" },
     source: "express",
+    route: "/posts/:id",
+  });
+});
+
+t.test("it deals with regex routes", async (t) => {
+  const response = await request(getApp()).get("/butterfly");
+
+  t.match(response.body, {
+    method: "GET",
+    query: {},
+    cookies: {},
+    headers: {},
+    source: "express",
+    route: "/.*fly$",
   });
 });

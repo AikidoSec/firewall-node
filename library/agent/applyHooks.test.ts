@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "./Agent";
-import { APIForTesting } from "./api/APIForTesting";
+import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
+import { Token } from "./api/Token";
 import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
@@ -16,21 +17,18 @@ const context: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 function createAgent() {
   const logger = new LoggerForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    new APIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const api = new ReportingAPIForTesting();
+  const agent = new Agent(true, logger, api, new Token("123"), "lambda");
 
   return {
     agent,
     logger,
+    api,
   };
 }
 
@@ -231,3 +229,56 @@ t.test(
     });
   }
 );
+
+t.test("it ignores route if force protection off is on", async (t) => {
+  const inspectionCalls: { args: unknown[] }[] = [];
+
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("dns/promises")
+    .addSubject((exports) => exports)
+    .inspect("lookup", (args) => {
+      inspectionCalls.push({ args });
+    });
+
+  const { agent, api } = createAgent();
+  applyHooks(hooks, agent);
+
+  api.setResult({
+    success: true,
+    endpoints: [{ method: "GET", route: "/route", forceProtectionOff: true }],
+  });
+
+  // Read rules from API
+  await agent.flushStats(1000);
+
+  const { lookup } = require("dns/promises");
+
+  await lookup("www.google.com");
+  t.same(inspectionCalls, [{ args: ["www.google.com"] }]);
+
+  await runWithContext(context, async () => {
+    await lookup("www.aikido.dev");
+  });
+
+  t.same(inspectionCalls, [
+    { args: ["www.google.com"] },
+    { args: ["www.aikido.dev"] },
+  ]);
+
+  await runWithContext(
+    {
+      ...context,
+      method: "GET",
+      route: "/route",
+    },
+    async () => {
+      await lookup("www.times.com");
+    }
+  );
+
+  t.same(inspectionCalls, [
+    { args: ["www.google.com"] },
+    { args: ["www.aikido.dev"] },
+  ]);
+});

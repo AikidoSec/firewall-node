@@ -1,7 +1,7 @@
 import { json } from "express";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
-import { APIFetch } from "./APIFetch";
+import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
 import { Event } from "./Event";
 import { Token } from "./Token";
 import express = require("express");
@@ -38,14 +38,19 @@ function createTestEndpoint({
   statusCode,
   sleepInMs,
   port,
+  endpoints,
+  throwError,
 }: {
   sleepInMs?: number;
   statusCode?: number;
   port: number;
+  endpoints?: { route: string; method: string; forceProtectionOff: boolean }[];
+  throwError?: boolean;
 }): Promise<StopServer> {
   const seen: SeenPayload[] = [];
 
   const app = express();
+  app.set("env", "test");
   app.use(json());
   app.post(
     "*",
@@ -59,11 +64,18 @@ function createTestEndpoint({
         body: req.body,
       });
 
+      if (throwError) {
+        throw new Error("500");
+      }
+
       if (statusCode) {
         res.status(statusCode);
       }
 
-      res.send({ success: true });
+      res.send({
+        success: true,
+        endpoints: endpoints,
+      });
     })
   );
 
@@ -82,7 +94,7 @@ function createTestEndpoint({
 
 t.test("it reports event to API endpoint", async () => {
   const stop = await createTestEndpoint({ port: 3000 });
-  const api = new APIFetch(new URL("http://localhost:3000"));
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3000"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: true,
   });
@@ -95,7 +107,7 @@ t.test("it reports event to API endpoint", async () => {
 
 t.test("it respects timeout", async () => {
   const stop = await createTestEndpoint({ sleepInMs: 2000, port: 3001 });
-  const api = new APIFetch(new URL("http://localhost:3001"));
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3001"));
   const start = performance.now();
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
@@ -109,7 +121,7 @@ t.test("it respects timeout", async () => {
 
 t.test("it deals with 429", async () => {
   const stop = await createTestEndpoint({ statusCode: 429, port: 3002 });
-  const api = new APIFetch(new URL("http://localhost:3002"));
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3002"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "rate_limited",
@@ -119,10 +131,33 @@ t.test("it deals with 429", async () => {
 
 t.test("it deals with 401", async () => {
   const stop = await createTestEndpoint({ statusCode: 401, port: 3003 });
-  const api = new APIFetch(new URL("http://localhost:3003"));
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3003"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "invalid_token",
+  });
+  await stop();
+});
+
+t.test("it parses JSON", async () => {
+  const stop = await createTestEndpoint({
+    port: 3004,
+    endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+  });
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3004"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: true,
+    endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
+  });
+  await stop();
+});
+
+t.test("it deals with malformed JSON", async () => {
+  const stop = await createTestEndpoint({ port: 3005, throwError: true });
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3005"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: false,
+    error: "unknown_error",
   });
   await stop();
 });

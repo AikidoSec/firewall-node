@@ -1,0 +1,33 @@
+import { Event } from "./Event";
+import { Token } from "./Token";
+
+type ReportingAPIError =
+  | "timeout"
+  | "unknown_error"
+  | "rate_limited"
+  | "max_attacks_reached"
+  | "invalid_token";
+
+export type Endpoint = {
+  method: string;
+  route: string;
+  forceProtectionOff: boolean;
+};
+
+export type ReportingAPIResponse =
+  | {
+      success: true;
+      endpoints?: Endpoint[];
+    }
+  | {
+      success: false;
+      error: ReportingAPIError;
+    };
+
+export interface ReportingAPI {
+  report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<ReportingAPIResponse>;
+}

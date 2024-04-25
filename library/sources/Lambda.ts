@@ -88,6 +88,7 @@ function isJsonContentType(contentType: string) {
 }
 
 export type APIGatewayProxyEvent = {
+  resource: string;
   httpMethod: string;
   headers: Record<string, string | undefined>;
   queryStringParameters?: Record<string, string>;
@@ -145,6 +146,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         query: {},
         cookies: {},
         source: "lambda/sqs",
+        route: undefined,
       };
     } else if (isGatewayEvent(event)) {
       agentContext = {
@@ -157,6 +159,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
         source: "lambda/gateway",
+        route: event.resource ? event.resource : undefined,
       };
     }
 

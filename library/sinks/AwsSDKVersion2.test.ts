@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
@@ -22,6 +22,7 @@ const unsafeContext: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it works", async (t) => {
@@ -29,7 +30,7 @@ t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     logger,
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     undefined,
     undefined
   );
