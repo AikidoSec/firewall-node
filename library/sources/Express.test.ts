@@ -17,7 +17,16 @@ agent.start([new Express()]);
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
-import { getContext } from "../agent/Context";
+import { getContext, User } from "../agent/Context";
+
+function setUser(
+  req: express.Request & { aikido: { user: User } },
+  res: express.Response,
+  next: express.NextFunction
+) {
+  req.aikido = { user: { id: "123", name: "John Doe" } };
+  next();
+}
 
 function getApp() {
   const app = express();
@@ -73,6 +82,12 @@ function getApp() {
     res.send(context);
   });
 
+  app.get("/user", setUser, (req, res) => {
+    const context = getContext();
+
+    res.send(context);
+  });
+
   return app;
 }
 
@@ -91,6 +106,7 @@ t.test("it adds context from request for GET", async (t) => {
     remoteAddress: "1.2.3.4",
     source: "express",
     route: "/",
+    user: undefined,
   });
 });
 
@@ -102,6 +118,7 @@ t.test("it adds context from request for POST", async (t) => {
     body: { title: "Title" },
     source: "express",
     route: "/",
+    user: undefined,
   });
 });
 
@@ -115,6 +132,7 @@ t.test("it adds context from request for route", async (t) => {
     headers: {},
     source: "express",
     route: "/route",
+    user: undefined,
   });
 });
 
@@ -128,6 +146,7 @@ t.test("it adds context from request for all", async (t) => {
     headers: {},
     source: "express",
     route: "/all",
+    user: undefined,
   });
 });
 
@@ -182,6 +201,7 @@ t.test("it adds context from request for route with params", async (t) => {
     routeParams: { id: "123" },
     source: "express",
     route: "/posts/:id",
+    user: undefined,
   });
 });
 
@@ -195,5 +215,13 @@ t.test("it deals with regex routes", async (t) => {
     headers: {},
     source: "express",
     route: "/.*fly$",
+  });
+});
+
+t.test("it grabs user from request", async (t) => {
+  const response = await request(getApp()).get("/user");
+
+  t.match(response.body, {
+    user: { id: "123", name: "John Doe" },
   });
 });

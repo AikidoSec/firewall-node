@@ -28,6 +28,16 @@ async function main(port) {
   app.use(morgan("tiny"));
   app.use(cookieParser());
 
+  app.use((req, res, next) => {
+    req.aikido = {
+      user: {
+        id: "123",
+        name: "John Doe",
+      },
+    };
+    next();
+  });
+
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
   // { title: { '$ne': null } }

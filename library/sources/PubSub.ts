@@ -51,6 +51,7 @@ function handleMessage(handler: Function) {
         routeParams: {},
         source: "pubsub",
         route: undefined,
+        user: undefined,
       },
       () => {
         return handler(...args);

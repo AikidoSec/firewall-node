@@ -1,4 +1,5 @@
 import { Kind } from "../Attack";
+import { User } from "../Context";
 import { Source } from "../Source";
 
 export type AgentInfo = {
@@ -38,6 +39,7 @@ export type DetectedAttack = {
     source: string;
     route: string | undefined;
   };
+  user: User | undefined;
   attack: {
     kind: Kind;
     operation: string;

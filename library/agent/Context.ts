@@ -1,6 +1,11 @@
 import { AsyncLocalStorage } from "async_hooks";
 import type { ParsedQs } from "qs";
 
+export type User = {
+  id: string;
+  name?: string;
+};
+
 export type Context = {
   url: string | undefined;
   method: string | undefined;
@@ -13,6 +18,7 @@ export type Context = {
   attackDetected?: boolean;
   source: string;
   route: string | undefined;
+  user: User | undefined;
 };
 
 const requestContext = new AsyncLocalStorage<Context>();

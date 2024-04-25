@@ -1,15 +1,21 @@
 /* eslint-disable prefer-rest-params */
 import type { NextFunction, Request, Response } from "express";
 import { Agent } from "../agent/Agent";
-import { getContext, runWithContext } from "../agent/Context";
+import { getContext, runWithContext, User } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "http";
 
 type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
 
+type RequestWithUser = Request & {
+  aikido?: { user?: { id?: unknown; name?: unknown } };
+};
+
+// eslint-disable-next-line max-lines-per-function
 function createMiddleware(agent: Agent): Middleware {
-  return (req, resp, next) => {
+  // eslint-disable-next-line max-lines-per-function
+  return (req: RequestWithUser, resp, next) => {
     let route = undefined;
     if (typeof req.route.path === "string") {
       route = req.route.path;
@@ -19,6 +25,18 @@ function createMiddleware(agent: Agent): Middleware {
 
     if (route) {
       agent.onRouteExecute(req.method, req.route.path);
+    }
+
+    let user: User | undefined = undefined;
+    if (
+      req.aikido &&
+      req.aikido.user &&
+      typeof req.aikido.user.id === "string"
+    ) {
+      user = { id: req.aikido.user.id };
+      if (typeof req.aikido.user.name === "string") {
+        user.name = req.aikido.user.name;
+      }
     }
 
     runWithContext(
@@ -34,6 +52,7 @@ function createMiddleware(agent: Agent): Middleware {
         cookies: req.cookies ? req.cookies : {},
         source: "express",
         route: route,
+        user: user,
       },
       () => {
         try {

@@ -167,6 +167,7 @@ export class Agent {
               kind: kind,
               payload: JSON.stringify(payload).substring(0, 4096),
             },
+            user: request.user,
             request: {
               method: request.method,
               url: request.url,
