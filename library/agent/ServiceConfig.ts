@@ -1,12 +1,13 @@
 import { Endpoint } from "./api/ReportingAPI";
 
 export class ServiceConfig {
+  private blockedUserIds: Map<string, string> = new Map();
   private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
-  constructor(endpoints: Endpoint[]) {
+  constructor(endpoints: Endpoint[], blockedUserIds: string[]) {
     endpoints.forEach((rule) => {
       this.endpoints.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
@@ -14,10 +15,17 @@ export class ServiceConfig {
         forceProtectionOff: rule.forceProtectionOff,
       });
     });
+    blockedUserIds.forEach((userId) => {
+      this.blockedUserIds.set(userId, userId);
+    });
   }
 
   private getKey(method: string, route: string) {
     return `${method}:${route}`;
+  }
+
+  shouldBlockUser(userId: string) {
+    return this.blockedUserIds.has(userId);
   }
 
   shouldProtectEndpoint(method: string, route: string | RegExp) {

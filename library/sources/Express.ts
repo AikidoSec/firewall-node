@@ -39,6 +39,10 @@ function createMiddleware(agent: Agent): Middleware {
       }
     }
 
+    if (user && agent.getConfig().shouldBlockUser(user.id)) {
+      return resp.sendStatus(403);
+    }
+
     runWithContext(
       {
         method: req.method,

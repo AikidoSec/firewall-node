@@ -33,7 +33,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private serviceConfig = new ServiceConfig([]);
+  private serviceConfig = new ServiceConfig([], []);
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -206,7 +206,10 @@ export class Agent {
 
   private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success && response.endpoints) {
-      this.serviceConfig = new ServiceConfig(response.endpoints);
+      this.serviceConfig = new ServiceConfig(
+        response.endpoints,
+        response.blockedUserIds ? response.blockedUserIds : []
+      );
     }
   }
 
