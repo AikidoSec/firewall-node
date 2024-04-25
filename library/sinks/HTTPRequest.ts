@@ -7,15 +7,28 @@ import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 
 export class HTTPRequest implements Wrapper {
   private onConnectHostname(
     agent: Agent,
     hostname: string,
-    port: number | undefined
+    port: number | undefined,
+    module: string
   ): InterceptorResult {
     agent.onConnectHostname(hostname, port);
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    return checkContextForSSRF({
+      hostname: hostname,
+      operation: `${module}.request`,
+      context: context,
+    });
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -28,7 +41,8 @@ export class HTTPRequest implements Wrapper {
             const result = this.onConnectHostname(
               agent,
               url.hostname,
-              getPortFromURL(url)
+              getPortFromURL(url),
+              module
             );
             if (result) {
               return result;
@@ -43,7 +57,8 @@ export class HTTPRequest implements Wrapper {
         const result = this.onConnectHostname(
           agent,
           args[0].hostname,
-          getPortFromURL(args[0])
+          getPortFromURL(args[0]),
+          module
         );
         if (result) {
           return result;
@@ -65,7 +80,12 @@ export class HTTPRequest implements Wrapper {
           port = parseInt(args[0].port, 10);
         }
 
-        const result = this.onConnectHostname(agent, args[0].hostname, port);
+        const result = this.onConnectHostname(
+          agent,
+          args[0].hostname,
+          port,
+          module
+        );
         if (result) {
           return result;
         }

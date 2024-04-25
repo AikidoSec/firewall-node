@@ -1,10 +1,13 @@
 /* eslint-disable max-lines-per-function */
 import { LookupAddress } from "node:dns";
 import { Agent } from "../../agent/Agent";
-import { attackKindHumanName } from "../../agent/Attack";
+import { attackKindHumanName, Kind } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
+import { Source } from "../../agent/Source";
+import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { isPlainObject } from "../../helpers/isPlainObject";
-import { checkContextForSSRF } from "./checkContextForSSRF";
+import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { isPrivateIP } from "./isPrivateIP";
 
 function wrapCallback(
   callback: Function,
@@ -40,40 +43,69 @@ function wrapCallback(
       }
     }
 
-    for (const ip of toCheck) {
-      const detect = checkContextForSSRF({
-        hostname: hostname,
-        operation: operation,
-        ipAddress: ip,
-        context: context,
-      });
+    const privateIP = toCheck.find(isPrivateIP);
 
-      if (detect) {
-        agent.onDetectedAttack({
-          module: module,
-          operation: detect.operation,
-          kind: detect.kind,
-          source: detect.source,
-          blocked: agent.shouldBlock(),
-          stack: new Error().stack!,
-          path: detect.pathToPayload,
-          metadata: detect.metadata,
-          request: context,
-          payload: detect.payload,
-        });
+    if (!privateIP) {
+      return callback(err, addresses, family);
+    }
 
-        if (agent.shouldBlock()) {
-          callback(
-            new Error(
-              `Aikido runtime has blocked a ${attackKindHumanName(detect.kind)}: ${operation}(...) originating from ${detect.source}${detect.pathToPayload}`
-            )
-          );
-          return;
+    let detected:
+      | {
+          source: Source;
+          pathToPayload: string;
+          payload: string;
+        }
+      | undefined = undefined;
+    for (const source of [
+      "body",
+      "query",
+      "headers",
+      "cookies",
+      "routeParams",
+    ] as Source[]) {
+      if (context[source]) {
+        const userInput = extractStringsFromUserInput(context[source]);
+        for (const [str, path] of userInput.entries()) {
+          const found = findHostnameInUserInput(str, hostname);
+          if (found) {
+            detected = {
+              source: source,
+              pathToPayload: path,
+              payload: str,
+            };
+            break;
+          }
         }
       }
     }
 
-    callback(err, addresses, family);
+    if (!detected) {
+      return callback(err, addresses, family);
+    }
+
+    // Todo: check service config for endpoint protection
+    agent.onDetectedAttack({
+      module: module,
+      operation: operation,
+      kind: "ssrf",
+      source: detected.source,
+      blocked: agent.shouldBlock(),
+      stack: new Error().stack!,
+      path: detected.pathToPayload,
+      metadata: {},
+      request: context,
+      payload: detected.payload,
+    });
+
+    if (agent.shouldBlock()) {
+      return callback(
+        new Error(
+          `Aikido runtime has blocked a ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${detected.source}${detected.pathToPayload}`
+        )
+      );
+    }
+
+    return callback(err, addresses, family);
   };
 }
 

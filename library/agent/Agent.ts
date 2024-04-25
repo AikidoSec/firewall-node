@@ -335,6 +335,10 @@ export class Agent {
     this.hostnames.add(hostname, port);
   }
 
+  log(message: string) {
+    this.logger.log(message);
+  }
+
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);

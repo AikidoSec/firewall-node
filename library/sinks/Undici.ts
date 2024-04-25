@@ -6,6 +6,7 @@ import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 
@@ -35,8 +36,7 @@ export class Undici implements Wrapper {
     }
 
     return checkContextForSSRF({
-      hostname,
-      ipAddress: hostname,
+      hostname: hostname,
       operation: `undici.${method}`,
       context,
     });
@@ -50,21 +50,17 @@ export class Undici implements Wrapper {
   ): InterceptorResult {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
-        try {
-          const url = new URL(args[0]);
-          if (url.hostname.length > 0) {
-            const result = this.onConnectHostname(
-              agent,
-              url.hostname,
-              getPortFromURL(url),
-              method
-            );
-            if (result) {
-              return result;
-            }
+        const url = tryParseURL(args[0]);
+        if (url) {
+          const result = this.onConnectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url),
+            method
+          );
+          if (result) {
+            return result;
           }
-        } catch (e) {
-          // Ignore
         }
       }
 
@@ -118,6 +114,14 @@ export class Undici implements Wrapper {
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .addSubject((exports) => exports);
+
+    undici.inspect("setGlobalDispatcher", (args, subject, agent) => {
+      if (this.patchedGlobalDispatcher) {
+        agent.log(
+          `undici.setGlobalDispatcher was called, we can't provide protection!`
+        );
+      }
+    });
 
     methods.forEach((method) => {
       undici

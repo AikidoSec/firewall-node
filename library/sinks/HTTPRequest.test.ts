@@ -1,3 +1,4 @@
+import { lookup } from "dns";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
@@ -33,6 +34,7 @@ t.test("it works", (t) => {
   t.same(agent.getHostnames().asArray(), []);
 
   const http = require("http");
+  const https = require("https");
 
   runWithContext(context, () => {
     const google = http.request("http://aikido.dev");
@@ -43,8 +45,6 @@ t.test("it works", (t) => {
     { hostname: "aikido.dev", port: 80 },
   ]);
   agent.getHostnames().clear();
-
-  const https = require("https");
 
   runWithContext(context, () => {
     const google = https.request("https://aikido.dev");
@@ -66,6 +66,7 @@ t.test("it works", (t) => {
     hostname: "aikido.dev",
     port: undefined,
   });
+  t.same(withoutPort instanceof http.ClientRequest, true);
   withoutPort.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
@@ -77,12 +78,14 @@ t.test("it works", (t) => {
     port: undefined,
   });
   httpWithoutPort.end();
+  t.same(httpWithoutPort instanceof http.ClientRequest, true);
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 80 },
   ]);
   agent.getHostnames().clear();
 
   const withPort = https.request({ hostname: "aikido.dev", port: 443 });
+  t.same(withPort instanceof http.ClientRequest, true);
   withPort.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
@@ -90,6 +93,7 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   const withStringPort = https.request({ hostname: "aikido.dev", port: "443" });
+  t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: "443" },
@@ -101,12 +105,10 @@ t.test("it works", (t) => {
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
-    const google = https.request("https://google.com");
-    google.end();
-
+  runWithContext({ ...context, ...{ body: { image: "localtest.me" } } }, () => {
+    // localtest.me resolves to 127.0.0.1
     https
-      .request("https://localhost:4000/api/internal")
+      .request("https://localtest.me")
       .on("error", (error) => {
         t.match(
           error.message,
@@ -117,35 +119,60 @@ t.test("it works", (t) => {
         t.fail("should not finish");
       })
       .end();
-    https
-      .request(new URL("https://localhost:4000/api/internal"))
-      .on("error", (err) => {
-        t.match(
-          err.message,
-          "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
-        );
-      })
-      .on("finish", () => {
-        t.fail("should not finish");
-      })
-      .end();
-    https
-      .request({
+  });
+
+  runWithContext(context, () => {
+    // With lookup function specified
+    const google = http.request("http://google.com", { lookup: lookup });
+    google.end();
+
+    // With options object
+    const google2 = http.request("http://google.com", {});
+    google2.end();
+  });
+
+  runWithContext(context, () => {
+    // Safe request
+    const google = https.request("https://google.com");
+    google.end();
+
+    // With string URL
+    const error = t.throws(() =>
+      https.request("https://localhost:4000/api/internal")
+    );
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    // With URL object
+    const error2 = t.throws(() =>
+      https.request(new URL("https://localhost:4000/api/internal"))
+    );
+    if (error2 instanceof Error) {
+      t.same(
+        error2.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    // With object like URL
+    const error3 = t.throws(() =>
+      https.request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-      .on("error", (err) => {
-        t.match(
-          err.message,
-          "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
-        );
-      })
-      .on("finish", () => {
-        t.fail("should not finish");
-      })
-      .end();
+    );
+    if (error3 instanceof Error) {
+      t.same(
+        error3.message,
+        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
   });
 
   setTimeout(() => {
