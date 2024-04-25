@@ -3,7 +3,7 @@ import { Agent } from "../agent/Agent";
 import { APIForTesting } from "../agent/api/APIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { Undici } from "./Undici";
 
 const context: Context = {
@@ -28,9 +28,10 @@ t.test(
       : false,
   },
   async () => {
+    const logger = new LoggerForTesting();
     const agent = new Agent(
       true,
-      new LoggerNoop(),
+      logger,
       new APIForTesting(),
       new Token("123"),
       undefined
@@ -38,7 +39,12 @@ t.test(
 
     agent.start([new Undici()]);
 
-    const { request, fetch } = require("undici");
+    const {
+      request,
+      fetch,
+      setGlobalDispatcher,
+      Agent: UndiciAgent,
+    } = require("undici");
 
     await request("https://aikido.dev");
     t.same(agent.getHostnames().asArray(), [
@@ -151,5 +157,11 @@ t.test(
         }
       }
     );
+
+    logger.clear();
+    setGlobalDispatcher(new UndiciAgent({}));
+    t.same(logger.getMessages(), [
+      "undici.setGlobalDispatcher was called, we can't provide protection!",
+    ]);
   }
 );
