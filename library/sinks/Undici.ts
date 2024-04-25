@@ -129,11 +129,11 @@ export class Undici implements Wrapper {
           this.inspect(args, agent, method)
         )
         .modifyArguments(method, (args, subject, agent) => {
-          const undici = require("undici");
-
           if (this.patchedGlobalDispatcher) {
             return args;
           }
+
+          const undici = require("undici");
 
           undici.setGlobalDispatcher(
             new undici.Agent({
