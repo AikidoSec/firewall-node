@@ -24,4 +24,11 @@ export class ReportingAPIThatValidatesToken implements ReportingAPI {
 
     return result;
   }
+
+  async getConfig(
+    token: Token,
+    timeoutInMS: number
+  ): Promise<ReportingAPIResponse> {
+    return await this.api.getConfig(token, timeoutInMS);
+  }
 }

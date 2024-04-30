@@ -28,4 +28,8 @@ export class ReportingAPIForTesting implements ReportingAPI {
   getEvents() {
     return this.events;
   }
+
+  getConfig(token: Token, timeoutInMS: number): Promise<ReportingAPIResponse> {
+    throw new Error("Method not implemented.");
+  }
 }

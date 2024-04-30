@@ -65,6 +65,17 @@ function serverSideRateLimited(api: ReportingAPI) {
   return new ReportingAPIRateLimitedServerSide(api);
 }
 
+function getPusherAuthURL() {
+  if (process.env.AIKIDO_URL) {
+    const url = new URL(process.env.AIKIDO_URL);
+    url.pathname = url.pathname.replace("/events", "/authenticate");
+
+    return url;
+  }
+
+  return new URL("https://guard.aikido.dev/api/runtime/authenticate");
+}
+
 function getAPI(): ReportingAPI {
   let url = new URL("https://guard.aikido.dev/api/runtime/events");
   if (process.env.AIKIDO_URL) {
@@ -94,7 +105,11 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    {
+      key: "b5532a9279048135883a",
+      authUrl: getPusherAuthURL(),
+    }
   );
 
   setInstance(agent);

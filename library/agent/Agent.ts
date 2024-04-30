@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "os";
+import * as Pusher from "pusher-js/node";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
@@ -34,6 +35,7 @@ export class Agent {
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private serviceConfig = new ServiceConfig([], []);
+  private pusher: Pusher | undefined = undefined;
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -45,7 +47,8 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined
+    private readonly serverless: string | undefined,
+    private readonly pusherConfig: { key: string; authUrl: URL }
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -346,6 +349,7 @@ export class Agent {
 
     if (!this.serverless) {
       this.startHeartbeats();
+      this.listenForConfigChanges();
     }
   }
 
@@ -361,8 +365,57 @@ export class Agent {
     this.routes.addRoute(method, path);
   }
 
+  getUsers() {
+    return this.users;
+  }
+
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
+  }
+
+  private async grabLatestConfig() {
+    if (!this.token) {
+      throw new Error("Token is required");
+    }
+
+    try {
+      const response = await this.api.getConfig(this.token, this.timeoutInMS);
+      this.updateServiceConfig(response);
+    } catch (error) {
+      this.logger.log("Failed to grab latest config");
+    }
+  }
+
+  private listenForConfigChanges() {
+    if (!this.token) {
+      return;
+    }
+
+    if (!this.pusherConfig) {
+      throw new Error("Pusher config is required");
+    }
+
+    if (this.pusher) {
+      throw new Error("Pusher already initialized");
+    }
+
+    this.pusher = new Pusher(this.pusherConfig.key, {
+      cluster: "eu",
+      forceTLS: true,
+      channelAuthorization: {
+        transport: "ajax",
+        endpoint: this.pusherConfig.authUrl.toString(),
+        headers: {
+          Authorization: this.token.asString(),
+        },
+      },
+    });
+
+    const serviceId = this.token.getServiceId();
+    this.pusher.subscribe(`private-runtime-${serviceId}`);
+    this.pusher.bind("config-updated", () => {
+      this.grabLatestConfig().finally(() => {});
+    });
   }
 }

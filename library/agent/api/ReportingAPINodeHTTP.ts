@@ -1,6 +1,7 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import type { IncomingMessage } from "node:http";
+import { isPlainObject } from "../../helpers/isPlainObject";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
 import { Token } from "./Token";
@@ -75,22 +76,24 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
     });
   }
 
-  async report(
+  private async doRequest(
+    url: URL,
     token: Token,
-    event: Event,
+    method: "GET" | "POST",
+    body: unknown,
     timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  ) {
     const abort = new AbortController();
 
     return await Promise.race([
-      this.fetch(this.reportingUrl.toString(), {
+      this.fetch(url.toString(), {
         signal: abort.signal,
-        method: "POST",
+        method: method,
         headers: {
           "Content-Type": "application/json",
           Authorization: token.asString(),
         },
-        body: JSON.stringify(event),
+        body: isPlainObject(body) ? JSON.stringify(body) : "",
       }),
       new Promise<ReportingAPIResponse>((resolve) =>
         setTimeout(() => {
@@ -99,5 +102,35 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
         }, timeoutInMS)
       ),
     ]);
+  }
+
+  async report(
+    token: Token,
+    event: Event,
+    timeoutInMS: number
+  ): Promise<ReportingAPIResponse> {
+    return await this.doRequest(
+      this.reportingUrl,
+      token,
+      "POST",
+      event,
+      timeoutInMS
+    );
+  }
+
+  async getConfig(
+    token: Token,
+    timeoutInMS: number
+  ): Promise<ReportingAPIResponse> {
+    const configURL = new URL(this.reportingUrl);
+    configURL.pathname = configURL.pathname.replace("/events", "/config");
+
+    return await this.doRequest(
+      configURL,
+      token,
+      "GET",
+      undefined,
+      timeoutInMS
+    );
   }
 }

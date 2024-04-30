@@ -75,5 +75,8 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pusher-js": "8.3.0"
   }
 }
