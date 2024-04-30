@@ -39,8 +39,16 @@ function createMiddleware(agent: Agent): Middleware {
       }
     }
 
-    if (user && agent.getConfig().shouldBlockUser(user.id)) {
-      return resp.sendStatus(403);
+    if (user) {
+      if (agent.getConfig().shouldBlockUser(user.id)) {
+        return resp.sendStatus(403);
+      }
+
+      agent.getUsers().addUser({
+        id: user.id,
+        name: user.name,
+        lastIpAddress: req.ip,
+      });
     }
 
     runWithContext(

@@ -17,6 +17,7 @@ import { Logger } from "./logger/Logger";
 import { Routes } from "./Routes";
 import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
+import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 
@@ -37,6 +38,7 @@ export class Agent {
   private serviceConfig = new ServiceConfig([], []);
   private pusher: Pusher | undefined = undefined;
   private routes: Routes = new Routes(200);
+  private users: Users = new Users(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -236,6 +238,7 @@ export class Agent {
           },
           hostnames: this.hostnames.asArray(),
           routes: this.routes.asArray(),
+          users: this.users.asArray(),
         },
         timeoutInMS
       );
