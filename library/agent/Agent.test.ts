@@ -149,6 +149,7 @@ t.test("when attack detected", async () => {
       remoteAddress: "::1",
       source: "express",
       route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: "payload",
@@ -208,6 +209,7 @@ t.test("it checks if user agent is a string", async () => {
       remoteAddress: "::1",
       source: "express",
       route: "/posts/:id",
+      routeParams: {},
     },
     payload: "payload",
     operation: "operation",
@@ -363,6 +365,7 @@ t.test("it logs when failed to report event", async () => {
       remoteAddress: "::1",
       source: "express",
       route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     stack: "stack",
@@ -438,6 +441,7 @@ t.test("when payload is object", async () => {
       remoteAddress: "::1",
       source: "express",
       route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: { $gt: "" },
@@ -543,4 +547,22 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   ]);
 
   clock.uninstall();
+});
+
+t.test("it updates configuration", async () => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [
+      {
+        method: "POST",
+        route: "/events",
+        forceProtectionOff: false,
+      },
+    ],
+    heartbeatIntervalInMS: 1000,
+  });
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
 });
