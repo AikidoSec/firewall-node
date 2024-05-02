@@ -176,10 +176,12 @@ export function createLambdaWrapper(handler: Handler): Handler {
       });
     } finally {
       if (agent) {
-        agent.getInspectionStatistics().onRequest({
-          blocked: agent.shouldBlock(),
-          attackDetected: !!agentContext.attackDetected,
-        });
+        const stats = agent.getInspectionStatistics();
+        stats.onRequest();
+
+        if (agentContext.attackDetected) {
+          stats.onDetectedAttack({ blocked: agent.shouldBlock() });
+        }
 
         if (
           lastFlushStatsAt === undefined ||

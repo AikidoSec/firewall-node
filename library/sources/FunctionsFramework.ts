@@ -31,10 +31,12 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         } finally {
           const context = getContext();
           if (agent && context) {
-            agent.getInspectionStatistics().onRequest({
-              blocked: agent.shouldBlock(),
-              attackDetected: !!context.attackDetected,
-            });
+            const stats = agent.getInspectionStatistics();
+            stats.onRequest();
+
+            if (context.attackDetected) {
+              stats.onDetectedAttack({ blocked: agent.shouldBlock() });
+            }
 
             if (
               lastFlushStatsAt === undefined ||

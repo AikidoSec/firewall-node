@@ -6,19 +6,32 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "http";
 
-type Middleware = (req: Request, resp: Response, next: NextFunction) => void;
+type RequestWithAikido = Request & {
+  __AIKIDO__?: {
+    requestCounted: boolean;
+    attackDetected: boolean;
+  };
+};
 
+type Middleware = (
+  req: RequestWithAikido,
+  resp: Response,
+  next: NextFunction
+) => void;
+
+// eslint-disable-next-line max-lines-per-function
 function createMiddleware(agent: Agent): Middleware {
-  return (req, resp, next) => {
+  // eslint-disable-next-line max-lines-per-function
+  const middleware: Middleware = (req, resp, next) => {
     let route = undefined;
-    if (typeof req.route.path === "string") {
+    if (typeof req.route?.path === "string") {
       route = req.route.path;
-    } else if (req.route.path instanceof RegExp) {
+    } else if (req.route?.path instanceof RegExp) {
       route = req.route.path.toString();
     }
 
     if (route) {
-      agent.onRouteExecute(req.method, req.route.path);
+      agent.onRouteExecute(req.method, route);
     }
 
     runWithContext(
@@ -42,17 +55,36 @@ function createMiddleware(agent: Agent): Middleware {
           // We want to count the request
           next();
         } finally {
+          if (!req.__AIKIDO__) {
+            req.__AIKIDO__ = {
+              requestCounted: false,
+              attackDetected: false,
+            };
+          }
+
+          if (!req.__AIKIDO__.requestCounted) {
+            agent.getInspectionStatistics().onRequest();
+            req.__AIKIDO__.requestCounted = true;
+          }
+
           const context = getContext();
-          if (context) {
-            agent.getInspectionStatistics().onRequest({
+
+          if (
+            context &&
+            context.attackDetected &&
+            !req.__AIKIDO__.attackDetected
+          ) {
+            agent.getInspectionStatistics().onDetectedAttack({
               blocked: agent.shouldBlock(),
-              attackDetected: !!context.attackDetected,
             });
+            req.__AIKIDO__.attackDetected = true;
           }
         }
       }
     );
   };
+
+  return middleware;
 }
 
 export class Express implements Wrapper {
@@ -68,12 +100,20 @@ export class Express implements Wrapper {
   // app.get("/path", json(), middleware(), (req, res) => { ... }))
   //
   // Without having to change the user's code
-  private addMiddleware(args: unknown[], agent: Agent) {
+  private addMiddlewareToRoute(args: unknown[], agent: Agent) {
     const handler = args.pop();
     args.push(createMiddleware(agent));
     args.push(handler);
 
     return args;
+  }
+
+  private addMiddlewareToUse(args: unknown[], agent: Agent) {
+    if (args.length > 0 && typeof args[0] === "string") {
+      return [args[0], createMiddleware(agent), ...args.slice(1)];
+    }
+
+    return [createMiddleware(agent), ...args];
   }
 
   wrap(hooks: Hooks) {
@@ -84,9 +124,17 @@ export class Express implements Wrapper {
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
     expressMethodNames.forEach((method) => {
-      route.modifyArguments(method, (args, subject, agent) =>
-        this.addMiddleware(args, agent)
-      );
+      route.modifyArguments(method, (args, subject, agent) => {
+        return this.addMiddlewareToRoute(args, agent);
+      });
     });
+
+    express
+      .addSubject((exports) => {
+        return exports.application;
+      })
+      .modifyArguments("use", (args, subject, agent) =>
+        this.addMiddlewareToUse(args, agent)
+      );
   }
 }
