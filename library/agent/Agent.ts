@@ -24,7 +24,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 30 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 10 * 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
@@ -204,8 +204,19 @@ export class Agent {
   }
 
   private updateServiceConfig(response: ReportingAPIResponse) {
-    if (response.success && response.endpoints) {
-      this.serviceConfig = new ServiceConfig(response.endpoints);
+    if (response.success) {
+      if (response.endpoints) {
+        this.serviceConfig = new ServiceConfig(response.endpoints);
+      }
+
+      const minimumHeartbeatIntervalMS = 2 * 60 * 1000;
+
+      if (
+        typeof response.heartbeatIntervalInMS === "number" &&
+        response.heartbeatIntervalInMS >= minimumHeartbeatIntervalMS
+      ) {
+        this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
+      }
     }
   }
 
