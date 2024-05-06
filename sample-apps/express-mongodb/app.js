@@ -51,6 +51,11 @@ async function main(port) {
   app.use(morgan("tiny"));
   app.use(cookieParser());
 
+  app.use("*", (req, res, next) => {
+    res.setHeader("X-Frame-Options", "DENY");
+    next();
+  });
+
   app.use((req, res, next) => {
     const randomUser = users[Math.floor(Math.random() * users.length)];
     req.aikido = {

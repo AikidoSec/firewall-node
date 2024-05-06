@@ -155,20 +155,15 @@ export class InspectionStatistics {
     this.stats[sink].interceptorThrewError += 1;
   }
 
-  onRequest({
-    attackDetected,
-    blocked,
-  }: {
-    attackDetected: boolean;
-    blocked: boolean;
-  }) {
-    this.requests.total += 1;
-    if (attackDetected) {
-      this.requests.attacksDetected.total += 1;
-      if (blocked) {
-        this.requests.attacksDetected.blocked += 1;
-      }
+  onDetectedAttack({ blocked }: { blocked: boolean }) {
+    this.requests.attacksDetected.total += 1;
+    if (blocked) {
+      this.requests.attacksDetected.blocked += 1;
     }
+  }
+
+  onRequest() {
+    this.requests.total += 1;
   }
 
   onInspectedCall({

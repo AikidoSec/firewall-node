@@ -325,10 +325,7 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: false,
-    blocked: false,
-  });
+  stats.onRequest();
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -342,10 +339,8 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: true,
-    blocked: false,
-  });
+  stats.onRequest();
+  stats.onDetectedAttack({ blocked: false });
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -359,10 +354,8 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: true,
-    blocked: true,
-  });
+  stats.onRequest();
+  stats.onDetectedAttack({ blocked: true });
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -415,10 +408,7 @@ t.test("it force compresses stats", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: false,
-    blocked: false,
-  });
+  stats.onRequest();
 
   stats.onInspectedCall({
     withoutContext: false,
