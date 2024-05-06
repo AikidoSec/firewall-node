@@ -25,6 +25,7 @@ function setUser(
   res: express.Response,
   next: express.NextFunction
 ) {
+  // TODO: __AIKIDO__
   req.aikido = { user: { id: "123", name: "John Doe" } };
   next();
 }
