@@ -20,7 +20,7 @@ jobs:
         ports:
           - "27016:5432"
       mysql:
-        image: mysql:8.1
+        image: mysql:8.0
         # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
         # We need to use this long command in order to execute the last part : mysql_native_password
         # https://stackoverflow.com/questions/60902904/how-to-pass-mysql-native-password-to-mysql-service-in-github-actions
