@@ -3,6 +3,7 @@ import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
+import { FileSystem } from "../sinks/FileSystem";
 
 // Before require("express")
 const agent = new Agent(
@@ -12,7 +13,7 @@ const agent = new Agent(
   undefined,
   "lambda"
 );
-agent.start([new Express()]);
+agent.start([new Express(), new FileSystem()]);
 
 import * as express from "express";
 import * as request from "supertest";
@@ -25,6 +26,18 @@ function getApp() {
   app.set("trust proxy", true);
   app.set("env", "test");
   app.use(cookieParser());
+
+  app.use("/*", (req, res, next) => {
+    res.setHeader("X-Powered-By", "Aikido");
+    next();
+  });
+
+  // A middleware that is used as a route
+  app.use("/api/*", (req, res, next) => {
+    const context = getContext();
+
+    res.send(context);
+  });
 
   app.get("/", (req, res) => {
     const context = getContext();
@@ -50,11 +63,10 @@ function getApp() {
     res.send(context);
   });
 
-  app.get("/detect-attack", (req, res) => {
-    const context = getContext();
-    context.attackDetected = true;
+  app.get("/files", (req, res) => {
+    require("fs").readdir(req.query.directory).unref();
 
-    res.send(context);
+    res.send(getContext());
   });
 
   app.get("/posts/:id", (req, res) => {
@@ -148,7 +160,8 @@ t.test("it counts requests", async () => {
 
 t.test("it counts attacks detected", async (t) => {
   agent.getInspectionStatistics().reset();
-  await request(getApp()).get("/detect-attack");
+  const response = await request(getApp()).get("/files?directory=../../");
+  t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
     requests: {
       total: 1,
@@ -196,4 +209,10 @@ t.test("it deals with regex routes", async (t) => {
     source: "express",
     route: "/.*fly$",
   });
+});
+
+t.test("it takes the path from the arguments for middleware", async () => {
+  const response = await request(getApp()).get("/api/foo");
+
+  t.match(response.body, { route: "/api/*" });
 });

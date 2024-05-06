@@ -28,6 +28,11 @@ async function main(port) {
   app.use(morgan("tiny"));
   app.use(cookieParser());
 
+  app.use("*", (req, res, next) => {
+    res.setHeader("X-Frame-Options", "DENY");
+    next();
+  });
+
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
   // { title: { '$ne': null } }

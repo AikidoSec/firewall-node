@@ -415,3 +415,33 @@ t.test("no cookie header", async () => {
     cookies: {},
   });
 });
+
+t.test("it counts attacks", async () => {
+  const logger = new LoggerNoop();
+  const testing = new ReportingAPIForTesting();
+  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  agent.start([]);
+  setInstance(agent);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    const ctx = getContext();
+    ctx.attackDetected = true;
+    return ctx;
+  });
+
+  // This one will flush the stats
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  // This one will not flush the stats
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  t.match(agent.getInspectionStatistics().getStats(), {
+    requests: {
+      total: 1,
+      attacksDetected: {
+        total: 1,
+        blocked: 0,
+      },
+    },
+  });
+});
