@@ -550,6 +550,8 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
 });
 
 t.test("it updates configuration", async () => {
+  const clock = FakeTimers.install();
+
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting({
     success: true,
@@ -560,9 +562,36 @@ t.test("it updates configuration", async () => {
         forceProtectionOff: false,
       },
     ],
-    heartbeatIntervalInMS: 1000,
+    heartbeatIntervalInMS: 1000, // Too low
   });
+
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
+
+  // @ts-expect-error Private property
+  const original = agent.sendHeartbeatEveryMS;
+
   agent.start([]);
+
+  // @ts-expect-error Private method
+  t.same(agent.sendHeartbeatEveryMS, original);
+
+  api.setResult({
+    success: true,
+    endpoints: [
+      {
+        method: "POST",
+        route: "/events",
+        forceProtectionOff: false,
+      },
+    ],
+    heartbeatIntervalInMS: 3 * 60 * 1000,
+  });
+
+  await agent.flushStats(1000);
+
+  // @ts-expect-error Private method
+  t.same(agent.sendHeartbeatEveryMS, 3 * 60 * 1000);
+
+  clock.uninstall();
 });
