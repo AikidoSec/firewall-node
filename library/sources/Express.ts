@@ -20,10 +20,10 @@ type Middleware = (
 ) => void;
 
 // eslint-disable-next-line max-lines-per-function
-function createMiddleware(agent: Agent): Middleware {
+function createMiddleware(agent: Agent, path: string | undefined): Middleware {
   // eslint-disable-next-line max-lines-per-function
   const middleware: Middleware = (req, resp, next) => {
-    let route = undefined;
+    let route = path;
     if (typeof req.route?.path === "string") {
       route = req.route.path;
     } else if (req.route?.path instanceof RegExp) {
@@ -102,7 +102,7 @@ export class Express implements Wrapper {
   // Without having to change the user's code
   private addMiddlewareToRoute(args: unknown[], agent: Agent) {
     const handler = args.pop();
-    args.push(createMiddleware(agent));
+    args.push(createMiddleware(agent, undefined));
     args.push(handler);
 
     return args;
@@ -110,10 +110,10 @@ export class Express implements Wrapper {
 
   private addMiddlewareToUse(args: unknown[], agent: Agent) {
     if (args.length > 0 && typeof args[0] === "string") {
-      return [args[0], createMiddleware(agent), ...args.slice(1)];
+      return [args[0], createMiddleware(agent, args[0]), ...args.slice(1)];
     }
 
-    return [createMiddleware(agent), ...args];
+    return [createMiddleware(agent, undefined), ...args];
   }
 
   wrap(hooks: Hooks) {

@@ -32,6 +32,13 @@ function getApp() {
     next();
   });
 
+  // A middleware that is used as a route
+  app.use("/api/*", (req, res, next) => {
+    const context = getContext();
+
+    res.send(context);
+  });
+
   app.get("/", (req, res) => {
     const context = getContext();
 
@@ -202,4 +209,10 @@ t.test("it deals with regex routes", async (t) => {
     source: "express",
     route: "/.*fly$",
   });
+});
+
+t.test("it takes the path from the arguments for middleware", async () => {
+  const response = await request(getApp()).get("/api/foo");
+
+  t.match(response.body, { route: "/api/*" });
 });
