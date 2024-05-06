@@ -209,7 +209,12 @@ export class Agent {
         this.serviceConfig = new ServiceConfig(response.endpoints);
       }
 
-      if (typeof response.heartbeatIntervalInMS === "number") {
+      const minimumHeartbeatIntervalMS = 2 * 60 * 1000;
+
+      if (
+        typeof response.heartbeatIntervalInMS === "number" &&
+        response.heartbeatIntervalInMS >= minimumHeartbeatIntervalMS
+      ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
       }
     }
