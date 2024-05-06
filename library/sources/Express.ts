@@ -7,6 +7,9 @@ import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "http";
 
 type RequestWithAikido = Request & {
+  // We need to keep track of whether we've counted the request or not
+  // We don't want to count the request more than once
+  // Since contexts can be nested
   __AIKIDO__?: {
     requestCounted: boolean;
     attackDetected: boolean;
