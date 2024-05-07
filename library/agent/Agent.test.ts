@@ -665,15 +665,8 @@ t.test("it updates configuration", async () => {
   });
 
   const token = new Token("123");
-  const configAPI = new ConfigAPIForTesting()
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    configAPI
-  );
+  const configAPI = new ConfigAPIForTesting();
+  const agent = new Agent(true, logger, api, token, undefined, configAPI);
 
   // @ts-expect-error Private property
   const original = agent.sendHeartbeatEveryMS;
