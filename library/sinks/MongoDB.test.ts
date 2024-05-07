@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
@@ -41,7 +42,8 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda"
+    "lambda",
+    new ConfigAPIForTesting()
   );
   agent.start([new MongoDB()]);
 

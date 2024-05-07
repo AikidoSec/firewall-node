@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
@@ -32,7 +33,8 @@ t.test("it works", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    undefined
+    undefined,
+    new ConfigAPIForTesting()
   );
 
   agent.start([new AwsSDKVersion2()]);

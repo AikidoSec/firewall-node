@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
 import { Token } from "./Token";
 import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
@@ -23,7 +24,14 @@ const context: Context = {
 function createAgent() {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
-  const agent = new Agent(true, logger, api, new Token("123"), "lambda");
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    new Token("123"),
+    "lambda",
+    new ConfigAPIForTesting()
+  );
 
   return {
     agent,

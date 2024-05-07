@@ -2,6 +2,7 @@ import * as t from "tap";
 import { fetch, request } from "undici";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Token } from "../agent/Token";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Undici } from "./Undici";
@@ -19,7 +20,8 @@ t.test(
       new LoggerNoop(),
       new ReportingAPIForTesting(),
       new Token("123"),
-      undefined
+      undefined,
+      new ConfigAPIForTesting()
     );
 
     agent.start([new Undici()]);

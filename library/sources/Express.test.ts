@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
@@ -11,7 +12,8 @@ const agent = new Agent(
   new LoggerNoop(),
   new ReportingAPIForTesting(),
   undefined,
-  "lambda"
+  "lambda",
+  new ConfigAPIForTesting()
 );
 agent.start([new Express(), new FileSystem()]);
 
@@ -21,12 +23,11 @@ import * as cookieParser from "cookie-parser";
 import { getContext, User } from "../agent/Context";
 
 function setUser(
-  req: express.Request & { aikido: { user: User } },
+  req: express.Request & { aikidoUser: User },
   res: express.Response,
   next: express.NextFunction
 ) {
-  // TODO: __AIKIDO__
-  req.aikido = { user: { id: "123", name: "John Doe" } };
+  req.aikidoUser = { id: "123", name: "John Doe" };
   next();
 }
 

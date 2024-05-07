@@ -13,8 +13,8 @@ type RequestWithAikido = Request & {
   __AIKIDO__?: {
     requestCounted: boolean;
     attackDetected: boolean;
-    user?: { id?: unknown; name?: unknown };
   };
+  aikidoUser?: { id?: unknown; name?: unknown };
 };
 
 type Middleware = (
@@ -39,14 +39,10 @@ function createMiddleware(agent: Agent, path: string | undefined): Middleware {
     }
 
     let user: User | undefined = undefined;
-    if (
-      req.__AIKIDO__ &&
-      req.__AIKIDO__.user &&
-      typeof req.__AIKIDO__.user.id === "string"
-    ) {
-      user = { id: req.__AIKIDO__.user.id };
-      if (typeof req.__AIKIDO__.user.name === "string") {
-        user.name = req.__AIKIDO__.user.name;
+    if (req.aikidoUser && typeof req.aikidoUser.id === "string") {
+      user = { id: req.aikidoUser.id };
+      if (typeof req.aikidoUser.name === "string") {
+        user.name = req.aikidoUser.name;
       }
     }
 

@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Token } from "../agent/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
@@ -25,7 +26,8 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     new Token("123"),
-    undefined
+    undefined,
+    new ConfigAPIForTesting()
   );
   agent.start([new HTTPRequest()]);
 

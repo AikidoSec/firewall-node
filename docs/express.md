@@ -63,7 +63,7 @@ For example:
 ```
 app.use(
   (req, res, next) => {
-    req.aikido = {
+    req.aikidoUser = {
       user: {
         id: '1234',
         name: 'John Doe', // optional

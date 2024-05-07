@@ -4,6 +4,7 @@ import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Token } from "../agent/Token";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
@@ -171,6 +172,7 @@ t.test("it handles SQS event", async (t) => {
     routeParams: {},
     source: "lambda/sqs",
     route: undefined,
+    user: undefined,
   });
 });
 
@@ -195,7 +197,14 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
 
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
+  const agent = new Agent(
+    false,
+    logger,
+    testing,
+    new Token("123"),
+    "lambda",
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -261,6 +270,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       agent: agent.getAgentInfo(),
       hostnames: [],
       routes: [],
+      users: [],
       stats: {
         sinks: {
           mongodb: {
@@ -309,7 +319,14 @@ t.test(
 
     const logger = new LoggerNoop();
     const testing = new ReportingAPIForTesting();
-    const agent = new Agent(false, logger, testing, undefined, "lambda");
+    const agent = new Agent(
+      false,
+      logger,
+      testing,
+      undefined,
+      "lambda",
+      new ConfigAPIForTesting()
+    );
     agent.start([]);
     setInstance(agent);
 
@@ -341,7 +358,14 @@ t.test("if handler throws it still sends heartbeat", async () => {
 
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  const agent = new Agent(
+    false,
+    logger,
+    testing,
+    new Token("token"),
+    "lambda",
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -390,6 +414,7 @@ t.test("undefined values", async () => {
     remoteAddress: undefined,
     body: undefined,
     headers: undefined,
+    user: undefined,
     query: {},
     cookies: {},
     routeParams: {},
@@ -419,7 +444,14 @@ t.test("no cookie header", async () => {
 t.test("it counts attacks", async () => {
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  const agent = new Agent(
+    false,
+    logger,
+    testing,
+    new Token("token"),
+    "lambda",
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
   setInstance(agent);
 

@@ -7,6 +7,7 @@ import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
+import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
 import { Token } from "./Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
@@ -21,7 +22,8 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        ""
+        "",
+        new ConfigAPIForTesting()
       ),
     "Serverless cannot be an empty string"
   );
@@ -31,7 +33,14 @@ t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([new MongoDB()]);
 
   t.match(api.getEvents(), [
@@ -62,7 +71,14 @@ t.test("it throws error if already started", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([new MongoDB()]);
   t.throws(() => agent.start([new MongoDB()]), "Agent already started!");
 });
@@ -77,7 +93,14 @@ t.test("it logs if package is supported or not", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([new WrapperForTesting()]);
   t.same(logger.getMessages(), [
     "Starting agent...",
@@ -90,7 +113,14 @@ t.test("it starts in non-blocking mode", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(false, logger, api, token, undefined);
+  const agent = new Agent(
+    false,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([new MongoDB()]);
   t.same(logger.getMessages(), [
     "Starting agent...",
@@ -104,7 +134,14 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, "lambda");
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    "lambda",
+    new ConfigAPIForTesting()
+  );
   agent.onPrototypePollutionPrevented();
   agent.start([]);
   t.match(api.getEvents(), [
@@ -121,7 +158,14 @@ t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, "lambda");
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    "lambda",
+    new ConfigAPIForTesting()
+  );
 
   // This would otherwise keep the process running
   agent.start([]);
@@ -131,7 +175,14 @@ t.test("when attack detected", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.onDetectedAttack({
     module: "mongodb",
     kind: "nosql_injection",
@@ -191,7 +242,14 @@ t.test("it checks if user agent is a string", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.onDetectedAttack({
     module: "mongodb",
     kind: "nosql_injection",
@@ -251,7 +309,14 @@ t.test("it sends heartbeat when reached max timings", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
@@ -338,7 +403,14 @@ t.test("it logs when failed to report event", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIThatThrows();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
 
   await waitForCalls();
@@ -394,7 +466,14 @@ t.test("unable to prevent prototype pollution", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
@@ -422,7 +501,14 @@ t.test("when payload is object", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
 
   agent.onDetectedAttack({
     module: "mongodb",
@@ -501,7 +587,14 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
   agent.start([]);
 
   agent.onConnectHostname("aikido.dev", 443);
@@ -566,7 +659,14 @@ t.test("it updates configuration", async () => {
   });
 
   const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = new Agent(
+    true,
+    logger,
+    api,
+    token,
+    undefined,
+    new ConfigAPIForTesting()
+  );
 
   // @ts-expect-error Private property
   const original = agent.sendHeartbeatEveryMS;
