@@ -82,3 +82,12 @@ t.test("it ignores other errors", async () => {
   });
   t.same(api.getEvents(), [event, event]);
 });
+
+t.test("it gets config", async () => {
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const validatesToken = new ReportingAPIThatValidatesToken(api);
+  t.match(await validatesToken.getConfig(token, 5000), {
+    success: true,
+  });
+});

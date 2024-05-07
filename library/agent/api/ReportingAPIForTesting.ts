@@ -29,7 +29,22 @@ export class ReportingAPIForTesting implements ReportingAPI {
     return this.events;
   }
 
-  getConfig(token: Token, timeoutInMS: number): Promise<ReportingAPIResponse> {
-    throw new Error("Method not implemented.");
+  async getConfig(
+    token: Token,
+    timeoutInMS: number
+  ): Promise<ReportingAPIResponse> {
+    return {
+      success: true,
+      endpoints: [
+        {
+          method: "GET",
+          route: "/config",
+          forceProtectionOff: false,
+        },
+      ],
+      heartbeatIntervalInMS: 1000,
+      blockedUserIds: ["userId"],
+      configUpdatedAt: 0,
+    };
   }
 }

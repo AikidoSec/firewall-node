@@ -402,6 +402,7 @@ export class Agent {
   }
 
   private async configNeedsUpdate() {
+    /* c8 ignore next 3 */
     if (!this.token) {
       throw new Error("Token is required");
     }
@@ -412,6 +413,7 @@ export class Agent {
   }
 
   private async grabLatestConfig() {
+    /* c8 ignore next 3 */
     if (!this.token) {
       throw new Error("Token is required");
     }

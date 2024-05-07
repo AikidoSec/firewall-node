@@ -19,6 +19,7 @@ const context: Context = {
   routeParams: {},
   source: "express",
   route: "/posts/:id",
+  user: undefined,
 };
 
 function createAgent() {

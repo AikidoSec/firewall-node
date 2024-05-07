@@ -122,3 +122,12 @@ t.test("it stops sending requests if rate limited", async (t) => {
 
   clock.uninstall();
 });
+
+t.test("it gets config", async () => {
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const throttled = new ReportingAPIRateLimitedServerSide(api);
+  t.match(await throttled.getConfig(token, 5000), {
+    success: true,
+  });
+});

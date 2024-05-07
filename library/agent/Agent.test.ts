@@ -665,13 +665,14 @@ t.test("it updates configuration", async () => {
   });
 
   const token = new Token("123");
+  const configAPI = new ConfigAPIForTesting()
   const agent = new Agent(
     true,
     logger,
     api,
     token,
     undefined,
-    new ConfigAPIForTesting()
+    configAPI
   );
 
   // @ts-expect-error Private property
