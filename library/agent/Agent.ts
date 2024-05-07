@@ -37,7 +37,7 @@ export class Agent {
   private hostnames = new Hostnames(200);
   private config = new Config([], [], Date.now());
   private routes: Routes = new Routes(200);
-  private users: Users = new Users(200);
+  private users: Users = new Users(1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
