@@ -1,5 +1,5 @@
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
-import { Token } from "./Token";
+import { Token } from "../Token";
 import { Event } from "./Event";
 
 type ThrottleOptions = { maxEventsPerInterval: number; intervalInMs: number };

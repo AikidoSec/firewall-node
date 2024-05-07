@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { Token } from "../agent/api/Token";
+import { Token } from "../agent/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPRequest } from "./HTTPRequest";

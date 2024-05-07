@@ -1,6 +1,6 @@
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
-import { Token } from "./Token";
+import { Token } from "../Token";
 
 export class ReportingAPIRateLimitedServerSide implements ReportingAPI {
   private readonly stopSendingForInMilliseconds = 30 * 60 * 1000;

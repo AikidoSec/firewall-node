@@ -1,9 +1,9 @@
 import * as express from "express";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
-import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
+import { ReportingAPIHTTP } from "./ReportingAPIHTTP";
 import { Event } from "./Event";
-import { Token } from "./Token";
+import { Token } from "../Token";
 
 function generateStartedEvent(): Event {
   return {
@@ -93,7 +93,7 @@ function createTestEndpoint({
 
 t.test("it reports event to API endpoint", async () => {
   const stop = await createTestEndpoint({ port: 3000 });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3000"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3000"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: true,
   });
@@ -106,7 +106,7 @@ t.test("it reports event to API endpoint", async () => {
 
 t.test("it respects timeout", async () => {
   const stop = await createTestEndpoint({ sleepInMs: 2000, port: 3001 });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3001"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3001"));
   const start = performance.now();
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
@@ -120,7 +120,7 @@ t.test("it respects timeout", async () => {
 
 t.test("it deals with 429", async () => {
   const stop = await createTestEndpoint({ statusCode: 429, port: 3002 });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3002"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3002"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "rate_limited",
@@ -130,7 +130,7 @@ t.test("it deals with 429", async () => {
 
 t.test("it deals with 401", async () => {
   const stop = await createTestEndpoint({ statusCode: 401, port: 3003 });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3003"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3003"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "invalid_token",
@@ -143,7 +143,7 @@ t.test("it parses JSON", async () => {
     port: 3004,
     endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
   });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3004"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3004"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: true,
     endpoints: [{ route: "/route", method: "GET", forceProtectionOff: false }],
@@ -153,7 +153,7 @@ t.test("it parses JSON", async () => {
 
 t.test("it deals with malformed JSON", async () => {
   const stop = await createTestEndpoint({ port: 3005, throwError: true });
-  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3005"));
+  const api = new ReportingAPIHTTP(new URL("http://localhost:3005"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "unknown_error",

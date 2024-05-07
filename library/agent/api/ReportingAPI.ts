@@ -1,5 +1,5 @@
 import { Event } from "./Event";
-import { Token } from "./Token";
+import { Token } from "../Token";
 
 type ReportingAPIError =
   | "timeout"
@@ -20,6 +20,7 @@ export type ReportingAPIResponse =
       endpoints?: Endpoint[];
       heartbeatIntervalInMS?: number;
       blockedUserIds?: string[];
+      configUpdatedAt?: number;
     }
   | {
       success: false;

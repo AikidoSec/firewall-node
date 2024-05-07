@@ -3,7 +3,7 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
 import { ReportingAPIRateLimitedServerSide } from "./ReportingAPIRateLimitedServerSide";
 import { Event } from "./Event";
-import { Token } from "./Token";
+import { Token } from "../Token";
 
 function generateStartedEvent(): Event {
   return {

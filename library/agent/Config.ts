@@ -1,13 +1,17 @@
 import { Endpoint } from "./api/ReportingAPI";
 
-export class ServiceConfig {
+export class Config {
   private blockedUserIds: Map<string, string> = new Map();
   private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
-  constructor(endpoints: Endpoint[], blockedUserIds: string[]) {
+  constructor(
+    endpoints: Endpoint[],
+    blockedUserIds: string[],
+    private readonly lastUpdatedAt: number
+  ) {
     endpoints.forEach((rule) => {
       this.endpoints.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
@@ -40,5 +44,9 @@ export class ServiceConfig {
     }
 
     return !rule.forceProtectionOff;
+  }
+
+  getLastUpdatedAt() {
+    return this.lastUpdatedAt;
   }
 }

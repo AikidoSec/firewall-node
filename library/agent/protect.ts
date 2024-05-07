@@ -19,11 +19,15 @@ import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
-import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
+import { ReportingAPIHTTP } from "./api/ReportingAPIHTTP";
 import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
 import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
-import { Token } from "./api/Token";
+import { ConfigAPI } from "./config-api/ConfigAPI";
+import { ConfigAPIHTTP } from "./config-api/ConfigAPIHTTP";
+import { HttpClient } from "./http/HttpClient";
+import { HttpClientNodeHttp } from "./http/HttpClientNodeHttp";
+import { Token } from "./Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
@@ -65,15 +69,20 @@ function serverSideRateLimited(api: ReportingAPI) {
   return new ReportingAPIRateLimitedServerSide(api);
 }
 
-function getPusherAuthURL() {
-  if (process.env.AIKIDO_URL) {
-    const url = new URL(process.env.AIKIDO_URL);
-    url.pathname = url.pathname.replace("/events", "/authenticate");
-
-    return url;
+function getConfigAPIURL() {
+  if (process.env.AIKIDO_CONFIG_URL) {
+    return new URL(process.env.AIKIDO_CONFIG_URL);
   }
 
-  return new URL("https://guard.aikido.dev/api/runtime/authenticate");
+  return new URL("https://runtime.aikido.dev/config");
+}
+
+function getConfigAPI(): ConfigAPI {
+  return new ConfigAPIHTTP(getHttpClient(), getConfigAPIURL(), 3000);
+}
+
+function getHttpClient(): HttpClient {
+  return new HttpClientNodeHttp();
 }
 
 function getAPI(): ReportingAPI {
@@ -83,7 +92,9 @@ function getAPI(): ReportingAPI {
   }
 
   return validatesToken(
-    serverSideRateLimited(clientSideRateLimited(new ReportingAPINodeHTTP(url)))
+    serverSideRateLimited(
+      clientSideRateLimited(new ReportingAPIHTTP(url, getHttpClient()))
+    )
   );
 }
 
@@ -106,10 +117,7 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
     getAPI(),
     getTokenFromEnv(),
     serverless,
-    {
-      key: "b5532a9279048135883a",
-      authUrl: getPusherAuthURL(),
-    }
+    getConfigAPI()
   );
 
   setInstance(agent);

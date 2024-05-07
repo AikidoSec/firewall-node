@@ -7,7 +7,7 @@ import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
-import { Token } from "./api/Token";
+import { Token } from "./Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";

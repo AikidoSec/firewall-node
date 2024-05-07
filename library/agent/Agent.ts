@@ -1,6 +1,5 @@
 /* eslint-disable max-lines-per-function */
 import { hostname, platform, release } from "os";
-import * as Pusher from "pusher-js/node";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
@@ -8,14 +7,15 @@ import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders"
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
-import { Token } from "./api/Token";
+import { ConfigAPI } from "./config-api/ConfigAPI";
+import { Token } from "./Token";
 import { Kind } from "./Attack";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Routes } from "./Routes";
-import { ServiceConfig } from "./ServiceConfig";
+import { Config } from "./Config";
 import { Source } from "./Source";
 import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
@@ -35,8 +35,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private serviceConfig = new ServiceConfig([], []);
-  private pusher: Pusher | undefined = undefined;
+  private config = new Config([], [], Date.now());
   private routes: Routes = new Routes(200);
   private users: Users = new Users(200);
   private statistics = new InspectionStatistics({
@@ -50,7 +49,7 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
-    private readonly pusherConfig: { key: string; authUrl: URL }
+    private readonly configAPI: ConfigAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -107,7 +106,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateServiceConfig(result))
+        .then((result) => this.updateConfig(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -206,16 +205,19 @@ export class Agent {
   }
 
   getConfig() {
-    return this.serviceConfig;
+    return this.config;
   }
 
-  private updateServiceConfig(response: ReportingAPIResponse) {
+  private updateConfig(response: ReportingAPIResponse) {
     if (response.success) {
       if (response.endpoints) {
-        this.serviceConfig = new ServiceConfig(
-        response.endpoints,
-        response.blockedUserIds ? response.blockedUserIds : []
-      );
+        this.config = new Config(
+          response.endpoints,
+          response.blockedUserIds ? response.blockedUserIds : [],
+          typeof response.configUpdatedAt === "number"
+            ? response.configUpdatedAt
+            : Date.now()
+        );
       }
 
       const minimumHeartbeatIntervalMS = 2 * 60 * 1000;
@@ -253,7 +255,7 @@ export class Agent {
         },
         timeoutInMS
       );
-      this.updateServiceConfig(response);
+      this.updateConfig(response);
     }
   }
 
@@ -283,6 +285,18 @@ export class Agent {
         this.lastHeartbeat = now;
         this.reportedInitialStats = true;
       }
+
+      this.configNeedsUpdate()
+        .then((needsUpdate) => {
+          if (needsUpdate) {
+            this.grabLatestConfig().catch(() => {
+              this.logger.log("Failed to grab latest config");
+            });
+          }
+        })
+        .catch(() => {
+          this.logger.log("Failed to check if config needs updated");
+        });
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
     this.interval.unref();
@@ -361,9 +375,8 @@ export class Agent {
 
     this.onStart();
 
-    if (!this.serverless) {
+    if (!this.serverless && this.token) {
       this.startHeartbeats();
-      this.listenForConfigChanges();
     }
   }
 
@@ -388,6 +401,16 @@ export class Agent {
     await this.sendHeartbeat(timeoutInMS);
   }
 
+  private async configNeedsUpdate() {
+    if (!this.token) {
+      throw new Error("Token is required");
+    }
+
+    const lastUpdated = await this.configAPI.getLastUpdatedAt(this.token);
+
+    return lastUpdated > this.config.getLastUpdatedAt();
+  }
+
   private async grabLatestConfig() {
     if (!this.token) {
       throw new Error("Token is required");
@@ -395,41 +418,9 @@ export class Agent {
 
     try {
       const response = await this.api.getConfig(this.token, this.timeoutInMS);
-      this.updateServiceConfig(response);
+      this.updateConfig(response);
     } catch (error) {
       this.logger.log("Failed to grab latest config");
     }
-  }
-
-  private listenForConfigChanges() {
-    if (!this.token) {
-      return;
-    }
-
-    if (!this.pusherConfig) {
-      throw new Error("Pusher config is required");
-    }
-
-    if (this.pusher) {
-      throw new Error("Pusher already initialized");
-    }
-
-    this.pusher = new Pusher(this.pusherConfig.key, {
-      cluster: "eu",
-      forceTLS: true,
-      channelAuthorization: {
-        transport: "ajax",
-        endpoint: this.pusherConfig.authUrl.toString(),
-        headers: {
-          Authorization: this.token.asString(),
-        },
-      },
-    });
-
-    const serviceId = this.token.getServiceId();
-    this.pusher.subscribe(`private-runtime-${serviceId}`);
-    this.pusher.bind("config-updated", () => {
-      this.grabLatestConfig().finally(() => {});
-    });
   }
 }

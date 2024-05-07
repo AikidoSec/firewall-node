@@ -1,13 +1,13 @@
 import * as t from "tap";
-import { ServiceConfig } from "./ServiceConfig";
+import { Config } from "./Config";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([]);
+  const config = new Config([]);
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
 });
 
 t.test("it works", async () => {
-  const config = new ServiceConfig([
+  const config = new Config([
     { method: "GET", route: "/foo", forceProtectionOff: false },
     { method: "POST", route: "/foo", forceProtectionOff: true },
     { method: "POST", route: /fly+/.source, forceProtectionOff: true },
