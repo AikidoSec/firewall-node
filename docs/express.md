@@ -51,25 +51,3 @@ This will output debug information to the console (e.g. if the agent failed to s
 Aikido runtime can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
-
-## User identification
-
-If you want to identify the user making the request, you can add a middleware to your express app that sets the `aikido` property on the request object.
-
-This will enable you to block specific users from making requests to your application or rate limit certain endpoints based on the user (using the Aikido dashboard).
-
-For example:
-
-```
-app.use(
-  (req, res, next) => {
-    req.aikidoUser = {
-      user: {
-        id: '1234',
-        name: 'John Doe', // optional
-      },
-    };
-    next();
-  }
-);
-```

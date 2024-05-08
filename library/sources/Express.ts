@@ -1,7 +1,7 @@
 /* eslint-disable prefer-rest-params */
 import type { NextFunction, Request, Response } from "express";
 import { Agent } from "../agent/Agent";
-import { getContext, runWithContext, User } from "../agent/Context";
+import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { METHODS } from "http";
@@ -14,7 +14,6 @@ type RequestWithAikido = Request & {
     requestCounted: boolean;
     attackDetected: boolean;
   };
-  aikidoUser?: { id?: unknown; name?: unknown };
 };
 
 type Middleware = (
@@ -38,26 +37,6 @@ function createMiddleware(agent: Agent, path: string | undefined): Middleware {
       agent.onRouteExecute(req.method, route);
     }
 
-    let user: User | undefined = undefined;
-    if (req.aikidoUser && typeof req.aikidoUser.id === "string") {
-      user = { id: req.aikidoUser.id };
-      if (typeof req.aikidoUser.name === "string") {
-        user.name = req.aikidoUser.name;
-      }
-    }
-
-    if (user) {
-      if (agent.getConfig().shouldBlockUser(user.id)) {
-        return resp.sendStatus(403);
-      }
-
-      agent.getUsers().addUser({
-        id: user.id,
-        name: user.name,
-        lastIpAddress: req.ip,
-      });
-    }
-
     runWithContext(
       {
         method: req.method,
@@ -71,7 +50,6 @@ function createMiddleware(agent: Agent, path: string | undefined): Middleware {
         cookies: req.cookies ? req.cookies : {},
         source: "express",
         route: route,
-        user: user,
       },
       () => {
         try {

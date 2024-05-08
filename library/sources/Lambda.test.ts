@@ -172,7 +172,6 @@ t.test("it handles SQS event", async (t) => {
     routeParams: {},
     source: "lambda/sqs",
     route: undefined,
-    user: undefined,
   });
 });
 
@@ -270,7 +269,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       agent: agent.getAgentInfo(),
       hostnames: [],
       routes: [],
-      users: [],
       stats: {
         sinks: {
           mongodb: {
@@ -414,7 +412,6 @@ t.test("undefined values", async () => {
     remoteAddress: undefined,
     body: undefined,
     headers: undefined,
-    user: undefined,
     query: {},
     cookies: {},
     routeParams: {},

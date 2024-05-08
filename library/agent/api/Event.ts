@@ -1,5 +1,4 @@
 import { Kind } from "../Attack";
-import { User } from "../Context";
 import { Source } from "../Source";
 
 export type AgentInfo = {
@@ -39,7 +38,6 @@ export type DetectedAttack = {
     source: string;
     route: string | undefined;
   };
-  user: User | undefined;
   attack: {
     kind: Kind;
     operation: string;
@@ -86,13 +84,6 @@ type Heartbeat = {
   };
   hostnames: { hostname: string; port: number | undefined }[];
   routes: { path: string; method: string }[];
-  users: {
-    id: string;
-    name: string | undefined;
-    lastIpAddress: string | undefined;
-    firstSeenAt: number;
-    lastSeenAt: number;
-  }[];
   agent: AgentInfo;
   time: number;
 };

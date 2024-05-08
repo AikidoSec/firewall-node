@@ -24,7 +24,6 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         routeParams: {},
         source: "cloud-function/http",
         route: undefined,
-        user: undefined,
       },
       async () => {
         try {

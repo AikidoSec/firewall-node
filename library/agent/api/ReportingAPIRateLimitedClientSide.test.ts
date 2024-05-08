@@ -18,7 +18,6 @@ function generateAttackEvent(): Event {
       source: "express",
       route: "/posts/:id",
     },
-    user: undefined,
     attack: {
       module: "module",
       blocked: false,
@@ -164,7 +163,6 @@ function generateHeartbeatEvent(): Event {
     },
     hostnames: [],
     routes: [],
-    users: [],
   };
 }
 

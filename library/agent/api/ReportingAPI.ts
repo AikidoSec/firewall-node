@@ -19,7 +19,6 @@ export type ReportingAPIResponse =
       success: true;
       endpoints?: Endpoint[];
       heartbeatIntervalInMS?: number;
-      blockedUserIds?: string[];
       configUpdatedAt?: number;
     }
   | {

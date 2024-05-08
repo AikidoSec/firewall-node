@@ -43,7 +43,6 @@ export class ReportingAPIForTesting implements ReportingAPI {
         },
       ],
       heartbeatIntervalInMS: 1000,
-      blockedUserIds: ["userId"],
       configUpdatedAt: 0,
     };
   }

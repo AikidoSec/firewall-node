@@ -1,7 +1,6 @@
 import { Endpoint } from "./api/ReportingAPI";
 
 export class Config {
-  private blockedUserIds: Map<string, string> = new Map();
   private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }
@@ -9,7 +8,6 @@ export class Config {
 
   constructor(
     endpoints: Endpoint[],
-    blockedUserIds: string[],
     private readonly lastUpdatedAt: number
   ) {
     endpoints.forEach((rule) => {
@@ -19,17 +17,10 @@ export class Config {
         forceProtectionOff: rule.forceProtectionOff,
       });
     });
-    blockedUserIds.forEach((userId) => {
-      this.blockedUserIds.set(userId, userId);
-    });
   }
 
   private getKey(method: string, route: string) {
     return `${method}:${route}`;
-  }
-
-  shouldBlockUser(userId: string) {
-    return this.blockedUserIds.has(userId);
   }
 
   shouldProtectEndpoint(method: string, route: string | RegExp) {

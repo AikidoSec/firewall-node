@@ -21,29 +21,6 @@ async function getPosts() {
   return new Posts(client);
 }
 
-const users = [
-  {
-    id: "123",
-    name: "John Doe",
-  },
-  {
-    id: "456",
-    name: "Jane Doe",
-  },
-  {
-    id: "789",
-    name: "Alice",
-  },
-  {
-    id: "101",
-    name: "Bob",
-  },
-  {
-    id: "102",
-    name: "Charlie",
-  },
-];
-
 async function main(port) {
   const app = express();
   const posts = await getPosts();
@@ -53,12 +30,6 @@ async function main(port) {
 
   app.use("*", (req, res, next) => {
     res.setHeader("X-Frame-Options", "DENY");
-    next();
-  });
-
-  app.use((req, res, next) => {
-    const randomUser = users[Math.floor(Math.random() * users.length)];
-    req.aikidoUser = randomUser;
     next();
   });
 

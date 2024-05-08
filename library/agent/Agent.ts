@@ -17,7 +17,6 @@ import { Logger } from "./logger/Logger";
 import { Routes } from "./Routes";
 import { Config } from "./Config";
 import { Source } from "./Source";
-import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 
@@ -35,9 +34,8 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private config = new Config([], [], Date.now());
+  private config = new Config([], Date.now());
   private routes: Routes = new Routes(200);
-  private users: Users = new Users(1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -171,7 +169,6 @@ export class Agent {
               kind: kind,
               payload: JSON.stringify(payload).substring(0, 4096),
             },
-            user: request.user,
             request: {
               method: request.method,
               url: request.url,
@@ -213,7 +210,6 @@ export class Agent {
       if (response.endpoints) {
         this.config = new Config(
           response.endpoints,
-          response.blockedUserIds ? response.blockedUserIds : [],
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
             : Date.now()
@@ -251,7 +247,6 @@ export class Agent {
           },
           hostnames: this.hostnames.asArray(),
           routes: this.routes.asArray(),
-          users: this.users.asArray(),
         },
         timeoutInMS
       );
@@ -390,10 +385,6 @@ export class Agent {
 
   onRouteExecute(method: string, path: string) {
     this.routes.addRoute(method, path);
-  }
-
-  getUsers() {
-    return this.users;
   }
 
   async flushStats(timeoutInMS: number) {
