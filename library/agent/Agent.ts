@@ -409,11 +409,7 @@ export class Agent {
       throw new Error("Token is required");
     }
 
-    try {
-      const response = await this.api.getConfig(this.token, this.timeoutInMS);
-      this.updateConfig(response);
-    } catch (error) {
-      this.logger.log("Failed to grab latest config");
-    }
+    const response = await this.api.getConfig(this.token, this.timeoutInMS);
+    this.updateConfig(response);
   }
 }

@@ -8,6 +8,8 @@ import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
 import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
+import { ConfigAPIThatThrows } from "./config-api/ConfigAPIThatThrows";
+import { LoggerConsole } from "./logger/LoggerConsole";
 import { Token } from "./Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
@@ -687,6 +689,71 @@ t.test("it updates configuration", async () => {
 
   // @ts-expect-error Private method
   t.same(agent.sendHeartbeatEveryMS, 3 * 60 * 1000);
+
+  clock.uninstall();
+});
+
+t.test("it fails to get config", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIThatThrows();
+  const token = new Token("123");
+  const configAPI = new ConfigAPIForTesting(10);
+  const agent = new Agent(true, logger, api, token, undefined, configAPI);
+  agent.start([]);
+
+  clock.tick(1000 * 60);
+
+  clock.uninstall();
+});
+
+t.test("the config API throws an error", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [
+      {
+        method: "POST",
+        route: "/events",
+        forceProtectionOff: false,
+      },
+    ],
+    configUpdatedAt: 10,
+  });
+  const token = new Token("123");
+  const configAPI = new ConfigAPIThatThrows();
+  const agent = new Agent(true, logger, api, token, undefined, configAPI);
+  agent.start([]);
+
+  clock.tick(1000 * 60);
+
+  clock.uninstall();
+});
+
+t.test("it checks if config needs to be updated and updates it", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [
+      {
+        method: "POST",
+        route: "/events",
+        forceProtectionOff: false,
+      },
+    ],
+    configUpdatedAt: 1,
+  });
+  const token = new Token("123");
+  const configAPI = new ConfigAPIForTesting(10);
+  const agent = new Agent(true, logger, api, token, undefined, configAPI);
+  agent.start([]);
+
+  clock.tick(1000 * 60);
 
   clock.uninstall();
 });
