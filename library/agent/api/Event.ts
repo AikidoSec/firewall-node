@@ -90,6 +90,8 @@ type Heartbeat = {
     id: string;
     name: string | undefined;
     lastIpAddress: string | undefined;
+    firstSeenAt: number;
+    lastSeenAt: number;
   }[];
   agent: AgentInfo;
   time: number;
