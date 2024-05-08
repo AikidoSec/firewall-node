@@ -58,9 +58,7 @@ async function main(port) {
 
   app.use((req, res, next) => {
     const randomUser = users[Math.floor(Math.random() * users.length)];
-    req.aikido = {
-      user: randomUser,
-    };
+    req.aikidoUser = randomUser;
     next();
   });
 
