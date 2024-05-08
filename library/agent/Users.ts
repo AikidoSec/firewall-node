@@ -7,7 +7,13 @@ type User = {
 export class Users {
   private users: Map<
     string,
-    { id: string; name: string | undefined; lastIpAddress: string | undefined }
+    {
+      id: string;
+      name: string | undefined;
+      lastIpAddress: string | undefined;
+      firstSeenAt: number;
+      lastSeenAt: number;
+    }
   > = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
@@ -17,6 +23,7 @@ export class Users {
     if (existing) {
       existing.name = user.name;
       existing.lastIpAddress = user.lastIpAddress;
+      existing.lastSeenAt = Date.now();
       return;
     }
 
@@ -29,6 +36,8 @@ export class Users {
       id: user.id,
       name: user.name,
       lastIpAddress: user.lastIpAddress,
+      firstSeenAt: Date.now(),
+      lastSeenAt: Date.now(),
     });
   }
 
@@ -38,6 +47,8 @@ export class Users {
         id: user.id,
         name: user.name,
         lastIpAddress: user.lastIpAddress,
+        firstSeenAt: user.firstSeenAt,
+        lastSeenAt: user.lastSeenAt,
       };
     });
   }
