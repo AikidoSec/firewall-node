@@ -47,6 +47,7 @@ export class HttpClientNodeHttp implements HttpClient {
             // We don't throw errors unless the request times out, is aborted or fails for low level reasons
             // Error objects are annoying to work with
             // That's why we use `resolve` instead of `reject`
+            /* c8 ignore next */
             resolve({ body: data, statusCode: response.statusCode || 0 });
           });
         }
