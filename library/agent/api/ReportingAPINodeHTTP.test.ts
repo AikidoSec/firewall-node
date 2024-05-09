@@ -52,16 +52,6 @@ function createTestEndpoint({
   app.set("env", "test");
   app.use(express.json());
 
-  app.get(
-    "/api/runtime/config",
-    asyncHandler(async (req, res) => {
-      res.send({
-        success: true,
-        endpoints: endpoints,
-      });
-    })
-  );
-
   app.post(
     "/api/runtime/events",
     asyncHandler(async (req, res) => {
