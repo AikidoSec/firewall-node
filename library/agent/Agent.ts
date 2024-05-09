@@ -26,9 +26,11 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 30 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
+  private checkIfConfigNeedsUpdateEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
+  private configInterval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
@@ -280,7 +282,25 @@ export class Agent {
         this.lastHeartbeat = now;
         this.reportedInitialStats = true;
       }
+    }, this.checkIfHeartbeatIsNeededEveryMS);
 
+    this.interval.unref();
+  }
+
+  private startPollingForConfigChanges() {
+    /* c8 ignore next 3 */
+    if (this.serverless) {
+      throw new Error(
+        "Polling for config changes in serverless mode is not supported"
+      );
+    }
+
+    /* c8 ignore next 3 */
+    if (this.configInterval) {
+      throw new Error("Interval already started");
+    }
+
+    this.configInterval = setInterval(() => {
       this.configNeedsUpdate()
         .then((needsUpdate) => {
           if (needsUpdate) {
@@ -292,9 +312,9 @@ export class Agent {
         .catch(() => {
           this.logger.log("Failed to check if config needs updated");
         });
-    }, this.checkIfHeartbeatIsNeededEveryMS);
+    }, this.checkIfConfigNeedsUpdateEveryMS);
 
-    this.interval.unref();
+    this.configInterval.unref();
   }
 
   private getAgentInfo(): AgentInfo {
@@ -372,6 +392,7 @@ export class Agent {
 
     if (!this.serverless && this.token) {
       this.startHeartbeats();
+      this.startPollingForConfigChanges();
     }
   }
 
