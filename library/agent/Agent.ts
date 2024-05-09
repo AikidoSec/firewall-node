@@ -10,6 +10,7 @@ import { AgentInfo } from "./api/Event";
 import { ConfigAPI } from "./config-api/ConfigAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { ConfigChangeChecker } from "./ConfigChangeChecker";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -26,17 +27,16 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 30 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private checkIfConfigNeedsUpdateEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
-  private configInterval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private serviceConfig = new ServiceConfig([], Date.now());
+  private configChangeChecker: ConfigChangeChecker | undefined = undefined;
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -94,22 +94,19 @@ export class Agent {
   /**
    * Reports to the API that this agent has started
    */
-  onStart() {
+  async onStart() {
     if (this.token) {
-      this.api
-        .report(
-          this.token,
-          {
-            type: "started",
-            time: Date.now(),
-            agent: this.getAgentInfo(),
-          },
-          this.timeoutInMS
-        )
-        .then((result) => this.updateServiceConfig(result))
-        .catch((error) => {
-          this.logger.log("Failed to report started event");
-        });
+      const result = await this.api.report(
+        this.token,
+        {
+          type: "started",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+        },
+        this.timeoutInMS
+      );
+
+      this.updateServiceConfig(result);
     }
   }
 
@@ -295,26 +292,24 @@ export class Agent {
       );
     }
 
-    /* c8 ignore next 3 */
-    if (this.configInterval) {
-      throw new Error("Interval already started");
+    if (this.configChangeChecker) {
+      throw new Error("Polling already started");
     }
 
-    this.configInterval = setInterval(() => {
-      this.configNeedsUpdate()
-        .then((needsUpdate) => {
-          if (needsUpdate) {
-            this.grabLatestConfig().catch(() => {
-              this.logger.log("Failed to grab latest config");
-            });
-          }
-        })
-        .catch(() => {
-          this.logger.log("Failed to check if config needs updated");
-        });
-    }, this.checkIfConfigNeedsUpdateEveryMS);
+    if (!this.token) {
+      throw new Error("Token is required to poll for config changes");
+    }
 
-    this.configInterval.unref();
+    this.configChangeChecker = new ConfigChangeChecker(
+      this.configAPI,
+      this.token,
+      this.logger,
+      this.serviceConfig.getLastUpdatedAt()
+    );
+
+    this.configChangeChecker.startPolling((config) => {
+      this.updateServiceConfig(config);
+    });
   }
 
   private getAgentInfo(): AgentInfo {
@@ -388,12 +383,18 @@ export class Agent {
       }
     }
 
-    this.onStart();
-
-    if (!this.serverless && this.token) {
-      this.startHeartbeats();
-      this.startPollingForConfigChanges();
-    }
+    // Send startup event and wait for config
+    // Then start heartbeats and polling for config changes
+    this.onStart()
+      .then(() => {
+        if (!this.serverless && this.token) {
+          this.startHeartbeats();
+          this.startPollingForConfigChanges();
+        }
+      })
+      .catch(() => {
+        this.logger.log("Failed to start agent");
+      });
   }
 
   onFailedToWrapMethod(module: string, name: string) {
@@ -411,26 +412,5 @@ export class Agent {
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
-  }
-
-  private async configNeedsUpdate() {
-    /* c8 ignore next 3 */
-    if (!this.token) {
-      throw new Error("Token is required");
-    }
-
-    const lastUpdated = await this.configAPI.getLastUpdatedAt(this.token);
-
-    return lastUpdated > this.serviceConfig.getLastUpdatedAt();
-  }
-
-  private async grabLatestConfig() {
-    /* c8 ignore next 3 */
-    if (!this.token) {
-      throw new Error("Token is required");
-    }
-
-    const response = await this.configAPI.getConfig(this.token);
-    this.updateServiceConfig(response);
   }
 }
