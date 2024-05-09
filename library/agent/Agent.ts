@@ -288,7 +288,7 @@ export class Agent {
   }
 
   private startPollingForConfigChanges() {
-    /* c8 ignore next 3 */
+    /* c8 ignore next 5 */
     if (this.serverless) {
       throw new Error(
         "Polling for config changes in serverless mode is not supported"
@@ -430,7 +430,7 @@ export class Agent {
       throw new Error("Token is required");
     }
 
-    const response = await this.api.getConfig(this.token, this.timeoutInMS);
+    const response = await this.configAPI.getConfig(this.token);
     this.updateServiceConfig(response);
   }
 }

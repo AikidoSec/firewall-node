@@ -693,27 +693,13 @@ t.test("it updates configuration", async () => {
   clock.uninstall();
 });
 
-t.test("it fails to get config", async () => {
-  const clock = FakeTimers.install();
-
-  const logger = new LoggerForTesting();
-  const api = new ReportingAPIThatThrows();
-  const token = new Token("123");
-  const configAPI = new ConfigAPIForTesting(10);
-  const agent = new Agent(true, logger, api, token, undefined, configAPI);
-  agent.start([]);
-
-  clock.tick(1000 * 60);
-
-  clock.uninstall();
-});
-
 t.test("the config API throws an error", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting({
     success: true,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
     endpoints: [
       {
         method: "POST",
@@ -739,6 +725,7 @@ t.test("it checks if config needs to be updated and updates it", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting({
     success: true,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
     endpoints: [
       {
         method: "POST",
@@ -749,7 +736,18 @@ t.test("it checks if config needs to be updated and updates it", async () => {
     configUpdatedAt: 1,
   });
   const token = new Token("123");
-  const configAPI = new ConfigAPIForTesting(10);
+  const configAPI = new ConfigAPIForTesting(10, {
+    success: true,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    endpoints: [
+      {
+        method: "POST",
+        route: "/events",
+        forceProtectionOff: false,
+      },
+    ],
+    configUpdatedAt: 10,
+  });
   const agent = new Agent(true, logger, api, token, undefined, configAPI);
   agent.start([]);
 

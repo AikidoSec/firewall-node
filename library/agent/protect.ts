@@ -72,21 +72,26 @@ function getConfigAPIURL() {
     return new URL(process.env.AIKIDO_CONFIG_URL);
   }
 
-  return new URL("https://runtime.aikido.dev/config");
+  return new URL("https://runtime.aikido.dev");
 }
 
 function getConfigAPI(): ConfigAPI {
-  return new ConfigAPINodeHTTP(getConfigAPIURL(), 3000);
+  return new ConfigAPINodeHTTP(getConfigAPIURL(), getReportingAPIURL());
+}
+
+function getReportingAPIURL() {
+  if (process.env.AIKIDO_URL) {
+    return new URL(process.env.AIKIDO_URL);
+  }
+
+  return new URL("https://guard.aikido.dev");
 }
 
 function getAPI(): ReportingAPI {
-  let url = new URL("https://guard.aikido.dev/api/runtime/events");
-  if (process.env.AIKIDO_URL) {
-    url = new URL(process.env.AIKIDO_URL);
-  }
-
   return validatesToken(
-    serverSideRateLimited(clientSideRateLimited(new ReportingAPINodeHTTP(url)))
+    serverSideRateLimited(
+      clientSideRateLimited(new ReportingAPINodeHTTP(getReportingAPIURL()))
+    )
   );
 }
 

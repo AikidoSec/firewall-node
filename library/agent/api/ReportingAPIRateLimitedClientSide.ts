@@ -42,11 +42,4 @@ export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
 
     return await this.api.report(token, event, timeoutInMS);
   }
-
-  async getConfig(
-    token: Token,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
-    return await this.api.getConfig(token, timeoutInMS);
-  }
 }

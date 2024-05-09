@@ -1,5 +1,18 @@
 import { Token } from "../api/Token";
 
+export type Endpoint = {
+  method: string;
+  route: string;
+  forceProtectionOff: boolean;
+};
+
+export type ConfigAPIResponse = {
+  success: true;
+  endpoints: Endpoint[];
+  heartbeatIntervalInMS: number;
+  configUpdatedAt: number;
+};
+
 /**
  * This API is used to get the last updated timestamp of the configuration.
  *
@@ -7,4 +20,5 @@ import { Token } from "../api/Token";
  */
 export interface ConfigAPI {
   getLastUpdatedAt(token: Token): Promise<number>;
+  getConfig(token: Token): Promise<ConfigAPIResponse>;
 }

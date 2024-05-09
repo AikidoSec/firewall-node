@@ -28,22 +28,4 @@ export class ReportingAPIForTesting implements ReportingAPI {
   getEvents() {
     return this.events;
   }
-
-  async getConfig(
-    token: Token,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
-    return {
-      success: true,
-      endpoints: [
-        {
-          method: "GET",
-          route: "/config",
-          forceProtectionOff: false,
-        },
-      ],
-      heartbeatIntervalInMS: 10 * 60 * 1000,
-      configUpdatedAt: 0,
-    };
-  }
 }

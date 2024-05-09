@@ -216,15 +216,3 @@ t.test("it does not blow memory", async () => {
   // @ts-expect-error Private field but we need to check the length
   t.same(throttled.events.length, 10);
 });
-
-t.test("it gets config", async () => {
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const throttled = new ReportingAPIRateLimitedClientSide(api, {
-    maxEventsPerInterval: 10,
-    intervalInMs: 60000,
-  });
-  t.match(await throttled.getConfig(token, 5000), {
-    success: true,
-  });
-});

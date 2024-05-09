@@ -1,12 +1,12 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import { Token } from "../api/Token";
-import { ConfigAPI } from "./ConfigAPI";
+import { ConfigAPI, ConfigAPIResponse } from "./ConfigAPI";
 
 export class ConfigAPINodeHTTP implements ConfigAPI {
   constructor(
     private readonly configAPIURL: URL,
-    private readonly timeoutInMS: number
+    private readonly reportingAPIURL: URL
   ) {}
 
   private toAPIResponse({
@@ -40,7 +40,7 @@ export class ConfigAPINodeHTTP implements ConfigAPI {
       headers: Record<string, string>;
       body: string;
     }
-  ): Promise<number> {
+  ): Promise<{ body: string; statusCode: number }> {
     /* c8 ignore next */
     const request = url.startsWith("https://") ? requestHttps : requestHttp;
 
@@ -84,19 +84,41 @@ export class ConfigAPINodeHTTP implements ConfigAPI {
     const abort = new AbortController();
 
     return await Promise.race([
-      this.fetch(this.configAPIURL.toString(), {
+      this.fetch(`${this.configAPIURL.toString()}config`, {
         method: "GET",
         signal: abort.signal,
         headers: {
           Authorization: token.asString(),
         },
         body: "",
-      }),
+      }).then((result) => this.toAPIResponse(result)),
       new Promise<number>((resolve, reject) =>
         setTimeout(() => {
           abort.abort();
           reject(new Error("Request timed out"));
-        }, this.timeoutInMS)
+        }, 500)
+      ),
+    ]);
+  }
+
+  async getConfig(token: Token): Promise<ConfigAPIResponse> {
+    const abort = new AbortController();
+
+    return await Promise.race([
+      this.fetch(`${this.reportingAPIURL.toString()}api/runtime/config`, {
+        signal: abort.signal,
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token.asString(),
+        },
+        body: "",
+      }).then((response) => this.toAPIResponse(response)),
+      new Promise<ConfigAPIResponse>((resolve, reject) =>
+        setTimeout(() => {
+          abort.abort();
+          reject(new Error("Request timed out"));
+        }, 3000)
       ),
     ]);
   }

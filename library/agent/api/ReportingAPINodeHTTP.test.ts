@@ -183,18 +183,3 @@ t.test("it deals with malformed JSON", async () => {
   });
   await stop();
 });
-
-t.test("it gets config", async () => {
-  const stop = await createTestEndpoint({
-    port: 3006,
-    endpoints: [{ route: "/config", method: "GET", forceProtectionOff: false }],
-  });
-  const api = new ReportingAPINodeHTTP(
-    new URL("http://localhost:3006/api/runtime/events")
-  );
-  t.same(await api.getConfig(new Token("123"), 1000), {
-    success: true,
-    endpoints: [{ route: "/config", method: "GET", forceProtectionOff: false }],
-  });
-  await stop();
-});

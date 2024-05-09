@@ -27,7 +27,6 @@ export type ReportingAPIResponse =
     };
 
 export interface ReportingAPI {
-  getConfig(token: Token, timeoutInMS: number): Promise<ReportingAPIResponse>;
   report(
     token: Token,
     event: Event,

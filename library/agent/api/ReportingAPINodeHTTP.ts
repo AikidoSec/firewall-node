@@ -100,31 +100,4 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
       ),
     ]);
   }
-
-  async getConfig(
-    token: Token,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
-    const configURL = new URL(this.reportingUrl);
-    configURL.pathname = configURL.pathname.replace("/events", "/config");
-    const abort = new AbortController();
-
-    return await Promise.race([
-      this.fetch(configURL.toString(), {
-        signal: abort.signal,
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token.asString(),
-        },
-        body: "",
-      }),
-      new Promise<ReportingAPIResponse>((resolve) =>
-        setTimeout(() => {
-          abort.abort();
-          resolve({ success: false, error: "timeout" });
-        }, timeoutInMS)
-      ),
-    ]);
-  }
 }
