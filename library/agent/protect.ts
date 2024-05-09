@@ -19,12 +19,12 @@ import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
-import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
+import { ReportingAPIFetch } from "./api/ReportingAPIFetch";
 import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
 import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { ConfigAPI } from "./config-api/ConfigAPI";
-import { ConfigAPINodeHTTP } from "./config-api/ConfigAPINodeHTTP";
+import { ConfigAPIFetch } from "./config-api/ConfigAPIFetch";
 import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
@@ -76,7 +76,7 @@ function getConfigAPIURL() {
 }
 
 function getConfigAPI(): ConfigAPI {
-  return new ConfigAPINodeHTTP(getConfigAPIURL(), getReportingAPIURL());
+  return new ConfigAPIFetch(getConfigAPIURL(), getReportingAPIURL());
 }
 
 function getReportingAPIURL() {
@@ -90,7 +90,7 @@ function getReportingAPIURL() {
 function getAPI(): ReportingAPI {
   return validatesToken(
     serverSideRateLimited(
-      clientSideRateLimited(new ReportingAPINodeHTTP(getReportingAPIURL()))
+      clientSideRateLimited(new ReportingAPIFetch(getReportingAPIURL()))
     )
   );
 }

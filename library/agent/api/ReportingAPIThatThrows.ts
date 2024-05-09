@@ -10,11 +10,4 @@ export class ReportingAPIThatThrows implements ReportingAPI {
   ): Promise<ReportingAPIResponse> {
     throw new Error("Failed to report event");
   }
-
-  async getConfig(
-    token: Token,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
-    throw new Error("Failed to get config");
-  }
 }

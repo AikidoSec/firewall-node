@@ -9,7 +9,6 @@ import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
 import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
 import { ConfigAPIThatThrows } from "./config-api/ConfigAPIThatThrows";
-import { LoggerConsole } from "./logger/LoggerConsole";
 import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
@@ -484,8 +483,7 @@ t.test("unable to prevent prototype pollution", async () => {
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
 
-  clock.tick(1000 * 60 * 30);
-  clock.next();
+  clock.tick(1000 * 60 * 31);
 
   t.same(api.getEvents().length, 2);
   const [_, heartbeat] = api.getEvents();

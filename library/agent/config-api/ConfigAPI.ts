@@ -1,6 +1,6 @@
 import { Token } from "../api/Token";
 
-export type Endpoint = {
+type Endpoint = {
   method: string;
   route: string;
   forceProtectionOff: boolean;
