@@ -42,7 +42,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
           forceProtectionOff: false,
         },
       ],
-      heartbeatIntervalInMS: 1000,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
       configUpdatedAt: 0,
     };
   }
