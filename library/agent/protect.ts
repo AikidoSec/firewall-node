@@ -19,7 +19,7 @@ import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
-import { ReportingAPIFetch } from "./api/ReportingAPIFetch";
+import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
 import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
 import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
@@ -90,7 +90,7 @@ function getReportingAPIURL() {
 function getAPI(): ReportingAPI {
   return validatesToken(
     serverSideRateLimited(
-      clientSideRateLimited(new ReportingAPIFetch(getReportingAPIURL()))
+      clientSideRateLimited(new ReportingAPINodeHTTP(getReportingAPIURL()))
     )
   );
 }

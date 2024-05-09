@@ -3,7 +3,7 @@ import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
-export class ReportingAPIFetch implements ReportingAPI {
+export class ReportingAPINodeHTTP implements ReportingAPI {
   constructor(private readonly reportingUrl: URL) {}
 
   private toAPIResponse(
