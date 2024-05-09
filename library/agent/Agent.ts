@@ -34,7 +34,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private config = new ServiceConfig([], Date.now());
+  private serviceConfig = new ServiceConfig([], Date.now());
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -104,7 +104,7 @@ export class Agent {
           },
           this.timeoutInMS
         )
-        .then((result) => this.updateConfig(result))
+        .then((result) => this.updateServiceConfig(result))
         .catch((error) => {
           this.logger.log("Failed to report started event");
         });
@@ -202,13 +202,13 @@ export class Agent {
   }
 
   getConfig() {
-    return this.config;
+    return this.serviceConfig;
   }
 
-  private updateConfig(response: ReportingAPIResponse) {
+  private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success) {
       if (response.endpoints) {
-        this.config = new ServiceConfig(
+        this.serviceConfig = new ServiceConfig(
           response.endpoints,
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
@@ -250,7 +250,7 @@ export class Agent {
         },
         timeoutInMS
       );
-      this.updateConfig(response);
+      this.updateServiceConfig(response);
     }
   }
 
@@ -400,7 +400,7 @@ export class Agent {
 
     const lastUpdated = await this.configAPI.getLastUpdatedAt(this.token);
 
-    return lastUpdated > this.config.getLastUpdatedAt();
+    return lastUpdated > this.serviceConfig.getLastUpdatedAt();
   }
 
   private async grabLatestConfig() {
@@ -410,6 +410,6 @@ export class Agent {
     }
 
     const response = await this.api.getConfig(this.token, this.timeoutInMS);
-    this.updateConfig(response);
+    this.updateServiceConfig(response);
   }
 }
