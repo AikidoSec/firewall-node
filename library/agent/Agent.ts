@@ -8,14 +8,14 @@ import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { ConfigAPI } from "./config-api/ConfigAPI";
-import { Token } from "./Token";
+import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
 import { Routes } from "./Routes";
-import { Config } from "./Config";
+import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
@@ -34,7 +34,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private config = new Config([], Date.now());
+  private config = new ServiceConfig([], Date.now());
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -208,7 +208,7 @@ export class Agent {
   private updateConfig(response: ReportingAPIResponse) {
     if (response.success) {
       if (response.endpoints) {
-        this.config = new Config(
+        this.config = new ServiceConfig(
           response.endpoints,
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt

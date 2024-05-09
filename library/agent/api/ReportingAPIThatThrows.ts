@@ -1,5 +1,5 @@
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
-import { Token } from "../Token";
+import { Token } from "./Token";
 import { Event } from "./Event";
 
 export class ReportingAPIThatThrows implements ReportingAPI {

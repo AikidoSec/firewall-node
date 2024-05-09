@@ -1,6 +1,6 @@
 import { Endpoint } from "./api/ReportingAPI";
 
-export class Config {
+export class ServiceConfig {
   private endpoints: Map<
     string,
     { method: string; route: string; forceProtectionOff: boolean }

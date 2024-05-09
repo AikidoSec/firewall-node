@@ -1,4 +1,4 @@
-import { Token } from "../Token";
+import { Token } from "./Token";
 import { Event } from "./Event";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 

@@ -1,4 +1,4 @@
-import { Token } from "../Token";
+import { Token } from "../api/Token";
 import { ConfigAPI } from "./ConfigAPI";
 
 export class ConfigAPIThatThrows implements ConfigAPI {

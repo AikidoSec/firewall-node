@@ -2,7 +2,7 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 import { HttpClient } from "../http/HttpClient";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 import { Event } from "./Event";
-import { Token } from "../Token";
+import { Token } from "./Token";
 
 export class ReportingAPIHTTP implements ReportingAPI {
   constructor(

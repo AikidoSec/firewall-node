@@ -4,7 +4,7 @@ import * as t from "tap";
 import { HttpClientNodeHttp } from "../http/HttpClientNodeHttp";
 import { ReportingAPIHTTP } from "./ReportingAPIHTTP";
 import { Event } from "./Event";
-import { Token } from "../Token";
+import { Token } from "./Token";
 
 function generateStartedEvent(): Event {
   return {

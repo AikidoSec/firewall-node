@@ -1,5 +1,5 @@
 import { HttpClient } from "../http/HttpClient";
-import { Token } from "../Token";
+import { Token } from "../api/Token";
 import { ConfigAPI } from "./ConfigAPI";
 
 export class ConfigAPIHTTP implements ConfigAPI {

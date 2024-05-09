@@ -10,7 +10,7 @@ import { Event, DetectedAttack } from "./api/Event";
 import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
 import { ConfigAPIThatThrows } from "./config-api/ConfigAPIThatThrows";
 import { LoggerConsole } from "./logger/LoggerConsole";
-import { Token } from "./Token";
+import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";

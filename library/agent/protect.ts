@@ -27,7 +27,7 @@ import { ConfigAPI } from "./config-api/ConfigAPI";
 import { ConfigAPIHTTP } from "./config-api/ConfigAPIHTTP";
 import { HttpClient } from "./http/HttpClient";
 import { HttpClientNodeHttp } from "./http/HttpClientNodeHttp";
-import { Token } from "./Token";
+import { Token } from "./api/Token";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";

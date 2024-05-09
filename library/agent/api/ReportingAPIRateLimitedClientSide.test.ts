@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
 import { ReportingAPIRateLimitedClientSide } from "./ReportingAPIRateLimitedClientSide";
-import { Token } from "../Token";
+import { Token } from "./Token";
 import { Event } from "./Event";
 
 function generateAttackEvent(): Event {

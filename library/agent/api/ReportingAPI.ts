@@ -1,5 +1,5 @@
 import { Event } from "./Event";
-import { Token } from "../Token";
+import { Token } from "./Token";
 
 type ReportingAPIError =
   | "timeout"

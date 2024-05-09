@@ -5,7 +5,7 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
-import { Token } from "../agent/Token";
+import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import {
