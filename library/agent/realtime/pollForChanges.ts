@@ -6,7 +6,8 @@ import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 
 type OnConfigUpdate = (config: Config) => void;
 
-let interval: NodeJS.Timeout | undefined;
+let interval: NodeJS.Timeout | null = null;
+let currentLastUpdatedAt: number | null = null;
 
 export function pollForChanges({
   onConfigUpdate,
@@ -33,15 +34,7 @@ export function pollForChanges({
     return;
   }
 
-  async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
-    const configLastUpdatedAt = await getConfigLastUpdatedAt(token);
-
-    if (configLastUpdatedAt > lastUpdatedAt) {
-      const config = await getConfig(token);
-      lastUpdatedAt = config.lastUpdatedAt;
-      onConfigUpdate(config);
-    }
-  }
+  currentLastUpdatedAt = lastUpdatedAt;
 
   if (interval) {
     clearInterval(interval);
@@ -54,4 +47,17 @@ export function pollForChanges({
   }, 60 * 1000);
 
   interval.unref();
+}
+
+async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
+  const configLastUpdatedAt = await getConfigLastUpdatedAt(token);
+
+  if (
+    typeof currentLastUpdatedAt === "number" &&
+    configLastUpdatedAt > currentLastUpdatedAt
+  ) {
+    const config = await getConfig(token);
+    currentLastUpdatedAt = config.lastUpdatedAt;
+    onConfigUpdate(config);
+  }
 }
