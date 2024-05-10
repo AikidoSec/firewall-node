@@ -6,6 +6,8 @@ import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 
 type OnConfigUpdate = (config: Config) => void;
 
+let interval: NodeJS.Timeout | undefined;
+
 export function pollForChanges({
   onConfigUpdate,
   serverless,
@@ -41,7 +43,11 @@ export function pollForChanges({
     }
   }
 
-  const interval = setInterval(() => {
+  if (interval) {
+    clearInterval(interval);
+  }
+
+  interval = setInterval(() => {
     check(token, onConfigUpdate).catch(() => {
       logger.log("Failed to check for config updates");
     });
