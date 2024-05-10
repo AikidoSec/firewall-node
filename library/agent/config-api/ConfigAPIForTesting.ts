@@ -16,6 +16,11 @@ export class ConfigAPIForTesting implements ConfigAPI {
     return this.lastUpdatedAt;
   }
 
+  update(lastUpdatedAt: number) {
+    this.lastUpdatedAt = lastUpdatedAt;
+    this.config.configUpdatedAt = lastUpdatedAt;
+  }
+
   async getConfig(token: Token): Promise<ConfigAPIResponse> {
     return this.config;
   }
