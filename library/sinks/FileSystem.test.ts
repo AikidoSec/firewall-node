@@ -36,8 +36,7 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda",
-    new ConfigAPIForTesting()
+    "lambda"
   );
 
   agent.start([new FileSystem()]);

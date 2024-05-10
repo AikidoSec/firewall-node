@@ -28,8 +28,7 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    undefined,
-    new ConfigAPIForTesting()
+    undefined
   );
 
   agent.start([new Path()]);

@@ -33,8 +33,7 @@ t.test("it works", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    undefined,
-    new ConfigAPIForTesting()
+    undefined
   );
 
   agent.start([new AwsSDKVersion2()]);

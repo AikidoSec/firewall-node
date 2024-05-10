@@ -1,0 +1,61 @@
+import { Token } from "../api/Token";
+import { Config } from "../Config";
+import { Logger } from "../logger/Logger";
+import { getConfig } from "./getConfig";
+import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
+
+type OnConfigUpdate = (config: Config) => void;
+
+let interval: NodeJS.Timeout | null = null;
+let currentLastUpdatedAt: number | null = null;
+
+export function pollForChanges({
+  onConfigUpdate,
+  serverless,
+  token,
+  logger,
+  lastUpdatedAt,
+}: {
+  onConfigUpdate: OnConfigUpdate;
+  token: Token | undefined;
+  serverless: string | undefined;
+  logger: Logger;
+  lastUpdatedAt: number;
+}) {
+  if (!token) {
+    logger.log("No token provided, not polling for config updates");
+    return;
+  }
+
+  if (serverless) {
+    logger.log(
+      "Running in serverless environment, not polling for config updates"
+    );
+    return;
+  }
+
+  if (interval) {
+    throw new Error("Polling already started");
+  }
+
+  currentLastUpdatedAt = lastUpdatedAt;
+  interval = setInterval(() => {
+    check(token, onConfigUpdate).catch(() => {
+      logger.log("Failed to check for config updates");
+    });
+  }, 60 * 1000);
+
+  interval!.unref();
+}
+
+async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
+  const lastUpdated = await getConfigLastUpdatedAt(token);
+
+  if (
+    typeof currentLastUpdatedAt === "number" &&
+    lastUpdated > currentLastUpdatedAt
+  ) {
+    const config = await getConfig(token);
+    onConfigUpdate(config);
+  }
+}

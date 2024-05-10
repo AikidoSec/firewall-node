@@ -26,8 +26,7 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     new Token("123"),
-    undefined,
-    new ConfigAPIForTesting()
+    undefined
   );
   agent.start([new HTTPRequest()]);
 

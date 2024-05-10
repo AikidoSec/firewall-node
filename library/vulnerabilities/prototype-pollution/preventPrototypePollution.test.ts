@@ -47,8 +47,7 @@ t.test("it lets agent know", async () => {
     logger,
     new ReportingAPIForTesting(),
     new Token("123"),
-    undefined,
-    new ConfigAPIForTesting()
+    undefined
   );
 
   setInstance(agent);

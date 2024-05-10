@@ -7,10 +7,9 @@ import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders"
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
-import { ConfigAPI } from "./config-api/ConfigAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { ConfigChangeChecker } from "./ConfigChangeChecker";
+import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -36,7 +35,6 @@ export class Agent {
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private serviceConfig = new ServiceConfig([], Date.now());
-  private configChangeChecker: ConfigChangeChecker | undefined = undefined;
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -48,8 +46,7 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined,
-    private readonly configAPI: ConfigAPI
+    private readonly serverless: string | undefined
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -292,21 +289,14 @@ export class Agent {
   }
 
   private startPollingForConfigChanges() {
-    /* c8 ignore next 3 */
-    if (this.configChangeChecker) {
-      throw new Error("Already initialized!");
-    }
-
-    this.configChangeChecker = new ConfigChangeChecker(
-      this.configAPI,
-      this.token,
-      this.serverless,
-      this.logger,
-      this.serviceConfig.getLastUpdatedAt()
-    );
-
-    this.configChangeChecker.startPolling((config) => {
-      this.updateServiceConfig(config);
+    pollForChanges({
+      token: this.token,
+      serverless: this.serverless,
+      logger: this.logger,
+      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
+      onConfigUpdate: (config) => {
+        this.updateServiceConfig({ success: true, ...config });
+      },
     });
   }
 

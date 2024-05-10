@@ -42,8 +42,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda",
-    new ConfigAPIForTesting()
+    "lambda"
   );
   agent.start([new MongoDB()]);
 

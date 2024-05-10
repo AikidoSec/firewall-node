@@ -7,8 +7,6 @@ import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
-import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
-import { ConfigAPIThatThrows } from "./config-api/ConfigAPIThatThrows";
 import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
@@ -23,8 +21,7 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        "",
-        new ConfigAPIForTesting()
+        ""
       ),
     "Serverless cannot be an empty string"
   );
@@ -34,14 +31,7 @@ t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new MongoDB()]);
 
   t.match(api.getEvents(), [
@@ -72,14 +62,7 @@ t.test("it throws error if already started", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new MongoDB()]);
   t.throws(() => agent.start([new MongoDB()]), "Agent already started!");
 });
@@ -94,14 +77,7 @@ t.test("it logs if package is supported or not", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new WrapperForTesting()]);
   t.same(logger.getMessages(), [
     "Starting agent...",
@@ -114,14 +90,7 @@ t.test("it starts in non-blocking mode", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    false,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(false, logger, api, token, undefined);
   agent.start([new MongoDB()]);
   t.same(logger.getMessages(), [
     "Starting agent...",
@@ -135,14 +104,7 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, "lambda");
   agent.onPrototypePollutionPrevented();
   agent.start([]);
   t.match(api.getEvents(), [
@@ -159,14 +121,7 @@ t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, "lambda");
 
   // This would otherwise keep the process running
   agent.start([]);
@@ -176,14 +131,7 @@ t.test("when attack detected", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.onDetectedAttack({
     module: "mongodb",
     kind: "nosql_injection",
@@ -243,14 +191,7 @@ t.test("it checks if user agent is a string", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.onDetectedAttack({
     module: "mongodb",
     kind: "nosql_injection",
@@ -310,14 +251,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
@@ -407,14 +341,7 @@ t.test("it logs when failed to report event", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIThatThrows();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
   await waitForCalls();
@@ -470,14 +397,7 @@ t.test("unable to prevent prototype pollution", async () => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
@@ -505,14 +425,7 @@ t.test("when payload is object", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
 
   agent.onDetectedAttack({
     module: "mongodb",
@@ -592,14 +505,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    token,
-    undefined,
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
   agent.onConnectHostname("aikido.dev", 443);
@@ -643,117 +549,6 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
       ],
     },
   ]);
-
-  clock.uninstall();
-});
-
-t.test("it updates configuration", async () => {
-  const clock = FakeTimers.install();
-
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting({
-    success: true,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    heartbeatIntervalInMS: 1000, // Too low
-  });
-
-  const token = new Token("123");
-  const configAPI = new ConfigAPIForTesting();
-  const agent = new Agent(true, logger, api, token, undefined, configAPI);
-
-  // @ts-expect-error Private property
-  const original = agent.sendHeartbeatEveryMS;
-
-  agent.start([]);
-
-  // @ts-expect-error Private method
-  t.same(agent.sendHeartbeatEveryMS, original);
-
-  api.setResult({
-    success: true,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    heartbeatIntervalInMS: 3 * 60 * 1000,
-  });
-
-  await agent.flushStats(1000);
-
-  // @ts-expect-error Private method
-  t.same(agent.sendHeartbeatEveryMS, 3 * 60 * 1000);
-
-  clock.uninstall();
-});
-
-t.test("the config API throws an error", async () => {
-  const clock = FakeTimers.install();
-
-  const logger = new LoggerForTesting();
-  const api = new ReportingAPIForTesting({
-    success: true,
-    heartbeatIntervalInMS: 10 * 60 * 1000,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    configUpdatedAt: 10,
-  });
-  const token = new Token("123");
-  const configAPI = new ConfigAPIThatThrows();
-  const agent = new Agent(true, logger, api, token, undefined, configAPI);
-  agent.start([]);
-
-  await clock.nextAsync();
-
-  clock.uninstall();
-});
-
-t.test("it checks if config needs to be updated and updates it", async () => {
-  const clock = FakeTimers.install();
-
-  const logger = new LoggerForTesting();
-  const api = new ReportingAPIForTesting({
-    success: true,
-    heartbeatIntervalInMS: 10 * 60 * 1000,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    configUpdatedAt: 1,
-  });
-  const token = new Token("123");
-  const configAPI = new ConfigAPIForTesting(10, {
-    success: true,
-    heartbeatIntervalInMS: 10 * 60 * 1000,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    configUpdatedAt: 10,
-  });
-  const agent = new Agent(true, logger, api, token, undefined, configAPI);
-  agent.start([]);
-
-  await clock.nextAsync();
 
   clock.uninstall();
 });

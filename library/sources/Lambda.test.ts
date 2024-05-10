@@ -196,14 +196,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
 
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(
-    false,
-    logger,
-    testing,
-    new Token("123"),
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
   agent.start([]);
   setInstance(agent);
 
@@ -317,14 +310,7 @@ t.test(
 
     const logger = new LoggerNoop();
     const testing = new ReportingAPIForTesting();
-    const agent = new Agent(
-      false,
-      logger,
-      testing,
-      undefined,
-      "lambda",
-      new ConfigAPIForTesting()
-    );
+    const agent = new Agent(false, logger, testing, undefined, "lambda");
     agent.start([]);
     setInstance(agent);
 
@@ -356,14 +342,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
 
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(
-    false,
-    logger,
-    testing,
-    new Token("token"),
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);
 
@@ -441,14 +420,7 @@ t.test("no cookie header", async () => {
 t.test("it counts attacks", async () => {
   const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(
-    false,
-    logger,
-    testing,
-    new Token("token"),
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);
 

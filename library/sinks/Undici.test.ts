@@ -20,8 +20,7 @@ t.test(
       new LoggerNoop(),
       new ReportingAPIForTesting(),
       new Token("123"),
-      undefined,
-      new ConfigAPIForTesting()
+      undefined
     );
 
     agent.start([new Undici()]);

@@ -27,8 +27,7 @@ t.test("it detects SQL injections", async () => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda",
-    new ConfigAPIForTesting()
+    "lambda"
   );
   agent.start([new Postgres()]);
 

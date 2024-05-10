@@ -24,14 +24,7 @@ const context: Context = {
 function createAgent() {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    new Token("123"),
-    "lambda",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, new Token("123"), "lambda");
 
   return {
     agent,

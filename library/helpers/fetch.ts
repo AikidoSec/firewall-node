@@ -54,13 +54,13 @@ export async function fetch({
   url,
   method,
   headers,
-  body,
+  body = "",
   timeoutInMS,
 }: {
   url: URL;
   method: string;
   headers: Record<string, string>;
-  body: string;
+  body?: string;
   timeoutInMS: number;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();

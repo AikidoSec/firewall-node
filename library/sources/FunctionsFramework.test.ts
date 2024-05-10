@@ -82,8 +82,7 @@ t.test("it counts requests", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    "gcp",
-    new ConfigAPIForTesting()
+    "gcp"
   );
   agent.start([]);
   setInstance(agent);
@@ -104,8 +103,7 @@ t.test("it counts attacks", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    "gcp",
-    new ConfigAPIForTesting()
+    "gcp"
   );
   agent.start([]);
   setInstance(agent);
@@ -126,8 +124,7 @@ t.test("it counts request if error", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    "gcp",
-    new ConfigAPIForTesting()
+    "gcp"
   );
   agent.start([]);
   setInstance(agent);
@@ -144,14 +141,7 @@ t.test("it counts request if error", async (t) => {
 t.test("it flushes stats first invoke", async (t) => {
   const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    api,
-    new Token("123"),
-    "gcp",
-    new ConfigAPIForTesting()
-  );
+  const agent = new Agent(true, logger, api, new Token("123"), "gcp");
   agent.start([]);
   setInstance(agent);
 
@@ -175,8 +165,7 @@ t.test("it hooks into functions framework", async () => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    "gcp",
-    new ConfigAPIForTesting()
+    "gcp"
   );
   agent.start([new FunctionsFramework()]);
   setInstance(agent);
