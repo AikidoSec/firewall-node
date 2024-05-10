@@ -355,6 +355,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   // After 10 minutes, we'll see that the required amount of performance samples has been reached
   // And then send a heartbeat
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -367,6 +368,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // After another 10 minutes, we'll see that we already sent the initial stats
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -379,6 +381,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // Every 30 minutes we'll send a heartbeat
   clock.tick(30 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -454,7 +457,7 @@ t.test("it logs when failed to report event", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Failed to report started event",
+    "Failed to start agent",
     "Heartbeat...",
     "Failed to do heartbeat",
     "Failed to report attack",
@@ -483,7 +486,8 @@ t.test("unable to prevent prototype pollution", async () => {
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
 
-  clock.tick(1000 * 60 * 31);
+  clock.tick(1000 * 60 * 30);
+  await clock.nextAsync();
 
   t.same(api.getEvents().length, 2);
   const [_, heartbeat] = api.getEvents();
@@ -713,6 +717,7 @@ t.test("the config API throws an error", async () => {
   agent.start([]);
 
   clock.tick(1000 * 60);
+  await clock.nextAsync();
 
   clock.uninstall();
 });
@@ -750,6 +755,7 @@ t.test("it checks if config needs to be updated and updates it", async () => {
   agent.start([]);
 
   clock.tick(1000 * 60);
+  await clock.nextAsync();
 
   clock.uninstall();
 });

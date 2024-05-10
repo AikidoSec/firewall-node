@@ -257,9 +257,16 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
-    /* c8 ignore next 3 */
     if (this.serverless) {
-      throw new Error("Heartbeats in serverless mode are not supported");
+      this.logger.log(
+        "Running in serverless environment, not starting heartbeats"
+      );
+      return;
+    }
+
+    if (!this.token) {
+      this.logger.log("No token provided, not starting heartbeats");
+      return;
     }
 
     /* c8 ignore next 3 */
@@ -285,24 +292,15 @@ export class Agent {
   }
 
   private startPollingForConfigChanges() {
-    /* c8 ignore next 5 */
-    if (this.serverless) {
-      throw new Error(
-        "Polling for config changes in serverless mode is not supported"
-      );
-    }
-
+    /* c8 ignore next 3 */
     if (this.configChangeChecker) {
-      throw new Error("Polling already started");
-    }
-
-    if (!this.token) {
-      throw new Error("Token is required to poll for config changes");
+      throw new Error("Already initialized!");
     }
 
     this.configChangeChecker = new ConfigChangeChecker(
       this.configAPI,
       this.token,
+      this.serverless,
       this.logger,
       this.serviceConfig.getLastUpdatedAt()
     );
@@ -387,10 +385,8 @@ export class Agent {
     // Then start heartbeats and polling for config changes
     this.onStart()
       .then(() => {
-        if (!this.serverless && this.token) {
-          this.startHeartbeats();
-          this.startPollingForConfigChanges();
-        }
+        this.startHeartbeats();
+        this.startPollingForConfigChanges();
       })
       .catch(() => {
         this.logger.log("Failed to start agent");

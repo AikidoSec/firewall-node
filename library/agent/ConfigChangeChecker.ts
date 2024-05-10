@@ -10,19 +10,20 @@ export class ConfigChangeChecker {
 
   constructor(
     private readonly configAPI: ConfigAPI,
-    private readonly token: Token,
+    private readonly token: Token | undefined,
+    private readonly serverless: string | undefined,
     private readonly logger: Logger,
     private configLastUpdatedAt: number
   ) {}
 
   private async configWasUpdated() {
-    const lastUpdated = await this.configAPI.getLastUpdatedAt(this.token);
+    const lastUpdated = await this.configAPI.getLastUpdatedAt(this.token!);
 
     return lastUpdated > this.configLastUpdatedAt;
   }
 
   private async updateConfig(onConfigUpdate: Callback) {
-    const config = await this.configAPI.getConfig(this.token);
+    const config = await this.configAPI.getConfig(this.token!);
     this.configLastUpdatedAt = config.configUpdatedAt;
     onConfigUpdate(config);
   }
@@ -34,6 +35,22 @@ export class ConfigChangeChecker {
   }
 
   startPolling(onConfigUpdate: Callback) {
+    if (!this.token) {
+      this.logger.log("No token provided, not polling for config updates");
+      return;
+    }
+
+    if (this.serverless) {
+      this.logger.log(
+        "Running in serverless environment, not polling for config updates"
+      );
+      return;
+    }
+
+    if (this.interval) {
+      throw new Error("Polling already started");
+    }
+
     this.interval = setInterval(() => {
       this.check(onConfigUpdate).catch(() => {
         this.logger.log("Failed to check for config updates");
