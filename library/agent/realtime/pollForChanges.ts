@@ -34,28 +34,30 @@ export function pollForChanges({
     return;
   }
 
+  currentLastUpdatedAt = lastUpdatedAt;
+
   if (interval) {
-    throw new Error("Polling already started");
+    clearInterval(interval);
   }
 
-  currentLastUpdatedAt = lastUpdatedAt;
   interval = setInterval(() => {
     check(token, onConfigUpdate).catch(() => {
       logger.log("Failed to check for config updates");
     });
   }, 60 * 1000);
 
-  interval!.unref();
+  interval.unref();
 }
 
 async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
-  const lastUpdated = await getConfigLastUpdatedAt(token);
+  const configLastUpdatedAt = await getConfigLastUpdatedAt(token);
 
   if (
     typeof currentLastUpdatedAt === "number" &&
-    lastUpdated > currentLastUpdatedAt
+    configLastUpdatedAt > currentLastUpdatedAt
   ) {
     const config = await getConfig(token);
+    currentLastUpdatedAt = config.lastUpdatedAt;
     onConfigUpdate(config);
   }
 }

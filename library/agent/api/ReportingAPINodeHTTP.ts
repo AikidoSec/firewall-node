@@ -33,7 +33,7 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
     let response;
     try {
       response = await fetch({
-        url: this.reportingUrl,
+        url: new URL(`${this.reportingUrl.toString()}api/runtime/events`),
         method: "POST",
         headers: {
           "Content-Type": "application/json",
