@@ -116,6 +116,8 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return client.query("-- This is a comment");

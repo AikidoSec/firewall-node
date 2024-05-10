@@ -2,6 +2,7 @@ import type { HttpFunction } from "@google-cloud/functions-framework";
 import type { Handler } from "aws-lambda";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
+import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
@@ -9,25 +10,25 @@ import { MySQL2 } from "../sinks/MySQL2";
 import { Path } from "../sinks/Path";
 import { Postgres } from "../sinks/Postgres";
 import { Undici } from "../sinks/Undici";
+import { Express } from "../sources/Express";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
-import { Express } from "../sources/Express";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
 import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
-import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
 import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
+import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { Token } from "./api/Token";
+import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
-import { FileSystem } from "../sinks/FileSystem";
 
 function isDebugging() {
   return (
@@ -66,13 +67,10 @@ function serverSideRateLimited(api: ReportingAPI) {
 }
 
 function getAPI(): ReportingAPI {
-  let url = new URL("https://guard.aikido.dev/api/runtime/events");
-  if (process.env.AIKIDO_URL) {
-    url = new URL(process.env.AIKIDO_URL);
-  }
-
   return validatesToken(
-    serverSideRateLimited(clientSideRateLimited(new ReportingAPINodeHTTP(url)))
+    serverSideRateLimited(
+      clientSideRateLimited(new ReportingAPINodeHTTP(getAPIURL()))
+    )
   );
 }
 

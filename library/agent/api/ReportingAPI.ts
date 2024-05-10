@@ -19,6 +19,7 @@ export type ReportingAPIResponse =
       success: true;
       endpoints?: Endpoint[];
       heartbeatIntervalInMS?: number;
+      configUpdatedAt?: number;
     }
   | {
       success: false;

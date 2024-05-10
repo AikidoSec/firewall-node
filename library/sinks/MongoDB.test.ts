@@ -170,6 +170,8 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return collection.find({ title: { $ne: null } }).toArray();

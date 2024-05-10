@@ -19,6 +19,8 @@ t.test("it returns correct path", async () => {
           id: "1' OR 1=1; --",
         },
         source: "express",
+        route: "/",
+        routeParams: {},
       },
     }),
     {

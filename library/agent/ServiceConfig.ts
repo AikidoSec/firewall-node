@@ -6,7 +6,10 @@ export class ServiceConfig {
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
 
-  constructor(endpoints: Endpoint[]) {
+  constructor(
+    endpoints: Endpoint[],
+    private readonly lastUpdatedAt: number
+  ) {
     endpoints.forEach((rule) => {
       this.endpoints.set(this.getKey(rule.method, rule.route), {
         method: rule.method,
@@ -32,5 +35,9 @@ export class ServiceConfig {
     }
 
     return !rule.forceProtectionOff;
+  }
+
+  getLastUpdatedAt() {
+    return this.lastUpdatedAt;
   }
 }

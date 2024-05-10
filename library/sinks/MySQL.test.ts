@@ -142,6 +142,8 @@ t.test("it detects SQL injections", async () => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return connection.query("-- This is a comment");

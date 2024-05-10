@@ -2,16 +2,20 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([]);
+  const config = new ServiceConfig([], 0);
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
+  t.same(config.getLastUpdatedAt(), 0);
 });
 
 t.test("it works", async () => {
-  const config = new ServiceConfig([
-    { method: "GET", route: "/foo", forceProtectionOff: false },
-    { method: "POST", route: "/foo", forceProtectionOff: true },
-    { method: "POST", route: /fly+/.source, forceProtectionOff: true },
-  ]);
+  const config = new ServiceConfig(
+    [
+      { method: "GET", route: "/foo", forceProtectionOff: false },
+      { method: "POST", route: "/foo", forceProtectionOff: true },
+      { method: "POST", route: /fly+/.source, forceProtectionOff: true },
+    ],
+    0
+  );
 
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
   t.same(config.shouldProtectEndpoint("POST", "/foo"), false);

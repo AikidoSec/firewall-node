@@ -289,6 +289,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   // After 10 minutes, we'll see that the required amount of performance samples has been reached
   // And then send a heartbeat
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -301,6 +302,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // After another 10 minutes, we'll see that we already sent the initial stats
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -313,6 +315,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // Every 30 minutes we'll send a heartbeat
   clock.tick(30 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -381,7 +384,7 @@ t.test("it logs when failed to report event", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Failed to report started event",
+    "Failed to start agent",
     "Heartbeat...",
     "Failed to do heartbeat",
     "Failed to report attack",
@@ -404,7 +407,7 @@ t.test("unable to prevent prototype pollution", async () => {
   ]);
 
   clock.tick(1000 * 60 * 30);
-  clock.next();
+  await clock.nextAsync();
 
   t.same(api.getEvents().length, 2);
   const [_, heartbeat] = api.getEvents();
@@ -469,6 +472,7 @@ t.test("when payload is object", async () => {
       remoteAddress: "::1",
       source: "express",
       route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: "a".repeat(20000),
@@ -545,53 +549,6 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
       ],
     },
   ]);
-
-  clock.uninstall();
-});
-
-t.test("it updates configuration", async () => {
-  const clock = FakeTimers.install();
-
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting({
-    success: true,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    heartbeatIntervalInMS: 1000, // Too low
-  });
-
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
-
-  // @ts-expect-error Private property
-  const original = agent.sendHeartbeatEveryMS;
-
-  agent.start([]);
-
-  // @ts-expect-error Private method
-  t.same(agent.sendHeartbeatEveryMS, original);
-
-  api.setResult({
-    success: true,
-    endpoints: [
-      {
-        method: "POST",
-        route: "/events",
-        forceProtectionOff: false,
-      },
-    ],
-    heartbeatIntervalInMS: 3 * 60 * 1000,
-  });
-
-  await agent.flushStats(1000);
-
-  // @ts-expect-error Private method
-  t.same(agent.sendHeartbeatEveryMS, 3 * 60 * 1000);
 
   clock.uninstall();
 });

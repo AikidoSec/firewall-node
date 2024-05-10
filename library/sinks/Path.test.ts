@@ -19,6 +19,7 @@ const unsafeContext: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it works", async (t) => {

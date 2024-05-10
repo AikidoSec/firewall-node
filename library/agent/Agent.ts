@@ -9,6 +9,7 @@ import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -33,7 +34,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
-  private serviceConfig = new ServiceConfig([]);
+  private serviceConfig = new ServiceConfig([], Date.now());
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -90,22 +91,19 @@ export class Agent {
   /**
    * Reports to the API that this agent has started
    */
-  onStart() {
+  async onStart() {
     if (this.token) {
-      this.api
-        .report(
-          this.token,
-          {
-            type: "started",
-            time: Date.now(),
-            agent: this.getAgentInfo(),
-          },
-          this.timeoutInMS
-        )
-        .then((result) => this.updateServiceConfig(result))
-        .catch((error) => {
-          this.logger.log("Failed to report started event");
-        });
+      const result = await this.api.report(
+        this.token,
+        {
+          type: "started",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+        },
+        this.timeoutInMS
+      );
+
+      this.updateServiceConfig(result);
     }
   }
 
@@ -206,7 +204,12 @@ export class Agent {
   private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success) {
       if (response.endpoints) {
-        this.serviceConfig = new ServiceConfig(response.endpoints);
+        this.serviceConfig = new ServiceConfig(
+          response.endpoints,
+          typeof response.configUpdatedAt === "number"
+            ? response.configUpdatedAt
+            : Date.now()
+        );
       }
 
       const minimumHeartbeatIntervalMS = 2 * 60 * 1000;
@@ -251,9 +254,16 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
-    /* c8 ignore next 3 */
     if (this.serverless) {
-      throw new Error("Heartbeats in serverless mode are not supported");
+      this.logger.log(
+        "Running in serverless environment, not starting heartbeats"
+      );
+      return;
+    }
+
+    if (!this.token) {
+      this.logger.log("No token provided, not starting heartbeats");
+      return;
     }
 
     /* c8 ignore next 3 */
@@ -276,6 +286,18 @@ export class Agent {
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
     this.interval.unref();
+  }
+
+  private startPollingForConfigChanges() {
+    pollForChanges({
+      token: this.token,
+      serverless: this.serverless,
+      logger: this.logger,
+      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
+      onConfigUpdate: (config) => {
+        this.updateServiceConfig({ success: true, ...config });
+      },
+    });
   }
 
   private getAgentInfo(): AgentInfo {
@@ -349,11 +371,16 @@ export class Agent {
       }
     }
 
-    this.onStart();
-
-    if (!this.serverless) {
-      this.startHeartbeats();
-    }
+    // Send startup event and wait for config
+    // Then start heartbeats and polling for config changes
+    this.onStart()
+      .then(() => {
+        this.startHeartbeats();
+        this.startPollingForConfigChanges();
+      })
+      .catch(() => {
+        this.logger.log("Failed to start agent");
+      });
   }
 
   onFailedToWrapMethod(module: string, name: string) {
