@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Path } from "./Path";
@@ -20,6 +19,7 @@ const unsafeContext: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it works", async (t) => {

@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
@@ -117,6 +116,8 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return client.query("-- This is a comment");

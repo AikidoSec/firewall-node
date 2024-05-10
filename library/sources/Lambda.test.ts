@@ -4,7 +4,6 @@ import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";

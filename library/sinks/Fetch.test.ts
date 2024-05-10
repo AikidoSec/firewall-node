@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Fetch } from "./Fetch";

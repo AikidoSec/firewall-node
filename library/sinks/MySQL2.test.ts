@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { ConfigAPIForTesting } from "../agent/config-api/ConfigAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL2 } from "./MySQL2";
