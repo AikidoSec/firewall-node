@@ -716,7 +716,6 @@ t.test("the config API throws an error", async () => {
   const agent = new Agent(true, logger, api, token, undefined, configAPI);
   agent.start([]);
 
-  clock.tick(1000 * 60);
   await clock.nextAsync();
 
   clock.uninstall();
@@ -754,7 +753,6 @@ t.test("it checks if config needs to be updated and updates it", async () => {
   const agent = new Agent(true, logger, api, token, undefined, configAPI);
   agent.start([]);
 
-  clock.tick(1000 * 60);
   await clock.nextAsync();
 
   clock.uninstall();

@@ -2,6 +2,7 @@ import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
 import { Token } from "./api/Token";
 import { ConfigAPIForTesting } from "./config-api/ConfigAPIForTesting";
+import { ConfigAPIThatThrows } from "./config-api/ConfigAPIThatThrows";
 import { ConfigChangeChecker } from "./ConfigChangeChecker";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
@@ -101,6 +102,28 @@ t.test("it polls for config updates", async () => {
       time: 2 * 60 * 1000,
     },
   ]);
+
+  clock.uninstall();
+});
+
+t.test("api throws error", async () => {
+  const clock = FakeTimers.install();
+
+  const api = new ConfigAPIThatThrows();
+  const logger = new LoggerForTesting();
+  const checker = new ConfigChangeChecker(
+    api,
+    new Token("token"),
+    undefined,
+    logger,
+    0
+  );
+
+  checker.startPolling((config) => {
+    t.fail();
+  });
+
+  await clock.nextAsync();
 
   clock.uninstall();
 });
