@@ -1,10 +1,10 @@
 import { fetch } from "../../helpers/fetch";
 import { Token } from "../api/Token";
-import { getRealtimeURL } from "./getRealtimeURL";
+import { getAPIURL } from "../getAPIURL";
 
 export async function getConfig(token: Token) {
   const { body, statusCode } = await fetch({
-    url: new URL(`${getRealtimeURL().toString()}api/runtime/config`),
+    url: new URL(`${getAPIURL().toString()}api/runtime/config`),
     method: "GET",
     headers: {
       Authorization: token.asString(),

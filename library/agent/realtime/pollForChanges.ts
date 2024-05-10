@@ -6,9 +6,6 @@ import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 
 type OnConfigUpdate = (config: Config) => void;
 
-let interval: NodeJS.Timeout | null = null;
-let currentLastUpdatedAt: number | null = null;
-
 export function pollForChanges({
   onConfigUpdate,
   serverless,
@@ -34,28 +31,21 @@ export function pollForChanges({
     return;
   }
 
-  if (interval) {
-    throw new Error("Polling already started");
+  async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
+    const configLastUpdatedAt = await getConfigLastUpdatedAt(token);
+
+    if (configLastUpdatedAt > lastUpdatedAt) {
+      const config = await getConfig(token);
+      lastUpdatedAt = config.lastUpdatedAt;
+      onConfigUpdate(config);
+    }
   }
 
-  currentLastUpdatedAt = lastUpdatedAt;
-  interval = setInterval(() => {
+  const interval = setInterval(() => {
     check(token, onConfigUpdate).catch(() => {
       logger.log("Failed to check for config updates");
     });
   }, 60 * 1000);
 
-  interval!.unref();
-}
-
-async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
-  const lastUpdated = await getConfigLastUpdatedAt(token);
-
-  if (
-    typeof currentLastUpdatedAt === "number" &&
-    lastUpdated > currentLastUpdatedAt
-  ) {
-    const config = await getConfig(token);
-    onConfigUpdate(config);
-  }
+  interval.unref();
 }
