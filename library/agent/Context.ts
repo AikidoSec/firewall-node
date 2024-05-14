@@ -56,9 +56,5 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   }
 
   // If there's no stack yet, we create a new stack and run the function with it
-  stack = new ContextStack([]);
-  stack.push(context);
-
-  // No need to pop the context here, because the stack is going to be destroyed after the function is executed
-  return requestContext.run(stack, fn);
+  return requestContext.run(new ContextStack(context), fn);
 }

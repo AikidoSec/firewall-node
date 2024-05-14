@@ -1,15 +1,19 @@
 import type { Context } from "../Context";
 
 export class ContextStack {
-  constructor(private readonly stack: Context[]) {}
+  private readonly stack: Context[];
+
+  constructor(readonly parent: Context) {
+    this.stack = [parent];
+  }
 
   push(context: Context) {
     this.stack.push(context);
   }
 
   pop() {
-    if (this.stack.length === 0) {
-      throw new Error("No context to pop");
+    if (this.stack.length === 1) {
+      throw new Error("Cannot pop the last context in the stack");
     }
 
     this.stack.pop();
