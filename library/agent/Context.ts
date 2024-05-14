@@ -39,7 +39,7 @@ export function getContext() {
  * This is needed because Node.js is single-threaded, so we can't use a global variable to store the context.
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
-  let stack = requestContext.getStore();
+  const stack = requestContext.getStore();
 
   // If there is already a stack, we just push the context to it
   // Contexts can be nested, so we need to keep track of them
