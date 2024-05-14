@@ -261,6 +261,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       agent: agent.getAgentInfo(),
       hostnames: [],
       routes: [],
+      users: [],
       stats: {
         sinks: {
           mongodb: {
