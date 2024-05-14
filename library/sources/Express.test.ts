@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { getUser, setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
@@ -29,6 +30,14 @@ function getApp() {
 
   app.use("/*", (req, res, next) => {
     res.setHeader("X-Powered-By", "Aikido");
+    next();
+  });
+
+  app.use((req, res, next) => {
+    setUser({
+      id: "123",
+      name: "John Doe",
+    });
     next();
   });
 
@@ -83,6 +92,10 @@ function getApp() {
     const context = getContext();
 
     res.send(context);
+  });
+
+  app.get("/user", (req, res) => {
+    res.send(getUser());
   });
 
   return app;
@@ -215,4 +228,10 @@ t.test("it takes the path from the arguments for middleware", async () => {
   const response = await request(getApp()).get("/api/foo");
 
   t.match(response.body, { route: "/api/*" });
+});
+
+t.test("it adds user to context", async () => {
+  const response = await request(getApp()).get("/user");
+
+  t.match(response.body, { id: "123", name: "John Doe" });
 });

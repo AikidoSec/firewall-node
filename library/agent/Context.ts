@@ -1,6 +1,6 @@
-import { AsyncLocalStorage } from "async_hooks";
 import type { ParsedQs } from "qs";
 import { ContextStack } from "./context/ContextStack";
+import { ContextStackStorage } from "./context/ContextStackStorage";
 
 export type Context = {
   url: string | undefined;
@@ -16,13 +16,11 @@ export type Context = {
   route: string | undefined;
 };
 
-const requestContext = new AsyncLocalStorage<ContextStack>();
-
 /**
  * Get the current request context that is being handled
  */
 export function getContext() {
-  const stack = requestContext.getStore();
+  const stack = ContextStackStorage.getStore();
 
   if (!stack) {
     return undefined;
@@ -39,7 +37,7 @@ export function getContext() {
  * This is needed because Node.js is single-threaded, so we can't use a global variable to store the context.
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
-  const stack = requestContext.getStore();
+  const stack = ContextStackStorage.getStore();
 
   // If there is already a stack, we just push the context to it
   // Contexts can be nested, so we need to keep track of them
@@ -56,5 +54,5 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   }
 
   // If there's no stack yet, we create a new stack and run the function with it
-  return requestContext.run(new ContextStack(context), fn);
+  return ContextStackStorage.run(new ContextStack(context), fn);
 }

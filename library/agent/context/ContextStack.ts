@@ -1,7 +1,10 @@
 import type { Context } from "../Context";
 
+export type User = { id: string; name?: string };
+
 export class ContextStack {
   private readonly stack: Context[];
+  private user: User | undefined = undefined;
 
   constructor(readonly parent: Context) {
     this.stack = [parent];
@@ -21,5 +24,13 @@ export class ContextStack {
 
   getCurrent() {
     return this.stack[this.stack.length - 1];
+  }
+
+  getUser() {
+    return this.user;
+  }
+
+  setUser(user: User) {
+    this.user = user;
   }
 }
