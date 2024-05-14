@@ -1,4 +1,4 @@
-# Setting current user
+# Setting the current user
 
 To set the current user, you can use the `setUser` function. Here's an example for express:
 
@@ -7,13 +7,12 @@ require('@aikidosec/runtime');
 
 // ...
 
-const { setUser } = require('@aikidosec/runtime/user');
+const Aikido = require('@aikidosec/runtime/context');
 
 app.use((req, res, next) => {
   // Get the user from your authentication middleware
   // or wherever you store the user
-  const user = req.user;
-  setUser(user);
+  Aikido.setUser(req.user);
   next();
 });
 ```
