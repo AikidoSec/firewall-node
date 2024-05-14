@@ -18,6 +18,7 @@ import { Logger } from "./logger/Logger";
 import { Routes } from "./Routes";
 import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
+import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 
@@ -35,6 +36,7 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
+  private users = new Users(1000);
   private serviceConfig = new ServiceConfig([], Date.now());
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
@@ -199,6 +201,10 @@ export class Agent {
     });
   }
 
+  getUsers() {
+    return this.users;
+  }
+
   getConfig() {
     return this.serviceConfig;
   }
@@ -245,6 +251,7 @@ export class Agent {
           },
           hostnames: this.hostnames.asArray(),
           routes: this.routes.asArray(),
+          users: this.users.asArray(),
         },
         timeoutInMS
       );
