@@ -12,7 +12,7 @@ const { exec } = require("child_process");
 
 require("@aikidosec/runtime/nopp");
 
-const { setUser } = require("@aikidosec/runtime/user");
+const Aikido = require("@aikidosec/runtime/context");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -36,7 +36,7 @@ async function main(port) {
   });
 
   app.use((req, res, next) => {
-    setUser({ id: "123", name: "John Doe" });
+    Aikido.setUser({ id: "123", name: "John Doe" });
     next();
   });
 
