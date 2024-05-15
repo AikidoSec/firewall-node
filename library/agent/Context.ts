@@ -1,6 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
 import type { ParsedQs } from "qs";
-import { ContextStack } from "./context/ContextStack";
 
 export type Context = {
   url: string | undefined;
@@ -16,19 +15,13 @@ export type Context = {
   route: string | undefined;
 };
 
-const requestContext = new AsyncLocalStorage<ContextStack>();
+const ContextStorage = new AsyncLocalStorage<Context>();
 
 /**
  * Get the current request context that is being handled
  */
 export function getContext() {
-  const stack = requestContext.getStore();
-
-  if (!stack) {
-    return undefined;
-  }
-
-  return stack.getCurrent();
+  return ContextStorage.getStore();
 }
 
 /**
@@ -39,22 +32,25 @@ export function getContext() {
  * This is needed because Node.js is single-threaded, so we can't use a global variable to store the context.
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
-  const stack = requestContext.getStore();
+  const current = ContextStorage.getStore();
 
-  // If there is already a stack, we just push the context to it
-  // Contexts can be nested, so we need to keep track of them
-  // e.g. GET /posts/:id
-  // app.use("/posts/:postId", (req, res, next) => ...)
-  // ^ the code that runs in the middleware will have different route params than the code that runs here:
-  // app.get("/posts/:id", (req, res) => ...)
-  if (stack) {
-    stack.push(context);
-    const result = fn();
-    stack.pop();
+  // If there is already a context, we just update it
+  // In this way we don't lose the `attackDetected` flag
+  if (current) {
+    current.url = context.url;
+    current.method = context.method;
+    current.query = context.query;
+    current.headers = context.headers;
+    current.routeParams = context.routeParams;
+    current.remoteAddress = context.remoteAddress;
+    current.body = context.body;
+    current.cookies = context.cookies;
+    current.source = context.source;
+    current.route = context.route;
 
-    return result;
+    return fn();
   }
 
-  // If there's no stack yet, we create a new stack and run the function with it
-  return requestContext.run(new ContextStack(context), fn);
+  // If there's no context yet, we create a new context and run the function with it
+  return ContextStorage.run(context, fn);
 }
