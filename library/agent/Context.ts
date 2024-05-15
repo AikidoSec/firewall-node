@@ -15,13 +15,13 @@ export type Context = {
   route: string | undefined;
 };
 
-const requestContext = new AsyncLocalStorage<Context>();
+const ContextStorage = new AsyncLocalStorage<Context>();
 
 /**
  * Get the current request context that is being handled
  */
 export function getContext() {
-  return requestContext.getStore();
+  return ContextStorage.getStore();
 }
 
 /**
@@ -32,5 +32,25 @@ export function getContext() {
  * This is needed because Node.js is single-threaded, so we can't use a global variable to store the context.
  */
 export function runWithContext<T>(context: Context, fn: () => T) {
-  return requestContext.run(context, fn);
+  const current = ContextStorage.getStore();
+
+  // If there is already a context, we just update it
+  // In this way we don't lose the `attackDetected` flag
+  if (current) {
+    current.url = context.url;
+    current.method = context.method;
+    current.query = context.query;
+    current.headers = context.headers;
+    current.routeParams = context.routeParams;
+    current.remoteAddress = context.remoteAddress;
+    current.body = context.body;
+    current.cookies = context.cookies;
+    current.source = context.source;
+    current.route = context.route;
+
+    return fn();
+  }
+
+  // If there's no context yet, we create a new context and run the function with it
+  return ContextStorage.run(context, fn);
 }
