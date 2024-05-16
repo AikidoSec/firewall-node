@@ -1,24 +1,23 @@
 import { getInstance } from "../AgentSingleton";
-import { User } from "./ContextStack";
-import { ContextStackStorage } from "./ContextStackStorage";
+import type { User } from "../Context";
+import { ContextStorage } from "./ContextStorage";
 
 export function setUser(user: User) {
   if (!user.id) {
     return;
   }
 
-  const stack = ContextStackStorage.getStore();
+  const context = ContextStorage.getStore();
 
-  if (!stack) {
+  if (!context) {
     return;
   }
 
-  stack.setUser(user);
-
+  context.user = user;
   const agent = getInstance();
 
   if (agent) {
-    const ipAddress = stack.getCurrent().remoteAddress;
+    const ipAddress = context.remoteAddress;
 
     agent.getUsers().addUser({
       id: user.id,
@@ -26,14 +25,4 @@ export function setUser(user: User) {
       lastIpAddress: ipAddress,
     });
   }
-}
-
-export function getUser() {
-  const stack = ContextStackStorage.getStore();
-
-  if (!stack) {
-    return undefined;
-  }
-
-  return stack.getUser();
 }
