@@ -90,6 +90,13 @@ type Heartbeat = {
   };
   hostnames: { hostname: string; port: number | undefined }[];
   routes: { path: string; method: string }[];
+  users: {
+    id: string;
+    name: string | undefined;
+    lastIpAddress: string | undefined;
+    firstSeenAt: number;
+    lastSeenAt: number;
+  }[];
   agent: AgentInfo;
   time: number;
 };
