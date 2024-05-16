@@ -40,7 +40,7 @@ t.test("it does not start interval if serverless", async (t) => {
 t.test("it checks for config updates", async () => {
   const clock = FakeTimers.install();
 
-  let calls: { url: string; method: string }[] = [];
+  const calls: { url: string; method: string }[] = [];
   let configUpdatedAt = 0;
 
   wrap(fetch, "fetch", function fetch() {
