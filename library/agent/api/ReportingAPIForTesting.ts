@@ -10,7 +10,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
       success: true,
       endpoints: [],
       configUpdatedAt: 0,
-      heartbeatIntervalInMS: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
     }
   ) {}
 

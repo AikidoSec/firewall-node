@@ -35,10 +35,20 @@ t.test("it ignores valid tokens", async () => {
   const token = new Token("123");
 
   const event = generateStartedEvent();
-  t.same(await validatesToken.report(token, event, 5000), { success: true });
+  t.same(await validatesToken.report(token, event, 5000), {
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+  });
   t.same(api.getEvents(), [event]);
 
-  t.same(await validatesToken.report(token, event, 5000), { success: true });
+  t.same(await validatesToken.report(token, event, 5000), {
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+  });
   t.same(api.getEvents(), [event, event]);
 });
 
