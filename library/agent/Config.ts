@@ -1,4 +1,4 @@
-type Endpoint = {
+export type Endpoint = {
   method: string;
   route: string;
   forceProtectionOff: boolean;

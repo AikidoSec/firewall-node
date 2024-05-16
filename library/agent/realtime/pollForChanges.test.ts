@@ -40,12 +40,20 @@ t.test("it does not start interval if serverless", async (t) => {
 t.test("it checks for config updates", async () => {
   const clock = FakeTimers.install();
 
+  const calls: { url: string; method: string }[] = [];
+  let configUpdatedAt = 0;
+
   wrap(fetch, "fetch", function fetch() {
     return async function fetch(params) {
+      calls.push({
+        url: params.url.toString(),
+        method: params.method,
+      });
+
       if (params.url.hostname.startsWith("runtime")) {
         return {
           body: JSON.stringify({
-            configUpdatedAt: 1,
+            configUpdatedAt: configUpdatedAt,
           }),
           statusCode: 200,
         };
@@ -56,7 +64,7 @@ t.test("it checks for config updates", async () => {
           body: JSON.stringify({
             endpoints: [],
             heartbeatIntervalInMS: 10 * 60 * 1000,
-            configUpdatedAt: 1,
+            configUpdatedAt: configUpdatedAt,
           }),
           statusCode: 200,
         };
@@ -79,6 +87,42 @@ t.test("it checks for config updates", async () => {
   });
 
   t.same(configUpdates, []);
+  t.same(calls, []);
+
+  await clock.nextAsync();
+
+  t.same(configUpdates, []);
+  t.same(calls, [
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+  ]);
+
+  configUpdatedAt = 1;
+  await clock.nextAsync();
+
+  t.same(configUpdates, [
+    {
+      endpoints: [],
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      configUpdatedAt: 1,
+    },
+  ]);
+  t.same(calls, [
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://guard.aikido.dev/api/runtime/config",
+      method: "GET",
+    },
+  ]);
 
   await clock.nextAsync();
 
@@ -89,10 +133,66 @@ t.test("it checks for config updates", async () => {
       configUpdatedAt: 1,
     },
   ]);
+  t.same(calls, [
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://guard.aikido.dev/api/runtime/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+  ]);
 
+  configUpdatedAt = 2;
   await clock.nextAsync();
 
-  t.same(configUpdates.length, 1);
+  t.same(configUpdates, [
+    {
+      endpoints: [],
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      configUpdatedAt: 1,
+    },
+    {
+      endpoints: [],
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      configUpdatedAt: 2,
+    },
+  ]);
+  t.same(calls, [
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://guard.aikido.dev/api/runtime/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://runtime.aikido.dev/config",
+      method: "GET",
+    },
+    {
+      url: "https://guard.aikido.dev/api/runtime/config",
+      method: "GET",
+    },
+  ]);
 
   clock.uninstall();
 });
