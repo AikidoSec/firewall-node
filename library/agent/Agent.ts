@@ -9,7 +9,6 @@ import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { getUser } from "./context/user";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -165,7 +164,7 @@ export class Agent {
               metadata: limitLengthMetadata(metadata, 4096),
               kind: kind,
               payload: JSON.stringify(payload).substring(0, 4096),
-              user: getUser(),
+              user: request.user,
             },
             request: {
               method: request.method,

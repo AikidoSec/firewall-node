@@ -1,26 +1,16 @@
-import { User } from "./ContextStack";
-import { ContextStackStorage } from "./ContextStackStorage";
+import type { User } from "../Context";
+import { ContextStorage } from "./ContextStorage";
 
 export function setUser(user: User) {
   if (!user.id) {
     return;
   }
 
-  const stack = ContextStackStorage.getStore();
+  const context = ContextStorage.getStore();
 
-  if (!stack) {
+  if (!context) {
     return;
   }
 
-  stack.setUser(user);
-}
-
-export function getUser() {
-  const stack = ContextStackStorage.getStore();
-
-  if (!stack) {
-    return undefined;
-  }
-
-  return stack.getUser();
+  context.user = user;
 }

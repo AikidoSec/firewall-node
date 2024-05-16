@@ -15,6 +15,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
@@ -115,6 +116,7 @@ function getWrappers() {
     new Fetch(),
     new Undici(),
     new Path(),
+    new HTTPServer(),
   ];
 }
 
