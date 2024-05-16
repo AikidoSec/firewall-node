@@ -12,6 +12,8 @@ const { exec } = require("child_process");
 
 require("@aikidosec/runtime/nopp");
 
+const Aikido = require("@aikidosec/runtime/context");
+
 async function getPosts() {
   // Normally you'd use environment variables for this
   const url = "mongodb://root:password@127.0.0.1:27017";
@@ -30,6 +32,11 @@ async function main(port) {
 
   app.use("*", (req, res, next) => {
     res.setHeader("X-Frame-Options", "DENY");
+    next();
+  });
+
+  app.use((req, res, next) => {
+    Aikido.setUser({ id: "123", name: "John Doe" });
     next();
   });
 

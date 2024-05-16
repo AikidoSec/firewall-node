@@ -26,6 +26,11 @@ type Started = {
   time: number;
 };
 
+export type User = {
+  id: string;
+  name?: string;
+};
+
 export type DetectedAttack = {
   type: "detected_attack";
   request: {
@@ -48,6 +53,7 @@ export type DetectedAttack = {
     stack: string;
     payload: string;
     metadata: Record<string, string>;
+    user: User | undefined;
   };
   agent: AgentInfo;
   time: number;

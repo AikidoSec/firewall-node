@@ -164,6 +164,7 @@ export class Agent {
               metadata: limitLengthMetadata(metadata, 4096),
               kind: kind,
               payload: JSON.stringify(payload).substring(0, 4096),
+              user: request.user,
             },
             request: {
               method: request.method,

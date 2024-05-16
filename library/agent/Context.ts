@@ -1,5 +1,7 @@
-import { AsyncLocalStorage } from "async_hooks";
 import type { ParsedQs } from "qs";
+import { ContextStorage } from "./context/ContextStorage";
+
+export type User = { id: string; name?: string };
 
 export type Context = {
   url: string | undefined;
@@ -11,11 +13,10 @@ export type Context = {
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
   attackDetected?: boolean;
+  user?: { id: string; name?: string };
   source: string;
   route: string | undefined;
 };
-
-const ContextStorage = new AsyncLocalStorage<Context>();
 
 /**
  * Get the current request context that is being handled

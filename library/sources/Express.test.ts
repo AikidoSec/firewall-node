@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
@@ -40,6 +41,14 @@ function getApp() {
 
   app.use("/attack-in-middleware", (req, res, next) => {
     require("fs").readdir(req.query.directory).unref();
+    next();
+  });
+
+  app.use((req, res, next) => {
+    setUser({
+      id: "123",
+      name: "John Doe",
+    });
     next();
   });
 
@@ -109,6 +118,10 @@ function getApp() {
     const context = getContext();
 
     res.send(context);
+  });
+
+  app.get("/user", (req, res) => {
+    res.send(getContext());
   });
 
   return app;
@@ -272,4 +285,12 @@ t.test("detect attack in middleware", async () => {
     response.text,
     /Aikido runtime has blocked a Path traversal: fs.readdir(...)/
   );
+});
+
+t.test("it adds user to context", async () => {
+  const response = await request(getApp()).get("/user");
+
+  t.match(response.body, {
+    user: { id: "123", name: "John Doe" },
+  });
 });
