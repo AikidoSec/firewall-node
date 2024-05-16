@@ -23,6 +23,8 @@ t.test("it wraps the createServer function of http module", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
+  server.keepAliveTimeout = 0;
+
   await new Promise<void>((resolve) => {
     server.listen(3314, () => {
       fetch({
@@ -67,6 +69,8 @@ t.test("it wraps the createServer function of https module", async () => {
       res.end(JSON.stringify(getContext()));
     }
   );
+
+  server.keepAliveTimeout = 0;
 
   await new Promise<void>((resolve) => {
     server.listen(3315, () => {
