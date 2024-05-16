@@ -23,7 +23,7 @@ t.test("it wraps the createServer function of http module", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  server.keepAliveTimeout = 0;
+  http.globalAgent = new http.Agent({ keepAlive: false });
 
   await new Promise<void>((resolve) => {
     server.listen(3314, () => {
@@ -70,7 +70,7 @@ t.test("it wraps the createServer function of https module", async () => {
     }
   );
 
-  server.keepAliveTimeout = 0;
+  https.globalAgent = new https.Agent({ keepAlive: false });
 
   await new Promise<void>((resolve) => {
     server.listen(3315, () => {
