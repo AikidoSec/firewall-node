@@ -5,7 +5,14 @@ import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
 export class ReportingAPIForTesting implements ReportingAPI {
   private events: Event[] = [];
 
-  constructor(private result: ReportingAPIResponse = { success: true }) {}
+  constructor(
+    private result: ReportingAPIResponse = {
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 0,
+    }
+  ) {}
 
   setResult(result: ReportingAPIResponse) {
     this.result = result;
