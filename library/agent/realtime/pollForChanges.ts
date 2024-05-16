@@ -57,7 +57,7 @@ async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
     configLastUpdatedAt > currentLastUpdatedAt
   ) {
     const config = await getConfig(token);
-    currentLastUpdatedAt = config.lastUpdatedAt;
+    currentLastUpdatedAt = config.configUpdatedAt;
     onConfigUpdate(config);
   }
 }
