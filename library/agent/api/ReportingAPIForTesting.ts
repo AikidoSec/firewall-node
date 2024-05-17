@@ -11,6 +11,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
       endpoints: [],
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
     }
   ) {}
 

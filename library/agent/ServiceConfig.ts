@@ -5,9 +5,11 @@ export class ServiceConfig {
     string,
     { method: string; route: string; forceProtectionOff: boolean }
   > = new Map();
+  private blockedUserIds: Map<string, string> = new Map();
 
   constructor(
     endpoints: Endpoint[],
+    blockedUserIds: string[],
     private readonly lastUpdatedAt: number
   ) {
     endpoints.forEach((rule) => {
@@ -16,6 +18,10 @@ export class ServiceConfig {
         route: rule.route,
         forceProtectionOff: rule.forceProtectionOff,
       });
+    });
+
+    blockedUserIds.forEach((userId) => {
+      this.blockedUserIds.set(userId, userId);
     });
   }
 
@@ -35,6 +41,10 @@ export class ServiceConfig {
     }
 
     return !rule.forceProtectionOff;
+  }
+
+  isUserBlocked(userId: string) {
+    return this.blockedUserIds.has(userId);
   }
 
   getLastUpdatedAt() {

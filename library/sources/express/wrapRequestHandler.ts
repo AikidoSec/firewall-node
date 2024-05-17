@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import { Agent } from "../../agent/Agent";
-import { runWithContext } from "../../agent/Context";
+import { getContext, runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapRequestHandler(
@@ -16,6 +16,16 @@ export function wrapRequestHandler(
     }
 
     return runWithContext(context, () => {
+      const context = getContext();
+
+      if (
+        context &&
+        context.user &&
+        agent.getConfig().isUserBlocked(context.user.id)
+      ) {
+        return res.sendStatus(403);
+      }
+
       return handler(req, res, next);
     });
   };
