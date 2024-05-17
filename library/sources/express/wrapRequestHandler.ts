@@ -26,7 +26,9 @@ export function wrapRequestHandler(
         context.user &&
         agent.getConfig().isUserBlocked(context.user.id)
       ) {
-        return res.sendStatus(403);
+        return res
+          .status(403)
+          .send("You are blocked by Aikido runtime protection.");
       }
 
       return handler(req, res, next);
