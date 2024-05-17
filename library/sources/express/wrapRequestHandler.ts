@@ -16,6 +16,9 @@ export function wrapRequestHandler(
     }
 
     return runWithContext(context, () => {
+      // Even though we already have the context, we need to get it again
+      // The context from `contextFromRequest` will never return a user
+      // The user will be carried over from the previous context
       const context = getContext();
 
       if (
