@@ -9,8 +9,8 @@ export class ServiceConfig {
 
   constructor(
     endpoints: Endpoint[],
-    blockedUserIds: string[],
-    private readonly lastUpdatedAt: number
+    private readonly lastUpdatedAt: number,
+    blockedUserIds: string[]
   ) {
     endpoints.forEach((rule) => {
       this.endpoints.set(this.getKey(rule.method, rule.route), {

@@ -36,7 +36,7 @@ export class Agent {
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], [], Date.now());
+  private serviceConfig = new ServiceConfig([], Date.now(), []);
   private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
@@ -213,10 +213,10 @@ export class Agent {
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
           response.endpoints,
-          response.blockedUserIds ? response.blockedUserIds : [],
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
-            : Date.now()
+            : Date.now(),
+          response.blockedUserIds ? response.blockedUserIds : []
         );
       }
 

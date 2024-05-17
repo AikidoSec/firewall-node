@@ -2,7 +2,7 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([], [], 0);
+  const config = new ServiceConfig([], 0, []);
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
@@ -15,8 +15,8 @@ t.test("it works", async () => {
       { method: "POST", route: "/foo", forceProtectionOff: true },
       { method: "POST", route: /fly+/.source, forceProtectionOff: true },
     ],
-    ["123"],
-    0
+    0,
+    ["123"]
   );
 
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
