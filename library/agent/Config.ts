@@ -8,4 +8,5 @@ export type Config = {
   endpoints: Endpoint[];
   heartbeatIntervalInMS: number;
   configUpdatedAt: number;
+  blockedUserIds: string[];
 };

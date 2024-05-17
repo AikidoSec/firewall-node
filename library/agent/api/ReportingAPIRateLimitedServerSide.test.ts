@@ -42,6 +42,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
     endpoints: [],
     heartbeatIntervalInMS: 10 * 60 * 1000,
     configUpdatedAt: 0,
+    blockedUserIds: [],
   });
   t.match(api.getEvents(), [{ type: "started" }]);
 
@@ -91,12 +92,14 @@ t.test("it stops sending requests if rate limited", async (t) => {
     endpoints: [],
     heartbeatIntervalInMS: 10 * 60 * 1000,
     configUpdatedAt: 0,
+    blockedUserIds: [],
   });
   t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
     endpoints: [],
     heartbeatIntervalInMS: 10 * 60 * 1000,
     configUpdatedAt: 0,
+    blockedUserIds: [],
   });
   t.match(api.getEvents(), [
     { type: "started" },

@@ -40,6 +40,7 @@ t.test("it ignores valid tokens", async () => {
     endpoints: [],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
   });
   t.same(api.getEvents(), [event]);
 
@@ -48,6 +49,7 @@ t.test("it ignores valid tokens", async () => {
     endpoints: [],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
   });
   t.same(api.getEvents(), [event, event]);
 });

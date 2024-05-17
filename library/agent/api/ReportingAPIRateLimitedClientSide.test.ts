@@ -205,6 +205,7 @@ t.test("it does not blow memory", async () => {
       endpoints: [],
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
     });
   }
 

@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import { Agent } from "../../agent/Agent";
-import { runWithContext } from "../../agent/Context";
+import { getContext, runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapRequestHandler(
@@ -16,6 +16,21 @@ export function wrapRequestHandler(
     }
 
     return runWithContext(context, () => {
+      // Even though we already have the context, we need to get it again
+      // The context from `contextFromRequest` will never return a user
+      // The user will be carried over from the previous context
+      const context = getContext();
+
+      if (
+        context &&
+        context.user &&
+        agent.getConfig().isUserBlocked(context.user.id)
+      ) {
+        return res
+          .status(403)
+          .send("You are blocked by Aikido runtime protection.");
+      }
+
       return handler(req, res, next);
     });
   };

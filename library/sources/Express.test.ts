@@ -1,6 +1,8 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
+import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
@@ -11,11 +13,18 @@ import { HTTPServer } from "./HTTPServer";
 const agent = new Agent(
   true,
   new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  undefined,
+  new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    blockedUserIds: ["567"],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+  }),
+  new Token("123"),
   "lambda"
 );
 agent.start([new Express(), new FileSystem(), new HTTPServer()]);
+setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";
@@ -123,6 +132,21 @@ function getApp() {
   app.get("/user", (req, res) => {
     res.send(getContext());
   });
+
+  app.get(
+    "/block-user",
+    (req, res, next) => {
+      setUser({
+        id: "567",
+      });
+      next();
+    },
+    (req, res) => {
+      res.send({
+        willNotBeSent: true,
+      });
+    }
+  );
 
   return app;
 }
@@ -285,6 +309,13 @@ t.test("detect attack in middleware", async () => {
     response.text,
     /Aikido runtime has blocked a Path traversal: fs.readdir(...)/
   );
+});
+
+t.test("it blocks user", async () => {
+  const response = await request(getApp()).get("/block-user");
+
+  t.same(response.statusCode, 403);
+  t.same(response.body, {});
 });
 
 t.test("it adds user to context", async () => {
