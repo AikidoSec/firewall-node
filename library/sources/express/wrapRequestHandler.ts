@@ -31,6 +31,18 @@ export function wrapRequestHandler(
           .send("You are blocked by Aikido runtime protection.");
       }
 
+      if (context && context.route) {
+        const rateLimiting = agent
+          .getConfig()
+          .getRateLimiting(req.method, context.route);
+
+        if (rateLimiting) {
+          return res
+            .status(429)
+            .send("You are being rate limited by Aikido runtime protection.");
+        }
+      }
+
       return handler(req, res, next);
     });
   };
