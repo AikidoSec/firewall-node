@@ -97,42 +97,6 @@ t.test("it wraps the createServer function of https module", async () => {
   });
 });
 
-t.test("it sets body in the context", async () => {
-  const payload = Array.from({ length: 2000 }).map(() => "a");
-  const json = JSON.stringify(payload);
-
-  const http = require("http");
-  const server = http.createServer((req, res) => {
-    t.same(getContext().body, payload);
-
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
-    req.on("end", () => {
-      res.end(body);
-    });
-  });
-
-  await new Promise<void>((resolve) => {
-    server.listen(3316, () => {
-      fetch({
-        url: new URL("http://localhost:3316"),
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: json,
-        timeoutInMS: 500,
-      }).then(({ body }) => {
-        t.equal(body, body);
-        server.close();
-        resolve();
-      });
-    });
-  });
-});
-
 t.test("it parses query parameters", async () => {
   const http = require("http");
   const server = http.createServer((req, res) => {

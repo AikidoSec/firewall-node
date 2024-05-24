@@ -4,7 +4,6 @@ import { parse } from "../../helpers/parseCookies";
 
 export function contextFromRequest(
   req: IncomingMessage,
-  rawBody: string | undefined,
   module: string
 ): Context {
   let parsedURL: URL | undefined = undefined;
@@ -21,15 +20,6 @@ export function contextFromRequest(
     }
   }
 
-  let body: string | undefined = undefined;
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch (e) {
-      // Ignore
-    }
-  }
-
   return {
     url: req.url,
     method: req.method,
@@ -39,7 +29,7 @@ export function contextFromRequest(
     source: `${module}.createServer`,
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
-    body: body,
+    body: undefined,
     remoteAddress: undefined,
   };
 }
