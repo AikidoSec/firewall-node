@@ -15,5 +15,9 @@ export function detectPathTraversal(
     return false;
   }
 
-  return filePath.includes(userInput) && containsUnsafePathParts(filePath);
+  return (
+    filePath.includes(userInput) &&
+    containsUnsafePathParts(filePath) &&
+    containsUnsafePathParts(userInput)
+  );
 }
