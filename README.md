@@ -34,6 +34,7 @@ Aikido Runtime for Node.js 16+ is compatible with:
 ### Web frameworks
 
 * ✅ [`express`](https://www.npmjs.com/package/express) 4.x
+* ✅ [`next`](https://www.npmjs.com/package/next) (in standalone mode)
 
 ### Database drivers
 
@@ -73,6 +74,7 @@ $ yarn add --exact @aikidosec/runtime
 For framework- and provider- specific instructions, check out our docs:
 
 - [Express.js-based apps](docs/express.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)

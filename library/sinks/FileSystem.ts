@@ -78,9 +78,8 @@ export class FileSystem implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const callbackStyle = hooks
-      .addBuiltinModule("fs")
-      .addSubject((exports) => exports);
+    const fs = hooks.addBuiltinModule("fs");
+    const callbackStyle = fs.addSubject((exports) => exports);
 
     functionsWithPath.forEach((name) => {
       callbackStyle.inspect(name, (args) => {
@@ -104,6 +103,17 @@ export class FileSystem implements Wrapper {
           );
         });
       });
+
+    fs.addSubject((exports) => exports.realpath).inspect("native", (args) => {
+      return this.inspectPath(args, "realpath.native", 1);
+    });
+
+    fs.addSubject((exports) => exports.realpathSync).inspect(
+      "native",
+      (args) => {
+        return this.inspectPath(args, "realpathSync.native", 1);
+      }
+    );
 
     const promiseStyle = hooks
       .addBuiltinModule("fs/promises")
