@@ -2,6 +2,7 @@ import type { IncomingMessage } from "http";
 import type { Readable } from "stream";
 import { PassThrough } from "stream";
 
+// Copies all properties from the stream to the base object
 function replaceRequestBody<T extends IncomingMessage>(
   base: T,
   stream: Readable

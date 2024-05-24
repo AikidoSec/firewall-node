@@ -10,18 +10,18 @@ export function createRequestListener(
   agent: Agent
 ): RequestListener {
   return async function requestListener(req, res) {
-    // Get a cloneable body
-    const cloneableBody = getCloneableBody(req);
-
     // Clone the body stream to read the body
-    const clonedStream = cloneableBody.cloneBodyStream();
+    // We need to do this because the original request body can only be read once
+    const { cloneBodyStream, finalize } = getCloneableBody(req);
+    const clonedStream = cloneBodyStream();
+
     let body = "";
     for await (const chunk of clonedStream) {
       body += chunk.toString();
     }
 
-    // Finalize to ensure the original request can still be read
-    await cloneableBody.finalize();
+    // Finalize to ensure the rest of the code can read the body
+    await finalize();
 
     callListenerWithContext(listener, req, res, module, agent, body);
   };
