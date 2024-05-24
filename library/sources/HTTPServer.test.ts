@@ -42,7 +42,9 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
-          remoteAddress: "::1",
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
         });
         server.close();
         resolve();
@@ -90,7 +92,9 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
-          remoteAddress: "::1",
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
         });
         server.close();
         resolve();
