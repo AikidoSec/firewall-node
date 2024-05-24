@@ -54,7 +54,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(pathTraversal.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a Path traversal/);
+      t.match(stderr, /Aikido runtime has blocked a path traversal attack/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -105,7 +105,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(pathTraversal.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a Path traversal/);
+      t.notMatch(stderr, /Aikido runtime has blocked a path traversal attack/);
     })
     .catch((error) => {
       t.fail(error.message);
