@@ -42,6 +42,7 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          remoteAddress: "::1",
         });
         server.close();
         resolve();
@@ -89,6 +90,7 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
+          remoteAddress: "::1",
         });
         server.close();
         resolve();
@@ -140,6 +142,86 @@ t.test("it parses cookies", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.cookies, { foo: "bar", baz: "qux" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it parses x-forwarded-for header with proxy", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3316, () => {
+      fetch({
+        url: new URL("http://localhost:3316"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for":
+            "203.0.113.195,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
+        },
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.remoteAddress, "203.0.113.195");
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it uses x-forwarded-for header", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3316, () => {
+      fetch({
+        url: new URL("http://localhost:3316"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "203.0.113.195",
+        },
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.remoteAddress, "203.0.113.195");
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it sets body in context", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3319, () => {
+      fetch({
+        url: new URL("http://localhost:3319"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ foo: "bar" }),
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, { foo: "bar" });
         server.close();
         resolve();
       });
