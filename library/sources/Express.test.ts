@@ -227,7 +227,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Aikido runtime has blocked a Path traversal: fs.readdir(...)/
+    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -307,7 +307,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido runtime has blocked a Path traversal: fs.readdir(...)/
+    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 

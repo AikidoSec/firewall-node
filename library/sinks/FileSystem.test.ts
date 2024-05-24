@@ -87,7 +87,7 @@ t.test("it works", async (t) => {
           { encoding: "utf-8" },
           (err) => {}
         ),
-      "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
+      "Aikido runtime has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
     );
 
     throws(
@@ -97,7 +97,7 @@ t.test("it works", async (t) => {
           "some other file content to test with",
           { encoding: "utf-8" }
         ),
-      "Aikido runtime has blocked a Path traversal: fs.writeFileSync(...) originating from body.file.matches"
+      "Aikido runtime has blocked a path traversal attack: fs.writeFileSync(...) originating from body.file.matches"
     );
 
     const error = await t.rejects(() =>
@@ -111,18 +111,18 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.match(
         error.message,
-        "Aikido runtime has blocked a Path traversal: fs.writeFile(...) originating from body.file.matches"
+        "Aikido runtime has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
     }
 
     throws(
       () => rename("../../test.txt", "./test2.txt", (err) => {}),
-      "Aikido runtime has blocked a Path traversal: fs.rename(...) originating from body.file.matches"
+      "Aikido runtime has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () => rename("./test.txt", "../../test.txt", (err) => {}),
-      "Aikido runtime has blocked a Path traversal: fs.rename(...) originating from body.file.matches"
+      "Aikido runtime has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
 });
