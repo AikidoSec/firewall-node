@@ -1,19 +1,12 @@
-const MAX_BODY_SIZE_IN_BYTES = 20 * 1024 * 1024; // 20 MB
+const MAX_BODY_SIZE_MB = 20;
 
 export function getMaxBodySize() {
-  if (process.env.AIKIDO_MAX_BODY_SIZE) {
-    let maxBodySize = process.env.AIKIDO_MAX_BODY_SIZE;
-
-    // Remove the "m" suffix if it exists
-    if (maxBodySize.toLowerCase().endsWith("m")) {
-      maxBodySize = maxBodySize.slice(0, -1);
-    }
-
-    const parsed = parseInt(maxBodySize, 10);
+  if (process.env.AIKIDO_MAX_BODY_SIZE_MB) {
+    const parsed = parseInt(process.env.AIKIDO_MAX_BODY_SIZE_MB, 10);
     if (!isNaN(parsed) && parsed > 0) {
       return parsed * 1024 * 1024;
     }
   }
 
-  return MAX_BODY_SIZE_IN_BYTES;
+  return MAX_BODY_SIZE_MB * 1024 * 1024;
 }
