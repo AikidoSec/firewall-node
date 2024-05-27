@@ -260,7 +260,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
       }).then(({ body, statusCode }) => {
         t.equal(
           body,
-          "This request was aborted by Aikido runtime protection because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
+          "This request was aborted by Aikido runtime because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
         );
         t.equal(statusCode, 413);
         server.close();

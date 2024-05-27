@@ -24,7 +24,9 @@ export function createRequestListener(
 
         if (bodySize > maxBodySize) {
           res.statusCode = 413;
-          res.write("Request Entity Too Large");
+          res.write(
+            "This request was aborted by Aikido runtime because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
+          );
           res.end();
           return;
         }
@@ -34,7 +36,9 @@ export function createRequestListener(
       }
     } catch (e) {
       res.statusCode = 500;
-      res.write("Internal Server Error");
+      res.write(
+        "Aikido runtime encountered an error while reading the request body."
+      );
       res.end();
       return;
     }
