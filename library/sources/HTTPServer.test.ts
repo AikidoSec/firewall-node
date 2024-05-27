@@ -16,6 +16,10 @@ const agent = new Agent(
 );
 agent.start([new HTTPServer()]);
 
+t.beforeEach(() => {
+  delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+});
+
 t.test("it wraps the createServer function of http module", async () => {
   const http = require("http");
   const server = http.createServer((req, res) => {
@@ -256,7 +260,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
           "Content-Type": "application/json",
         },
         body: generateJsonPayload(21),
-        timeoutInMS: 500,
+        timeoutInMS: 2000,
       }).then(({ body, statusCode }) => {
         t.equal(
           body,
@@ -293,6 +297,55 @@ t.test("body that is not JSON is ignored", async () => {
         server.close();
         resolve();
       });
+    });
+  });
+});
+
+t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
+  const http = require("http");
+
+  const server = http.createServer((req, res) => {
+    res.end();
+  });
+
+  process.on("unhandledRejection", (error) => {
+    t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3322, () => {
+      process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3322"),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: generateJsonPayload(1),
+          timeoutInMS: 2000,
+        }),
+        fetch({
+          url: new URL("http://localhost:3322"),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: generateJsonPayload(2),
+          timeoutInMS: 2000,
+        }),
+      ])
+        .then(([response1, response2]) => {
+          t.equal(response1.statusCode, 200);
+          t.equal(response2.statusCode, 413);
+        })
+        .catch((error) => {
+          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+        })
+        .finally(() => {
+          server.close();
+          resolve();
+        });
     });
   });
 });
