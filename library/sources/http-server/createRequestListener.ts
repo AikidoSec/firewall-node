@@ -21,10 +21,9 @@ export function createRequestListener(
       for await (const chunk of req) {
         if (bodySize + chunk.length > maxBodySize) {
           res.statusCode = 413;
-          res.write(
+          res.end(
             "This request was aborted by Aikido runtime because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
           );
-          res.end();
           agent.getInspectionStatistics().onAbortedRequest();
           return;
         }
@@ -35,10 +34,9 @@ export function createRequestListener(
       }
     } catch {
       res.statusCode = 500;
-      res.write(
+      res.end(
         "Aikido runtime encountered an error while reading the request body."
       );
-      res.end();
       return;
     }
 
