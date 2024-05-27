@@ -40,8 +40,17 @@ t.test("it works", async (t) => {
 
   agent.start([new FileSystem()]);
 
-  const { writeFile, writeFileSync, rename } = require("fs");
+  const {
+    writeFile,
+    writeFileSync,
+    rename,
+    realpath,
+    realpathSync,
+  } = require("fs");
   const { writeFile: writeFilePromise } = require("fs/promises");
+
+  t.ok(typeof realpath.native === "function");
+  t.ok(typeof realpathSync.native === "function");
 
   const runCommandsWithInvalidArgs = () => {
     throws(() => writeFile(), /Received undefined/);

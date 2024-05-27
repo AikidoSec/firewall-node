@@ -16,6 +16,10 @@ const agent = new Agent(
 );
 agent.start([new HTTPServer()]);
 
+t.beforeEach(() => {
+  delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+});
+
 t.test("it wraps the createServer function of http module", async () => {
   const http = require("http");
   const server = http.createServer((req, res) => {
@@ -42,6 +46,9 @@ t.test("it wraps the createServer function of http module", async () => {
           source: "http.createServer",
           routeParams: {},
           cookies: {},
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
         });
         server.close();
         resolve();
@@ -89,10 +96,256 @@ t.test("it wraps the createServer function of https module", async () => {
           source: "https.createServer",
           routeParams: {},
           cookies: {},
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
         });
         server.close();
         resolve();
       });
+    });
+  });
+});
+
+t.test("it parses query parameters", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3317, () => {
+      fetch({
+        url: new URL("http://localhost:3317?foo=bar&baz=qux"),
+        method: "GET",
+        headers: {},
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.query, { foo: "bar", baz: "qux" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it parses cookies", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3318, () => {
+      fetch({
+        url: new URL("http://localhost:3318"),
+        method: "GET",
+        headers: {
+          Cookie: "foo=bar; baz=qux",
+        },
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.cookies, { foo: "bar", baz: "qux" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it parses x-forwarded-for header with proxy", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3316, () => {
+      fetch({
+        url: new URL("http://localhost:3316"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for":
+            "203.0.113.195,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
+        },
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.remoteAddress, "203.0.113.195");
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it uses x-forwarded-for header", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3316, () => {
+      fetch({
+        url: new URL("http://localhost:3316"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "203.0.113.195",
+        },
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.remoteAddress, "203.0.113.195");
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it sets body in context", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3319, () => {
+      fetch({
+        url: new URL("http://localhost:3319"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ foo: "bar" }),
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, { foo: "bar" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+function generateJsonPayload(sizeInMb: number) {
+  const doubleQuotes = 2;
+  const sizeInBytes = sizeInMb * 1024 * 1024 - doubleQuotes;
+
+  return JSON.stringify("a".repeat(sizeInBytes));
+}
+
+t.test("it sends 413 when body is larger than 20 Mb", async () => {
+  const http = require("http");
+
+  const server = http.createServer((req, res) => {
+    t.fail();
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3320, () => {
+      fetch({
+        url: new URL("http://localhost:3320"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: generateJsonPayload(21),
+        timeoutInMS: 2000,
+      }).then(({ body, statusCode }) => {
+        t.equal(
+          body,
+          "This request was aborted by Aikido runtime because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
+        );
+        t.equal(statusCode, 413);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("body that is not JSON is ignored", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3321, () => {
+      fetch({
+        url: new URL("http://localhost:3321"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "not json",
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
+  const http = require("http");
+
+  const server = http.createServer((req, res) => {
+    res.end();
+  });
+
+  process.on("unhandledRejection", (error) => {
+    t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3322, () => {
+      process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3322"),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: generateJsonPayload(1),
+          timeoutInMS: 2000,
+        }),
+        fetch({
+          url: new URL("http://localhost:3322"),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: generateJsonPayload(2),
+          timeoutInMS: 2000,
+        }),
+      ])
+        .then(([response1, response2]) => {
+          t.equal(response1.statusCode, 200);
+          t.equal(response2.statusCode, 413);
+        })
+        .catch((error) => {
+          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+        })
+        .finally(() => {
+          server.close();
+          resolve();
+        });
     });
   });
 });
