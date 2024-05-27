@@ -4,6 +4,8 @@ import { getContext, runWithContext } from "../../agent/Context";
 import { getCloneableBody } from "./cloneableBody";
 import { contextFromRequest } from "./contextFromRequest";
 
+const MAX_BODY_SIZE = 1e6; // 1 MB size limit, adjust as needed
+
 export function createRequestListener(
   listener: Function,
   module: string,
@@ -16,7 +18,13 @@ export function createRequestListener(
     const clonedStream = cloneBodyStream();
 
     let body = "";
+    let bodySize = 0;
     for await (const chunk of clonedStream) {
+      bodySize += chunk.length;
+      if (bodySize > MAX_BODY_SIZE) {
+        // Body too large, skip the rest of the body
+        break;
+      }
       body += chunk.toString();
     }
 

@@ -232,3 +232,37 @@ t.test("it sets body in context", async () => {
     });
   });
 });
+
+t.test("it stops reading body when it exceeds the limit", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    let bodySize = 0;
+    req.on("data", (chunk) => {
+      bodySize += chunk.length;
+    });
+    req.on("end", () => {
+      t.same(bodySize, 2e6);
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3320, () => {
+      fetch({
+        url: new URL("http://localhost:3320"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "a".repeat(2e6),
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
