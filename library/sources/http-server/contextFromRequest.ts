@@ -10,9 +10,13 @@ export function contextFromRequest(
 ): Context {
   let parsedURL: URL | undefined = undefined;
   if (req.url) {
-    parsedURL = new URL(
-      req.url.startsWith("/") ? `http://localhost${req.url}` : req.url
-    );
+    try {
+      parsedURL = new URL(
+        req.url.startsWith("/") ? `http://localhost${req.url}` : req.url
+      );
+    } catch (e) {
+      // Ignore
+    }
   }
 
   const queryObject: Record<string, string> = {};
