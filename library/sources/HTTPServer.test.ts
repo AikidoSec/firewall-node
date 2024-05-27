@@ -266,3 +266,30 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
     });
   });
 });
+
+t.test("body that is not JSON is ignored", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3321, () => {
+      fetch({
+        url: new URL("http://localhost:3321"),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "not json",
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
