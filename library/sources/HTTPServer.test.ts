@@ -233,18 +233,18 @@ t.test("it sets body in context", async () => {
   });
 });
 
-t.test("it stops reading body when it exceeds the limit", async () => {
+function generateJsonPayload(sizeInMb: number) {
+  const doubleQuotes = 2;
+  const sizeInBytes = sizeInMb * 1024 * 1024 - doubleQuotes;
+
+  return JSON.stringify("a".repeat(sizeInBytes));
+}
+
+t.test("it sends 413 when body is larger than 20 Mb", async () => {
   const http = require("http");
+
   const server = http.createServer((req, res) => {
-    let bodySize = 0;
-    req.on("data", (chunk) => {
-      bodySize += chunk.length;
-    });
-    req.on("end", () => {
-      t.same(bodySize, 2e6);
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify(getContext()));
-    });
+    t.fail();
   });
 
   await new Promise<void>((resolve) => {
@@ -255,11 +255,11 @@ t.test("it stops reading body when it exceeds the limit", async () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: "a".repeat(2e6),
+        body: generateJsonPayload(21),
         timeoutInMS: 500,
-      }).then(({ body }) => {
-        const context = JSON.parse(body);
-        t.same(context.body, undefined);
+      }).then(({ body, statusCode }) => {
+        t.equal(body, "Request Entity Too Large");
+        t.equal(statusCode, 413);
         server.close();
         resolve();
       });
