@@ -36,6 +36,7 @@ export function createRequestListener(
       res.statusCode = 500;
       res.write("Internal Server Error");
       res.end();
+      return;
     }
 
     // End the stream
