@@ -91,6 +91,7 @@ t.test("it counts requests", async (t) => {
   await request(app).get("/");
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
+    aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -112,6 +113,7 @@ t.test("it counts attacks", async (t) => {
   await request(app).get("/attack-detected");
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
+    aborted: 0,
     attacksDetected: { total: 1, blocked: 1 },
   });
 });
@@ -133,6 +135,7 @@ t.test("it counts request if error", async (t) => {
   await request(app).get("/error");
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
+    aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });

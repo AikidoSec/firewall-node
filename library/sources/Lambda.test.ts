@@ -291,6 +291,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
         endedAt: 60 * 1000 * 10 + 1,
         requests: {
           total: 100,
+          aborted: 0,
           attacksDetected: {
             total: 0,
             blocked: 0,
