@@ -28,6 +28,7 @@ export function createRequestListener(
             "This request was aborted by Aikido runtime because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
           );
           res.end();
+          agent.getInspectionStatistics().onAbortedRequest();
           return;
         }
 
