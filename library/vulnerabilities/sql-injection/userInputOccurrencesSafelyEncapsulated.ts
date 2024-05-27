@@ -36,6 +36,8 @@ export function userInputOccurrencesSafelyEncapsulated(
       ) {
         quoteChar = char;
         charBeforeUserInput = currentSegment.slice(-2, -1);
+        // Remove the escaped quote from the user input
+        // otherwise we'll flag the user input as NOT safely encapsulated
         input = input.slice(1);
         break;
       }
