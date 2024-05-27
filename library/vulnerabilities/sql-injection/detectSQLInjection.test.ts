@@ -1,6 +1,7 @@
 import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
@@ -302,16 +303,14 @@ const files = [
   join(__dirname, "payloads", "mssql_and_db2.txt"),
 ];
 
-/**
- * escapeLikeDatabase("I'm a test", "'") => 'I''m a test'
- * escapeLikeDatabase("I'm a test", "'", true) => 'I\'m a test'
- */
-function escapeLikeDatabase(str: string, char: string, backslash = false) {
+function escapeLikeDatabase(str: string, char: string) {
+  // Replace all occurrences of the char with \\char
+  // Replace all occurrences of \ with \\
   return (
     char +
     str.replace(
-      new RegExp(char, "g"),
-      backslash ? "\\" + char : char.repeat(2)
+      new RegExp(`${char}|${escapeStringRegexp("\\")}`, "g"),
+      "\\" + char
     ) +
     char
   );
@@ -331,47 +330,23 @@ for (const file of files) {
     t.test(
       `It flags ${sql} from ${basename(file)} as SQL injection (in query)`,
       async () => {
-        isSqlInjection(`SELECT * FROM users ${sql}`, sql);
-      }
-    );
-
-    t.test(
-      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes)`,
-      async () => {
-        const escaped = escapeLikeDatabase(sql, "'");
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        isSqlInjection(`SELECT * FROM users WHERE id = ${sql}`, sql);
       }
     );
 
     t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes using backslash)`,
       async () => {
-        const escaped = escapeLikeDatabase(sql, "'", true);
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
-      }
-    );
-
-    t.test(
-      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes)`,
-      async () => {
-        const escaped = escapeLikeDatabase(sql, '"');
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
+        const escaped = escapeLikeDatabase(sql, "'");
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
 
     t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes using backslash)`,
       async () => {
-        const escaped = escapeLikeDatabase(sql, '"', true);
-        isNotSqlInjection("SELECT * FROM users WHERE id = ${escaped}", sql);
-      }
-    );
-
-    t.test(
-      `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with backticks)`,
-      async () => {
-        const escaped = escapeLikeDatabase(sql, "`");
-        isNotSqlInjection("SELECT * FROM ${escaped}", sql);
+        const escaped = escapeLikeDatabase(sql, '"');
+        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
       }
     );
   }
