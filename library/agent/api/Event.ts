@@ -26,6 +26,11 @@ type Started = {
   time: number;
 };
 
+export type User = {
+  id: string;
+  name?: string;
+};
+
 export type DetectedAttack = {
   type: "detected_attack";
   request: {
@@ -36,6 +41,7 @@ export type DetectedAttack = {
     headers: Record<string, string | string[]>;
     body: string | undefined;
     source: string;
+    route: string | undefined;
   };
   attack: {
     kind: Kind;
@@ -47,6 +53,7 @@ export type DetectedAttack = {
     stack: string;
     payload: string;
     metadata: Record<string, string>;
+    user: User | undefined;
   };
   agent: AgentInfo;
   time: number;
@@ -82,6 +89,14 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
+  routes: { path: string; method: string }[];
+  users: {
+    id: string;
+    name: string | undefined;
+    lastIpAddress: string | undefined;
+    firstSeenAt: number;
+    lastSeenAt: number;
+  }[];
   agent: AgentInfo;
   time: number;
 };

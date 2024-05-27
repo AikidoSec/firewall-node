@@ -4,8 +4,8 @@ import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
-import { APIForTesting } from "./api/APIForTesting";
-import { APIThatThrows } from "./api/APIThatThrows";
+import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
+import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
 import { Event, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
@@ -15,14 +15,21 @@ import { Wrapper } from "./Wrapper";
 
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
-    () => new Agent(true, new LoggerNoop(), new APIForTesting(), undefined, ""),
+    () =>
+      new Agent(
+        true,
+        new LoggerNoop(),
+        new ReportingAPIForTesting(),
+        undefined,
+        ""
+      ),
     "Serverless cannot be an empty string"
   );
 });
 
 t.test("it sends started event", async (t) => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new MongoDB()]);
@@ -53,7 +60,7 @@ t.test("it sends started event", async (t) => {
 
 t.test("it throws error if already started", async () => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new MongoDB()]);
@@ -68,7 +75,7 @@ class WrapperForTesting implements Wrapper {
 
 t.test("it logs if package is supported or not", async () => {
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new WrapperForTesting()]);
@@ -81,7 +88,7 @@ t.test("it logs if package is supported or not", async () => {
 
 t.test("it starts in non-blocking mode", async () => {
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(false, logger, api, token, undefined);
   agent.start([new MongoDB()]);
@@ -95,7 +102,7 @@ t.test("it starts in non-blocking mode", async () => {
 
 t.test("when prevent prototype pollution is enabled", async (t) => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, "lambda");
   agent.onPrototypePollutionPrevented();
@@ -112,7 +119,7 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
 
 t.test("it does not start interval in serverless mode", async () => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, "lambda");
 
@@ -122,7 +129,7 @@ t.test("it does not start interval in serverless mode", async () => {
 
 t.test("when attack detected", async () => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.onDetectedAttack({
@@ -141,6 +148,8 @@ t.test("when attack detected", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: "payload",
@@ -172,6 +181,7 @@ t.test("when attack detected", async () => {
         url: "http://localhost:4000",
         headers: {},
         body: "{}",
+        route: "/posts/:id",
       },
     },
   ]);
@@ -179,7 +189,7 @@ t.test("when attack detected", async () => {
 
 t.test("it checks if user agent is a string", async () => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.onDetectedAttack({
@@ -198,6 +208,8 @@ t.test("it checks if user agent is a string", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
+      routeParams: {},
     },
     payload: "payload",
     operation: "operation",
@@ -237,7 +249,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
@@ -247,6 +259,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
   }
   t.match(api.getEvents(), [
@@ -260,6 +273,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
+      withoutContext: false,
     });
   }
 
@@ -275,6 +289,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   // After 10 minutes, we'll see that the required amount of performance samples has been reached
   // And then send a heartbeat
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -287,6 +302,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // After another 10 minutes, we'll see that we already sent the initial stats
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -299,6 +315,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // Every 30 minutes we'll send a heartbeat
   clock.tick(30 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -322,7 +339,7 @@ t.test("it logs when failed to report event", async () => {
   }
 
   const logger = new LoggerForTesting();
-  const api = new APIThatThrows();
+  const api = new ReportingAPIThatThrows();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
@@ -350,6 +367,8 @@ t.test("it logs when failed to report event", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     stack: "stack",
@@ -365,7 +384,7 @@ t.test("it logs when failed to report event", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Failed to report started event",
+    "Failed to start agent",
     "Heartbeat...",
     "Failed to do heartbeat",
     "Failed to report attack",
@@ -376,7 +395,7 @@ t.test("unable to prevent prototype pollution", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
@@ -388,7 +407,7 @@ t.test("unable to prevent prototype pollution", async () => {
   ]);
 
   clock.tick(1000 * 60 * 30);
-  clock.next();
+  await clock.nextAsync();
 
   t.same(api.getEvents().length, 2);
   const [_, heartbeat] = api.getEvents();
@@ -404,7 +423,7 @@ t.test("unable to prevent prototype pollution", async () => {
 
 t.test("when payload is object", async () => {
   const logger = new LoggerNoop();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
 
@@ -424,6 +443,8 @@ t.test("when payload is object", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: { $gt: "" },
@@ -450,6 +471,8 @@ t.test("when payload is object", async () => {
       url: "http://localhost:4000",
       remoteAddress: "::1",
       source: "express",
+      route: "/posts/:id",
+      routeParams: {},
     },
     operation: "operation",
     payload: "a".repeat(20000),
@@ -474,4 +497,58 @@ t.test("when payload is object", async () => {
       JSON.stringify("a".repeat(20000)).substring(0, 4096),
     ]
   );
+});
+
+t.test("it sends hostnames and routes along with heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
+
+  agent.onConnectHostname("aikido.dev", 443);
+  agent.onConnectHostname("aikido.dev", 80);
+  agent.onConnectHostname("google.com", 443);
+  agent.onRouteExecute("POST", "/posts/:id");
+  agent.onRouteExecute("POST", "/posts/:id");
+  agent.onRouteExecute("GET", "/posts/:id");
+  agent.onRouteExecute("GET", "/");
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      hostnames: [
+        {
+          hostname: "aikido.dev",
+          port: 443,
+        },
+        {
+          hostname: "google.com",
+          port: 443,
+        },
+      ],
+      routes: [
+        {
+          method: "POST",
+          path: "/posts/:id",
+        },
+        {
+          method: "GET",
+          path: "/posts/:id",
+        },
+        {
+          method: "GET",
+          path: "/",
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
 });

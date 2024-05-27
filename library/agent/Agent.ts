@@ -5,15 +5,19 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
-import { API } from "./api/API";
+import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
+import { Routes } from "./Routes";
+import { ServiceConfig } from "./ServiceConfig";
 import { Source } from "./Source";
+import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 
@@ -22,7 +26,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 30 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 10 * 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
@@ -31,6 +35,9 @@ export class Agent {
   private wrappedPackages: Record<string, WrappedPackage> = {};
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
+  private users = new Users(1000);
+  private serviceConfig = new ServiceConfig([], Date.now(), []);
+  private routes: Routes = new Routes(200);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -39,7 +46,7 @@ export class Agent {
   constructor(
     private readonly block: boolean,
     private readonly logger: Logger,
-    private readonly api: API,
+    private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined
   ) {
@@ -86,21 +93,19 @@ export class Agent {
   /**
    * Reports to the API that this agent has started
    */
-  onStart() {
+  async onStart() {
     if (this.token) {
-      this.api
-        .report(
-          this.token,
-          {
-            type: "started",
-            time: Date.now(),
-            agent: this.getAgentInfo(),
-          },
-          this.timeoutInMS
-        )
-        .catch(() => {
-          this.logger.log("Failed to report started event");
-        });
+      const result = await this.api.report(
+        this.token,
+        {
+          type: "started",
+          time: Date.now(),
+          agent: this.getAgentInfo(),
+        },
+        this.timeoutInMS
+      );
+
+      this.updateServiceConfig(result);
     }
   }
 
@@ -161,6 +166,7 @@ export class Agent {
               metadata: limitLengthMetadata(metadata, 4096),
               kind: kind,
               payload: JSON.stringify(payload).substring(0, 4096),
+              user: request.user,
             },
             request: {
               method: request.method,
@@ -173,6 +179,7 @@ export class Agent {
               body: convertRequestBodyToString(request.body),
               headers: filterEmptyRequestHeaders(request.headers),
               source: request.source,
+              route: request.route,
             },
             agent: this.getAgentInfo(),
           },
@@ -193,13 +200,44 @@ export class Agent {
     });
   }
 
+  getUsers() {
+    return this.users;
+  }
+
+  getConfig() {
+    return this.serviceConfig;
+  }
+
+  private updateServiceConfig(response: ReportingAPIResponse) {
+    if (response.success) {
+      if (response.endpoints) {
+        this.serviceConfig = new ServiceConfig(
+          response.endpoints,
+          typeof response.configUpdatedAt === "number"
+            ? response.configUpdatedAt
+            : Date.now(),
+          response.blockedUserIds ? response.blockedUserIds : []
+        );
+      }
+
+      const minimumHeartbeatIntervalMS = 2 * 60 * 1000;
+
+      if (
+        typeof response.heartbeatIntervalInMS === "number" &&
+        response.heartbeatIntervalInMS >= minimumHeartbeatIntervalMS
+      ) {
+        this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
+      }
+    }
+  }
+
   private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
-      await this.api.report(
+      const response = await this.api.report(
         this.token,
         {
           type: "heartbeat",
@@ -212,9 +250,12 @@ export class Agent {
             requests: stats.requests,
           },
           hostnames: this.hostnames.asArray(),
+          routes: this.routes.asArray(),
+          users: this.users.asArray(),
         },
         timeoutInMS
       );
+      this.updateServiceConfig(response);
     }
   }
 
@@ -222,9 +263,16 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
-    /* c8 ignore next 3 */
     if (this.serverless) {
-      throw new Error("Heartbeats in serverless mode are not supported");
+      this.logger.log(
+        "Running in serverless environment, not starting heartbeats"
+      );
+      return;
+    }
+
+    if (!this.token) {
+      this.logger.log("No token provided, not starting heartbeats");
+      return;
     }
 
     /* c8 ignore next 3 */
@@ -247,6 +295,18 @@ export class Agent {
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
     this.interval.unref();
+  }
+
+  private startPollingForConfigChanges() {
+    pollForChanges({
+      token: this.token,
+      serverless: this.serverless,
+      logger: this.logger,
+      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
+      onConfigUpdate: (config) => {
+        this.updateServiceConfig({ success: true, ...config });
+      },
+    });
   }
 
   private getAgentInfo(): AgentInfo {
@@ -320,11 +380,16 @@ export class Agent {
       }
     }
 
-    this.onStart();
-
-    if (!this.serverless) {
-      this.startHeartbeats();
-    }
+    // Send startup event and wait for config
+    // Then start heartbeats and polling for config changes
+    this.onStart()
+      .then(() => {
+        this.startHeartbeats();
+        this.startPollingForConfigChanges();
+      })
+      .catch(() => {
+        this.logger.log("Failed to start agent");
+      });
   }
 
   onFailedToWrapMethod(module: string, name: string) {
@@ -333,6 +398,10 @@ export class Agent {
 
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
+  }
+
+  onRouteExecute(method: string, path: string) {
+    this.routes.addRoute(method, path);
   }
 
   async flushStats(timeoutInMS: number) {

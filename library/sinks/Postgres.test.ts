@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
@@ -15,14 +15,16 @@ const context: Context = {
     myTitle: `-- should be blocked`,
   },
   cookies: {},
+  routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it inspects query method calls and blocks if needed", async () => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     undefined,
     "lambda"
   );
@@ -76,7 +78,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body.myTitle"
+        "Aikido runtime has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -88,7 +90,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido runtime has blocked a SQL injection: pg.query(...) originating from body.myTitle"
+        "Aikido runtime has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -114,6 +116,8 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return client.query("-- This is a comment");

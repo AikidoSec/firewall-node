@@ -21,7 +21,9 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         query: req.query,
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
+        routeParams: {},
         source: "cloud-function/http",
+        route: undefined,
       },
       async () => {
         try {
@@ -29,10 +31,12 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         } finally {
           const context = getContext();
           if (agent && context) {
-            agent.getInspectionStatistics().onRequest({
-              blocked: agent.shouldBlock(),
-              attackDetected: !!context.attackDetected,
-            });
+            const stats = agent.getInspectionStatistics();
+            stats.onRequest();
+
+            if (context.attackDetected) {
+              stats.onDetectedAttack({ blocked: agent.shouldBlock() });
+            }
 
             if (
               lastFlushStatsAt === undefined ||

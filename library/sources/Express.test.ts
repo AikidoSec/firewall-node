@@ -1,18 +1,30 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { setInstance } from "../agent/AgentSingleton";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
+import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
+import { FileSystem } from "../sinks/FileSystem";
+import { HTTPServer } from "./HTTPServer";
 
 // Before require("express")
 const agent = new Agent(
   true,
   new LoggerNoop(),
-  new APIForTesting(),
-  undefined,
+  new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    blockedUserIds: ["567"],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+  }),
+  new Token("123"),
   "lambda"
 );
-agent.start([new Express()]);
+agent.start([new Express(), new FileSystem(), new HTTPServer()]);
+setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";
@@ -25,6 +37,36 @@ function getApp() {
   app.set("trust proxy", true);
   app.set("env", "test");
   app.use(cookieParser());
+
+  app.use("/*", (req, res, next) => {
+    res.setHeader("X-Powered-By", "Aikido");
+    next();
+  });
+
+  app.use("/middleware/:otherParamId", (req, res, next) => {
+    res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
+    next();
+  });
+
+  app.use("/attack-in-middleware", (req, res, next) => {
+    require("fs").readdir(req.query.directory).unref();
+    next();
+  });
+
+  app.use((req, res, next) => {
+    setUser({
+      id: "123",
+      name: "John Doe",
+    });
+    next();
+  });
+
+  // A middleware that is used as a route
+  app.use("/api/*", (req, res, next) => {
+    const context = getContext();
+
+    res.send(context);
+  });
 
   app.get("/", (req, res) => {
     const context = getContext();
@@ -50,9 +92,29 @@ function getApp() {
     res.send(context);
   });
 
-  app.get("/detect-attack", (req, res) => {
+  app.get("/files", (req, res) => {
+    require("fs").readdir(req.query.directory).unref();
+
+    res.send(getContext());
+  });
+
+  app.get("/attack-in-middleware", (req, res) => {
+    res.send({ willNotBeSent: true });
+  });
+
+  app.get(
+    "/middleware/:id",
+    (req, res, next) => {
+      res.setHeader("X-Context-Route-Middleware", JSON.stringify(getContext()));
+      next();
+    },
+    (req, res) => {
+      res.send(getContext());
+    }
+  );
+
+  app.get("/posts/:id", (req, res) => {
     const context = getContext();
-    context.attackDetected = true;
 
     res.send(context);
   });
@@ -60,6 +122,31 @@ function getApp() {
   app.get("/throws", (req, res) => {
     throw new Error("test");
   });
+
+  app.get(/.*fly$/, (req, res) => {
+    const context = getContext();
+
+    res.send(context);
+  });
+
+  app.get("/user", (req, res) => {
+    res.send(getContext());
+  });
+
+  app.get(
+    "/block-user",
+    (req, res, next) => {
+      setUser({
+        id: "567",
+      });
+      next();
+    },
+    (req, res) => {
+      res.send({
+        willNotBeSent: true,
+      });
+    }
+  );
 
   return app;
 }
@@ -78,6 +165,7 @@ t.test("it adds context from request for GET", async (t) => {
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",
     source: "express",
+    route: "/",
   });
 });
 
@@ -88,6 +176,7 @@ t.test("it adds context from request for POST", async (t) => {
     method: "POST",
     body: { title: "Title" },
     source: "express",
+    route: "/",
   });
 });
 
@@ -100,6 +189,7 @@ t.test("it adds context from request for route", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
+    route: "/route",
   });
 });
 
@@ -112,6 +202,7 @@ t.test("it adds context from request for all", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
+    route: "/all",
   });
 });
 
@@ -132,7 +223,13 @@ t.test("it counts requests", async () => {
 
 t.test("it counts attacks detected", async (t) => {
   agent.getInspectionStatistics().reset();
-  await request(getApp()).get("/detect-attack");
+  const response = await request(getApp()).get("/files?directory=../../");
+
+  t.match(
+    response.text,
+    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+  );
+  t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
     requests: {
       total: 1,
@@ -155,5 +252,76 @@ t.test("it counts request with error", async (t) => {
         blocked: 0,
       },
     },
+  });
+});
+
+t.test("it adds context from request for route with params", async (t) => {
+  const response = await request(getApp()).get("/posts/123");
+
+  t.match(response.body, {
+    method: "GET",
+    routeParams: { id: "123" },
+    source: "express",
+    route: "/posts/:id",
+  });
+});
+
+t.test("it deals with regex routes", async (t) => {
+  const response = await request(getApp()).get("/butterfly");
+
+  t.match(response.body, {
+    method: "GET",
+    query: {},
+    cookies: {},
+    headers: {},
+    source: "express",
+    route: "/.*fly$",
+  });
+});
+
+t.test("it takes the path from the arguments for middleware", async () => {
+  const response = await request(getApp()).get("/api/foo");
+
+  t.match(response.body, { route: "/api/*" });
+});
+
+t.test("route handler with middleware", async () => {
+  const response = await request(getApp()).get("/middleware/123");
+
+  const middlewareContext = JSON.parse(response.header["x-context-middleware"]);
+  t.match(middlewareContext, { route: "/middleware/:otherParamId" });
+  t.match(middlewareContext.routeParams, { otherParamId: "123" });
+
+  const routeMiddlewareContext = JSON.parse(
+    response.header["x-context-route-middleware"]
+  );
+  t.match(routeMiddlewareContext, { route: "/middleware/:id" });
+  t.match(response.body, { route: "/middleware/:id" });
+});
+
+t.test("detect attack in middleware", async () => {
+  const response = await request(getApp()).get(
+    "/attack-in-middleware?directory=../../"
+  );
+
+  t.same(response.statusCode, 500);
+  t.match(
+    response.text,
+    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+  );
+});
+
+t.test("it blocks user", async () => {
+  const response = await request(getApp()).get("/block-user");
+
+  t.same(response.statusCode, 403);
+  t.same(response.body, {});
+});
+
+t.test("it adds user to context", async () => {
+  const response = await request(getApp()).get("/user");
+
+  t.match(response.body, {
+    user: { id: "123", name: "John Doe" },
   });
 });

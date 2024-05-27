@@ -7,12 +7,12 @@ export type Kind =
 export function attackKindHumanName(kind: Kind) {
   switch (kind) {
     case "nosql_injection":
-      return "NoSQL injection";
+      return "a NoSQL injection";
     case "sql_injection":
-      return "SQL injection";
+      return "an SQL injection";
     case "shell_injection":
-      return "Shell injection";
+      return "a shell injection";
     case "path_traversal":
-      return "Path traversal";
+      return "a path traversal attack";
   }
 }

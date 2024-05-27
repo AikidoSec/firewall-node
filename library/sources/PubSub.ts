@@ -48,7 +48,9 @@ function handleMessage(handler: Function) {
         headers: {},
         cookies: {},
         query: {},
+        routeParams: {},
         source: "pubsub",
+        route: undefined,
       },
       () => {
         return handler(...args);

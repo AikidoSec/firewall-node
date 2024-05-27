@@ -17,7 +17,13 @@ export function checkContextForPathTraversal({
   operation: string;
   context: Context;
 }): InterceptorResult {
-  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
+  for (const source of [
+    "body",
+    "query",
+    "headers",
+    "cookies",
+    "routeParams",
+  ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {

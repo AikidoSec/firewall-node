@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
@@ -20,7 +20,9 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it works", async (t) => {
@@ -28,7 +30,7 @@ t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     logger,
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     undefined,
     undefined
   );
@@ -95,7 +97,7 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a Path traversal: S3.putObject(...) originating from body.file.matches"
+        "Aikido runtime has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
       );
     }
 
@@ -104,7 +106,7 @@ t.test("it works", async (t) => {
     if (signedURLError instanceof Error) {
       t.same(
         signedURLError.message,
-        "Aikido runtime has blocked a Path traversal: S3.getSignedUrl(...) originating from body.file.matches"
+        "Aikido runtime has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
       );
     }
   });

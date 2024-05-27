@@ -88,9 +88,11 @@ function isJsonContentType(contentType: string) {
 }
 
 export type APIGatewayProxyEvent = {
+  resource: string;
   httpMethod: string;
   headers: Record<string, string | undefined>;
   queryStringParameters?: Record<string, string>;
+  pathParameters?: Record<string, string>;
   requestContext?: {
     identity?: {
       sourceIp?: string;
@@ -139,10 +141,12 @@ export function createLambdaWrapper(handler: Handler): Handler {
             body: record,
           })),
         },
+        routeParams: {},
         headers: {},
         query: {},
         cookies: {},
         source: "lambda/sqs",
+        route: undefined,
       };
     } else if (isGatewayEvent(event)) {
       agentContext = {
@@ -151,9 +155,11 @@ export function createLambdaWrapper(handler: Handler): Handler {
         remoteAddress: event.requestContext?.identity?.sourceIp,
         body: parseBody(event),
         headers: event.headers,
+        routeParams: event.pathParameters ? event.pathParameters : {},
         query: event.queryStringParameters ? event.queryStringParameters : {},
         cookies: event.headers?.cookie ? parse(event.headers.cookie) : {},
         source: "lambda/gateway",
+        route: event.resource ? event.resource : undefined,
       };
     }
 
@@ -170,10 +176,12 @@ export function createLambdaWrapper(handler: Handler): Handler {
       });
     } finally {
       if (agent) {
-        agent.getInspectionStatistics().onRequest({
-          blocked: agent.shouldBlock(),
-          attackDetected: !!agentContext.attackDetected,
-        });
+        const stats = agent.getInspectionStatistics();
+        stats.onRequest();
+
+        if (agentContext.attackDetected) {
+          stats.onDetectedAttack({ blocked: agent.shouldBlock() });
+        }
 
         if (
           lastFlushStatsAt === undefined ||

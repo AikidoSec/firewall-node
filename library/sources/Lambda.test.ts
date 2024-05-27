@@ -3,17 +3,21 @@ import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
+  resource: "/dev/{proxy+}",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
     query: "value",
+  },
+  pathParameters: {
+    parameter: "value",
   },
   headers: {
     "content-type": "application/json",
@@ -68,7 +72,11 @@ t.test("it transforms callback handler to async handler", async (t) => {
     cookies: {
       cookie: "value",
     },
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -119,7 +127,11 @@ t.test("json header is missing for gateway event", async (t) => {
     headers: {},
     query: { query: "value" },
     cookies: {},
+    routeParams: {
+      parameter: "value",
+    },
     source: "lambda/gateway",
+    route: "/dev/{proxy+}",
   });
 });
 
@@ -156,7 +168,9 @@ t.test("it handles SQS event", async (t) => {
     headers: {},
     query: {},
     cookies: {},
+    routeParams: {},
     source: "lambda/sqs",
+    route: undefined,
   });
 });
 
@@ -180,7 +194,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
   agent.start([]);
   setInstance(agent);
@@ -246,6 +260,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       // @ts-expect-error AgentInfo is private
       agent: agent.getAgentInfo(),
       hostnames: [],
+      routes: [],
+      users: [],
       stats: {
         sinks: {
           mongodb: {
@@ -293,7 +309,7 @@ t.test(
     const clock = FakeTimers.install();
 
     const logger = new LoggerNoop();
-    const testing = new APIForTesting();
+    const testing = new ReportingAPIForTesting();
     const agent = new Agent(false, logger, testing, undefined, "lambda");
     agent.start([]);
     setInstance(agent);
@@ -325,7 +341,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
-  const testing = new APIForTesting();
+  const testing = new ReportingAPIForTesting();
   const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
   agent.start([]);
   setInstance(agent);
@@ -361,6 +377,8 @@ t.test("undefined values", async () => {
       requestContext: undefined,
       queryStringParameters: undefined,
       cookies: undefined,
+      pathParameters: undefined,
+      resource: undefined,
     },
     lambdaContext,
     () => {}
@@ -368,12 +386,14 @@ t.test("undefined values", async () => {
 
   t.same(result, {
     url: undefined,
+    route: undefined,
     method: "GET",
     remoteAddress: undefined,
     body: undefined,
     headers: undefined,
     query: {},
     cookies: {},
+    routeParams: {},
     source: "lambda/gateway",
   });
 });
@@ -394,5 +414,35 @@ t.test("no cookie header", async () => {
 
   t.match(result, {
     cookies: {},
+  });
+});
+
+t.test("it counts attacks", async () => {
+  const logger = new LoggerNoop();
+  const testing = new ReportingAPIForTesting();
+  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  agent.start([]);
+  setInstance(agent);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    const ctx = getContext();
+    ctx.attackDetected = true;
+    return ctx;
+  });
+
+  // This one will flush the stats
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  // This one will not flush the stats
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  t.match(agent.getInspectionStatistics().getStats(), {
+    requests: {
+      total: 1,
+      attacksDetected: {
+        total: 1,
+        blocked: 0,
+      },
+    },
   });
 });

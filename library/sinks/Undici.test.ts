@@ -1,22 +1,10 @@
 import * as t from "tap";
 import { fetch, request } from "undici";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Undici } from "./Undici";
-
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {},
-  cookies: {},
-  source: "express",
-};
 
 t.test(
   "it works",
@@ -29,7 +17,7 @@ t.test(
     const agent = new Agent(
       true,
       new LoggerNoop(),
-      new APIForTesting(),
+      new ReportingAPIForTesting(),
       new Token("123"),
       undefined
     );

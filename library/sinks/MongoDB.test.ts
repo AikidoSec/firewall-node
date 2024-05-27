@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
@@ -17,7 +17,9 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 const safeContext: Context = {
@@ -28,14 +30,16 @@ const safeContext: Context = {
   headers: {},
   body: {},
   cookies: {},
+  routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 t.test("it inspects method calls and blocks if needed", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     undefined,
     "lambda"
   );
@@ -166,6 +170,8 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return collection.find({ title: { $ne: null } }).toArray();

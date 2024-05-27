@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
@@ -17,7 +17,9 @@ const unsafeContext: Context = {
     },
   },
   cookies: {},
+  routeParams: {},
   source: "express",
+  route: "/posts/:id",
 };
 
 function throws(fn: () => void, wanted: string | RegExp) {
@@ -31,7 +33,7 @@ t.test("it works", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
-    new APIForTesting(),
+    new ReportingAPIForTesting(),
     undefined,
     "lambda"
   );
@@ -88,12 +90,12 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     throws(
       () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
-      "Aikido runtime has blocked a Shell injection: child_process.exec(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.exec(...) originating from body.file.matches"
     );
 
     throws(
       () => execSync("ls `echo .`", (err, stdout, stderr) => {}),
-      "Aikido runtime has blocked a Shell injection: child_process.execSync(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.execSync(...) originating from body.file.matches"
     );
   });
 
@@ -106,7 +108,7 @@ t.test("it works", async (t) => {
           { shell: true },
           (err, stdout, stderr) => {}
         ).unref(),
-      "Aikido runtime has blocked a Shell injection: child_process.spawn(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
     throws(
@@ -117,7 +119,7 @@ t.test("it works", async (t) => {
           { shell: "/bin/sh" },
           (err, stdout, stderr) => {}
         ).unref(),
-      "Aikido runtime has blocked a Shell injection: child_process.spawn(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
     throws(
@@ -128,7 +130,7 @@ t.test("it works", async (t) => {
           { shell: true },
           (err, stdout, stderr) => {}
         ),
-      "Aikido runtime has blocked a Shell injection: child_process.spawnSync(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
     );
 
     throws(
@@ -139,7 +141,7 @@ t.test("it works", async (t) => {
           { shell: "/bin/sh" },
           (err, stdout, stderr) => {}
         ),
-      "Aikido runtime has blocked a Shell injection: child_process.spawnSync(...) originating from body.file.matches"
+      "Aikido runtime has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
     );
   });
 });

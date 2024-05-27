@@ -1,7 +1,7 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import * as t from "tap";
-import { APIForTesting } from "./APIForTesting";
-import { APIRateLimitedServerSide } from "./APIRateLimitedServerSide";
+import { ReportingAPIForTesting } from "./ReportingAPIForTesting";
+import { ReportingAPIRateLimitedServerSide } from "./ReportingAPIRateLimitedServerSide";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
@@ -33,12 +33,16 @@ function generateStartedEvent(): Event {
 t.test("it stops sending requests if rate limited", async (t) => {
   const clock = FakeTimers.install();
 
-  const api = new APIForTesting();
-  const rateLimitedAPI = new APIRateLimitedServerSide(api);
+  const api = new ReportingAPIForTesting();
+  const rateLimitedAPI = new ReportingAPIRateLimitedServerSide(api);
   const token = new Token("token");
 
   t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
+    endpoints: [],
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    configUpdatedAt: 0,
+    blockedUserIds: [],
   });
   t.match(api.getEvents(), [{ type: "started" }]);
 
@@ -83,9 +87,19 @@ t.test("it stops sending requests if rate limited", async (t) => {
   ]);
 
   clock.tick(30 * 60 * 1000);
-  api.setResult({ success: true });
+  api.setResult({
+    success: true,
+    endpoints: [],
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    configUpdatedAt: 0,
+    blockedUserIds: [],
+  });
   t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
+    endpoints: [],
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    configUpdatedAt: 0,
+    blockedUserIds: [],
   });
   t.match(api.getEvents(), [
     { type: "started" },

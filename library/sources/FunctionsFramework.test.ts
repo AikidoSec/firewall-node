@@ -3,11 +3,14 @@ import * as express from "express";
 import * as request from "supertest";
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
-import { APIForTesting } from "../agent/api/APIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
-import { createCloudFunctionWrapper } from "./FunctionsFramework";
+import {
+  createCloudFunctionWrapper,
+  FunctionsFramework,
+} from "./FunctionsFramework";
 import * as asyncHandler from "express-async-handler";
 
 function getExpressApp() {
@@ -42,6 +45,17 @@ function getExpressApp() {
     )
   );
 
+  app.get(
+    "/attack-detected",
+    asyncHandler(
+      createCloudFunctionWrapper((req, res) => {
+        const context = getContext();
+        context.attackDetected = true;
+        res.send(context);
+      })
+    )
+  );
+
   return app;
 }
 
@@ -62,7 +76,13 @@ t.test("it sets context", async (t) => {
 
 t.test("it counts requests", async (t) => {
   const logger = new LoggerForTesting();
-  const agent = new Agent(true, logger, new APIForTesting(), undefined, "gcp");
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -75,9 +95,36 @@ t.test("it counts requests", async (t) => {
   });
 });
 
+t.test("it counts attacks", async (t) => {
+  const logger = new LoggerForTesting();
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
+  agent.start([]);
+  setInstance(agent);
+
+  const app = getExpressApp();
+
+  await request(app).get("/attack-detected");
+  t.same(agent.getInspectionStatistics().getStats().requests, {
+    total: 1,
+    attacksDetected: { total: 1, blocked: 1 },
+  });
+});
+
 t.test("it counts request if error", async (t) => {
   const logger = new LoggerForTesting();
-  const agent = new Agent(true, logger, new APIForTesting(), undefined, "gcp");
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
   agent.start([]);
   setInstance(agent);
 
@@ -92,7 +139,7 @@ t.test("it counts request if error", async (t) => {
 
 t.test("it flushes stats first invoke", async (t) => {
   const logger = new LoggerForTesting();
-  const api = new APIForTesting();
+  const api = new ReportingAPIForTesting();
   const agent = new Agent(true, logger, api, new Token("123"), "gcp");
   agent.start([]);
   setInstance(agent);
@@ -108,4 +155,22 @@ t.test("it flushes stats first invoke", async (t) => {
   await request(app).get("/");
 
   t.same(api.getEvents().length, 1);
+});
+
+t.test("it hooks into functions framework", async () => {
+  const logger = new LoggerForTesting();
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
+  agent.start([new FunctionsFramework()]);
+  setInstance(agent);
+
+  const framework = require("@google-cloud/functions-framework");
+  framework.http("hello", (req, res) => {
+    res.send("Hello, Functions Framework!");
+  });
 });

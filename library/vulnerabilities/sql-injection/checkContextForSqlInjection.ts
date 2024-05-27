@@ -20,7 +20,13 @@ export function checkContextForSqlInjection({
   context: Context;
   dialect: SQLDialect;
 }): InterceptorResult {
-  for (const source of ["body", "query", "headers", "cookies"] as Source[]) {
+  for (const source of [
+    "body",
+    "query",
+    "headers",
+    "cookies",
+    "routeParams",
+  ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {

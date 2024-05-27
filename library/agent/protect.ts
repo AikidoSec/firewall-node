@@ -2,6 +2,7 @@ import type { HttpFunction } from "@google-cloud/functions-framework";
 import type { Handler } from "aws-lambda";
 import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
+import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
@@ -9,25 +10,26 @@ import { MySQL2 } from "../sinks/MySQL2";
 import { Path } from "../sinks/Path";
 import { Postgres } from "../sinks/Postgres";
 import { Undici } from "../sinks/Undici";
+import { Express } from "../sources/Express";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
-import { Express } from "../sources/Express";
+import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
-import { API } from "./api/API";
-import { APIFetch } from "./api/APIFetch";
-import { APIRateLimitedServerSide } from "./api/APIRateLimitedServerSide";
-import { APIRateLimitedClientSide } from "./api/APIRateLimitedClientSide";
-import { APIThatValidatesToken } from "./api/APIThatValidatesToken";
+import { ReportingAPI } from "./api/ReportingAPI";
+import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
+import { ReportingAPIRateLimitedClientSide } from "./api/ReportingAPIRateLimitedClientSide";
+import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimitedServerSide";
+import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { Token } from "./api/Token";
+import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
-import { FileSystem } from "../sinks/FileSystem";
 
 function isDebugging() {
   return (
@@ -50,29 +52,26 @@ function getLogger(): Logger {
   return new LoggerNoop();
 }
 
-function validatesToken(api: API) {
-  return new APIThatValidatesToken(api);
+function validatesToken(api: ReportingAPI) {
+  return new ReportingAPIThatValidatesToken(api);
 }
 
-function clientSideRateLimited(api: API) {
-  return new APIRateLimitedClientSide(api, {
+function clientSideRateLimited(api: ReportingAPI) {
+  return new ReportingAPIRateLimitedClientSide(api, {
     maxEventsPerInterval: 100,
     intervalInMs: 60 * 60 * 1000,
   });
 }
 
-function serverSideRateLimited(api: API) {
-  return new APIRateLimitedServerSide(api);
+function serverSideRateLimited(api: ReportingAPI) {
+  return new ReportingAPIRateLimitedServerSide(api);
 }
 
-function getAPI(): API {
-  let url = new URL("https://guard.aikido.dev/api/runtime/events");
-  if (process.env.AIKIDO_URL) {
-    url = new URL(process.env.AIKIDO_URL);
-  }
-
+function getAPI(): ReportingAPI {
   return validatesToken(
-    serverSideRateLimited(clientSideRateLimited(new APIFetch(url)))
+    serverSideRateLimited(
+      clientSideRateLimited(new ReportingAPINodeHTTP(getAPIURL()))
+    )
   );
 }
 
@@ -117,6 +116,7 @@ function getWrappers() {
     new Fetch(),
     new Undici(),
     new Path(),
+    new HTTPServer(),
   ];
 }
 
