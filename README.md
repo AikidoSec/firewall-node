@@ -103,7 +103,7 @@ By default, Runtime will only detect and report attacks to Aikido.
 
 To block requests, set the `AIKIDO_BLOCKING` environment variable to `true`.
 
-See [Reporting to Aikido](#reporting-to-aikido) to learn how to send events to Aikido.
+See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn how to send events to Aikido.
 
 ## License
 
