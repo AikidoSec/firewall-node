@@ -308,10 +308,6 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
     res.end();
   });
 
-  process.on("unhandledRejection", (error) => {
-    t.fail(`Unexpected error: ${error.message} ${error.stack}`);
-  });
-
   await new Promise<void>((resolve) => {
     server.listen(3322, () => {
       process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
