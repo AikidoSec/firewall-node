@@ -89,7 +89,7 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
-* Go to [Runtime](https://app.aikido.dev/runtime).
+* Go to [Runtime](https://app.aikido.dev/runtime/events).
 * Go to services.
 * Click on **Add service**.
 * Choose a name for your service.
