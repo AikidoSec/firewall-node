@@ -26,9 +26,7 @@ export function wrapRequestHandler(
         context.user &&
         agent.getConfig().isUserBlocked(context.user.id)
       ) {
-        return res
-          .status(403)
-          .send("You are blocked by Aikido runtime protection.");
+        return res.status(403).send("You are blocked by Aikido runtime.");
       }
 
       if (context && context.route) {

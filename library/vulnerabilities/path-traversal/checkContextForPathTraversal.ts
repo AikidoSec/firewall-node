@@ -33,7 +33,9 @@ export function checkContextForPathTraversal({
             kind: "path_traversal",
             source: source,
             pathToPayload: path,
-            metadata: {},
+            metadata: {
+              filename: filename,
+            },
             payload: str,
           };
         }

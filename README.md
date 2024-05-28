@@ -1,6 +1,6 @@
-![Aikido Runtime Protection for Node.js](./docs/banner.svg)
+![Aikido Runtime for Node.js](./docs/banner.svg)
 
-# Aikido Runtime Protection for Node.js
+# Aikido Runtime for Node.js
 
 ![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Fruntime?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/runtime-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Fruntime?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/runtime-node/actions/workflows/end-to-end-tests.yml/badge.svg)
@@ -33,7 +33,8 @@ Aikido Runtime for Node.js 16+ is compatible with:
 
 ### Web frameworks
 
-* ✅ [`express`](https://www.npmjs.com/package/express) 4.x
+* ✅ [Express](docs/express.md) 4.x
+* ✅ [Next.js](docs/next.md) (in standalone mode)
 
 ### Database drivers
 
@@ -73,6 +74,7 @@ $ yarn add --exact @aikidosec/runtime
 For framework- and provider- specific instructions, check out our docs:
 
 - [Express.js-based apps](docs/express.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
@@ -87,7 +89,7 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
-* Go to [Runtime protection](https://app.aikido.dev/runtime).
+* Go to [Runtime](https://app.aikido.dev/runtime/events).
 * Go to services.
 * Click on **Add service**.
 * Choose a name for your service.
