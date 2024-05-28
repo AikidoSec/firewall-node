@@ -26,7 +26,9 @@ t.test("it detects path traversal from route parameter", async () => {
       kind: "path_traversal",
       source: "routeParams",
       pathToPayload: ".path",
-      metadata: {},
+      metadata: {
+        filename: "../file/test.txt",
+      },
       payload: "../file",
     }
   );
