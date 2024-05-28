@@ -33,8 +33,8 @@ Aikido Runtime for Node.js 16+ is compatible with:
 
 ### Web frameworks
 
-* ✅ [`express`](https://www.npmjs.com/package/express) 4.x
-* ✅ [`next`](https://www.npmjs.com/package/next) (in standalone mode)
+* ✅ [Express](docs/express.md) 4.x
+* ✅ [Next.js](docs/next.md) (in standalone mode)
 
 ### Database drivers
 
