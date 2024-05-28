@@ -354,6 +354,25 @@ t.test("it flags colon if used as a command", async () => {
   isShellInjection(": | echo", ": |");
 });
 
+t.test("it flags ../ as dangerous", async () => {
+  isShellInjection("ls ../", "../");
+  isShellInjection("ls ../../", "../../");
+  isShellInjection("ls ../../../", "../../../");
+  isShellInjection("ls ../../../../", "../../../../");
+});
+
+t.test("it flags quoted ../ as dangerous", async () => {
+  isShellInjection("ls '../'", "../");
+  isShellInjection("ls '../../'", "../../");
+  isShellInjection("ls '../../../'", "../../../");
+  isShellInjection("ls '../../../../'", "../../../../");
+});
+
+t.test("it does not flag if ../ is not in user input", async () => {
+  isNotShellInjection("ls", "../");
+  isNotShellInjection("ls ../", "hello");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
