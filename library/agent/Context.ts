@@ -14,6 +14,8 @@ export type Context = {
   cookies: Record<string, string>;
   attackDetected?: boolean;
   user?: { id: string; name?: string };
+  rateLimitedIp?: boolean;
+  rateLimitedUserId?: boolean;
   source: string;
   route: string | undefined;
 };

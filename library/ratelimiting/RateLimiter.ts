@@ -4,8 +4,8 @@ export class RateLimiter {
   private requests: LRUMap<string, { count: number; startTime: number }>;
 
   constructor(
-    readonly max: number = 5000,
-    readonly ttl: number = 120 * 60 * 1000
+    readonly max: number,
+    readonly ttl: number
   ) {
     this.requests = new LRUMap<string, { count: number; startTime: number }>(
       max,
