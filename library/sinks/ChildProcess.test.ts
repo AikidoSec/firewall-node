@@ -114,8 +114,8 @@ t.test("it works", async (t) => {
     throws(
       () =>
         spawn(
-          "ls `echo .`",
-          [],
+          "ls",
+          ["`echo .`"],
           { shell: "/bin/sh" },
           (err, stdout, stderr) => {}
         ).unref(),
