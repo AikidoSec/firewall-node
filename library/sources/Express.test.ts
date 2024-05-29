@@ -15,7 +15,28 @@ const agent = new Agent(
   new LoggerNoop(),
   new ReportingAPIForTesting({
     success: true,
-    endpoints: [],
+    endpoints: [
+      {
+        method: "GET",
+        route: "/rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+      {
+        method: "GET",
+        route: "/user-rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+    ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
@@ -31,7 +52,7 @@ import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
 
-function getApp() {
+function getApp(userMiddleware = true) {
   const app = express();
 
   app.set("trust proxy", true);
@@ -53,13 +74,15 @@ function getApp() {
     next();
   });
 
-  app.use((req, res, next) => {
-    setUser({
-      id: "123",
-      name: "John Doe",
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
     });
-    next();
-  });
+  }
 
   // A middleware that is used as a route
   app.use("/api/*", (req, res, next) => {
@@ -147,6 +170,14 @@ function getApp() {
       });
     }
   );
+
+  app.get("/rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.get("/user-rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
 
   return app;
 }
@@ -324,4 +355,38 @@ t.test("it adds user to context", async () => {
   t.match(response.body, {
     user: { id: "123", name: "John Doe" },
   });
+});
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+t.test("it rate limits by IP", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp(false)).get("/rate-limited");
+    t.same(res.statusCode, 200);
+  }
+
+  const res = await request(getApp(false)).get("/rate-limited");
+  t.same(res.statusCode, 429);
+
+  await sleep(2000);
+
+  const res2 = await request(getApp(false)).get("/rate-limited");
+  t.same(res2.statusCode, 200);
+});
+
+t.test("it rate limits by user", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp()).get("/user-rate-limited");
+    t.same(res.statusCode, 200);
+  }
+
+  const res = await request(getApp()).get("/user-rate-limited");
+  t.same(res.statusCode, 429);
+
+  await sleep(2000);
+
+  const res2 = await request(getApp()).get("/user-rate-limited");
+  t.same(res2.statusCode, 200);
 });

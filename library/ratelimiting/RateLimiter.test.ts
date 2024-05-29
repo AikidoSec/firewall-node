@@ -25,7 +25,7 @@ const ttl = 60000; // 1 minute in milliseconds
 const maxAmount = 5;
 
 t.test("should allow up to maxAmount requests within TTL", async (t) => {
-  const limiter = new RateLimiter();
+  const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
     t.ok(
       limiter.check(key, ttl, maxAmount),
@@ -39,7 +39,7 @@ t.test("should allow up to maxAmount requests within TTL", async (t) => {
 });
 
 t.test("should reset after TTL has expired", async (t) => {
-  const limiter = new RateLimiter();
+  const limiter = new RateLimiter(maxAmount, ttl);
   for (let i = 0; i < maxAmount; i++) {
     t.ok(
       limiter.check(key, ttl, maxAmount),
@@ -60,7 +60,7 @@ t.test("should reset after TTL has expired", async (t) => {
 });
 
 t.test("should allow requests for different keys independently", async (t) => {
-  const limiter = new RateLimiter();
+  const limiter = new RateLimiter(maxAmount, ttl);
   const key2 = "user2";
 
   for (let i = 0; i < maxAmount; i++) {
