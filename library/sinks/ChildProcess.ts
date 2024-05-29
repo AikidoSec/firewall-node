@@ -28,7 +28,15 @@ export class ChildProcess implements Wrapper {
     }
 
     if (args.length > 0 && typeof args[0] === "string") {
-      const command = args[0];
+      let command = args[0];
+
+      if (
+        (name === "spawn" || name === "spawnSync") &&
+        args.length > 1 &&
+        Array.isArray(args[1])
+      ) {
+        command += " " + args[1].join(" ");
+      }
 
       return checkContextForShellInjection({
         command: command,
