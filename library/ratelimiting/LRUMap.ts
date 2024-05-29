@@ -91,12 +91,6 @@ export class LRUMap<K, V> {
     }
   }
 
-  deleteMany(keys: K[]): void {
-    for (let i = 0; i < keys.length; i++) {
-      this.delete(keys[i]);
-    }
-  }
-
   private evict(): void {
     if (this.size > 0) {
       const item = this.first as Item<K, V>;
