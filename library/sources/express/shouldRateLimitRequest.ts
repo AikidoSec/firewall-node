@@ -14,7 +14,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
     return false;
   }
 
-  if (context.remoteAddress && !context.rateLimitedIp) {
+  if (context.remoteAddress) {
     const allowed = agent
       .getRateLimiter()
       .check(
@@ -28,7 +28,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
     }
   }
 
-  if (context.user && !context.rateLimitedUserId) {
+  if (context.user) {
     const allowed = agent
       .getRateLimiter()
       .check(
