@@ -33,7 +33,8 @@ export class ChildProcess implements Wrapper {
       if (
         (name === "spawn" || name === "spawnSync") &&
         args.length > 1 &&
-        Array.isArray(args[1])
+        Array.isArray(args[1]) &&
+        args[1].length > 0
       ) {
         command += " " + args[1].join(" ");
       }
