@@ -5,11 +5,10 @@ import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapRequestHandler(
   handler: RequestHandler,
-  agent: Agent,
-  path: string | undefined
+  agent: Agent
 ): RequestHandler {
   return (req, res, next) => {
-    const context = contextFromRequest(req, path);
+    const context = contextFromRequest(req);
 
     if (context.route) {
       agent.onRouteExecute(req.method, context.route);

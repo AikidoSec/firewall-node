@@ -282,14 +282,14 @@ t.test("it deals with regex routes", async (t) => {
 t.test("it takes the path from the arguments for middleware", async () => {
   const response = await request(getApp()).get("/api/foo");
 
-  t.match(response.body, { route: "/api/*" });
+  t.match(response.body, { route: undefined });
 });
 
 t.test("route handler with middleware", async () => {
   const response = await request(getApp()).get("/middleware/123");
 
   const middlewareContext = JSON.parse(response.header["x-context-middleware"]);
-  t.match(middlewareContext, { route: "/middleware/:otherParamId" });
+  t.match(middlewareContext, { route: undefined });
   t.match(middlewareContext.routeParams, { otherParamId: "123" });
 
   const routeMiddlewareContext = JSON.parse(
