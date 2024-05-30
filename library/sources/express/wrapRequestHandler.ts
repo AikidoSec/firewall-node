@@ -29,10 +29,15 @@ export function wrapRequestHandler(
         return res.status(403).send("You are blocked by Aikido runtime.");
       }
 
-      const shouldRateLimit = shouldRateLimitRequest(context, agent);
+      const result = shouldRateLimitRequest(context, agent);
 
-      if (shouldRateLimit) {
-        return res.status(429).send("You are rate limited by Aikido runtime.");
+      if (result.block) {
+        let message = "You are rate limited by Aikido runtime.";
+        if (result.trigger === "ip") {
+          message += ` (Your IP: ${context.remoteAddress})`;
+        }
+
+        return res.status(429).send(message);
       }
 
       return handler(req, res, next);

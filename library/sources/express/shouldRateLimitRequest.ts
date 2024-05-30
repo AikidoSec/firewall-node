@@ -2,11 +2,24 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 
-export function shouldRateLimitRequest(context: Context, agent: Agent) {
+type Result =
+  | {
+      block: false;
+    }
+  | {
+      block: true;
+      trigger: "ip";
+    }
+  | {
+      block: true;
+      trigger: "user";
+    };
+
+export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
   const rateLimiting = getRateLimitingForContext(context, agent);
 
   if (!rateLimiting) {
-    return false;
+    return { block: false };
   }
 
   const { config, route } = rateLimiting;
@@ -25,7 +38,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
     context.consumedRateLimitForIP = true;
 
     if (!allowed) {
-      return true;
+      return { block: true, trigger: "ip" };
     }
   }
 
@@ -43,11 +56,11 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
     context.consumedRateLimitForUser = true;
 
     if (!allowed) {
-      return true;
+      return { block: true, trigger: "user" };
     }
   }
 
-  return false;
+  return { block: false };
 }
 
 function getRateLimitingForContext(context: Context, agent: Agent) {
