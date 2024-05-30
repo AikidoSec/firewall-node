@@ -27,7 +27,7 @@ export function containsUnsafePathParts(filePath: string) {
     if (filePath.includes(dangerousPart)) {
       return true;
     }
-    for(const dangerousStart of dangerousPathStarts) {
+    for (const dangerousStart of dangerousPathStarts) {
       if (filePath.startsWith(dangerousStart)) {
         return true;
       }
