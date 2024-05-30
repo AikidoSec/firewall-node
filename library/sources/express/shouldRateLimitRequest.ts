@@ -11,7 +11,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
 
   const { config, route } = rateLimiting;
 
-  if (context.remoteAddress && !context.rateLimitedIP) {
+  if (context.remoteAddress && !context.consumedRateLimitForIP) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -22,14 +22,14 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.rateLimitedIP = true;
+    context.consumedRateLimitForIP = true;
 
     if (!allowed) {
       return true;
     }
   }
 
-  if (context.user && !context.rateLimitedUser) {
+  if (context.user && !context.consumedRateLimitForUser) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -40,7 +40,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.rateLimitedUser = true;
+    context.consumedRateLimitForUser = true;
 
     if (!allowed) {
       return true;
