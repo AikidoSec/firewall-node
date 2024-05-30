@@ -81,5 +81,8 @@ t.test("windows drive letter", async () => {
 });
 
 t.test("no path traversal", async () => {
-  t.same(detectPathTraversal("/appdata/storage/file.txt", "/storage/file.txt"), false);
+  t.same(
+    detectPathTraversal("/appdata/storage/file.txt", "/storage/file.txt"),
+    false
+  );
 });
