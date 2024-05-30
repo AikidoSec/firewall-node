@@ -86,3 +86,22 @@ t.test("no path traversal", async () => {
     false
   );
 });
+
+t.test("does not flag test", async () => {
+  t.same(detectPathTraversal("/app/test.txt", "test"), false);
+});
+
+t.test("does not flag example/test.txt", async () => {
+  t.same(
+    detectPathTraversal("/app/data/example/test.txt", "example/test.txt"),
+    false
+  );
+});
+
+t.test("does not absolute path with different folder", async () => {
+  t.same(detectPathTraversal("/etc/app/config", "/etc/hack/config"), false);
+});
+
+t.test("does not absolute path inside another folder", async () => {
+  t.same(detectPathTraversal("/etc/app/data/etc/config", "/etc/config"), false);
+});

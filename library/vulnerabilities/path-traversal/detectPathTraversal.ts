@@ -1,4 +1,5 @@
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
+import { startsWithUnsafePath } from "./unsafePathStart";
 
 export function detectPathTraversal(
   filePath: string,
@@ -15,9 +16,15 @@ export function detectPathTraversal(
     return false;
   }
 
-  return (
-    filePath.includes(userInput) &&
-    containsUnsafePathParts(filePath) &&
-    containsUnsafePathParts(userInput)
-  );
+  if (!filePath.includes(userInput)) {
+    // We ignore cases where the user input is not part of the file path.
+    return false;
+  }
+
+  if (containsUnsafePathParts(filePath) && containsUnsafePathParts(userInput)) {
+    return true;
+  }
+
+  // Check for absolute path traversal
+  return startsWithUnsafePath(filePath, userInput);
 }
