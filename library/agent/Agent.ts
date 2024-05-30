@@ -5,6 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
+import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
@@ -38,6 +39,7 @@ export class Agent {
   private users = new Users(1000);
   private serviceConfig = new ServiceConfig([], Date.now(), []);
   private routes: Routes = new Routes(200);
+  private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
@@ -407,5 +409,9 @@ export class Agent {
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
+  }
+
+  getRateLimiter() {
+    return this.rateLimiter;
   }
 }

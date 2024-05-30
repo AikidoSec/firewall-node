@@ -1,10 +1,7 @@
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
-  private endpoints: Map<
-    string,
-    { method: string; route: string; forceProtectionOff: boolean }
-  > = new Map();
+  private endpoints: Map<string, Endpoint> = new Map();
   private blockedUserIds: Map<string, string> = new Map();
 
   constructor(
@@ -17,6 +14,7 @@ export class ServiceConfig {
         method: rule.method,
         route: rule.route,
         forceProtectionOff: rule.forceProtectionOff,
+        rateLimiting: rule.rateLimiting,
       });
     });
 
@@ -29,11 +27,27 @@ export class ServiceConfig {
     return `${method}:${route}`;
   }
 
+  getRateLimiting(method: string, route: string | RegExp) {
+    const key = this.getKey(
+      method,
+      typeof route === "string" ? route : route.source
+    );
+
+    const rule = this.endpoints.get(key);
+
+    if (!rule || !rule.rateLimiting) {
+      return undefined;
+    }
+
+    return rule.rateLimiting;
+  }
+
   shouldProtectEndpoint(method: string, route: string | RegExp) {
     const key = this.getKey(
       method,
       typeof route === "string" ? route : route.source
     );
+
     const rule = this.endpoints.get(key);
 
     if (!rule) {

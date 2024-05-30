@@ -82,6 +82,13 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/posts/:id",
+    asyncHandler(async (req, res) => {
+      res.send({ post: { id: req.params.id } });
+    })
+  );
+
   app.post(
     "/search",
     express.json(),

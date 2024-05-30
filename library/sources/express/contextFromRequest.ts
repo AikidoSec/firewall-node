@@ -1,11 +1,8 @@
 import type { Request } from "express";
 import { Context } from "../../agent/Context";
 
-export function contextFromRequest(
-  req: Request,
-  path: string | undefined
-): Context {
-  let route = path;
+export function contextFromRequest(req: Request): Context {
+  let route = undefined;
   if (typeof req.route?.path === "string") {
     route = req.route.path;
   } else if (req.route?.path instanceof RegExp) {

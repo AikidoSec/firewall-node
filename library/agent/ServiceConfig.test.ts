@@ -11,9 +11,36 @@ t.test("it returns false if empty rules", async () => {
 t.test("it works", async () => {
   const config = new ServiceConfig(
     [
-      { method: "GET", route: "/foo", forceProtectionOff: false },
-      { method: "POST", route: "/foo", forceProtectionOff: true },
-      { method: "POST", route: /fly+/.source, forceProtectionOff: true },
+      {
+        method: "GET",
+        route: "/foo",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
+      },
+      {
+        method: "POST",
+        route: "/foo",
+        forceProtectionOff: true,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
+      },
+      {
+        method: "POST",
+        route: /fly+/.source,
+        forceProtectionOff: true,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
+      },
     ],
     0,
     ["123"]
@@ -25,4 +52,42 @@ t.test("it works", async () => {
   t.same(config.shouldProtectEndpoint("POST", /fly+/), false);
   t.same(config.isUserBlocked("123"), true);
   t.same(config.isUserBlocked("567"), false);
+});
+
+t.test("it returns rate limiting", async () => {
+  const config = new ServiceConfig(
+    [
+      {
+        method: "GET",
+        route: "/foo",
+        forceProtectionOff: false,
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+      },
+      {
+        method: "POST",
+        route: "/foo",
+        forceProtectionOff: true,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
+      },
+    ],
+    0,
+    []
+  );
+
+  t.same(config.getRateLimiting("GET", "/foo"), {
+    enabled: true,
+    maxRequests: 10,
+    windowSizeInMS: 1000,
+  });
+
+  t.same(config.getRateLimiting("GET", "/unknown"), undefined);
+  t.same(config.getRateLimiting("POST", "/foo"), {
+    enabled: false,
+    maxRequests: 0,
+    windowSizeInMS: 0,
+  });
 });

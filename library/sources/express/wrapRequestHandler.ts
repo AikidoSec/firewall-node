@@ -2,14 +2,14 @@ import type { RequestHandler } from "express";
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
+import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 
 export function wrapRequestHandler(
   handler: RequestHandler,
-  agent: Agent,
-  path: string | undefined
+  agent: Agent
 ): RequestHandler {
   return (req, res, next) => {
-    const context = contextFromRequest(req, path);
+    const context = contextFromRequest(req);
 
     if (context.route) {
       agent.onRouteExecute(req.method, context.route);
@@ -21,12 +21,18 @@ export function wrapRequestHandler(
       // The user will be carried over from the previous context
       const context = getContext();
 
-      if (
-        context &&
-        context.user &&
-        agent.getConfig().isUserBlocked(context.user.id)
-      ) {
+      if (!context) {
+        return handler(req, res, next);
+      }
+
+      if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
         return res.status(403).send("You are blocked by Aikido runtime.");
+      }
+
+      const shouldRateLimit = shouldRateLimitRequest(context, agent);
+
+      if (shouldRateLimit) {
+        return res.status(429).send("You are rate limited by Aikido runtime.");
       }
 
       return handler(req, res, next);
