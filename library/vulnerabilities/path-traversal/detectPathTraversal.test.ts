@@ -105,3 +105,7 @@ t.test("does not absolute path with different folder", async () => {
 t.test("does not absolute path inside another folder", async () => {
   t.same(detectPathTraversal("/etc/app/data/etc/config", "/etc/config"), false);
 });
+
+t.test("disable checkPathStart", async () => {
+  t.same(detectPathTraversal("/etc/passwd", "/etc/passwd", false), false);
+});

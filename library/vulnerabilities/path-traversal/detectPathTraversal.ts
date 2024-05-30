@@ -3,7 +3,8 @@ import { startsWithUnsafePath } from "./unsafePathStart";
 
 export function detectPathTraversal(
   filePath: string,
-  userInput: string
+  userInput: string,
+  checkPathStart = true
 ): boolean {
   if (userInput.length <= 1) {
     // We ignore single characters since they don't pose a big threat.
@@ -25,6 +26,10 @@ export function detectPathTraversal(
     return true;
   }
 
-  // Check for absolute path traversal
-  return startsWithUnsafePath(filePath, userInput);
+  if (checkPathStart) {
+    // Check for absolute path traversal
+    return startsWithUnsafePath(filePath, userInput);
+  }
+
+  return false;
 }

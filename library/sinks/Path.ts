@@ -17,6 +17,8 @@ export class Path implements Wrapper {
           filename: path,
           operation: `path.${operation}`,
           context: context,
+          // Only check the start of the path for absolute path traversal
+          checkPathStart: path === args[0],
         });
 
         if (result) {
