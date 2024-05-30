@@ -1,26 +1,26 @@
 const dangerousPathParts = ["../", "..\\"];
 const linuxRootFolders = [
-  "/bin",
-  "/boot",
-  "/dev",
-  "/etc",
-  "/home",
-  "/init",
-  "/lib",
-  "/media",
-  "/mnt",
-  "/opt",
-  "/proc",
-  "/root",
-  "/run",
-  "/sbin",
-  "/srv",
-  "/sys",
-  "/tmp",
-  "/usr",
-  "/var",
+  "/bin/",
+  "/boot/",
+  "/dev/",
+  "/etc/",
+  "/home/",
+  "/init/",
+  "/lib/",
+  "/media/",
+  "/mnt/",
+  "/opt/",
+  "/proc/",
+  "/root/",
+  "/run/",
+  "/sbin/",
+  "/srv/",
+  "/sys/",
+  "/tmp/",
+  "/usr/",
+  "/var/",
 ];
-const dangerousPathStarts = [...linuxRootFolders, "C:", "c:"];
+const dangerousPathStarts = [...linuxRootFolders, "C:/", "c:/", "C:\\", "c:\\"];
 
 export function containsUnsafePathParts(filePath: string) {
   for (const dangerousPart of dangerousPathParts) {
