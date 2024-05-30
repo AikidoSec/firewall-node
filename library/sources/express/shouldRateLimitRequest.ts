@@ -1,5 +1,6 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
+import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import { tryParseURL } from "../../helpers/tryParseURL";
 
 type Result =
@@ -24,7 +25,11 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
   const { config, route } = rateLimiting;
 
-  if (context.remoteAddress && !context.consumedRateLimitForIP) {
+  if (
+    context.remoteAddress &&
+    !context.consumedRateLimitForIP &&
+    !isLocalhostIP(context.remoteAddress)
+  ) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
