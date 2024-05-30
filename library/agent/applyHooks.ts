@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
-import { join } from "path";
+import { join, resolve } from "path";
+import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
@@ -150,6 +151,8 @@ function wrapWithoutArgumentModification(
   module: string,
   agent: Agent
 ) {
+  const libraryRoot = resolve(__dirname, "..");
+
   try {
     wrap(subject, method.getName(), function wrap(original: Function) {
       return function wrap() {
@@ -207,7 +210,7 @@ function wrapWithoutArgumentModification(
             kind: result.kind,
             source: result.source,
             blocked: agent.shouldBlock(),
-            stack: new Error().stack!,
+            stack: cleanupStackTrace(new Error().stack!, libraryRoot),
             path: result.pathToPayload,
             metadata: result.metadata,
             request: context,
