@@ -17,7 +17,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
   if (context.remoteAddress) {
     const allowed = agent
       .getRateLimiter()
-      .check(
+      .isAllowed(
         `${context.method}:${context.route}:ip:${context.remoteAddress}`,
         rateLimiting.windowSizeInMS,
         rateLimiting.maxRequests
@@ -31,7 +31,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
   if (context.user) {
     const allowed = agent
       .getRateLimiter()
-      .check(
+      .isAllowed(
         `${context.method}:${context.route}:user:${context.user.id}`,
         rateLimiting.windowSizeInMS,
         rateLimiting.maxRequests

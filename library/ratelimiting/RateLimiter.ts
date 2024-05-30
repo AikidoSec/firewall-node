@@ -1,42 +1,45 @@
 import { LRUMap } from "./LRUMap";
 
 export class RateLimiter {
-  private requests: LRUMap<string, { count: number; startTime: number }>;
+  private rateLimitedItems: LRUMap<
+    string,
+    { count: number; startTime: number }
+  >;
 
   constructor(
-    readonly max: number,
-    readonly ttl: number
+    readonly maxItems: number,
+    readonly timeToLiveInMS: number
   ) {
-    this.requests = new LRUMap<string, { count: number; startTime: number }>(
-      max,
-      ttl
-    );
+    this.rateLimitedItems = new LRUMap<
+      string,
+      { count: number; startTime: number }
+    >(maxItems, timeToLiveInMS);
   }
 
-  check(key: string, ttl: number, maxAmount: number): boolean {
+  isAllowed(key: string, windowSizeInMS: number, maxRequests: number): boolean {
     const currentTime = Date.now();
-    const requestInfo = this.requests.get(key);
+    const requestInfo = this.rateLimitedItems.get(key);
 
     if (!requestInfo) {
-      this.requests.set(key, { count: 1, startTime: currentTime });
+      this.rateLimitedItems.set(key, { count: 1, startTime: currentTime });
       return true;
     }
 
     const elapsedTime = currentTime - requestInfo.startTime;
 
-    if (elapsedTime > ttl) {
-      // Reset the counter and timestamp if TTL has expired
-      this.requests.set(key, { count: 1, startTime: currentTime });
+    if (elapsedTime > windowSizeInMS) {
+      // Reset the counter and timestamp if windowSizeInMS has expired
+      this.rateLimitedItems.set(key, { count: 1, startTime: currentTime });
       return true;
     }
 
-    if (requestInfo.count < maxAmount) {
-      // Increment the counter if it is within the TTL and maxAmount
+    if (requestInfo.count < maxRequests) {
+      // Increment the counter if it is within the windowSizeInMS and maxRequests
       requestInfo.count += 1;
       return true;
     }
 
-    // Deny the request if the maxAmount is reached within TTL
+    // Deny the request if the maxRequests is reached within windowSizeInMS
     return false;
   }
 }
