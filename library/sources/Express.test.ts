@@ -377,17 +377,23 @@ async function sleep(ms: number) {
 
 t.test("it rate limits by IP", async () => {
   for (const _ of Array.from({ length: 3 })) {
-    const res = await request(getApp(false)).get("/rate-limited");
+    const res = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "1.2.3.4");
     t.same(res.statusCode, 200);
   }
 
-  const res = await request(getApp(false)).get("/rate-limited");
-  t.same(res.statusCode, 429);
+  const res2 = await request(getApp(false))
+    .get("/rate-limited")
+    .set("x-forwarded-for", "1.2.3.4");
+  t.same(res2.statusCode, 429);
 
   await sleep(2000);
 
-  const res2 = await request(getApp(false)).get("/rate-limited");
-  t.same(res2.statusCode, 200);
+  const res3 = await request(getApp(false))
+    .get("/rate-limited")
+    .set("x-forwarded-for", "1.2.3.4");
+  t.same(res3.statusCode, 200);
 });
 
 t.test("it rate limits by user", async () => {
@@ -407,15 +413,15 @@ t.test("it rate limits by user", async () => {
 
 t.test("it rate limits by middleware", async () => {
   for (const _ of Array.from({ length: 3 })) {
-    const res = await request(getApp(false)).get("/middleware-rate-limited");
+    const res = await request(getApp()).get("/middleware-rate-limited");
     t.same(res.statusCode, 200);
   }
 
-  const res = await request(getApp(false)).get("/middleware-rate-limited");
+  const res = await request(getApp()).get("/middleware-rate-limited");
   t.same(res.statusCode, 429);
 
   await sleep(2000);
 
-  const res2 = await request(getApp(false)).get("/middleware-rate-limited");
+  const res2 = await request(getApp()).get("/middleware-rate-limited");
   t.same(res2.statusCode, 200);
 });
