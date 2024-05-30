@@ -1,5 +1,6 @@
 import type { Request } from "express";
 import { Context } from "../../agent/Context";
+import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
 export function contextFromRequest(req: Request): Context {
   let route = undefined;
@@ -11,7 +12,7 @@ export function contextFromRequest(req: Request): Context {
 
   return {
     method: req.method,
-    remoteAddress: req.ip,
+    remoteAddress: getIPAddressFromRequest(req),
     body: req.body ? req.body : undefined,
     url: req.protocol + "://" + req.get("host") + req.originalUrl,
     headers: req.headers,
