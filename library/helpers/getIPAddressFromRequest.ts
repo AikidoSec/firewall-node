@@ -3,7 +3,7 @@ import { isIP } from "net";
 
 export function getIPAddressFromRequest(req: IncomingMessage) {
   if (req.headers) {
-    if (typeof req.headers["x-forwarded-for"] === "string") {
+    if (typeof req.headers["x-forwarded-for"] === "string" && trustProxy()) {
       const xForwardedFor = getClientIpFromXForwardedFor(
         req.headers["x-forwarded-for"]
       );
@@ -47,4 +47,17 @@ function getClientIpFromXForwardedFor(value: string) {
   }
 
   return null;
+}
+
+function trustProxy() {
+  if (!process.env.AIKIDO_TRUST_PROXY) {
+    // Trust proxy by default
+    // Most of the time, the application is behind a reverse proxy
+    return true;
+  }
+
+  return (
+    process.env.AIKIDO_TRUST_PROXY === "1" ||
+    process.env.AIKIDO_TRUST_PROXY === "true"
+  );
 }
