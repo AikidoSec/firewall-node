@@ -3,30 +3,7 @@ import { Context } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 
 export function shouldRateLimitRequest(context: Context, agent: Agent) {
-  if (!context.method) {
-    return false;
-  }
-
-  let rateLimiting = undefined;
-
-  if (context.url) {
-    const url = tryParseURL(context.url);
-    if (url && url.pathname) {
-      rateLimiting = agent
-        .getConfig()
-        .getRateLimiting(context.method, url.pathname);
-    }
-  }
-
-  if (context.route) {
-    const routeRateLimiting = agent
-      .getConfig()
-      .getRateLimiting(context.method, context.route);
-
-    if (routeRateLimiting) {
-      rateLimiting = routeRateLimiting;
-    }
-  }
+  const rateLimiting = getRateLimitingForContext(context, agent);
 
   if (!rateLimiting) {
     return false;
@@ -65,4 +42,35 @@ export function shouldRateLimitRequest(context: Context, agent: Agent) {
   }
 
   return false;
+}
+
+function getRateLimitingForContext(context: Context, agent: Agent) {
+  if (!context.method) {
+    return undefined;
+  }
+
+  if (context.url) {
+    const url = tryParseURL(context.url);
+    if (url && url.pathname) {
+      const rateLimiting = agent
+        .getConfig()
+        .getRateLimiting(context.method, url.pathname);
+
+      if (rateLimiting) {
+        return rateLimiting;
+      }
+    }
+  }
+
+  if (context.route) {
+    const rateLimiting = agent
+      .getConfig()
+      .getRateLimiting(context.method, context.route);
+
+    if (rateLimiting) {
+      return rateLimiting;
+    }
+  }
+
+  return undefined;
 }
