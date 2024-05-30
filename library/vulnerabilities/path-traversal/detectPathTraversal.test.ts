@@ -67,3 +67,19 @@ t.test("it flags ..\\..\\..\\", async () => {
 t.test("user input is longer than file path", async () => {
   t.same(detectPathTraversal("../file.txt", "../../file.txt"), false);
 });
+
+t.test("absolute linux path", async () => {
+  t.same(detectPathTraversal("/etc/passwd", "/etc/passwd"), true);
+});
+
+t.test("linux user directory", async () => {
+  t.same(detectPathTraversal("/home/user/file.txt", "/home/user/"), true);
+});
+
+t.test("windows drive letter", async () => {
+  t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+});
+
+t.test("no path traversal", async () => {
+  t.same(detectPathTraversal("/appdata/storage/file.txt", "/storage/file.txt"), false);
+});
