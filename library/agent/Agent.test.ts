@@ -512,9 +512,11 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   agent.onConnectHostname("aikido.dev", 80);
   agent.onConnectHostname("google.com", 443);
   agent.onRouteExecute("POST", "/posts/:id");
+  agent.onRouteExecute("OPTIONS", "/posts/:id");
   agent.onRouteExecute("POST", "/posts/:id");
   agent.onRouteExecute("GET", "/posts/:id");
   agent.onRouteExecute("GET", "/");
+  agent.onRouteExecute("HEAD", "/");
 
   api.clear();
 
