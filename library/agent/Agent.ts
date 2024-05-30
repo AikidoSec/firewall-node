@@ -403,6 +403,12 @@ export class Agent {
   }
 
   onRouteExecute(method: string, path: string) {
+    const excludedMethods = ["OPTIONS", "HEAD"];
+
+    if (excludedMethods.includes(method)) {
+      return;
+    }
+
     this.routes.addRoute(method, path);
   }
 
