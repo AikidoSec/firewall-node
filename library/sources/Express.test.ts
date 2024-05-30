@@ -36,6 +36,16 @@ const agent = new Agent(
           enabled: true,
         },
       },
+      {
+        method: "GET",
+        route: "/middleware-rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
     ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
@@ -176,6 +186,10 @@ function getApp(userMiddleware = true) {
   });
 
   app.get("/user-rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.use("/middleware-rate-limited", (req, res, next) => {
     res.send({ hello: "world" });
   });
 
@@ -388,5 +402,20 @@ t.test("it rate limits by user", async () => {
   await sleep(2000);
 
   const res2 = await request(getApp()).get("/user-rate-limited");
+  t.same(res2.statusCode, 200);
+});
+
+t.test("it rate limits by middleware", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp(false)).get("/middleware-rate-limited");
+    t.same(res.statusCode, 200);
+  }
+
+  const res = await request(getApp(false)).get("/middleware-rate-limited");
+  t.same(res.statusCode, 429);
+
+  await sleep(2000);
+
+  const res2 = await request(getApp(false)).get("/middleware-rate-limited");
   t.same(res2.statusCode, 200);
 });
