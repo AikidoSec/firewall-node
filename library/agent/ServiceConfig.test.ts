@@ -2,10 +2,11 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([], 0, []);
+  const config = new ServiceConfig([], 0, [], []);
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
+  t.same(config.isAllowedIP("1.2.3.4"), false);
 });
 
 t.test("it works", async () => {
@@ -43,7 +44,8 @@ t.test("it works", async () => {
       },
     ],
     0,
-    ["123"]
+    ["123"],
+    []
   );
 
   t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
@@ -75,6 +77,7 @@ t.test("it returns rate limiting", async () => {
       },
     ],
     0,
+    [],
     []
   );
 
@@ -90,4 +93,10 @@ t.test("it returns rate limiting", async () => {
     maxRequests: 0,
     windowSizeInMS: 0,
   });
+});
+
+t.test("it checks if IP is allowed", async () => {
+  const config = new ServiceConfig([], 0, [], ["1.2.3.4"]);
+  t.same(config.isAllowedIP("1.2.3.4"), true);
+  t.same(config.isAllowedIP("1.2.3.5"), false);
 });

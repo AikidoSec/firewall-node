@@ -28,7 +28,8 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
   if (
     context.remoteAddress &&
     !context.consumedRateLimitForIP &&
-    !isLocalhostIP(context.remoteAddress)
+    !isLocalhostIP(context.remoteAddress) &&
+    !agent.getConfig().isAllowedIP(context.remoteAddress)
   ) {
     const allowed = agent
       .getRateLimiter()

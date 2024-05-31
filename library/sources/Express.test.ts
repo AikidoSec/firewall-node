@@ -46,10 +46,21 @@ const agent = new Agent(
           enabled: true,
         },
       },
+      {
+        method: "GET",
+        route: "/white-listed-ip-address",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
     ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
+    allowedIPAddresses: ["4.3.2.1"],
   }),
   new Token("123"),
   "lambda"
@@ -186,6 +197,10 @@ function getApp(userMiddleware = true) {
   });
 
   app.get("/user-rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.get("/white-listed-ip-address", (req, res) => {
     res.send({ hello: "world" });
   });
 
@@ -428,4 +443,13 @@ t.test("it rate limits by middleware", async () => {
 
   const res2 = await request(getApp()).get("/middleware-rate-limited");
   t.same(res2.statusCode, 200);
+});
+
+t.test("it allows white-listed IP address", async () => {
+  for (const _ of Array.from({ length: 5 })) {
+    const res = await request(getApp(false))
+      .get("/white-listed-ip-address")
+      .set("x-forwarded-for", "4.3.2.1");
+    t.same(res.statusCode, 200);
+  }
 });
