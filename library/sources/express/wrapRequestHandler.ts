@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
+import { escapeHTML } from "../../helpers/escapeHTML";
 import { contextFromRequest } from "./contextFromRequest";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 
@@ -34,7 +35,7 @@ export function wrapRequestHandler(
       if (result.block) {
         let message = "You are rate limited by Aikido runtime.";
         if (result.trigger === "ip") {
-          message += ` (Your IP: ${context.remoteAddress})`;
+          message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }
 
         return res.status(429).send(message);

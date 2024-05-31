@@ -387,6 +387,10 @@ t.test("it rate limits by IP", async () => {
     .get("/rate-limited")
     .set("x-forwarded-for", "1.2.3.4");
   t.same(res2.statusCode, 429);
+  t.same(
+    res2.text,
+    "You are rate limited by Aikido runtime. (Your IP: 1.2.3.4)"
+  );
 
   await sleep(2000);
 
