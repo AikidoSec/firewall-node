@@ -1,11 +1,12 @@
 import { sep } from "path";
+import { dynamicRequirePackageJson, dynamicResolve } from "../agent/requirePackage";
 
 /**
  * Get the installed version of a package
  */
 export function getPackageVersion(pkg: string): string | null {
   try {
-    const path = require.resolve(pkg);
+    const path = dynamicResolve(pkg);
     const parts = path.split(sep);
 
     // e.g. @google-cloud/functions-framework
@@ -15,6 +16,8 @@ export function getPackageVersion(pkg: string): string | null {
       lookup = pkgParts[1];
     }
 
+    return dynamicRequirePackageJson(pkg).version;
+
     // Normally we can just require(`${pkg}/package.json`)
     // but @google-cloud/functions-framework is a special case
     // the package.json contains "exports" which results in the following error:
@@ -23,8 +26,9 @@ export function getPackageVersion(pkg: string): string | null {
     const index = parts.indexOf(lookup);
     const root = parts.slice(0, index + 1).join(sep);
 
-    return require(`${root}/package.json`).version;
+    return dynamicRequirePackageJson(`${root}/package.json`).version;
   } catch (error) {
+    //console.error(error);
     return null;
   }
 }

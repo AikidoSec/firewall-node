@@ -18,6 +18,7 @@ import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsI
 import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
+import { dynamicRequire, dynamicRequireFile } from "./requirePackage";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -109,7 +110,7 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
-    const exports = require(join(pkg.getName(), file.getRelativePath()));
+    const exports = dynamicRequireFile(join(pkg.getName(), file.getRelativePath()));
 
     file
       .getSubjects()
@@ -125,7 +126,7 @@ function wrapBuiltInModule(
   subjects: WrappableSubject[],
   agent: Agent
 ) {
-  const exports = require(module.getName());
+  const exports = dynamicRequire(module.getName());
 
   subjects.forEach(
     (selector) => wrapSubject(exports, selector, module.getName(), agent),
@@ -134,7 +135,7 @@ function wrapBuiltInModule(
 }
 
 function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
-  const exports = require(pkg.getName());
+  const exports = dynamicRequire(pkg.getName());
 
   subjects.forEach(
     (selector) => wrapSubject(exports, selector, pkg.getName(), agent),

@@ -1,7 +1,5 @@
-import { resolve } from "path";
-
 export function getAgentVersion(): string {
-  const json = require(resolve(__dirname, "../package.json"));
+  const json = require("../package.json");
 
   /* c8 ignore start */
   if (!json.version) {
