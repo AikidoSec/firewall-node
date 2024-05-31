@@ -22,12 +22,12 @@ const linuxRootFolders = [
 const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
 
 export function startsWithUnsafePath(filePath: string, userInput: string) {
-  const lowerCasePath = filePath.toLowerCase();
-  const lowerCaseUserInput = userInput.toLowerCase();
+  const normalizedPath = filePath.replace(/^(\/\.)*/g, "").toLowerCase();
+  const normalizedUserInput = userInput.replace(/^(\/\.)*/g, "").toLowerCase();
   for (const dangerousStart of dangerousPathStarts) {
     if (
-      lowerCasePath.startsWith(dangerousStart) &&
-      lowerCasePath.startsWith(lowerCaseUserInput)
+      normalizedPath.startsWith(dangerousStart) &&
+      normalizedPath.startsWith(normalizedUserInput)
     ) {
       return true;
     }

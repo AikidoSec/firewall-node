@@ -80,6 +80,17 @@ t.test("windows drive letter", async () => {
   t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
 });
 
+t.test("possible bypass", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc/passwd"), true);
+});
+
+t.test("another bypass", async () => {
+  t.same(
+    detectPathTraversal("/./././root/test.txt", "/./././root/test.txt"),
+    true
+  );
+});
+
 t.test("no path traversal", async () => {
   t.same(
     detectPathTraversal("/appdata/storage/file.txt", "/storage/file.txt"),
