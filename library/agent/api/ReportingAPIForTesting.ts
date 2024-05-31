@@ -12,6 +12,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      allowedIPAddresses: [],
     }
   ) {}
 
