@@ -1,0 +1,60 @@
+{
+  "name": "@aikidosec/runtime-next",
+  "version": "0.0.0",
+  "description": "Aikido runtime protects your application against NoSQL injections and more",
+  "repository": "https://github.com/AikidoSec/runtime-node",
+  "keywords": [
+    "security",
+    "nosql",
+    "injection",
+    "sql",
+    "mongodb",
+    "mysql",
+    "mysql2",
+    "mariadb",
+    "pubsub",
+    "postgres",
+    "express",
+    "rasp",
+    "firewall",
+    "aikido",
+    "guard",
+    "runtime",
+    "protection",
+    "threats",
+    "owasp"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "@aikidosec/runtime": "file:../build"
+  },
+  "devDependencies": {
+    "@sinonjs/fake-timers": "^11.2.2",
+    "@types/node": "^20.11.5",
+    "@types/sinonjs__fake-timers": "^8.1.5",
+    "@types/supertest": "^6.0.2",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.4",
+    "tap": "^18.6.1",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "test": "tap --allow-incomplete-coverage",
+    "test:ci": "tap --coverage-report=lcov --allow-incomplete-coverage",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "lint": "npm run lint-eslint && npm run lint-tsc",
+    "lint-eslint": "eslint '**/*.ts'",
+    "lint-tsc": "tsc --noEmit"
+  }
+}

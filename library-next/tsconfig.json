@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["ES2019", "DOM"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "../build-next",
+    "declaration": true,
+    "strict": true,
+    "allowJs": false
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.test.ts"]
+}

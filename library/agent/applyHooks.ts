@@ -110,7 +110,9 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
-    const exports = dynamicRequireFile(join(pkg.getName(), file.getRelativePath()));
+    const exports = dynamicRequireFile(
+      join(pkg.getName(), file.getRelativePath())
+    );
 
     file
       .getSubjects()

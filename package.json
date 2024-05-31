@@ -6,6 +6,7 @@
     "sample-apps/*",
     "benchmarks/*",
     "end2end",
-    "library"
+    "library",
+    "library-next"
   ]
 }

@@ -1,5 +1,8 @@
 import { sep } from "path";
-import { dynamicRequirePackageJson, dynamicResolve } from "../agent/requirePackage";
+import {
+  dynamicRequirePackageJson,
+  dynamicResolve,
+} from "../agent/requirePackage";
 
 /**
  * Get the installed version of a package

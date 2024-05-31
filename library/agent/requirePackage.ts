@@ -22,25 +22,25 @@ export function dynamicRequire(pkgName: string) {
     case "path":
       return require("path");
     case "shell-quote":
-        return require("shell-quote");
+      return require("shell-quote");
     case "aws-sdk":
-        return require("aws-sdk");
+      return require("aws-sdk");
     case "mongodb":
-        return require("mongodb");
+      return require("mongodb");
     case "mysql":
-        return require("mysql");
+      return require("mysql");
     case "mysql2":
-        return require("mysql2");
+      return require("mysql2");
     case "pg":
-        return require("pg");
+      return require("pg");
     //case "undici":
-        //return require("undici");
+    //return require("undici");
     case "express":
-        return require("express");
+      return require("express");
     case "@google-cloud/functions-framework":
-        return require("@google-cloud/functions-framework");
+      return require("@google-cloud/functions-framework");
     case "@google-cloud/pubsub":
-        return require("@google-cloud/pubsub");
+      return require("@google-cloud/pubsub");
     default:
       throw new Error(`Unknown dynamic require for package: ${pkgName}`);
   }
@@ -66,7 +66,7 @@ export function dynamicResolve(pkgName: string) {
     case "pg":
       return require.resolve("pg");
     //case "undici":
-      //return require.resolve("undici");
+    //return require.resolve("undici");
     case "express":
       return require.resolve("express");
     case "@google-cloud/functions-framework":
@@ -86,43 +86,45 @@ export function dynamicResolve(pkgName: string) {
 export function dynamicRequirePackageJson(pkgName: string) {
   switch (pkgName) {
     case "express":
-        return require("express/package.json");
+      return require("express/package.json");
     case "shell-quote":
-        return require("shell-quote/package.json");
+      return require("shell-quote/package.json");
     case "aws-sdk":
-        return require("aws-sdk/package.json");
+      return require("aws-sdk/package.json");
     case "mongodb":
-        return require("mongodb/package.json");
+      return require("mongodb/package.json");
     case "mysql":
-        return require("mysql/package.json");
+      return require("mysql/package.json");
     case "mysql2":
-        return require("mysql2/package.json");
+      return require("mysql2/package.json");
     case "pg":
-        return require("pg/package.json");
+      return require("pg/package.json");
     case "undici":
-        return require("undici/package.json");
+      return require("undici/package.json");
     //case "@google-cloud/functions-framework":
-        //return require("@google-cloud/functions-framework/package.json");
+    //return require("@google-cloud/functions-framework/package.json");
     case "@google-cloud/pubsub":
-        return require("@google-cloud/pubsub/package.json");
+      return require("@google-cloud/pubsub/package.json");
     default:
-      throw new Error(`Unknown dynamic package json require for package: ${pkgName}`);
+      throw new Error(
+        `Unknown dynamic package json require for package: ${pkgName}`
+      );
   }
 }
 
 /**
  * This function wraps the dynamic require for specific files.
  * This is done to add support for webpack.
- * @param path 
- * @returns 
+ * @param path
+ * @returns
  */
 export function dynamicRequireFile(path: string) {
-    switch (path) {
-        case "mysql/lib/Connection":
-            return require("mysql/lib/Connection");
-        case "@google-cloud/pubsub/build/src/subscription.js":
-            return require("@google-cloud/pubsub/build/src/subscription.js");
-        default:
-            throw new Error(`Unknown dynamic require for file: ${path}`);
-    }
+  switch (path) {
+    case "mysql/lib/Connection":
+      return require("mysql/lib/Connection");
+    case "@google-cloud/pubsub/build/src/subscription.js":
+      return require("@google-cloud/pubsub/build/src/subscription.js");
+    default:
+      throw new Error(`Unknown dynamic require for file: ${path}`);
+  }
 }

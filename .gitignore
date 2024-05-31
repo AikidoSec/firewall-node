@@ -18,6 +18,7 @@ node_modules/
 # Built files
 build/
 generated_docs
+build-next/
 
 # IDE's
 .idea/
