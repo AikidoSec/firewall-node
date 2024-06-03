@@ -200,7 +200,12 @@ function wrapWithoutArgumentModification(
           withoutContext: !context,
         });
 
-        if (result && context) {
+        const isAllowedIP =
+          context &&
+          context.remoteAddress &&
+          agent.getConfig().isAllowedIP(context.remoteAddress);
+
+        if (result && context && !isAllowedIP) {
           // Flag request as having an attack detected
           context.attackDetected = true;
 

@@ -14,4 +14,5 @@ export type Config = {
   heartbeatIntervalInMS: number;
   configUpdatedAt: number;
   blockedUserIds: string[];
+  allowedIPAddresses: string[];
 };

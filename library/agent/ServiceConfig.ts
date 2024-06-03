@@ -3,11 +3,13 @@ import { Endpoint } from "./Config";
 export class ServiceConfig {
   private endpoints: Map<string, Endpoint> = new Map();
   private blockedUserIds: Map<string, string> = new Map();
+  private allowedIPAddresses: Map<string, string> = new Map();
 
   constructor(
     endpoints: Endpoint[],
     private readonly lastUpdatedAt: number,
-    blockedUserIds: string[]
+    blockedUserIds: string[],
+    allowedIPAddresses: string[]
   ) {
     endpoints.forEach((rule) => {
       this.endpoints.set(this.getKey(rule.method, rule.route), {
@@ -20,6 +22,10 @@ export class ServiceConfig {
 
     blockedUserIds.forEach((userId) => {
       this.blockedUserIds.set(userId, userId);
+    });
+
+    allowedIPAddresses.forEach((ip) => {
+      this.allowedIPAddresses.set(ip, ip);
     });
   }
 
@@ -40,6 +46,10 @@ export class ServiceConfig {
     }
 
     return rule.rateLimiting;
+  }
+
+  isAllowedIP(ip: string) {
+    return this.allowedIPAddresses.has(ip);
   }
 
   shouldProtectEndpoint(method: string, route: string | RegExp) {

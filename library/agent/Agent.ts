@@ -37,7 +37,7 @@ export class Agent {
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -218,7 +218,8 @@ export class Agent {
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
             : Date.now(),
-          response.blockedUserIds ? response.blockedUserIds : []
+          response.blockedUserIds ? response.blockedUserIds : [],
+          response.allowedIPAddresses ? response.allowedIPAddresses : []
         );
       }
 
