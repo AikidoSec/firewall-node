@@ -28,6 +28,7 @@ function generateAttackEvent(): Event {
       metadata: {},
       operation: "operation",
       payload: "payload",
+      user: undefined,
     },
     agent: {
       version: "1.0.0",
