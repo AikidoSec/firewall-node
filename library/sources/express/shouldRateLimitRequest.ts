@@ -1,7 +1,7 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
+import { matchEndpoint } from "../../helpers/matchEndpoint";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
-import { tryParseURL } from "../../helpers/tryParseURL";
 
 type Result =
   | {
@@ -17,13 +17,19 @@ type Result =
     };
 
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const rateLimiting = getRateLimitingForContext(context, agent);
+  const match = matchEndpoint(context, agent.getConfig());
 
-  if (!rateLimiting) {
+  if (!match) {
     return { block: false };
   }
 
-  const { config, route } = rateLimiting;
+  const { endpoint, route } = match;
+
+  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
+    return { block: false };
+  }
+
+  const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (
     context.remoteAddress &&
@@ -35,8 +41,8 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${route}:ip:${context.remoteAddress}`,
-        config.windowSizeInMS,
-        config.maxRequests
+        windowSizeInMS,
+        maxRequests
       );
 
     // This function is executed for every middleware and route handler
@@ -53,8 +59,8 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${route}:user:${context.user.id}`,
-        config.windowSizeInMS,
-        config.maxRequests
+        windowSizeInMS,
+        maxRequests
       );
 
     // This function is executed for every middleware and route handler
@@ -67,35 +73,4 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
   }
 
   return { block: false };
-}
-
-function getRateLimitingForContext(context: Context, agent: Agent) {
-  if (!context.method) {
-    return undefined;
-  }
-
-  if (context.route) {
-    const rateLimiting = agent
-      .getConfig()
-      .getRateLimiting(context.method, context.route);
-
-    if (rateLimiting) {
-      return { config: rateLimiting, route: context.route };
-    }
-  }
-
-  if (context.url) {
-    const url = tryParseURL(context.url);
-    if (url && url.pathname) {
-      const rateLimiting = agent
-        .getConfig()
-        .getRateLimiting(context.method, url.pathname);
-
-      if (rateLimiting) {
-        return { config: rateLimiting, route: url.pathname };
-      }
-    }
-  }
-
-  return undefined;
 }

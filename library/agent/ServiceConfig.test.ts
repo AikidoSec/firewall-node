@@ -56,7 +56,7 @@ t.test("it works", async () => {
   t.same(config.isUserBlocked("567"), false);
 });
 
-t.test("it returns rate limiting", async () => {
+t.test("it returns endpoints", async () => {
   const config = new ServiceConfig(
     [
       {
@@ -81,18 +81,24 @@ t.test("it returns rate limiting", async () => {
     []
   );
 
-  t.same(config.getRateLimiting("GET", "/foo"), {
-    enabled: true,
-    maxRequests: 10,
-    windowSizeInMS: 1000,
-  });
-
-  t.same(config.getRateLimiting("GET", "/unknown"), undefined);
-  t.same(config.getRateLimiting("POST", "/foo"), {
-    enabled: false,
-    maxRequests: 0,
-    windowSizeInMS: 0,
-  });
+  t.same(config.getEndpoints(), [
+    {
+      method: "GET",
+      route: "/foo",
+      forceProtectionOff: false,
+      rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+    },
+    {
+      method: "POST",
+      route: "/foo",
+      forceProtectionOff: true,
+      rateLimiting: {
+        enabled: false,
+        maxRequests: 0,
+        windowSizeInMS: 0,
+      },
+    },
+  ]);
 });
 
 t.test("it checks if IP is allowed", async () => {

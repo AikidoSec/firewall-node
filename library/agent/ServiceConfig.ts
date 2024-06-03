@@ -33,19 +33,8 @@ export class ServiceConfig {
     return `${method}:${route}`;
   }
 
-  getRateLimiting(method: string, route: string | RegExp) {
-    const key = this.getKey(
-      method,
-      typeof route === "string" ? route : route.source
-    );
-
-    const rule = this.endpoints.get(key);
-
-    if (!rule || !rule.rateLimiting) {
-      return undefined;
-    }
-
-    return rule.rateLimiting;
+  getEndpoints() {
+    return Array.from(this.endpoints.values());
   }
 
   isAllowedIP(ip: string) {
