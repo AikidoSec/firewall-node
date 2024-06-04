@@ -15,6 +15,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -117,6 +118,7 @@ function getWrappers() {
     new Undici(),
     new Path(),
     new HTTPServer(),
+    new Hono(),
   ];
 }
 
