@@ -1,13 +1,13 @@
+import { Endpoint } from "../agent/Config";
 import { Context } from "../agent/Context";
-import { ServiceConfig } from "../agent/ServiceConfig";
 import { tryParseURL } from "./tryParseURL";
 
-export function matchEndpoint(context: Context, config: ServiceConfig) {
+type LimitedContext = Pick<Context, "url" | "method" | "route">;
+
+export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
   if (!context.method) {
     return undefined;
   }
-
-  const endpoints = config.getEndpoints();
 
   if (context.route) {
     const endpoint = endpoints.find(

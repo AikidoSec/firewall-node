@@ -1,6 +1,5 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
-import { matchEndpoint } from "../../helpers/matchEndpoint";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 
 type Result =
@@ -17,7 +16,7 @@ type Result =
     };
 
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const match = matchEndpoint(context, agent.getConfig());
+  const match = agent.getConfig().getEndpoints().fromContext(context);
 
   if (!match) {
     return { block: false };
