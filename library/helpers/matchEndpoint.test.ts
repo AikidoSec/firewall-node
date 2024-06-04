@@ -36,6 +36,16 @@ t.test("no URL and no route", async () => {
   );
 });
 
+t.test("no method", async () => {
+  t.same(
+    matchEndpoint(
+      { ...context, method: undefined },
+      new ServiceConfig([], 0, [], [])
+    ),
+    undefined
+  );
+});
+
 t.test("it returns undefined if nothing found", async () => {
   t.same(matchEndpoint(context, new ServiceConfig([], 0, [], [])), undefined);
 });

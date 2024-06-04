@@ -15,7 +15,7 @@ export function matchEndpoint(context: Context, config: ServiceConfig) {
         endpoint.method === context.method && endpoint.route === context.route
     );
 
-    if (endpoint && endpoint.rateLimiting && endpoint.rateLimiting.enabled) {
+    if (endpoint) {
       return { endpoint: endpoint, route: context.route };
     }
   }
