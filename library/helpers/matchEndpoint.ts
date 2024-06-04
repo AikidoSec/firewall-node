@@ -1,4 +1,3 @@
-import { end } from "tap";
 import { Context } from "../agent/Context";
 import { ServiceConfig } from "../agent/ServiceConfig";
 import { tryParseURL } from "./tryParseURL";
