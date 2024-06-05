@@ -38,11 +38,17 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4000/?search[$ne]=null", {
+        fetch("http://localhost:4000/search", {
+          method: "POST",
           signal: AbortSignal.timeout(5000),
+          body: JSON.stringify({ title: { $ne: null } }),
+          headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://localhost:4000/?search=title", {
+        fetch("http://localhost:4000/search", {
+          method: "POST",
           signal: AbortSignal.timeout(5000),
+          body: JSON.stringify({ title: "title" }),
+          headers: { "Content-Type": "application/json" },
         }),
       ]);
     })
@@ -83,11 +89,17 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4001/?search[$ne]=null", {
+        fetch("http://localhost:4001/search", {
+          method: "POST",
           signal: AbortSignal.timeout(5000),
+          body: JSON.stringify({ title: { $ne: null } }),
+          headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://localhost:4001/?search=title", {
+        fetch("http://localhost:4001/search", {
+          method: "POST",
           signal: AbortSignal.timeout(5000),
+          body: JSON.stringify({ title: "title" }),
+          headers: { "Content-Type": "application/json" },
         }),
       ])
     )
