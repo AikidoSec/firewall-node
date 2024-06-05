@@ -12,7 +12,10 @@ export function contextFromRequest(req: Request): Context {
 
   return {
     method: req.method,
-    remoteAddress: getIPAddressFromRequest(req),
+    remoteAddress: getIPAddressFromRequest({
+      headers: req.headers,
+      remoteAddress: req.socket?.remoteAddress,
+    }),
     body: req.body ? req.body : undefined,
     url: req.protocol + "://" + req.get("host") + req.originalUrl,
     headers: req.headers,

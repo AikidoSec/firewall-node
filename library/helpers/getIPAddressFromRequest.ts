@@ -1,7 +1,9 @@
-import type { IncomingMessage } from "http";
 import { isIP } from "net";
 
-export function getIPAddressFromRequest(req: IncomingMessage) {
+export function getIPAddressFromRequest(req: {
+  headers: Record<string, unknown>;
+  remoteAddress: string | undefined;
+}) {
   if (req.headers) {
     if (typeof req.headers["x-forwarded-for"] === "string" && trustProxy()) {
       const xForwardedFor = getClientIpFromXForwardedFor(
@@ -14,12 +16,8 @@ export function getIPAddressFromRequest(req: IncomingMessage) {
     }
   }
 
-  if (
-    req.socket &&
-    req.socket.remoteAddress &&
-    isIP(req.socket.remoteAddress)
-  ) {
-    return req.socket.remoteAddress;
+  if (req.remoteAddress && isIP(req.remoteAddress)) {
+    return req.remoteAddress;
   }
 
   return undefined;
