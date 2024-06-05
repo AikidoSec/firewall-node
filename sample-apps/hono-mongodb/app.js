@@ -109,7 +109,7 @@ main().then((app) => {
   serve({
     fetch: app.fetch,
     port: port,
+  }).on("listening", () => {
+    console.log(`Server is running on port ${port}`);
   });
-
-  console.log(`Server is running on port ${port}`);
 });
