@@ -1,7 +1,7 @@
-import { Agent } from "../../agent/Agent";
-import { Context } from "../../agent/Context";
-import { isLocalhostIP } from "../../helpers/isLocalhostIP";
-import { tryParseURL } from "../../helpers/tryParseURL";
+import { Agent } from "../agent/Agent";
+import { Context } from "../agent/Context";
+import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { tryParseURL } from "../helpers/tryParseURL";
 
 type Result =
   | {
