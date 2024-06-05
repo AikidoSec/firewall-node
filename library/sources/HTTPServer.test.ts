@@ -1,3 +1,13 @@
+import { wrap } from "../helpers/wrap";
+import * as pkg from "../helpers/isPackageInstalled";
+
+wrap(pkg, "isPackageInstalled", function wrap() {
+  return function wrap() {
+    // So that it thinks next is installed
+    return true;
+  };
+});
+
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
