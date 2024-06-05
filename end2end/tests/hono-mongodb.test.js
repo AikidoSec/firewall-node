@@ -36,15 +36,15 @@ t.test("it blocks in blocking mode", (t) => {
 
   // Wait for the server to start
   timeout(2000)
-    .then(() => {
+    .then((a) => {
       return Promise.all([
-        fetch("http://localhost:4000/search", {
+        fetch("http://127.0.0.1:4000/search", {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: { $ne: null } }),
           headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://localhost:4000/search", {
+        fetch("http://127.0.0.1:4000/search", {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: "title" }),
@@ -87,22 +87,22 @@ t.test("it does not block in dry mode", (t) => {
 
   // Wait for the server to start
   timeout(2000)
-    .then(() =>
-      Promise.all([
-        fetch("http://localhost:4001/search", {
+    .then((a) => {
+      return Promise.all([
+        fetch("http://127.0.0.1:4001/search", {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: { $ne: null } }),
           headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://localhost:4001/search", {
+        fetch("http://127.0.0.1:4001/search", {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: "title" }),
           headers: { "Content-Type": "application/json" },
         }),
-      ])
-    )
+      ]);
+    })
     .then(([noSQLInjection, normalSearch]) => {
       t.equal(noSQLInjection.status, 200);
       t.equal(normalSearch.status, 200);
