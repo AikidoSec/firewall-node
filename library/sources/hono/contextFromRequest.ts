@@ -16,9 +16,17 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const contentType = req.header("content-type");
   if (contentType) {
     if (isJsonContentType(contentType)) {
-      body = await req.json();
+      try {
+        body = await req.json();
+      } catch {
+        // Ignore
+      }
     } else if (contentType.startsWith("application/x-www-form-urlencoded")) {
-      body = await req.parseBody();
+      try {
+        body = await req.parseBody();
+      } catch {
+        // Ignore
+      }
     }
   }
 
