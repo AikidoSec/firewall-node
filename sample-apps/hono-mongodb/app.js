@@ -26,7 +26,7 @@ async function main() {
       name: "Name",
     });
 
-    return await next();
+    await next();
   });
 
   app.use("/posts/*", async (c, next) => {
@@ -39,7 +39,8 @@ async function main() {
       query.search ? query.search : undefined
     );
 
-    c.html(`
+    return c.html(
+      `
         <html lang="en">
           <body>
             <form action="/" method="GET">
@@ -57,22 +58,23 @@ async function main() {
             </form>
           </body>
         </html>
-      `);
+      `
+    );
   });
 
   app.post("/posts", async (c) => {
-    const body = await c.req.json();
+    const body = await c.req.parseBody();
     const post = new Post(body.title, new Date());
     await posts.persist(post);
 
-    c.redirect("/");
+    return c.redirect("/");
   });
 
   app.post("/search", async (c) => {
     const body = await c.req.json();
-    const homePagePosts = await posts.all(body);
+    const homePagePosts = await posts.all(body.title);
 
-    c.json(homePagePosts);
+    return c.json(homePagePosts);
   });
 
   app.get(
@@ -83,7 +85,7 @@ async function main() {
     (c) => {
       const { id } = c.req.param();
 
-      c.text(`Post ${id}`);
+      return c.text(`Post ${id}`);
     }
   );
 
