@@ -355,20 +355,26 @@ t.test("it flags colon if used as a command", async () => {
 });
 
 t.test("it does detect shell injection", async () => {
-  isShellInjection('/usr/bin/kill', "/usr/bin/kill");
+  isShellInjection("/usr/bin/kill", "/usr/bin/kill");
 });
 
 t.test("it does not detect shell injection with uppercase path", async () => {
-  isShellInjection('/usr/bIn/kill', "/usr/bIn/kill");
+  isShellInjection("/usr/bIn/kill", "/usr/bIn/kill");
 });
 
-t.test("it does not detect shell injection with uppercase command", async () => {
-  isShellInjection('/bin/CAT', "/bin/CAT");
-});
+t.test(
+  "it does not detect shell injection with uppercase command",
+  async () => {
+    isShellInjection("/bin/CAT", "/bin/CAT");
+  }
+);
 
-t.test("it does not detect shell injection with uppercase path and command", async () => {
-  isShellInjection('/bIn/LS -la', "/bIn/LS -la");
-});
+t.test(
+  "it does not detect shell injection with uppercase path and command",
+  async () => {
+    isShellInjection("/bIn/LS -la", "/bIn/LS -la");
+  }
+);
 
 function isShellInjection(command: string, userInput: string) {
   t.same(
