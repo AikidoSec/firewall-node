@@ -87,7 +87,7 @@ function byLength(a: string, b: string) {
 
 const commandsRegex = new RegExp(
   `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.slice().sort(byLength).join("|")}))`,
-  "g"
+  "gi"
 );
 
 function matchAll(str: string, regex: RegExp) {
