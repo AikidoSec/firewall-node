@@ -15,6 +15,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -40,7 +41,9 @@ function isDebugging() {
 function shouldBlock() {
   return (
     process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1"
+    process.env.AIKIDO_BLOCKING === "1" ||
+    process.env.AIKIDO_BLOCK === "true" ||
+    process.env.AIKIDO_BLOCK === "1"
   );
 }
 
@@ -117,6 +120,7 @@ function getWrappers() {
     new Undici(),
     new Path(),
     new HTTPServer(),
+    new Hono(),
   ];
 }
 

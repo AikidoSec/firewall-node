@@ -34,6 +34,7 @@ Aikido Runtime for Node.js 16+ is compatible with:
 ### Web frameworks
 
 * ✅ [Express](docs/express.md) 4.x
+* ✅ [Hono](docs/hono.md) 4.x
 
 ### Database drivers
 

@@ -45,6 +45,9 @@ export function contextFromRequest(
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     body: parsedBody,
-    remoteAddress: getIPAddressFromRequest(req),
+    remoteAddress: getIPAddressFromRequest({
+      headers: req.headers,
+      remoteAddress: req.socket?.remoteAddress,
+    }),
   };
 }
