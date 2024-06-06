@@ -318,6 +318,7 @@ export class Agent {
       /* c8 ignore next */
       hostname: hostname() || "",
       version: getAgentVersion(),
+      library: "runtime-node",
       /* c8 ignore next */
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
