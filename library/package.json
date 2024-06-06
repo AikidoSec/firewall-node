@@ -57,7 +57,7 @@
     "express-async-handler": "^1.2.0",
     "mongodb": "^6.3.0",
     "mysql": "^2.18.1",
-    "mysql2": "^3.9.2",
+    "mysql2": "^3.10.0",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "prettier": "^3.2.4",
