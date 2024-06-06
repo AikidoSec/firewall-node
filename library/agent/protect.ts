@@ -41,7 +41,9 @@ function isDebugging() {
 function shouldBlock() {
   return (
     process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1"
+    process.env.AIKIDO_BLOCKING === "1" ||
+    process.env.AIKIDO_BLOCK === "true" ||
+    process.env.AIKIDO_BLOCK === "1"
   );
 }
 
