@@ -362,12 +362,9 @@ t.test("it detects shell injection with uppercase path", async () => {
   isShellInjection("/usr/bIn/kill", "/usr/bIn/kill");
 });
 
-t.test(
-  "it detects shell injection with uppercase command",
-  async () => {
-    isShellInjection("/bin/CAT", "/bin/CAT");
-  }
-);
+t.test("it detects shell injection with uppercase command", async () => {
+  isShellInjection("/bin/CAT", "/bin/CAT");
+});
 
 t.test(
   "it detects shell injection with uppercase path and command",
