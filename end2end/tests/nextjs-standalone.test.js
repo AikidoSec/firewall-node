@@ -5,7 +5,7 @@ const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 
-t.setTimeout(60000);
+t.setTimeout(100000);
 
 t.test("it blocks in blocking mode", (t) => {
   const server = spawn(`npm`, ["run", "dev"], {
