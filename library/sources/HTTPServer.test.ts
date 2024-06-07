@@ -1,7 +1,7 @@
 import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
+import * as pkg from "../helpers/isNextjs";
 
-wrap(pkg, "isPackageInstalled", function wrap() {
+wrap(pkg, "isNextjs", function wrap() {
   return function wrap() {
     // So that it thinks next is installed
     return true;

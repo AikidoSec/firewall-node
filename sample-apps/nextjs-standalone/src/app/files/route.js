@@ -14,3 +14,15 @@ export async function GET(request) {
     files: files.split("\n").filter((line) => line),
   });
 }
+
+export async function POST(request) {
+  const body = await request.json();
+  const directory = body.path ?? ".";
+
+  // This is a command injection vulnerability. Do not use this in production.
+  const files = await execAsync(`ls '${directory}'`);
+
+  return NextResponse.json({
+    files: files.split("\n").filter((line) => line),
+  });
+}

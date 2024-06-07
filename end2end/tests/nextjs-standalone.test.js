@@ -39,14 +39,23 @@ t.test("it blocks in blocking mode", (t) => {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4000/files", {
+          method: "POST",
+          signal: AbortSignal.timeout(5000),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ path: ".';cat './package.json" }),
+        }),
         fetch("http://127.0.0.1:4000/files?path=docs", {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([shellInjection, noInjection]) => {
-      t.equal(shellInjection.status, 500);
+    .then(([shellInjectionGet, shellInjectionPost, noInjection]) => {
+      t.equal(shellInjectionGet.status, 500);
+      t.equal(shellInjectionPost.status, 500);
       t.equal(noInjection.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido runtime has blocked a shell injection/);
