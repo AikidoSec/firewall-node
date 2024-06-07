@@ -90,12 +90,12 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     throws(
       () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
-      "Aikido runtime has blocked a shell injection: child_process.exec(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.exec(...) originating from body.file.matches"
     );
 
     throws(
       () => execSync("ls `echo .`", (err, stdout, stderr) => {}),
-      "Aikido runtime has blocked a shell injection: child_process.execSync(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.execSync(...) originating from body.file.matches"
     );
   });
 
@@ -108,7 +108,7 @@ t.test("it works", async (t) => {
           { shell: true },
           (err, stdout, stderr) => {}
         ).unref(),
-      "Aikido runtime has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
     throws(
@@ -119,7 +119,7 @@ t.test("it works", async (t) => {
           { shell: "/bin/sh" },
           (err, stdout, stderr) => {}
         ).unref(),
-      "Aikido runtime has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
     throws(
@@ -130,7 +130,7 @@ t.test("it works", async (t) => {
           { shell: true },
           (err, stdout, stderr) => {}
         ),
-      "Aikido runtime has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
     );
 
     throws(
@@ -141,7 +141,7 @@ t.test("it works", async (t) => {
           { shell: "/bin/sh" },
           (err, stdout, stderr) => {}
         ),
-      "Aikido runtime has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
+      "Aikido firewall has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
     );
   });
 });
