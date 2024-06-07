@@ -22,7 +22,7 @@ Firewall autonomously protects your Node.js applications against:
 
 Firewall operates autonomously on the same server as your Node.js app to:
 
-* ✅ Secure your database similar to a web application firewall (WAF) with none of the infrastructure or cost.
+* ✅ Secure your database similar to a classic web application firewall (WAF) with none of the infrastructure or cost.
 * ✅ [Minimize impact](#performance) on production with a tiny footprint and no additional dependencies.
 * ✅ Support a developer-first local development and testing experience.
 * ✅ Save security operators and development teams hours rooting out vulnerabilities, testing exploits, and coding remediations.
