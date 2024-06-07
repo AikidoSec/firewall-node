@@ -5,10 +5,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: "18.x"
           registry-url: "https://registry.npmjs.org"
@@ -19,6 +22,6 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
       - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
       - run: make build
-      - run: cd build && npm publish --access public
+      - run: cd build && npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
