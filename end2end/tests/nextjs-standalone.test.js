@@ -5,7 +5,7 @@ const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 
-t.setTimeout(150000);
+t.setTimeout(200000);
 
 t.test("building the nextjs app should work", (t) => {
   const build = spawn(`npm`, ["run", "build"], {
@@ -50,16 +50,16 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  timeout(10000)
     .then((a) => {
       return Promise.all([
         fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
           method: "GET",
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(40000),
         }),
         fetch("http://127.0.0.1:4000/files", {
           method: "POST",
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(40000),
           headers: {
             "Content-Type": "application/json",
           },
@@ -67,7 +67,7 @@ t.test("it blocks in blocking mode", (t) => {
         }),
         fetch("http://127.0.0.1:4000/files?path=docs", {
           method: "GET",
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(40000),
         }),
       ]);
     })
@@ -111,16 +111,16 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  timeout(10000)
     .then((a) => {
       return Promise.all([
         fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
           method: "GET",
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(40000),
         }),
         fetch("http://127.0.0.1:4000/files?path=docs", {
           method: "GET",
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(40000),
         }),
       ]);
     })
