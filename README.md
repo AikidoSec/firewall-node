@@ -24,7 +24,7 @@ Firewall operates autonomously on the same server as your Node.js app to:
 
 * ✅ Secure your app like a classic web application firewall (WAF), but with none of the infrastructure or cost.
 * ✅ Rate limit specific API endpoints by IP or by user
-* ✅ Block specific users 
+* ✅ Allow you to block specific users manually
 
 ## Supported libraries and frameworks
 
