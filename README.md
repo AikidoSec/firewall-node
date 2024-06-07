@@ -5,7 +5,7 @@
 ![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Ffirewall?style=flat-square)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)
 
-Firewall is an embedded security engine for autonomously protecting Node.js apps against common and critical attacks.
+Firewall is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
 
 Firewall protects your Node.js apps by preventing situations, like user input containing dangerous strings, which allow injection, pollution, and path traversal attacks in the first place. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
 
