@@ -9,10 +9,17 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return undefined;
   }
 
+  const possible = endpoints.filter((endpoint) => {
+    if (endpoint.method === "*") {
+      return true;
+    }
+
+    return endpoint.method === context.method;
+  });
+
   if (context.route) {
-    const endpoint = endpoints.find(
-      (endpoint) =>
-        endpoint.method === context.method && endpoint.route === context.route
+    const endpoint = possible.find(
+      (endpoint) => endpoint.route === context.route
     );
 
     if (endpoint) {
@@ -30,17 +37,14 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return undefined;
   }
 
-  const endpoint = endpoints.find(
-    (endpoint) =>
-      endpoint.method === context.method && endpoint.route === url.pathname
-  );
+  const endpoint = possible.find((endpoint) => endpoint.route === url.pathname);
 
   if (endpoint) {
     return { endpoint: endpoint, route: endpoint.route };
   }
 
-  const wildcards = endpoints
-    .filter((endpoint) => endpoint.method === "*")
+  const wildcards = possible
+    .filter((endpoint) => endpoint.route.includes("*"))
     .sort((a, b) => {
       // Sort endpoints based on the amount of * in the route
       return b.route.split("*").length - a.route.split("*").length;

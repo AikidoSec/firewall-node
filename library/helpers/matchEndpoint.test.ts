@@ -145,3 +145,81 @@ t.test("it favors more specific wildcard", async () => {
     }
   );
 });
+
+t.test("it does not check whether rate limiting is enabled", async () => {
+  t.same(
+    matchEndpoint({ ...context, route: undefined }, [
+      {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: false, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: false,
+      },
+    ]),
+    {
+      endpoint: {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: false, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: false,
+      },
+      route: "/posts/3",
+    }
+  );
+});
+
+t.test("it does not check whether force protection is off", async () => {
+  t.same(
+    matchEndpoint({ ...context, route: undefined }, [
+      {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: true,
+      },
+    ]),
+    {
+      endpoint: {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: true,
+      },
+      route: "/posts/3",
+    }
+  );
+});
+
+t.test("it matches wildcard route with specific method", async () => {
+  t.same(
+    matchEndpoint(
+      {
+        ...context,
+        url: "http://localhost:4000/posts/3/comments/10",
+        route: undefined,
+        method: "POST",
+      },
+      [
+        {
+          method: "POST",
+          route: "/posts/*/comments/*",
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 10,
+            windowSizeInMS: 1000,
+          },
+          forceProtectionOff: false,
+        },
+      ]
+    ),
+    {
+      endpoint: {
+        method: "POST",
+        route: "/posts/*/comments/*",
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: false,
+      },
+      route: "/posts/*/comments/*",
+    }
+  );
+});
