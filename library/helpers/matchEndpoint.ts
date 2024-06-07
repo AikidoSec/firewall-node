@@ -35,7 +35,7 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
       endpoint.method === context.method && endpoint.route === url.pathname
   );
 
-  if (endpoint && endpoint.rateLimiting && endpoint.rateLimiting.enabled) {
+  if (endpoint) {
     return { endpoint: endpoint, route: endpoint.route };
   }
 
