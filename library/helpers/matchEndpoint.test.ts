@@ -223,3 +223,51 @@ t.test("it matches wildcard route with specific method", async () => {
     }
   );
 });
+
+t.test("it prefers specific route over wildcard", async () => {
+  t.same(
+    matchEndpoint(
+      {
+        ...context,
+        route: undefined,
+        method: "POST",
+        url: "http://localhost:4000/api/coach",
+      },
+      [
+        {
+          method: "*",
+          route: "/api/*",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 20,
+            windowSizeInMS: 60000,
+          },
+        },
+        {
+          method: "POST",
+          route: "/api/coach",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 100,
+            windowSizeInMS: 60000,
+          },
+        },
+      ]
+    ),
+    {
+      endpoint: {
+        method: "POST",
+        route: "/api/coach",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 100,
+          windowSizeInMS: 60000,
+        },
+      },
+      route: "/api/coach",
+    }
+  );
+});
