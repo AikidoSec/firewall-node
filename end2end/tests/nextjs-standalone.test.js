@@ -5,10 +5,28 @@ const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 
-t.setTimeout(100000);
+t.setTimeout(150000);
+
+t.test("building the nextjs app should work", (t) => {
+  const build = spawn(`npm`, ["run", "build"], {
+    cwd: pathToApp,
+  });
+
+  build.on("close", () => {
+    t.end();
+  });
+
+  build.on("error", (err) => {
+    t.fail(err.message);
+  });
+
+  build.stderr.on("data", (data) => {
+    t.fail(data.toString());
+  });
+});
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`npm`, ["run", "dev"], {
+  const server = spawn(`npm`, ["run", "start"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
     cwd: pathToApp,
   });
@@ -69,7 +87,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`npm`, ["run", "dev"], {
+  const server = spawn(`npm`, ["run", "start"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
     cwd: pathToApp,
   });
