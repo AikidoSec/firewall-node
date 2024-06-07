@@ -16,7 +16,7 @@ type Result =
     };
 
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const match = agent.getConfig().getEndpoints().fromContext(context);
+  const match = agent.getConfig().getEndpoint(context);
 
   if (!match) {
     return { block: false };

@@ -1,19 +1,16 @@
+import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
 import { Endpoint } from "./Config";
-import { Endpoints } from "./Endpoints";
 
 export class ServiceConfig {
-  private readonly endpoints: Endpoints;
   private blockedUserIds: Map<string, string> = new Map();
   private allowedIPAddresses: Map<string, string> = new Map();
 
   constructor(
-    endpoints: Endpoint[],
+    private readonly endpoints: Endpoint[],
     private readonly lastUpdatedAt: number,
     blockedUserIds: string[],
     allowedIPAddresses: string[]
   ) {
-    this.endpoints = new Endpoints(endpoints);
-
     blockedUserIds.forEach((userId) => {
       this.blockedUserIds.set(userId, userId);
     });
@@ -23,8 +20,8 @@ export class ServiceConfig {
     });
   }
 
-  getEndpoints() {
-    return this.endpoints;
+  getEndpoint(context: LimitedContext) {
+    return matchEndpoint(context, this.endpoints);
   }
 
   isAllowedIP(ip: string) {

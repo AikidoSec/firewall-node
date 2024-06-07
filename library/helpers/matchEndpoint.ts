@@ -2,7 +2,7 @@ import { Endpoint } from "../agent/Config";
 import { Context } from "../agent/Context";
 import { tryParseURL } from "./tryParseURL";
 
-type LimitedContext = Pick<Context, "url" | "method" | "route">;
+export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
 export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
   if (!context.method) {

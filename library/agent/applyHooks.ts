@@ -161,7 +161,7 @@ function wrapWithoutArgumentModification(
         const context = getContext();
 
         if (context) {
-          const match = agent.getConfig().getEndpoints().fromContext(context);
+          const match = agent.getConfig().getEndpoint(context);
 
           if (match && match.endpoint.forceProtectionOff) {
             return original.apply(
