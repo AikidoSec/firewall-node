@@ -50,4 +50,4 @@ jobs:
           file: ./library/.tap/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/runtime-node
+          slug: AikidoSec/firewall-node

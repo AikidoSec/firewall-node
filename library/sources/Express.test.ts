@@ -287,7 +287,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -367,7 +367,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -404,7 +404,7 @@ t.test("it rate limits by IP", async () => {
   t.same(res2.statusCode, 429);
   t.same(
     res2.text,
-    "You are rate limited by Aikido runtime. (Your IP: 1.2.3.4)"
+    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
   );
 
   await sleep(2000);

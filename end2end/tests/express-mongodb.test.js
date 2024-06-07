@@ -50,7 +50,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(noSQLInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -95,7 +95,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(noSQLInjection.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -162,7 +162,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -224,7 +224,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
