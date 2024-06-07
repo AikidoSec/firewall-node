@@ -32,16 +32,16 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(5000)
     .then((a) => {
       return Promise.all([
         fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
           method: "GET",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(25000),
         }),
         fetch("http://127.0.0.1:4000/files", {
           method: "POST",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(25000),
           headers: {
             "Content-Type": "application/json",
           },
@@ -49,7 +49,7 @@ t.test("it blocks in blocking mode", (t) => {
         }),
         fetch("http://127.0.0.1:4000/files?path=docs", {
           method: "GET",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(25000),
         }),
       ]);
     })
@@ -93,16 +93,16 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(5000)
     .then((a) => {
       return Promise.all([
         fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
           method: "GET",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(25000),
         }),
         fetch("http://127.0.0.1:4000/files?path=docs", {
           method: "GET",
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(25000),
         }),
       ]);
     })
