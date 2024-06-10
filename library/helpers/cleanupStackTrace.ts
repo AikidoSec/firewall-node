@@ -1,4 +1,4 @@
-import { resolve, sep } from "path";
+import { sep } from "path";
 
 export function cleanupStackTrace(stack: string, libraryRoot: string): string {
   return stack
@@ -16,9 +16,9 @@ export function cleanupStackTrace(stack: string, libraryRoot: string): string {
         return true;
       }
 
-      const isPartOfRuntime = path.startsWith(libraryRoot);
+      const isPartOfFirewall = path.startsWith(libraryRoot);
 
-      return !isPartOfRuntime;
+      return !isPartOfFirewall;
     })
     .join("\n");
 }

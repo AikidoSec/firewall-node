@@ -214,12 +214,19 @@ export class Agent {
     if (response.success) {
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
-          response.endpoints,
+          response.endpoints && Array.isArray(response.endpoints)
+            ? response.endpoints
+            : [],
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
             : Date.now(),
-          response.blockedUserIds ? response.blockedUserIds : [],
-          response.allowedIPAddresses ? response.allowedIPAddresses : []
+          response.blockedUserIds && Array.isArray(response.blockedUserIds)
+            ? response.blockedUserIds
+            : [],
+          response.allowedIPAddresses &&
+          Array.isArray(response.allowedIPAddresses)
+            ? response.allowedIPAddresses
+            : []
         );
       }
 

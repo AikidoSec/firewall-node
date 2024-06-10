@@ -132,6 +132,8 @@ t.test("it decodes JWTs", async () => {
       sub: ".token<jwt>",
       "1234567890": ".token<jwt>.sub",
       $ne: ".token<jwt>.username",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ":
+        ".token",
     })
   );
 });
@@ -139,3 +141,13 @@ t.test("it decodes JWTs", async () => {
 function fromObj(obj: Record<string, string>): Map<string, string> {
   return new Map(Object.entries(obj));
 }
+
+t.test("it also adds the JWT itself as string", async () => {
+  t.same(
+    extractStringsFromUserInput({ header: "/;ping%20localhost;.e30=." }),
+    fromObj({
+      header: ".",
+      "/;ping%20localhost;.e30=.": ".header",
+    })
+  );
+});

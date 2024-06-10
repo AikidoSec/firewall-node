@@ -27,13 +27,13 @@ export function wrapRequestHandler(
       }
 
       if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return c.text("You are blocked by Aikido runtime.", 403);
+        return c.text("You are blocked by Aikido firewall.", 403);
       }
 
       const result = shouldRateLimitRequest(context, agent);
 
       if (result.block) {
-        let message = "You are rate limited by Aikido runtime.";
+        let message = "You are rate limited by Aikido firewall.";
         if (result.trigger === "ip") {
           message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }

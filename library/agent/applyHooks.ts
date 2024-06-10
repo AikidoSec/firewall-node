@@ -160,20 +160,17 @@ function wrapWithoutArgumentModification(
         const args = Array.from(arguments);
         const context = getContext();
 
-        if (
-          context &&
-          context.method &&
-          context.route &&
-          !agent
-            .getConfig()
-            .shouldProtectEndpoint(context.method, context.route)
-        ) {
-          return original.apply(
-            // @ts-expect-error We don't now the type of this
-            this,
-            // eslint-disable-next-line prefer-rest-params
-            arguments
-          );
+        if (context) {
+          const match = agent.getConfig().getEndpoint(context);
+
+          if (match && match.endpoint.forceProtectionOff) {
+            return original.apply(
+              // @ts-expect-error We don't now the type of this
+              this,
+              // eslint-disable-next-line prefer-rest-params
+              arguments
+            );
+          }
         }
 
         const start = performance.now();
@@ -224,7 +221,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido runtime has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
+              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
             );
           }
         }

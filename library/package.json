@@ -1,8 +1,8 @@
 {
-  "name": "@aikidosec/runtime",
+  "name": "@aikidosec/firewall",
   "version": "0.0.0",
-  "description": "Aikido runtime protects your application against NoSQL injections and more",
-  "repository": "https://github.com/AikidoSec/runtime-node",
+  "description": "Aikido firewall protects your application against NoSQL injections and more",
+  "repository": "https://github.com/AikidoSec/firewall-node",
   "keywords": [
     "security",
     "nosql",
@@ -19,6 +19,7 @@
     "firewall",
     "aikido",
     "guard",
+    "firewall",
     "runtime",
     "protection",
     "threats",
