@@ -5,6 +5,7 @@ export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
+  library: string;
   packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
