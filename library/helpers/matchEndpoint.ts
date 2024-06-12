@@ -31,7 +31,9 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return undefined;
   }
 
-  const url = tryParseURL(context.url);
+  const url = tryParseURL(
+    context.url.startsWith("/") ? `http://localhost${context.url}` : context.url
+  );
 
   if (!url || !url.pathname) {
     return undefined;

@@ -81,6 +81,28 @@ t.test("it returns endpoint based on url", async () => {
   );
 });
 
+t.test("it returns endpoint based on relative url", async () => {
+  t.same(
+    matchEndpoint({ ...context, route: undefined, url: "/posts/3" }, [
+      {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: false,
+      },
+    ]),
+    {
+      endpoint: {
+        method: "POST",
+        route: "/posts/3",
+        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        forceProtectionOff: false,
+      },
+      route: "/posts/3",
+    }
+  );
+});
+
 t.test("it returns endpoint based on wildcard", async () => {
   t.same(
     matchEndpoint({ ...context, route: undefined }, [
