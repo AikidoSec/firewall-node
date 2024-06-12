@@ -6,6 +6,7 @@ import type {
 } from "http";
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
+import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
@@ -48,6 +49,10 @@ function callListenerWithContext(
   body: string
 ) {
   const context = contextFromRequest(req, body, module);
+
+  if (context.route && context.method) {
+    agent.onRouteExecute(context.method, context.route);
+  }
 
   return runWithContext(context, () => {
     res.on("finish", () => {

@@ -17,14 +17,12 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return endpoint.method === context.method;
   });
 
-  if (context.route) {
-    const endpoint = possible.find(
-      (endpoint) => endpoint.route === context.route
-    );
+  const endpoint = possible.find(
+    (endpoint) => endpoint.route === context.route
+  );
 
-    if (endpoint) {
-      return { endpoint: endpoint, route: context.route };
-    }
+  if (endpoint) {
+    return { endpoint: endpoint, route: endpoint.route };
   }
 
   if (!context.url) {
@@ -35,14 +33,8 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     context.url.startsWith("/") ? `http://localhost${context.url}` : context.url
   );
 
-  if (!url || !url.pathname) {
+  if (!url) {
     return undefined;
-  }
-
-  const endpoint = possible.find((endpoint) => endpoint.route === url.pathname);
-
-  if (endpoint) {
-    return { endpoint: endpoint, route: endpoint.route };
   }
 
   const wildcards = possible

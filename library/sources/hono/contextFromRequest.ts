@@ -1,16 +1,12 @@
 import type { Context as HonoContext } from "hono";
 import { Context } from "../../agent/Context";
+import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { isJsonContentType } from "../../helpers/isJsonContentType";
 import { parse } from "../../helpers/parseCookies";
 
 export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const { req } = c;
-
-  let route = undefined;
-  if (req.routePath) {
-    route = req.routePath;
-  }
 
   let body = undefined;
   const contentType = req.header("content-type");
@@ -46,6 +42,6 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
     /* c8 ignore next */
     cookies: cookieHeader ? parse(cookieHeader) : {},
     source: "hono",
-    route: route,
+    route: buildRouteFromURL(req.url),
   };
 }

@@ -1,5 +1,6 @@
 import type { IncomingMessage } from "http";
 import { Context } from "../../agent/Context";
+import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 
@@ -39,7 +40,7 @@ export function contextFromRequest(
     url: req.url,
     method: req.method,
     headers: req.headers,
-    route: undefined,
+    route: req.url ? buildRouteFromURL(req.url) : undefined,
     query: queryObject,
     source: `${module}.createServer`,
     routeParams: {},

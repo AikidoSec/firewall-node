@@ -421,6 +421,10 @@ export class Agent {
     this.routes.addRoute(method, path);
   }
 
+  getRoutes() {
+    return this.routes;
+  }
+
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);

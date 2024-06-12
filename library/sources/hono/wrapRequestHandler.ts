@@ -12,10 +12,6 @@ export function wrapRequestHandler(
   return async (c, next) => {
     const context = await contextFromRequest(c);
 
-    if (context.route) {
-      agent.onRouteExecute(c.req.method, context.route);
-    }
-
     return await runWithContext(context, async () => {
       // Even though we already have the context, we need to get it again
       // The context from `contextFromRequest` will never return a user

@@ -73,6 +73,7 @@ t.test("it wraps the createServer function of http module", async () => {
           method: "GET",
           headers: { host: "localhost:3314", connection: "close" },
           query: {},
+          route: "/",
           source: "http.createServer",
           routeParams: {},
           cookies: {},
@@ -123,6 +124,7 @@ t.test("it wraps the createServer function of https module", async () => {
           method: "GET",
           headers: { host: "localhost:3315", connection: "close" },
           query: {},
+          route: "/",
           source: "https.createServer",
           routeParams: {},
           cookies: {},
@@ -154,6 +156,38 @@ t.test("it parses query parameters", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.query, { foo: "bar", baz: "qux" });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it discovers routes", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3318, () => {
+      fetch({
+        url: new URL("http://localhost:3318/foo/bar"),
+        method: "GET",
+        headers: {},
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        t.same(
+          agent
+            .getRoutes()
+            .asArray()
+            .find((route) => route.path === "/foo/bar"),
+          {
+            path: "/foo/bar",
+            method: "GET",
+          }
+        );
         server.close();
         resolve();
       });
