@@ -1,16 +1,11 @@
-import type {
-  IncomingMessage,
-  OutgoingMessage,
-  RequestListener,
-  ServerResponse,
-} from "http";
+import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
-import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
+import { routeExists } from "./routeExists";
 
 export function createRequestListener(
   listener: Function,
@@ -50,13 +45,19 @@ function callListenerWithContext(
 ) {
   const context = contextFromRequest(req, body, module);
 
-  if (context.route && context.method) {
-    agent.onRouteExecute(context.method, context.route);
-  }
-
   return runWithContext(context, () => {
     res.on("finish", () => {
       const context = getContext();
+
+      if (
+        context &&
+        context.route &&
+        context.method &&
+        routeExists(res.statusCode)
+      ) {
+        agent.onRouteExecute(context.method, context.route);
+      }
+
       agent.getInspectionStatistics().onRequest();
       if (context && context.attackDetected) {
         agent.getInspectionStatistics().onDetectedAttack({
