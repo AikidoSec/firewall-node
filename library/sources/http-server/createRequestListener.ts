@@ -5,7 +5,7 @@ import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
-import { routeExists } from "./routeExists";
+import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
 export function createRequestListener(
   listener: Function,
@@ -53,7 +53,11 @@ function callListenerWithContext(
         context &&
         context.route &&
         context.method &&
-        routeExists(res.statusCode)
+        shouldDiscoverRoute({
+          statusCode: res.statusCode,
+          route: context.route,
+          method: context.method,
+        })
       ) {
         agent.onRouteExecute(context.method, context.route);
       }
