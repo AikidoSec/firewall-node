@@ -171,9 +171,9 @@ t.test("it discovers routes", async () => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3318, () => {
+    server.listen(3340, () => {
       fetch({
-        url: new URL("http://localhost:3318/foo/bar"),
+        url: new URL("http://localhost:3340/foo/bar"),
         method: "GET",
         headers: {},
         timeoutInMS: 500,
@@ -194,6 +194,38 @@ t.test("it discovers routes", async () => {
     });
   });
 });
+
+t.test(
+  "it does not discover route if server response is error code",
+  async () => {
+    const http = require("http");
+    const server = http.createServer((req, res) => {
+      res.statusCode = 404;
+      res.end();
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3341, () => {
+        fetch({
+          url: new URL("http://localhost:3341/not-found"),
+          method: "GET",
+          headers: {},
+          timeoutInMS: 500,
+        }).then(() => {
+          t.equal(
+            agent
+              .getRoutes()
+              .asArray()
+              .find((route) => route.path === "/not-found"),
+            undefined
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
 
 t.test("it parses cookies", async () => {
   const http = require("http");
