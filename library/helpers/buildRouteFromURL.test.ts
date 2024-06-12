@@ -113,3 +113,7 @@ t.test("it ignores strings", async () => {
 t.test("it replaces email addresses", async () => {
   t.same(buildRouteFromURL("/login/john.doe@acme.com"), "/login/:email");
 });
+
+t.test("it replaces IP addresses", async () => {
+  t.same(buildRouteFromURL("/block/1.2.3.4"), "/block/:ip");
+});
