@@ -29,6 +29,8 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return undefined;
   }
 
+  // req.url is relative, so we need to prepend a host to make it absolute
+  // We just match the pathname, we don't use the host for matching
   const url = tryParseURL(
     context.url.startsWith("/") ? `http://localhost${context.url}` : context.url
   );

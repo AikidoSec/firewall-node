@@ -12,6 +12,8 @@ export function contextFromRequest(
   let parsedURL: URL | undefined = undefined;
   if (req.url) {
     try {
+      // req.url is relative, so we need to prepend a host to make it absolute
+      // We just need the searchParams, we don't use the host
       parsedURL = new URL(
         req.url.startsWith("/") ? `http://localhost${req.url}` : req.url
       );
