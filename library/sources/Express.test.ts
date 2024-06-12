@@ -322,7 +322,7 @@ t.test("it adds context from request for route with params", async (t) => {
     method: "GET",
     routeParams: { id: "123" },
     source: "express",
-    route: "/posts/:id",
+    route: "/posts/:number",
   });
 });
 
@@ -335,28 +335,28 @@ t.test("it deals with regex routes", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
-    route: "/.*fly$",
+    route: "/butterfly",
   });
 });
 
 t.test("it takes the path from the arguments for middleware", async () => {
   const response = await request(getApp()).get("/api/foo");
 
-  t.match(response.body, { route: undefined });
+  t.match(response.body, { route: "/api/foo" });
 });
 
 t.test("route handler with middleware", async () => {
   const response = await request(getApp()).get("/middleware/123");
 
   const middlewareContext = JSON.parse(response.header["x-context-middleware"]);
-  t.match(middlewareContext, { route: undefined });
+  t.match(middlewareContext, { route: "/middleware/:number" });
   t.match(middlewareContext.routeParams, { otherParamId: "123" });
 
   const routeMiddlewareContext = JSON.parse(
     response.header["x-context-route-middleware"]
   );
-  t.match(routeMiddlewareContext, { route: "/middleware/:id" });
-  t.match(response.body, { route: "/middleware/:id" });
+  t.match(routeMiddlewareContext, { route: "/middleware/:number" });
+  t.match(response.body, { route: "/middleware/:number" });
 });
 
 t.test("detect attack in middleware", async () => {

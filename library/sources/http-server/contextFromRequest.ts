@@ -1,27 +1,19 @@
 import type { IncomingMessage } from "http";
 import { Context } from "../../agent/Context";
+import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
+import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 
 export function contextFromRequest(
   req: IncomingMessage,
   body: string | undefined,
   module: string
 ): Context {
-  let parsedURL: URL | undefined = undefined;
-  if (req.url) {
-    try {
-      parsedURL = new URL(
-        req.url.startsWith("/") ? `http://localhost${req.url}` : req.url
-      );
-    } catch (e) {
-      // Ignore
-    }
-  }
-
   const queryObject: Record<string, string> = {};
-  if (parsedURL) {
-    for (const [key, value] of parsedURL.searchParams.entries()) {
+  if (req.url) {
+    const params = tryParseURLParams(req.url);
+    for (const [key, value] of params.entries()) {
       queryObject[key] = value;
     }
   }
@@ -39,7 +31,7 @@ export function contextFromRequest(
     url: req.url,
     method: req.method,
     headers: req.headers,
-    route: undefined,
+    route: req.url ? buildRouteFromURL(req.url) : undefined,
     query: queryObject,
     source: `${module}.createServer`,
     routeParams: {},

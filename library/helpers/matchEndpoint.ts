@@ -1,6 +1,6 @@
 import { Endpoint } from "../agent/Config";
 import { Context } from "../agent/Context";
-import { tryParseURL } from "./tryParseURL";
+import { tryParseURLPath } from "./tryParseURLPath";
 
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
@@ -17,30 +17,24 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return endpoint.method === context.method;
   });
 
-  if (context.route) {
-    const endpoint = possible.find(
-      (endpoint) => endpoint.route === context.route
-    );
+  const endpoint = possible.find(
+    (endpoint) => endpoint.route === context.route
+  );
 
-    if (endpoint) {
-      return { endpoint: endpoint, route: context.route };
-    }
+  if (endpoint) {
+    return { endpoint: endpoint, route: endpoint.route };
   }
 
   if (!context.url) {
     return undefined;
   }
 
-  const url = tryParseURL(context.url);
+  // req.url is relative, so we need to prepend a host to make it absolute
+  // We just match the pathname, we don't use the host for matching
+  const path = tryParseURLPath(context.url);
 
-  if (!url || !url.pathname) {
+  if (!path) {
     return undefined;
-  }
-
-  const endpoint = possible.find((endpoint) => endpoint.route === url.pathname);
-
-  if (endpoint) {
-    return { endpoint: endpoint, route: endpoint.route };
   }
 
   const wildcards = possible
@@ -56,7 +50,7 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
       "i"
     );
 
-    if (regex.test(url.pathname)) {
+    if (regex.test(path)) {
       return { endpoint: wildcard, route: wildcard.route };
     }
   }
