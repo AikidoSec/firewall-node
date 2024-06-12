@@ -1,6 +1,6 @@
 import { Endpoint } from "../agent/Config";
 import { Context } from "../agent/Context";
-import { tryParseURL } from "./tryParseURL";
+import { tryParseURLPath } from "./tryParseURLPath";
 
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
@@ -31,11 +31,9 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
 
   // req.url is relative, so we need to prepend a host to make it absolute
   // We just match the pathname, we don't use the host for matching
-  const url = tryParseURL(
-    context.url.startsWith("/") ? `http://localhost${context.url}` : context.url
-  );
+  const path = tryParseURLPath(context.url);
 
-  if (!url) {
+  if (!path) {
     return undefined;
   }
 
@@ -52,7 +50,7 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
       "i"
     );
 
-    if (regex.test(url.pathname)) {
+    if (regex.test(path)) {
       return { endpoint: wildcard, route: wildcard.route };
     }
   }

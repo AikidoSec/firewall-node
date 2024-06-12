@@ -3,28 +3,17 @@ import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
+import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 
 export function contextFromRequest(
   req: IncomingMessage,
   body: string | undefined,
   module: string
 ): Context {
-  let parsedURL: URL | undefined = undefined;
-  if (req.url) {
-    try {
-      // req.url is relative, so we need to prepend a host to make it absolute
-      // We just need the searchParams, we don't use the host
-      parsedURL = new URL(
-        req.url.startsWith("/") ? `http://localhost${req.url}` : req.url
-      );
-    } catch (e) {
-      // Ignore
-    }
-  }
-
   const queryObject: Record<string, string> = {};
-  if (parsedURL) {
-    for (const [key, value] of parsedURL.searchParams.entries()) {
+  if (req.url) {
+    const params = tryParseURLParams(req.url);
+    for (const [key, value] of params.entries()) {
       queryObject[key] = value;
     }
   }
