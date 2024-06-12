@@ -109,3 +109,7 @@ t.test("it ignores invalid UUIDs", async () => {
 t.test("it ignores strings", async () => {
   t.same(buildRouteFromURL("/posts/abc"), "/posts/abc");
 });
+
+t.test("it replaces email addresses", async () => {
+  t.same(buildRouteFromURL("/login/john.doe@acme.com"), "/login/:email");
+});
