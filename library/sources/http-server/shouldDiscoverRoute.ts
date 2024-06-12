@@ -29,11 +29,7 @@ export function shouldDiscoverRoute({
     // Remove the dot from the extension
     extension = extension.slice(1);
 
-    if (
-      extension !== "html" &&
-      extension.length >= 2 &&
-      extension.length <= 4
-    ) {
+    if (extension.length >= 2 && extension.length <= 4) {
       return false;
     }
   }

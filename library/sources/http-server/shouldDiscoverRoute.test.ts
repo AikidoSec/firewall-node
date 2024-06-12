@@ -105,15 +105,7 @@ t.test("it allows html files", async () => {
       route: "/index.html",
       method: "GET",
     }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 200,
-      route: "/about.html",
-      method: "GET",
-    }),
-    true
+    false
   );
   t.same(
     shouldDiscoverRoute({
@@ -121,7 +113,7 @@ t.test("it allows html files", async () => {
       route: "/contact.html",
       method: "GET",
     }),
-    true
+    false
   );
 });
 
