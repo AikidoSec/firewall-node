@@ -63,6 +63,20 @@ const commands = [
   "uniq",
   "wc",
   "ls",
+  "env",
+  "ps",
+  "who",
+  "whoami",
+  "id",
+  "w",
+  "df",
+  "du",
+  "pwd",
+  "uname",
+  "hostname",
+  "netstat",
+  "passwd",
+  "arch",
 
   // Colon is a null command
   // it might occur in URLs that are passed as arguments to a binary
