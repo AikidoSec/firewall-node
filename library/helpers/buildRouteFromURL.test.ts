@@ -112,10 +112,19 @@ t.test("it ignores strings", async () => {
 
 t.test("it replaces email addresses", async () => {
   t.same(buildRouteFromURL("/login/john.doe@acme.com"), "/login/:email");
+  t.same(buildRouteFromURL("/login/john.doe+alias@acme.com"), "/login/:email");
 });
 
 t.test("it replaces IP addresses", async () => {
   t.same(buildRouteFromURL("/block/1.2.3.4"), "/block/:ip");
+  t.same(
+    buildRouteFromURL("/block/2001:2:ffff:ffff:ffff:ffff:ffff:ffff"),
+    "/block/:ip"
+  );
+  t.same(buildRouteFromURL("/block/64:ff9a::255.255.255.255"), "/block/:ip");
+  t.same(buildRouteFromURL("/block/100::"), "/block/:ip");
+  t.same(buildRouteFromURL("/block/fec0::"), "/block/:ip");
+  t.same(buildRouteFromURL("/block/227.202.96.196"), "/block/:ip");
 });
 
 function generateHash(type: string) {

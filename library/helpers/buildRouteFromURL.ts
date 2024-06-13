@@ -30,23 +30,26 @@ export function buildRouteFromURL(url: string) {
 }
 
 function replaceURLSegmentWithParam(segment: string) {
-  if (NUMBER.test(segment)) {
+  const charCode = segment.charCodeAt(0);
+  const startsWithNumber = charCode >= 48 && charCode <= 57; // ASCII codes for '0' to '9'
+
+  if (startsWithNumber && NUMBER.test(segment)) {
     return ":number";
   }
 
-  if (UUID.test(segment)) {
+  if (segment.includes("-") && UUID.test(segment)) {
     return ":uuid";
   }
 
-  if (DATE.test(segment)) {
+  if (startsWithNumber && DATE.test(segment)) {
     return ":date";
   }
 
-  if (EMAIL.test(segment)) {
+  if (segment.includes("@") && EMAIL.test(segment)) {
     return ":email";
   }
 
-  if (isIP(segment)) {
+  if ((segment.includes(":") || segment.includes(".")) && isIP(segment)) {
     return ":ip";
   }
 
