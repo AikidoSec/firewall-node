@@ -146,3 +146,84 @@ t.test("it allows files with extension of 5 or more characters", async () => {
     true
   );
 });
+
+t.test('it ignores files that end with ".properties"', async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/file.properties",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/directory/file.properties",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it ignores files or directories that start with dot", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/.env",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/.aws/credentials",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/directory/.gitconfig",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/hello/.gitignore/file",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it allows .well-known directory", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/.well-known",
+      method: "GET",
+    }),
+    true
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/.well-known/change-password",
+      method: "GET",
+    }),
+    true
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/.well-known/security.txt",
+      method: "GET",
+    }),
+    false
+  );
+});
