@@ -3,6 +3,8 @@ import { extname } from "path";
 const NOT_FOUND = 404;
 const METHOD_NOT_ALLOWED = 405;
 const ERROR_CODES = [NOT_FOUND, METHOD_NOT_ALLOWED];
+const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
+const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp"];
 
 export function shouldDiscoverRoute({
   statusCode,
@@ -13,9 +15,7 @@ export function shouldDiscoverRoute({
   route: string;
   method: string;
 }) {
-  const excludedMethods = ["OPTIONS", "HEAD"];
-
-  if (excludedMethods.includes(method)) {
+  if (EXCLUDED_METHODS.includes(method)) {
     return false;
   }
 
@@ -23,7 +23,18 @@ export function shouldDiscoverRoute({
     return false;
   }
 
-  let extension = extname(route);
+  const segments = route.split("/");
+
+  // e.g. /path/to/.file or /.directory/file
+  if (segments.some(isDotFile)) {
+    return false;
+  }
+
+  return segments.every(isAllowedExtension);
+}
+
+function isAllowedExtension(segment: string) {
+  let extension = extname(segment);
 
   if (extension && extension.startsWith(".")) {
     // Remove the dot from the extension
@@ -32,7 +43,20 @@ export function shouldDiscoverRoute({
     if (extension.length >= 2 && extension.length <= 4) {
       return false;
     }
+
+    if (IGNORE_EXTENSIONS.includes(extension)) {
+      return false;
+    }
   }
 
   return true;
+}
+
+function isDotFile(segment: string) {
+  // See https://www.rfc-editor.org/rfc/rfc8615
+  if (segment === ".well-known") {
+    return false;
+  }
+
+  return segment.startsWith(".") && segment.length > 1;
 }
