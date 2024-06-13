@@ -7,6 +7,7 @@ const NUMBER = /^\d+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}$/;
 const EMAIL =
   /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 
 export function buildRouteFromURL(url: string) {
   const path = tryParseURLPath(url);
@@ -47,6 +48,10 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (isIP(segment)) {
     return ":ip";
+  }
+
+  if (HASH.test(segment)) {
+    return ":hash";
   }
 
   return segment;

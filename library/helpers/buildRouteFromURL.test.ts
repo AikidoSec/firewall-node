@@ -117,3 +117,14 @@ t.test("it replaces email addresses", async () => {
 t.test("it replaces IP addresses", async () => {
   t.same(buildRouteFromURL("/block/1.2.3.4"), "/block/:ip");
 });
+
+function generateHash(type: string) {
+  return require("crypto").createHash(type).update("test").digest("hex");
+}
+
+t.test("it replaces hashes", async () => {
+  t.same(buildRouteFromURL(`/files/${generateHash("md5")}`), "/files/:hash");
+  t.same(buildRouteFromURL(`/files/${generateHash("sha1")}`), "/files/:hash");
+  t.same(buildRouteFromURL(`/files/${generateHash("sha256")}`), "/files/:hash");
+  t.same(buildRouteFromURL(`/files/${generateHash("sha512")}`), "/files/:hash");
+});
