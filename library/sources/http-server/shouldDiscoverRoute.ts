@@ -30,11 +30,7 @@ export function shouldDiscoverRoute({
     return false;
   }
 
-  if (!segments.every(isAllowedExtension)) {
-    return false;
-  }
-
-  return true;
+  return segments.every(isAllowedExtension);
 }
 
 function isAllowedExtension(segment: string) {
