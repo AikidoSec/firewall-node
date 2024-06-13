@@ -201,6 +201,25 @@ t.test("it ignores files or directories that start with dot", async () => {
   );
 });
 
+t.test("it ignores files that end with php (used as directory", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/file.php",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/app_dev.php/_profiler/phpinfo",
+      method: "GET",
+    }),
+    false
+  );
+});
+
 t.test("it allows .well-known directory", async () => {
   t.same(
     shouldDiscoverRoute({

@@ -23,7 +23,22 @@ export function shouldDiscoverRoute({
     return false;
   }
 
-  let extension = extname(route);
+  const segments = route.split("/");
+
+  // e.g. /path/to/.file or /.directory/file
+  if (segments.some(isDotFile)) {
+    return false;
+  }
+
+  if (!segments.every(isAllowedExtension)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isAllowedExtension(segment: string) {
+  let extension = extname(segment);
 
   if (extension && extension.startsWith(".")) {
     // Remove the dot from the extension
@@ -36,12 +51,6 @@ export function shouldDiscoverRoute({
     if (IGNORE_EXTENSIONS.includes(extension)) {
       return false;
     }
-  }
-
-  // e.g. /path/to/.file or /.directory/file
-  const segmentWithDot = route.split("/").find(isDotFile);
-  if (segmentWithDot) {
-    return false;
   }
 
   return true;
