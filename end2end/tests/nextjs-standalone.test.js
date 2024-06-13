@@ -5,7 +5,7 @@ const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 
-t.setTimeout(200000);
+t.setTimeout(100000);
 
 t.test("building the nextjs app should work", (t) => {
   const build = spawn(`npm`, ["run", "build"], {
@@ -26,10 +26,20 @@ t.test("building the nextjs app should work", (t) => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`npm`, ["run", "start"], {
-    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
-    cwd: pathToApp,
-  });
+  const server = spawn(
+    `node`,
+    [".next/standalone/sample-apps/nextjs-standalone/server.js"],
+    {
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCKING: "true",
+        PORT: 4000,
+        NODE_OPTIONS: "-r @aikidosec/runtime",
+      },
+      cwd: pathToApp,
+    }
+  );
 
   server.on("close", () => {
     t.end();
@@ -50,24 +60,24 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(10000)
+  timeout(5000)
     .then((a) => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
+        fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
           method: "GET",
-          signal: AbortSignal.timeout(40000),
+          signal: AbortSignal.timeout(30000),
         }),
         fetch("http://127.0.0.1:4000/files", {
           method: "POST",
-          signal: AbortSignal.timeout(40000),
+          signal: AbortSignal.timeout(30000),
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ path: ".';cat './package.json" }),
+          body: JSON.stringify({ path: `.';env'` }),
         }),
-        fetch("http://127.0.0.1:4000/files?path=docs", {
+        fetch("http://127.0.0.1:4000/files", {
           method: "GET",
-          signal: AbortSignal.timeout(40000),
+          signal: AbortSignal.timeout(30000),
         }),
       ]);
     })
@@ -87,10 +97,19 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`npm`, ["run", "start"], {
-    env: { ...process.env, AIKIDO_DEBUG: "true" },
-    cwd: pathToApp,
-  });
+  const server = spawn(
+    `node`,
+    [".next/standalone/sample-apps/nextjs-standalone/server.js"],
+    {
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        PORT: 4000,
+        NODE_OPTIONS: "-r @aikidosec/runtime",
+      },
+      cwd: pathToApp,
+    }
+  );
 
   server.on("close", () => {
     t.end();
@@ -111,16 +130,16 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(10000)
+  timeout(5000)
     .then((a) => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/files?path=.%27;cat%20%27./package.json", {
+        fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
           method: "GET",
-          signal: AbortSignal.timeout(40000),
+          signal: AbortSignal.timeout(30000),
         }),
-        fetch("http://127.0.0.1:4000/files?path=docs", {
+        fetch("http://127.0.0.1:4000/files", {
           method: "GET",
-          signal: AbortSignal.timeout(40000),
+          signal: AbortSignal.timeout(30000),
         }),
       ]);
     })
