@@ -13,8 +13,13 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
-    // Ignore calls to spawn or spawnSync if shell option is not enabled
-    if (name === "spawn" || name === "spawnSync") {
+    // Ignore calls to spawn, spawnSync, execFile and execFileSync if shell option is not enabled
+    if (
+      name === "spawn" ||
+      name === "spawnSync" ||
+      name === "execFile" ||
+      name === "execFileSync"
+    ) {
       const unsafeShellOption = args.find(
         (arg) =>
           isPlainObject(arg) &&
