@@ -31,7 +31,10 @@ export class ChildProcess implements Wrapper {
       let command = args[0];
 
       if (
-        (name === "spawn" || name === "spawnSync") &&
+        (name === "spawn" ||
+          name === "spawnSync" ||
+          name === "execFile" ||
+          name === "execFileSync") &&
         args.length > 1 &&
         Array.isArray(args[1]) &&
         args[1].length > 0
@@ -57,6 +60,10 @@ export class ChildProcess implements Wrapper {
       .inspect("exec", (args) => this.inspectExec(args, "exec"))
       .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
       .inspect("spawn", (args) => this.inspectExec(args, "spawn"))
-      .inspect("spawnSync", (args) => this.inspectExec(args, "spawnSync"));
+      .inspect("spawnSync", (args) => this.inspectExec(args, "spawnSync"))
+      .inspect("execFile", (args) => this.inspectExec(args, "execFile"))
+      .inspect("execFileSync", (args) =>
+        this.inspectExec(args, "execFileSync")
+      );
   }
 }
