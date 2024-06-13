@@ -30,6 +30,10 @@ express-mariadb:
 express-path-traversal:
 	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: express-graphql
+express-path-traversal:
+	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/nosql-injection-request.json
