@@ -31,7 +31,7 @@ express-path-traversal:
 	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
 .PHONY: express-graphql
-express-path-traversal:
+express-graphql:
 	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
 .PHONY: lambda-mongodb-nosql-injection

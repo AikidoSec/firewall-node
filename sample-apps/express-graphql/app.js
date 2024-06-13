@@ -36,7 +36,6 @@ const schema = new GraphQLSchema({
         },
         async resolve(_, args) {
           const query = `SELECT petname, age FROM cats2 WHERE petname = '${args.name}'`;
-          console.log(query);
           const [rows] = await dbConnection.execute(query);
           return rows.map((row) => ({ petname: row.petname, age: row.age }));
         },
