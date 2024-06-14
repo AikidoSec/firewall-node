@@ -31,6 +31,10 @@ async function fetchCats() {
     }),
   });
   const json = await response.json();
+  if (Array.isArray(json.errors) && json.errors.length > 0) {
+    listEle.innerHTML = `<strong>Error:</strong> ${json.errors[0].message}`;
+    return;
+  }
   const cats = json.data.cats;
   if (!cats) {
     listEle.innerHTML = "No cats found";
