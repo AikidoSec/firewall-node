@@ -373,6 +373,21 @@ t.test(
   }
 );
 
+t.test(
+  "it detects shell injection with multiple slashes at the beginning",
+  async () => {
+    isShellInjection("//bin/ls", "//bin/ls");
+    isShellInjection("///bin/ls", "///bin/ls");
+  }
+);
+
+t.test("it detects shell injection with ../", async () => {
+  isShellInjection("../bin/ls", "../bin/ls");
+  isShellInjection("../../bin/ls", "../../bin/ls");
+  isShellInjection("/../bin/ls", "/../bin/ls");
+  isShellInjection("/./bin/ls", "/./bin/ls");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
