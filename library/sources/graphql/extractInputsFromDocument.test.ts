@@ -251,3 +251,34 @@ t.test("it handles list values in mutations", (t) => {
   t.same(inputs, ["1", "2", "3", "New City"]);
   t.end();
 });
+
+t.test("it handles queries with FragmentDefinition and InlineFragment", (t) => {
+  const source = {
+    query: `query {
+      user(id: "user123") {
+        ...userDetails
+      }
+    }
+
+    fragment userDetails on User {
+      id
+      name
+      ...on User {
+        age
+      }
+    }`,
+  };
+
+  const document = parse(source.query);
+  const validationErrors = validate(schema, document);
+  if (validationErrors.length > 0) {
+    t.fail(validationErrors[0].message);
+    return;
+  }
+
+  const inputs = extractInputsFromDocument(document);
+
+  t.equal(inputs.length, 1);
+  t.same(inputs, ["user123"]);
+  t.end();
+});
