@@ -14,21 +14,30 @@ import {
 } from "graphql";
 import { extractInputsFromDocument } from "./extractInputsFromDocument";
 
+const AddressType = new GraphQLObjectType({
+  name: "Address",
+  fields: {
+    street: { type: GraphQLString },
+    city: { type: GraphQLString },
+  },
+});
+
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: {
     id: { type: GraphQLString },
     name: { type: GraphQLString },
     age: { type: GraphQLInt },
-    city: { type: GraphQLString },
-  },
-});
-
-const AddressType = new GraphQLObjectType({
-  name: "Address",
-  fields: {
-    street: { type: GraphQLString },
-    city: { type: GraphQLString },
+    jobTitle: { type: GraphQLString },
+    address: {
+      type: AddressType,
+      args: {
+        city: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        // Resolve logic for User's address
+      },
+    },
   },
 });
 
@@ -87,11 +96,11 @@ const RootMutationType = new GraphQLObjectType({
         // Add resolve logic here
       },
     },
-    updateUsersCities: {
+    updateUsersJobTitle: {
       type: new GraphQLList(UserType),
       args: {
         userIds: { type: new GraphQLList(GraphQLID) },
-        city: { type: GraphQLString },
+        jobTitle: { type: GraphQLString },
       },
       resolve(parent, args) {
         // Add resolve logic here
@@ -231,9 +240,9 @@ t.test("it handles list query with argument", (t) => {
 t.test("it handles list values in mutations", (t) => {
   const source = {
     query: `mutation {
-        updateUsersCities(userIds: ["1", "2", "3"], city: "New City") {
+        updateUsersJobTitle(userIds: ["1", "2", "3"], jobTitle: "Software Engineer") {
           id
-          city
+          jobTitle
         }
       }`,
   };
@@ -248,7 +257,7 @@ t.test("it handles list values in mutations", (t) => {
   const inputs = extractInputsFromDocument(document);
 
   t.equal(inputs.length, 4);
-  t.same(inputs, ["1", "2", "3", "New City"]);
+  t.same(inputs, ["1", "2", "3", "Software Engineer"]);
   t.end();
 });
 
@@ -280,5 +289,33 @@ t.test("it handles queries with FragmentDefinition and InlineFragment", (t) => {
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["user123"]);
+  t.end();
+});
+
+t.test("it handles nested query with argument", (t) => {
+  const source = {
+    query: `query {
+      users {
+        id
+        name
+        address(city: "NestedCity") {
+          street
+          city
+        }
+      }
+    }`,
+  };
+
+  const document = parse(source.query);
+  const validationErrors = validate(schema, document);
+  if (validationErrors.length > 0) {
+    t.fail(validationErrors[0].message);
+    return;
+  }
+
+  const inputs = extractInputsFromDocument(document);
+
+  t.equal(inputs.length, 1);
+  t.same(inputs, ["NestedCity"]);
   t.end();
 });
