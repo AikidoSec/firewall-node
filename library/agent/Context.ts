@@ -18,6 +18,7 @@ export type Context = {
   user?: { id: string; name?: string };
   source: string;
   route: string | undefined;
+  graphql?: string[];
 };
 
 /**

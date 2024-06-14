@@ -13,10 +13,9 @@ export class GraphQL implements Wrapper {
     const executeArgs = args[0] as ExecutionArgs;
     const context = getContext();
     if (!context) {
-      // Todo ?
+      // We expect the context to be set by the wrapped http server
+      return;
     }
-
-    console.log(executeArgs);
 
     const userInputs = extractInputsFromDocument(executeArgs.document);
 
@@ -31,7 +30,13 @@ export class GraphQL implements Wrapper {
       }
     }
 
-    // Todo Add user inputs to the context
+    if (userInputs.length > 0) {
+      if (Array.isArray(context.graphql)) {
+        context.graphql.push(...userInputs);
+      } else {
+        context.graphql = userInputs;
+      }
+    }
   }
 
   wrap(hooks: Hooks) {

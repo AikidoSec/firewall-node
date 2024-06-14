@@ -25,6 +25,7 @@ export function checkContextForPathTraversal({
     "headers",
     "cookies",
     "routeParams",
+    "graphql",
   ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
