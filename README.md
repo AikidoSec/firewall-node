@@ -60,6 +60,10 @@ See list above for supported database drivers.
 * ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 * ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
 
+### API tools
+
+* ✅ [`graphql`](https://www.npmjs.com/package/graphql) 16.x
+
 ## Installation
 
 ```shell

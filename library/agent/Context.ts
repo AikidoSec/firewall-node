@@ -18,6 +18,7 @@ export type Context = {
   user?: { id: string; name?: string };
   source: string;
   route: string | undefined;
+  graphql?: string[];
 };
 
 /**
@@ -50,6 +51,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.cookies = context.cookies;
     current.source = context.source;
     current.route = context.route;
+    current.graphql = context.graphql;
 
     return fn();
   }

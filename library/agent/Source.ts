@@ -1,1 +1,7 @@
-export type Source = "query" | "body" | "headers" | "cookies" | "routeParams";
+export type Source =
+  | "query"
+  | "body"
+  | "headers"
+  | "cookies"
+  | "routeParams"
+  | "graphql";

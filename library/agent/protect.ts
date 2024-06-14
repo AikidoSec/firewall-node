@@ -31,6 +31,7 @@ import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
+import { GraphQL } from "../sources/GraphQL";
 
 function isDebugging() {
   return (
@@ -121,6 +122,7 @@ function getWrappers() {
     new Path(),
     new HTTPServer(),
     new Hono(),
+    new GraphQL(),
   ];
 }
 

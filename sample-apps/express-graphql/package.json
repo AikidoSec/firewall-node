@@ -1,0 +1,13 @@
+{
+  "name": "express-graphql",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out injections with graphql",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^4.19.2",
+    "graphql": "^16.8.2",
+    "mysql2": "^3.10.0"
+  }
+}
