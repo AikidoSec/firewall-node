@@ -26,7 +26,7 @@ const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
   // Required because resolve will build absolute paths from relative paths
-  if (!/^(\/|\w:).*/.test(filePath)) {
+  if (isRelativePath(filePath)) {
     return false;
   }
 
@@ -47,4 +47,8 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
     }
   }
   return false;
+}
+
+export function isRelativePath(filePath: string) {
+  return !/^(\/|\w:).*/.test(filePath);
 }
