@@ -47,6 +47,5 @@ export class GraphQL implements Wrapper {
       .addSubject((exports) => exports)
       .inspect("execute", (args) => this.inspectGraphQLExecute(args))
       .inspect("executeSync", (args) => this.inspectGraphQLExecute(args));
-    // Todo parse?
   }
 }
