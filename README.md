@@ -2,8 +2,12 @@
 
 # Aikido Firewall for Node.js
 
-![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Ffirewall?style=flat-square)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)
+[![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square)](https://www.npmjs.com/package/@aikidosec/firewall) 
+[![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY)](https://app.codecov.io/gh/aikidosec/firewall-node) 
+[![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Ffirewall?style=flat-square)](https://github.com/AikidoSec/firewall-node/blob/main/LICENSE) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) 
+[![Unit tests](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml) 
+[![End to end tests](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml) 
 
 Aikido Firewall is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
 
