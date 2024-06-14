@@ -20,6 +20,7 @@ const UserType = new GraphQLObjectType({
     id: { type: GraphQLString },
     name: { type: GraphQLString },
     age: { type: GraphQLInt },
+    city: { type: GraphQLString },
   },
 });
 
@@ -54,6 +55,9 @@ const RootQueryType = new GraphQLObjectType({
     },
     users: {
       type: new GraphQLList(UserType),
+      args: {
+        city: { type: GraphQLString },
+      },
       resolve(parent, args) {
         // Add resolve logic here
       },
@@ -187,5 +191,29 @@ t.test("it handles nested inputs and mutations", (t) => {
 
   t.equal(inputs.length, 2);
   t.same(inputs, ["123 Main St", "Metropolis"]);
+  t.end();
+});
+
+t.test("it handles list query with argument", (t) => {
+  const source = {
+    query: `query {
+        users(city: "Wesel") {
+          id
+          name
+        }
+      }`,
+  };
+
+  const document = parse(source.query);
+  const validationErrors = validate(schema, document);
+  if (validationErrors.length > 0) {
+    t.fail(validationErrors[0].message);
+    return;
+  }
+
+  const inputs = extractInputsFromDocument(document);
+
+  t.equal(inputs.length, 1);
+  t.same(inputs, ["Wesel"]);
   t.end();
 });
