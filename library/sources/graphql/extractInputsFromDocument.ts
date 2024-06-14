@@ -91,8 +91,6 @@ export function extractInputsFromDocument(document: DocumentNode): string[] {
         const fragment = definition as FragmentDefinitionNode;
         traverseSelectionSet(fragment.selectionSet, inputs);
         break;
-      default:
-        break;
     }
   }
   return inputs;
