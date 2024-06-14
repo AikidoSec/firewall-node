@@ -87,6 +87,16 @@ const RootMutationType = new GraphQLObjectType({
         // Add resolve logic here
       },
     },
+    updateUsersCities: {
+      type: new GraphQLList(UserType),
+      args: {
+        userIds: { type: new GraphQLList(GraphQLID) },
+        city: { type: GraphQLString },
+      },
+      resolve(parent, args) {
+        // Add resolve logic here
+      },
+    },
   },
 });
 
@@ -215,5 +225,29 @@ t.test("it handles list query with argument", (t) => {
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["Wesel"]);
+  t.end();
+});
+
+t.test("it handles list values in mutations", (t) => {
+  const source = {
+    query: `mutation {
+        updateUsersCities(userIds: ["1", "2", "3"], city: "New City") {
+          id
+          city
+        }
+      }`,
+  };
+
+  const document = parse(source.query);
+  const validationErrors = validate(schema, document);
+  if (validationErrors.length > 0) {
+    t.fail(validationErrors[0].message);
+    return;
+  }
+
+  const inputs = extractInputsFromDocument(document);
+
+  t.equal(inputs.length, 4);
+  t.same(inputs, ["1", "2", "3", "New City"]);
   t.end();
 });
