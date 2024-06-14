@@ -30,7 +30,7 @@ or ESM import style:
 import '@aikidosec/firewall/nopp';
 ```
 
-together with `protect`:
+in combination with the actual firewall (you can skip this if you only want protection against prototype pollution):
 
 ```js
 import '@aikidosec/firewall'; // <-- Include this before any other code or imports
