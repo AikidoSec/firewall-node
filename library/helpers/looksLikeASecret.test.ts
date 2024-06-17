@@ -57,11 +57,15 @@ t.test("it returns true for long strings", async () => {
 
 t.test("it returns false for strings with repeated characters", async () => {
   t.same(
-    looksLikeASecret(secretFromCharset(10, lower + upper + numbers) + "aa"),
+    looksLikeASecret(
+      secretFromCharset(10, lower + upper + numbers + specials) + "aa"
+    ),
     true
   );
   t.same(
-    looksLikeASecret(secretFromCharset(10, lower + upper + numbers) + "aaa"),
+    looksLikeASecret(
+      secretFromCharset(10, lower + upper + numbers + specials) + "aaa"
+    ),
     false
   );
 });
