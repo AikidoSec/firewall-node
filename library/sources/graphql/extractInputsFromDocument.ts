@@ -5,12 +5,17 @@ import type { DocumentNode, StringValueNode } from "graphql";
  * @returns An array of user inputs.
  */
 export function extractInputsFromDocument(document: DocumentNode): string[] {
-  // Assuming graphql is installed when this function is called
-  // Don't use normal import for graphql
-  const { visit } = require("graphql");
+  let graphql;
+  try {
+    // Assuming graphql is installed when this function is called
+    // Don't use normal import for graphql
+    graphql = require("graphql");
+  } catch (e) {
+    return [];
+  }
 
   const inputs: string[] = [];
-  visit(document, {
+  graphql.visit(document, {
     StringValue(node: StringValueNode) {
       inputs.push(node.value);
     },
