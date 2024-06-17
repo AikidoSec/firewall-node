@@ -319,3 +319,26 @@ t.test("it handles nested query with argument", (t) => {
   t.same(inputs, ["NestedCity"]);
   t.end();
 });
+
+t.test("it parses default values for string arguments", (t) => {
+  const source = {
+    query: `query($id: ID = "default") {
+      user(id: $id) {
+        id
+        name
+      }
+    }`,
+  };
+
+  const document = parse(source.query);
+  const validationErrors = validate(schema, document);
+  if (validationErrors.length > 0) {
+    t.fail(validationErrors[0].message);
+    return;
+  }
+
+  const inputs = extractInputsFromDocument(document);
+
+  t.same(inputs, ["default"]);
+  t.end();
+});
