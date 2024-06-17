@@ -32,7 +32,7 @@ export function looksLikeASecret(str: string) {
 
   // Calculate the entropy of a string using Shannon's entropy formula
   // If the string has an entropy lower than 3, it's not a secret
-  if (calculateEntropy(str) < 3) {
+  if (calculateEntropy(str) < 2.5) {
     return false;
   }
 

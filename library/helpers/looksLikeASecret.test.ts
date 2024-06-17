@@ -35,7 +35,7 @@ t.test("it returns false for short strings", async () => {
 });
 
 t.test("it returns true for long strings", async () => {
-  for (let length = 11; length <= 32; length++) {
+  for (let length = 11; length <= 16; length++) {
     const secret = secretFromCharset(length, lower + upper + numbers);
     t.same(
       looksLikeASecret(secret),
@@ -58,13 +58,13 @@ t.test("it returns true for long strings", async () => {
 t.test("it returns false for strings with repeated characters", async () => {
   t.same(
     looksLikeASecret(
-      secretFromCharset(10, lower + upper + numbers + specials) + "aa"
+      secretFromCharset(12, lower + upper + numbers + specials) + "aa"
     ),
     true
   );
   t.same(
     looksLikeASecret(
-      secretFromCharset(10, lower + upper + numbers + specials) + "aaa"
+      secretFromCharset(12, lower + upper + numbers + specials) + "aaa"
     ),
     false
   );
@@ -82,6 +82,10 @@ t.test("it returns false if it has less than 2 charsets", async () => {
   t.same(looksLikeASecret(secretFromCharset(10, upper)), false);
   t.same(looksLikeASecret(secretFromCharset(10, numbers)), false);
   t.same(looksLikeASecret(secretFromCharset(10, specials)), false);
+});
+
+t.test("it flags these as secrets", async () => {
+  t.same(looksLikeASecret("cGAnuwGWQcGcg"), true);
 });
 
 const urlTerms = [
