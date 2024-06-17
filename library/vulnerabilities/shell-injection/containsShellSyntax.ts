@@ -77,6 +77,7 @@ const commands = [
   "netstat",
   "passwd",
   "arch",
+  "printenv",
 
   // Colon is a null command
   // it might occur in URLs that are passed as arguments to a binary
