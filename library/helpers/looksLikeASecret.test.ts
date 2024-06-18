@@ -40,18 +40,21 @@ t.test("it returns true for long strings", async () => {
   );
 });
 
-t.test("it returns false for strings with repeated characters", async () => {
+t.test("it flags very long strings", async () => {
+  const secret = secretFromCharset(64, lower + upper + numbers);
   t.same(
-    looksLikeASecret(
-      secretFromCharset(12, lower + upper + numbers + specials) + "aa"
-    ),
-    true
+    looksLikeASecret(secret),
+    true,
+    `Expected string to not look like a secret: ${secret}`
   );
+});
+
+t.test("it flags very very long strings", async () => {
+  const secret = secretFromCharset(128, lower + upper + numbers);
   t.same(
-    looksLikeASecret(
-      secretFromCharset(12, lower + upper + numbers + specials) + "aaa"
-    ),
-    false
+    looksLikeASecret(secret),
+    true,
+    `Expected string to not look like a secret: ${secret}`
   );
 });
 
@@ -146,6 +149,21 @@ t.test("it returns false for common url terms", async () => {
       looksLikeASecret(term),
       false,
       `Expected ${term} to not look like a secret`
+    );
+  }
+});
+
+const secrets = [
+  "yqHYTS<agpi^aa",
+  "hIofuWBifkJI5iVsSNKKKDpBfmMqJJwuXMxau6AS8WZaHVLDAMeJXo3BwsFyrIIm",
+];
+
+t.test("it returns true for known secrets", async () => {
+  for (const secret of secrets) {
+    t.same(
+      looksLikeASecret(secret),
+      true,
+      `Expected ${secret} to look like a secret`
     );
   }
 });
