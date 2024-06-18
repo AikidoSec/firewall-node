@@ -292,3 +292,49 @@ t.test("it should ignore fonts", async () => {
     false
   );
 });
+
+t.test("it ignores files that end with .config", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/blog/App_Config/ConnectionStrings.config",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it ignores URLs that contain wp-config", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/wp-config.php",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/wp-config.php.bak",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/wp-config.php~",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/wp-config.php_old",
+      method: "GET",
+    }),
+    false
+  );
+});
