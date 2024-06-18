@@ -2,6 +2,7 @@ const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
 const UPPERCASE = LOWERCASE.map((char) => char.toUpperCase());
 const NUMBERS = "0123456789".split("");
 const SPECIAL = "!#$%^&*|;:<>".split("");
+const KNOWN_WORD_SEPARATORS = ["-"];
 const WHITE_SPACE = /\s+/;
 const MINIMUM_LENGTH = 10;
 
@@ -11,18 +12,27 @@ export function looksLikeASecret(str: string) {
   }
 
   const hasNumber = NUMBERS.some((char) => str.includes(char));
+
+  if (!hasNumber) {
+    return false;
+  }
+
   const hasLower = LOWERCASE.some((char) => str.includes(char));
   const hasUpper = UPPERCASE.some((char) => str.includes(char));
   const hasSpecial = SPECIAL.some((char) => str.includes(char));
-  const charsets = [hasNumber, hasLower, hasUpper, hasSpecial];
+  const charsets = [hasLower, hasUpper, hasSpecial];
 
   // If the string doesn't have at least 2 different charsets, it's not a secret
-  if (charsets.filter((type) => type).length < 2) {
+  if (!charsets.some((charset) => charset)) {
     return false;
   }
 
   // If the string has white space, it's not a secret
   if (WHITE_SPACE.test(str)) {
+    return false;
+  }
+
+  if (KNOWN_WORD_SEPARATORS.some((separator) => str.includes(separator))) {
     return false;
   }
 
@@ -36,26 +46,7 @@ export function looksLikeASecret(str: string) {
   }
 
   const averageRatio =
-    ratios.reduce((acc, ratio) => acc + ratio, 0) / ratios.length;
-  if (averageRatio < 0.8) {
-    return false;
-  }
+    ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
 
-  return true;
-}
-
-function hasRepeatedChars(s: string, limit: number): boolean {
-  let count = 1;
-  for (let i = 1; i < s.length; i++) {
-    if (s[i] === s[i - 1]) {
-      count++;
-      if (count > limit) {
-        return true;
-      }
-    } else {
-      count = 1;
-    }
-  }
-
-  return false;
+  return averageRatio > 0.8;
 }

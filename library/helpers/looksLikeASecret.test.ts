@@ -141,6 +141,9 @@ const urlTerms = [
   "data-transfer",
   "encryption",
   "signature",
+  "poppins-bold-webfont.woff2",
+  "karla-bold-webfont.woff2",
+  "startEmailBasedLogin",
 ];
 
 t.test("it returns false for common url terms", async () => {
@@ -153,8 +156,17 @@ t.test("it returns false for common url terms", async () => {
   }
 });
 
+t.test("it returns false for known word separators", async () => {
+  t.same(looksLikeASecret("this-is-a-secret-1"), false);
+});
+
+t.test("a number is not a secret", async () => {
+  t.same(looksLikeASecret("1234567890"), false);
+  t.same(looksLikeASecret("1234567890".repeat(2)), false);
+});
+
 const secrets = [
-  "yqHYTS<agpi^aa",
+  "yqHYTS<agpi^aa1",
   "hIofuWBifkJI5iVsSNKKKDpBfmMqJJwuXMxau6AS8WZaHVLDAMeJXo3BwsFyrIIm",
 ];
 
