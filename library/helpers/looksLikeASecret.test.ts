@@ -168,6 +168,7 @@ t.test("a number is not a secret", async () => {
 const secrets = [
   "yqHYTS<agpi^aa1",
   "hIofuWBifkJI5iVsSNKKKDpBfmMqJJwuXMxau6AS8WZaHVLDAMeJXo3BwsFyrIIm",
+  "AG7DrGi3pDDIUU1PrEsj",
 ];
 
 t.test("it returns true for known secrets", async () => {
