@@ -105,7 +105,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Aikido firewall has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
@@ -118,7 +118,7 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido runtime has blocked a SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Aikido firewall has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
@@ -142,6 +142,8 @@ t.test("it detects SQL injections", async () => {
         body: {},
         cookies: {},
         source: "express",
+        route: "/posts/:id",
+        routeParams: {},
       },
       () => {
         return connection.query("-- This is a comment");

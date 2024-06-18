@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
-import { join } from "path";
+import { join, resolve } from "path";
+import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
@@ -150,6 +151,8 @@ function wrapWithoutArgumentModification(
   module: string,
   agent: Agent
 ) {
+  const libraryRoot = resolve(__dirname, "..");
+
   try {
     wrap(subject, method.getName(), function wrap(original: Function) {
       return function wrap() {
@@ -157,20 +160,17 @@ function wrapWithoutArgumentModification(
         const args = Array.from(arguments);
         const context = getContext();
 
-        if (
-          context &&
-          context.method &&
-          context.route &&
-          !agent
-            .getConfig()
-            .shouldProtectEndpoint(context.method, context.route)
-        ) {
-          return original.apply(
-            // @ts-expect-error We don't now the type of this
-            this,
-            // eslint-disable-next-line prefer-rest-params
-            arguments
-          );
+        if (context) {
+          const match = agent.getConfig().getEndpoint(context);
+
+          if (match && match.endpoint.forceProtectionOff) {
+            return original.apply(
+              // @ts-expect-error We don't now the type of this
+              this,
+              // eslint-disable-next-line prefer-rest-params
+              arguments
+            );
+          }
         }
 
         const start = performance.now();
@@ -197,7 +197,12 @@ function wrapWithoutArgumentModification(
           withoutContext: !context,
         });
 
-        if (result && context) {
+        const isAllowedIP =
+          context &&
+          context.remoteAddress &&
+          agent.getConfig().isAllowedIP(context.remoteAddress);
+
+        if (result && context && !isAllowedIP) {
           // Flag request as having an attack detected
           context.attackDetected = true;
 
@@ -207,7 +212,7 @@ function wrapWithoutArgumentModification(
             kind: result.kind,
             source: result.source,
             blocked: agent.shouldBlock(),
-            stack: new Error().stack!,
+            stack: cleanupStackTrace(new Error().stack!, libraryRoot),
             path: result.pathToPayload,
             metadata: result.metadata,
             request: context,
@@ -216,7 +221,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido runtime has blocked a ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
+              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
             );
           }
         }

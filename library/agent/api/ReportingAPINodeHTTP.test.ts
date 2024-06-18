@@ -1,10 +1,9 @@
-import { json } from "express";
+import * as express from "express";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
 import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
 import { Event } from "./Event";
 import { Token } from "./Token";
-import express = require("express");
 
 function generateStartedEvent(): Event {
   return {
@@ -51,9 +50,10 @@ function createTestEndpoint({
 
   const app = express();
   app.set("env", "test");
-  app.use(json());
+  app.use(express.json());
+
   app.post(
-    "*",
+    "/api/runtime/events",
     asyncHandler(async (req, res) => {
       if (sleepInMs) {
         await new Promise((resolve) => setTimeout(resolve, sleepInMs));

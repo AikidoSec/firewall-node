@@ -21,6 +21,9 @@ t.test("it detects shell syntax", async (t) => {
   containsSyntax("/sbin/sleep", true);
   containsSyntax("/usr/bin/kill", true);
   containsSyntax("/usr/bin/killall", true);
+  containsSyntax("/usr/bin/env", true);
+  containsSyntax("/bin/ps", true);
+  containsSyntax("/usr/bin/W", true);
 });
 
 function containsSyntax(str: string, expected: boolean) {

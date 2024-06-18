@@ -289,6 +289,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   // After 10 minutes, we'll see that the required amount of performance samples has been reached
   // And then send a heartbeat
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -301,6 +302,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // After another 10 minutes, we'll see that we already sent the initial stats
   clock.tick(10 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -313,6 +315,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // Every 30 minutes we'll send a heartbeat
   clock.tick(30 * 60 * 1000);
+  await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
@@ -381,7 +384,7 @@ t.test("it logs when failed to report event", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Failed to report started event",
+    "Failed to start agent",
     "Heartbeat...",
     "Failed to do heartbeat",
     "Failed to report attack",
@@ -404,7 +407,7 @@ t.test("unable to prevent prototype pollution", async () => {
   ]);
 
   clock.tick(1000 * 60 * 30);
-  clock.next();
+  await clock.nextAsync();
 
   t.same(api.getEvents().length, 2);
   const [_, heartbeat] = api.getEvents();
@@ -530,20 +533,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           port: 443,
         },
       ],
-      routes: [
-        {
-          method: "POST",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/",
-        },
-      ],
+      routes: [],
     },
   ]);
 

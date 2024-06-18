@@ -1,30 +1,116 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
+import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
+import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
+import { FileSystem } from "../sinks/FileSystem";
+import { HTTPServer } from "./HTTPServer";
 
 // Before require("express")
 const agent = new Agent(
   true,
   new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  undefined,
+  new ReportingAPIForTesting({
+    success: true,
+    endpoints: [
+      {
+        method: "GET",
+        route: "/rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+      {
+        method: "GET",
+        route: "/user-rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+      {
+        method: "GET",
+        route: "/middleware-rate-limited",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+      {
+        method: "GET",
+        route: "/white-listed-ip-address",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 3,
+          enabled: true,
+        },
+      },
+    ],
+    blockedUserIds: ["567"],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    allowedIPAddresses: ["4.3.2.1"],
+  }),
+  new Token("123"),
   "lambda"
 );
-agent.start([new Express()]);
+agent.start([new Express(), new FileSystem(), new HTTPServer()]);
+setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
 
-function getApp() {
+function getApp(userMiddleware = true) {
   const app = express();
 
   app.set("trust proxy", true);
   app.set("env", "test");
   app.use(cookieParser());
+
+  app.use("/*", (req, res, next) => {
+    res.setHeader("X-Powered-By", "Aikido");
+    next();
+  });
+
+  app.use("/middleware/:otherParamId", (req, res, next) => {
+    res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
+    next();
+  });
+
+  app.use("/attack-in-middleware", (req, res, next) => {
+    require("fs").readdir(req.query.directory).unref();
+    next();
+  });
+
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
+    });
+  }
+
+  // A middleware that is used as a route
+  app.use("/api/*", (req, res, next) => {
+    const context = getContext();
+
+    res.send(context);
+  });
 
   app.get("/", (req, res) => {
     const context = getContext();
@@ -50,12 +136,26 @@ function getApp() {
     res.send(context);
   });
 
-  app.get("/detect-attack", (req, res) => {
-    const context = getContext();
-    context.attackDetected = true;
+  app.get("/files", (req, res) => {
+    require("fs").readdir(req.query.directory).unref();
 
-    res.send(context);
+    res.send(getContext());
   });
+
+  app.get("/attack-in-middleware", (req, res) => {
+    res.send({ willNotBeSent: true });
+  });
+
+  app.get(
+    "/middleware/:id",
+    (req, res, next) => {
+      res.setHeader("X-Context-Route-Middleware", JSON.stringify(getContext()));
+      next();
+    },
+    (req, res) => {
+      res.send(getContext());
+    }
+  );
 
   app.get("/posts/:id", (req, res) => {
     const context = getContext();
@@ -71,6 +171,41 @@ function getApp() {
     const context = getContext();
 
     res.send(context);
+  });
+
+  app.get("/user", (req, res) => {
+    res.send(getContext());
+  });
+
+  app.get(
+    "/block-user",
+    (req, res, next) => {
+      setUser({
+        id: "567",
+      });
+      next();
+    },
+    (req, res) => {
+      res.send({
+        willNotBeSent: true,
+      });
+    }
+  );
+
+  app.get("/rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.get("/user-rate-limited", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.get("/white-listed-ip-address", (req, res) => {
+    res.send({ hello: "world" });
+  });
+
+  app.use("/middleware-rate-limited", (req, res, next) => {
+    res.send({ hello: "world" });
   });
 
   return app;
@@ -148,7 +283,13 @@ t.test("it counts requests", async () => {
 
 t.test("it counts attacks detected", async (t) => {
   agent.getInspectionStatistics().reset();
-  await request(getApp()).get("/detect-attack");
+  const response = await request(getApp()).get("/files?directory=../../");
+
+  t.match(
+    response.text,
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+  );
+  t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
     requests: {
       total: 1,
@@ -181,7 +322,7 @@ t.test("it adds context from request for route with params", async (t) => {
     method: "GET",
     routeParams: { id: "123" },
     source: "express",
-    route: "/posts/:id",
+    route: "/posts/:number",
   });
 });
 
@@ -194,6 +335,121 @@ t.test("it deals with regex routes", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
-    route: "/.*fly$",
+    route: "/butterfly",
   });
+});
+
+t.test("it takes the path from the arguments for middleware", async () => {
+  const response = await request(getApp()).get("/api/foo");
+
+  t.match(response.body, { route: "/api/foo" });
+});
+
+t.test("route handler with middleware", async () => {
+  const response = await request(getApp()).get("/middleware/123");
+
+  const middlewareContext = JSON.parse(response.header["x-context-middleware"]);
+  t.match(middlewareContext, { route: "/middleware/:number" });
+  t.match(middlewareContext.routeParams, { otherParamId: "123" });
+
+  const routeMiddlewareContext = JSON.parse(
+    response.header["x-context-route-middleware"]
+  );
+  t.match(routeMiddlewareContext, { route: "/middleware/:number" });
+  t.match(response.body, { route: "/middleware/:number" });
+});
+
+t.test("detect attack in middleware", async () => {
+  const response = await request(getApp()).get(
+    "/attack-in-middleware?directory=../../"
+  );
+
+  t.same(response.statusCode, 500);
+  t.match(
+    response.text,
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+  );
+});
+
+t.test("it blocks user", async () => {
+  const response = await request(getApp()).get("/block-user");
+
+  t.same(response.statusCode, 403);
+  t.same(response.body, {});
+});
+
+t.test("it adds user to context", async () => {
+  const response = await request(getApp()).get("/user");
+
+  t.match(response.body, {
+    user: { id: "123", name: "John Doe" },
+  });
+});
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+t.test("it rate limits by IP", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "1.2.3.4");
+    t.same(res.statusCode, 200);
+  }
+
+  const res2 = await request(getApp(false))
+    .get("/rate-limited")
+    .set("x-forwarded-for", "1.2.3.4");
+  t.same(res2.statusCode, 429);
+  t.same(
+    res2.text,
+    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+  );
+
+  await sleep(2000);
+
+  const res3 = await request(getApp(false))
+    .get("/rate-limited")
+    .set("x-forwarded-for", "1.2.3.4");
+  t.same(res3.statusCode, 200);
+});
+
+t.test("it rate limits by user", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp()).get("/user-rate-limited");
+    t.same(res.statusCode, 200);
+  }
+
+  const res = await request(getApp()).get("/user-rate-limited");
+  t.same(res.statusCode, 429);
+
+  await sleep(2000);
+
+  const res2 = await request(getApp()).get("/user-rate-limited");
+  t.same(res2.statusCode, 200);
+});
+
+t.test("it rate limits by middleware", async () => {
+  for (const _ of Array.from({ length: 3 })) {
+    const res = await request(getApp()).get("/middleware-rate-limited");
+    t.same(res.statusCode, 200);
+  }
+
+  const res = await request(getApp()).get("/middleware-rate-limited");
+  t.same(res.statusCode, 429);
+
+  await sleep(2000);
+
+  const res2 = await request(getApp()).get("/middleware-rate-limited");
+  t.same(res2.statusCode, 200);
+});
+
+t.test("it allows white-listed IP address", async () => {
+  for (const _ of Array.from({ length: 5 })) {
+    const res = await request(getApp(false))
+      .get("/white-listed-ip-address")
+      .set("x-forwarded-for", "4.3.2.1");
+    t.same(res.statusCode, 200);
+  }
 });

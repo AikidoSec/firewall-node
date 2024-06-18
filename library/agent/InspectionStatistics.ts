@@ -29,11 +29,12 @@ export class InspectionStatistics {
   private readonly maxCompressedStatsInMemory: number;
   private requests: {
     total: number;
+    aborted: number;
     attacksDetected: {
       total: number;
       blocked: number;
     };
-  } = { total: 0, attacksDetected: { total: 0, blocked: 0 } };
+  } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
 
   constructor({
     maxPerfSamplesInMemory,
@@ -54,7 +55,11 @@ export class InspectionStatistics {
 
   reset() {
     this.stats = {};
-    this.requests = { total: 0, attacksDetected: { total: 0, blocked: 0 } };
+    this.requests = {
+      total: 0,
+      aborted: 0,
+      attacksDetected: { total: 0, blocked: 0 },
+    };
     this.startedAt = Date.now();
   }
 
@@ -63,6 +68,7 @@ export class InspectionStatistics {
     startedAt: number;
     requests: {
       total: number;
+      aborted: number;
       attacksDetected: {
         total: number;
         blocked: number;
@@ -155,20 +161,19 @@ export class InspectionStatistics {
     this.stats[sink].interceptorThrewError += 1;
   }
 
-  onRequest({
-    attackDetected,
-    blocked,
-  }: {
-    attackDetected: boolean;
-    blocked: boolean;
-  }) {
-    this.requests.total += 1;
-    if (attackDetected) {
-      this.requests.attacksDetected.total += 1;
-      if (blocked) {
-        this.requests.attacksDetected.blocked += 1;
-      }
+  onDetectedAttack({ blocked }: { blocked: boolean }) {
+    this.requests.attacksDetected.total += 1;
+    if (blocked) {
+      this.requests.attacksDetected.blocked += 1;
     }
+  }
+
+  onAbortedRequest() {
+    this.requests.aborted += 1;
+  }
+
+  onRequest() {
+    this.requests.total += 1;
   }
 
   onInspectedCall({

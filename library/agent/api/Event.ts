@@ -5,6 +5,7 @@ export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
+  library: string;
   packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
@@ -24,6 +25,11 @@ type Started = {
   type: "started";
   agent: AgentInfo;
   time: number;
+};
+
+export type User = {
+  id: string;
+  name?: string;
 };
 
 export type DetectedAttack = {
@@ -48,6 +54,7 @@ export type DetectedAttack = {
     stack: string;
     payload: string;
     metadata: Record<string, string>;
+    user: User | undefined;
   };
   agent: AgentInfo;
   time: number;
@@ -76,6 +83,7 @@ type Heartbeat = {
     endedAt: number;
     requests: {
       total: number;
+      aborted: number;
       attacksDetected: {
         total: number;
         blocked: number;
@@ -83,7 +91,14 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
-  routes: { path: string; method: string }[];
+  routes: { path: string; method: string; hits: number }[];
+  users: {
+    id: string;
+    name: string | undefined;
+    lastIpAddress: string | undefined;
+    firstSeenAt: number;
+    lastSeenAt: number;
+  }[];
   agent: AgentInfo;
   time: number;
 };

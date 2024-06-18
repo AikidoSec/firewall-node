@@ -137,7 +137,7 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
     mysql2: {
-      version: "3.9.2",
+      version: "3.10.0",
       supported: true,
     },
   });
@@ -246,7 +246,18 @@ t.test("it ignores route if force protection off is on", async (t) => {
 
   api.setResult({
     success: true,
-    endpoints: [{ method: "GET", route: "/route", forceProtectionOff: true }],
+    endpoints: [
+      {
+        method: "GET",
+        route: "/route",
+        forceProtectionOff: true,
+        rateLimiting: undefined,
+      },
+    ],
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    configUpdatedAt: 0,
   });
 
   // Read rules from API
@@ -281,4 +292,46 @@ t.test("it ignores route if force protection off is on", async (t) => {
     { args: ["www.google.com"] },
     { args: ["www.aikido.dev"] },
   ]);
+});
+
+t.test("it does not report attack if IP is allowed", async (t) => {
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("os")
+    .addSubject((exports) => exports)
+    .inspect("hostname", (args, subject, agent) => {
+      return {
+        operation: "os.hostname",
+        source: "body",
+        pathToPayload: "path",
+        payload: "payload",
+        metadata: {},
+        kind: "path_traversal",
+      };
+    });
+
+  const { agent, api } = createAgent();
+  applyHooks(hooks, agent);
+
+  api.setResult({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: ["::1"],
+  });
+
+  // Read rules from API
+  await agent.flushStats(1000);
+  api.clear();
+
+  const { hostname } = require("os");
+
+  await runWithContext(context, async () => {
+    const name = hostname();
+    t.ok(typeof name === "string");
+  });
+
+  t.same(api.getEvents(), []);
 });

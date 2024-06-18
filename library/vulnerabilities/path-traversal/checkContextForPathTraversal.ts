@@ -12,10 +12,12 @@ export function checkContextForPathTraversal({
   filename,
   operation,
   context,
+  checkPathStart = true,
 }: {
   filename: string;
   operation: string;
   context: Context;
+  checkPathStart?: boolean;
 }): InterceptorResult {
   for (const source of [
     "body",
@@ -23,17 +25,20 @@ export function checkContextForPathTraversal({
     "headers",
     "cookies",
     "routeParams",
+    "graphql",
   ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        if (detectPathTraversal(filename, str)) {
+        if (detectPathTraversal(filename, str, checkPathStart)) {
           return {
             operation: operation,
             kind: "path_traversal",
             source: source,
             pathToPayload: path,
-            metadata: {},
+            metadata: {
+              filename: filename,
+            },
             payload: str,
           };
         }

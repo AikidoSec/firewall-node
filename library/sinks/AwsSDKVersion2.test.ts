@@ -97,7 +97,7 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a Path traversal: S3.putObject(...) originating from body.file.matches"
+        "Aikido firewall has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
       );
     }
 
@@ -106,7 +106,7 @@ t.test("it works", async (t) => {
     if (signedURLError instanceof Error) {
       t.same(
         signedURLError.message,
-        "Aikido runtime has blocked a Path traversal: S3.getSignedUrl(...) originating from body.file.matches"
+        "Aikido firewall has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
       );
     }
   });

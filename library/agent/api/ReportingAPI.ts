@@ -1,3 +1,4 @@
+import { Config } from "../Config";
 import { Event } from "./Event";
 import { Token } from "./Token";
 
@@ -8,17 +9,10 @@ type ReportingAPIError =
   | "max_attacks_reached"
   | "invalid_token";
 
-export type Endpoint = {
-  method: string;
-  route: string;
-  forceProtectionOff: boolean;
-};
-
 export type ReportingAPIResponse =
-  | {
+  | ({
       success: true;
-      endpoints?: Endpoint[];
-    }
+    } & Config)
   | {
       success: false;
       error: ReportingAPIError;

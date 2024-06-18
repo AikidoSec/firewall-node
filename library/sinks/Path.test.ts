@@ -19,6 +19,12 @@ const unsafeContext: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
+  route: "/posts/:id",
+};
+
+const unsafeAbsoluteContext: Context = {
+  ...unsafeContext,
+  body: { file: { matches: "/etc/" } },
 };
 
 t.test("it works", async (t) => {
@@ -37,6 +43,7 @@ t.test("it works", async (t) => {
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
     t.same(resolve(__dirname, "./test.txt"), join(__dirname, "./test.txt"));
+    t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
   }
 
   safeCalls();
@@ -48,37 +55,53 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     t.throws(
       () => join(__dirname, "../test.txt"),
-      "Aikido runtime has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "../test.txt"),
-      "Aikido runtime has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "some_directory", "../test.txt"),
-      "Aikido runtime has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "some_directory", "../test.txt"),
-      "Aikido runtime has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "some_directory", "../../test.txt"),
-      "Aikido runtime has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "../test.txt", "some_directory"),
-      "Aikido runtime has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "../test.txt", "some_directory"),
-      "Aikido runtime has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Aikido firewall has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    );
+  });
+
+  runWithContext(unsafeAbsoluteContext, () => {
+    safeCalls();
+  });
+
+  runWithContext(unsafeAbsoluteContext, () => {
+    t.throws(
+      () => join("/etc/", "test.txt"),
+      "Aikido firewall has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    );
+
+    t.throws(
+      () => resolve("/etc/some_directory", "test.txt"),
+      "Aikido firewall has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
   });
 });

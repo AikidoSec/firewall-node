@@ -11,14 +11,14 @@ t.setTimeout(60000);
 
 // Ensure the serverless CLI is installed
 t.before(async () => {
-  await execAsync("npx --loglevel=error serverless --help", {
+  await execAsync("npx --loglevel=error serverless@3.38.0 --help", {
     cwd: directory,
   });
 });
 
 t.test("it does not block by default", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx --node-options='--no-deprecation' --loglevel=error serverless invoke local --function login --path payloads/nosql-injection-request.json",
+    "npx --node-options='--no-deprecation' --loglevel=error serverless@3.38.0 invoke local --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
@@ -39,21 +39,21 @@ t.test("it does not block by default", async (t) => {
 
 t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx --node-options='--no-deprecation' --loglevel=error serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json",
+    "npx --node-options='--no-deprecation' --loglevel=error serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
   );
 
   t.same(stdout, "");
-  t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+  t.match(stderr, /Aikido firewall has blocked a NoSQL injection/);
 });
 
 t.test(
   "it does not block safe requests when AIKIDO_BLOCKING is true",
   async (t) => {
     const { stdout, stderr } = await execAsync(
-      "npx --node-options='--no-deprecation' --loglevel=error serverless invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/safe-request.json",
+      "npx --node-options='--no-deprecation' --loglevel=error serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/safe-request.json",
       {
         cwd: directory,
       }

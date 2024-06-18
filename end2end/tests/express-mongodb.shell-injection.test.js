@@ -11,7 +11,7 @@ const pathToApp = resolve(
 
 t.test("it blocks in blocking mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4000"], {
-    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
+    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCK: "true" },
   });
 
   server.on("close", () => {
@@ -62,7 +62,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(noSQLInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a Shell injection/);
+      t.match(stderr, /Aikido firewall has blocked a shell injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -121,7 +121,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(noSQLInjection.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a Shell injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a shell injection/);
     })
     .catch((error) => {
       t.fail(error.message);

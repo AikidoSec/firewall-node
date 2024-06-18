@@ -1,36 +1,38 @@
-import { Endpoint } from "./api/ReportingAPI";
+import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
+import { Endpoint } from "./Config";
 
 export class ServiceConfig {
-  private endpoints: Map<
-    string,
-    { method: string; route: string; forceProtectionOff: boolean }
-  > = new Map();
+  private blockedUserIds: Map<string, string> = new Map();
+  private allowedIPAddresses: Map<string, string> = new Map();
 
-  constructor(endpoints: Endpoint[]) {
-    endpoints.forEach((rule) => {
-      this.endpoints.set(this.getKey(rule.method, rule.route), {
-        method: rule.method,
-        route: rule.route,
-        forceProtectionOff: rule.forceProtectionOff,
-      });
+  constructor(
+    private readonly endpoints: Endpoint[],
+    private readonly lastUpdatedAt: number,
+    blockedUserIds: string[],
+    allowedIPAddresses: string[]
+  ) {
+    blockedUserIds.forEach((userId) => {
+      this.blockedUserIds.set(userId, userId);
+    });
+
+    allowedIPAddresses.forEach((ip) => {
+      this.allowedIPAddresses.set(ip, ip);
     });
   }
 
-  private getKey(method: string, route: string) {
-    return `${method}:${route}`;
+  getEndpoint(context: LimitedContext) {
+    return matchEndpoint(context, this.endpoints);
   }
 
-  shouldProtectEndpoint(method: string, route: string | RegExp) {
-    const key = this.getKey(
-      method,
-      typeof route === "string" ? route : route.source
-    );
-    const rule = this.endpoints.get(key);
+  isAllowedIP(ip: string) {
+    return this.allowedIPAddresses.has(ip);
+  }
 
-    if (!rule) {
-      return true;
-    }
+  isUserBlocked(userId: string) {
+    return this.blockedUserIds.has(userId);
+  }
 
-    return !rule.forceProtectionOff;
+  getLastUpdatedAt() {
+    return this.lastUpdatedAt;
   }
 }

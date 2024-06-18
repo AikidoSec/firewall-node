@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/runtime");
+require("@aikidosec/firewall");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -10,7 +10,9 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { exec } = require("child_process");
 
-require("@aikidosec/runtime/nopp");
+require("@aikidosec/firewall/nopp");
+
+const Aikido = require("@aikidosec/firewall/context");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -27,6 +29,16 @@ async function main(port) {
 
   app.use(morgan("tiny"));
   app.use(cookieParser());
+
+  app.use("*", (req, res, next) => {
+    res.setHeader("X-Frame-Options", "DENY");
+    next();
+  });
+
+  app.use((req, res, next) => {
+    Aikido.setUser({ id: "123", name: "John Doe" });
+    next();
+  });
 
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
@@ -67,6 +79,13 @@ async function main(port) {
       const post = new Post(req.body.title, new Date());
       await posts.persist(post);
       res.redirect("/");
+    })
+  );
+
+  app.get(
+    "/posts/:id",
+    asyncHandler(async (req, res) => {
+      res.send({ post: { id: req.params.id } });
     })
   );
 

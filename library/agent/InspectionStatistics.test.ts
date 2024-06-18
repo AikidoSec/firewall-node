@@ -34,6 +34,7 @@ t.test("it resets stats", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -48,6 +49,7 @@ t.test("it resets stats", async () => {
     startedAt: 1000,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -73,6 +75,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -104,6 +107,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -135,6 +139,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -160,6 +165,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -191,6 +197,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -222,6 +229,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -272,6 +280,7 @@ t.test("it keeps track of amount of calls", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -318,6 +327,7 @@ t.test("it keeps track of requests", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -325,16 +335,14 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: false,
-    blocked: false,
-  });
+  stats.onRequest();
 
   t.same(stats.getStats(), {
     sinks: {},
     startedAt: 0,
     requests: {
       total: 1,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -342,16 +350,15 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: true,
-    blocked: false,
-  });
+  stats.onRequest();
+  stats.onDetectedAttack({ blocked: false });
 
   t.same(stats.getStats(), {
     sinks: {},
     startedAt: 0,
     requests: {
       total: 2,
+      aborted: 0,
       attacksDetected: {
         total: 1,
         blocked: 0,
@@ -359,16 +366,15 @@ t.test("it keeps track of requests", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: true,
-    blocked: true,
-  });
+  stats.onRequest();
+  stats.onDetectedAttack({ blocked: true });
 
   t.same(stats.getStats(), {
     sinks: {},
     startedAt: 0,
     requests: {
       total: 3,
+      aborted: 0,
       attacksDetected: {
         total: 2,
         blocked: 1,
@@ -385,6 +391,7 @@ t.test("it keeps track of requests", async () => {
     startedAt: 1000,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -408,6 +415,7 @@ t.test("it force compresses stats", async () => {
     startedAt: 0,
     requests: {
       total: 0,
+      aborted: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -415,10 +423,7 @@ t.test("it force compresses stats", async () => {
     },
   });
 
-  stats.onRequest({
-    attackDetected: false,
-    blocked: false,
-  });
+  stats.onRequest();
 
   stats.onInspectedCall({
     withoutContext: false,
@@ -435,4 +440,28 @@ t.test("it force compresses stats", async () => {
   t.same(stats.hasCompressedStats(), true);
 
   clock.uninstall();
+});
+
+t.test("it keeps track of aborted requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onAbortedRequest();
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 1,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
 });

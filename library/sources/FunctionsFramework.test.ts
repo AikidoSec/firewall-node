@@ -7,7 +7,10 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
-import { createCloudFunctionWrapper } from "./FunctionsFramework";
+import {
+  createCloudFunctionWrapper,
+  FunctionsFramework,
+} from "./FunctionsFramework";
 import * as asyncHandler from "express-async-handler";
 
 function getExpressApp() {
@@ -38,6 +41,17 @@ function getExpressApp() {
     asyncHandler(
       createCloudFunctionWrapper((req, res) => {
         res.send(getContext());
+      })
+    )
+  );
+
+  app.get(
+    "/attack-detected",
+    asyncHandler(
+      createCloudFunctionWrapper((req, res) => {
+        const context = getContext();
+        context.attackDetected = true;
+        res.send(context);
       })
     )
   );
@@ -77,7 +91,30 @@ t.test("it counts requests", async (t) => {
   await request(app).get("/");
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
+    aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
+  });
+});
+
+t.test("it counts attacks", async (t) => {
+  const logger = new LoggerForTesting();
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
+  agent.start([]);
+  setInstance(agent);
+
+  const app = getExpressApp();
+
+  await request(app).get("/attack-detected");
+  t.same(agent.getInspectionStatistics().getStats().requests, {
+    total: 1,
+    aborted: 0,
+    attacksDetected: { total: 1, blocked: 1 },
   });
 });
 
@@ -98,6 +135,7 @@ t.test("it counts request if error", async (t) => {
   await request(app).get("/error");
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
+    aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -120,4 +158,22 @@ t.test("it flushes stats first invoke", async (t) => {
   await request(app).get("/");
 
   t.same(api.getEvents().length, 1);
+});
+
+t.test("it hooks into functions framework", async () => {
+  const logger = new LoggerForTesting();
+  const agent = new Agent(
+    true,
+    logger,
+    new ReportingAPIForTesting(),
+    undefined,
+    "gcp"
+  );
+  agent.start([new FunctionsFramework()]);
+  setInstance(agent);
+
+  const framework = require("@google-cloud/functions-framework");
+  framework.http("hello", (req, res) => {
+    res.send("Hello, Functions Framework!");
+  });
 });

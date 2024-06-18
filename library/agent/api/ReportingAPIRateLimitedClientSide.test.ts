@@ -28,6 +28,7 @@ function generateAttackEvent(): Event {
       metadata: {},
       operation: "operation",
       payload: "payload",
+      user: undefined,
     },
     agent: {
       version: "1.0.0",
@@ -137,6 +138,7 @@ function generateHeartbeatEvent(): Event {
       sinks: {},
       requests: {
         total: 0,
+        aborted: 0,
         attacksDetected: {
           blocked: 0,
           total: 0,
@@ -163,6 +165,7 @@ function generateHeartbeatEvent(): Event {
     },
     hostnames: [],
     routes: [],
+    users: [],
   };
 }
 
@@ -201,6 +204,11 @@ t.test("it does not blow memory", async () => {
   for (let i = 0; i < 10; i++) {
     t.same(await throttled.report(token, generateAttackEvent(), 5000), {
       success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
     });
   }
 
