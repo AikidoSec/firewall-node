@@ -34,4 +34,7 @@ t.test("it works", async (t) => {
     { method: "PUT", path: "/users/1", hits: 1 },
     { method: "DELETE", path: "/users/1", hits: 1 },
   ]);
+
+  routes.clear();
+  t.same(routes.asArray(), []);
 });

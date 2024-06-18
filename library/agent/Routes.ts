@@ -36,6 +36,10 @@ export class Routes {
     }
   }
 
+  clear() {
+    this.routes.clear();
+  }
+
   asArray() {
     return Array.from(this.routes.entries()).map(([key, route]) => {
       return {

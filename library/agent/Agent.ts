@@ -247,6 +247,7 @@ export class Agent {
       const stats = this.statistics.getStats();
       const endedAt = Date.now();
       this.statistics.reset();
+      this.routes.clear();
       const response = await this.api.report(
         this.token,
         {

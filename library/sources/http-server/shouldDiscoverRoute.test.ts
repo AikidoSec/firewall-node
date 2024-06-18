@@ -292,3 +292,14 @@ t.test("it should ignore fonts", async () => {
     false
   );
 });
+
+t.test("it ignores files that end with .config", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/blog/App_Config/ConnectionStrings.config",
+      method: "GET",
+    }),
+    false
+  );
+});
