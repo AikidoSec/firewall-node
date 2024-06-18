@@ -5,7 +5,7 @@ const METHOD_NOT_ALLOWED = 405;
 const ERROR_CODES = [NOT_FOUND, METHOD_NOT_ALLOWED];
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
 const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp", "config"];
-const IGNORE_STRINGS = ["cgi-bin", "wp-config"];
+const IGNORE_STRINGS = ["cgi-bin"];
 
 export function shouldDiscoverRoute({
   statusCode,

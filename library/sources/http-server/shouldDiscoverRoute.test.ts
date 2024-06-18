@@ -303,38 +303,3 @@ t.test("it ignores files that end with .config", async () => {
     false
   );
 });
-
-t.test("it ignores URLs that contain wp-config", async () => {
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 200,
-      route: "/wp-config.php",
-      method: "GET",
-    }),
-    false
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 200,
-      route: "/wp-config.php.bak",
-      method: "GET",
-    }),
-    false
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 200,
-      route: "/wp-config.php~",
-      method: "GET",
-    }),
-    false
-  );
-  t.same(
-    shouldDiscoverRoute({
-      statusCode: 200,
-      route: "/wp-config.php_old",
-      method: "GET",
-    }),
-    false
-  );
-});
