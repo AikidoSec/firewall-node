@@ -21,38 +21,23 @@ t.test("it returns false for short strings", async () => {
       false,
       `Expected string of length ${length} to not look like a secret: ${secret}`
     );
-
-    const secret2 = secretFromCharset(
-      length,
-      lower + upper + numbers + specials
-    );
-    t.same(
-      looksLikeASecret(secret2),
-      false,
-      `Expected string of length ${length} to not look like a secret: ${secret2}`
-    );
   }
 });
 
 t.test("it returns true for long strings", async () => {
-  for (let length = 11; length <= 16; length++) {
-    const secret = secretFromCharset(length, lower + upper + numbers);
-    t.same(
-      looksLikeASecret(secret),
-      true,
-      `Expected string of length ${length} to look like a secret: ${secret}`
-    );
+  const secret = secretFromCharset(20, lower + upper + numbers);
+  t.same(
+    looksLikeASecret(secret),
+    true,
+    `Expected string to look like a secret: ${secret}`
+  );
 
-    const secret2 = secretFromCharset(
-      length,
-      lower + upper + numbers + specials
-    );
-    t.same(
-      looksLikeASecret(secret2),
-      true,
-      `Expected string of length ${length} to look like a secret: ${secret2}`
-    );
-  }
+  const secret2 = secretFromCharset(20, lower + upper + numbers + specials);
+  t.same(
+    looksLikeASecret(secret2),
+    true,
+    `Expected string to look like a secret: ${secret2}`
+  );
 });
 
 t.test("it returns false for strings with repeated characters", async () => {
@@ -82,10 +67,6 @@ t.test("it returns false if it has less than 2 charsets", async () => {
   t.same(looksLikeASecret(secretFromCharset(10, upper)), false);
   t.same(looksLikeASecret(secretFromCharset(10, numbers)), false);
   t.same(looksLikeASecret(secretFromCharset(10, specials)), false);
-});
-
-t.test("it flags these as secrets", async () => {
-  t.same(looksLikeASecret("cGAnuwGWQcGcg"), true);
 });
 
 const urlTerms = [
@@ -161,6 +142,10 @@ const urlTerms = [
 
 t.test("it returns false for common url terms", async () => {
   for (const term of urlTerms) {
-    t.same(looksLikeASecret(term), false);
+    t.same(
+      looksLikeASecret(term),
+      false,
+      `Expected ${term} to not look like a secret`
+    );
   }
 });

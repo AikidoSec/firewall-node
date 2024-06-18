@@ -14,14 +14,25 @@ export function looksLikeASecret(str: string) {
     return false;
   }
 
+  const hasNumber = NUMBERS.some((char) => str.includes(char));
+
+  if (!hasNumber) {
+    return false;
+  }
+
   const hasLower = LOWERCASE.some((char) => str.includes(char));
   const hasUpper = UPPERCASE.some((char) => str.includes(char));
-  const hasNumber = NUMBERS.some((char) => str.includes(char));
   const hasSpecial = SPECIAL.some((char) => str.includes(char));
-  const charsets = [hasLower, hasUpper, hasNumber, hasSpecial];
 
   // If the string doesn't have at least 2 different charsets, it's not a secret
-  if (charsets.filter((type) => type).length < 2) {
+  // (together with the number charset)
+  if (!hasLower && !hasUpper && !hasSpecial) {
+    return false;
+  }
+
+  // If the string has less than 80% unique characters, it's not a secret
+  const unique = new Set(str);
+  if (unique.size / str.length < 0.8) {
     return false;
   }
 
@@ -30,29 +41,7 @@ export function looksLikeASecret(str: string) {
     return false;
   }
 
-  // Calculate the entropy of a string using Shannon's entropy formula
-  // If the string has an entropy lower than 3, it's not a secret
-  if (calculateEntropy(str) < 2.5) {
-    return false;
-  }
-
   return true;
-}
-
-function calculateEntropy(s: string): number {
-  const freq: { [key: string]: number } = {};
-  for (const char of s) {
-    freq[char] = (freq[char] || 0) + 1;
-  }
-
-  const len = s.length;
-  let entropy = 0;
-  for (const char in freq) {
-    const p = freq[char] / len;
-    entropy -= p * Math.log2(p);
-  }
-
-  return entropy;
 }
 
 function hasRepeatedChars(s: string, limit: number): boolean {
