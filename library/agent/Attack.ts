@@ -16,6 +16,6 @@ export function attackKindHumanName(kind: Kind) {
     case "path_traversal":
       return "a path traversal attack";
     case "ssrf":
-      return "Server-side request forgery";
+      return "a server-side request forgery";
   }
 }

@@ -118,7 +118,7 @@ t.test(
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
       const error2 = await t.rejects(() =>
@@ -127,7 +127,7 @@ t.test(
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
       const error3 = await t.rejects(() =>
@@ -141,7 +141,7 @@ t.test(
       if (error3 instanceof Error) {
         t.same(
           error3.message,
-          "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
     });
@@ -153,7 +153,7 @@ t.test(
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido runtime has blocked a Server-side request forgery: undici.request(...) originating from routeParams.param"
+            "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
           );
         }
       }

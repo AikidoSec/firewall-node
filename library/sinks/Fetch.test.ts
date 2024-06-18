@@ -63,7 +63,7 @@ t.test(
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Aikido runtime has blocked a Server-side request forgery: fetch(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
       const error2 = await t.rejects(() =>
@@ -72,7 +72,7 @@ t.test(
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Aikido runtime has blocked a Server-side request forgery: fetch(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
     });

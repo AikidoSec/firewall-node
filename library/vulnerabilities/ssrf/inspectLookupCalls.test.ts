@@ -84,7 +84,7 @@ t.test("it blocks lookup in blocking mode", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido runtime has blocked a Server-side request forgery: operation(...) originating from body.image"
+        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(address, undefined);
       t.match(api.getEvents(), [
@@ -167,8 +167,16 @@ t.test(
           method: "POST",
           route: "/posts/:id",
           forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 60 * 1000,
+            maxRequests: 100,
+          },
         },
       ],
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
     });
     const token = new Token("123");
     const agent = new Agent(true, logger, api, token, undefined);
@@ -212,7 +220,7 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido runtime has blocked a Server-side request forgery: operation(...) originating from body.image"
+        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(addresses, undefined);
       t.end();

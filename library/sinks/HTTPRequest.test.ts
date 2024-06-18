@@ -113,7 +113,7 @@ t.test("it works", (t) => {
       .on("error", (error) => {
         t.match(
           error.message,
-          "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+          "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
         );
       })
       .on("finish", () => {
@@ -144,7 +144,7 @@ t.test("it works", (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -155,7 +155,7 @@ t.test("it works", (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -171,7 +171,7 @@ t.test("it works", (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido runtime has blocked a Server-side request forgery: https.request(...) originating from body.image"
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
   });

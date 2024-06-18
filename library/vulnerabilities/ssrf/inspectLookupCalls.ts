@@ -31,6 +31,12 @@ function wrapCallback(
       return callback(err, addresses, family);
     }
 
+    const endpoint = agent.getConfig().getEndpoint(context);
+
+    if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      return callback(err, addresses, family);
+    }
+
     const toCheck: string[] = [];
     for (const address of Array.isArray(addresses) ? addresses : [addresses]) {
       if (typeof address === "string") {
@@ -83,14 +89,6 @@ function wrapCallback(
       return callback(err, addresses, family);
     }
 
-    if (
-      context.method &&
-      context.route &&
-      !agent.getConfig().shouldProtectEndpoint(context.method, context.route)
-    ) {
-      return callback(err, addresses, family);
-    }
-
     agent.onDetectedAttack({
       module: module,
       operation: operation,
@@ -107,7 +105,7 @@ function wrapCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Aikido runtime has blocked a ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${detected.source}${detected.pathToPayload}`
+          `Aikido firewall has blocked a ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${detected.source}${detected.pathToPayload}`
         )
       );
     }
