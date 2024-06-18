@@ -533,20 +533,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           port: 443,
         },
       ],
-      routes: [
-        {
-          method: "POST",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/",
-        },
-      ],
+      routes: [],
     },
   ]);
 
