@@ -94,6 +94,7 @@ const urlTerms = [
   "contributions",
   "accessibility",
   "subscription",
+  "subscriptions",
   "infrastructure",
   "architecture",
   "authentication",
@@ -144,6 +145,13 @@ const urlTerms = [
   "poppins-bold-webfont.woff2",
   "karla-bold-webfont.woff2",
   "startEmailBasedLogin",
+  "jenkinsFile",
+  "ConnectionStrings.config",
+  "coach",
+  "login",
+  "payment_methods",
+  "activity_logs",
+  "feedback_responses",
 ];
 
 t.test("it returns false for common url terms", async () => {
@@ -169,6 +177,7 @@ const secrets = [
   "yqHYTS<agpi^aa1",
   "hIofuWBifkJI5iVsSNKKKDpBfmMqJJwuXMxau6AS8WZaHVLDAMeJXo3BwsFyrIIm",
   "AG7DrGi3pDDIUU1PrEsj",
+  "CnJ4DunhYfv2db6T1FRfciRBHtlNKOYrjoz",
 ];
 
 t.test("it returns true for known secrets", async () => {

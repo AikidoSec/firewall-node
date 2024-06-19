@@ -48,5 +48,5 @@ export function looksLikeASecret(str: string) {
   const averageRatio =
     ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
 
-  return averageRatio > 0.8;
+  return averageRatio > 0.75;
 }
