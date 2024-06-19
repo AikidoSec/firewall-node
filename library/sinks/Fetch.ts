@@ -79,7 +79,7 @@ export class Fetch implements Wrapper {
 
     if (dispatcher.constructor.name !== "Agent") {
       agent.log(
-        `Expected Agent as global dispatcher for fetch but found ${dispatcher}, we can't provide protection!`
+        `Expected Agent as global dispatcher for fetch but found ${dispatcher.constructor.name}, we can't provide protection!`
       );
       return;
     }
