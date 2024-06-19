@@ -1,10 +1,26 @@
+/* eslint-disable prefer-rest-params */
+import * as dns from "dns";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
+import { wrap } from "../helpers/wrap";
 import { Undici } from "./Undici";
+
+wrap(dns, "lookup", function lookup(original) {
+  return function lookup() {
+    if (arguments[0] === "thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
+    original.apply(this, arguments);
+  };
+});
 
 const context: Context = {
   remoteAddress: "::1",
@@ -154,6 +170,24 @@ t.test(
           t.same(
             error.message,
             "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        body: { image: "http://thisdomainpointstointernalip.com" },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          request("http://thisdomainpointstointernalip.com")
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
       }

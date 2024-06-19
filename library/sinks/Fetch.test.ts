@@ -1,3 +1,4 @@
+/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -7,8 +8,8 @@ import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
 
-wrap(dns, "lookup", function (original) {
-  return function () {
+wrap(dns, "lookup", function lookup(original) {
+  return function lookup() {
     if (arguments[0] === "thisdomainpointstointernalip.com") {
       return original.apply(this, [
         "localhost",

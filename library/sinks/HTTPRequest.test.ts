@@ -1,11 +1,26 @@
-import { lookup } from "dns";
+/* eslint-disable prefer-rest-params */
+import * as dns from "dns";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
+
+wrap(dns, "lookup", function lookup(original) {
+  return function lookup() {
+    if (arguments[0] === "thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
+    original.apply(this, arguments);
+  };
+});
 
 const context: Context = {
   remoteAddress: "::1",
@@ -106,25 +121,27 @@ t.test("it works", (t) => {
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
 
-  runWithContext({ ...context, ...{ body: { image: "localtest.me" } } }, () => {
-    // localtest.me resolves to 127.0.0.1
-    https
-      .request("https://localtest.me")
-      .on("error", (error) => {
-        t.match(
-          error.message,
-          "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
-        );
-      })
-      .on("finish", () => {
-        t.fail("should not finish");
-      })
-      .end();
-  });
+  runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
+    () => {
+      https
+        .request("http://thisdomainpointstointernalip.com")
+        .on("error", (error) => {
+          t.match(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+          );
+        })
+        .on("finish", () => {
+          t.fail("should not finish");
+        })
+        .end();
+    }
+  );
 
   runWithContext(context, () => {
     // With lookup function specified
-    const google = http.request("http://google.com", { lookup: lookup });
+    const google = http.request("http://google.com", { lookup: dns.lookup });
     google.end();
 
     // With options object

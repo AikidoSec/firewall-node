@@ -109,6 +109,24 @@ export class Undici implements Wrapper {
     return undefined;
   }
 
+  private patchGlobalDispatcher(agent: Agent) {
+    const undici = require("undici");
+
+    undici.setGlobalDispatcher(
+      new undici.Agent({
+        connect: {
+          lookup: inspectLookupCalls(
+            lookup,
+            agent,
+            "undici",
+            // We don't know the method here, so we just use "undici.[method]"
+            "undici.[method]"
+          ),
+        },
+      })
+    );
+  }
+
   wrap(hooks: Hooks) {
     const undici = hooks
       .addPackage("undici")
@@ -129,26 +147,10 @@ export class Undici implements Wrapper {
           this.inspect(args, agent, method)
         )
         .modifyArguments(method, (args, subject, agent) => {
-          if (this.patchedGlobalDispatcher) {
-            return args;
+          if (!this.patchedGlobalDispatcher) {
+            this.patchGlobalDispatcher(agent);
+            this.patchedGlobalDispatcher = true;
           }
-
-          const undici = require("undici");
-
-          undici.setGlobalDispatcher(
-            new undici.Agent({
-              connect: {
-                lookup: inspectLookupCalls(
-                  lookup,
-                  agent,
-                  "undici",
-                  `undici.${method}`
-                ),
-              },
-            })
-          );
-
-          this.patchedGlobalDispatcher = true;
 
           return args;
         });
