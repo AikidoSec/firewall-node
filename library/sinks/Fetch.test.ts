@@ -8,9 +8,18 @@ import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
 
+const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
   return function lookup() {
-    if (arguments[0] === "thisdomainpointstointernalip.com") {
+    const hostname = arguments[0];
+
+    if (!calls[hostname]) {
+      calls[hostname] = 0;
+    }
+
+    calls[hostname]++;
+
+    if (hostname === "thisdomainpointstointernalip.com") {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -110,25 +119,10 @@ t.test(
             "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
-      }
-    );
 
-    await runWithContext(
-      {
-        ...context,
-        ...{ body: { image: "http://08080404.7f000001.rbndr.us/" } },
-      },
-      async () => {
-        const error = await t.rejects(() =>
-          fetch("http://08080404.7f000001.rbndr.us/")
-        );
-        if (error instanceof Error) {
-          t.same(
-            // @ts-expect-error Type is not defined
-            error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
-          );
-        }
+        // Ensure the lookup is only called once per hostname
+        // Otherwise, it could be vulnerable to TOCTOU
+        t.same(calls["thisdomainpointstointernalip.com"], 1);
       }
     );
   }

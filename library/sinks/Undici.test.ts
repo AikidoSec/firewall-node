@@ -9,9 +9,18 @@ import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { wrap } from "../helpers/wrap";
 import { Undici } from "./Undici";
 
+const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
   return function lookup() {
-    if (arguments[0] === "thisdomainpointstointernalip.com") {
+    const hostname = arguments[0];
+
+    if (!calls[hostname]) {
+      calls[hostname] = 0;
+    }
+
+    calls[hostname]++;
+
+    if (hostname === "thisdomainpointstointernalip.com") {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -190,24 +199,10 @@ t.test(
             "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
-      }
-    );
 
-    await runWithContext(
-      {
-        ...context,
-        routeParams: { param: "http://08080404.7f000001.rbndr.us/" },
-      },
-      async () => {
-        const error = await t.rejects(() =>
-          request("http://08080404.7f000001.rbndr.us/")
-        );
-        if (error instanceof Error) {
-          t.same(
-            error.message,
-            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from routeParams.param"
-          );
-        }
+        // Ensure the lookup is only called once per hostname
+        // Otherwise, it could be vulnerable to TOCTOU
+        t.same(calls["thisdomainpointstointernalip.com"], 1);
       }
     );
 

@@ -9,9 +9,18 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 
+const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
   return function lookup() {
-    if (arguments[0] === "thisdomainpointstointernalip.com") {
+    const hostname = arguments[0];
+
+    if (!calls[hostname]) {
+      calls[hostname] = 0;
+    }
+
+    calls[hostname]++;
+
+    if (hostname === "thisdomainpointstointernalip.com") {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -131,6 +140,10 @@ t.test("it works", (t) => {
             error.message,
             "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
+
+          // Ensure the lookup is only called once per hostname
+          // Otherwise, it could be vulnerable to TOCTOU
+          t.same(calls["thisdomainpointstointernalip.com"], 1);
         })
         .on("finish", () => {
           t.fail("should not finish");
