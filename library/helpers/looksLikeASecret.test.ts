@@ -152,6 +152,17 @@ const urlTerms = [
   "payment_methods",
   "activity_logs",
   "feedback_responses",
+  "balance_transactions",
+  "customer_sessions",
+  "payment_intents",
+  "billing_portal",
+  "subscription_items",
+  "namedLayouts",
+  "PlatformAction",
+  "quickActions",
+  "queryLocator",
+  "relevantItems",
+  "parameterizedSearch",
 ];
 
 t.test("it returns false for common url terms", async () => {
@@ -178,6 +189,8 @@ const secrets = [
   "hIofuWBifkJI5iVsSNKKKDpBfmMqJJwuXMxau6AS8WZaHVLDAMeJXo3BwsFyrIIm",
   "AG7DrGi3pDDIUU1PrEsj",
   "CnJ4DunhYfv2db6T1FRfciRBHtlNKOYrjoz",
+  "Gic*EfMq:^MQ|ZcmX:yW1",
+  "AG7DrGi3pDDIUU1PrEsj",
 ];
 
 t.test("it returns true for known secrets", async () => {
