@@ -125,7 +125,7 @@ t.test("it works", (t) => {
     { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
     () => {
       https
-        .request("http://thisdomainpointstointernalip.com")
+        .request("https://thisdomainpointstointernalip.com")
         .on("error", (error) => {
           t.match(
             error.message,
