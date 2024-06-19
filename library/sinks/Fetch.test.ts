@@ -112,7 +112,7 @@ t.test(
         }
       }
     );
-    
+
     await runWithContext(
       {
         ...context,
@@ -131,6 +131,5 @@ t.test(
         }
       }
     );
-  
   }
 );

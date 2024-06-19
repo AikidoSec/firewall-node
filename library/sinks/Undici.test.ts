@@ -194,9 +194,14 @@ t.test(
     );
 
     await runWithContext(
-      { ...context, routeParams: { param: "http://08080404.7f000001.rbndr.us/" } },
+      {
+        ...context,
+        routeParams: { param: "http://08080404.7f000001.rbndr.us/" },
+      },
       async () => {
-        const error = await t.rejects(() => request("http://08080404.7f000001.rbndr.us/"));
+        const error = await t.rejects(() =>
+          request("http://08080404.7f000001.rbndr.us/")
+        );
         if (error instanceof Error) {
           t.same(
             error.message,
