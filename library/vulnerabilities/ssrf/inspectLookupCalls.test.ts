@@ -59,7 +59,7 @@ t.test("it resolves private IPv6 without context", (t) => {
 
   wrappedLookup("localhost", (err, address) => {
     t.same(err, null);
-    t.same(address, "::1");
+    t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
     t.end();
   });
 });
@@ -148,7 +148,10 @@ t.test(
     runWithContext({ ...context, body: undefined }, () => {
       wrappedLookup("localhost", (err, address) => {
         t.same(err, null);
-        t.same(address, "::1");
+        t.same(
+          address,
+          process.version.startsWith("v16") ? "127.0.0.1" : "::1"
+        );
         t.same(api.getEvents(), []);
         t.end();
       });
@@ -194,7 +197,10 @@ t.test(
     runWithContext(context, () => {
       wrappedLookup("localhost", (err, address) => {
         t.same(err, null);
-        t.same(address, "::1");
+        t.same(
+          address,
+          process.version.startsWith("v16") ? "127.0.0.1" : "::1"
+        );
         t.same(api.getEvents(), []);
         t.end();
       });
@@ -247,7 +253,7 @@ t.test("it does not block in dry mode", (t) => {
   runWithContext(context, () => {
     wrappedLookup("localhost", (err, address) => {
       t.same(err, null);
-      t.same(address, "::1");
+      t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
       t.match(api.getEvents(), [
         {
           type: "detected_attack",
@@ -278,7 +284,7 @@ t.test("it ignores invalid args", (t) => {
   const error = t.throws(() => wrappedLookup());
   if (error instanceof Error) {
     // The "callback" argument must be of type function
-    t.match(error.message, /callback/);
+    t.match(error.message, /callback/i);
   }
   t.end();
 });
