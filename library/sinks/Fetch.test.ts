@@ -112,5 +112,25 @@ t.test(
         }
       }
     );
+    
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "http://08080404.7f000001.rbndr.us/" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("http://08080404.7f000001.rbndr.us/")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+  
   }
 );

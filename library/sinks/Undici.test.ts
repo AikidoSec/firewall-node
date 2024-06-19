@@ -193,6 +193,19 @@ t.test(
       }
     );
 
+    await runWithContext(
+      { ...context, routeParams: { param: "http://08080404.7f000001.rbndr.us/" } },
+      async () => {
+        const error = await t.rejects(() => request("http://08080404.7f000001.rbndr.us/"));
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from routeParams.param"
+          );
+        }
+      }
+    );
+
     logger.clear();
     setGlobalDispatcher(new UndiciAgent({}));
     t.same(logger.getMessages(), [
