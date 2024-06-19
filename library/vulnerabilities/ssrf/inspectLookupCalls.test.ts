@@ -162,6 +162,7 @@ t.test(
     const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting({
       success: true,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
       endpoints: [
         {
           method: "POST",

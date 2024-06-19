@@ -3,7 +3,22 @@ import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
+import * as dns from "dns";
+
+wrap(dns, "lookup", function (original) {
+  return function () {
+    if (arguments[0] === "thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
+    original.apply(this, arguments);
+  };
+});
 
 const context: Context = {
   remoteAddress: "::1",
@@ -66,6 +81,7 @@ t.test(
           "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
       );
@@ -76,5 +92,24 @@ t.test(
         );
       }
     });
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "http://thisdomainpointstointernalip.com" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("http://thisdomainpointstointernalip.com")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
   }
 );

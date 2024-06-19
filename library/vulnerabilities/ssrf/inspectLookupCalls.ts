@@ -68,6 +68,7 @@ function wrapCallback(
       "headers",
       "cookies",
       "routeParams",
+      "graphql",
     ] as Source[]) {
       if (context[source]) {
         const userInput = extractStringsFromUserInput(context[source]);
@@ -105,7 +106,7 @@ function wrapCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Aikido firewall has blocked a ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${detected.source}${detected.pathToPayload}`
+          `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${detected.source}${detected.pathToPayload}`
         )
       );
     }
