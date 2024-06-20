@@ -250,6 +250,7 @@ t.test("it adds context from request for route", async (t) => {
     headers: {},
     source: "express",
     route: "/route",
+    subdomains: [],
   });
 });
 

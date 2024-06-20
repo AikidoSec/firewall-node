@@ -4,4 +4,5 @@ export type Source =
   | "headers"
   | "cookies"
   | "routeParams"
-  | "graphql";
+  | "graphql"
+  | "subdomains";
