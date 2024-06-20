@@ -32,6 +32,7 @@ import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { GraphQL } from "../sources/GraphQL";
+import { Xml2js } from "../sources/Xml2js";
 
 function isDebugging() {
   return (
@@ -123,6 +124,7 @@ function getWrappers() {
     new HTTPServer(),
     new Hono(),
     new GraphQL(),
+    new Xml2js(),
   ];
 }
 

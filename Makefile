@@ -42,6 +42,10 @@ lambda-mongodb-nosql-injection:
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/safe-request.json
 
+.PHONY: hono-xml
+hono-xml:
+	cd sample-apps/hono-xml && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: install
 install:
 	mkdir -p build && cp library/package.json build/package.json
