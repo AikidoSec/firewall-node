@@ -28,7 +28,7 @@ export class Xml2js implements Wrapper {
 
     // Wrap the callback to get the parsed result
     const originalCallback = args[1] as Function;
-    args[1] = function (err: Error, result: unknown) {
+    args[1] = function wrapCallback(err: Error, result: unknown) {
       if (result && typeof result === "object") {
         context.body = result;
       }
