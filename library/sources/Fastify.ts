@@ -59,19 +59,23 @@ export class Fastify implements Wrapper {
       "all",
     ];
 
-    const instance = exports
-      .inspectNewInstance("fastify")
-      .addSubject((exports) => exports);
+    const instances = [
+      //exports.inspectNewInstance("").addSubject((exports) => exports),
+      exports.inspectNewInstance("fastify").addSubject((exports) => exports),
+      exports.inspectNewInstance("default").addSubject((exports) => exports),
+    ];
 
-    for (const func of requestFunctions) {
-      instance.modifyArguments(func, (args, original, agent) => {
-        return this.wrapArgs(args, agent);
+    for (const instance of instances) {
+      for (const func of requestFunctions) {
+        instance.modifyArguments(func, (args, original, agent) => {
+          return this.wrapArgs(args, agent);
+        });
+      }
+
+      instance.modifyArguments("route", (args, original, agent) => {
+        return this.wrapRouteMethod(args, agent);
       });
     }
-
-    instance.modifyArguments("route", (args, original, agent) => {
-      return this.wrapRouteMethod(args, agent);
-    });
 
     // Todo wrap default export
     // Todo wrap other methods

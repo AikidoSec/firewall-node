@@ -13,15 +13,12 @@ export function contextFromRequest(req: FastifyRequest): Context {
     body: req.body ? req.body : undefined,
     url: req.url,
     headers: req.headers,
-    // Todo types
-    // @ts-ignore
+    // @ts-expect-error not typed
     routeParams: req.params,
-    // Todo types
-    // @ts-ignore
+    // @ts-expect-error not typed
     query: req.query,
     /* c8 ignore next */
-    // Todo types
-    // @ts-ignore
+    // @ts-expect-error not typed
     cookies: req.cookies ? req.cookies : {},
     source: "express",
     route: buildRouteFromURL(req.url),

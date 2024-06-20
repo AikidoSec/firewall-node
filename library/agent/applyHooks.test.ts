@@ -137,7 +137,7 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
     mysql2: {
-      version: "3.10.0",
+      version: "3.10.1",
       supported: true,
     },
   });
