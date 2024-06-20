@@ -6,7 +6,7 @@ const timeout = require("../timeout");
 const pathToApp = resolve(__dirname, "../../sample-apps/hono-xml", "app.js");
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4000"], {
+  const server = spawn(`node`, [pathToApp, "4002"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -32,7 +32,7 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4000/add", {
+        fetch("http://localhost:4002/add", {
           method: "POST",
           body: "<cat><name>Njuska'); DELETE FROM cats;-- H</name></cat>",
           headers: {
@@ -40,7 +40,7 @@ t.test("it blocks in blocking mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4000/add", {
+        fetch("http://localhost:4002/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
           headers: {
@@ -65,7 +65,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4001"], {
+  const server = spawn(`node`, [pathToApp, "4003"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -87,7 +87,7 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4001/add", {
+        fetch("http://localhost:4003/add", {
           method: "POST",
           body: "<cat><name>Njuska'); DELETE FROM cats;-- H</name></cat>",
           headers: {
@@ -95,7 +95,7 @@ t.test("it does not block in dry mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4001/add", {
+        fetch("http://localhost:4003/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
           headers: {

@@ -69,6 +69,7 @@ See list above for supported database drivers.
 ### API tools
 
 * ✅ [`graphql`](https://www.npmjs.com/package/graphql) 16.x
+* ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
 
 ## Installation
 
