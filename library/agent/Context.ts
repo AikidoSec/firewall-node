@@ -19,7 +19,7 @@ export type Context = {
   source: string;
   route: string | undefined;
   graphql?: string[];
-  subdomains?: string[];
+  subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
 };
 
 /**
