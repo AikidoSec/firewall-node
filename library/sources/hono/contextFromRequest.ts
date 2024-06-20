@@ -23,6 +23,12 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
       } catch {
         // Ignore
       }
+    } else if (contentType.includes("text/plain")) {
+      try {
+        body = await req.text();
+      } catch {
+        // Ignore
+      }
     }
   }
 
