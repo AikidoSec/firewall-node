@@ -57,6 +57,7 @@ export class Fastify implements Wrapper {
       "options",
       "patch",
       "all",
+      "addHook",
     ];
 
     const instances = [
@@ -77,7 +78,7 @@ export class Fastify implements Wrapper {
       });
     }
 
-    // Todo wrap default export
-    // Todo wrap other methods
+    // Todo wrap module.exports
+    // Todo wrap plugins?
   }
 }
