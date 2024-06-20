@@ -44,6 +44,14 @@ function getHTMLBody(cats) {
     reply.header("Content-Type", "text/html").send(html);
   });
 
+  app.route({
+    method: "GET",
+    url: "/cats",
+    handler: async (request, reply) => {
+      reply.send(await cats.getAll());
+    },
+  });
+
   // Handle GET requests to /clear
   app.get("/clear", async (request, reply) => {
     await db.execute("DELETE FROM cats;");

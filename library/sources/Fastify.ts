@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyRequest, FastifyReply, RouteOptions } from "fastify";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -19,18 +19,59 @@ export class Fastify implements Wrapper {
     });
   }
 
+  private wrapRouteMethod(args: unknown[], agent: Agent) {
+    if (args.length < 1) {
+      return args;
+    }
+    const options = args[0] as RouteOptions;
+    if (!options || typeof options !== "object") {
+      return args;
+    }
+
+    for (const [key, value] of Object.entries(options)) {
+      if (typeof value !== "function") {
+        continue;
+      }
+
+      // @ts-expect-error types
+      options[key] = wrapRequestHandler(
+        value as (request: FastifyRequest, reply: FastifyReply) => unknown,
+        agent
+      );
+    }
+    return args;
+  }
+
   wrap(hooks: Hooks) {
     const fastify = hooks.addPackage("fastify").withVersion("^4.0.0");
     const exports = fastify.addSubject((exports) => {
       return exports;
     });
 
-    exports
+    const requestFunctions = [
+      "get",
+      "head",
+      "post",
+      "put",
+      "delete",
+      "options",
+      "patch",
+      "all",
+    ];
+
+    const instance = exports
       .inspectNewInstance("fastify")
-      .addSubject((exports) => exports)
-      .modifyArguments("get", (args, original, agent) => {
+      .addSubject((exports) => exports);
+
+    for (const func of requestFunctions) {
+      instance.modifyArguments(func, (args, original, agent) => {
         return this.wrapArgs(args, agent);
       });
+    }
+
+    instance.modifyArguments("route", (args, original, agent) => {
+      return this.wrapRouteMethod(args, agent);
+    });
 
     // Todo wrap default export
     // Todo wrap other methods
