@@ -28,6 +28,7 @@ const PRIVATE_IPV6_RANGES = [
   "::1/128", // Loopback address
   "fc00::/7", // Unique local address (ULA)
   "fe80::/10", // Link-local address (LLA)
+  "::ffff:127.0.0.1/128", // IPv4-mapped address
 ];
 
 const privateIp = new BlockList();
