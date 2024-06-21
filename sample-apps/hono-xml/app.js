@@ -6,6 +6,7 @@ const { Hono } = require("hono");
 const { createConnection } = require("./db");
 const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
+const { XMLParser } = require("fast-xml-parser");
 
 async function main() {
   const app = new Hono();
@@ -43,7 +44,7 @@ async function main() {
                 const form = document.getElementById("add-cat");
                 form.addEventListener("submit", async (event) => {
                   event.preventDefault();
-                  fetch("/add", {
+                  fetch("/add-fast", {
                     method: "POST",
                     body: "<cat><name>" + form.petname.value + "</name></cat>",
                   }).then(response => response.json())
@@ -89,6 +90,39 @@ async function main() {
     }
 
     await cats.add(result.cat.$.name);
+
+    return c.json({ success: true });
+  });
+
+  app.post("/add-fast", async (c) => {
+    const body = await c.req.text();
+
+    let result;
+    try {
+      const parser = new XMLParser();
+      result = await parser.parse(body);
+    } catch (err) {
+      return c.json({ error: "Invalid XML" }, 400);
+    }
+
+    await cats.add(result.cat.name);
+
+    return c.json({ success: true });
+  });
+
+  app.post("/add-fast-attribute", async (c) => {
+    const body = await c.req.text();
+
+    let result;
+    try {
+      const parser = new XMLParser({
+        ignoreAttributes: false,
+      });
+      result = await parser.parse(body);
+    } catch (err) {
+      return c.json({ error: "Invalid XML" }, 400);
+    }
+    await cats.add(result.cat["@_name"]);
 
     return c.json({ success: true });
   });
