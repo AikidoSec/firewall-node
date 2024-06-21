@@ -1,25 +1,32 @@
-const mysql = require("mysql2/promise");
+const sqlite3 = require("sqlite3");
 
-async function createConnection() {
-  // Normally you'd use environment variables for this
-  const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "mypassword",
-    database: "catsdb",
-    port: 27015,
-    multipleStatements: true,
+/** @type {sqlite3.Database} */
+let db;
+
+async function getDB() {
+  if (db) {
+    return db;
+  }
+
+  db = new sqlite3.Database(":memory:");
+
+  await new Promise((resolve, reject) => {
+    db.run(
+      `CREATE TABLE cats (
+          petname TEXT
+        );`,
+      (err) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve();
+      }
+    );
   });
 
-  await connection.execute(`
-    CREATE TABLE IF NOT EXISTS cats (
-        petname varchar(255)
-    );
-  `);
-
-  return connection;
+  return db;
 }
 
 module.exports = {
-  createConnection,
+  getDB,
 };

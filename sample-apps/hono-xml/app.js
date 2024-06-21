@@ -3,14 +3,14 @@ require("@aikidosec/firewall");
 const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
-const { createConnection } = require("./db");
+const { getDB } = require("./db");
 const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 const { XMLParser } = require("fast-xml-parser");
 
 async function main() {
   const app = new Hono();
-  const db = await createConnection();
+  const db = await getDB();
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
@@ -37,7 +37,7 @@ async function main() {
               <input type="text" name="petname">
               <input type="submit" value="Add" />
             </form>
-            <p>SQL Injection: '); DELETE FROM cats;-- H</p>
+            <p>SQL Injection: Test'), ('Test2');--</p>
             <a href="/clear">Clear all cats</a>
             <script>
               document.addEventListener("DOMContentLoaded", () => {
@@ -128,8 +128,19 @@ async function main() {
   });
 
   app.get("/clear", async (c) => {
-    await db.execute("DELETE FROM cats;");
-    return c.redirect("/");
+    try {
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM cats;", (result, err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(result);
+        });
+      });
+      return c.redirect("/", 302);
+    } catch (err) {
+      return c.json({ error: "Failed to clear cats" }, 500);
+    }
   });
 
   return app;
