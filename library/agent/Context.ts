@@ -19,6 +19,7 @@ export type Context = {
   source: string;
   route: string | undefined;
   graphql?: string[];
+  xml?: unknown;
 };
 
 /**
@@ -52,6 +53,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.source = context.source;
     current.route = context.route;
     current.graphql = context.graphql;
+    current.xml = context.xml;
 
     return fn();
   }

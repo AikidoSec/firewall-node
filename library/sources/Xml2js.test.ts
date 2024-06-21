@@ -25,7 +25,7 @@ t.test("it works", async () => {
 
   parseString(xmlString, (err, result) => {
     t.same(result, { root: "Hello xml2js!" });
-    t.same(getContext()?.body, undefined);
+    t.same(getContext()?.xml, undefined);
   });
 
   const context: Context = {
@@ -44,13 +44,13 @@ t.test("it works", async () => {
   await runWithContext(context, async () => {
     const result = await parseStringPromise(xmlString);
     t.same(result, { root: "Hello xml2js!" });
-    t.same(getContext()?.body, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, { root: "Hello xml2js!" });
   });
 
   runWithContext(context, () => {
     parseString(xmlString, (err, result) => {
       t.same(result, { root: "Hello xml2js!" });
-      t.same(getContext()?.body, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, { root: "Hello xml2js!" });
     });
   });
 });

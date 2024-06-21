@@ -137,6 +137,7 @@ export function detectNoSQLInjection(
     "cookies",
     "routeParams",
     "graphql",
+    "xml",
   ] as Source[]) {
     if (request[source]) {
       const result = findFilterPartWithOperators(request[source], filter);

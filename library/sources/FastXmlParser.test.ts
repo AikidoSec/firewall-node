@@ -40,6 +40,6 @@ t.test("it works", async () => {
   runWithContext(context, () => {
     const result = parser.parse(xmlString);
     t.same(result, { root: "Hello xml2js!" });
-    t.same(getContext()?.body, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, { root: "Hello xml2js!" });
   });
 });

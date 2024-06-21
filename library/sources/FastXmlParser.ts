@@ -6,7 +6,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 
 /**
  * Wrapper for fast-xml-parser package.
- * If the XML string is in the body of the request and parsed with fast-xml-parser, the parsed result is stored in the context as body.
+ * If the XML string is in the body of the request and parsed with fast-xml-parser, the parsed result is stored in the context.
  * This prevents bypassing the firewall using XML. The XML is parsed only once keeping the performance impact low.
  */
 export class FastXmlParser implements Wrapper {
@@ -30,7 +30,7 @@ export class FastXmlParser implements Wrapper {
 
     // Replace the body in the context with the parsed result
     if (result && isPlainObject(result)) {
-      context.body = result;
+      context.xml = result;
     }
   }
 
