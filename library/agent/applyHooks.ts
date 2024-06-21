@@ -312,7 +312,8 @@ function wrapNewInstance(
 }
 
 /**
- * Wraps a method call with an interceptor that modifies the arguments of the method call.
+ * Wraps a method call with an interceptor that is called after the method call has returned.
+ * Returns the arguments and the result of the method call.
  */
 function wrapWithResult(
   subject: unknown,
