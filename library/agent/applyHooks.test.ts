@@ -335,3 +335,27 @@ t.test("it does not report attack if IP is allowed", async (t) => {
 
   t.same(api.getEvents(), []);
 });
+
+t.test("it can get the result of a method", async (t) => {
+  let receivedResult: unknown | undefined;
+  let receivedArgs: unknown[] | undefined;
+
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("path")
+    .addSubject((exports) => exports)
+    .inspectResult("extname", (args, result) => {
+      receivedArgs = args;
+      receivedResult = result;
+    });
+
+  const { agent } = createAgent();
+  t.same(applyHooks(hooks, agent), {});
+
+  const { extname } = require("path");
+
+  await runWithContext(context, async () => extname("file.txt"));
+
+  t.same(receivedArgs, ["file.txt"]);
+  t.same(receivedResult, ".txt");
+});
