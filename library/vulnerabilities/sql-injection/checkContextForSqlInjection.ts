@@ -27,6 +27,7 @@ export function checkContextForSqlInjection({
     "cookies",
     "routeParams",
     "graphql",
+    "xml",
     "subdomains",
   ] as Source[]) {
     if (context[source]) {

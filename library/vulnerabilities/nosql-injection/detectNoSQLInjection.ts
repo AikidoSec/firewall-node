@@ -137,6 +137,7 @@ export function detectNoSQLInjection(
     "cookies",
     "routeParams",
     "graphql",
+    "xml",
     "subdomains",
   ] as Source[]) {
     if (request[source]) {

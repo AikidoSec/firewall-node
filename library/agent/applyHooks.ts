@@ -18,6 +18,7 @@ import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsI
 import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
+import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -310,6 +311,47 @@ function wrapNewInstance(
   }
 }
 
+/**
+ * Wraps a method call with an interceptor that is called after the method call has returned.
+ * Returns the arguments and the result of the method call.
+ */
+function wrapWithResult(
+  subject: unknown,
+  method: MethodResultInterceptor,
+  module: string,
+  agent: Agent
+) {
+  try {
+    wrap(subject, method.getName(), function wrap(original: Function) {
+      return function wrap() {
+        // eslint-disable-next-line prefer-rest-params
+        const args = Array.from(arguments);
+
+        const result = original.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          args
+        );
+
+        try {
+          // @ts-expect-error We don't now the type of this
+          method.getInterceptor()(args, result, this, agent);
+        } catch (error: any) {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: method.getName(),
+            module: module,
+          });
+        }
+
+        return result;
+      };
+    });
+  } catch (error) {
+    agent.onFailedToWrapMethod(module, method.getName());
+  }
+}
+
 function wrapSubject(
   exports: unknown,
   subject: WrappableSubject,
@@ -327,6 +369,8 @@ function wrapSubject(
       wrapWithArgumentModification(theSubject, method, module, agent);
     } else if (method instanceof MethodInterceptor) {
       wrapWithoutArgumentModification(theSubject, method, module, agent);
+    } else if (method instanceof MethodResultInterceptor) {
+      wrapWithResult(theSubject, method, module, agent);
     } else {
       wrapNewInstance(theSubject, method, module, agent);
     }
