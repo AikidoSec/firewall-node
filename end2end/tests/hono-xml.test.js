@@ -32,7 +32,7 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4002/add", {
+        fetch("http://127.0.0.1:4002/add", {
           method: "POST",
           body: "<cat><name>Njuska'); DELETE FROM cats;-- H</name></cat>",
           headers: {
@@ -40,7 +40,7 @@ t.test("it blocks in blocking mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4002/add", {
+        fetch("http://127.0.0.1:4002/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
           headers: {
@@ -87,7 +87,7 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4003/add", {
+        fetch("http://127.0.0.1:4003/add", {
           method: "POST",
           body: "<cat><name>Njuska'); DELETE FROM cats;-- H</name></cat>",
           headers: {
@@ -95,7 +95,7 @@ t.test("it does not block in dry mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4003/add", {
+        fetch("http://127.0.0.1:4003/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
           headers: {
