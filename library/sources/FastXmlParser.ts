@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, runWithContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 
