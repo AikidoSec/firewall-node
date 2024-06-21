@@ -1,6 +1,10 @@
 import { ConstructorInterceptor } from "./ConstructorInterceptor";
 import { Interceptor, MethodInterceptor } from "./MethodInterceptor";
 import {
+  MethodResultInterceptor,
+  ResultInterceptor,
+} from "./MethodResultInterceptor";
+import {
   ModifyingArgumentsInterceptor,
   ModifyingArgumentsMethodInterceptor,
 } from "./ModifyingArgumentsInterceptor";
@@ -13,6 +17,7 @@ export class WrappableSubject {
     | MethodInterceptor
     | ModifyingArgumentsMethodInterceptor
     | ConstructorInterceptor
+    | MethodResultInterceptor
   )[] = [];
 
   constructor(private readonly selector: (exports: unknown) => unknown) {}
@@ -24,6 +29,20 @@ export class WrappableSubject {
    */
   inspect(methodName: string, interceptor: Interceptor) {
     const method = new MethodInterceptor(methodName, interceptor);
+    this.methods.push(method);
+
+    return this;
+  }
+
+  /**
+   * Inspection of method results. Also includes the arguments passed to the method.
+   *
+   * ! Currently only useable for sources and not for sinks. !
+   *
+   * If not necessary, use inspect instead.
+   */
+  inspectResult(methodName: string, interceptor: ResultInterceptor) {
+    const method = new MethodResultInterceptor(methodName, interceptor);
     this.methods.push(method);
 
     return this;

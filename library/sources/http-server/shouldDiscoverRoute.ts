@@ -4,7 +4,8 @@ const NOT_FOUND = 404;
 const METHOD_NOT_ALLOWED = 405;
 const ERROR_CODES = [NOT_FOUND, METHOD_NOT_ALLOWED];
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
-const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp"];
+const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp", "config"];
+const IGNORE_STRINGS = ["cgi-bin"];
 
 export function shouldDiscoverRoute({
   statusCode,
@@ -30,6 +31,10 @@ export function shouldDiscoverRoute({
     return false;
   }
 
+  if (segments.some(containsIgnoredString)) {
+    return false;
+  }
+
   return segments.every(isAllowedExtension);
 }
 
@@ -40,7 +45,7 @@ function isAllowedExtension(segment: string) {
     // Remove the dot from the extension
     extension = extension.slice(1);
 
-    if (extension.length >= 2 && extension.length <= 4) {
+    if (extension.length >= 2 && extension.length <= 5) {
       return false;
     }
 
@@ -59,4 +64,8 @@ function isDotFile(segment: string) {
   }
 
   return segment.startsWith(".") && segment.length > 1;
+}
+
+function containsIgnoredString(segment: string) {
+  return IGNORE_STRINGS.some((str) => segment.includes(str));
 }

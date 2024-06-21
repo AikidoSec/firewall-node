@@ -69,7 +69,8 @@
     "supertest": "^6.3.4",
     "tap": "^18.6.1",
     "typescript": "^5.3.3",
-    "undici": "^6.12.0"
+    "undici": "^6.12.0",
+    "xml2js": "^0.6.2"
   },
   "scripts": {
     "test": "tap --allow-incomplete-coverage",

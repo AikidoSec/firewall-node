@@ -24,6 +24,8 @@ export function checkContextForShellInjection({
     "cookies",
     "routeParams",
     "graphql",
+    "xml",
+    "subdomains",
   ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
