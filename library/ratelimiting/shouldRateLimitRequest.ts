@@ -31,7 +31,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
   const isProduction = process.env.NODE_ENV === "production";
 
-  // Allow requests from localhost in development
+  // Allow requests from localhost in development to be rate limited
   // In production, we don't want to rate limit localhost
   const isFromLocalhostInProduction =
     context.remoteAddress &&
