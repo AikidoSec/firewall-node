@@ -1,7 +1,8 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, runWithContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 /**
  * Wrapper for fast-xml-parser package.
@@ -28,7 +29,7 @@ export class FastXmlParser implements Wrapper {
     }
 
     // Replace the body in the context with the parsed result
-    if (result && typeof result === "object") {
+    if (result && isPlainObject(result)) {
       context.body = result;
     }
   }
