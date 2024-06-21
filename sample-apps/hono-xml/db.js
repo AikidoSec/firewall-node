@@ -11,11 +11,9 @@ async function createConnection() {
     multipleStatements: true,
   });
 
-  await connection.execute(`
-    CREATE TABLE IF NOT EXISTS cats (
-        petname varchar(255)
-    );
-  `);
+  await connection.execute(
+    `CREATE TABLE IF NOT EXISTS cats (petname varchar(255));`
+  );
 
   return connection;
 }

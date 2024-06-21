@@ -48,6 +48,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 
 ### Cloud providers
 

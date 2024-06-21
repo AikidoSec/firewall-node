@@ -1,16 +1,14 @@
 require("@aikidosec/firewall");
 
-const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
-const { createConnection } = require("./db");
+const { getDB } = require("./db");
 const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
-const { XMLParser } = require("fast-xml-parser");
 
 async function main() {
   const app = new Hono();
-  const db = await createConnection();
+  const db = await getDB();
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
@@ -28,7 +26,7 @@ async function main() {
       `
         <html lang="en">
           <body>
-            <h1>Vulnerable app using XML</h1>
+            <h1>Vulnerable app using SQLite3</h1>
             <ul id="list">
               ${catNames.map((name) => `<li>${name}</li>`).join("")}
             </ul>
@@ -37,7 +35,7 @@ async function main() {
               <input type="text" name="petname">
               <input type="submit" value="Add" />
             </form>
-            <p>SQL Injection: '); DELETE FROM cats;-- H</p>
+            <p>SQL Injection: Test'), ('Test2');--</p>
             <a href="/clear">Clear all cats</a>
             <script>
               document.addEventListener("DOMContentLoaded", () => {
@@ -46,7 +44,10 @@ async function main() {
                   event.preventDefault();
                   fetch("/add", {
                     method: "POST",
-                    body: "<cat><name>" + form.petname.value + "</name></cat>",
+                    body: JSON.stringify({ name: form.petname.value }),
+                    headers: {
+                      "Content-Type": "application/json"
+                    }
                   }).then(response => response.json())
                     .then(data => {
                       if(!data.success) {
@@ -65,73 +66,26 @@ async function main() {
   });
 
   app.post("/add", async (c) => {
-    const body = await c.req.text();
+    const body = await c.req.json();
 
-    let result;
-    try {
-      const parser = new xml2js.Parser();
-      result = await parser.parseStringPromise(body);
-    } catch (err) {
-      return c.json({ error: "Invalid XML" }, 400);
+    if (typeof body.name !== "string") {
+      return c.json({ error: "Invalid request" }, 400);
     }
 
-    await cats.add(result.cat.name[0]);
-
-    return c.json({ success: true });
-  });
-
-  app.post("/add-attribute", async (c) => {
-    const body = await c.req.text();
-
-    let result;
-    try {
-      const parser = new xml2js.Parser();
-      result = await parser.parseStringPromise(body);
-    } catch (err) {
-      return c.json({ error: "Invalid XML" }, 400);
-    }
-
-    await cats.add(result.cat.$.name);
-
-    return c.json({ success: true });
-  });
-
-  app.post("/add-fast", async (c) => {
-    const body = await c.req.text();
-
-    let result;
-    try {
-      const parser = new XMLParser();
-      result = await parser.parse(body);
-    } catch (err) {
-      return c.json({ error: "Invalid XML" }, 400);
-    }
-
-    await cats.add(result.cat.name);
-
-    return c.json({ success: true });
-  });
-
-  app.post("/add-fast-attribute", async (c) => {
-    const body = await c.req.text();
-
-    let result;
-    try {
-      const parser = new XMLParser({
-        ignoreAttributes: false,
-      });
-      result = await parser.parse(body);
-    } catch (err) {
-      return c.json({ error: "Invalid XML" }, 400);
-    }
-    await cats.add(result.cat["@_name"]);
-
+    await cats.add(body.name);
     return c.json({ success: true });
   });
 
   app.get("/clear", async (c) => {
     try {
-      await db.execute("DELETE FROM cats;");
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM cats;", (result, err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(result);
+        });
+      });
       return c.redirect("/", 302);
     } catch (err) {
       return c.json({ error: "Failed to clear cats" }, 500);
