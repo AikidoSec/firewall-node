@@ -40,6 +40,14 @@ t.test("it blocks in blocking mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4002/add-attribute", {
+          method: "POST",
+          body: `<cat name="Njuska'); DELETE FROM cats;-- H"></cat>`,
+          headers: {
+            "Content-Type": "application/xml",
+          },
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://127.0.0.1:4002/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
@@ -50,8 +58,9 @@ t.test("it blocks in blocking mode", (t) => {
         }),
       ]);
     })
-    .then(([sqlInjection, normalAdd]) => {
+    .then(([sqlInjection, sqlInjection2, normalAdd]) => {
       t.equal(sqlInjection.status, 500);
+      t.equal(sqlInjection2.status, 500);
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido firewall has blocked an SQL injection/);
@@ -95,6 +104,14 @@ t.test("it does not block in dry mode", (t) => {
           },
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4003/add-attribute", {
+          method: "POST",
+          body: `<cat name="Njuska'); DELETE FROM cats;-- H"></cat>`,
+          headers: {
+            "Content-Type": "application/xml",
+          },
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://127.0.0.1:4003/add", {
           method: "POST",
           body: "<cat><name>Miau</name></cat>",
@@ -105,8 +122,9 @@ t.test("it does not block in dry mode", (t) => {
         }),
       ])
     )
-    .then(([sqlInjection, normalAdd]) => {
+    .then(([sqlInjection, sqlInjection2, normalAdd]) => {
       t.equal(sqlInjection.status, 200);
+      t.equal(sqlInjection2.status, 200);
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);

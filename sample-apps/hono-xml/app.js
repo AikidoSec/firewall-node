@@ -77,6 +77,22 @@ async function main() {
     return c.json({ success: true });
   });
 
+  app.post("/add-attribute", async (c) => {
+    const body = await c.req.text();
+
+    let result;
+    try {
+      const parser = new xml2js.Parser();
+      result = await parser.parseStringPromise(body);
+    } catch (err) {
+      return c.json({ error: "Invalid XML" }, 400);
+    }
+
+    await cats.add(result.cat.$.name);
+
+    return c.json({ success: true });
+  });
+
   app.get("/clear", async (c) => {
     await db.execute("DELETE FROM cats;");
     return c.redirect("/");

@@ -3,6 +3,11 @@ import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 
+/**
+ * Wrapper for xml2js package.
+ * If the XML string is in the body of the request and parsed with xml2js, the parsed result is stored in the context as body.
+ * This prevents bypassing the firewall using XML. The XML is parsed only once keeping the performance impact low.
+ */
 export class Xml2js implements Wrapper {
   private modifyArgs(args: unknown[]) {
     if (
