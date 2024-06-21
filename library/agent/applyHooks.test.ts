@@ -82,7 +82,8 @@ t.test("it tries to wrap method that does not exist", async (t) => {
     .inspect("does_not_exist", () => {})
     .modifyArguments("another_method_that_does_not_exist", (args) => {
       return args;
-    });
+    })
+    .inspectResult("another_second_method_that_does_not_exist", () => {});
 
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
@@ -95,6 +96,7 @@ t.test("it tries to wrap method that does not exist", async (t) => {
   t.same(logger.getMessages(), [
     "Failed to wrap method does_not_exist in module shell-quote",
     "Failed to wrap method another_method_that_does_not_exist in module shell-quote",
+    "Failed to wrap method another_second_method_that_does_not_exist in module shell-quote",
   ]);
 });
 
@@ -133,6 +135,9 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   connection.modifyArguments("execute", () => {
     throw new Error("THIS SHOULD BE CATCHED");
   });
+  connection.inspectResult("execute", () => {
+    throw new Error("THIS SHOULD BE CATCHED");
+  });
 
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
@@ -164,6 +169,7 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
 
   t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
     'Internal error in module "mysql2" in method "query"',
+    'Internal error in module "mysql2" in method "execute"',
     'Internal error in module "mysql2" in method "execute"',
   ]);
 
