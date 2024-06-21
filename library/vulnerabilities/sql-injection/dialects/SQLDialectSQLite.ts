@@ -7,8 +7,6 @@ export class SQLDialectSQLite implements SQLDialect {
   }
 
   getKeywords(): string[] {
-    return [
-      // Todo
-    ];
+    return ["VACUUM", "ATTACH", "DETACH"];
   }
 }

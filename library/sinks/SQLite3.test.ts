@@ -114,7 +114,6 @@ t.test("it detects SQL injections", async () => {
       );
     }
   } catch (error: any) {
-    console.error(error);
     t.fail(error);
   } finally {
     await close();
