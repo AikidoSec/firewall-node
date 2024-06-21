@@ -1,3 +1,5 @@
+const { promisify } = require("util");
+
 class Cats {
   /**
    *
@@ -5,48 +7,25 @@ class Cats {
    */
   constructor(db) {
     this.db = db;
+    this.all = promisify(this.db.all).bind(this.db);
   }
 
   async add(name) {
-    await new Promise((resolve, reject) => {
-      // This is unsafe! This is for demo purposes only, you should use parameterized queries.
-      console.log(`INSERT INTO cats(petname) VALUES ('${name}');`);
-      this.db.all(
-        `INSERT INTO cats(petname) VALUES ('${name}');`,
-        (result, err) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(result);
-        }
-      );
-    });
+    const result = await this.all(
+      `INSERT INTO cats(petname) VALUES ('${name}');`
+    );
+    return result;
   }
 
   async byName(name) {
-    const cats = await new Promise((resolve, reject) => {
-      this.db.all(
-        `SELECT petname FROM cats WHERE petname = '${name}';`,
-        (err, rows) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(rows);
-        }
-      );
-    });
+    const cats = await this.all(
+      `SELECT petname FROM cats WHERE petname = '${name}';`
+    );
     return cats.map((row) => row.petname);
   }
 
   async getAll() {
-    const cats = await new Promise((resolve, reject) => {
-      this.db.all("SELECT petname FROM cats;", (err, rows) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const cats = await this.all("SELECT petname FROM cats;");
     return cats.map((row) => row.petname);
   }
 }

@@ -44,15 +44,17 @@ async function main() {
                 const form = document.getElementById("add-cat");
                 form.addEventListener("submit", async (event) => {
                   event.preventDefault();
-                  fetch("/add-fast", {
+                  fetch("/add", {
                     method: "POST",
                     body: "<cat><name>" + form.petname.value + "</name></cat>",
                   }).then(response => response.json())
                     .then(data => {
+                      if(!data.success) {
+                        throw new Error("Response was not successful");
+                      }
                       window.location.reload();
                     })
-                    .catch(error => document.getElementById("list").innerHTML = "<li>Error</li>");
-                  window.location.reload();
+                    .catch(error => document.getElementById("list").innerHTML = "<li>" + error.message + "</li>");
                 });
               });
             </script>
