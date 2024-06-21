@@ -138,6 +138,7 @@ export function detectNoSQLInjection(
     "routeParams",
     "graphql",
     "xml",
+    "subdomains",
   ] as Source[]) {
     if (request[source]) {
       const result = findFilterPartWithOperators(request[source], filter);

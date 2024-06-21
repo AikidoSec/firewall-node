@@ -6,3 +6,4 @@ export type Source =
   | "routeParams"
   | "graphql"
   | "xml";
+  | "subdomains";
