@@ -2,6 +2,7 @@
 import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 /**
  * Wrapper for xml2js package.
@@ -34,7 +35,7 @@ export class Xml2js implements Wrapper {
     // Wrap the callback to get the parsed result
     const originalCallback = args[1] as Function;
     args[1] = function wrapCallback(err: Error, result: unknown) {
-      if (result && typeof result === "object") {
+      if (result && isPlainObject(result)) {
         context.body = result;
       }
       runWithContext(context, () => originalCallback(err, result));
