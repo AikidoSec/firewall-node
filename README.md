@@ -144,9 +144,9 @@ The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.j
 
 See [benchmarks](benchmarks) for more information.
 
-## Bug bounty programme
+## Bug bounty program
 
-Our bug bounty programme is public and can be found by all registered Intigriti users at: https://app.intigriti.com/researcher/programs/aikido/aikidoruntime
+Our bug bounty program is public and can be found by all registered Intigriti users at: https://app.intigriti.com/researcher/programs/aikido/aikidoruntime
 
 ## Contributing
 
