@@ -61,9 +61,20 @@ function getHTMLBody(cats) {
 
   // Start the server
   try {
-    await app.listen({ port: 4000 });
+    await app.listen({ port: getPort() });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
 })();
+
+function getPort() {
+  const port = parseInt(process.argv[2], 10) || 4000;
+
+  if (isNaN(port)) {
+    console.error("Invalid port");
+    process.exit(1);
+  }
+
+  return port;
+}
