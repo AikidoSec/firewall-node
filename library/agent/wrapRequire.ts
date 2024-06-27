@@ -8,7 +8,7 @@ const interceptors: ModifyingRequireInterceptor[] = [];
 
 export function wrapRequire(agent: Agent) {
   // @ts-expect-error Ignore type error
-  mod.prototype.require = function (id) {
+  mod.prototype.require = function wrap(id) {
     const interceptor = interceptors.find((i) => i.getName() === id);
     if (!interceptor) {
       return req.apply(this, [id]);
@@ -30,8 +30,10 @@ export function wrapRequire(agent: Agent) {
       const originalReturnValue = original.apply(
         // @ts-expect-error We don't now the type of this
         this,
+        // eslint-disable-next-line prefer-rest-params
         arguments
       );
+      // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
       return interceptor.getInterceptor()(args, originalReturnValue, agent);
     };
@@ -49,8 +51,6 @@ export function wrapRequire(agent: Agent) {
     }
 
     return wrapped;
-
-    // Todo prevent multiple wrapping
   };
 }
 
