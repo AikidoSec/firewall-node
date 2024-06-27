@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { Hooks } from "./Hooks";
+import { VersionedPackage } from "./VersionedPackage";
 
 t.test("package throws error if name is empty", async (t) => {
   const hooks = new Hooks();
@@ -12,6 +13,10 @@ t.test("withVersion throws error if version is empty", async (t) => {
   const subject = hooks.addPackage("package");
 
   t.throws(() => subject.withVersion(""));
+});
+
+t.test("VersionedPackage throws error if name is empty", async (t) => {
+  t.throws(() => new VersionedPackage("", "^1.0.0"));
 });
 
 t.test("file throws error if path is empty", async (t) => {

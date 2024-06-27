@@ -20,7 +20,7 @@ export function contextFromRequest(req: FastifyRequest): Context {
     /* c8 ignore next */
     // @ts-expect-error not typed
     cookies: req.cookies ? req.cookies : {},
-    source: "express",
+    source: "fastify",
     route: buildRouteFromURL(req.url),
   };
 }
