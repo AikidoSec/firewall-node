@@ -3,6 +3,8 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
+import { wrapWithArgumentModification } from "../agent/applyHooks";
+import { ModifyingArgumentsMethodInterceptor } from "../agent/hooks/ModifyingArgumentsInterceptor";
 
 export class Fastify implements Wrapper {
   private wrapArgs(args: unknown[], agent: Agent) {
@@ -44,9 +46,8 @@ export class Fastify implements Wrapper {
 
   wrap(hooks: Hooks) {
     const fastify = hooks.addPackage("fastify").withVersion("^4.0.0");
-    const exports = fastify.addSubject((exports) => {
-      return exports;
-    });
+    const exports = fastify.addSubject((exports) => exports);
+    const requireSubject = fastify.addRequireSubject();
 
     const requestFunctions = [
       "get",
@@ -61,7 +62,7 @@ export class Fastify implements Wrapper {
     ];
 
     const instances = [
-      //exports.inspectNewInstance("").addSubject((exports) => exports),
+      requireSubject,
       exports.inspectNewInstance("fastify").addSubject((exports) => exports),
       exports.inspectNewInstance("default").addSubject((exports) => exports),
     ];
@@ -77,8 +78,5 @@ export class Fastify implements Wrapper {
         return this.wrapRouteMethod(args, agent);
       });
     }
-
-    // Todo wrap module.exports
-    // Todo wrap plugins?
   }
 }

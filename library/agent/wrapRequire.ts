@@ -1,11 +1,12 @@
 import * as mod from "module";
 import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
 import { defineProperty } from "../helpers/wrap";
+import { Agent } from "./Agent";
 const req = mod.prototype.require;
 
 const interceptors: ModifyingRequireInterceptor[] = [];
 
-export function wrapRequire() {
+export function wrapRequire(agent: Agent) {
   // @ts-expect-error Ignore type error
   mod.prototype.require = function (id) {
     const interceptor = interceptors.find((i) => i.getName() === id);
@@ -26,13 +27,13 @@ export function wrapRequire() {
     }
 
     const wrapped = function () {
-      const instance = original.apply(
+      const originalReturnValue = original.apply(
         // @ts-expect-error We don't now the type of this
         this,
         arguments
       );
-      // @ts-ignore Todo
-      return interceptor.getInterceptor()(arguments, instance);
+      const args = Array.from(arguments);
+      return interceptor.getInterceptor()(args, originalReturnValue, agent);
     };
 
     defineProperty(wrapped, "__original", original);
@@ -51,8 +52,6 @@ export function wrapRequire() {
 
     // Todo prevent multiple wrapping
   };
-
-  console.log(require.resolve("module"));
 }
 
 export function addRequireInterceptor(

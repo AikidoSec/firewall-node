@@ -243,7 +243,7 @@ function wrapWithoutArgumentModification(
 /**
  * Wraps a method call with an interceptor that modifies the arguments of the method call.
  */
-function wrapWithArgumentModification(
+export function wrapWithArgumentModification(
   subject: unknown,
   method: ModifyingArgumentsMethodInterceptor,
   module: string,

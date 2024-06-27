@@ -2,7 +2,8 @@ import { Agent } from "../Agent";
 
 export type ModifyingRequireInterceptorFunction = (
   args: unknown[],
-  original: unknown
+  originalReturnValue: unknown,
+  agent: Agent
 ) => unknown;
 
 export class ModifyingRequireInterceptor {

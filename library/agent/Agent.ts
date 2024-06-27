@@ -379,7 +379,7 @@ export class Agent {
     this.wrappedPackages = wrapInstalledPackages(this, wrappers);
 
     // Wrap require function
-    wrapRequire();
+    wrapRequire(this);
 
     for (const pkg in this.wrappedPackages) {
       const details = this.wrappedPackages[pkg];

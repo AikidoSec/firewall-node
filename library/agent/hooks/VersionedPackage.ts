@@ -5,6 +5,7 @@ import {
   ModifyingRequireInterceptorFunction,
 } from "./ModifyingRequireInterceptor";
 import { addRequireInterceptor } from "../wrapRequire";
+import { WrappableRequireSubject } from "./WrappableRequireSubject";
 
 export class VersionedPackage {
   private subjects: WrappableSubject[] = [];
@@ -40,12 +41,14 @@ export class VersionedPackage {
     return fn;
   }
 
-  wrapRequire(interceptor: ModifyingRequireInterceptorFunction) {
-    const require = new ModifyingRequireInterceptor(
-      this.packageName,
-      interceptor
-    );
-    addRequireInterceptor(require);
+  /**
+   * Wraps the require function for this package.
+   * Only required if root export of module is a function.
+   * Use addSubject to wrap other exports.
+   */
+  addRequireSubject() {
+    const require = new WrappableRequireSubject(this.packageName);
+    return require;
   }
 
   getSubjects() {
