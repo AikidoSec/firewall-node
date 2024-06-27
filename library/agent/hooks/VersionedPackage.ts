@@ -47,7 +47,7 @@ export class VersionedPackage {
    * Use addSubject to wrap other exports.
    */
   addRequireSubject() {
-    const require = new WrappableRequireSubject(this.packageName);
+    const require = new WrappableRequireSubject(this);
     return require;
   }
 
@@ -57,5 +57,9 @@ export class VersionedPackage {
 
   getFiles() {
     return this.files;
+  }
+
+  getName() {
+    return this.packageName;
   }
 }

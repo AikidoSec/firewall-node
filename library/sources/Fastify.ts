@@ -3,8 +3,6 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
-import { wrapWithArgumentModification } from "../agent/applyHooks";
-import { ModifyingArgumentsMethodInterceptor } from "../agent/hooks/ModifyingArgumentsInterceptor";
 
 export class Fastify implements Wrapper {
   private wrapArgs(args: unknown[], agent: Agent) {

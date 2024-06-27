@@ -1,3 +1,5 @@
+import { getPackageVersion } from "../../helpers/getPackageVersion";
+import { satisfiesVersion } from "../../helpers/satisfiesVersion";
 import { Agent } from "../Agent";
 import { wrapWithArgumentModification } from "../applyHooks";
 import { addRequireInterceptor } from "../wrapRequire";
@@ -6,19 +8,31 @@ import {
   ModifyingArgumentsMethodInterceptor,
 } from "./ModifyingArgumentsInterceptor";
 import { ModifyingRequireInterceptor } from "./ModifyingRequireInterceptor";
+import { VersionedPackage } from "./VersionedPackage";
 
 export class WrappableRequireSubject {
   private methods: ModifyingArgumentsMethodInterceptor[] = [];
 
-  constructor(private readonly name: string) {
-    if (!this.name) {
-      throw new Error("Module name is required");
+  constructor(private readonly versionedPackage: VersionedPackage) {
+    if (!this.versionedPackage) {
+      throw new Error("VerrsionedPackage is required");
+    }
+
+    const version = getPackageVersion(versionedPackage.getName());
+    if (!version) {
+      return;
+    }
+
+    if (!satisfiesVersion(versionedPackage.getRange(), version)) {
+      return;
     }
 
     this.intercept = this.intercept.bind(this);
-
     addRequireInterceptor(
-      new ModifyingRequireInterceptor(name, this.intercept)
+      new ModifyingRequireInterceptor(
+        versionedPackage.getName(),
+        this.intercept
+      )
     );
   }
 
@@ -36,7 +50,7 @@ export class WrappableRequireSubject {
   }
 
   getName() {
-    return this.name;
+    return this.versionedPackage.getName();
   }
 
   private intercept(
@@ -48,7 +62,7 @@ export class WrappableRequireSubject {
       wrapWithArgumentModification(
         originalReturnValue,
         methodInterceptor,
-        this.name,
+        this.versionedPackage.getName(),
         agent
       );
     }
