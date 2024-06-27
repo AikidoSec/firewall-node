@@ -96,16 +96,17 @@ function getApp() {
 
 t.test("it adds context from request for all", async (t) => {
   const app = getApp();
-  await app.listen({ port: 4123 });
-  await app.ready();
 
-  const response = await fetch("http://127.0.0.1:4123/?title[$ne]=null", {
+  const response = await app.inject({
+    method: "GET",
+    url: "/?title[$ne]=null",
     headers: {
       accept: "application/json",
       cookie: "session=123",
     },
   });
-  t.same(response.status, 200);
+
+  t.same(response.statusCode, 200);
 
   const json = await response.json();
   t.same(json, {
@@ -116,35 +117,29 @@ t.test("it adds context from request for all", async (t) => {
     headers: {
       accept: "application/json",
       cookie: "session=123",
-      host: "127.0.0.1:4123",
-      connection: "keep-alive",
-      "accept-language": "*",
-      "sec-fetch-mode": "cors",
-      "user-agent": "node",
-      "accept-encoding": "gzip, deflate",
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
     },
     routeParams: {},
     source: "fastify",
     route: "/",
     cookies: {},
   });
-
-  await app.close();
 });
 
-t.test("it adds context from request for POST to all", async (t) => {
+t.test("it adds context from request for all", async (t) => {
   const app = getApp();
-  await app.listen({ port: 4123 });
-  await app.ready();
 
-  const response = await fetch("http://127.0.0.1:4123/context", {
+  const response = await app.inject({
     method: "POST",
+    url: "/context",
     headers: {
       accept: "application/json",
       cookie: "session=123",
     },
   });
-  t.same(response.status, 200);
+
+  t.same(response.statusCode, 200);
 
   const json = await response.json();
   t.same(json, {
@@ -155,44 +150,32 @@ t.test("it adds context from request for POST to all", async (t) => {
     headers: {
       accept: "application/json",
       cookie: "session=123",
-      host: "127.0.0.1:4123",
-      connection: "keep-alive",
-      "accept-language": "*",
-      "sec-fetch-mode": "cors",
-      "user-agent": "node",
-      "accept-encoding": "gzip, deflate",
-      "content-length": "0",
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
     },
     routeParams: {},
     source: "fastify",
     route: "/context",
     cookies: {},
   });
-
-  await app.close();
 });
 
 t.test("it blocks request in on-request hook", async (t) => {
   const app = getApp();
-  await app.listen({ port: 4123 });
-  await app.ready();
 
-  const response = await fetch(
-    "http://127.0.0.1:4123/on-request-attack?directory=/etc/",
-    {
-      headers: {
-        accept: "application/json",
-      },
-    }
-  );
+  const response = await app.inject({
+    method: "GET",
+    url: "/on-request-attack?directory=/etc/",
+    headers: {
+      accept: "application/json",
+    },
+  });
 
-  t.same(response.status, 500);
+  t.same(response.statusCode, 500);
 
-  const text = await response.text();
+  const json = response.json();
   t.match(
-    text,
+    json.message,
     /Aikido firewall has blocked a path traversal attack: fs.readdir.* originating from query.directory/
   );
-
-  await app.close();
 });
