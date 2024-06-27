@@ -27,16 +27,6 @@ const agent = new Agent(
       },
       {
         method: "GET",
-        route: "/user-rate-limited",
-        forceProtectionOff: false,
-        rateLimiting: {
-          windowSizeInMS: 2000,
-          maxRequests: 3,
-          enabled: true,
-        },
-      },
-      {
-        method: "GET",
         route: "/white-listed-ip-address",
         forceProtectionOff: false,
         rateLimiting: {
@@ -65,6 +55,10 @@ function getApp() {
 
   app.addHook("onRequest", async (request, reply) => {
     reply.header("X-Powered-By", "Aikido");
+
+    if (request.url.startsWith("/blocked-user")) {
+      setUser({ id: "567", name: "User" });
+    }
   });
 
   app.addHook("onRequest", async (request, reply) => {
@@ -89,6 +83,18 @@ function getApp() {
   app.all("/context", (request, reply) => {
     const context = getContext();
     reply.code(200).header("Content-Type", "application/json").send(context);
+  });
+
+  app.route({
+    method: "GET",
+    url: "/rate-limited",
+    handler: async (request, reply) => {
+      reply.code(200).send("ok");
+    },
+  });
+
+  app.get("/blocked-user", (request, reply) => {
+    reply.code(200).send("ok");
   });
 
   return app;
@@ -178,4 +184,35 @@ t.test("it blocks request in on-request hook", async (t) => {
     json.message,
     /Aikido firewall has blocked a path traversal attack: fs.readdir.* originating from query.directory/
   );
+});
+
+t.test("it rate limits requests by ip address", async (t) => {
+  const app = getApp();
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/rate-limited",
+  });
+
+  t.same(response.statusCode, 200);
+
+  const response2 = await app.inject({
+    method: "GET",
+    url: "/rate-limited",
+  });
+
+  t.same(response2.statusCode, 429);
+});
+
+t.test("it blocks blocked user", async (t) => {
+  const app = getApp();
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/blocked-user",
+  });
+
+  t.same(response.statusCode, 403);
+
+  app.close();
 });
