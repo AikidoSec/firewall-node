@@ -23,7 +23,7 @@ export class Package {
   }
 
   withVersion(range: string): VersionedPackage {
-    const pkg = new VersionedPackage(range);
+    const pkg = new VersionedPackage(this.packageName, range);
     this.versions.push(pkg);
 
     return pkg;

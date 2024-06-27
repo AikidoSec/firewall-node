@@ -2,7 +2,8 @@
 
 require("@aikidosec/firewall");
 const { createConnection } = require("./db");
-const { fastify } = require("fastify");
+
+const fastify = require("fastify");
 const Cats = require("./Cats");
 
 // Prevent Prototype Pollution
