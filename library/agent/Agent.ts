@@ -246,9 +246,14 @@ export class Agent {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
+      const routes = this.routes.asArray();
+      const outgoingDomains = this.hostnames.asArray();
+      const users = this.users.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
       this.routes.clear();
+      this.hostnames.clear();
+      this.users.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -261,9 +266,9 @@ export class Agent {
             endedAt: endedAt,
             requests: stats.requests,
           },
-          hostnames: this.hostnames.asArray(),
-          routes: this.routes.asArray(),
-          users: this.users.asArray(),
+          hostnames: outgoingDomains,
+          routes: routes,
+          users: users,
         },
         timeoutInMS
       );

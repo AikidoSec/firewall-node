@@ -35,6 +35,7 @@ import { GraphQL } from "../sources/GraphQL";
 import { Xml2js } from "../sources/Xml2js";
 import { FastXmlParser } from "../sources/FastXmlParser";
 import { Fastify } from "../sources/Fastify";
+import { SQLite3 } from "../sinks/SQLite3";
 
 function isDebugging() {
   return (
@@ -129,6 +130,7 @@ function getWrappers() {
     new Xml2js(),
     new FastXmlParser(),
     new Fastify(),
+    new SQLite3(),
   ];
 }
 

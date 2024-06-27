@@ -48,6 +48,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 
 ### Cloud providers
 
@@ -142,6 +143,10 @@ The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.j
 (Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
 
 See [benchmarks](benchmarks) for more information.
+
+## Bug bounty program
+
+Our bug bounty program is public and can be found by all registered Intigriti users at: https://app.intigriti.com/researcher/programs/aikido/aikidoruntime
 
 ## Contributing
 
