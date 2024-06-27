@@ -49,7 +49,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
             })),
           };
 
-          return await fetch(`http://localhost:4000/search`, {
+          return await fetch(`http://127.0.0.1:4000/search`, {
             method: "POST",
             signal: AbortSignal.timeout(5000),
             body: JSON.stringify(filter),

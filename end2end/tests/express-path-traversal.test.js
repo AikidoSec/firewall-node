@@ -37,13 +37,13 @@ t.test("it blocks in blocking mode", (t) => {
     .then(() => {
       return Promise.all([
         fetch(
-          "http://localhost:4000/?content=blablabla&filename=/../TestDoc.txt",
+          "http://127.0.0.1:4000/?content=blablabla&filename=/../TestDoc.txt",
           {
             signal: AbortSignal.timeout(5000),
           }
         ),
         fetch(
-          "http://localhost:4000/?content=blablabla&filename=/TestDoc.txt",
+          "http://127.0.0.1:4000/?content=blablabla&filename=/TestDoc.txt",
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -88,13 +88,13 @@ t.test("it does not block in dry mode", (t) => {
     .then(() =>
       Promise.all([
         fetch(
-          "http://localhost:4001/?content=blablabla&filename=/../TestDoc.txt",
+          "http://127.0.0.1:4001/?content=blablabla&filename=/../TestDoc.txt",
           {
             signal: AbortSignal.timeout(5000),
           }
         ),
         fetch(
-          "http://localhost:4001/?content=blablabla&filename=/TestDoc.txt",
+          "http://127.0.0.1:4001/?content=blablabla&filename=/TestDoc.txt",
           {
             signal: AbortSignal.timeout(5000),
           }

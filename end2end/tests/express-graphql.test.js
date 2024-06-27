@@ -36,7 +36,7 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch(`http://localhost:4000/graphql`, {
+        fetch(`http://127.0.0.1:4000/graphql`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -44,7 +44,7 @@ t.test("it blocks in blocking mode", (t) => {
           }),
           signal: AbortSignal.timeout(5000),
         }),
-        fetch(`http://localhost:4000/graphql`, {
+        fetch(`http://127.0.0.1:4000/graphql`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -97,7 +97,7 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch(`http://localhost:4000/graphql`, {
+        fetch(`http://127.0.0.1:4000/graphql`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -105,7 +105,7 @@ t.test("it does not block in dry mode", (t) => {
           }),
           signal: AbortSignal.timeout(5000),
         }),
-        fetch(`http://localhost:4000/graphql`, {
+        fetch(`http://127.0.0.1:4000/graphql`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

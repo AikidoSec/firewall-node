@@ -36,10 +36,10 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4000/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4000/?search=title", {
+        fetch("http://127.0.0.1:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
@@ -81,10 +81,10 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4001/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4001/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4001/?search=title", {
+        fetch("http://127.0.0.1:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
