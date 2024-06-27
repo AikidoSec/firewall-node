@@ -1,4 +1,4 @@
-import { lookup } from "dns";
+import { LookupAddress, lookup } from "dns";
 import * as t from "tap";
 import { Agent } from "../../agent/Agent";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
@@ -307,6 +307,71 @@ t.test("it ignores if lookup returns error", (t) => {
     t.same(err instanceof Error, true);
     t.same(err.message, "lookup failed");
     t.same(address, undefined);
+    t.end();
+  });
+});
+
+const imdsMockLookup = (
+  hostname: string,
+  options: any,
+  callback: (
+    err: any | null,
+    address: string | LookupAddress[],
+    family: number
+  ) => void
+) => {
+  if (
+    hostname === "imds.test.com" ||
+    hostname === "metadata.google.internal" ||
+    hostname === "metadata.goog"
+  ) {
+    return callback(null, "169.254.169.254", 4);
+  }
+  return lookup(hostname, options, callback);
+};
+
+t.test("Blocks IMDS SSRF with untrusted domain", (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
+
+  const wrappedLookup = inspectLookupCalls(
+    imdsMockLookup,
+    agent,
+    "module",
+    "operation"
+  );
+
+  wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
+    t.same(err instanceof Error, true);
+    t.same(
+      err.message,
+      "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+    );
+    t.same(addresses, undefined);
+    t.end();
+  });
+});
+
+t.test("Does not block IMDS SSRF with Google metadata domain", (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
+
+  const wrappedLookup = inspectLookupCalls(
+    imdsMockLookup,
+    agent,
+    "module",
+    "operation"
+  );
+
+  wrappedLookup("metadata.google.internal", { family: 4 }, (err, addresses) => {
+    t.same(err, null);
+    t.same(addresses, "169.254.169.254");
     t.end();
   });
 });

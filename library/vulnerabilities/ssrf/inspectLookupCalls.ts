@@ -8,6 +8,7 @@ import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUse
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
+import { isBlockedIP, isTrustedHost } from "./blockDNSResolution";
 
 function wrapCallback(
   callback: Function,
@@ -27,16 +28,6 @@ function wrapCallback(
 
     const context = getContext();
 
-    if (!context) {
-      return callback(err, addresses, family);
-    }
-
-    const endpoint = agent.getConfig().getEndpoint(context);
-
-    if (endpoint && endpoint.endpoint.forceProtectionOff) {
-      return callback(err, addresses, family);
-    }
-
     const toCheck: string[] = [];
     for (const address of Array.isArray(addresses) ? addresses : [addresses]) {
       if (typeof address === "string") {
@@ -47,6 +38,30 @@ function wrapCallback(
       if (isPlainObject(address) && address.address) {
         toCheck.push(address.address);
       }
+    }
+
+    if (!context) {
+      // Block stored SSRF attack (IMDS IP address) with untrusted domain
+      const blockedIP = toCheck.find((ip) => isBlockedIP(ip));
+      if (blockedIP && !isTrustedHost(hostname)) {
+        // Todo support reporting attack without context?
+
+        if (agent.shouldBlock()) {
+          return callback(
+            new Error(
+              `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+            )
+          );
+        }
+      }
+
+      return callback(err, addresses, family);
+    }
+
+    const endpoint = agent.getConfig().getEndpoint(context);
+
+    if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      return callback(err, addresses, family);
     }
 
     const privateIP = toCheck.find(isPrivateIP);
