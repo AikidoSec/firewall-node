@@ -43,8 +43,6 @@ export function isSafelyEncapsulated(command: string, userInput: string) {
         includesBothSingleAndDoubleQuotes(nextSegment) &&
         includesEscapeChar(userInput)
       ) {
-        console.log(currentSegment);
-        console.log(nextSegment);
         return false;
       }
 
