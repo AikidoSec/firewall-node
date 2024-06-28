@@ -53,22 +53,28 @@ async function init(port) {
     method: "GET",
     path: "/",
     handler: async (request, h) => {
-      if (request.query.petname) {
-        await cats.add(request.query.petname);
+      try {
+        if (request.query.petname) {
+          await cats.add(request.query.petname);
+        }
+      } catch (e) {
+        return h.response(e.message).code(500);
       }
 
       return getHTMLBody(await cats.getAll());
     },
   });
 
-  server.route({
-    method: "GET",
-    path: "/clear",
-    handler: async (request, h) => {
-      await db.query("DELETE FROM cats;");
-      return h.redirect("/");
+  server.route([
+    {
+      method: "GET",
+      path: "/clear",
+      handler: async (request, h) => {
+        await db.query("DELETE FROM cats;");
+        return h.redirect("/");
+      },
     },
-  });
+  ]);
 
   await server.start();
   console.log(`Server running on http://127.0.0.1:${port}`);
