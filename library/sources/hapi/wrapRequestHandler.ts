@@ -18,12 +18,16 @@ export function wrapRequestHandler(
       // The user will be carried over from the previous context
       const context = getContext();
 
-      /* if (!context) {
-        return await handler(c, next);
+      if (!context) {
+        return handler.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          [request, h]
+        );
       }
 
       if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return c.text("You are blocked by Aikido firewall.", 403);
+        return h.response("You are blocked by Aikido firewall.").code(403);
       }
 
       const result = shouldRateLimitRequest(context, agent);
@@ -34,8 +38,8 @@ export function wrapRequestHandler(
           message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }
 
-        return c.text(message, 429);
-      } */
+        return h.response(message).code(429);
+      }
 
       return handler.apply(
         // @ts-expect-error We don't now the type of this
