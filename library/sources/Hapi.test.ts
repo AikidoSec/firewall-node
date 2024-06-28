@@ -77,6 +77,15 @@ function getServer() {
         return "OK - you are not blocked";
       },
     },
+    {
+      method: "GET",
+      path: "/options-handler",
+      options: {
+        handler: (request, h) => {
+          return getContext();
+        },
+      },
+    },
   ]);
 
   server.ext("onRequest", (request, h) => {
@@ -124,6 +133,22 @@ t.test("it adds context from POST with JSON body", async (t) => {
     source: "hapi",
     route: "/context",
     body: { content: "test", abc: [] },
+  });
+});
+
+t.test("it wraps options.handler", async (t) => {
+  const response = await request(getServer().listener)
+    .get("/options-handler?title=test")
+    .set("Accept", "application/json")
+    .set("X-Forwarded-For", "1.2.3.4");
+
+  t.match(response.body, {
+    method: "GET",
+    query: { title: "test" },
+    headers: { accept: "application/json" },
+    remoteAddress: "1.2.3.4",
+    source: "hapi",
+    route: "/options-handler",
   });
 });
 

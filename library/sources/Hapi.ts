@@ -29,6 +29,15 @@ export class Hapi implements Wrapper {
           agent
         );
       }
+      if (
+        isPlainObject(route.options) &&
+        typeof route.options.handler === "function"
+      ) {
+        route.options.handler = wrapRequestHandler(
+          route.options.handler as Lifecycle.Method<ReqRefDefaults>,
+          agent
+        );
+      }
     }
 
     return args;
