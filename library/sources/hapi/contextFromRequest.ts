@@ -5,7 +5,7 @@ import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
 export function contextFromRequest(req: Request<ReqRefDefaults>): Context {
   return {
-    method: req.method,
+    method: req.method.toUpperCase(),
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
       remoteAddress: req.info.remoteAddress,

@@ -7,6 +7,9 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapRequestHandler } from "./hapi/wrapRequestHandler";
 
 export class Hapi implements Wrapper {
+  /**
+   * Wrap the route handler function
+   */
   private wrapRoute(args: unknown[], agent: Agent) {
     if (
       args.length < 1 ||
@@ -31,15 +34,35 @@ export class Hapi implements Wrapper {
     return args;
   }
 
+  private wrapArgs(args: unknown[], agent: Agent) {
+    return args.map((arg) => {
+      // Ignore non-function arguments
+      if (typeof arg !== "function") {
+        return arg;
+      }
+
+      return wrapRequestHandler(arg as Lifecycle.Method<ReqRefDefaults>, agent);
+    });
+  }
+
   wrap(hooks: Hooks) {
     const hapi = hooks.addPackage("@hapi/hapi").withVersion("^21.0.0");
+    const exports = hapi.addSubject((exports) => exports);
 
-    hapi
-      .addSubject((exports) => exports)
-      .inspectNewInstance("server")
-      .addSubject((exports) => exports)
-      .modifyArguments("route", (args, original, agent) => {
+    const subjects = [
+      exports.inspectNewInstance("server").addSubject((exports) => exports),
+      exports.inspectNewInstance("Server").addSubject((exports) => exports),
+    ];
+
+    for (const subject of subjects) {
+      subject.modifyArguments("route", (args, original, agent) => {
         return this.wrapRoute(args, agent);
       });
+      subject.modifyArguments("ext", (args, original, agent) => {
+        return this.wrapArgs(args, agent);
+      });
+    }
+
+    // Todo wrap more methods
   }
 }

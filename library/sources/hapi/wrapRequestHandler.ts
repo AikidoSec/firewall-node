@@ -12,7 +12,7 @@ export function wrapRequestHandler(
   return async (request, h) => {
     const context = contextFromRequest(request);
 
-    return await runWithContext(context, async () => {
+    return runWithContext(context, () => {
       // Even though we already have the context, we need to get it again
       // The context from `contextFromRequest` will never return a user
       // The user will be carried over from the previous context
@@ -27,7 +27,10 @@ export function wrapRequestHandler(
       }
 
       if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return h.response("You are blocked by Aikido firewall.").code(403);
+        return h
+          .response("You are blocked by Aikido firewall.")
+          .code(403)
+          .takeover();
       }
 
       const result = shouldRateLimitRequest(context, agent);
@@ -38,7 +41,7 @@ export function wrapRequestHandler(
           message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }
 
-        return h.response(message).code(429);
+        return h.response(message).code(429).takeover();
       }
 
       return handler.apply(
