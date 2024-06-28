@@ -62,7 +62,5 @@ export class Hapi implements Wrapper {
         return this.wrapArgs(args, agent);
       });
     }
-
-    // Todo wrap more methods
   }
 }

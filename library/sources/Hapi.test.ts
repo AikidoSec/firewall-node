@@ -50,7 +50,7 @@ function getServer() {
   server.route({
     method: "GET",
     path: "/",
-    handler: function (request, h) {
+    handler: (request, h) => {
       return getContext();
     },
   });
@@ -59,27 +59,27 @@ function getServer() {
     {
       method: "*",
       path: "/context",
-      handler: function (request, h) {
+      handler: (request, h) => {
         return getContext();
       },
     },
     {
       method: "GET",
       path: "/rate-limited",
-      handler: function (request, h) {
+      handler: (request, h) => {
         return "OK";
       },
     },
     {
       method: "GET",
       path: "/blocked-user",
-      handler: function (request, h) {
+      handler: (request, h) => {
         return "OK - you are not blocked";
       },
     },
   ]);
 
-  server.ext("onRequest", function (request, h) {
+  server.ext("onRequest", (request, h) => {
     if (request.url.pathname === "/blocked-user") {
       setUser({ id: "567" });
     }
