@@ -16,7 +16,7 @@ export function contextFromRequest(req: Request<ReqRefDefaults>): Context {
     routeParams: req.params,
     query: req.query,
     /* c8 ignore next */
-    cookies: req.state,
+    cookies: req.state || {},
     source: "hapi",
     route: buildRouteFromURL(req.url.toString()),
   };

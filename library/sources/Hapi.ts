@@ -54,6 +54,24 @@ export class Hapi implements Wrapper {
     });
   }
 
+  /**
+   * Wrap the decorate function if it's a request handler
+   */
+  private wrapDecorate(args: unknown[], agent: Agent) {
+    if (
+      args.length < 3 ||
+      typeof args[0] !== "string" ||
+      typeof args[2] !== "function" ||
+      args[0] !== "handler"
+    ) {
+      return args;
+    }
+
+    // Todo wrap returned function of args[2]
+
+    return args;
+  }
+
   wrap(hooks: Hooks) {
     const hapi = hooks.addPackage("@hapi/hapi").withVersion("^21.0.0");
     const exports = hapi.addSubject((exports) => exports);
@@ -69,6 +87,9 @@ export class Hapi implements Wrapper {
       });
       subject.modifyArguments("ext", (args, original, agent) => {
         return this.wrapArgs(args, agent);
+      });
+      subject.modifyArguments("decorate", (args, original, agent) => {
+        return this.wrapDecorate(args, agent);
       });
     }
   }

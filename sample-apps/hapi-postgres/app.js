@@ -44,7 +44,7 @@ async function init(port) {
   const db = await createConnection();
   const cats = new Cats(db);
 
-  const server = Hapi.Server({
+  const server = new Hapi.Server({
     port: port,
     host: "127.0.0.1",
   });

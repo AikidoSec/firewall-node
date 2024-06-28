@@ -88,6 +88,20 @@ function getServer() {
     },
   ]);
 
+  server.decorate("handler", "customHandler", (route, options) => {
+    return (request, h) => {
+      return h.response(getContext()).code(200);
+    };
+  });
+
+  server.route({
+    method: "GET",
+    path: "/decorate-handler",
+    handler: {
+      customHandler: {},
+    },
+  });
+
   server.ext("onRequest", (request, h) => {
     if (request.url.pathname === "/blocked-user") {
       setUser({ id: "567" });
@@ -201,4 +215,19 @@ t.test("it blocks based on user ID", async (t) => {
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 403);
   t.match(response.text, "You are blocked by Aikido firewall.");
+});
+
+t.test("it gets context from decorate handler", async (t) => {
+  const response = await request(getServer().listener)
+    .get("/decorate-handler?query=123")
+    .set("X-Forwarded-For", "1.2.3.4");
+  t.match(response.body, {
+    method: "GET",
+    query: { query: "123" },
+    cookies: {},
+    headers: {},
+    remoteAddress: "1.2.3.4",
+    source: "hapi",
+    route: "/decorate-handler",
+  });
 });
