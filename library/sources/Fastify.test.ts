@@ -166,6 +166,45 @@ t.test("it adds context from request for all", async (t) => {
   });
 });
 
+t.test("it adds body to context", async (t) => {
+  const app = getApp();
+
+  const response = await app.inject({
+    method: "POST",
+    url: "/context",
+    headers: {
+      accept: "application/json",
+    },
+    body: {
+      title: "test",
+    },
+  });
+
+  t.same(response.statusCode, 200);
+
+  const json = await response.json();
+  t.same(json, {
+    url: "/context",
+    remoteAddress: "127.0.0.1",
+    method: "POST",
+    query: {},
+    headers: {
+      accept: "application/json",
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
+      "content-type": "application/json",
+      "content-length": "16",
+    },
+    body: {
+      title: "test",
+    },
+    routeParams: {},
+    source: "fastify",
+    route: "/context",
+    cookies: {},
+  });
+});
+
 t.test("it blocks request in on-request hook", async (t) => {
   const app = getApp();
 
@@ -223,3 +262,23 @@ t.test(
     app.close();
   }
 );
+
+t.test("does ignore invalid route usage", async (t) => {
+  const app = getApp();
+
+  try {
+    // @ts-expect-error wrong usage
+    app.route();
+    t.notOk("should not reach here");
+  } catch (error) {
+    t.match(error.code, "FST_ERR_ROUTE_METHOD_INVALID");
+  }
+
+  try {
+    // @ts-expect-error wrong usage
+    app.route(null);
+    t.notOk("should not reach here");
+  } catch (error) {
+    t.match(error.code, "FST_ERR_ROUTE_METHOD_INVALID");
+  }
+});
