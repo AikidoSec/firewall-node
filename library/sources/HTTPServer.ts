@@ -24,7 +24,7 @@ export class HTTPServer implements Wrapper {
     // http(s).createServer({ ... }, listener)
     if (
       args.length > 1 &&
-      isPlainObject(args[0]) &&
+      (isPlainObject(args[0]) || !args[0]) &&
       typeof args[1] === "function"
     ) {
       return [

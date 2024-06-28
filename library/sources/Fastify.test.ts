@@ -204,15 +204,19 @@ t.test("it rate limits requests by ip address", async (t) => {
   t.same(response2.statusCode, 429);
 });
 
-t.test("it blocks blocked user", async (t) => {
-  const app = getApp();
+t.test(
+  "it blocks blocked user",
+  {
+    skip: process.version.startsWith("v16") ? "Fetch is not available" : false,
+  },
+  async (t) => {
+    const app = getApp();
+    await app.listen({ port: 4123 });
+    await app.ready();
 
-  const response = await app.inject({
-    method: "GET",
-    url: "/blocked-user",
-  });
+    const response = await fetch("http://127.0.0.1:4123/blocked-user");
+    t.same(response.status, 403);
 
-  t.same(response.statusCode, 403);
-
-  app.close();
-});
+    app.close();
+  }
+);
