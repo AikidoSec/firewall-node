@@ -388,6 +388,14 @@ t.test("it detects shell injection with ../", async () => {
   isShellInjection("/./bin/ls", "/./bin/ls");
 });
 
+t.test(
+  "it detects shell injection with both single and double quotes",
+  async () => {
+    isShellInjection(`echo "Your value here: '" ; id #'"`, `" ; id #`);
+    isShellInjection(`echo "Your value here: '";id #'"`, `";id #`);
+  }
+);
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

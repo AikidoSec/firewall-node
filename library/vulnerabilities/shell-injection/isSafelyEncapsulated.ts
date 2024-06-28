@@ -38,7 +38,25 @@ export function isSafelyEncapsulated(command: string, userInput: string) {
         return false;
       }
 
+      if (
+        includesBothSingleAndDoubleQuotes(currentSegment) &&
+        includesBothSingleAndDoubleQuotes(nextSegment) &&
+        includesEscapeChar(userInput)
+      ) {
+        console.log(currentSegment);
+        console.log(nextSegment);
+        return false;
+      }
+
       return true;
     }
   );
+}
+
+function includesEscapeChar(toCheck: string) {
+  return escapeChars.some((char) => toCheck.includes(char));
+}
+
+function includesBothSingleAndDoubleQuotes(toCheck: string) {
+  return toCheck.includes("'") && toCheck.includes('"');
 }

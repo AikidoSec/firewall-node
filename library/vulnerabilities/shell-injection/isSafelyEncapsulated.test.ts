@@ -40,3 +40,26 @@ t.test("user input does not occur in the command", async () => {
   t.same(isSafelyEncapsulated(`echo 'USER'`, "$USER"), true);
   t.same(isSafelyEncapsulated(`echo "USER"`, "$USER"), true);
 });
+
+t.test("use both single and double quotes", async () => {
+  t.same(
+    isSafelyEncapsulated(`echo "Your value here: '" ; id #'"`, `" ; id #`),
+    false
+  );
+  t.same(
+    isSafelyEncapsulated(`echo "Your value here: '";id #'"`, `";id #`),
+    false
+  );
+  t.same(
+    isSafelyEncapsulated(`echo "Your value here: '" ; id #"'"`, `" ; id #"`),
+    false
+  );
+  t.same(
+    isSafelyEncapsulated(`echo 'Your value here: "' ; id #"'`, `' ; id #`),
+    false
+  );
+  t.same(
+    isSafelyEncapsulated(`echo "Your value here: '"" ; id #'"`, `"" ; id #`),
+    true
+  );
+});
