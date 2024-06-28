@@ -207,7 +207,10 @@ t.test("it rate limits requests by ip address", async (t) => {
 t.test(
   "it blocks blocked user",
   {
-    skip: process.version.startsWith("v16") ? "Fetch is not available" : false,
+    skip:
+      process.version.startsWith("v16") || process.version.startsWith("v18")
+        ? "Fetch is not available"
+        : false,
   },
   async (t) => {
     const app = getApp();

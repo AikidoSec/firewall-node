@@ -48,12 +48,21 @@ t.test("test wrapRequire", async (t) => {
 
   const fastifyBefore = require("fastify");
   t.notOk(fastifyBefore.__wrapped);
+  t.same(
+    fastifyBefore().hasRoute({
+      url: "/",
+      method: "GET",
+    }),
+    false
+  );
 
   hooks
     .addPackage("fastify")
     .withVersion("^4.0.0")
     .addRequireSubject()
-    .modifyArguments("get", (args) => {
+    .modifyArguments("hasRoute", (args) => {
+      // Break the method for testing
+      args[0] = null;
       return args;
     });
 
@@ -81,4 +90,14 @@ t.test("test wrapRequire", async (t) => {
   t.type(fastifyAfter, "function");
   t.same(fastifyAfter.errorCodes, fastifyBefore.errorCodes);
   t.ok(fastifyAfter.__wrapped);
+  try {
+    fastifyAfter().hasRoute({
+      url: "/",
+      method: "GET",
+    }),
+      t.fail("should throw error");
+  } catch (error) {
+    t.ok(error instanceof Error);
+    t.match(error.message, "Cannot read properties of null (reading 'method')");
+  }
 });
