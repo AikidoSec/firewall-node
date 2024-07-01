@@ -161,7 +161,7 @@ t.test(
 
 t.test(
   "it does not block resolved private IP if endpoint protection is turned off",
-  (t) => {
+  async (t) => {
     const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting({
       success: true,
@@ -185,6 +185,9 @@ t.test(
     const token = new Token("123");
     const agent = new Agent(true, logger, api, token, undefined);
     agent.start([]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     api.clear();
 
     const wrappedLookup = inspectDNSLookupCalls(
@@ -194,15 +197,17 @@ t.test(
       "operation"
     );
 
-    runWithContext(context, () => {
-      wrappedLookup("localhost", (err, address) => {
-        t.same(err, null);
-        t.same(
-          address,
-          process.version.startsWith("v16") ? "127.0.0.1" : "::1"
-        );
-        t.same(api.getEvents(), []);
-        t.end();
+    await new Promise<void>((resolve) => {
+      runWithContext(context, () => {
+        wrappedLookup("localhost", (err, address) => {
+          t.same(err, null);
+          t.same(
+            address,
+            process.version.startsWith("v16") ? "127.0.0.1" : "::1"
+          );
+          t.same(api.getEvents(), []);
+          resolve();
+        });
       });
     });
   }
@@ -330,7 +335,7 @@ const imdsMockLookup = (
   return lookup(hostname, options, callback);
 };
 
-t.test("Blocks IMDS SSRF with untrusted domain", (t) => {
+t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
@@ -344,18 +349,82 @@ t.test("Blocks IMDS SSRF with untrusted domain", (t) => {
     "operation"
   );
 
-  wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
-    t.same(err instanceof Error, true);
-    t.same(
-      err.message,
-      "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
-    );
-    t.same(addresses, undefined);
-    t.end();
-  });
+  await Promise.all([
+    new Promise<void>((resolve) => {
+      wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
+        t.same(err instanceof Error, true);
+        t.same(
+          err.message,
+          "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+        );
+        t.same(addresses, undefined);
+        resolve();
+      });
+    }),
+    new Promise<void>((resolve) => {
+      runWithContext(context, () => {
+        wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
+          t.same(err instanceof Error, true);
+          t.same(
+            err.message,
+            "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+          );
+          t.same(addresses, undefined);
+          resolve();
+        });
+      });
+    }),
+  ]);
 });
 
-t.test("Does not block IMDS SSRF with Google metadata domain", (t) => {
+t.test(
+  "it ignores IMDS SSRF with untrusted domain when endpoint protection is force off",
+  async (t) => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      endpoints: [
+        {
+          method: "POST",
+          route: "/posts/:id",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            windowSizeInMS: 60 * 1000,
+            maxRequests: 100,
+          },
+        },
+      ],
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+
+    // Wait for the agent to start
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const wrappedLookup = inspectDNSLookupCalls(
+      imdsMockLookup,
+      agent,
+      "module",
+      "operation"
+    );
+
+    runWithContext(context, () => {
+      wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
+        t.same(err, null);
+        t.same(addresses, "169.254.169.254");
+        t.end();
+      });
+    });
+  }
+);
+
+t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
@@ -369,11 +438,32 @@ t.test("Does not block IMDS SSRF with Google metadata domain", (t) => {
     "operation"
   );
 
-  wrappedLookup("metadata.google.internal", { family: 4 }, (err, addresses) => {
-    t.same(err, null);
-    t.same(addresses, "169.254.169.254");
-    t.end();
-  });
+  await Promise.all([
+    new Promise<void>((resolve) => {
+      wrappedLookup(
+        "metadata.google.internal",
+        { family: 4 },
+        (err, addresses) => {
+          t.same(err, null);
+          t.same(addresses, "169.254.169.254");
+          resolve();
+        }
+      );
+    }),
+    new Promise<void>((resolve) => {
+      runWithContext(context, () => {
+        wrappedLookup(
+          "metadata.google.internal",
+          { family: 4 },
+          (err, addresses) => {
+            t.same(err, null);
+            t.same(addresses, "169.254.169.254");
+            resolve();
+          }
+        );
+      });
+    }),
+  ]);
 });
 
 t.test("it ignores when the argument is an IP address", async (t) => {

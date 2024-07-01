@@ -76,31 +76,34 @@ function wrapDNSLookupCallback(
     }
 
     const context = getContext();
-    const resolvedIPAddresses = getResolvedIPAddresses(addresses);
 
-    if (!context) {
-      if (resolvesToIMDSIP(resolvedIPAddresses, hostname)) {
-        // Block stored SSRF attack that target IMDS IP addresses
-        // An attacker could have stored a hostname in a database that points to an IMDS IP address
-        // We don't check if the user input contains the hostname because there's no context
-        if (agent.shouldBlock()) {
-          return callback(
-            new Error(
-              `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
-            )
-          );
-        }
+    if (context) {
+      const endpoint = agent.getConfig().getEndpoint(context);
+
+      if (endpoint && endpoint.endpoint.forceProtectionOff) {
+        // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
+        // Just call the original callback to allow the DNS lookup
+        return callback(err, addresses, family);
       }
-
-      // If there's no context and the hostname doesn't resolve to an IMDS IP address, we don't need to inspect the resolved IPs
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
     }
 
-    const endpoint = agent.getConfig().getEndpoint(context);
+    const resolvedIPAddresses = getResolvedIPAddresses(addresses);
 
-    if (endpoint && endpoint.endpoint.forceProtectionOff) {
-      // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
+    if (resolvesToIMDSIP(resolvedIPAddresses, hostname)) {
+      // Block stored SSRF attack that target IMDS IP addresses
+      // An attacker could have stored a hostname in a database that points to an IMDS IP address
+      // We don't check if the user input contains the hostname because there's no context
+      if (agent.shouldBlock()) {
+        return callback(
+          new Error(
+            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+          )
+        );
+      }
+    }
+
+    if (!context) {
+      // If there's no context, we can't check if the hostname is in the context
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
