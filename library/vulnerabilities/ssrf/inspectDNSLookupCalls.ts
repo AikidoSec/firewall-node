@@ -129,7 +129,7 @@ function wrapCallback(
   };
 }
 
-export function inspectLookupCalls(
+export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,

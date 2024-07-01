@@ -7,7 +7,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
-import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
+import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -88,7 +88,7 @@ export class Fetch implements Wrapper {
       // @ts-expect-error Type is not defined
       globalThis[undiciGlobalDispatcherSymbol] = new dispatcher.constructor({
         connect: {
-          lookup: inspectLookupCalls(lookup, agent, "fetch", "fetch"),
+          lookup: inspectDNSLookupCalls(lookup, agent, "fetch", "fetch"),
         },
       });
     } catch (error) {

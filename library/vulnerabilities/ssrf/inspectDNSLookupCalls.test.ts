@@ -5,7 +5,7 @@ import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
-import { inspectLookupCalls } from "./inspectLookupCalls";
+import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -29,7 +29,7 @@ t.test("it resolves private IPv4 without context", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -50,7 +50,7 @@ t.test("it resolves private IPv6 without context", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -72,7 +72,7 @@ t.test("it blocks lookup in blocking mode", (t) => {
   agent.start([]);
   api.clear();
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -108,7 +108,7 @@ t.test("it allows resolved public IP", (t) => {
   agent.start([]);
   api.clear();
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -138,7 +138,7 @@ t.test(
     agent.start([]);
     api.clear();
 
-    const wrappedLookup = inspectLookupCalls(
+    const wrappedLookup = inspectDNSLookupCalls(
       lookup,
       agent,
       "module",
@@ -187,7 +187,7 @@ t.test(
     agent.start([]);
     api.clear();
 
-    const wrappedLookup = inspectLookupCalls(
+    const wrappedLookup = inspectDNSLookupCalls(
       lookup,
       agent,
       "module",
@@ -215,7 +215,7 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -243,7 +243,7 @@ t.test("it does not block in dry mode", (t) => {
   agent.start([]);
   api.clear();
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -274,7 +274,7 @@ t.test("it ignores invalid args", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     lookup,
     agent,
     "module",
@@ -296,7 +296,7 @@ t.test("it ignores if lookup returns error", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     (_, callback) => callback(new Error("lookup failed")),
     agent,
     "module",
@@ -337,7 +337,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     imdsMockLookup,
     agent,
     "module",
@@ -362,7 +362,7 @@ t.test("Does not block IMDS SSRF with Google metadata domain", (t) => {
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([]);
 
-  const wrappedLookup = inspectLookupCalls(
+  const wrappedLookup = inspectDNSLookupCalls(
     imdsMockLookup,
     agent,
     "module",

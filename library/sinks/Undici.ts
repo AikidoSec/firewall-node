@@ -8,7 +8,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
-import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
+import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 
 const methods = [
   "request",
@@ -115,7 +115,7 @@ export class Undici implements Wrapper {
     undici.setGlobalDispatcher(
       new undici.Agent({
         connect: {
-          lookup: inspectLookupCalls(
+          lookup: inspectDNSLookupCalls(
             lookup,
             agent,
             "undici",

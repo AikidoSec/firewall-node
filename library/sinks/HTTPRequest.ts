@@ -8,7 +8,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
-import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
+import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -113,7 +113,7 @@ export class HTTPRequest implements Wrapper {
     if (!optionObj) {
       return args.concat([
         {
-          lookup: inspectLookupCalls(
+          lookup: inspectDNSLookupCalls(
             lookup,
             agent,
             module,
@@ -124,14 +124,14 @@ export class HTTPRequest implements Wrapper {
     }
 
     if (optionObj.lookup) {
-      optionObj.lookup = inspectLookupCalls(
+      optionObj.lookup = inspectDNSLookupCalls(
         optionObj.lookup,
         agent,
         module,
         `${module}.request`
       ) as RequestOptions["lookup"];
     } else {
-      optionObj.lookup = inspectLookupCalls(
+      optionObj.lookup = inspectDNSLookupCalls(
         lookup,
         agent,
         module,
