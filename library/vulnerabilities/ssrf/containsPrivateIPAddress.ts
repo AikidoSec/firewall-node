@@ -1,7 +1,8 @@
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isPrivateIP } from "./isPrivateIP";
 
-/** Check if the hostname contains a private IP address
+/**
+ * Check if the hostname contains a private IP address
  * This function is used to detect obvious SSRF attacks (with a private IP address being used as the hostname)
  *
  * Examples
