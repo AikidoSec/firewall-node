@@ -92,24 +92,32 @@ function wrapDNSLookupCallback(
         }
       }
 
+      // If there's no context and the hostname doesn't resolve to an IMDS IP address, we don't need to inspect the call
+      // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
     const endpoint = agent.getConfig().getEndpoint(context);
 
     if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
+      // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
+      // If the hostname doesn't resolve to a private IP address, it's not an SSRF attack
+      // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
     const found = findHostnameInContext(hostname, context);
 
     if (!found) {
+      // If we can't find the hostname in the context, it's not an SSRF attack
+      // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
@@ -134,6 +142,8 @@ function wrapDNSLookupCallback(
       );
     }
 
+    // If the attack should not be blocked
+    // Just call the original callback to allow the DNS lookup
     return callback(err, addresses, family);
   };
 }
