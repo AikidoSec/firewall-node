@@ -375,3 +375,45 @@ t.test("Does not block IMDS SSRF with Google metadata domain", (t) => {
     t.end();
   });
 });
+
+t.test("it ignores when the argument is an IP address", async (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  agent.start([]);
+
+  const wrappedLookup = inspectDNSLookupCalls(
+    lookup,
+    agent,
+    "module",
+    "operation"
+  );
+
+  await Promise.all([
+    new Promise<void>((resolve) => {
+      runWithContext(
+        { ...context, routeParams: { id: "169.254.169.254" } },
+        () => {
+          wrappedLookup("169.254.169.254", (err, address) => {
+            t.same(err, null);
+            t.same(address, "169.254.169.254");
+            resolve();
+          });
+        }
+      );
+    }),
+    new Promise<void>((resolve) => {
+      runWithContext(
+        { ...context, routeParams: { id: "fd00:ec2::254" } },
+        () => {
+          wrappedLookup("fd00:ec2::254", (err, address) => {
+            t.same(err, null);
+            t.same(address, "fd00:ec2::254");
+            resolve();
+          });
+        }
+      );
+    }),
+  ]);
+});

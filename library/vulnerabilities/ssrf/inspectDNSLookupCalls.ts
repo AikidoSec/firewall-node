@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+import { isIP } from "net";
 import { LookupAddress } from "node:dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
@@ -140,7 +141,8 @@ export function inspectDNSLookupCalls(
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;
     const callback = args.find((arg) => typeof arg === "function");
 
-    if (!hostname || !callback) {
+    // If the hostname is an IP address, or if the callback is missing, we don't need to inspect the call
+    if (!hostname || isIP(hostname) || !callback) {
       return lookup(...args);
     }
 
