@@ -1,7 +1,18 @@
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isPrivateIP } from "./isPrivateIP";
 
-export function isPrivateHostname(hostname: string): boolean {
+/** Check if the hostname contains a private IP address
+ * This function is used to detect obvious SSRF attacks (with a private IP address being used as the hostname)
+ *
+ * Examples
+ * http://192.168.0.1/some/path
+ * http://[::1]/some/path
+ * http://localhost/some/path
+ *
+ * We won't flag this-domain-points-to-a-private-ip.com
+ * This will be handled by the inspectDNSLookupCalls function
+ */
+export function containsPrivateIPAddress(hostname: string): boolean {
   if (hostname === "localhost") {
     return true;
   }

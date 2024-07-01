@@ -2,7 +2,7 @@ import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
 import { Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
-import { isPrivateHostname } from "./isPrivateHostname";
+import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 
 /**
@@ -31,7 +31,7 @@ export function checkContextForSSRF({
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
         const found = findHostnameInUserInput(str, hostname);
-        if (found && isPrivateHostname(hostname)) {
+        if (found && containsPrivateIPAddress(hostname)) {
           return {
             operation: operation,
             kind: "ssrf",

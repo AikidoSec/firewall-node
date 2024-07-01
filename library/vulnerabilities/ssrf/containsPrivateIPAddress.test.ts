@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { isPrivateHostname } from "./isPrivateHostname";
+import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 
 const publicIPs = [
   "44.37.112.180",
@@ -166,7 +166,7 @@ t.test("public IPs", async (t) => {
     if (ip.includes(":")) {
       ip = `[${ip}]`; // IPv6 are enclosed in brackets
     }
-    t.same(isPrivateHostname(ip), false, `Expected ${ip} to be public`);
+    t.same(containsPrivateIPAddress(ip), false, `Expected ${ip} to be public`);
   }
 });
 
@@ -175,7 +175,7 @@ t.test("private IPs", async (t) => {
     if (ip.includes(":")) {
       ip = `[${ip}]`; // IPv6 are enclosed in brackets
     }
-    t.same(isPrivateHostname(ip), true, `Expected ${ip} to be private`);
+    t.same(containsPrivateIPAddress(ip), true, `Expected ${ip} to be private`);
   }
 });
 
@@ -184,6 +184,6 @@ t.test("invalid IPs", async (t) => {
     if (ip.includes(":")) {
       ip = `[${ip}]`; // IPv6 are enclosed in brackets
     }
-    t.same(isPrivateHostname(ip), false, `Expected ${ip} to be invalid`);
+    t.same(containsPrivateIPAddress(ip), false, `Expected ${ip} to be invalid`);
   }
 });
