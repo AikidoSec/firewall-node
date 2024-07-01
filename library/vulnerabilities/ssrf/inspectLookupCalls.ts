@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import { LookupAddress } from "node:dns";
 import { Agent } from "../../agent/Agent";
-import { attackKindHumanName, Kind } from "../../agent/Attack";
+import { attackKindHumanName } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
 import { Source } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
@@ -41,11 +41,9 @@ function wrapCallback(
     }
 
     if (!context) {
-      // Block stored SSRF attack (IMDS IP address) with untrusted domain
+      // Block stored SSRF attack (e.g. IMDS IP address) with untrusted domain
       const blockedIP = toCheck.find((ip) => isBlockedIP(ip));
       if (blockedIP && !isTrustedHost(hostname)) {
-        // Todo support reporting attack without context?
-
         if (agent.shouldBlock()) {
           return callback(
             new Error(
