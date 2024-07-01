@@ -25,6 +25,7 @@ export function checkContextForSSRF({
     "cookies",
     "routeParams",
     "graphql",
+    "xml",
   ] as Source[]) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
