@@ -87,6 +87,7 @@ export class Fetch implements Wrapper {
     }
 
     try {
+      // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
       // @ts-expect-error Type is not defined
       globalThis[undiciGlobalDispatcherSymbol] = new dispatcher.constructor({
         connect: {
@@ -110,7 +111,9 @@ export class Fetch implements Wrapper {
 
     hooks
       .addGlobal("fetch")
+      // Whenever a request is made, we'll check the hostname whether it's a private IP
       .inspect((args, subject, agent) => this.inspectFetch(args, agent))
+      // We're not really modifying the arguments here, but we need to patch the global dispatcher
       .modifyArguments((args, subject, agent) => {
         if (!this.patchedGlobalDispatcher) {
           this.patchGlobalDispatcher(agent);

@@ -114,6 +114,7 @@ export class Undici implements Wrapper {
   private patchGlobalDispatcher(agent: Agent) {
     const undici = require("undici");
 
+    // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(
       new undici.Agent({
         connect: {
@@ -145,9 +146,11 @@ export class Undici implements Wrapper {
 
     methods.forEach((method) => {
       undici
+        // Whenever a request is made, we'll check the hostname whether it's a private IP
         .inspect(method, (args, subject, agent) =>
           this.inspect(args, agent, method)
         )
+        // We're not really modifying the arguments here, but we need to patch the global dispatcher
         .modifyArguments(method, (args, subject, agent) => {
           if (!this.patchedGlobalDispatcher) {
             this.patchGlobalDispatcher(agent);

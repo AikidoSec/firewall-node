@@ -145,24 +145,21 @@ export class HTTPRequest implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addBuiltinModule("http")
-      .addSubject((exports) => exports)
-      .inspect("request", (args, subject, agent) => {
-        this.inspectHttpRequest(args, agent, "http");
-      })
-      .modifyArguments("request", (args, subject, agent) =>
-        this.monitorDNSLookups(args, agent, "http")
-      );
+    const modules = ["http", "https"];
 
-    hooks
-      .addBuiltinModule("https")
-      .addSubject((exports) => exports)
-      .inspect("request", (args, subject, agent) =>
-        this.inspectHttpRequest(args, agent, "https")
-      )
-      .modifyArguments("request", (args, subject, agent) =>
-        this.monitorDNSLookups(args, agent, "https")
-      );
+    modules.forEach((module) => {
+      hooks
+        .addBuiltinModule(module)
+        .addSubject((exports) => exports)
+        // Whenever a request is made, we'll check the hostname whether it's a private IP
+        .inspect("request", (args, subject, agent) =>
+          this.inspectHttpRequest(args, agent, module)
+        )
+        // Whenever a request is made, we'll modify the options to pass a custom lookup function
+        // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
+        .modifyArguments("request", (args, subject, agent) =>
+          this.monitorDNSLookups(args, agent, module)
+        );
+    });
   }
 }
