@@ -10,14 +10,14 @@ import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 
-function wrapCallback(
+function wrapDNSLookupCallback(
   callback: Function,
   hostname: string,
   module: string,
   agent: Agent,
   operation: string
 ): Function {
-  return function wrappedLookup(
+  return function wrappedDNSLookupCallback(
     err: Error,
     addresses: string | LookupAddress[],
     family: number
@@ -152,7 +152,7 @@ export function inspectDNSLookupCalls(
       ? [
           hostname,
           options,
-          wrapCallback(
+          wrapDNSLookupCallback(
             callback as Function,
             hostname,
             module,
@@ -162,7 +162,7 @@ export function inspectDNSLookupCalls(
         ]
       : [
           hostname,
-          wrapCallback(
+          wrapDNSLookupCallback(
             callback as Function,
             hostname,
             module,
