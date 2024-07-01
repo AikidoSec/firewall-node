@@ -8,7 +8,7 @@ import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUse
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
-import { isBlockedIP, isTrustedHost } from "./blockDNSResolution";
+import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 
 function wrapCallback(
   callback: Function,
@@ -42,8 +42,8 @@ function wrapCallback(
 
     if (!context) {
       // Block stored SSRF attack (e.g. IMDS IP address) with untrusted domain
-      const blockedIP = toCheck.find((ip) => isBlockedIP(ip));
-      if (blockedIP && !isTrustedHost(hostname)) {
+      const blockedIP = toCheck.find((ip) => isIMDSIPAddress(ip));
+      if (blockedIP && !isTrustedHostname(hostname)) {
         if (agent.shouldBlock()) {
           return callback(
             new Error(
