@@ -43,10 +43,9 @@ function wrapDNSLookupCallback(
 
     if (!context) {
       // Block stored SSRF attack that target IMDS IP addresses
-      // An attacker could have stored an IMDS IP address in the database of the application
-      // We still need to allow direct requests to the IMDS IP addresses (otherwise we might block legitimate requests)
+      // An attacker could have stored a hostname in a database that points to an IMDS IP address
       // isTrustedHostname is used to allow requests to the Google Cloud metadata service (and other services)
-      // Note: We don't check if the user input contains the IMDS IP address
+      // We don't check if the user input contains the IMDS IP address because there's no context
       const blockedIP = toCheck.find((ip) => isIMDSIPAddress(ip));
       if (blockedIP && !isTrustedHostname(hostname)) {
         if (agent.shouldBlock()) {
