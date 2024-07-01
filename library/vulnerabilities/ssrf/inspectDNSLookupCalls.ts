@@ -21,7 +21,7 @@ export function inspectDNSLookupCalls(
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;
     const callback = args.find((arg) => typeof arg === "function");
 
-    // If the hostname is an IP address, or if the callback is missing, we don't need to inspect the call
+    // If the hostname is an IP address, or if the callback is missing, we don't need to inspect the resolved IPs
     if (!hostname || isIP(hostname) || !callback) {
       return lookup(...args);
     }
@@ -92,7 +92,7 @@ function wrapDNSLookupCallback(
         }
       }
 
-      // If there's no context and the hostname doesn't resolve to an IMDS IP address, we don't need to inspect the call
+      // If there's no context and the hostname doesn't resolve to an IMDS IP address, we don't need to inspect the resolved IPs
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
