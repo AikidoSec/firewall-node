@@ -17,6 +17,8 @@ export class Fetch implements Wrapper {
     hostname: string,
     port: number | undefined
   ): InterceptorResult {
+    // Let the agent know that we are connecting to this hostname
+    // This is to build a list of all hostnames that the application is connecting to
     agent.onConnectHostname(hostname, port);
     const context = getContext();
 
