@@ -10,6 +10,8 @@ import { isPrivateIP } from "./isPrivateIP";
  * http://[::1]/some/path
  * http://localhost/some/path
  *
+ * This function gets to see "192.168.0.1", "[::1]", and "localhost"
+ *
  * We won't flag this-domain-points-to-a-private-ip.com
  * This will be handled by the inspectDNSLookupCalls function
  */
