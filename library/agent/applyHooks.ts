@@ -371,8 +371,8 @@ function wrapSubject(
       } else if (method instanceof MethodInterceptor) {
         wrapWithoutArgumentModification(theSubject, method, module, agent);
       } else if (method instanceof MethodResultInterceptor) {
-      wrapWithResult(theSubject, method, module, agent);
-    } else {
+        wrapWithResult(theSubject, method, module, agent);
+      } else {
         wrapNewInstance(theSubject, method, module, agent);
       }
     });
