@@ -64,6 +64,7 @@ export class Fetch implements Wrapper {
     return undefined;
   }
 
+  // We'll set a global dispatcher that will allow us to inspect the resolved IPs (and thus preventing TOCTOU attacks)
   private patchGlobalDispatcher(agent: Agent) {
     const undiciGlobalDispatcherSymbol = Symbol.for(
       "undici.globalDispatcher.1"
@@ -87,7 +88,6 @@ export class Fetch implements Wrapper {
     }
 
     try {
-      // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
       // @ts-expect-error Type is not defined
       globalThis[undiciGlobalDispatcherSymbol] = new dispatcher.constructor({
         connect: {
