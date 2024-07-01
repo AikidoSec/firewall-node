@@ -425,6 +425,10 @@ export class Agent {
     return this.routes;
   }
 
+  log(message: string) {
+    this.logger.log(message);
+  }
+
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
