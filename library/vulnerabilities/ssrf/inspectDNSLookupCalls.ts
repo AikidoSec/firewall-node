@@ -29,15 +29,15 @@ function wrapDNSLookupCallback(
 
     const context = getContext();
 
-    const toCheck: string[] = [];
+    const resolvedIPAddresses: string[] = [];
     for (const address of Array.isArray(addresses) ? addresses : [addresses]) {
       if (typeof address === "string") {
-        toCheck.push(address);
+        resolvedIPAddresses.push(address);
         continue;
       }
 
       if (isPlainObject(address) && address.address) {
-        toCheck.push(address.address);
+        resolvedIPAddresses.push(address.address);
       }
     }
 
@@ -46,7 +46,7 @@ function wrapDNSLookupCallback(
       // An attacker could have stored a hostname in a database that points to an IMDS IP address
       // isTrustedHostname is used to allow requests to the Google Cloud metadata service (and other services)
       // We don't check if the user input contains the IMDS IP address because there's no context
-      const blockedIP = toCheck.find((ip) => isIMDSIPAddress(ip));
+      const blockedIP = resolvedIPAddresses.find((ip) => isIMDSIPAddress(ip));
       if (blockedIP && !isTrustedHostname(hostname)) {
         if (agent.shouldBlock()) {
           return callback(
@@ -66,7 +66,7 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const privateIP = toCheck.find(isPrivateIP);
+    const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
       return callback(err, addresses, family);
