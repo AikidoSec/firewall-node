@@ -11,7 +11,7 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 
 export class HTTPRequest implements Wrapper {
-  private onConnectHostname(
+  private inspectHostname(
     agent: Agent,
     hostname: string,
     port: number | undefined,
@@ -38,14 +38,14 @@ export class HTTPRequest implements Wrapper {
         try {
           const url = new URL(args[0]);
           if (url.hostname.length > 0) {
-            const result = this.onConnectHostname(
+            const attack = this.inspectHostname(
               agent,
               url.hostname,
               getPortFromURL(url),
               module
             );
-            if (result) {
-              return result;
+            if (attack) {
+              return attack;
             }
           }
         } catch (e) {
@@ -54,14 +54,14 @@ export class HTTPRequest implements Wrapper {
       }
 
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        const result = this.onConnectHostname(
+        const attack = this.inspectHostname(
           agent,
           args[0].hostname,
           getPortFromURL(args[0]),
           module
         );
-        if (result) {
-          return result;
+        if (attack) {
+          return attack;
         }
       }
 
@@ -80,14 +80,14 @@ export class HTTPRequest implements Wrapper {
           port = parseInt(args[0].port, 10);
         }
 
-        const result = this.onConnectHostname(
+        const attack = this.inspectHostname(
           agent,
           args[0].hostname,
           port,
           module
         );
-        if (result) {
-          return result;
+        if (attack) {
+          return attack;
         }
       }
     }

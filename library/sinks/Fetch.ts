@@ -12,7 +12,7 @@ import { inspectLookupCalls } from "../vulnerabilities/ssrf/inspectLookupCalls";
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
 
-  private onConnectHostname(
+  private inspectHostname(
     agent: Agent,
     hostname: string,
     port: number | undefined
@@ -36,25 +36,25 @@ export class Fetch implements Wrapper {
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
         if (url) {
-          const result = this.onConnectHostname(
+          const attack = this.inspectHostname(
             agent,
             url.hostname,
             getPortFromURL(url)
           );
-          if (result) {
-            return result;
+          if (attack) {
+            return attack;
           }
         }
       }
 
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        const result = this.onConnectHostname(
+        const attack = this.inspectHostname(
           agent,
           args[0].hostname,
           getPortFromURL(args[0])
         );
-        if (result) {
-          return result;
+        if (attack) {
+          return attack;
         }
       }
     }
