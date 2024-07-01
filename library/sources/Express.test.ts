@@ -142,6 +142,12 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
+  app.get("/files-subdomains", (req, res) => {
+    require("fs").readdir(req.subdomains[2]).unref();
+
+    res.send(getContext());
+  });
+
   app.get("/attack-in-middleware", (req, res) => {
     res.send({ willNotBeSent: true });
   });
@@ -250,6 +256,7 @@ t.test("it adds context from request for route", async (t) => {
     headers: {},
     source: "express",
     route: "/route",
+    subdomains: [],
   });
 });
 
@@ -363,6 +370,18 @@ t.test("detect attack in middleware", async () => {
   const response = await request(getApp()).get(
     "/attack-in-middleware?directory=../../"
   );
+
+  t.same(response.statusCode, 500);
+  t.match(
+    response.text,
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+  );
+});
+
+t.test("detect attack in middleware", async () => {
+  const response = await request(getApp())
+    .get("/files-subdomains")
+    .set("Host", "/etc/passwd.127.0.0.1");
 
   t.same(response.statusCode, 500);
   t.match(

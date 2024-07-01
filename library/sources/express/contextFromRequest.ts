@@ -21,5 +21,6 @@ export function contextFromRequest(req: Request): Context {
     cookies: req.cookies ? req.cookies : {},
     source: "express",
     route: buildRouteFromURL(url),
+    subdomains: req.subdomains,
   };
 }
