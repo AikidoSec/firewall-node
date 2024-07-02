@@ -25,6 +25,7 @@ function createContext({
     cookies: cookies ? cookies : {},
     routeParams: routeParams ? routeParams : {},
     source: "express",
+    route: "/posts/:id",
   };
 }
 
@@ -617,5 +618,53 @@ t.test("it checks route params", async () => {
       }
     ),
     { injection: false }
+  );
+});
+
+t.test("it flags pipeline aggregations", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "Dummy-IdontExist",
+              foreignField: "Dummy-IdontExist",
+              as: "user_docs",
+            },
+          },
+          {
+            $limit: 1,
+          },
+        ],
+      }),
+      [
+        {
+          $lookup: {
+            from: "users",
+            localField: "Dummy-IdontExist",
+            foreignField: "Dummy-IdontExist",
+            as: "user_docs",
+          },
+        },
+        {
+          $limit: 1,
+        },
+      ]
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".[0]",
+      payload: {
+        $lookup: {
+          from: "users",
+          localField: "Dummy-IdontExist",
+          foreignField: "Dummy-IdontExist",
+          as: "user_docs",
+        },
+      },
+    }
   );
 });

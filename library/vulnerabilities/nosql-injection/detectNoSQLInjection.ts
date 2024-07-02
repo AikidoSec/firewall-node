@@ -126,7 +126,7 @@ export function detectNoSQLInjection(
   request: Context,
   filter: unknown
 ): DetectionResult {
-  if (!isPlainObject(filter)) {
+  if (!isPlainObject(filter) && !Array.isArray(filter)) {
     return { injection: false };
   }
 
