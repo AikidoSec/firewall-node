@@ -3,7 +3,7 @@ import { LookupAddress } from "node:dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { Context, getContext } from "../../agent/Context";
-import { Source } from "../../agent/Source";
+import { Source, SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
@@ -161,15 +161,7 @@ function findHostnameInContext(
   hostname: string,
   context: Context
 ): Location | undefined {
-  for (const source of [
-    "body",
-    "query",
-    "headers",
-    "cookies",
-    "routeParams",
-    "graphql",
-    "xml",
-  ] as Source[]) {
+  for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
