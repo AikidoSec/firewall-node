@@ -26,7 +26,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   private started = false;
-  private sendHeartbeatEveryMS = 30 * 60 * 1000;
+  private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
