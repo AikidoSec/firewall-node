@@ -667,6 +667,41 @@ t.test("it flags pipeline aggregations", async () => {
       },
     }
   );
+
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: {
+            $gt: "",
+          },
+        },
+      }),
+      [
+        {
+          $match: {
+            username: {
+              $gt: "",
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$username",
+            count: { $sum: 1 },
+          },
+        },
+      ]
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".username",
+      payload: {
+        $gt: "",
+      },
+    }
+  );
 });
 
 t.test("it ignores safe pipeline aggregations", async () => {
