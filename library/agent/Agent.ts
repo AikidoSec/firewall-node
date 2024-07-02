@@ -46,7 +46,7 @@ export class Agent {
   });
 
   constructor(
-    private readonly block: boolean,
+    private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
@@ -212,6 +212,15 @@ export class Agent {
 
   private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success) {
+      if (typeof response.block === "boolean") {
+        if (response.block !== this.block) {
+          this.block = response.block;
+          this.logger.log(
+            `Block mode has been set to ${this.block ? "on" : "off"}`
+          );
+        }
+      }
+
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
           response.endpoints && Array.isArray(response.endpoints)
