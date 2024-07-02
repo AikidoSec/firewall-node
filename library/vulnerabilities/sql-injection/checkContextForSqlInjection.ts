@@ -1,6 +1,6 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
-import { Source } from "../../agent/Source";
+import { SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
@@ -20,16 +20,7 @@ export function checkContextForSqlInjection({
   context: Context;
   dialect: SQLDialect;
 }): InterceptorResult {
-  for (const source of [
-    "body",
-    "query",
-    "headers",
-    "cookies",
-    "routeParams",
-    "graphql",
-    "xml",
-    "subdomains",
-  ] as Source[]) {
+  for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
