@@ -35,7 +35,7 @@ t.test("it blocks in blocking mode", (t) => {
         AIKIDO_DEBUG: "true",
         AIKIDO_BLOCKING: "true",
         PORT: 4000,
-        NODE_OPTIONS: "-r @aikidosec/runtime",
+        NODE_OPTIONS: "-r @aikidosec/firewall",
       },
       cwd: pathToApp,
     }
@@ -105,7 +105,7 @@ t.test("it does not block in dry mode", (t) => {
         ...process.env,
         AIKIDO_DEBUG: "true",
         PORT: 4000,
-        NODE_OPTIONS: "-r @aikidosec/runtime",
+        NODE_OPTIONS: "-r @aikidosec/firewall",
       },
       cwd: pathToApp,
     }

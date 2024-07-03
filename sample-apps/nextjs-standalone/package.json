@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS='-r @aikidosec/runtime' next dev -p 4000",
+    "dev": "NODE_OPTIONS='-r @aikidosec/firewall' next dev -p 4000",
     "build": "next build",
-    "start": "NODE_OPTIONS='-r @aikidosec/runtime' next start -p 4000",
+    "start": "NODE_OPTIONS='-r @aikidosec/firewall' next start -p 4000",
     "lint": "next lint"
   },
   "dependencies": {
-    "@aikidosec/runtime": "file:../../build",
+    "@aikidosec/firewall": "file:../../build",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18"
