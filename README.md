@@ -2,8 +2,12 @@
 
 # Aikido Firewall for Node.js
 
-![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square) ![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY) ![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Ffirewall?style=flat-square)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg) ![](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)
+[![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square)](https://www.npmjs.com/package/@aikidosec/firewall) 
+[![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY)](https://app.codecov.io/gh/aikidosec/firewall-node) 
+[![NPM License](https://img.shields.io/npm/l/%40aikidosec%2Ffirewall?style=flat-square)](https://github.com/AikidoSec/firewall-node/blob/main/LICENSE) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) 
+[![Unit tests](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml) 
+[![End to end tests](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml) 
 
 Aikido Firewall is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
 
@@ -18,6 +22,7 @@ Firewall autonomously protects your Node.js applications against:
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
+* 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 * 🚀 More to come (see the [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1))!
 
 Firewall operates autonomously on the same server as your Node.js app to:
@@ -34,6 +39,8 @@ Aikido Firewall for Node.js 16+ is compatible with:
 
 * ✅ [Express](docs/express.md) 4.x
 * ✅ [Hono](docs/hono.md) 4.x
+* ✅ Next.js (upcoming)
+* ✅ Fastify (upcoming)
 
 ### Database drivers
 
@@ -42,6 +49,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 
 ### Cloud providers
 
@@ -59,6 +67,15 @@ See list above for supported database drivers.
 * ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 * ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 * ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
+
+### API tools
+
+* ✅ [`graphql`](https://www.npmjs.com/package/graphql) 16.x
+
+### Data serialization tools
+
+* ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
+* ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
 
 ## Installation
 
@@ -88,9 +105,9 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
 * Go to [Firewall](https://app.aikido.dev/runtime/events).
-* Go to services.
-* Click on **Add service**.
-* Choose a name for your service.
+* Go to apps.
+* Click on **Add app**.
+* Choose a name for your app.
 * Click **Generate token**.
 * Copy the token.
 * Set the token as an environment variable, `AIKIDO_TOKEN`, using [dotenv](https://github.com/motdotla/dotenv) or another method of your choosing.
@@ -127,6 +144,10 @@ The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.j
 (Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
 
 See [benchmarks](benchmarks) for more information.
+
+## Bug bounty program
+
+Our bug bounty program is public and can be found by all registered Intigriti users at: https://app.intigriti.com/researcher/programs/aikido/aikidoruntime
 
 ## Contributing
 

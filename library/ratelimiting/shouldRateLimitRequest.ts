@@ -15,6 +15,7 @@ type Result =
       trigger: "user";
     };
 
+// eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
   const match = agent.getConfig().getEndpoint(context);
 
@@ -28,13 +29,27 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
     return { block: false };
   }
 
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Allow requests from localhost in development to be rate limited
+  // In production, we don't want to rate limit localhost
+  const isFromLocalhostInProduction =
+    context.remoteAddress &&
+    isLocalhostIP(context.remoteAddress) &&
+    isProduction;
+
+  // Allow requests from allowed IPs, e.g. never rate limit office IPs
+  const isAllowedIP =
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (
     context.remoteAddress &&
     !context.consumedRateLimitForIP &&
-    !isLocalhostIP(context.remoteAddress) &&
-    !agent.getConfig().isAllowedIP(context.remoteAddress)
+    !isFromLocalhostInProduction &&
+    !isAllowedIP
   ) {
     const allowed = agent
       .getRateLimiter()

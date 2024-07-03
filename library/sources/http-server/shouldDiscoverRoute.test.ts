@@ -128,11 +128,11 @@ t.test("it allows files with extension of one character", async () => {
   );
 });
 
-t.test("it allows files with extension of 5 or more characters", async () => {
+t.test("it allows files with extension of 6 or more characters", async () => {
   t.same(
     shouldDiscoverRoute({
       statusCode: 200,
-      route: "/a.aaaaa",
+      route: "/a.aaaaaa",
       method: "GET",
     }),
     true
@@ -140,7 +140,7 @@ t.test("it allows files with extension of 5 or more characters", async () => {
   t.same(
     shouldDiscoverRoute({
       statusCode: 200,
-      route: "/a.aaaaaa",
+      route: "/a.aaaaaaa",
       method: "GET",
     }),
     true
@@ -241,6 +241,63 @@ t.test("it allows .well-known directory", async () => {
     shouldDiscoverRoute({
       statusCode: 200,
       route: "/.well-known/security.txt",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it ignores certain strings", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/cgi-bin/luci/;stok=/locale",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/whatever/cgi-bin",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it should ignore fonts", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/fonts/icomoon.ttf",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/fonts/icomoon.woff",
+      method: "GET",
+    }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/fonts/icomoon.woff2",
+      method: "GET",
+    }),
+    false
+  );
+});
+
+t.test("it ignores files that end with .config", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/blog/App_Config/ConnectionStrings.config",
       method: "GET",
     }),
     false

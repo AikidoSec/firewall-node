@@ -1,3 +1,4 @@
+import { looksLikeASecret } from "./looksLikeASecret";
 import { tryParseURLPath } from "./tryParseURLPath";
 import { isIP } from "net";
 
@@ -56,6 +57,10 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (HASH_LENGTHS.includes(segment.length) && HASH.test(segment)) {
     return ":hash";
+  }
+
+  if (looksLikeASecret(segment)) {
+    return ":secret";
   }
 
   return segment;

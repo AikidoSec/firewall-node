@@ -137,3 +137,10 @@ t.test("it replaces hashes", async () => {
   t.same(buildRouteFromURL(`/files/${generateHash("sha256")}`), "/files/:hash");
   t.same(buildRouteFromURL(`/files/${generateHash("sha512")}`), "/files/:hash");
 });
+
+t.test("it replaces secrets", async () => {
+  t.same(
+    buildRouteFromURL("/confirm/CnJ4DunhYfv2db6T1FRfciRBHtlNKOYrjoz"),
+    "/confirm/:secret"
+  );
+});
