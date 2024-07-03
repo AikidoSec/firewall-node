@@ -539,3 +539,47 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
 
   clock.uninstall();
 });
+
+t.test("it enables blocking mode after sending startup event", async () => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+  });
+  const token = new Token("123");
+  const agent = new Agent(false, logger, api, token, undefined);
+  t.same(agent.shouldBlock(), false);
+  agent.start([]);
+
+  // Wait for the event to be sent
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(agent.shouldBlock(), true);
+});
+
+t.test("it goes into monitoring mode after sending startup event", async () => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: false,
+  });
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  t.same(agent.shouldBlock(), true);
+  agent.start([]);
+
+  // Wait for the event to be sent
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(agent.shouldBlock(), false);
+});
