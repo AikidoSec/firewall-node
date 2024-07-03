@@ -43,6 +43,9 @@ const functions: Record<string, FileSystemFunction> = {
   copyFile: { pathsArgs: 2, sync: true, promise: true },
   cp: { pathsArgs: 2, sync: true, promise: true },
   link: { pathsArgs: 2, sync: true, promise: true },
+  watch: { pathsArgs: 1, sync: false, promise: false },
+  watchFile: { pathsArgs: 1, sync: false, promise: false },
+  mkdtemp: { pathsArgs: 1, sync: true, promise: true },
 };
 
 export class FileSystem implements Wrapper {
