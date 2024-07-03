@@ -28,6 +28,7 @@ const functionsWithPath = [
   "rename",
   "rmdir",
   "rm",
+  "symlink",
   "stat",
   "statfs",
   "truncate",

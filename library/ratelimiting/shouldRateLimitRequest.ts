@@ -1,7 +1,6 @@
 import { Agent } from "../agent/Agent";
 import { Context } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
-import { tryParseURL } from "../helpers/tryParseURL";
 
 type Result =
   | {
@@ -16,27 +15,48 @@ type Result =
       trigger: "user";
     };
 
+// eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const rateLimiting = getRateLimitingForContext(context, agent);
+  const match = agent.getConfig().getEndpoint(context);
 
-  if (!rateLimiting) {
+  if (!match) {
     return { block: false };
   }
 
-  const { config, route } = rateLimiting;
+  const { endpoint, route } = match;
+
+  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
+    return { block: false };
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Allow requests from localhost in development to be rate limited
+  // In production, we don't want to rate limit localhost
+  const isFromLocalhostInProduction =
+    context.remoteAddress &&
+    isLocalhostIP(context.remoteAddress) &&
+    isProduction;
+
+  // Allow requests from allowed IPs, e.g. never rate limit office IPs
+  const isAllowedIP =
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (
     context.remoteAddress &&
     !context.consumedRateLimitForIP &&
-    !isLocalhostIP(context.remoteAddress) &&
-    !agent.getConfig().isAllowedIP(context.remoteAddress)
+    !isFromLocalhostInProduction &&
+    !isAllowedIP
   ) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${route}:ip:${context.remoteAddress}`,
-        config.windowSizeInMS,
-        config.maxRequests
+        windowSizeInMS,
+        maxRequests
       );
 
     // This function is executed for every middleware and route handler
@@ -53,8 +73,8 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
       .getRateLimiter()
       .isAllowed(
         `${context.method}:${route}:user:${context.user.id}`,
-        config.windowSizeInMS,
-        config.maxRequests
+        windowSizeInMS,
+        maxRequests
       );
 
     // This function is executed for every middleware and route handler
@@ -67,35 +87,4 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
   }
 
   return { block: false };
-}
-
-function getRateLimitingForContext(context: Context, agent: Agent) {
-  if (!context.method) {
-    return undefined;
-  }
-
-  if (context.route) {
-    const rateLimiting = agent
-      .getConfig()
-      .getRateLimiting(context.method, context.route);
-
-    if (rateLimiting) {
-      return { config: rateLimiting, route: context.route };
-    }
-  }
-
-  if (context.url) {
-    const url = tryParseURL(context.url);
-    if (url && url.pathname) {
-      const rateLimiting = agent
-        .getConfig()
-        .getRateLimiting(context.method, url.pathname);
-
-      if (rateLimiting) {
-        return { config: rateLimiting, route: url.pathname };
-      }
-    }
-  }
-
-  return undefined;
 }

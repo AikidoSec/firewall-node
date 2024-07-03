@@ -3,11 +3,11 @@
 To set the current user, you can use the `setUser` function. Here's an example for express:
 
 ```js
-require('@aikidosec/runtime');
+require('@aikidosec/firewall');
 
 // ...
 
-const Aikido = require('@aikidosec/runtime/context');
+const Aikido = require('@aikidosec/firewall/context');
 
 app.use((req, res, next) => {
   // Get the user from your authentication middleware

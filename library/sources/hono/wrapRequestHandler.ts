@@ -12,10 +12,6 @@ export function wrapRequestHandler(
   return async (c, next) => {
     const context = await contextFromRequest(c);
 
-    if (context.route) {
-      agent.onRouteExecute(c.req.method, context.route);
-    }
-
     return await runWithContext(context, async () => {
       // Even though we already have the context, we need to get it again
       // The context from `contextFromRequest` will never return a user
@@ -27,13 +23,13 @@ export function wrapRequestHandler(
       }
 
       if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return c.text("You are blocked by Aikido runtime.", 403);
+        return c.text("You are blocked by Aikido firewall.", 403);
       }
 
       const result = shouldRateLimitRequest(context, agent);
 
       if (result.block) {
-        let message = "You are rate limited by Aikido runtime.";
+        let message = "You are rate limited by Aikido firewall.";
         if (result.trigger === "ip") {
           message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }

@@ -5,10 +5,8 @@ import {
 } from "./ModifyingArgumentsInterceptor";
 
 export class Global {
-  private method:
-    | MethodInterceptor
-    | ModifyingArgumentsMethodInterceptor
-    | undefined = undefined;
+  private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
+    [];
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -22,7 +20,8 @@ export class Global {
    * This is the preferred way to use when wrapping methods
    */
   inspect(interceptor: Interceptor) {
-    this.method = new MethodInterceptor(this.name, interceptor);
+    const method = new MethodInterceptor(this.name, interceptor);
+    this.methods.push(method);
 
     return this;
   }
@@ -35,10 +34,11 @@ export class Global {
    * Don't use this unless you have to, it's better to use inspect
    */
   modifyArguments(interceptor: ModifyingArgumentsInterceptor) {
-    this.method = new ModifyingArgumentsMethodInterceptor(
+    const method = new ModifyingArgumentsMethodInterceptor(
       this.name,
       interceptor
     );
+    this.methods.push(method);
 
     return this;
   }
@@ -47,7 +47,7 @@ export class Global {
     return this.name;
   }
 
-  getMethodInterceptor() {
-    return this.method;
+  getMethodInterceptors() {
+    return this.methods;
   }
 }

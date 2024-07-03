@@ -214,12 +214,19 @@ export class Agent {
     if (response.success) {
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
-          response.endpoints,
+          response.endpoints && Array.isArray(response.endpoints)
+            ? response.endpoints
+            : [],
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
             : Date.now(),
-          response.blockedUserIds ? response.blockedUserIds : [],
-          response.allowedIPAddresses ? response.allowedIPAddresses : []
+          response.blockedUserIds && Array.isArray(response.blockedUserIds)
+            ? response.blockedUserIds
+            : [],
+          response.allowedIPAddresses &&
+          Array.isArray(response.allowedIPAddresses)
+            ? response.allowedIPAddresses
+            : []
         );
       }
 
@@ -238,8 +245,14 @@ export class Agent {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
+      const routes = this.routes.asArray();
+      const outgoingDomains = this.hostnames.asArray();
+      const users = this.users.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
+      this.routes.clear();
+      this.hostnames.clear();
+      this.users.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -252,9 +265,9 @@ export class Agent {
             endedAt: endedAt,
             requests: stats.requests,
           },
-          hostnames: this.hostnames.asArray(),
-          routes: this.routes.asArray(),
-          users: this.users.asArray(),
+          hostnames: outgoingDomains,
+          routes: routes,
+          users: users,
         },
         timeoutInMS
       );
@@ -318,6 +331,7 @@ export class Agent {
       /* c8 ignore next */
       hostname: hostname() || "",
       version: getAgentVersion(),
+      library: "firewall-node",
       /* c8 ignore next */
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
@@ -404,13 +418,15 @@ export class Agent {
   }
 
   onRouteExecute(method: string, path: string) {
-    const excludedMethods = ["OPTIONS", "HEAD"];
-
-    if (excludedMethods.includes(method)) {
-      return;
-    }
-
     this.routes.addRoute(method, path);
+  }
+
+  getRoutes() {
+    return this.routes;
+  }
+
+  log(message: string) {
+    this.logger.log(message);
   }
 
   async flushStats(timeoutInMS: number) {

@@ -142,6 +142,12 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
+  app.get("/files-subdomains", (req, res) => {
+    require("fs").readdir(req.subdomains[2]).unref();
+
+    res.send(getContext());
+  });
+
   app.get("/attack-in-middleware", (req, res) => {
     res.send({ willNotBeSent: true });
   });
@@ -250,6 +256,7 @@ t.test("it adds context from request for route", async (t) => {
     headers: {},
     source: "express",
     route: "/route",
+    subdomains: [],
   });
 });
 
@@ -287,7 +294,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -322,7 +329,7 @@ t.test("it adds context from request for route with params", async (t) => {
     method: "GET",
     routeParams: { id: "123" },
     source: "express",
-    route: "/posts/:id",
+    route: "/posts/:number",
   });
 });
 
@@ -335,28 +342,28 @@ t.test("it deals with regex routes", async (t) => {
     cookies: {},
     headers: {},
     source: "express",
-    route: "/.*fly$",
+    route: "/butterfly",
   });
 });
 
 t.test("it takes the path from the arguments for middleware", async () => {
   const response = await request(getApp()).get("/api/foo");
 
-  t.match(response.body, { route: undefined });
+  t.match(response.body, { route: "/api/foo" });
 });
 
 t.test("route handler with middleware", async () => {
   const response = await request(getApp()).get("/middleware/123");
 
   const middlewareContext = JSON.parse(response.header["x-context-middleware"]);
-  t.match(middlewareContext, { route: undefined });
+  t.match(middlewareContext, { route: "/middleware/:number" });
   t.match(middlewareContext.routeParams, { otherParamId: "123" });
 
   const routeMiddlewareContext = JSON.parse(
     response.header["x-context-route-middleware"]
   );
-  t.match(routeMiddlewareContext, { route: "/middleware/:id" });
-  t.match(response.body, { route: "/middleware/:id" });
+  t.match(routeMiddlewareContext, { route: "/middleware/:number" });
+  t.match(response.body, { route: "/middleware/:number" });
 });
 
 t.test("detect attack in middleware", async () => {
@@ -367,7 +374,19 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido runtime has blocked a path traversal attack: fs.readdir(...)/
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+  );
+});
+
+t.test("detect attack in middleware", async () => {
+  const response = await request(getApp())
+    .get("/files-subdomains")
+    .set("Host", "/etc/passwd.127.0.0.1");
+
+  t.same(response.statusCode, 500);
+  t.match(
+    response.text,
+    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -404,7 +423,7 @@ t.test("it rate limits by IP", async () => {
   t.same(res2.statusCode, 429);
   t.same(
     res2.text,
-    "You are rate limited by Aikido runtime. (Your IP: 1.2.3.4)"
+    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
   );
 
   await sleep(2000);

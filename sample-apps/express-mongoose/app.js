@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/runtime");
+require("@aikidosec/firewall");
 
 const mongoose = require("mongoose");
 const express = require("express");
@@ -9,7 +9,7 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
-require("@aikidosec/runtime/nopp");
+require("@aikidosec/firewall/nopp");
 
 async function main(port) {
   const app = express();

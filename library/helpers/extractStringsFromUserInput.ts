@@ -34,14 +34,13 @@ export function extractStringsFromUserInput(
   }
 
   if (typeof obj == "string") {
+    results.set(obj, buildPathToPayload(pathToPayload));
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
       extractStringsFromUserInput(
         jwt.object,
         pathToPayload.concat([{ type: "jwt" }])
       ).forEach((value, key) => results.set(key, value));
-    } else {
-      results.set(obj, buildPathToPayload(pathToPayload));
     }
   }
 

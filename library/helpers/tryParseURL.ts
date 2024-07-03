@@ -1,4 +1,4 @@
-export function tryParseURL(url: string) {
+export function tryParseURL(url: string): URL | undefined {
   try {
     return new URL(url);
   } catch {
