@@ -1,5 +1,5 @@
 const t = require("tap");
-const { spawn } = require("child_process");
+const { spawnSync, spawn, execSync } = require("child_process");
 const { resolve } = require("path");
 const timeout = require("../timeout");
 
@@ -7,22 +7,21 @@ const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 
 t.setTimeout(100000);
 
-t.test("building the nextjs app should work", (t) => {
-  const build = spawn(`npm`, ["run", "build"], {
+t.before(() => {
+  const { stderr } = spawnSync(`npm`, ["run", "build"], {
     cwd: pathToApp,
   });
 
-  build.on("close", () => {
-    t.end();
-  });
+  if (stderr) {
+    console.error(stderr.toString());
+  }
 
-  build.on("error", (err) => {
-    t.fail(err.message);
-  });
-
-  build.stderr.on("data", (data) => {
-    t.fail(data.toString());
-  });
+  const output = execSync(
+    `mkdir .next/standalone/node_modules/@aikidosec && cp -r ../../build .next/standalone/node_modules/@aikidosec/firewall`,
+    {
+      cwd: pathToApp,
+    }
+  );
 });
 
 t.test("it blocks in blocking mode", (t) => {
@@ -57,6 +56,7 @@ t.test("it blocks in blocking mode", (t) => {
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
+    console.error(data.toString());
   });
 
   // Wait for the server to start
@@ -79,15 +79,29 @@ t.test("it blocks in blocking mode", (t) => {
           method: "GET",
           signal: AbortSignal.timeout(30000),
         }),
+        fetch("http://127.0.0.1:4000/cats", {
+          method: "POST",
+          body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(30000),
+        }),
       ]);
     })
-    .then(([shellInjectionGet, shellInjectionPost, noInjection]) => {
-      t.equal(shellInjectionGet.status, 500);
-      t.equal(shellInjectionPost.status, 500);
-      t.equal(noInjection.status, 200);
-      t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a shell injection/);
-    })
+    .then(
+      ([shellInjectionGet, shellInjectionPost, noInjection, sqlInjection]) => {
+        t.equal(shellInjectionGet.status, 500);
+        t.equal(shellInjectionPost.status, 500);
+        t.equal(noInjection.status, 200);
+        t.equal(sqlInjection.status, 500);
+        t.match(stdout, /Starting agent/);
+        sqlInjection.json().then(console.log);
+        console.log(stderr);
+        t.match(stderr, /Aikido firewall has blocked a shell injection/);
+        t.match(stderr, /Aikido firewall has blocked an SQL injection/);
+      }
+    )
     .catch((error) => {
       t.fail(error.message);
     })
@@ -104,7 +118,7 @@ t.test("it does not block in dry mode", (t) => {
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
-        PORT: 4000,
+        PORT: 4001,
         NODE_OPTIONS: "-r @aikidosec/firewall",
       },
       cwd: pathToApp,
@@ -133,21 +147,31 @@ t.test("it does not block in dry mode", (t) => {
   timeout(5000)
     .then((a) => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
+        fetch("http://127.0.0.1:4001/files?path=.%27;env%27", {
           method: "GET",
           signal: AbortSignal.timeout(30000),
         }),
-        fetch("http://127.0.0.1:4000/files", {
+        fetch("http://127.0.0.1:4001/files", {
           method: "GET",
+          signal: AbortSignal.timeout(30000),
+        }),
+        fetch("http://127.0.0.1:4001/cats", {
+          method: "POST",
+          body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
+          headers: {
+            "Content-Type": "application/json",
+          },
           signal: AbortSignal.timeout(30000),
         }),
       ]);
     })
-    .then(([shellInjection, noInjection]) => {
+    .then(([shellInjection, noInjection, sqlInjection]) => {
       t.equal(shellInjection.status, 200);
       t.equal(noInjection.status, 200);
+      t.equal(sqlInjection.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a shell injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a shell injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);

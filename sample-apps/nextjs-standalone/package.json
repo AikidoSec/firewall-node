@@ -3,15 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS='-r @aikidosec/firewall' next dev -p 4000",
+    "dev": "AIKIDO_BLOCKING=true AIKIDO_DEBUG=true NODE_OPTIONS='-r @aikidosec/firewall' next dev -p 4000",
     "build": "next build",
-    "start": "NODE_OPTIONS='-r @aikidosec/firewall' next start -p 4000",
+    "start": "AIKIDO_BLOCKING=true AIKIDO_DEBUG=true NODE_OPTIONS='-r @aikidosec/firewall' next start -p 4000",
     "lint": "next lint"
   },
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
     "next": "14.2.3",
+    "pg": "^8.11.3",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "swr": "^2.2.5"
   }
 }
