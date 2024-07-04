@@ -5,6 +5,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapRequestHandler } from "./hapi/wrapRequestHandler";
+import { wrap } from "../helpers/wrap";
 
 export class Hapi implements Wrapper {
   /**
@@ -60,14 +61,26 @@ export class Hapi implements Wrapper {
   private wrapDecorate(args: unknown[], agent: Agent) {
     if (
       args.length < 3 ||
-      typeof args[0] !== "string" ||
-      typeof args[2] !== "function" ||
-      args[0] !== "handler"
+      args[0] !== "handler" ||
+      typeof args[2] !== "function"
     ) {
       return args;
     }
 
-    // Todo wrap returned function of args[2]
+    wrap(args, 2, (original) => {
+      return function wrap() {
+        // eslint-disable-next-line prefer-rest-params
+        const args = Array.from(arguments);
+
+        const result = original.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          args
+        );
+
+        return wrapRequestHandler(result, agent);
+      };
+    });
 
     return args;
   }

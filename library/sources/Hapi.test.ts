@@ -41,7 +41,7 @@ import * as hapi from "@hapi/hapi";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
 
-function getServer() {
+function getServer(onRequestExt = true) {
   const server = hapi.server({
     port: 4567,
     host: "127.0.0.1",
@@ -88,11 +88,15 @@ function getServer() {
     },
   ]);
 
-  server.decorate("handler", "customHandler", (route, options) => {
-    return (request, h) => {
-      return h.response(getContext()).code(200);
-    };
-  });
+  server.decorate(
+    "handler",
+    "customHandler",
+    function customHandler(route, options) {
+      return function customHandlerOnRequest(request, h) {
+        return h.response(getContext()).code(200);
+      };
+    }
+  );
 
   server.route({
     method: "GET",
@@ -102,12 +106,14 @@ function getServer() {
     },
   });
 
-  server.ext("onRequest", (request, h) => {
-    if (request.url.pathname === "/blocked-user") {
-      setUser({ id: "567" });
-    }
-    return h.continue;
-  });
+  if (onRequestExt) {
+    server.ext("onRequest", (request, h) => {
+      if (request.url.pathname === "/blocked-user") {
+        setUser({ id: "567" });
+      }
+      return h.continue;
+    });
+  }
 
   return server;
 }
@@ -219,6 +225,21 @@ t.test("it blocks based on user ID", async (t) => {
 
 t.test("it gets context from decorate handler", async (t) => {
   const response = await request(getServer().listener)
+    .get("/decorate-handler?query=123")
+    .set("X-Forwarded-For", "1.2.3.4");
+  t.match(response.body, {
+    method: "GET",
+    query: { query: "123" },
+    cookies: {},
+    headers: {},
+    remoteAddress: "1.2.3.4",
+    source: "hapi",
+    route: "/decorate-handler",
+  });
+});
+
+t.test("it gets context from decorate handler", async (t) => {
+  const response = await request(getServer(false).listener)
     .get("/decorate-handler?query=123")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.body, {

@@ -1,6 +1,6 @@
 export function wrap(
   nodule: any,
-  name: string,
+  name: string | number,
   wrapper: (original: Function) => Function
 ) {
   if (!nodule[name]) {
@@ -37,7 +37,7 @@ export function wrap(
 
 // Sets a property on an object, preserving its enumerability.
 // This function assumes that the property is already writable.
-function defineProperty(obj: unknown, name: string, value: unknown) {
+function defineProperty(obj: unknown, name: string | number, value: unknown) {
   // @ts-expect-error We don't know the type of obj
   const enumerable = !!obj[name] && obj.propertyIsEnumerable(name);
   Object.defineProperty(obj, name, {
