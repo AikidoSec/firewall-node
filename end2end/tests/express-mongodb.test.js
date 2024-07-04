@@ -146,7 +146,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() => {
       return Promise.all([
         fetch("http://127.0.0.1:4002/?search[$ne]=null", {
@@ -208,7 +208,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() =>
       Promise.all([
         fetch("http://127.0.0.1:4003/?search[$ne]=null", {

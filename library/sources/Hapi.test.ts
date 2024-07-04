@@ -55,6 +55,10 @@ function getServer(onRequestExt = true) {
     },
   });
 
+  server.decorate("toolkit", "success", function success() {
+    return this.response({ status: "ok" });
+  });
+
   server.route([
     {
       method: "*",
@@ -84,6 +88,14 @@ function getServer(onRequestExt = true) {
         handler: (request, h) => {
           return getContext();
         },
+      },
+    },
+    {
+      method: "GET",
+      path: "/success",
+      handler: (request, h) => {
+        // @ts-expect-error Not typed
+        return h.success();
       },
     },
   ]);
@@ -251,4 +263,9 @@ t.test("it gets context from decorate handler", async (t) => {
     source: "hapi",
     route: "/decorate-handler",
   });
+});
+
+t.test("toolkit decorator success works", async (t) => {
+  const response = await request(getServer().listener).get("/success");
+  t.match(response.body, { status: "ok" });
 });
