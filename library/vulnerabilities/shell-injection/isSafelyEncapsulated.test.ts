@@ -41,7 +41,9 @@ t.test("user input does not occur in the command", async () => {
   t.same(isSafelyEncapsulated(`echo "USER"`, "$USER"), true);
 });
 
-t.test("use both single and double quotes", async () => {
+// The following tests look at the case where the user input is encapsulated in both single and double quotes.
+// This can lead to a bypass of the shell injection detection, because the user input can be executed as a command.
+t.test("use both single and double quotes and is not safe", async () => {
   t.same(
     isSafelyEncapsulated(`echo "Your value here: '" ; id #'"`, `" ; id #`),
     false
@@ -58,6 +60,16 @@ t.test("use both single and double quotes", async () => {
     isSafelyEncapsulated(`echo 'Your value here: "' ; id #"'`, `' ; id #`),
     false
   );
+  t.same(
+    isSafelyEncapsulated(
+      `echo 'Your value here: "test' ; id #123"'`,
+      `test' ; id #123`
+    ),
+    false
+  );
+});
+
+t.test("use both single and double quotes and is safe", async () => {
   t.same(
     isSafelyEncapsulated(`echo "Your value here: '"" ; id #'"`, `"" ; id #`),
     true
