@@ -32,9 +32,6 @@ export class Shelljs implements Wrapper {
       }
     }
 
-    // Todo check options args?
-    console.log("Shelljs inspectExec", operation, args);
-
     return checkContextForShellInjection({
       command: args[0],
       operation: `shelljs.${operation}`,
@@ -43,9 +40,10 @@ export class Shelljs implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const shelljs = hooks.addPackage("shelljs").withVersion("^0.8.0");
+    const shelljs = hooks.addPackage("shelljs").withVersion("^0.8.0 || ^0.7.0");
     const exports = shelljs.addSubject((exports) => exports);
 
+    // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
     exports.inspect("exec", (args) => {
       return this.inspectExec("exec", args);
     });
