@@ -258,6 +258,8 @@ t.test("invalid arguments are passed to shelljs", async () => {
 
   const shelljs = require("shelljs");
 
-  const result = shelljs.exec(["ls", "-la", "/"], { silent: true });
-  t.same(result.code, 1);
+  runWithContext(safeContext, () => {
+    const result = shelljs.exec(["ls", "-la", "/"], { silent: true });
+    t.same(result.code, 1);
+  });
 });
