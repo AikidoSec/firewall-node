@@ -1,6 +1,6 @@
 export function wrap(
   nodule: any,
-  name: string | number,
+  name: string | number, // Normally a string (property name), but could be a number if the function is an array element.
   wrapper: (original: Function) => Function
 ) {
   if (!nodule[name]) {
