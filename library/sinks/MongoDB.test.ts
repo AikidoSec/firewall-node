@@ -68,6 +68,17 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
 
     t.same(await collection.count({ title: "Title" }), 1);
 
+    const cursor = collection.aggregate([
+      {
+        $group: {
+          _id: "$title",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    t.same(await cursor.toArray(), [{ _id: "Title", count: 1 }]);
+
     t.match(
       await collection.findOne({
         title: "Title",
@@ -136,6 +147,41 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
       t.same(
         error.message,
         "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+      );
+    }
+
+    const aggregateError = await t.rejects(async () => {
+      await runWithContext(
+        {
+          ...unsafeContext,
+          body: [
+            {
+              $group: {
+                _id: "$title",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+        () => {
+          return collection
+            .aggregate([
+              {
+                $group: {
+                  _id: "$title",
+                  count: { $sum: 1 },
+                },
+              },
+            ])
+            .toArray();
+        }
+      );
+    });
+
+    if (aggregateError instanceof Error) {
+      t.same(
+        aggregateError.message,
+        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
       );
     }
 

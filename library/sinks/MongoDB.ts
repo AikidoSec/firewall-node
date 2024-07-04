@@ -112,6 +112,28 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  private inspectAggregate(args: unknown[], collection: Collection) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (Array.isArray(args) && args.length > 0) {
+      const pipeline = args[0];
+
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        pipeline,
+        "aggregate"
+      );
+    }
+
+    return undefined;
+  }
+
   private inspectOperation(
     operation: string,
     args: unknown[],
@@ -155,6 +177,10 @@ export class MongoDB implements Wrapper {
 
     collection.inspect("bulkWrite", (args, collection) =>
       this.inspectBulkWrite(args, collection as Collection)
+    );
+
+    collection.inspect("aggregate", (args, collection) =>
+      this.inspectAggregate(args, collection as Collection)
     );
   }
 }

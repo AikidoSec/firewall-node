@@ -125,6 +125,27 @@ async function main(port) {
     });
   });
 
+  app.get(
+    "/images",
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to SSRF
+      const url = req.query.url;
+
+      if (!url) {
+        return res.status(400).send("url parameter is required");
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+      });
+
+      const buffer = await (await response.blob()).arrayBuffer();
+
+      res.attachment("image.jpg");
+      res.send(Buffer.from(buffer));
+    })
+  );
+
   return new Promise((resolve, reject) => {
     try {
       app.listen(port, () => {
