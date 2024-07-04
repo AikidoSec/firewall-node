@@ -76,6 +76,7 @@ See list above for supported database drivers.
 
 * ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
 * ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
+* ✅ [`xml-js`](https://www.npmjs.com/package/xml-js) 1.x
 
 ### Shell tools
 
