@@ -1,17 +1,18 @@
 /* eslint-disable prefer-rest-params */
-import type { ServerRoute, ReqRefDefaults, Lifecycle } from "@hapi/hapi";
+import {
+  ServerRoute,
+  Lifecycle,
+  RequestRoute,
+  HandlerDecorationMethod,
+} from "@hapi/hapi";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapRequestHandler } from "./hapi/wrapRequestHandler";
-import { wrap } from "../helpers/wrap";
 
 export class Hapi implements Wrapper {
-  /**
-   * Wrap the route handler function
-   */
-  private wrapRoute(args: unknown[], agent: Agent) {
+  private wrapRouteHandler(args: unknown[], agent: Agent) {
     if (
       args.length < 1 ||
       (!isPlainObject(args[0]) && !Array.isArray(args[0]))
@@ -20,22 +21,23 @@ export class Hapi implements Wrapper {
     }
 
     const routeOptions = Array.isArray(args[0])
-      ? (args[0] as ServerRoute<ReqRefDefaults>[])
-      : ([args[0]] as unknown as ServerRoute<ReqRefDefaults>[]);
+      ? (args[0] as ServerRoute[])
+      : ([args[0]] as unknown as ServerRoute[]);
 
     for (const route of routeOptions) {
       if (typeof route.handler === "function") {
         route.handler = wrapRequestHandler(
-          route.handler as Lifecycle.Method<ReqRefDefaults>,
+          route.handler as Lifecycle.Method,
           agent
         );
       }
+
       if (
         isPlainObject(route.options) &&
         typeof route.options.handler === "function"
       ) {
         route.options.handler = wrapRequestHandler(
-          route.options.handler as Lifecycle.Method<ReqRefDefaults>,
+          route.options.handler as Lifecycle.Method,
           agent
         );
       }
@@ -44,21 +46,18 @@ export class Hapi implements Wrapper {
     return args;
   }
 
-  private wrapArgs(args: unknown[], agent: Agent) {
+  private wrapExtensionFunction(args: unknown[], agent: Agent) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRequestHandler(arg as Lifecycle.Method<ReqRefDefaults>, agent);
+      return wrapRequestHandler(arg as Lifecycle.Method, agent);
     });
   }
 
-  /**
-   * Wrap the decorate function if it's a request handler
-   */
-  private wrapDecorate(args: unknown[], agent: Agent) {
+  private wrapDecorateFunction(args: unknown[], agent: Agent) {
     if (
       args.length < 3 ||
       args[0] !== "handler" ||
@@ -67,20 +66,16 @@ export class Hapi implements Wrapper {
       return args;
     }
 
-    wrap(args, 2, (original) => {
-      return function wrap() {
-        // eslint-disable-next-line prefer-rest-params
-        const args = Array.from(arguments);
+    const decorator = args[2] as unknown as HandlerDecorationMethod;
 
-        const result = original.apply(
-          // @ts-expect-error We don't now the type of this
-          this,
-          args
-        );
+    function wrappedDecorator() {
+      // @ts-expect-error We don't know the type of this
+      const handler = decorator.apply(this, arguments);
 
-        return wrapRequestHandler(result, agent);
-      };
-    });
+      return wrapRequestHandler(handler, agent);
+    }
+
+    args[2] = wrappedDecorator;
 
     return args;
   }
@@ -95,14 +90,14 @@ export class Hapi implements Wrapper {
     ];
 
     for (const subject of subjects) {
-      subject.modifyArguments("route", (args, original, agent) => {
-        return this.wrapRoute(args, agent);
+      subject.modifyArguments("route", (args, subject, agent) => {
+        return this.wrapRouteHandler(args, agent);
       });
-      subject.modifyArguments("ext", (args, original, agent) => {
-        return this.wrapArgs(args, agent);
+      subject.modifyArguments("ext", (args, subject, agent) => {
+        return this.wrapExtensionFunction(args, agent);
       });
-      subject.modifyArguments("decorate", (args, original, agent) => {
-        return this.wrapDecorate(args, agent);
+      subject.modifyArguments("decorate", (args, subject, agent) => {
+        return this.wrapDecorateFunction(args, agent);
       });
     }
   }

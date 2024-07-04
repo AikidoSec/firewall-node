@@ -1,9 +1,9 @@
-import type { ReqRefDefaults, Request } from "@hapi/hapi";
+import type { Request } from "@hapi/hapi";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
-export function contextFromRequest(req: Request<ReqRefDefaults>): Context {
+export function contextFromRequest(req: Request): Context {
   return {
     method: req.method.toUpperCase(),
     remoteAddress: getIPAddressFromRequest({

@@ -1,4 +1,4 @@
-import type { ReqRefDefaults, Lifecycle } from "@hapi/hapi";
+import type { Lifecycle } from "@hapi/hapi";
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -6,9 +6,9 @@ import { contextFromRequest } from "./contextFromRequest";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 
 export function wrapRequestHandler(
-  handler: Lifecycle.Method<ReqRefDefaults>,
+  handler: Lifecycle.Method,
   agent: Agent
-): Lifecycle.Method<ReqRefDefaults> {
+): Lifecycle.Method {
   return async (request, h) => {
     const context = contextFromRequest(request);
 
