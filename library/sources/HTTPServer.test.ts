@@ -503,3 +503,92 @@ t.test("it rate limits requests", async () => {
     });
   });
 });
+
+t.test("it wraps on request event of http", async () => {
+  const http = require("http");
+  const server = http.createServer();
+  server.on("request", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  http.globalAgent = new http.Agent({ keepAlive: false });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3314, () => {
+      fetch({
+        url: new URL("http://localhost:3314"),
+        method: "GET",
+        headers: {},
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context, {
+          url: "/",
+          method: "GET",
+          headers: { host: "localhost:3314", connection: "close" },
+          query: {},
+          route: "/",
+          source: "http.createServer",
+          routeParams: {},
+          cookies: {},
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it wraps on request event of https", async () => {
+  const https = require("https");
+  const { readFileSync } = require("fs");
+  const path = require("path");
+
+  // Otherwise, the self-signed certificate will be rejected
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  const server = https.createServer({
+    key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
+    secureContext: {},
+  });
+
+  server.on("request", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  https.globalAgent = new https.Agent({ keepAlive: false });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3315, () => {
+      fetch({
+        url: new URL("https://localhost:3315"),
+        method: "GET",
+        headers: {},
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context, {
+          url: "/",
+          method: "GET",
+          headers: { host: "localhost:3315", connection: "close" },
+          query: {},
+          route: "/",
+          source: "https.createServer",
+          routeParams: {},
+          cookies: {},
+          remoteAddress: process.version.startsWith("v16")
+            ? "::ffff:127.0.0.1"
+            : "::1",
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});

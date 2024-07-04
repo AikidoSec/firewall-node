@@ -1,0 +1,12 @@
+{
+  "name": "hapi-postgres",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SQL Injection with postgres",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hapi/hapi": "^21.3.10",
+    "pg": "^8.11.3"
+  }
+}
