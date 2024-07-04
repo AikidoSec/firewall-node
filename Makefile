@@ -34,6 +34,10 @@ express-path-traversal:
 express-graphql:
 	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: express-shelljs
+express-shelljs:
+	cd sample-apps/express-shelljs && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/nosql-injection-request.json
