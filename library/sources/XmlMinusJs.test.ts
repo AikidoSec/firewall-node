@@ -91,3 +91,38 @@ t.test("xml2json works", async () => {
     t.same(getContext()?.xml, { root: { _text: "Hello xml-js!" } });
   });
 });
+
+t.test("Ignore if xml is not in the body", async () => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+
+  agent.start([new XmlMinusJs()]);
+
+  const xmljs = require("xml-js");
+
+  const xmlString = "<root>Hello xml-js!</root>";
+
+  const context = {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: "Not xml",
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+
+  runWithContext(context, () => {
+    const result = xmljs.xml2js(xmlString, { compact: true });
+    t.same(result, { root: { _text: "Hello xml-js!" } });
+    t.same(getContext()?.xml, undefined);
+  });
+});
