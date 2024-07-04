@@ -66,6 +66,7 @@
     "pg": "^8.11.3",
     "prettier": "^3.2.4",
     "shell-quote": "^1.8.1",
+    "shelljs": "^0.8.5",
     "sqlite3": "^5.1.7",
     "supertest": "^6.3.4",
     "tap": "^18.6.1",
