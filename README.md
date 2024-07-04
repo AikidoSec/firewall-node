@@ -79,7 +79,7 @@ See list above for supported database drivers.
 
 ### Shell tools
 
-* ✅ [`shelljs`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
+* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
 
 ## Installation
 

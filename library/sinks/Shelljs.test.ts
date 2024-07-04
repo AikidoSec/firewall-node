@@ -99,6 +99,26 @@ t.test("it does not detect injection in safe context", async () => {
   }
 });
 
+t.test("it does not detect injection without context", async () => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
+
+  const shelljs = require("shelljs");
+
+  try {
+    shelljs.exec("ls -la xyz;pwd||x=", { silent: true });
+    t.end();
+  } catch (error) {
+    t.fail();
+  }
+});
+
 t.test("it detects async shell injections", async () => {
   const agent = new Agent(
     true,
@@ -225,3 +245,19 @@ t.test(
     }
   }
 );
+
+t.test("invalid arguments are passed to shelljs", async () => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
+
+  const shelljs = require("shelljs");
+
+  const result = shelljs.exec(["ls", "-la", "/"], { silent: true });
+  t.same(result.code, 1);
+});
