@@ -109,7 +109,7 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
-* Go to [Firewall](https://app.aikido.dev/runtime/events).
+* Go to [Firewall](https://app.aikido.dev/runtime/services).
 * Go to apps.
 * Click on **Add app**.
 * Choose a name for your app.
