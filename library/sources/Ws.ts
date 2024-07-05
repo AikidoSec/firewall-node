@@ -5,8 +5,6 @@ import { wrapConnectionHandler } from "./ws/wrapConnectionHandler";
 
 export class Ws implements Wrapper {
   private wrapEventArgs(args: unknown[], agent: Agent) {
-    console.log("args", args);
-
     if (
       args.length < 2 ||
       typeof args[0] !== "string" ||

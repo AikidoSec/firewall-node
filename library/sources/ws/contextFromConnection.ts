@@ -10,8 +10,6 @@ export function contextFromConnection(
   socket: WebSocket,
   req: IncomingMessage
 ): Context {
-  console.log("Context from connection");
-
   const queryObject: Record<string, string> = {};
   if (req.url) {
     const params = tryParseURLParams(req.url);

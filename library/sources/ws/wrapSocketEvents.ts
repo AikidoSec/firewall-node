@@ -1,50 +1,92 @@
 import { Agent } from "../../agent/Agent";
-import { getContext } from "../../agent/Context";
+import { Context, getContext, runWithContext } from "../../agent/Context";
 
 export function wrapSocketEventHandler(handler: any, agent: Agent): any {
   return function wrappedEvent(event: string, listener: unknown) {
-    console.log("Wrapped event", event);
+    const applyHandler = () => {
+      return handler.apply(
+        // @ts-expect-error We don't now the type of this
+        this,
+        [event, listener]
+      );
+    };
+
+    const context = getContext();
+    // We expect the context to be set by the connection handler
+    if (!context) {
+      return applyHandler();
+    }
 
     // Todo limit wrapping to specific events
     if (typeof listener === "function") {
-      listener = wrapSocketEventListener(event, listener, agent);
+      listener = wrapSocketEventListener(event, listener, context);
     }
 
-    return handler.apply(
-      // @ts-expect-error We don't now the type of this
-      this,
-      [event, listener]
-    );
+    return applyHandler();
   };
 }
 
 export function wrapSocketEventListener(
   event: string,
   listener: any,
-  agent: Agent
+  context: Context
 ): any {
   return function wrappedListener() {
-    const context = getContext();
-    const returnListener = () => {
-      return listener.apply(
-        // @ts-expect-error We don't now the type of this
-        this,
-        // eslint-disable-next-line prefer-rest-params
-        arguments
-      );
-    };
+    // We need to call runWithContext again because the context of the connection handler is not passed to called event listeners
+    return runWithContext(context, () => {
+      const applyListener = () => {
+        return listener.apply(
+          // @ts-expect-error We don't now the type of this
+          this,
+          // eslint-disable-next-line prefer-rest-params
+          arguments
+        );
+      };
 
-    console.log(`New ws event emitted: ${event}`);
-    console.log(arguments);
+      const context = getContext();
+      if (!context) {
+        return applyListener();
+      }
 
-    if (!context) {
-      console.log("!No context found!");
-      // We expect the context to be set by the connection handler
-      return returnListener();
-    }
+      // Message event
+      if (event === "message") {
+        onMessageEvent(Array.from(arguments), context);
+      }
 
-    // Todo ...
-
-    return returnListener();
+      return applyListener();
+    });
   };
+}
+
+function onMessageEvent(args: any[], context: Context) {
+  if (!args.length) {
+    return;
+  }
+  let isBinary = false;
+  if (args.length > 1 && typeof args[1] === "boolean") {
+    isBinary = args[1];
+  }
+  if (isBinary) {
+    // We do not know how to interpret binary data
+    return;
+  }
+
+  const data = args[0] as ArrayBuffer | Blob | Buffer | Buffer[];
+
+  let messageStr: string | undefined;
+  if (Buffer.isBuffer(args[0])) {
+    messageStr = args[0].toString();
+  } else {
+    // Todo handle ArrayBuffer, Blob, Buffer[]
+    return;
+  }
+
+  context.ws = messageStr;
+
+  // Try to parse the message as JSON
+  try {
+    context.ws = JSON.parse(messageStr);
+  } catch (e) {
+    // Ignore
+  }
 }

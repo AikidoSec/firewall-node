@@ -60,19 +60,11 @@ function runServer(useHttpServer: "express" | "http" | false) {
   }
 
   wss.on("connection", function connection(ws) {
-    // Context is available here
-
+    // Websocket message event
     ws.on("message", function message(data) {
-      console.log("Server received message", data.toString());
-
-      // Context is not available here
-
-      if (data.toString() === "getContext") {
-        ws.send(JSON.stringify(getContext()));
-      }
+      // Send back the context
+      ws.send(JSON.stringify(getContext()));
     });
-
-    ws.send("Welcome!");
   });
 
   if (httpServer) {
@@ -89,18 +81,83 @@ function runServer(useHttpServer: "express" | "http" | false) {
 
 const stop = runServer(false);
 
-t.test("Connect to WebSocket server", async (t) => {
+t.test("Connect to WebSocket server and get context", (t) => {
   const ws = new WebSocket("ws://localhost:3003");
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
 
   ws.on("open", function open() {
     ws.send("getContext");
   });
 
-  ws.on("message", function incoming(data) {
-    console.log("Client received data", data.toString());
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
 
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      headers: {
+        "sec-websocket-version": "13",
+        connection: "Upgrade",
+        upgrade: "websocket",
+        "sec-websocket-extensions":
+          "permessage-deflate; client_max_window_bits",
+        host: "localhost:3003",
+      },
+      route: "/",
+      query: {},
+      source: "ws.connection",
+      routeParams: {},
+      cookies: {},
+      remoteAddress: "::1",
+      ws: "getContext",
+    });
+    ws.close();
+
+    t.end();
+  });
+});
+
+t.test("Connect to WebSocket server and send json object", (t) => {
+  const ws = new WebSocket("ws://localhost:3003");
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", function open() {
+    ws.send(JSON.stringify({ test: "test1" }));
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      url: "/",
+      method: "GET",
+      headers: {
+        "sec-websocket-version": "13",
+        connection: "Upgrade",
+        upgrade: "websocket",
+        "sec-websocket-extensions":
+          "permessage-deflate; client_max_window_bits",
+        host: "localhost:3003",
+      },
+      route: "/",
+      query: {},
+      source: "ws.connection",
+      routeParams: {},
+      cookies: {},
+      remoteAddress: "::1",
+      ws: {
+        test: "test1",
+      },
+    });
     ws.close();
 
     stop();
+    t.end();
   });
 });
