@@ -22,6 +22,7 @@ Firewall autonomously protects your Node.js applications against:
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
+* 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 * 🚀 More to come (see the [public roadmap](https://github.com/orgs/AikidoSec/projects/2/views/1))!
 
 Firewall operates autonomously on the same server as your Node.js app to:
@@ -39,6 +40,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ [Express](docs/express.md) 4.x
 * ✅ [Hono](docs/hono.md) 4.x
 * ✅ [Fastify](docs/fastify.md) 4.x
+* ✅ [hapi](docs/hapi.md) 21.x
 * ✅ Next.js (upcoming)
 
 ### Database drivers
@@ -76,6 +78,10 @@ See list above for supported database drivers.
 * ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
 * ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
 
+### Shell tools
+
+* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
+
 ## Installation
 
 ```shell
@@ -103,7 +109,7 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
-* Go to [Firewall](https://app.aikido.dev/runtime/events).
+* Go to [Firewall](https://app.aikido.dev/runtime/services).
 * Go to apps.
 * Click on **Add app**.
 * Choose a name for your app.

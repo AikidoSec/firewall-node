@@ -303,3 +303,26 @@ t.test("it ignores files that end with .config", async () => {
     false
   );
 });
+
+t.test("it ignores redirects", async () => {
+  t.same(
+    shouldDiscoverRoute({ statusCode: 301, route: "/", method: "GET" }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({ statusCode: 302, route: "/", method: "GET" }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({ statusCode: 303, route: "/", method: "GET" }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({ statusCode: 307, route: "/", method: "GET" }),
+    false
+  );
+  t.same(
+    shouldDiscoverRoute({ statusCode: 308, route: "/", method: "GET" }),
+    false
+  );
+});

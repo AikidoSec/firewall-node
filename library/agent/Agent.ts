@@ -26,7 +26,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   private started = false;
-  private sendHeartbeatEveryMS = 30 * 60 * 1000;
+  private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
@@ -46,7 +46,7 @@ export class Agent {
   });
 
   constructor(
-    private readonly block: boolean,
+    private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
@@ -212,6 +212,15 @@ export class Agent {
 
   private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success) {
+      if (typeof response.block === "boolean") {
+        if (response.block !== this.block) {
+          this.block = response.block;
+          this.logger.log(
+            `Block mode has been set to ${this.block ? "on" : "off"}`
+          );
+        }
+      }
+
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
           response.endpoints && Array.isArray(response.endpoints)
@@ -423,6 +432,10 @@ export class Agent {
 
   getRoutes() {
     return this.routes;
+  }
+
+  log(message: string) {
+    this.logger.log(message);
   }
 
   async flushStats(timeoutInMS: number) {

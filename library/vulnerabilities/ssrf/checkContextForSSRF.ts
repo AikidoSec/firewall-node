@@ -2,32 +2,31 @@ import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
 import { SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
-import { detectSQLInjection } from "./detectSQLInjection";
-import { SQLDialect } from "./dialects/SQLDialect";
+import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
+import { findHostnameInUserInput } from "./findHostnameInUserInput";
 
 /**
  * This function goes over all the different input types in the context and checks
- * if it's a possible SQL Injection, if so the function returns an InterceptorResult
+ * if it possibly implies SSRF, if so the function returns an InterceptorResult
  */
-export function checkContextForSqlInjection({
-  sql,
+export function checkContextForSSRF({
+  hostname,
   operation,
   context,
-  dialect,
 }: {
-  sql: string;
+  hostname: string;
   operation: string;
   context: Context;
-  dialect: SQLDialect;
 }): InterceptorResult {
   for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        if (detectSQLInjection(sql, str, dialect)) {
+        const found = findHostnameInUserInput(str, hostname);
+        if (found && containsPrivateIPAddress(hostname)) {
           return {
             operation: operation,
-            kind: "sql_injection",
+            kind: "ssrf",
             source: source,
             pathToPayload: path,
             metadata: {},

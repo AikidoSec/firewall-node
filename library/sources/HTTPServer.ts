@@ -32,12 +32,31 @@ export class HTTPServer implements Wrapper {
     return args;
   }
 
+  private wrapOn(args: unknown[], module: string, agent: Agent) {
+    if (
+      args.length < 2 ||
+      typeof args[0] !== "string" ||
+      typeof args[1] !== "function"
+    ) {
+      return args;
+    }
+    if (args[0] !== "request") {
+      return args;
+    }
+    return this.wrapRequestListener(args, module, agent);
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addBuiltinModule("http")
       .addSubject((exports) => exports)
       .modifyArguments("createServer", (args, subject, agent) => {
         return this.wrapRequestListener(args, "http", agent);
+      })
+      .inspectNewInstance("createServer")
+      .addSubject((exports) => exports)
+      .modifyArguments("on", (args, subject, agent) => {
+        return this.wrapOn(args, "http", agent);
       });
 
     hooks
@@ -45,6 +64,11 @@ export class HTTPServer implements Wrapper {
       .addSubject((exports) => exports)
       .modifyArguments("createServer", (args, subject, agent) => {
         return this.wrapRequestListener(args, "https", agent);
+      })
+      .inspectNewInstance("createServer")
+      .addSubject((exports) => exports)
+      .modifyArguments("on", (args, subject, agent) => {
+        return this.wrapOn(args, "https", agent);
       });
   }
 }

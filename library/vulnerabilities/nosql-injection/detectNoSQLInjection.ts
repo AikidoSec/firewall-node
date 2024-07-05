@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "util";
 import { Context } from "../../agent/Context";
-import { Source } from "../../agent/Source";
+import { Source, SOURCES } from "../../agent/Source";
 import { buildPathToPayload, PathPart } from "../../helpers/attackPath";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
@@ -126,20 +126,11 @@ export function detectNoSQLInjection(
   request: Context,
   filter: unknown
 ): DetectionResult {
-  if (!isPlainObject(filter)) {
+  if (!isPlainObject(filter) && !Array.isArray(filter)) {
     return { injection: false };
   }
 
-  for (const source of [
-    "body",
-    "query",
-    "headers",
-    "cookies",
-    "routeParams",
-    "graphql",
-    "xml",
-    "subdomains",
-  ] as Source[]) {
+  for (const source of SOURCES) {
     if (request[source]) {
       const result = findFilterPartWithOperators(request[source], filter);
 

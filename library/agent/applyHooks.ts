@@ -113,17 +113,15 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
       return;
     }
 
-    const interceptor = g.getMethodInterceptor();
-
-    if (!interceptor) {
-      return;
-    }
-
-    if (interceptor instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(global, interceptor, "global", agent);
-    } else {
-      wrapWithoutArgumentModification(global, interceptor, "global", agent);
-    }
+    g.getMethodInterceptors()
+      .reverse() // Reverse to make sure we wrap in the order they were added
+      .forEach((interceptor) => {
+        if (interceptor instanceof ModifyingArgumentsMethodInterceptor) {
+          wrapWithArgumentModification(global, interceptor, name, agent);
+        } else {
+          wrapWithoutArgumentModification(global, interceptor, name, agent);
+        }
+      });
   });
 
   return wrapped;
@@ -410,15 +408,18 @@ function wrapSubject(
     return;
   }
 
-  subject.getMethodInterceptors().forEach((method) => {
-    if (method instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(theSubject, method, module, agent);
-    } else if (method instanceof MethodInterceptor) {
-      wrapWithoutArgumentModification(theSubject, method, module, agent);
-    } else if (method instanceof MethodResultInterceptor) {
-      wrapWithResult(theSubject, method, module, agent);
-    } else {
-      wrapNewInstance(theSubject, method, module, agent);
-    }
-  });
+  subject
+    .getMethodInterceptors()
+    .reverse() // Reverse to make sure we wrap in the order they were added
+    .forEach((method) => {
+      if (method instanceof ModifyingArgumentsMethodInterceptor) {
+        wrapWithArgumentModification(theSubject, method, module, agent);
+      } else if (method instanceof MethodInterceptor) {
+        wrapWithoutArgumentModification(theSubject, method, module, agent);
+      } else if (method instanceof MethodResultInterceptor) {
+        wrapWithResult(theSubject, method, module, agent);
+      } else {
+        wrapNewInstance(theSubject, method, module, agent);
+      }
+    });
 }
