@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import * as mod from "module";
 import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
 import { createWrappedFunction } from "../helpers/wrap";
@@ -24,7 +25,12 @@ export function wrapRequire(
 
   // @ts-expect-error Ignore type error
   mod.prototype.require = function wrap() {
-    const interceptor = interceptors.find((i) => i.getName() === arguments[0]);
+    const interceptor = interceptors.find(
+      (i) =>
+        i.getName() ===
+        // eslint-disable-next-line prefer-rest-params
+        arguments[0]
+    );
     if (!interceptor) {
       return req.apply(
         this,
