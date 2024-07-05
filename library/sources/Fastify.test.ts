@@ -8,6 +8,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Fastify } from "./Fastify";
 import { HTTPServer } from "./HTTPServer";
 import { FileSystem } from "../sinks/FileSystem";
+import type { FastifyInstance } from "fastify";
 
 const agent = new Agent(
   true,
@@ -47,11 +48,17 @@ const agent = new Agent(
 agent.start([new Fastify(), new HTTPServer(), new FileSystem()]);
 setInstance(agent);
 
-import fastify from "fastify";
 import { getContext } from "../agent/Context";
 
-function getApp() {
-  const app = fastify();
+function getApp(importDefault = false) {
+  let app: FastifyInstance;
+
+  if (importDefault) {
+    app = require("fastify")();
+  } else {
+    const { fastify } = require("fastify");
+    app = fastify();
+  }
 
   app.addHook("onRequest", async (request, reply) => {
     reply.header("X-Powered-By", "Aikido");
@@ -132,6 +139,42 @@ t.test("it adds context from request for all", async (t) => {
     cookies: {},
   });
 });
+
+t.test(
+  "it adds context from request for all by using default import",
+  async (t) => {
+    const app = getApp(true);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/?title[$ne]=null",
+      headers: {
+        accept: "application/json",
+        cookie: "session=123",
+      },
+    });
+
+    t.same(response.statusCode, 200);
+
+    const json = await response.json();
+    t.same(json, {
+      url: "/?title[$ne]=null",
+      remoteAddress: "127.0.0.1",
+      method: "GET",
+      query: { "title[$ne]": "null" },
+      headers: {
+        accept: "application/json",
+        cookie: "session=123",
+        "user-agent": "lightMyRequest",
+        host: "localhost:80",
+      },
+      routeParams: {},
+      source: "fastify",
+      route: "/",
+      cookies: {},
+    });
+  }
+);
 
 t.test("it adds context from request for all", async (t) => {
   const app = getApp();

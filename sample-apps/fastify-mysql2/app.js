@@ -2,7 +2,6 @@
 
 require("@aikidosec/firewall");
 const { createConnection } = require("./db");
-const { getContext } = require("@aikidosec/firewall/agent/context");
 
 const fastify = require("fastify");
 const Cats = require("./Cats");
@@ -44,11 +43,6 @@ function getHTMLBody(cats) {
     }
     const html = getHTMLBody(await cats.getAll());
     reply.header("Content-Type", "text/html").send(html);
-  });
-
-  app.get("/context", async (request, reply) => {
-    const context = getContext();
-    reply.send(context);
   });
 
   app.route({

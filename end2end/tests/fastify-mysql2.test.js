@@ -50,14 +50,11 @@ t.test("it blocks in blocking mode", (t) => {
         }),
       ]);
     })
-    .then(async ([sqlInjection, normalSearch, contextReq]) => {
+    .then(([sqlInjection, normalSearch]) => {
       t.equal(sqlInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stdout, /Aikido firewall has blocked an SQL injection/);
-      // Check that the context is correctly set by fastify and not by wrapping http
-      const context = await contextReq.json();
-      t.equal(context.source, "fastify");
     })
     .catch((error) => {
       t.fail(error.message);
