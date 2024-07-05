@@ -58,8 +58,4 @@ export class VersionedPackage {
   getFiles() {
     return this.files;
   }
-
-  getName() {
-    return this.packageName;
-  }
 }

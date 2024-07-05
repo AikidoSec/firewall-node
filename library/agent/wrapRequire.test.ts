@@ -6,6 +6,7 @@ import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { wrapRequire } from "./wrapRequire";
 import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
+import { applyHooks } from "./applyHooks";
 
 function createAgent() {
   const logger = new LoggerForTesting();
@@ -33,8 +34,6 @@ t.test("test wrapRequire", async (t) => {
     .withVersion("^1.0.0")
     .addRequireSubject();
 
-  t.same(requireSubject.getName(), "unknown");
-
   requireSubject.modifyArguments("unknown", (args) => {
     return args;
   });
@@ -43,8 +42,6 @@ t.test("test wrapRequire", async (t) => {
     .addPackage("hono")
     .withVersion("^4.0.0")
     .addRequireSubject();
-
-  t.same(requireSubjectHono.getName(), "hono");
 
   const fastifyBefore = require("fastify");
   t.notOk(fastifyBefore.__wrapped);
@@ -67,7 +64,7 @@ t.test("test wrapRequire", async (t) => {
     });
 
   const { agent } = createAgent();
-  wrapRequire(agent);
+  applyHooks(hooks, agent);
 
   try {
     require("unknown");

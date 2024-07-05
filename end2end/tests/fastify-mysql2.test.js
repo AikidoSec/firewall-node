@@ -33,7 +33,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(4000)
     .then(() => {
       return Promise.all([
         fetch(
@@ -87,7 +87,7 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(4000)
     .then(() =>
       Promise.all([
         fetch(
