@@ -4,9 +4,19 @@ import { defineProperty } from "../helpers/wrap";
 import { Agent } from "./Agent";
 const req = mod.prototype.require;
 
-const interceptors: ModifyingRequireInterceptor[] = [];
+let wrappedRequire = false;
+let interceptors: ModifyingRequireInterceptor[] = [];
 
-export function wrapRequire(agent: Agent) {
+export function wrapRequire(
+  reqInterceptors: ModifyingRequireInterceptor[],
+  agent: Agent
+) {
+  interceptors = reqInterceptors;
+  if (wrappedRequire) {
+    return;
+  }
+  wrappedRequire = true;
+
   // @ts-expect-error Ignore type error
   mod.prototype.require = function wrap(id) {
     const interceptor = interceptors.find((i) => i.getName() === id);
@@ -20,10 +30,6 @@ export function wrapRequire(agent: Agent) {
       throw new Error(
         "Module must export a function to be wrapped during require"
       );
-    }
-
-    if (original.__wrapped) {
-      return original;
     }
 
     const wrapped = function () {
@@ -52,10 +58,4 @@ export function wrapRequire(agent: Agent) {
 
     return wrapped;
   };
-}
-
-export function addRequireInterceptor(
-  interceptor: ModifyingRequireInterceptor
-) {
-  interceptors.push(interceptor);
 }

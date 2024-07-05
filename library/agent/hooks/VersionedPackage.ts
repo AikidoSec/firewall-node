@@ -1,14 +1,10 @@
 import { WrappableSubject } from "./WrappableSubject";
 import { WrappableFile } from "./WrappableFile";
-import {
-  ModifyingRequireInterceptor,
-  ModifyingRequireInterceptorFunction,
-} from "./ModifyingRequireInterceptor";
-import { addRequireInterceptor } from "../wrapRequire";
 import { WrappableRequireSubject } from "./WrappableRequireSubject";
 
 export class VersionedPackage {
   private subjects: WrappableSubject[] = [];
+  private requireSubject: WrappableRequireSubject | null = null;
   private files: WrappableFile[] = [];
 
   constructor(
@@ -47,12 +43,16 @@ export class VersionedPackage {
    * Use addSubject to wrap other exports.
    */
   addRequireSubject() {
-    const require = new WrappableRequireSubject(this);
-    return require;
+    this.requireSubject = new WrappableRequireSubject();
+    return this.requireSubject;
   }
 
   getSubjects() {
     return this.subjects;
+  }
+
+  getRequireSubject() {
+    return this.requireSubject;
   }
 
   getFiles() {

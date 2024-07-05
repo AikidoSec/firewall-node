@@ -19,6 +19,9 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
+import { WrappableRequireSubject } from "./hooks/WrappableRequireSubject";
+import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
+import { wrapRequire } from "./wrapRequire";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -29,6 +32,7 @@ import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
  */
 export function applyHooks(hooks: Hooks, agent: Agent) {
   const wrapped: Record<string, { version: string; supported: boolean }> = {};
+  const requireInterceptors: ModifyingRequireInterceptor[] = [];
 
   hooks.getPackages().forEach((pkg) => {
     const version = getPackageVersion(pkg.getName());
@@ -52,14 +56,23 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
         return {
           subjects: versioned.getSubjects(),
           files: versioned.getFiles(),
+          requireSubject: versioned.getRequireSubject(),
         };
       })
       .flat();
 
     const files = versions.map((hook) => hook.files).flat();
     const subjects = versions.map((hook) => hook.subjects).flat();
+    const requireSubjects = versions
+      .map((hook) => hook.requireSubject)
+      .flat()
+      .filter((subject) => subject !== null) as WrappableRequireSubject[]; // Tsc doesn't know that we've filtered out nulls on build?
 
-    if (subjects.length === 0 && files.length === 0) {
+    if (
+      subjects.length === 0 &&
+      files.length === 0 &&
+      requireSubjects.length === 0
+    ) {
       return;
     }
 
@@ -75,7 +88,15 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
     if (files.length > 0) {
       wrapFiles(pkg, files, agent);
     }
+
+    if (requireSubjects.length > 0) {
+      requireInterceptors.push(...wrapRequireSubjects(pkg, requireSubjects));
+    }
   });
+
+  if (requireInterceptors.length > 0) {
+    wrapRequire(requireInterceptors, agent);
+  }
 
   hooks.getBuiltInModules().forEach((module) => {
     const subjects = module.getSubjects();
@@ -106,6 +127,31 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
   });
 
   return wrapped;
+}
+
+function wrapRequireSubjects(
+  pkg: Package,
+  requireSubjects: WrappableRequireSubject[]
+) {
+  const requireInterceptors: ModifyingRequireInterceptor[] = [];
+  for (const requireSubject of requireSubjects) {
+    const requireInterceptor = new ModifyingRequireInterceptor(
+      pkg.getName(),
+      (args: unknown[], originalReturnValue: unknown, agent: Agent) => {
+        for (const methodInterceptor of requireSubject.getInterceptors()) {
+          wrapWithArgumentModification(
+            originalReturnValue,
+            methodInterceptor,
+            pkg.getName(),
+            agent
+          );
+          return originalReturnValue;
+        }
+      }
+    );
+    requireInterceptors.push(requireInterceptor);
+  }
+  return requireInterceptors;
 }
 
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {

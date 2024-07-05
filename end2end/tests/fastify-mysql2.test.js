@@ -45,13 +45,19 @@ t.test("it blocks in blocking mode", (t) => {
         fetch("http://127.0.0.1:4000/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4000/context", {
+          signal: AbortSignal.timeout(5000),
+        }),
       ]);
     })
-    .then(([sqlInjection, normalSearch]) => {
+    .then(async ([sqlInjection, normalSearch, contextReq]) => {
       t.equal(sqlInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stdout, /Aikido firewall has blocked an SQL injection/);
+      // Check that the context is correctly set by fastify and not by wrapping http
+      const context = await contextReq.json();
+      t.equal(context.source, "fastify");
     })
     .catch((error) => {
       t.fail(error.message);
