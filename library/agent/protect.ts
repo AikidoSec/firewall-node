@@ -37,6 +37,7 @@ import { FastXmlParser } from "../sources/FastXmlParser";
 import { SQLite3 } from "../sinks/SQLite3";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
+import { Ws } from "../sources/Ws";
 
 function isDebugging() {
   return (
@@ -133,6 +134,7 @@ function getWrappers() {
     new SQLite3(),
     new Shelljs(),
     new Hapi(),
+    new Ws(),
   ];
 }
 
