@@ -6,10 +6,7 @@ import { parse } from "../../helpers/parseCookies";
 import type { IncomingMessage } from "http";
 import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 
-export function contextFromConnection(
-  socket: WebSocket,
-  req: IncomingMessage
-): Context {
+export function contextFromConnection(req: IncomingMessage): Context {
   const queryObject: Record<string, string> = {};
   if (req.url) {
     const params = tryParseURLParams(req.url);
@@ -18,7 +15,7 @@ export function contextFromConnection(
     }
   }
 
-  let parsedBody: unknown = undefined;
+  const parsedBody: unknown = undefined;
   // Todo parse body?
   /*if (body) {
     try {

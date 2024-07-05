@@ -7,7 +7,7 @@ import { wrapSocketEventHandler } from "./wrapSocketEvents";
 
 export function wrapConnectionHandler(handler: any, agent: Agent): any {
   return async (socket: WebSocket, request: IncomingMessage) => {
-    const context = contextFromConnection(socket, request);
+    const context = contextFromConnection(request);
 
     return runWithContext(context, () => {
       // Even though we already have the context, we need to get it again
