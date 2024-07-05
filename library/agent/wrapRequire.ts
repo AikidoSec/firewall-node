@@ -1,30 +1,46 @@
 import * as mod from "module";
 import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
-import { defineProperty } from "../helpers/wrap";
+import { createWrappedFunction } from "../helpers/wrap";
 import { Agent } from "./Agent";
 const req = mod.prototype.require;
 
 let wrappedRequire = false;
 let interceptors: ModifyingRequireInterceptor[] = [];
+let requireCache = new Map<string, Function>();
 
 export function wrapRequire(
   reqInterceptors: ModifyingRequireInterceptor[],
   agent: Agent
 ) {
   interceptors = reqInterceptors;
+  // Clear the require cache if interceptors have changed
+  if (wrappedRequire) {
+    requireCache = new Map<string, Function>();
+  }
   if (wrappedRequire) {
     return;
   }
   wrappedRequire = true;
 
   // @ts-expect-error Ignore type error
-  mod.prototype.require = function wrap(id) {
-    const interceptor = interceptors.find((i) => i.getName() === id);
+  mod.prototype.require = function wrap() {
+    const interceptor = interceptors.find((i) => i.getName() === arguments[0]);
     if (!interceptor) {
-      return req.apply(this, [id]);
+      return req.apply(
+        this,
+        // eslint-disable-next-line prefer-rest-params
+        arguments as unknown as [string]
+      );
     }
 
-    const original = req.apply(this, [id]);
+    if (requireCache.has(interceptor.getName())) {
+      return requireCache.get(interceptor.getName());
+    }
+
+    const original = req.apply(
+      this, // eslint-disable-next-line prefer-rest-params
+      arguments as unknown as [string]
+    );
 
     if (typeof original !== "function") {
       throw new Error(
@@ -32,7 +48,7 @@ export function wrapRequire(
       );
     }
 
-    const wrapped = function () {
+    const wrapper = function () {
       const originalReturnValue = original.apply(
         // @ts-expect-error We don't now the type of this
         this,
@@ -44,18 +60,9 @@ export function wrapRequire(
       return interceptor.getInterceptor()(args, originalReturnValue, agent);
     };
 
-    defineProperty(wrapped, "__original", original);
-    defineProperty(wrapped, "__wrapped", true);
+    const wrappedFunction = createWrappedFunction(original, () => wrapper);
+    requireCache.set(interceptor.getName(), wrappedFunction);
 
-    // Copy over all properties from the original function to the wrapped one.
-    // We don't want to lose the original function's properties.
-    // Most of the functions we're wrapping don't have any properties, so this is a rare case.
-    for (const prop in original) {
-      if (original.hasOwnProperty(prop)) {
-        defineProperty(wrapped, prop, original[prop]);
-      }
-    }
-
-    return wrapped;
+    return wrappedFunction;
   };
 }

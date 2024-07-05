@@ -1,6 +1,6 @@
 import { Agent } from "../Agent";
 
-export type ModifyingRequireInterceptorFunction = (
+type ModifyingRequireInterceptorFunction = (
   args: unknown[],
   originalReturnValue: unknown,
   agent: Agent

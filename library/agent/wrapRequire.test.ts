@@ -38,11 +38,6 @@ t.test("test wrapRequire", async (t) => {
     return args;
   });
 
-  const requireSubjectHono = hooks
-    .addPackage("hono")
-    .withVersion("^4.0.0")
-    .addRequireSubject();
-
   const fastifyBefore = require("fastify");
   t.notOk(fastifyBefore.__wrapped);
   t.same(
@@ -97,4 +92,9 @@ t.test("test wrapRequire", async (t) => {
     t.ok(error instanceof Error);
     t.match(error.message, "Cannot read properties of null (reading 'method')");
   }
+
+  const fastifyCached = require("fastify");
+  t.type(fastifyCached, "function");
+  t.same(fastifyCached.errorCodes, fastifyBefore.errorCodes);
+  t.ok(fastifyCached.__wrapped);
 });

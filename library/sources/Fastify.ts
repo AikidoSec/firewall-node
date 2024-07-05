@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply, RouteOptions } from "fastify";
+import type { RouteOptions, RouteHandlerMethod } from "fastify";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -12,10 +12,7 @@ export class Fastify implements Wrapper {
         return arg;
       }
 
-      return wrapRequestHandler(
-        arg as (request: FastifyRequest, reply: FastifyReply) => unknown,
-        agent
-      );
+      return wrapRequestHandler(arg as RouteHandlerMethod, agent);
     });
   }
 
@@ -34,10 +31,7 @@ export class Fastify implements Wrapper {
       }
 
       // @ts-expect-error types
-      options[key] = wrapRequestHandler(
-        value as (request: FastifyRequest, reply: FastifyReply) => unknown,
-        agent
-      );
+      options[key] = wrapRequestHandler(value as RouteHandlerMethod, agent);
     }
     return args;
   }

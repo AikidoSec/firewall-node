@@ -135,7 +135,7 @@ function wrapRequireSubjects(
   for (const requireSubject of requireSubjects) {
     const requireInterceptor = new ModifyingRequireInterceptor(
       pkg.getName(),
-      (args: unknown[], originalReturnValue: unknown, agent: Agent) => {
+      (args, originalReturnValue, agent) => {
         for (const methodInterceptor of requireSubject.getInterceptors()) {
           wrapWithArgumentModification(
             originalReturnValue,
@@ -287,7 +287,7 @@ function wrapWithoutArgumentModification(
 /**
  * Wraps a method call with an interceptor that modifies the arguments of the method call.
  */
-export function wrapWithArgumentModification(
+function wrapWithArgumentModification(
   subject: unknown,
   method: ModifyingArgumentsMethodInterceptor,
   module: string,
