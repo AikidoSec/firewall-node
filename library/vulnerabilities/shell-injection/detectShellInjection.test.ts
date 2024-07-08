@@ -388,6 +388,16 @@ t.test("it detects shell injection with ../", async () => {
   isShellInjection("/./bin/ls", "/./bin/ls");
 });
 
+t.test("shell injection with ~", async () => {
+  isShellInjection("echo ~", "~");
+  isShellInjection("ls ~/.ssh", "~/.ssh");
+});
+
+t.test("no shell injection with ~", async () => {
+  isNotShellInjection("~", "~");
+  isNotShellInjection("ls ~/path", "path");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

@@ -5,6 +5,13 @@ export function detectShellInjection(
   command: string,
   userInput: string
 ): boolean {
+  // Block single ~ character. For example echo ~
+  if (userInput === "~") {
+    if (command.length > 1 && command.includes("~")) {
+      return true;
+    }
+  }
+
   if (userInput.length <= 1) {
     // We ignore single characters since they don't pose a big threat.
     // They are only able to crash the shell, not execute arbitrary commands.
