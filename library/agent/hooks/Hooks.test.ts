@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { Hooks } from "./Hooks";
-import { VersionedPackage } from "./VersionedPackage";
 
 t.test("package throws error if name is empty", async (t) => {
   const hooks = new Hooks();
