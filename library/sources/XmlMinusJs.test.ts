@@ -1,9 +1,11 @@
+import { join } from "path";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { XmlMinusJs } from "./XmlMinusJs";
+import { readFile } from "fs/promises";
 
 t.test("xml2js works", async () => {
   const agent = new Agent(
@@ -18,18 +20,13 @@ t.test("xml2js works", async () => {
 
   const xmljs = require("xml-js");
 
-  const xmlString = "<root>Hello xml-js!</root>";
+  const xmlString = (
+    await readFile(join(__dirname, "fixtures", "products.xml"), "utf8")
+  ).toString();
 
   const result = xmljs.xml2js(xmlString);
-  t.same(result, {
-    elements: [
-      {
-        type: "element",
-        name: "root",
-        elements: [{ type: "text", text: "Hello xml-js!" }],
-      },
-    ],
-  });
+  const expected = require(join(__dirname, "fixtures", "xml2js.json"));
+  t.same(result, expected);
 
   const context = {
     remoteAddress: "::1",
@@ -44,10 +41,14 @@ t.test("xml2js works", async () => {
     route: "/posts/:id",
   };
 
+  const expectedCompact = require(
+    join(__dirname, "fixtures", "xml2js.compact.json")
+  );
+
   runWithContext(context, () => {
     const result = xmljs.xml2js(xmlString, { compact: true });
-    t.same(result, { root: { _text: "Hello xml-js!" } });
-    t.same(getContext()?.xml, { root: { _text: "Hello xml-js!" } });
+    t.same(result, expectedCompact);
+    t.same(getContext()?.xml, expectedCompact);
   });
 });
 
