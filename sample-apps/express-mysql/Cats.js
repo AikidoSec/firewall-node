@@ -16,6 +16,7 @@ class Cats {
   }
 
   async add(name) {
+    console.log(JSON.stringify(getContext(), null, 2));
     // This is unsafe! This is for demo purposes only, you should use parameterized queries.
     await this.query(`INSERT INTO cats(petname) VALUES ('${name}');`);
   }
