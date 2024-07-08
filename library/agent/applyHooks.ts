@@ -61,12 +61,18 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
       })
       .flat();
 
+    function isWrappableSubject(
+      subject: WrappableRequireSubject | null
+    ): subject is WrappableRequireSubject {
+      return subject instanceof WrappableRequireSubject;
+    }
+
     const files = versions.map((hook) => hook.files).flat();
     const subjects = versions.map((hook) => hook.subjects).flat();
     const requireSubjects = versions
       .map((hook) => hook.requireSubject)
       .flat()
-      .filter((subject) => subject !== null) as WrappableRequireSubject[]; // Tsc doesn't know that we've filtered out nulls on build?
+      .filter(isWrappableSubject);
 
     if (
       subjects.length === 0 &&
