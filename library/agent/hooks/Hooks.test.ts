@@ -15,10 +15,6 @@ t.test("withVersion throws error if version is empty", async (t) => {
   t.throws(() => subject.withVersion(""));
 });
 
-t.test("VersionedPackage throws error if name is empty", async (t) => {
-  t.throws(() => new VersionedPackage("", "^1.0.0"));
-});
-
 t.test("file throws error if path is empty", async (t) => {
   const hooks = new Hooks();
   const subject = hooks.addPackage("package").withVersion("^1.0.0");

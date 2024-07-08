@@ -7,13 +7,7 @@ export class VersionedPackage {
   private requireSubject: WrappableRequireSubject | null = null;
   private files: WrappableFile[] = [];
 
-  constructor(
-    private readonly packageName: string,
-    private readonly range: string
-  ) {
-    if (!this.packageName) {
-      throw new Error("Package name is required");
-    }
+  constructor(private readonly range: string) {
     if (!this.range) {
       throw new Error("Version range is required");
     }
