@@ -6,6 +6,8 @@ const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const mysql = require("mysql");
+const { xml2js } = require("xml-js");
+const { escape } = require("./escape");
 
 require("@aikidosec/firewall/nopp");
 
@@ -60,6 +62,28 @@ async function main(port) {
       }
 
       res.send(getHTMLBody(await cats.getAll()));
+    })
+  );
+
+  app.post(
+    "/cats",
+    express.text({ type: "application/xml" }),
+    asyncHandler(async (req, res) => {
+      console.log(req.body);
+      const input = xml2js(req.body, { compact: true });
+      console.log(input);
+
+      if (!input || !input.cat || !input.cat.name || !input.cat.name._text) {
+        return res
+          .status(400)
+          .send(
+            `Invalid XML. Expected ${escape("<cat><name>...</name></cat>")}`
+          );
+      }
+
+      await cats.add(input.cat.name._text);
+
+      res.redirect("/");
     })
   );
 

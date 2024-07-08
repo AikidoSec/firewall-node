@@ -1,0 +1,178 @@
+{
+  "elements": [
+    {
+      "type": "element",
+      "name": "store",
+      "elements": [
+        {
+          "type": "element",
+          "name": "products",
+          "elements": [
+            {
+              "type": "element",
+              "name": "product",
+              "attributes": {
+                "id": "' OR 1=1 -- ",
+                "category": "electronics"
+              },
+              "elements": [
+                {
+                  "type": "element",
+                  "name": "name",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "Smartphone"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "brand",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "BrandX"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "price",
+                  "attributes": {
+                    "currency": "USD"
+                  },
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "499.99"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "availability",
+                  "attributes": {
+                    "status": "in stock"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "element",
+              "name": "product",
+              "attributes": {
+                "id": "102",
+                "category": "appliances"
+              },
+              "elements": [
+                {
+                  "type": "element",
+                  "name": "name",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "Blender"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "brand",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "KitchenPro"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "price",
+                  "attributes": {
+                    "currency": "USD"
+                  },
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "79.99"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "availability",
+                  "attributes": {
+                    "status": "out of stock"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "element",
+          "name": "employees",
+          "elements": [
+            {
+              "type": "element",
+              "name": "employee",
+              "attributes": {
+                "id": "001",
+                "role": "manager"
+              },
+              "elements": [
+                {
+                  "type": "element",
+                  "name": "name",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "John Doe"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "contact",
+                  "attributes": {
+                    "email": "john.doe@example.com",
+                    "phone": "123-456-7890"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "element",
+              "name": "employee",
+              "attributes": {
+                "id": "002",
+                "role": "cashier"
+              },
+              "elements": [
+                {
+                  "type": "element",
+                  "name": "name",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "Jane Smith"
+                    }
+                  ]
+                },
+                {
+                  "type": "element",
+                  "name": "contact",
+                  "attributes": {
+                    "email": "jane.smith@example.com",
+                    "phone": "098-765-4321"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

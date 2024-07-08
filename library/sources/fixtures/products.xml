@@ -1,0 +1,26 @@
+<store>
+  <products>
+    <product id="' OR 1=1 -- " category="electronics">
+      <name>Smartphone</name>
+      <brand>BrandX</brand>
+      <price currency="USD">499.99</price>
+      <availability status="in stock"/>
+    </product>
+    <product id="102" category="appliances">
+      <name>Blender</name>
+      <brand>KitchenPro</brand>
+      <price currency="USD">79.99</price>
+      <availability status="out of stock"/>
+    </product>
+  </products>
+  <employees>
+    <employee id="001" role="manager">
+      <name>John Doe</name>
+      <contact email="john.doe@example.com" phone="123-456-7890"/>
+    </employee>
+    <employee id="002" role="cashier">
+      <name>Jane Smith</name>
+      <contact email="jane.smith@example.com" phone="098-765-4321"/>
+    </employee>
+  </employees>
+</store>

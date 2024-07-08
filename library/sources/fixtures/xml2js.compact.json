@@ -1,0 +1,88 @@
+{
+  "store": {
+    "products": {
+      "product": [
+        {
+          "_attributes": {
+            "id": "' OR 1=1 -- ",
+            "category": "electronics"
+          },
+          "name": {
+            "_text": "Smartphone"
+          },
+          "brand": {
+            "_text": "BrandX"
+          },
+          "price": {
+            "_attributes": {
+              "currency": "USD"
+            },
+            "_text": "499.99"
+          },
+          "availability": {
+            "_attributes": {
+              "status": "in stock"
+            }
+          }
+        },
+        {
+          "_attributes": {
+            "id": "102",
+            "category": "appliances"
+          },
+          "name": {
+            "_text": "Blender"
+          },
+          "brand": {
+            "_text": "KitchenPro"
+          },
+          "price": {
+            "_attributes": {
+              "currency": "USD"
+            },
+            "_text": "79.99"
+          },
+          "availability": {
+            "_attributes": {
+              "status": "out of stock"
+            }
+          }
+        }
+      ]
+    },
+    "employees": {
+      "employee": [
+        {
+          "_attributes": {
+            "id": "001",
+            "role": "manager"
+          },
+          "name": {
+            "_text": "John Doe"
+          },
+          "contact": {
+            "_attributes": {
+              "email": "john.doe@example.com",
+              "phone": "123-456-7890"
+            }
+          }
+        },
+        {
+          "_attributes": {
+            "id": "002",
+            "role": "cashier"
+          },
+          "name": {
+            "_text": "Jane Smith"
+          },
+          "contact": {
+            "_attributes": {
+              "email": "jane.smith@example.com",
+              "phone": "098-765-4321"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
