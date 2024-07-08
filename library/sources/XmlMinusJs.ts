@@ -22,7 +22,8 @@ export class XmlMinusJs implements Wrapper {
     const xmlString = args[0] as string;
 
     if (typeof context.body !== "string" || context.body !== xmlString) {
-      // The XML string is not in the body, so currently we don't check it
+      // We only want to set the parsed XML result as context.xml
+      // When xml2js(req.body) or xml2json(req.body) is called
       return args;
     }
 
