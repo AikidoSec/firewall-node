@@ -3,24 +3,28 @@ import * as mod from "module";
 import { ModifyingRequireInterceptor } from "./hooks/ModifyingRequireInterceptor";
 import { createWrappedFunction } from "../helpers/wrap";
 import { Agent } from "./Agent";
+
 const req = mod.prototype.require;
 
 let wrappedRequire = false;
 let interceptors: ModifyingRequireInterceptor[] = [];
-let requireCache = new Map<string, Function>();
+let requireCache: Map<string, unknown> = new Map();
 
 export function wrapRequire(
   reqInterceptors: ModifyingRequireInterceptor[],
   agent: Agent
 ) {
   interceptors = reqInterceptors;
-  // Clear the require cache if interceptors have changed
+
+  // Clear the cache if interceptors have changed
   if (wrappedRequire) {
-    requireCache = new Map<string, Function>();
+    requireCache = new Map();
   }
+
   if (wrappedRequire) {
     return;
   }
+
   wrappedRequire = true;
 
   // @ts-expect-error Ignore type error
@@ -31,6 +35,7 @@ export function wrapRequire(
         // eslint-disable-next-line prefer-rest-params
         arguments[0]
     );
+
     if (!interceptor) {
       return req.apply(
         this,
@@ -61,8 +66,10 @@ export function wrapRequire(
         // eslint-disable-next-line prefer-rest-params
         arguments
       );
+
       // eslint-disable-next-line prefer-rest-params
       const args = Array.from(arguments);
+
       return interceptor.getInterceptor()(args, originalReturnValue, agent);
     };
 
