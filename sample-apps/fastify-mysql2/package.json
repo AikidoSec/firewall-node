@@ -1,0 +1,12 @@
+{
+  "name": "fastify-mysql2",
+  "version": "1.0.0",
+  "description": "A vulnerable fastify app to test out SQL Injection with mysql",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "fastify": "^4.28.0",
+    "mysql2": "^3.10.1"
+  }
+}
