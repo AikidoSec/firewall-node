@@ -1,8 +1,10 @@
 /* eslint-disable prefer-rest-params */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { Patcher } from "../agent/hooks/Patching";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import type { XMLParser } from "fast-xml-parser";
 
 /**
  * Wrapper for fast-xml-parser package.
@@ -10,7 +12,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
  * This prevents bypassing the firewall using XML. The XML is parsed only once keeping the performance impact low.
  */
 export class FastXmlParser implements Wrapper {
-  private inspectParse(args: unknown[], result: unknown) {
+  private inspectParsedResult(args: unknown[], result: unknown) {
     if (!args.length || typeof args[0] !== "string") {
       return;
     }
@@ -34,17 +36,16 @@ export class FastXmlParser implements Wrapper {
     }
   }
 
-  wrap(hooks: Hooks) {
-    const fastXmlParser = hooks
-      .addPackage("fast-xml-parser")
-      .withVersion("^4.0.0");
+  private patch(exports: unknown, patcher: Patcher) {
+    patcher.wrapConstructor(exports, "XMLParser", (instance) => {
+      patcher.inspectResult(instance, "parse", this.inspectParsedResult);
+    });
+  }
 
-    fastXmlParser
-      .addSubject((exports) => exports)
-      .inspectNewInstance("XMLParser")
-      .addSubject((exports) => exports)
-      .inspectResult("parse", (args, result) =>
-        this.inspectParse(args, result)
-      );
+  wrap(hooks: Hooks) {
+    hooks
+      .addPackage("fast-xml-parser")
+      .withVersion("^4.0.0")
+      .patchWhenInstalled(this.patch);
   }
 }

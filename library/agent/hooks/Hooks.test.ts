@@ -30,7 +30,6 @@ t.test("method throws error if name is empty", async (t) => {
 
   t.throws(() => subject.inspect("", () => {}));
   t.throws(() => subject.modifyArguments("", (args) => args));
-  t.throws(() => subject.inspectResult("", (args, result) => {}));
 });
 
 t.test("add builtin module throws if name is empty", async (t) => {

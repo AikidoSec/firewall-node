@@ -37,6 +37,7 @@ module.exports = {
     camelcase: "error",
     "max-classes-per-file": ["error", 1],
     "no-console": "error",
+    "prefer-rest-params": ["warn"],
   },
   overrides: [
     {
