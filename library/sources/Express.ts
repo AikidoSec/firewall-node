@@ -24,6 +24,11 @@ export class Express implements Wrapper {
         return arg;
       }
 
+      // Ignore error handlers
+      if (arg.length > 3) {
+        return arg;
+      }
+
       return wrapRequestHandler(arg as RequestHandler, agent);
     });
   }

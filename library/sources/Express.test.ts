@@ -214,6 +214,10 @@ function getApp(userMiddleware = true) {
     res.send({ hello: "world" });
   });
 
+  app.use((error, req, res, next) => {
+    res.status(500).send({ error: error.message });
+  });
+
   return app;
 }
 
@@ -310,7 +314,9 @@ t.test("it counts attacks detected", async (t) => {
 
 t.test("it counts request with error", async (t) => {
   agent.getInspectionStatistics().reset();
-  await request(getApp()).get("/throws");
+  const response = await request(getApp()).get("/throws");
+  t.same(response.statusCode, 500);
+  t.same(response.body, { error: "test" });
   t.match(agent.getInspectionStatistics().getStats(), {
     requests: {
       total: 1,
