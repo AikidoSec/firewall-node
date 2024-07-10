@@ -12,9 +12,11 @@ importers:
     specifiers:
       '@aikidosec/firewall': file:../../build
       mongodb: ^6.3.0
+      percentile: ^1.6.0
     dependencies:
       '@aikidosec/firewall': file:build
       mongodb: 6.8.0
+      percentile: 1.6.0
 
   benchmarks/shell-injection:
     specifiers:
@@ -5964,7 +5966,6 @@ packages:
 
   /percentile/1.6.0:
     resolution: {integrity: sha512-8vSyjdzwxGDHHwH+cSGch3A9Uj2On3UpgOWxWXMKwUvoAbnujx6DaqmV1duWXNiH/oEWpyVd6nSQccix6DM3Ng==}
-    dev: true
 
   /pg-cloudflare/1.1.1:
     resolution: {integrity: sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q==}
