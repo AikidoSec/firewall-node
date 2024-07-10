@@ -11,6 +11,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 8
+          run_install: false
       - uses: actions/setup-node@v3
         with:
           node-version: "18.x"

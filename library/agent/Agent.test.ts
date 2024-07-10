@@ -43,7 +43,7 @@ t.test("it sends started event", async (t) => {
         version: "0.0.0",
         ipAddress: ip(),
         packages: {
-          mongodb: "6.3.0",
+          mongodb: "6.8.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
@@ -96,7 +96,7 @@ t.test("it starts in non-blocking mode", async () => {
     "Starting agent...",
     "Dry mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
-    "mongodb@6.3.0 is supported!",
+    "mongodb@6.8.0 is supported!",
   ]);
 });
 

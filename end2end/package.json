@@ -3,7 +3,9 @@
   "private": true,
   "dependencies": {
     "@supercharge/promise-pool": "^3.1.1",
-    "tap": "^18.7.0"
+    "@types/node": "^20.14.10",
+    "tap": "^18.7.0",
+    "typescript": "^5.5.3"
   },
   "scripts": {
     "test": "tap tests/*.js --allow-empty-coverage -j 1"

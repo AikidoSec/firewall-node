@@ -58,8 +58,7 @@ hapi-postgres:
 install:
 	mkdir -p build && cp library/package.json build/package.json
 	touch build/index.js
-	npm install --workspaces || true
-	npm install --workspaces
+	pnpm install
 
 .PHONY: build
 build:
