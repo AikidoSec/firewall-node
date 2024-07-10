@@ -11,6 +11,7 @@
     "express-async-handler": "^1.2.0",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
-    "xml-js": "^1.6.11"
+    "xml-js": "^1.6.11",
+    "@sentry/node": "^7"
   }
 }
