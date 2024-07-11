@@ -42,7 +42,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import * as express from "express";
 import { Context, getContext } from "../agent/Context";
 import { createServer, Server } from "http";
-import { onMessageEvent } from "./ws/wrapSocketEvents";
+import { onWsData } from "./ws/wrapSocketEvents";
 
 function runServer(useHttpServer: "express" | "http" | false) {
   let wss: WebSocketServer;
@@ -60,9 +60,19 @@ function runServer(useHttpServer: "express" | "http" | false) {
     throw new Error("Invalid useHttpServer test option");
   }
 
-  wss.on("connection", function connection(ws) {
+  wss.on("connection", (ws) => {
     // Websocket message event
-    ws.on("message", function message(data) {
+    ws.on("message", (data) => {
+      // Send back the context
+      ws.send(JSON.stringify(getContext()));
+    });
+
+    ws.on("ping", (data) => {
+      // Send back the context
+      ws.send(JSON.stringify(getContext()));
+    });
+
+    ws.on("pong", (data) => {
       // Send back the context
       ws.send(JSON.stringify(getContext()));
     });
@@ -107,7 +117,7 @@ t.test("Connect to WebSocket server and get context", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     ws.send("getContext");
   });
 
@@ -129,7 +139,7 @@ t.test("Connect to WebSocket server and send json object", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     ws.send(JSON.stringify({ test: "test1" }));
   });
 
@@ -150,7 +160,7 @@ t.test("Connect to WebSocket server and send buffer", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     ws.send(Buffer.from("test-buffer"));
   });
 
@@ -171,7 +181,7 @@ t.test("Connect to WebSocket server and send Uint8Array", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     ws.send(new TextEncoder().encode("test-text-encoder"));
   });
 
@@ -192,7 +202,7 @@ t.test("Connect to WebSocket server and send non utf-8 Uint8Array", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     ws.send(new Uint8Array([0x80, 0x81, 0x82, 0x83]));
   });
 
@@ -213,7 +223,7 @@ t.test("Connect to WebSocket server and send text as Blob", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     // @ts-expect-error types say we are not allowed to send a Blob?
     ws.send(new Blob(["test-blob"]));
   });
@@ -235,7 +245,7 @@ t.test("Connect to WebSocket server and send binary as Blob", (t) => {
     t.fail(err);
   });
 
-  ws.on("open", function open() {
+  ws.on("open", () => {
     // @ts-expect-error types say we are not allowed to send a Blob?
     ws.send(new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])]));
   });
@@ -246,7 +256,6 @@ t.test("Connect to WebSocket server and send binary as Blob", (t) => {
     t.match(context, { ...expectedContext, ws: undefined });
 
     ws.close();
-    stopServer();
     t.end();
   });
 });
@@ -254,13 +263,13 @@ t.test("Connect to WebSocket server and send binary as Blob", (t) => {
 // We use the function directly to test because the websocket client converts blobs to array buffers
 t.test("Pass text blob to onMessageEvent", async (t) => {
   const context = { ...expectedContext, remoteAddress: "" } as Context;
-  await onMessageEvent([new Blob(["test-blob"])], context);
+  await onWsData([new Blob(["test-blob"])], context);
   t.same(context, { ...expectedContext, remoteAddress: "", ws: "test-blob" });
 });
 
 t.test("Pass binary blob to onMessageEvent", async (t) => {
   const context = { ...expectedContext, remoteAddress: "" } as Context;
-  await onMessageEvent(
+  await onWsData(
     [new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])])],
     context
   );
@@ -269,7 +278,7 @@ t.test("Pass binary blob to onMessageEvent", async (t) => {
 
 t.test("Pass buffer array to onMessageEvent", async (t) => {
   const context = { ...expectedContext, remoteAddress: "" } as Context;
-  await onMessageEvent(
+  await onWsData(
     [[Buffer.from("test-buffer-1"), Buffer.from("test-buffer-2")]],
     context
   );
@@ -282,7 +291,7 @@ t.test("Pass buffer array to onMessageEvent", async (t) => {
 
 t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
   const context = { ...expectedContext, remoteAddress: "" } as Context;
-  await onMessageEvent(
+  await onWsData(
     [[Buffer.from("test-buffer-1"), Buffer.from([0x80, 0x81, 0x82, 0x83])]],
     context
   );
@@ -290,5 +299,48 @@ t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
     ...expectedContext,
     remoteAddress: "",
     ws: undefined,
+  });
+});
+
+t.test("Send ping with data to WebSocket server", (t) => {
+  const ws = new WebSocket("ws://localhost:3003");
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.ping("test-ping");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, { ...expectedContext, ws: "test-ping" });
+
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Send pong with data to WebSocket server", (t) => {
+  const ws = new WebSocket("ws://localhost:3003");
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.pong(JSON.stringify({ test: "pong" }));
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, { ...expectedContext, ws: { test: "pong" } });
+
+    ws.close();
+    stopServer();
+    t.end();
   });
 });

@@ -48,10 +48,10 @@ export function wrapSocketEventListener(
         return applyListener();
       }
 
-      // Message event
-      if (event === "message") {
+      // Events with data
+      if (event === "message" || event === "ping" || event === "pong") {
         // eslint-disable-next-line prefer-rest-params
-        await onMessageEvent(Array.from(arguments), context);
+        await onWsData(Array.from(arguments), context);
       }
 
       return applyListener();
@@ -59,7 +59,7 @@ export function wrapSocketEventListener(
   };
 }
 
-export async function onMessageEvent(args: any[], context: Context) {
+export async function onWsData(args: any[], context: Context) {
   if (!args.length) {
     return;
   }
