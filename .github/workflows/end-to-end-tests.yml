@@ -43,4 +43,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: make install
       - run: make build
+      - run: make install # Install library from build folder
       - run: make end2end
