@@ -38,6 +38,7 @@ import { SQLite3 } from "../sinks/SQLite3";
 import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 function isDebugging() {
   return (
@@ -139,6 +140,27 @@ function getWrappers() {
 }
 
 export function protect() {
+  // Check if runtime is bun or deno
+  // @ts-expect-error Unknown type of globalThis
+  if (globalThis.Deno || globalThis.Bun) {
+    // @ts-expect-error Unknown type of globalThis
+    const runtimeName = globalThis.Deno ? "Deno" : "Bun";
+    // eslint-disable-next-line no-console
+    console.error(
+      `Error: Aikido Firewall does not support ${runtimeName}. If you want support for ${runtimeName}, please contact us: hello@aikido.dev`
+    );
+    return;
+  }
+
+  // Check for unsupported Node.js versions
+  if (getMajorNodeVersion() < 16) {
+    // eslint-disable-next-line no-console
+    console.error(
+      "Error: Aikido Firewall requires Node.js 16 or higher to run."
+    );
+    return;
+  }
+
   const agent = getAgent({
     serverless: undefined,
   });
