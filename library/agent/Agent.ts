@@ -376,10 +376,23 @@ export class Agent {
       throw new Error("Agent already started!");
     }
 
+    // Check for unsupported Node.js versions
     if (getMajorNodeVersion() < 16) {
       // eslint-disable-next-line no-console
       console.error(
         "Error: Aikido Firewall requires Node.js 16 or higher to run."
+      );
+      return;
+    }
+
+    // Check if runtime is bun or deno
+    // @ts-expect-error Unknown type of globalThis
+    if (globalThis.Deno || globalThis.Bun) {
+      // @ts-expect-error Unknown type of globalThis
+      const runtimeName = globalThis.Deno ? "Deno" : "Bun";
+      // eslint-disable-next-line no-console
+      console.error(
+        `Error: Aikido Firewall does not support ${runtimeName}. If you want support for ${runtimeName}, please contact us: hello@aikido.dev`
       );
       return;
     }
