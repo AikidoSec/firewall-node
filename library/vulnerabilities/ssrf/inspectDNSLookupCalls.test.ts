@@ -6,6 +6,7 @@ import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
+import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -59,7 +60,7 @@ t.test("it resolves private IPv6 without context", (t) => {
 
   wrappedLookup("localhost", (err, address) => {
     t.same(err, null);
-    t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
+    t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
     t.end();
   });
 });
@@ -148,10 +149,7 @@ t.test(
     runWithContext({ ...context, body: undefined }, () => {
       wrappedLookup("localhost", (err, address) => {
         t.same(err, null);
-        t.same(
-          address,
-          process.version.startsWith("v16") ? "127.0.0.1" : "::1"
-        );
+        t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
         t.same(api.getEvents(), []);
         t.end();
       });
@@ -201,10 +199,7 @@ t.test(
       runWithContext(context, () => {
         wrappedLookup("localhost", (err, address) => {
           t.same(err, null);
-          t.same(
-            address,
-            process.version.startsWith("v16") ? "127.0.0.1" : "::1"
-          );
+          t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
           t.same(api.getEvents(), []);
           resolve();
         });
@@ -258,7 +253,7 @@ t.test("it does not block in dry mode", (t) => {
   runWithContext(context, () => {
     wrappedLookup("localhost", (err, address) => {
       t.same(err, null);
-      t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
+      t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
       t.match(api.getEvents(), [
         {
           type: "detected_attack",

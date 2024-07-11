@@ -21,6 +21,7 @@ import { Source } from "./Source";
 import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -373,6 +374,10 @@ export class Agent {
   start(wrappers: Wrapper[]) {
     if (this.started) {
       throw new Error("Agent already started!");
+    }
+
+    if (getMajorNodeVersion() < 16) {
+      throw new Error("Node.js version 16 or higher is required");
     }
 
     this.started = true;
