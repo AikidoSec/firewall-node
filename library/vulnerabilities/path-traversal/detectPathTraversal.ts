@@ -13,6 +13,8 @@ export function detectPathTraversal(
     return false;
   }
 
+  // Check for URL path traversal
+  // Reason: new URL("file:///../../test.txt") => /test.txt
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
@@ -43,9 +45,11 @@ export function detectPathTraversal(
   return false;
 }
 
+// This function is used to convert a file path as a URL to a file path.
+// It is used to handle cases where a URL object is passed to a fs function.
 function parseAsFileUrl(path: string) {
   let url = path;
-  if (!url.startsWith("file://")) {
+  if (!url.startsWith("file:")) {
     if (!url.startsWith("/")) {
       url = `/${url}`;
     }
