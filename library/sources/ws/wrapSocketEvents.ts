@@ -1,13 +1,14 @@
-import { Agent } from "../../agent/Agent";
 import { Context, getContext, runWithContext } from "../../agent/Context";
+import { isPlainObject } from "../../helpers/isPlainObject";
 
-export function wrapSocketEventHandler(handler: any, agent: Agent): any {
-  return function wrappedEvent(event: string, listener: unknown) {
+export function wrapSocketEvent(handler: any): any {
+  return function wrapped() {
     const applyHandler = () => {
       return handler.apply(
         // @ts-expect-error We don't now the type of this
         this,
-        [event, listener]
+        // eslint-disable-next-line prefer-rest-params
+        arguments
       );
     };
 
@@ -17,25 +18,36 @@ export function wrapSocketEventHandler(handler: any, agent: Agent): any {
       return applyHandler();
     }
 
-    // Todo limit wrapping to specific events
-    if (typeof listener === "function") {
-      listener = wrapSocketEventListener(event, listener, context);
+    // eslint-disable-next-line prefer-rest-params
+    const args = Array.from(arguments);
+    if (
+      args.length < 2 ||
+      typeof args[0] !== "string" ||
+      typeof args[1] !== "function"
+    ) {
+      return applyHandler();
     }
 
-    return applyHandler();
+    args[1] = wrapSocketEventHandler(args[0], args[1], context);
+
+    return handler.apply(
+      // @ts-expect-error We don't now the type of this
+      this,
+      args
+    );
   };
 }
 
-export function wrapSocketEventListener(
+function wrapSocketEventHandler(
   event: string,
-  listener: any,
+  handler: any,
   context: Context
 ): any {
-  return async function wrappedListener() {
+  return async function wrappedHandler() {
     // We need to call runWithContext again because the context of the connection handler is not passed to called event listeners
     return await runWithContext(context, async () => {
-      const applyListener = () => {
-        return listener.apply(
+      const applyHandler = () => {
+        return handler.apply(
           // @ts-expect-error We don't now the type of this
           this,
           // eslint-disable-next-line prefer-rest-params
@@ -45,7 +57,7 @@ export function wrapSocketEventListener(
 
       const context = getContext();
       if (!context) {
-        return applyListener();
+        return applyHandler();
       }
 
       // Events with data
@@ -54,7 +66,7 @@ export function wrapSocketEventListener(
         await onWsData(Array.from(arguments), context);
       }
 
-      return applyListener();
+      return applyHandler();
     });
   };
 }
@@ -63,7 +75,19 @@ export async function onWsData(args: any[], context: Context) {
   if (!args.length) {
     return;
   }
-  const data = args[0] as ArrayBuffer | Blob | Buffer | Buffer[];
+  let data: ArrayBuffer | Blob | Buffer | Buffer[];
+
+  // Detect if its an event which contains the data
+  if (
+    typeof args[0] === "object" &&
+    "data" in args[0] &&
+    "type" in args[0] &&
+    "target" in args[0]
+  ) {
+    data = args[0].data;
+  } else {
+    data = args[0];
+  }
 
   let messageStr: string | undefined;
 

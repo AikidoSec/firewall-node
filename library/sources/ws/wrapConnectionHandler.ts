@@ -3,7 +3,7 @@ import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
 import { IncomingMessage } from "http";
 import { contextFromConnection } from "./contextFromConnection";
-import { wrapSocketEventHandler } from "./wrapSocketEvents";
+import { wrapSocketEvent } from "./wrapSocketEvents";
 
 export function wrapConnectionHandler(handler: any, agent: Agent): any {
   return async (socket: WebSocket, request: IncomingMessage) => {
@@ -17,12 +17,9 @@ export function wrapConnectionHandler(handler: any, agent: Agent): any {
 
       // Todo ratelimiting, user blocking
 
-      socket.on = wrapSocketEventHandler(socket.on, agent);
-      socket.addEventListener = wrapSocketEventHandler(
-        socket.addEventListener,
-        agent
-      );
-      socket.once = wrapSocketEventHandler(socket.once, agent);
+      socket.on = wrapSocketEvent(socket.on);
+      socket.once = wrapSocketEvent(socket.once);
+      socket.addEventListener = wrapSocketEvent(socket.addEventListener);
 
       return handler(socket, request);
     });

@@ -35,6 +35,9 @@ export class Ws implements Wrapper {
       subject.modifyArguments("on", (args, subject, agent) => {
         return this.wrapEventArgs(args, agent);
       });
+      subject.modifyArguments("addListener", (args, subject, agent) => {
+        return this.wrapEventArgs(args, agent);
+      });
     }
   }
 }

@@ -39,33 +39,41 @@ agent.start([new Ws(), new FileSystem(), new HTTPServer(), new Express()]);
 setInstance(agent);
 
 import { WebSocketServer, WebSocket } from "ws";
-import * as express from "express";
 import { Context, getContext } from "../agent/Context";
 import { createServer, Server } from "http";
 import { onWsData } from "./ws/wrapSocketEvents";
+import { AddressInfo } from "net";
 
-function runServer(useHttpServer: "express" | "http" | false) {
+// Method to run a sample WebSocket server with different configurations
+function runServer(
+  useHttpServer: boolean,
+  eventListenerType: "on" | "addEventListener" = "on"
+) {
   let wss: WebSocketServer;
   let httpServer: Server | undefined;
   if (!useHttpServer) {
-    wss = new WebSocketServer({ port: 3003 });
-  } else if (useHttpServer === "http") {
+    wss = new WebSocketServer({ port: 0 });
+  } else {
     httpServer = createServer();
     wss = new WebSocketServer({ server: httpServer });
-  } else if (useHttpServer === "express") {
-    const app = express();
-    httpServer = createServer(app);
-    wss = new WebSocketServer({ server: httpServer });
-  } else {
-    throw new Error("Invalid useHttpServer test option");
   }
 
-  wss.on("connection", (ws) => {
-    // Websocket message event
-    ws.on("message", (data) => {
-      // Send back the context
+  const onEvent = (ws: WebSocket) => {
+    const onMessage = (data: any) => {
       ws.send(JSON.stringify(getContext()));
-    });
+    };
+
+    if (eventListenerType === "addEventListener") {
+      ws.addEventListener(
+        "message",
+        (e) => {
+          onMessage(e.data);
+        },
+        { once: true }
+      );
+    } else {
+      ws.on("message", onMessage);
+    }
 
     ws.on("ping", (data) => {
       // Send back the context
@@ -76,42 +84,53 @@ function runServer(useHttpServer: "express" | "http" | false) {
       // Send back the context
       ws.send(JSON.stringify(getContext()));
     });
-  });
+  };
 
-  if (httpServer) {
-    httpServer.listen(3003);
+  if (eventListenerType === "addEventListener") {
+    wss.addListener("connection", onEvent);
+  } else {
+    wss.on("connection", onEvent);
   }
 
-  return function closeServer() {
-    wss.close();
-    if (httpServer) {
-      httpServer.close();
-    }
+  if (httpServer) {
+    httpServer.listen(0);
+  }
+
+  return {
+    port: (wss.address() as AddressInfo).port,
+    close: () => {
+      wss.close();
+      if (httpServer) {
+        httpServer.close();
+      }
+    },
   };
 }
 
-const stopServer = runServer(false);
+const testServer1 = runServer(false);
 
-const expectedContext = {
-  url: "/",
-  method: "GET",
-  headers: {
-    "sec-websocket-version": "13",
-    connection: "Upgrade",
-    upgrade: "websocket",
-    "sec-websocket-extensions": "permessage-deflate; client_max_window_bits",
-    host: "localhost:3003",
-  },
-  route: "/",
-  query: {},
-  source: "ws.connection",
-  routeParams: {},
-  cookies: {},
-  body: undefined,
+const getExpectedContext = (port: number) => {
+  return {
+    url: "/",
+    method: "GET",
+    headers: {
+      "sec-websocket-version": "13",
+      connection: "Upgrade",
+      upgrade: "websocket",
+      "sec-websocket-extensions": "permessage-deflate; client_max_window_bits",
+      host: `localhost:${port}`,
+    },
+    route: "/",
+    query: {},
+    source: "ws.connection",
+    routeParams: {},
+    cookies: {},
+    body: undefined,
+  };
 };
 
 t.test("Connect to WebSocket server and get context", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -124,7 +143,10 @@ t.test("Connect to WebSocket server and get context", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: "getContext" });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: "getContext",
+    });
     t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
 
     ws.close();
@@ -133,7 +155,7 @@ t.test("Connect to WebSocket server and get context", (t) => {
 });
 
 t.test("Connect to WebSocket server and send json object", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -146,7 +168,10 @@ t.test("Connect to WebSocket server and send json object", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: { test: "test1" } });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: { test: "test1" },
+    });
 
     ws.close();
     t.end();
@@ -154,7 +179,7 @@ t.test("Connect to WebSocket server and send json object", (t) => {
 });
 
 t.test("Connect to WebSocket server and send buffer", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -167,7 +192,10 @@ t.test("Connect to WebSocket server and send buffer", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: "test-buffer" });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: "test-buffer",
+    });
 
     ws.close();
     t.end();
@@ -175,7 +203,7 @@ t.test("Connect to WebSocket server and send buffer", (t) => {
 });
 
 t.test("Connect to WebSocket server and send Uint8Array", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -188,7 +216,10 @@ t.test("Connect to WebSocket server and send Uint8Array", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: "test-text-encoder" });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: "test-text-encoder",
+    });
 
     ws.close();
     t.end();
@@ -196,7 +227,7 @@ t.test("Connect to WebSocket server and send Uint8Array", (t) => {
 });
 
 t.test("Connect to WebSocket server and send non utf-8 Uint8Array", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -209,7 +240,10 @@ t.test("Connect to WebSocket server and send non utf-8 Uint8Array", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: undefined });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: undefined,
+    });
 
     ws.close();
     t.end();
@@ -217,7 +251,7 @@ t.test("Connect to WebSocket server and send non utf-8 Uint8Array", (t) => {
 });
 
 t.test("Connect to WebSocket server and send text as Blob", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -231,7 +265,10 @@ t.test("Connect to WebSocket server and send text as Blob", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: "test-blob" });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: "test-blob",
+    });
 
     ws.close();
     t.end();
@@ -239,7 +276,7 @@ t.test("Connect to WebSocket server and send text as Blob", (t) => {
 });
 
 t.test("Connect to WebSocket server and send binary as Blob", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -253,7 +290,10 @@ t.test("Connect to WebSocket server and send binary as Blob", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: undefined });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: undefined,
+    });
 
     ws.close();
     t.end();
@@ -262,48 +302,68 @@ t.test("Connect to WebSocket server and send binary as Blob", (t) => {
 
 // We use the function directly to test because the websocket client converts blobs to array buffers
 t.test("Pass text blob to onMessageEvent", async (t) => {
-  const context = { ...expectedContext, remoteAddress: "" } as Context;
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
   await onWsData([new Blob(["test-blob"])], context);
-  t.same(context, { ...expectedContext, remoteAddress: "", ws: "test-blob" });
+  t.same(context, {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+    ws: "test-blob",
+  });
 });
 
 t.test("Pass binary blob to onMessageEvent", async (t) => {
-  const context = { ...expectedContext, remoteAddress: "" } as Context;
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
   await onWsData(
     [new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])])],
     context
   );
-  t.match(context, { ...expectedContext, remoteAddress: "", ws: undefined });
+  t.match(context, {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+    ws: undefined,
+  });
 });
 
 t.test("Pass buffer array to onMessageEvent", async (t) => {
-  const context = { ...expectedContext, remoteAddress: "" } as Context;
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
   await onWsData(
     [[Buffer.from("test-buffer-1"), Buffer.from("test-buffer-2")]],
     context
   );
   t.match(context, {
-    ...expectedContext,
+    ...getExpectedContext(testServer1.port),
     remoteAddress: "",
     ws: "test-buffer-1test-buffer-2",
   });
 });
 
 t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
-  const context = { ...expectedContext, remoteAddress: "" } as Context;
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
   await onWsData(
     [[Buffer.from("test-buffer-1"), Buffer.from([0x80, 0x81, 0x82, 0x83])]],
     context
   );
   t.match(context, {
-    ...expectedContext,
+    ...getExpectedContext(testServer1.port),
     remoteAddress: "",
     ws: undefined,
   });
 });
 
 t.test("Send ping with data to WebSocket server", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -316,7 +376,10 @@ t.test("Send ping with data to WebSocket server", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: "test-ping" });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: "test-ping",
+    });
 
     ws.close();
     t.end();
@@ -324,7 +387,7 @@ t.test("Send ping with data to WebSocket server", (t) => {
 });
 
 t.test("Send pong with data to WebSocket server", (t) => {
-  const ws = new WebSocket("ws://localhost:3003");
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -337,10 +400,70 @@ t.test("Send pong with data to WebSocket server", (t) => {
   ws.on("message", (data) => {
     const context = JSON.parse(data.toString());
 
-    t.match(context, { ...expectedContext, ws: { test: "pong" } });
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      ws: { test: "pong" },
+    });
 
     ws.close();
-    stopServer();
+    testServer1.close();
+    t.end();
+  });
+});
+
+const testServer2 = runServer(true);
+
+t.test("Send message to WebSocket server with http server", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer2.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextHTTP");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer2.port),
+      ws: "getContextHTTP",
+    });
+
+    t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
+
+    ws.close();
+    testServer2.close();
+    t.end();
+  });
+});
+
+const testServer3 = runServer(false, "addEventListener");
+
+t.test("Send message to WebSocket server using addEventListener", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer3.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextEvent");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer3.port),
+      ws: "getContextEvent",
+    });
+    t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
+
+    ws.close();
+    testServer3.close();
     t.end();
   });
 });
