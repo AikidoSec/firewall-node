@@ -3,7 +3,7 @@ import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { contextFromRequest } from "./contextFromRequest";
-import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
+import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 
 export function wrapRequestHandler(
   handler: RequestHandler,
@@ -11,10 +11,6 @@ export function wrapRequestHandler(
 ): RequestHandler {
   return (req, res, next) => {
     const context = contextFromRequest(req);
-
-    if (context.route) {
-      agent.onRouteExecute(req.method, context.route);
-    }
 
     return runWithContext(context, () => {
       // Even though we already have the context, we need to get it again
@@ -27,13 +23,13 @@ export function wrapRequestHandler(
       }
 
       if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return res.status(403).send("You are blocked by Aikido runtime.");
+        return res.status(403).send("You are blocked by Aikido firewall.");
       }
 
       const result = shouldRateLimitRequest(context, agent);
 
       if (result.block) {
-        let message = "You are rate limited by Aikido runtime.";
+        let message = "You are rate limited by Aikido firewall.";
         if (result.trigger === "ip") {
           message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
         }

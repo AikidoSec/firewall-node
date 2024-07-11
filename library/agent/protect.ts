@@ -15,6 +15,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -30,6 +31,13 @@ import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
+import { GraphQL } from "../sources/GraphQL";
+import { Xml2js } from "../sources/Xml2js";
+import { FastXmlParser } from "../sources/FastXmlParser";
+import { SQLite3 } from "../sinks/SQLite3";
+import { XmlMinusJs } from "../sources/XmlMinusJs";
+import { Hapi } from "../sources/Hapi";
+import { Shelljs } from "../sinks/Shelljs";
 
 function isDebugging() {
   return (
@@ -40,7 +48,9 @@ function isDebugging() {
 function shouldBlock() {
   return (
     process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1"
+    process.env.AIKIDO_BLOCKING === "1" ||
+    process.env.AIKIDO_BLOCK === "true" ||
+    process.env.AIKIDO_BLOCK === "1"
   );
 }
 
@@ -117,6 +127,14 @@ function getWrappers() {
     new Undici(),
     new Path(),
     new HTTPServer(),
+    new Hono(),
+    new GraphQL(),
+    new Xml2js(),
+    new FastXmlParser(),
+    new SQLite3(),
+    new XmlMinusJs(),
+    new Shelljs(),
+    new Hapi(),
   ];
 }
 

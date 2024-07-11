@@ -38,10 +38,10 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4000/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4000/?search=title", {
+        fetch("http://127.0.0.1:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
@@ -50,7 +50,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(noSQLInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -83,10 +83,10 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4001/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4001/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4001/?search=title", {
+        fetch("http://127.0.0.1:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
@@ -95,7 +95,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(noSQLInjection.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -146,13 +146,13 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4002/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4002/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4002/?search=title", {
+        fetch("http://127.0.0.1:4002/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
@@ -162,7 +162,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -208,13 +208,13 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4003/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4003/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4003/?search=title", {
+        fetch("http://127.0.0.1:4003/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
@@ -224,7 +224,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Aikido firewall has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);

@@ -1,7 +1,7 @@
 import { Logger } from "./Logger";
 
 export class LoggerForTesting implements Logger {
-  private readonly messages: string[] = [];
+  private messages: string[] = [];
 
   log(message: string) {
     this.messages.push(message);
@@ -9,5 +9,9 @@ export class LoggerForTesting implements Logger {
 
   getMessages() {
     return this.messages;
+  }
+
+  clear() {
+    this.messages = [];
   }
 }

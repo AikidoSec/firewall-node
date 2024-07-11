@@ -5,6 +5,7 @@ export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
+  library: string;
   packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
@@ -90,7 +91,7 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
-  routes: { path: string; method: string }[];
+  routes: { path: string; method: string; hits: number }[];
   users: {
     id: string;
     name: string | undefined;

@@ -354,6 +354,50 @@ t.test("it flags colon if used as a command", async () => {
   isShellInjection(": | echo", ": |");
 });
 
+t.test("it detects shell injection", async () => {
+  isShellInjection("/usr/bin/kill", "/usr/bin/kill");
+});
+
+t.test("it detects shell injection with uppercase path", async () => {
+  isShellInjection("/usr/bIn/kill", "/usr/bIn/kill");
+});
+
+t.test("it detects shell injection with uppercase command", async () => {
+  isShellInjection("/bin/CAT", "/bin/CAT");
+});
+
+t.test(
+  "it detects shell injection with uppercase path and command",
+  async () => {
+    isShellInjection("/bIn/LS -la", "/bIn/LS -la");
+  }
+);
+
+t.test(
+  "it detects shell injection with multiple slashes at the beginning",
+  async () => {
+    isShellInjection("//bin/ls", "//bin/ls");
+    isShellInjection("///bin/ls", "///bin/ls");
+  }
+);
+
+t.test("it detects shell injection with ../", async () => {
+  isShellInjection("../bin/ls", "../bin/ls");
+  isShellInjection("../../bin/ls", "../../bin/ls");
+  isShellInjection("/../bin/ls", "/../bin/ls");
+  isShellInjection("/./bin/ls", "/./bin/ls");
+});
+
+t.test("shell injection with ~", async () => {
+  isShellInjection("echo ~", "~");
+  isShellInjection("ls ~/.ssh", "~/.ssh");
+});
+
+t.test("no shell injection with ~", async () => {
+  isNotShellInjection("~", "~");
+  isNotShellInjection("ls ~/path", "path");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

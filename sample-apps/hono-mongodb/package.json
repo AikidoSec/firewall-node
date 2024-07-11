@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.11.2",
+    "hono": "^4.4.2",
+    "mongodb": "^6.3.0"
+  }
+}

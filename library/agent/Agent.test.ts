@@ -512,11 +512,9 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   agent.onConnectHostname("aikido.dev", 80);
   agent.onConnectHostname("google.com", 443);
   agent.onRouteExecute("POST", "/posts/:id");
-  agent.onRouteExecute("OPTIONS", "/posts/:id");
   agent.onRouteExecute("POST", "/posts/:id");
   agent.onRouteExecute("GET", "/posts/:id");
   agent.onRouteExecute("GET", "/");
-  agent.onRouteExecute("HEAD", "/");
 
   api.clear();
 
@@ -535,22 +533,87 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           port: 443,
         },
       ],
-      routes: [
-        {
-          method: "POST",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/posts/:id",
-        },
-        {
-          method: "GET",
-          path: "/",
-        },
-      ],
+      routes: [],
     },
   ]);
 
   clock.uninstall();
+});
+
+t.test(
+  "it stays on blocking mode if server did not return block mode",
+  async () => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting();
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    t.same(agent.shouldBlock(), true);
+    agent.start([]);
+
+    // Wait for the event to be sent
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    t.same(agent.shouldBlock(), true);
+  }
+);
+
+t.test(
+  "it stays on monitoring mode if server did not return block mode",
+  async () => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting();
+    const token = new Token("123");
+    const agent = new Agent(false, logger, api, token, undefined);
+    t.same(agent.shouldBlock(), false);
+    agent.start([]);
+
+    // Wait for the event to be sent
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    t.same(agent.shouldBlock(), false);
+  }
+);
+
+t.test("it enables blocking mode after sending startup event", async () => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+  });
+  const token = new Token("123");
+  const agent = new Agent(false, logger, api, token, undefined);
+  t.same(agent.shouldBlock(), false);
+  agent.start([]);
+
+  // Wait for the event to be sent
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(agent.shouldBlock(), true);
+});
+
+t.test("it goes into monitoring mode after sending startup event", async () => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: false,
+  });
+  const token = new Token("123");
+  const agent = new Agent(true, logger, api, token, undefined);
+  t.same(agent.shouldBlock(), true);
+  agent.start([]);
+
+  // Wait for the event to be sent
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(agent.shouldBlock(), false);
 });

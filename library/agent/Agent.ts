@@ -26,7 +26,7 @@ type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   private started = false;
-  private sendHeartbeatEveryMS = 30 * 60 * 1000;
+  private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
   private lastHeartbeat = Date.now();
   private reportedInitialStats = false;
@@ -37,7 +37,7 @@ export class Agent {
   private timeoutInMS = 5000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -46,7 +46,7 @@ export class Agent {
   });
 
   constructor(
-    private readonly block: boolean,
+    private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
@@ -212,13 +212,30 @@ export class Agent {
 
   private updateServiceConfig(response: ReportingAPIResponse) {
     if (response.success) {
+      if (typeof response.block === "boolean") {
+        if (response.block !== this.block) {
+          this.block = response.block;
+          this.logger.log(
+            `Block mode has been set to ${this.block ? "on" : "off"}`
+          );
+        }
+      }
+
       if (response.endpoints) {
         this.serviceConfig = new ServiceConfig(
-          response.endpoints,
+          response.endpoints && Array.isArray(response.endpoints)
+            ? response.endpoints
+            : [],
           typeof response.configUpdatedAt === "number"
             ? response.configUpdatedAt
             : Date.now(),
-          response.blockedUserIds ? response.blockedUserIds : []
+          response.blockedUserIds && Array.isArray(response.blockedUserIds)
+            ? response.blockedUserIds
+            : [],
+          response.allowedIPAddresses &&
+          Array.isArray(response.allowedIPAddresses)
+            ? response.allowedIPAddresses
+            : []
         );
       }
 
@@ -237,8 +254,14 @@ export class Agent {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
+      const routes = this.routes.asArray();
+      const outgoingDomains = this.hostnames.asArray();
+      const users = this.users.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
+      this.routes.clear();
+      this.hostnames.clear();
+      this.users.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -251,9 +274,9 @@ export class Agent {
             endedAt: endedAt,
             requests: stats.requests,
           },
-          hostnames: this.hostnames.asArray(),
-          routes: this.routes.asArray(),
-          users: this.users.asArray(),
+          hostnames: outgoingDomains,
+          routes: routes,
+          users: users,
         },
         timeoutInMS
       );
@@ -317,6 +340,7 @@ export class Agent {
       /* c8 ignore next */
       hostname: hostname() || "",
       version: getAgentVersion(),
+      library: "firewall-node",
       /* c8 ignore next */
       ipAddress: ip() || "",
       packages: Object.keys(this.wrappedPackages).reduce(
@@ -403,13 +427,15 @@ export class Agent {
   }
 
   onRouteExecute(method: string, path: string) {
-    const excludedMethods = ["OPTIONS", "HEAD"];
-
-    if (excludedMethods.includes(method)) {
-      return;
-    }
-
     this.routes.addRoute(method, path);
+  }
+
+  getRoutes() {
+    return this.routes;
+  }
+
+  log(message: string) {
+    this.logger.log(message);
   }
 
   async flushStats(timeoutInMS: number) {

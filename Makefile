@@ -30,6 +30,10 @@ express-mariadb:
 express-path-traversal:
 	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: express-graphql
+express-graphql:
+	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/nosql-injection-request.json
@@ -37,6 +41,18 @@ lambda-mongodb-nosql-injection:
 .PHONY: lambda-mongodb-safe
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/safe-request.json
+
+.PHONY: hono-xml
+hono-xml:
+	cd sample-apps/hono-xml && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
+.PHONY: hono-sqlite3
+hono-sqlite3:
+	cd sample-apps/hono-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
+.PHONY: hapi-postgres
+hapi-postgres:
+	cd sample-apps/hapi-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
 .PHONY: install
 install:

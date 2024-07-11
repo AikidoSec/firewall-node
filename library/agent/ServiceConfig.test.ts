@@ -2,10 +2,14 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([], 0, []);
-  t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
+  const config = new ServiceConfig([], 0, [], []);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
+  t.same(config.isAllowedIP("1.2.3.4"), false);
+  t.same(
+    config.getEndpoint({ url: undefined, method: undefined, route: undefined }),
+    undefined
+  );
 });
 
 t.test("it works", async () => {
@@ -43,51 +47,36 @@ t.test("it works", async () => {
       },
     ],
     0,
-    ["123"]
+    ["123"],
+    []
   );
 
-  t.same(config.shouldProtectEndpoint("GET", "/foo"), true);
-  t.same(config.shouldProtectEndpoint("POST", "/foo"), false);
-  t.same(config.shouldProtectEndpoint("GET", "/unknown"), true);
-  t.same(config.shouldProtectEndpoint("POST", /fly+/), false);
   t.same(config.isUserBlocked("123"), true);
   t.same(config.isUserBlocked("567"), false);
-});
-
-t.test("it returns rate limiting", async () => {
-  const config = new ServiceConfig(
-    [
-      {
+  t.same(
+    config.getEndpoint({
+      url: undefined,
+      method: "GET",
+      route: "/foo",
+    }),
+    {
+      endpoint: {
         method: "GET",
         route: "/foo",
         forceProtectionOff: false,
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
-      },
-      {
-        method: "POST",
-        route: "/foo",
-        forceProtectionOff: true,
         rateLimiting: {
           enabled: false,
           maxRequests: 0,
           windowSizeInMS: 0,
         },
       },
-    ],
-    0,
-    []
+      route: "/foo",
+    }
   );
+});
 
-  t.same(config.getRateLimiting("GET", "/foo"), {
-    enabled: true,
-    maxRequests: 10,
-    windowSizeInMS: 1000,
-  });
-
-  t.same(config.getRateLimiting("GET", "/unknown"), undefined);
-  t.same(config.getRateLimiting("POST", "/foo"), {
-    enabled: false,
-    maxRequests: 0,
-    windowSizeInMS: 0,
-  });
+t.test("it checks if IP is allowed", async () => {
+  const config = new ServiceConfig([], 0, [], ["1.2.3.4"]);
+  t.same(config.isAllowedIP("1.2.3.4"), true);
+  t.same(config.isAllowedIP("1.2.3.5"), false);
 });

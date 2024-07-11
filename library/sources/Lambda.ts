@@ -1,6 +1,7 @@
 import type { Callback, Context, Handler } from "aws-lambda";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
+import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
 
@@ -74,17 +75,6 @@ function parseBody(event: APIGatewayProxyEvent) {
   }
 
   return tryParseAsJSON(event.body);
-}
-
-const jsonContentTypes = [
-  "application/json",
-  "application/vnd.api+json",
-  "application/csp-report",
-  "application/x-json",
-];
-
-function isJsonContentType(contentType: string) {
-  return jsonContentTypes.some((type) => contentType.includes(type));
 }
 
 export type APIGatewayProxyEvent = {

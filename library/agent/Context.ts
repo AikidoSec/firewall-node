@@ -18,6 +18,9 @@ export type Context = {
   user?: { id: string; name?: string };
   source: string;
   route: string | undefined;
+  graphql?: string[];
+  xml?: unknown;
+  subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
 };
 
 /**
@@ -50,6 +53,9 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.cookies = context.cookies;
     current.source = context.source;
     current.route = context.route;
+    current.graphql = context.graphql;
+    current.xml = context.xml;
+    current.subdomains = context.subdomains;
 
     return fn();
   }

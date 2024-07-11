@@ -28,6 +28,7 @@ const dangerousChars = [
   " ",
   "\n",
   "\t",
+  "~",
 ];
 
 const commands = [
@@ -62,6 +63,22 @@ const commands = [
   "sort",
   "uniq",
   "wc",
+  "ls",
+  "env",
+  "ps",
+  "who",
+  "whoami",
+  "id",
+  "w",
+  "df",
+  "du",
+  "pwd",
+  "uname",
+  "hostname",
+  "netstat",
+  "passwd",
+  "arch",
+  "printenv",
 
   // Colon is a null command
   // it might occur in URLs that are passed as arguments to a binary
@@ -86,8 +103,8 @@ function byLength(a: string, b: string) {
 }
 
 const commandsRegex = new RegExp(
-  `((${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.slice().sort(byLength).join("|")}))`,
-  "g"
+  `([/.]*(${pathPrefixes.map(escapeStringRegexp).join("|")})?(${commands.slice().sort(byLength).join("|")}))`,
+  "gi"
 );
 
 function matchAll(str: string, regex: RegExp) {

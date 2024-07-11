@@ -3,7 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/runtime'); // <-- Include this before any other code or imports
+require('@aikidosec/firewall'); // <-- Include this before any other code or imports
 
 const express = require('express');
 
@@ -15,18 +15,18 @@ const app = express();
 or ESM import style:
 
 ```js
-import '@aikidosec/runtime';
+import '@aikidosec/firewall';
 
 // ...
 ```
 
-That's it! Your app is now protected by Aikido runtime.
+That's it! Your app is now protected by Aikido firewall.
 
 If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
 
 ## Blocking mode
 
-By default, the runtime will run in non-blocking mode. When runtime detects an attack, it will be reported to Aikido and continue executing the call.
+By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
 
 You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`:
 
@@ -38,7 +38,7 @@ It's recommended to enable this on your staging environment for a considerable a
 
 ## Debug mode
 
-If you need to debug the runtime, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js
@@ -48,6 +48,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido runtime can also protect your application against prototype pollution attacks.
+Aikido firewall can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

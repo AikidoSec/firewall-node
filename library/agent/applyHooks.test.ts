@@ -82,7 +82,8 @@ t.test("it tries to wrap method that does not exist", async (t) => {
     .inspect("does_not_exist", () => {})
     .modifyArguments("another_method_that_does_not_exist", (args) => {
       return args;
-    });
+    })
+    .inspectResult("another_second_method_that_does_not_exist", () => {});
 
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
@@ -93,8 +94,9 @@ t.test("it tries to wrap method that does not exist", async (t) => {
   });
 
   t.same(logger.getMessages(), [
-    "Failed to wrap method does_not_exist in module shell-quote",
+    "Failed to wrap method another_second_method_that_does_not_exist in module shell-quote",
     "Failed to wrap method another_method_that_does_not_exist in module shell-quote",
+    "Failed to wrap method does_not_exist in module shell-quote",
   ]);
 });
 
@@ -133,11 +135,14 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
   connection.modifyArguments("execute", () => {
     throw new Error("THIS SHOULD BE CATCHED");
   });
+  connection.inspectResult("execute", () => {
+    throw new Error("THIS SHOULD BE CATCHED");
+  });
 
   const { agent, logger } = createAgent();
   t.same(applyHooks(hooks, agent), {
     mysql2: {
-      version: "3.9.2",
+      version: "3.10.1",
       supported: true,
     },
   });
@@ -164,6 +169,7 @@ t.test("it adds try/catch around the wrapped method", async (t) => {
 
   t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
     'Internal error in module "mysql2" in method "query"',
+    'Internal error in module "mysql2" in method "execute"',
     'Internal error in module "mysql2" in method "execute"',
   ]);
 
@@ -246,7 +252,18 @@ t.test("it ignores route if force protection off is on", async (t) => {
 
   api.setResult({
     success: true,
-    endpoints: [{ method: "GET", route: "/route", forceProtectionOff: true }],
+    endpoints: [
+      {
+        method: "GET",
+        route: "/route",
+        forceProtectionOff: true,
+        rateLimiting: undefined,
+      },
+    ],
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    configUpdatedAt: 0,
   });
 
   // Read rules from API
@@ -281,4 +298,70 @@ t.test("it ignores route if force protection off is on", async (t) => {
     { args: ["www.google.com"] },
     { args: ["www.aikido.dev"] },
   ]);
+});
+
+t.test("it does not report attack if IP is allowed", async (t) => {
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("os")
+    .addSubject((exports) => exports)
+    .inspect("hostname", (args, subject, agent) => {
+      return {
+        operation: "os.hostname",
+        source: "body",
+        pathToPayload: "path",
+        payload: "payload",
+        metadata: {},
+        kind: "path_traversal",
+      };
+    });
+
+  const { agent, api } = createAgent();
+  applyHooks(hooks, agent);
+
+  api.setResult({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: ["::1"],
+  });
+
+  // Read rules from API
+  await agent.flushStats(1000);
+  api.clear();
+
+  const { hostname } = require("os");
+
+  await runWithContext(context, async () => {
+    const name = hostname();
+    t.ok(typeof name === "string");
+  });
+
+  t.same(api.getEvents(), []);
+});
+
+t.test("it can get the result of a method", async (t) => {
+  let receivedResult: unknown | undefined;
+  let receivedArgs: unknown[] | undefined;
+
+  const hooks = new Hooks();
+  hooks
+    .addBuiltinModule("path")
+    .addSubject((exports) => exports)
+    .inspectResult("extname", (args, result) => {
+      receivedArgs = args;
+      receivedResult = result;
+    });
+
+  const { agent } = createAgent();
+  t.same(applyHooks(hooks, agent), {});
+
+  const { extname } = require("path");
+
+  await runWithContext(context, async () => extname("file.txt"));
+
+  t.same(receivedArgs, ["file.txt"]);
+  t.same(receivedResult, ".txt");
 });
