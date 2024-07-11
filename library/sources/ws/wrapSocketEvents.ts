@@ -60,6 +60,12 @@ function wrapSocketEventHandler(
         await onWsData(Array.from(arguments), context);
       }
 
+      // eslint-disable-next-line prefer-rest-params
+      if (event === "close" && arguments.length > 1) {
+        // eslint-disable-next-line prefer-rest-params
+        await onWsData([arguments[1]], context);
+      }
+
       return applyHandler();
     });
   };

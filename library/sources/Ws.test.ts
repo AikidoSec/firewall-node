@@ -52,7 +52,7 @@ function runServer(
   let wss: WebSocketServer;
   let httpServer: Server | undefined;
   if (!useHttpServer) {
-    wss = new WebSocketServer({ port: 0 });
+    wss = new WebSocket.Server({ port: 0 });
   } else {
     httpServer = createServer();
     wss = new WebSocketServer({ server: httpServer });
@@ -79,6 +79,12 @@ function runServer(
     ws.on("pong", (data) => {
       // Send back the context
       ws.send(JSON.stringify(getContext()));
+    });
+
+    ws.on("close", (code, reason) => {
+      if (code === 1001 && Buffer.isBuffer(reason) && reason.length) {
+        t.same(reason.toString(), getContext()?.ws);
+      }
     });
   };
 
@@ -410,6 +416,32 @@ t.test("Send ping with data to WebSocket server", (t) => {
     });
 
     ws.close();
+    t.end();
+  });
+});
+
+t.test("Send close with data to WebSocket server", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.close(1001, "test-close");
+    t.end();
+  });
+});
+
+t.test("Send close with data in buffer to WebSocket server", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.close(1001, Buffer.from("test-close"));
     t.end();
   });
 });
