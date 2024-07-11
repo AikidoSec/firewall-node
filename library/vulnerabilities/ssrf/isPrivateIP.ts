@@ -31,26 +31,19 @@ const PRIVATE_IPV6_RANGES = [
   "::ffff:127.0.0.1/128", // IPv4-mapped address
 ];
 
-let privateIp: BlockList;
+const privateIp = new BlockList();
 
-function initPrivateIps() {
-  privateIp = new BlockList();
+PRIVATE_IP_RANGES.forEach((range) => {
+  const [ip, mask] = range.split("/");
+  privateIp.addSubnet(ip, parseInt(mask, 10));
+});
 
-  PRIVATE_IP_RANGES.forEach((range) => {
-    const [ip, mask] = range.split("/");
-    privateIp.addSubnet(ip, parseInt(mask, 10));
-  });
-
-  PRIVATE_IPV6_RANGES.forEach((range) => {
-    const [ip, mask] = range.split("/");
-    privateIp.addSubnet(ip, parseInt(mask, 10), "ipv6");
-  });
-}
+PRIVATE_IPV6_RANGES.forEach((range) => {
+  const [ip, mask] = range.split("/");
+  privateIp.addSubnet(ip, parseInt(mask, 10), "ipv6");
+});
 
 export function isPrivateIP(ip: string): boolean {
-  if (!privateIp) {
-    initPrivateIps();
-  }
   return (
     (isIPv4(ip) && privateIp.check(ip)) ||
     (isIPv6(ip) && privateIp.check(ip, "ipv6"))
