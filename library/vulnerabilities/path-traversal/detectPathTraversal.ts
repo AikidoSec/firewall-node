@@ -1,14 +1,23 @@
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
 import { startsWithUnsafePath } from "./unsafePathStart";
+import { fileURLToPath } from "url";
 
 export function detectPathTraversal(
   filePath: string,
   userInput: string,
-  checkPathStart = true
+  checkPathStart = true,
+  isUrl = false
 ): boolean {
   if (userInput.length <= 1) {
     // We ignore single characters since they don't pose a big threat.
     return false;
+  }
+
+  if (isUrl && containsUnsafePathParts(userInput)) {
+    const filePathFromUrl = parseAsFileUrl(userInput);
+    if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
+      return true;
+    }
   }
 
   if (userInput.length > filePath.length) {
@@ -32,4 +41,20 @@ export function detectPathTraversal(
   }
 
   return false;
+}
+
+function parseAsFileUrl(path: string) {
+  let url = path;
+  if (!url.startsWith("file://")) {
+    if (!url.startsWith("/")) {
+      url = `/${url}`;
+    }
+    url = `file://${url}`;
+  }
+  try {
+    return fileURLToPath(url);
+  } catch (e) {
+    //
+  }
+  return undefined;
 }
