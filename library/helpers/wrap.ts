@@ -30,6 +30,8 @@ export function wrap(
     }
   }
 
+  wrapped.prototype = original.prototype;
+
   defineProperty(nodule, name, wrapped);
 
   return wrapped;
