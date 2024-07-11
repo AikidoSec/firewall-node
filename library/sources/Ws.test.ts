@@ -246,85 +246,101 @@ t.test("Connect to WebSocket server and send non utf-8 Uint8Array", (t) => {
   });
 });
 
-t.test("Connect to WebSocket server and send text as Blob", (t) => {
-  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+t.test(
+  "Connect to WebSocket server and send text as Blob",
+  { skip: !global.Blob ? "Blob is not available" : false },
+  (t) => {
+    const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
-  ws.on("error", (err) => {
-    t.fail(err);
-  });
-
-  ws.on("open", () => {
-    // @ts-expect-error types say we are not allowed to send a Blob?
-    ws.send(new Blob(["test-blob"]));
-  });
-
-  ws.on("message", (data) => {
-    const context = JSON.parse(data.toString());
-
-    t.match(context, {
-      ...getExpectedContext(testServer1.port),
-      ws: "test-blob",
+    ws.on("error", (err) => {
+      t.fail(err);
     });
 
-    ws.close();
-    t.end();
-  });
-});
-
-t.test("Connect to WebSocket server and send binary as Blob", (t) => {
-  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
-
-  ws.on("error", (err) => {
-    t.fail(err);
-  });
-
-  ws.on("open", () => {
-    // @ts-expect-error types say we are not allowed to send a Blob?
-    ws.send(new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])]));
-  });
-
-  ws.on("message", (data) => {
-    const context = JSON.parse(data.toString());
-
-    t.match(context, {
-      ...getExpectedContext(testServer1.port),
-      ws: undefined,
+    ws.on("open", () => {
+      // @ts-expect-error types say we are not allowed to send a Blob?
+      ws.send(new Blob(["test-blob"]));
     });
 
-    ws.close();
-    t.end();
-  });
-});
+    ws.on("message", (data) => {
+      const context = JSON.parse(data.toString());
+
+      t.match(context, {
+        ...getExpectedContext(testServer1.port),
+        ws: "test-blob",
+      });
+
+      ws.close();
+      t.end();
+    });
+  }
+);
+
+t.test(
+  "Connect to WebSocket server and send binary as Blob",
+  { skip: !global.Blob ? "Blob is not available" : false },
+  (t) => {
+    const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+
+    ws.on("error", (err) => {
+      t.fail(err);
+    });
+
+    ws.on("open", () => {
+      // @ts-expect-error types say we are not allowed to send a Blob?
+      ws.send(new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])]));
+    });
+
+    ws.on("message", (data) => {
+      const context = JSON.parse(data.toString());
+
+      t.match(context, {
+        ...getExpectedContext(testServer1.port),
+        ws: undefined,
+      });
+
+      ws.close();
+      t.end();
+    });
+  }
+);
 
 // We use the function directly to test because the websocket client converts blobs to array buffers
-t.test("Pass text blob to onMessageEvent", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData([new Blob(["test-blob"])], context);
-  t.same(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: "test-blob",
-  });
-});
+t.test(
+  "Pass text blob to onMessageEvent",
+  { skip: !global.Blob ? "Blob is not available" : false },
+  async (t) => {
+    const context = {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+    } as Context;
+    await onWsData([new Blob(["test-blob"])], context);
+    t.same(context, {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+      ws: "test-blob",
+    });
+  }
+);
 
-t.test("Pass binary blob to onMessageEvent", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData(
-    [new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])])],
-    context
-  );
-  t.match(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: undefined,
-  });
-});
+t.test(
+  "Pass binary blob to onMessageEvent",
+  { skip: !global.Blob ? "Blob is not available" : false },
+  async (t) => {
+    const context = {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+    } as Context;
+    await onWsData(
+      [new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])])],
+      context
+    );
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+      ws: undefined,
+    });
+  }
+);
 
 t.test("Pass buffer array to onMessageEvent", async (t) => {
   const context = {

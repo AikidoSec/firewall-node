@@ -87,7 +87,7 @@ export async function onWsData(args: any[], context: Context) {
 
   try {
     // Handle Blob
-    if (data instanceof Blob) {
+    if (global.Blob && data instanceof Blob) {
       messageStr = await data.text();
       if (typeof messageStr !== "string" || messageStr.includes("\uFFFD")) {
         return;
