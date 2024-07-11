@@ -181,4 +181,12 @@ t.test("it works", async (t) => {
       "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
+
+  // Ignores malformed URLs
+  runWithContext(
+    { ...unsafeContext, body: { file: { matches: "../%" } } },
+    () => {
+      rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
+    }
+  );
 });
