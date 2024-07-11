@@ -1,8 +1,7 @@
 /* eslint-disable prefer-rest-params */
-import {
+import type {
   ServerRoute,
   Lifecycle,
-  RequestRoute,
   HandlerDecorationMethod,
 } from "@hapi/hapi";
 import { Agent } from "../agent/Agent";

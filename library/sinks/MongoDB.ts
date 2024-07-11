@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import { Collection } from "mongodb";
+import type { Collection } from "mongodb";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
