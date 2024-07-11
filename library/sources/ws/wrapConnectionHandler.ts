@@ -17,9 +17,24 @@ export function wrapConnectionHandler(handler: any, agent: Agent): any {
 
       // Todo ratelimiting, user blocking
 
-      socket.on = wrapSocketEvent(socket.on);
-      socket.once = wrapSocketEvent(socket.once);
-      socket.addEventListener = wrapSocketEvent(socket.addEventListener);
+      const methodNames = [
+        "on",
+        "once",
+        "addEventListener",
+        "onmessage",
+        "onclose",
+        "onerror",
+        "onopen",
+      ];
+
+      for (const methodName of methodNames) {
+        const key = methodName as keyof WebSocket;
+        if (typeof socket[key] !== "function") {
+          continue;
+        }
+        // @ts-expect-error keyof does not exclude readonly properties
+        socket[key] = wrapSocketEvent(socket[key]);
+      }
 
       return handler(socket, request);
     });

@@ -1,14 +1,13 @@
 import { Context, getContext, runWithContext } from "../../agent/Context";
-import { isPlainObject } from "../../helpers/isPlainObject";
 
 export function wrapSocketEvent(handler: any): any {
   return function wrapped() {
-    const applyHandler = () => {
+    const applyHandler = (args: unknown[] | undefined = undefined) => {
       return handler.apply(
         // @ts-expect-error We don't now the type of this
         this,
         // eslint-disable-next-line prefer-rest-params
-        arguments
+        args || arguments
       );
     };
 
@@ -21,20 +20,15 @@ export function wrapSocketEvent(handler: any): any {
     // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (
-      args.length < 2 ||
-      typeof args[0] !== "string" ||
-      typeof args[1] !== "function"
+      args.length >= 2 &&
+      typeof args[0] === "string" &&
+      typeof args[1] === "function"
     ) {
-      return applyHandler();
+      args[1] = wrapSocketEventHandler(args[0], args[1], context);
+      return applyHandler(args);
     }
 
-    args[1] = wrapSocketEventHandler(args[0], args[1], context);
-
-    return handler.apply(
-      // @ts-expect-error We don't now the type of this
-      this,
-      args
-    );
+    return applyHandler();
   };
 }
 

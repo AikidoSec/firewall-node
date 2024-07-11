@@ -47,7 +47,7 @@ import { AddressInfo } from "net";
 // Method to run a sample WebSocket server with different configurations
 function runServer(
   useHttpServer: boolean,
-  eventListenerType: "on" | "addEventListener" = "on"
+  eventListenerType: "on" | "addEventListener" | "onlong" = "on"
 ) {
   let wss: WebSocketServer;
   let httpServer: Server | undefined;
@@ -59,18 +59,14 @@ function runServer(
   }
 
   const onEvent = (ws: WebSocket) => {
-    const onMessage = (data: any) => {
+    const onMessage = () => {
       ws.send(JSON.stringify(getContext()));
     };
 
     if (eventListenerType === "addEventListener") {
-      ws.addEventListener(
-        "message",
-        (e) => {
-          onMessage(e.data);
-        },
-        { once: true }
-      );
+      ws.addEventListener("message", onMessage, { once: true });
+    } else if (eventListenerType === "onlong") {
+      ws.onmessage = onMessage;
     } else {
       ws.on("message", onMessage);
     }
@@ -362,6 +358,22 @@ t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
   });
 });
 
+t.test("Pass unexpected data to onMessageEvent is ignored", async (t) => {
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
+  await onWsData(
+    [[new Date(), 123, { test: "test" }, null, undefined]],
+    context
+  );
+  t.match(context, {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+    ws: undefined,
+  });
+});
+
 t.test("Send ping with data to WebSocket server", (t) => {
   const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
 
@@ -464,6 +476,34 @@ t.test("Send message to WebSocket server using addEventListener", (t) => {
 
     ws.close();
     testServer3.close();
+    t.end();
+  });
+});
+
+const testServer4 = runServer(false, "onlong");
+
+t.test("Send message to WebSocket server using onmessage", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer4.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnMessage");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer4.port),
+      ws: "getContextOnMessage",
+    });
+    t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
+
+    ws.close();
+    testServer4.close();
     t.end();
   });
 });
