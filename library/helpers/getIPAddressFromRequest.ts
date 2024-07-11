@@ -1,4 +1,4 @@
-import { isIP } from "net";
+import { isIP } from "node:net";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;

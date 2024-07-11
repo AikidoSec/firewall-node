@@ -1,5 +1,5 @@
-import type { IncomingMessage } from "http";
-import type { Readable } from "stream";
+import type { IncomingMessage } from "node:http";
+import type { Readable } from "node:stream";
 
 // Copies all properties from the stream to the base object
 export function replaceRequestBody<T extends IncomingMessage>(

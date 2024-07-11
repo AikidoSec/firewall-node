@@ -1,4 +1,4 @@
-import { BlockList, isIPv4, isIPv6 } from "net";
+import { BlockList, isIPv4, isIPv6 } from "node:net";
 
 // Taken from https://github.com/frenchbread/private-ip/blob/master/src/index.ts
 const PRIVATE_IP_RANGES = [
@@ -31,19 +31,26 @@ const PRIVATE_IPV6_RANGES = [
   "::ffff:127.0.0.1/128", // IPv4-mapped address
 ];
 
-const privateIp = new BlockList();
+let privateIp: BlockList;
 
-PRIVATE_IP_RANGES.forEach((range) => {
-  const [ip, mask] = range.split("/");
-  privateIp.addSubnet(ip, parseInt(mask, 10));
-});
+function initPrivateIps() {
+  privateIp = new BlockList();
 
-PRIVATE_IPV6_RANGES.forEach((range) => {
-  const [ip, mask] = range.split("/");
-  privateIp.addSubnet(ip, parseInt(mask, 10), "ipv6");
-});
+  PRIVATE_IP_RANGES.forEach((range) => {
+    const [ip, mask] = range.split("/");
+    privateIp.addSubnet(ip, parseInt(mask, 10));
+  });
+
+  PRIVATE_IPV6_RANGES.forEach((range) => {
+    const [ip, mask] = range.split("/");
+    privateIp.addSubnet(ip, parseInt(mask, 10), "ipv6");
+  });
+}
 
 export function isPrivateIP(ip: string): boolean {
+  if (!privateIp) {
+    initPrivateIps();
+  }
   return (
     (isIPv4(ip) && privateIp.check(ip)) ||
     (isIPv6(ip) && privateIp.check(ip, "ipv6"))

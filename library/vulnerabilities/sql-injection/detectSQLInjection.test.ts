@@ -1,6 +1,6 @@
-import { basename, join } from "path";
+import { basename, join } from "node:path";
 import * as t from "tap";
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQL_DANGEROUS_IN_STRING } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";

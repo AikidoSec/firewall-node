@@ -1,11 +1,11 @@
-import { join } from "path";
+import { join } from "node:path";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { XmlMinusJs } from "./XmlMinusJs";
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
 
 t.test("xml2js works", async () => {
   const agent = new Agent(

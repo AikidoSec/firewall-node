@@ -6,7 +6,7 @@ import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
-import * as dns from "dns";
+import * as dns from "node:dns";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {

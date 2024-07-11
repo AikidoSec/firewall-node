@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 
 export function getAgentVersion(): string {
   const json = require(resolve(__dirname, "../package.json"));

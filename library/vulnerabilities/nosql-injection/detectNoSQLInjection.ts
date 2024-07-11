@@ -1,4 +1,4 @@
-import { isDeepStrictEqual } from "util";
+import { isDeepStrictEqual } from "node:util";
 import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { buildPathToPayload, PathPart } from "../../helpers/attackPath";

@@ -4,7 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
-import { execFile, execFileSync } from "child_process";
+import { execFile, execFileSync } from "node:child_process";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -41,7 +41,7 @@ t.test("it works", async (t) => {
 
   agent.start([new ChildProcess()]);
 
-  const { exec, execSync, spawn, spawnSync } = require("child_process");
+  const { exec, execSync, spawn, spawnSync } = require("node:child_process");
 
   const runCommandsWithInvalidArgs = () => {
     throws(

@@ -1,5 +1,5 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
-import { hostname, platform, release } from "os";
+import { hostname, platform, release } from "node:os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
 import { MongoDB } from "../sinks/MongoDB";

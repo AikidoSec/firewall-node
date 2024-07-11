@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
-import { METHODS } from "http";
+import { METHODS } from "node:http";
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";

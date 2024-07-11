@@ -2,7 +2,7 @@ import * as t from "tap";
 import { wrap } from "./wrap";
 import { ip } from "./ipAddress";
 
-const os = require("os");
+const os = require("node:os");
 
 wrap(os, "networkInterfaces", function wrap() {
   return function wrap() {

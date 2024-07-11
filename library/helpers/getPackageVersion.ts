@@ -1,4 +1,4 @@
-import { sep } from "path";
+import { sep } from "node:path";
 
 /**
  * Get the installed version of a package

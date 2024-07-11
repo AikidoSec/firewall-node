@@ -1,4 +1,4 @@
-import * as os from "os";
+import * as os from "node:os";
 
 /**
  * Get the IP Address of the machine running this code

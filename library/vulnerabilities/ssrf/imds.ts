@@ -1,4 +1,4 @@
-import { BlockList } from "net";
+import { BlockList } from "node:net";
 
 let IMDSAddresses: BlockList;
 

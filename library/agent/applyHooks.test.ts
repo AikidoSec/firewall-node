@@ -192,7 +192,7 @@ t.test("it hooks into dns module", async (t) => {
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {});
 
-  const { lookup } = require("dns/promises");
+  const { lookup } = require("node:dns/promises");
 
   await runWithContext(context, async () => await lookup("google.com"));
 
@@ -269,7 +269,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
   // Read rules from API
   await agent.flushStats(1000);
 
-  const { lookup } = require("dns/promises");
+  const { lookup } = require("node:dns/promises");
 
   await lookup("www.google.com");
   t.same(inspectionCalls, [{ args: ["www.google.com"] }]);
@@ -332,7 +332,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
   await agent.flushStats(1000);
   api.clear();
 
-  const { hostname } = require("os");
+  const { hostname } = require("node:os");
 
   await runWithContext(context, async () => {
     const name = hostname();
@@ -358,7 +358,7 @@ t.test("it can get the result of a method", async (t) => {
   const { agent } = createAgent();
   t.same(applyHooks(hooks, agent), {});
 
-  const { extname } = require("path");
+  const { extname } = require("node:path");
 
   await runWithContext(context, async () => extname("file.txt"));
 

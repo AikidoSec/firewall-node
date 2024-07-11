@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { join, resolve } from "path";
+import { join, resolve } from "node:path";
 import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
