@@ -1,12 +1,17 @@
+import { ConstructorInterceptor } from "./ConstructorInterceptor";
 import { Interceptor, MethodInterceptor } from "./MethodInterceptor";
 import {
   ModifyingArgumentsInterceptor,
   ModifyingArgumentsMethodInterceptor,
 } from "./ModifyingArgumentsInterceptor";
+import { RootConstructorInterceptor } from "./RootConstructorInterceptor";
 
 export class Global {
-  private methods: (MethodInterceptor | ModifyingArgumentsMethodInterceptor)[] =
-    [];
+  private methods: (
+    | MethodInterceptor
+    | ModifyingArgumentsMethodInterceptor
+    | RootConstructorInterceptor
+  )[] = [];
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -41,6 +46,13 @@ export class Global {
     this.methods.push(method);
 
     return this;
+  }
+
+  inspectNewInstance(interceptor: Interceptor) {
+    const construct = new RootConstructorInterceptor(this.name, interceptor);
+    this.methods.push(construct);
+
+    return construct;
   }
 
   getName() {

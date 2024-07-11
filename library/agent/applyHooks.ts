@@ -19,6 +19,7 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
+import { RootConstructorInterceptor } from "./hooks/RootConstructorInterceptor";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -146,7 +147,7 @@ function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
  */
 function wrapWithoutArgumentModification(
   subject: unknown,
-  method: MethodInterceptor,
+  method: MethodInterceptor | RootConstructorInterceptor,
   module: string,
   agent: Agent
 ) {
@@ -163,6 +164,10 @@ function wrapWithoutArgumentModification(
           const match = agent.getConfig().getEndpoint(context);
 
           if (match && match.endpoint.forceProtectionOff) {
+            if (method instanceof RootConstructorInterceptor) {
+              // @ts-expect-error It's a constructor
+              return new original(...args);
+            }
             return original.apply(
               // @ts-expect-error We don't now the type of this
               this,
@@ -225,6 +230,10 @@ function wrapWithoutArgumentModification(
           }
         }
 
+        if (method instanceof RootConstructorInterceptor) {
+          // @ts-expect-error It's a constructor
+          return new original(...args);
+        }
         return original.apply(
           // @ts-expect-error We don't now the type of this
           this,
