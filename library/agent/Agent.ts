@@ -377,6 +377,7 @@ export class Agent {
     }
 
     if (getMajorNodeVersion() < 16) {
+      // eslint-disable-next-line no-console
       console.error(
         "Error: Aikido Firewall requires Node.js 16 or higher to run."
       );
