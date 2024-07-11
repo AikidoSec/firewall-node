@@ -1,21 +1,14 @@
 import { BlockList } from "node:net";
 
-let IMDSAddresses: BlockList;
+const IMDSAddresses = new BlockList();
 
-function initIMDSAddresses() {
-  IMDSAddresses = new BlockList();
-
-  // This IP address is used by AWS EC2 instances to access the instance metadata service (IMDS)
-  // We should block any requests to these IP addresses
-  // This prevents STORED SSRF attacks that try to access the instance metadata service
-  IMDSAddresses.addAddress("169.254.169.254", "ipv4");
-  IMDSAddresses.addAddress("fd00:ec2::254", "ipv6");
-}
+// This IP address is used by AWS EC2 instances to access the instance metadata service (IMDS)
+// We should block any requests to these IP addresses
+// This prevents STORED SSRF attacks that try to access the instance metadata service
+IMDSAddresses.addAddress("169.254.169.254", "ipv4");
+IMDSAddresses.addAddress("fd00:ec2::254", "ipv6");
 
 export function isIMDSIPAddress(ip: string): boolean {
-  if (!IMDSAddresses) {
-    initIMDSAddresses();
-  }
   return IMDSAddresses.check(ip) || IMDSAddresses.check(ip, "ipv6");
 }
 
