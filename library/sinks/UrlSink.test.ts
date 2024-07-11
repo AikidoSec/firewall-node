@@ -55,6 +55,8 @@ t.test("it works", async (t) => {
     hash: "",
   });
 
+  t.ok(new URL("http://localhost:4000") instanceof URL);
+
   runWithContext(unsafeContext, () => {
     t.match(new URL("http://example.com/test?query=1"), {
       href: "http://example.com/test?query=1",
@@ -86,6 +88,36 @@ t.test("it works", async (t) => {
       hash: "",
     });
 
+    t.match(new URL("file:test.txt"), {
+      href: "file:///test.txt",
+      origin: "null",
+      protocol: "file:",
+      username: "",
+      password: "",
+      host: "",
+      hostname: "",
+      port: "",
+      pathname: "/test.txt",
+      search: "",
+      searchParams: new URLSearchParams(""),
+      hash: "",
+    });
+
+    t.match(new URL("test.txt", "file:"), {
+      href: "file:///test.txt",
+      origin: "null",
+      protocol: "file:",
+      username: "",
+      password: "",
+      host: "",
+      hostname: "",
+      port: "",
+      pathname: "/test.txt",
+      search: "",
+      searchParams: new URLSearchParams(""),
+      hash: "",
+    });
+
     throws(
       () => new URL("file:///../test.txt"),
       /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
@@ -93,6 +125,36 @@ t.test("it works", async (t) => {
 
     throws(
       () => new URL(new URL("file:///../test.txt")),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("file:../test.txt"),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("file:/../test.txt"),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("../test.txt", "file:"),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("../test.txt", "file:/"),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("../test.txt", "file://"),
+      /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
+    );
+
+    throws(
+      () => new URL("../test.txt", new URL("file://")),
       /Aikido firewall has blocked a path traversal attack: new URL.* originating from body.file.matches/
     );
   });

@@ -21,14 +21,24 @@ export class UrlSink implements Wrapper {
       return undefined;
     }
 
-    if (args.length > 1 && typeof args[1] === "string") {
-      //Base
-      console.log("Base: ", args[1]);
+    if (args.length > 1) {
+      if (typeof args[1] === "string") {
+        url = args[1] + url;
+      } else if (args[1] instanceof URL) {
+        url = args[1].toString() + url;
+      }
     }
 
-    if (url.startsWith("file://")) {
+    if (url.startsWith("file:")) {
+      // Remove the file:// prefix
+      const filename = url.startsWith("file://")
+        ? url.slice(7)
+        : url.startsWith("file:/")
+          ? url.slice(6)
+          : url.slice(5);
+
       const result = checkContextForPathTraversal({
-        filename: url.slice(7),
+        filename,
         operation: `new URL`,
         context: context,
       });
