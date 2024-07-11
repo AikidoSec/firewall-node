@@ -36,10 +36,10 @@ export function setUser(user: unknown) {
     return;
   }
 
-  const actualUser: User = { id: user.id.toString() };
+  const validatedUser: User = { id: user.id.toString() };
 
   if (typeof user.name === "string" && user.name.length > 0) {
-    actualUser.name = user.name;
+    validatedUser.name = user.name;
   }
 
   const context = ContextStorage.getStore();
@@ -48,13 +48,13 @@ export function setUser(user: unknown) {
     return;
   }
 
-  context.user = actualUser;
+  context.user = validatedUser;
 
   const ipAddress = context.remoteAddress;
 
   agent.getUsers().addUser({
-    id: actualUser.id,
-    name: actualUser.name,
+    id: validatedUser.id,
+    name: validatedUser.name,
     lastIpAddress: ipAddress,
   });
 }
