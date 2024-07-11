@@ -377,7 +377,10 @@ export class Agent {
     }
 
     if (getMajorNodeVersion() < 16) {
-      throw new Error("Node.js version 16 or higher is required");
+      console.error(
+        "Error: Aikido Firewall requires Node.js 16 or higher to run."
+      );
+      return;
     }
 
     this.started = true;
