@@ -4,6 +4,7 @@ import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
+import { MariaDB } from "../sinks/MariaDB";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
@@ -135,6 +136,7 @@ function getWrappers() {
     new XmlMinusJs(),
     new Shelljs(),
     new Hapi(),
+    new MariaDB(),
   ];
 }
 
