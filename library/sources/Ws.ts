@@ -21,7 +21,7 @@ export class Ws implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const ws = hooks.addPackage("ws").withVersion("^8.0.0"); // Todo add versions
+    const ws = hooks.addPackage("ws").withVersion("^8.0.0 || ^7.0.0");
     const exports = ws.addSubject((exports) => exports);
 
     const subjects = [
