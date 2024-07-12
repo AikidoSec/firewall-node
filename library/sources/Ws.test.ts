@@ -636,7 +636,6 @@ t.test("Test block user on custom http upgrade", (t) => {
   const ws = new WebSocket(`ws://localhost:${testServer5.port}/block-user`);
 
   ws.on("error", (err) => {
-    console.log(err);
     t.fail(err);
   });
 
