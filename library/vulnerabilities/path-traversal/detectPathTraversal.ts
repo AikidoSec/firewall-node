@@ -15,6 +15,9 @@ export function detectPathTraversal(
 
   // Check for URL path traversal
   // Reason: new URL("file:///../../test.txt") => /test.txt
+  // The normal check for relative path traversal will fail in this case, because transformed path does not contain ../.
+  // For absolute path traversal, we dont need to check the transformed path, because it will always start with /.
+  // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
