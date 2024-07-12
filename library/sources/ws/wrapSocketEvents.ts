@@ -1,3 +1,5 @@
+/* eslint-disable max-lines-per-function */
+import { AsyncResource } from "async_hooks";
 import { Context, getContext, runWithContext } from "../../agent/Context";
 
 export function wrapSocketEvent(handler: any): any {
@@ -24,7 +26,8 @@ export function wrapSocketEvent(handler: any): any {
       typeof args[0] === "string" &&
       typeof args[1] === "function"
     ) {
-      args[1] = wrapSocketEventHandler(args[0], args[1], context);
+      args[1] = AsyncResource.bind(wrapSocketEventHandler(args[0], args[1]));
+
       return applyHandler(args);
     }
 
@@ -32,42 +35,35 @@ export function wrapSocketEvent(handler: any): any {
   };
 }
 
-function wrapSocketEventHandler(
-  event: string,
-  handler: any,
-  context: Context
-): any {
+function wrapSocketEventHandler(event: string, handler: any): any {
   return async function wrappedHandler() {
-    // We need to call runWithContext again because the context of the connection handler is not passed to called event listeners
-    return await runWithContext(context, async () => {
-      const applyHandler = () => {
-        return handler.apply(
-          // @ts-expect-error We don't now the type of this
-          this,
-          // eslint-disable-next-line prefer-rest-params
-          arguments
-        );
-      };
-
-      const context = getContext();
-      if (!context) {
-        return applyHandler();
-      }
-
-      // Events with data
-      if (event === "message" || event === "ping" || event === "pong") {
+    const applyHandler = () => {
+      return handler.apply(
+        // @ts-expect-error We don't now the type of this
+        this,
         // eslint-disable-next-line prefer-rest-params
-        await onWsData(Array.from(arguments), context);
-      }
+        arguments
+      );
+    };
 
-      // eslint-disable-next-line prefer-rest-params
-      if (event === "close" && arguments.length > 1) {
-        // eslint-disable-next-line prefer-rest-params
-        await onWsData([arguments[1]], context);
-      }
-
+    const context = getContext();
+    if (!context) {
       return applyHandler();
-    });
+    }
+
+    // Events with data
+    if (event === "message" || event === "ping" || event === "pong") {
+      // eslint-disable-next-line prefer-rest-params
+      await onWsData(Array.from(arguments), context);
+    }
+
+    // eslint-disable-next-line prefer-rest-params
+    if (event === "close" && arguments.length > 1) {
+      // eslint-disable-next-line prefer-rest-params
+      await onWsData([arguments[1]], context);
+    }
+
+    return applyHandler();
   };
 }
 

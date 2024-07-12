@@ -62,26 +62,30 @@ async function main(port) {
 
     // Handle incoming messages
     ws.on("message", (message) => {
-      // Insert message into the database
-      db.query(
-        `INSERT INTO messages (content) VALUES ('${message}') RETURNING *`,
-        (err, res) => {
-          if (!err) {
-            if (!res.rows) {
-              return;
-            }
-
-            const time = new Date(res.rows[0].timestamp).toLocaleTimeString();
-            const msg = `[${time}] ${res.rows[0].content}`;
-            // Broadcast message to all clients
-            wss.clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(msg);
+      try {
+        // Insert message into the database
+        db.query(
+          `INSERT INTO messages (content) VALUES ('${message}') RETURNING *`,
+          (err, res) => {
+            if (!err) {
+              if (!res.rows) {
+                return;
               }
-            });
+
+              const time = new Date(res.rows[0].timestamp).toLocaleTimeString();
+              const msg = `[${time}] ${res.rows[0].content}`;
+              // Broadcast message to all clients
+              wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(msg);
+                }
+              });
+            }
           }
-        }
-      );
+        );
+      } catch (err) {
+        ws.send("An error occurred");
+      }
     });
 
     ws.send("Welcome to the chat!");
