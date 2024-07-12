@@ -4,6 +4,8 @@ import { getContext, runWithContext } from "../../agent/Context";
 import { IncomingMessage } from "http";
 import { contextFromConnection } from "./contextFromConnection";
 import { wrapSocketEvent } from "./wrapSocketEvents";
+import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
+import { escapeHTML } from "../../helpers/escapeHTML";
 
 export function wrapConnectionHandler(handler: any, agent: Agent): any {
   return async (socket: WebSocket, request: IncomingMessage) => {
@@ -15,7 +17,23 @@ export function wrapConnectionHandler(handler: any, agent: Agent): any {
       // The user will be carried over from the previous context
       const context = getContext();
 
-      // Todo ratelimiting, user blocking
+      if (!context) {
+        return handler(socket, request);
+      }
+
+      if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
+        return socket.close(3000, "You are blocked by Aikido firewall.");
+      }
+
+      const result = shouldRateLimitRequest(context, agent);
+      if (result.block) {
+        let message = "You are rate limited by Aikido firewall.";
+        if (result.trigger === "ip") {
+          message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
+        }
+
+        return socket.close(3000, message);
+      }
 
       const methodNames = [
         "on",

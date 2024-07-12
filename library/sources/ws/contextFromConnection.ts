@@ -15,16 +15,6 @@ export function contextFromConnection(req: IncomingMessage): Context {
     }
   }
 
-  const parsedBody: unknown = undefined;
-  // Todo parse body?
-  /*if (body) {
-    try {
-      parsedBody = JSON.parse(body);
-    } catch (e) {
-      // Ignore
-    }
-  }*/
-
   return {
     url: req.url,
     method: req.method,
@@ -34,7 +24,7 @@ export function contextFromConnection(req: IncomingMessage): Context {
     source: `ws.connection`,
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
-    body: parsedBody,
+    body: undefined,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
       remoteAddress: req.socket?.remoteAddress,

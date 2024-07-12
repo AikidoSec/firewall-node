@@ -48,7 +48,8 @@ import { AddressInfo } from "net";
 // Method to run a sample WebSocket server with different configurations
 function runServer(
   useHttpServer: boolean,
-  eventListenerType: "on" | "addEventListener" | "onlong" = "on"
+  eventListenerType: "on" | "addEventListener" | "onlong" = "on",
+  customUpgrade = false
 ) {
   let wss: WebSocketServer;
   let httpServer: Server | undefined;
@@ -56,7 +57,14 @@ function runServer(
     wss = new WebSocket.Server({ port: 0 });
   } else {
     httpServer = createServer();
-    wss = new WebSocketServer({ server: httpServer });
+    if (!customUpgrade) {
+      wss = new WebSocketServer({ server: httpServer });
+    } else {
+      if (!useHttpServer) {
+        throw new Error("Custom upgrade requires http server");
+      }
+      wss = new WebSocketServer({ noServer: true });
+    }
   }
 
   const onEvent = (ws: WebSocket) => {
@@ -96,11 +104,30 @@ function runServer(
   }
 
   if (httpServer) {
+    if (customUpgrade) {
+      httpServer.on("upgrade", function upgrade(request, socket, head) {
+        const { pathname } = new URL(
+          request.url || "",
+          `http://${request.headers.host}`
+        );
+
+        if (pathname === "/block-user") {
+          setUser({ id: "567" });
+        }
+
+        wss.handleUpgrade(request, socket, head, function done(ws) {
+          wss.emit("connection", ws, request);
+        });
+      });
+    }
+
     httpServer.listen(0);
   }
 
   return {
-    port: (wss.address() as AddressInfo).port,
+    port: !customUpgrade
+      ? (wss.address() as AddressInfo).port
+      : (httpServer!.address() as AddressInfo).port,
     close: () => {
       wss.close();
       if (httpServer) {
@@ -574,6 +601,114 @@ t.test("Send more than 2MB of data to WebSocket server", (t) => {
     );
     ws.close();
     testServer4.close();
+    t.end();
+  });
+});
+
+// Custom http upgrade
+const testServer5 = runServer(true, "on", true);
+
+t.test("Test custom http upgrade", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer5.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnMessage");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer5.port),
+      ws: "getContextOnMessage",
+    });
+
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Test block user on custom http upgrade", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer5.port}/block-user`);
+
+  ws.on("error", (err) => {
+    console.log(err);
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("Hi!");
+  });
+
+  ws.on("close", (code, reason) => {
+    t.same(code, 3000);
+    t.match(reason.toString(), /You are blocked by Aikido firewall/);
+
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Test rate limiting on WebSocket server - 1st request", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer5.port}/rate-limited`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnMessage");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer5.port),
+      ws: "getContextOnMessage",
+    });
+
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Test rate limiting on WebSocket server - 2nd request", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer5.port}/rate-limited`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnMessage");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer5.port),
+      ws: "getContextOnMessage",
+    });
+
+    ws.close();
+
+    t.end();
+  });
+});
+
+t.test("Test rate limiting on WebSocket server - 3rd request", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer5.port}/rate-limited`);
+
+  ws.on("unexpected-response", (req, res) => {
+    t.same(res.statusCode, 429);
+    t.same(res.statusMessage, "Too Many Requests");
+    testServer5.close();
     t.end();
   });
 });

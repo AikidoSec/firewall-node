@@ -8,7 +8,7 @@ import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 export function contextFromRequest(
   req: IncomingMessage,
   body: string | undefined,
-  module: string
+  source: string
 ): Context {
   const queryObject: Record<string, string> = {};
   if (req.url) {
@@ -33,7 +33,7 @@ export function contextFromRequest(
     headers: req.headers,
     route: req.url ? buildRouteFromURL(req.url) : undefined,
     query: queryObject,
-    source: `${module}.createServer`,
+    source,
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     body: parsedBody,

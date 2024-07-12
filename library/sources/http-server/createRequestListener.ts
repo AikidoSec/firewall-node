@@ -43,7 +43,7 @@ function callListenerWithContext(
   agent: Agent,
   body: string
 ) {
-  const context = contextFromRequest(req, body, module);
+  const context = contextFromRequest(req, body, `${module}.createServer`);
 
   return runWithContext(context, () => {
     res.on("finish", () => {
