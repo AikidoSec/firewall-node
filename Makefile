@@ -54,6 +54,11 @@ hono-sqlite3:
 hapi-postgres:
 	cd sample-apps/hapi-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+
+.PHONY: ws-postgres
+ws-postgres:
+	cd sample-apps/ws-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: install
 install:
 	mkdir -p build && cp library/package.json build/package.json
