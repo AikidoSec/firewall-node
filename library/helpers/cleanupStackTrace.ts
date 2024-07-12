@@ -1,79 +1,87 @@
 import { escapeStringRegexp } from "./escapeStringRegexp";
 
-const justACarrot = /^\^$/;
-
-// eslint-disable-next-line max-lines-per-function
 export function cleanupStackTrace(stack: string, libraryRoot: string): string {
-  const pathRegex = new RegExp(escapeStringRegexp(libraryRoot) + "\\S*");
+  try {
+    return stack
+      .split("\n")
+      .filter(createLineFilter(libraryRoot))
+      .map(createLineMapper(libraryRoot))
+      .join("\n")
+      .trim();
+  } catch (error) {
+    // Safer to return the original stack trace in case of an error
+    // than to crash the application
+    return stack;
+  }
+}
 
+function createLineFilter(libraryRoot: string) {
+  const justACarrot = /^\^$/;
   const pathRegexWithLineNumbers = new RegExp(
     "^" + escapeStringRegexp(libraryRoot) + "\\S*(:\\d+){1,2}$"
   );
 
-  return stack
-    .split("\n")
-    .filter((line) => {
+  return function lineFilter(line: string) {
+    if (
+      line.includes("cleanupStackTrace(") &&
+      line.includes("new Error().stack!")
+    ) {
+      return false;
+    }
+
+    // /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152
+    if (pathRegexWithLineNumbers.test(line.trimStart())) {
+      return false;
+    }
+
+    // Cleanup carrot under new Error().stack!
+    // stack: cleanupStackTrace(new Error().stack!, libraryRoot),
+    //                           ^
+    if (justACarrot.test(line.trimStart())) {
+      return false;
+    }
+
+    // Cleanup our own stack traces
+    // Examples:
+    // at Collection.wrap (/Code/runtime-node/build/agent/applyHooks.js:154:75)
+    // at /Code/runtime-node/build/sources/express/wrapRequestHandler.js:22:20
+    const parts = line.trimStart().split(" ");
+
+    if (parts.length > 1 && line.trimStart().startsWith("at ")) {
+      const lastPart = parts[parts.length - 1];
+
       if (
-        line.includes("cleanupStackTrace(") &&
-        line.includes("new Error().stack!")
+        lastPart.startsWith("(") &&
+        lastPart.endsWith(")") &&
+        pathRegexWithLineNumbers.test(lastPart.slice(1, -1))
       ) {
         return false;
       }
 
-      // /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152
-      if (pathRegexWithLineNumbers.test(line.trimStart())) {
+      if (pathRegexWithLineNumbers.test(lastPart)) {
         return false;
       }
+    }
 
-      // Cleanup carrot under new Error().stack!
-      // stack: cleanupStackTrace(new Error().stack!, libraryRoot),
-      //                           ^
-      if (justACarrot.test(line.trimStart())) {
-        return false;
-      }
+    return true;
+  };
+}
 
-      if (!line.trimStart().startsWith("at ")) {
-        return true;
-      }
+function createLineMapper(libraryRoot: string) {
+  const pathRegex = new RegExp(escapeStringRegexp(libraryRoot) + "\\S*");
 
-      // Cleanup our own stack traces
-      // Examples:
-      // at Collection.wrap (/Code/runtime-node/build/agent/applyHooks.js:154:75)
-      // at /Code/runtime-node/build/sources/express/wrapRequestHandler.js:22:20
+  return function lineMapper(line: string) {
+    if (line.trimStart().startsWith("at ")) {
       const parts = line.trimStart().split(" ");
-
-      if (parts.length > 1) {
+      if (parts.length === 4) {
         const lastPart = parts[parts.length - 1];
-
-        if (
-          lastPart.startsWith("(") &&
-          lastPart.endsWith(")") &&
-          pathRegexWithLineNumbers.test(lastPart.slice(1, -1))
-        ) {
-          return false;
-        }
-
-        if (pathRegexWithLineNumbers.test(lastPart)) {
-          return false;
-        }
+        // Cleanup our own stack traces
+        // Examples
+        // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall
+        return line.replace(pathRegex, "");
       }
+    }
 
-      return true;
-    })
-    .map((line) => {
-      if (line.trimStart().startsWith("at ")) {
-        const parts = line.trimStart().split(" ");
-        if (parts.length === 4) {
-          const lastPart = parts[parts.length - 1];
-          // Cleanup our own stack traces
-          // Examples
-          // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall
-          return line.replace(pathRegex, "");
-        }
-      }
-
-      return line;
-    })
-    .join("\n")
-    .trim();
+    return line;
+  };
 }
