@@ -22,6 +22,23 @@ const unsafeContext: Context = {
   route: "/posts/:id",
 };
 
+const unsafeContextAbsolute: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: {
+    file: {
+      matches: "/etc/passwd",
+    },
+  },
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
 function throws(fn: () => void, wanted: string | RegExp) {
   const error = t.throws(fn);
   if (error instanceof Error) {
@@ -133,5 +150,43 @@ t.test("it works", async (t) => {
       () => rename("./test.txt", "../../test.txt", (err) => {}),
       "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
+
+    throws(
+      () => rename(new URL("file:///../test.txt"), "../test2.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        rename(new URL("file:///./../test.txt"), "../test2.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
   });
+
+  runWithContext(unsafeContextAbsolute, () => {
+    throws(
+      () =>
+        rename(new URL("file:///etc/passwd"), "../test123.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+    throws(
+      () =>
+        rename(new URL("file:///../etc/passwd"), "../test123.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+  });
+
+  // Ignores malformed URLs
+  runWithContext(
+    { ...unsafeContext, body: { file: { matches: "../%" } } },
+    () => {
+      rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
+    }
+  );
 });

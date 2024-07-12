@@ -71,6 +71,17 @@ export class FileSystem implements Wrapper {
         if (result) {
           return result;
         }
+      } else if (path instanceof URL) {
+        const result = checkContextForPathTraversal({
+          filename: path.pathname,
+          operation: `fs.${name}`,
+          context: context,
+          isUrl: true,
+        });
+
+        if (result) {
+          return result;
+        }
       }
     }
 
