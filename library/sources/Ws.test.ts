@@ -8,7 +8,6 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Ws } from "./Ws";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
-import { Express } from "./Express";
 
 const agent = new Agent(
   true,
@@ -35,8 +34,10 @@ const agent = new Agent(
   new Token("123"),
   undefined
 );
-agent.start([new Ws(), new FileSystem(), new HTTPServer(), new Express()]);
+agent.start([new Ws(), new FileSystem(), new HTTPServer()]);
 setInstance(agent);
+
+process.env.AIKIDO_MAX_WS_MSG_SIZE_MB = "1";
 
 import { WebSocketServer, WebSocket } from "ws";
 import { Context, getContext } from "../agent/Context";
@@ -550,6 +551,27 @@ t.test("Send message to WebSocket server using onmessage", (t) => {
     });
     t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
 
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Send more than 2MB of data to WebSocket server", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer4.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("a".repeat(2.5 * 1024 * 1024));
+  });
+
+  ws.on("message", (data) => {
+    t.match(
+      data.toString(),
+      "WebSocket message size exceeded the maximum allowed size. Use AIKIDO_MAX_WS_MSG_SIZE_MB to increase the limit."
+    );
     ws.close();
     testServer4.close();
     t.end();

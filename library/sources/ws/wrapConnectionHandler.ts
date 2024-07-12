@@ -33,7 +33,7 @@ export function wrapConnectionHandler(handler: any, agent: Agent): any {
           continue;
         }
         // @ts-expect-error keyof does not exclude readonly properties
-        socket[key] = wrapSocketEvent(socket[key]);
+        socket[key] = wrapSocketEvent(socket[key], socket);
       }
 
       return handler(socket, request);
