@@ -46,8 +46,8 @@ t.test("it works", async (t) => {
     rename,
     realpath,
     realpathSync,
-  } = require("node:fs");
-  const { writeFile: writeFilePromise } = require("node:fs/promises");
+  } = require("fs");
+  const { writeFile: writeFilePromise } = require("fs/promises");
 
   t.ok(typeof realpath.native === "function");
   t.ok(typeof realpathSync.native === "function");

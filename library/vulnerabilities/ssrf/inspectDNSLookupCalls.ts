@@ -1,4 +1,4 @@
-import { isIP } from "node:net";
+import { isIP } from "net";
 import { LookupAddress } from "node:dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";

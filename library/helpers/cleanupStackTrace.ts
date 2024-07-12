@@ -1,4 +1,4 @@
-import { sep } from "node:path";
+import { sep } from "path";
 
 export function cleanupStackTrace(stack: string, libraryRoot: string): string {
   return stack

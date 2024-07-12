@@ -128,7 +128,7 @@ t.test("it replaces IP addresses", async () => {
 });
 
 function generateHash(type: string) {
-  return require("node:crypto").createHash(type).update("test").digest("hex");
+  return require("crypto").createHash(type).update("test").digest("hex");
 }
 
 t.test("it replaces hashes", async () => {

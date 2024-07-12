@@ -1,5 +1,5 @@
-import { request as requestHttp } from "node:http";
-import { request as requestHttps } from "node:https";
+import { request as requestHttp } from "http";
+import { request as requestHttps } from "https";
 
 async function request({
   url,

@@ -23,7 +23,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: "module",
   },
-  plugins: ["@typescript-eslint", "unicorn"],
+  plugins: ["@typescript-eslint"],
   rules: {
     "@typescript-eslint/ban-ts-comment": [
       "error",
@@ -37,7 +37,6 @@ module.exports = {
     camelcase: "error",
     "max-classes-per-file": ["error", 1],
     "no-console": "error",
-    "unicorn/prefer-node-protocol": "error",
   },
   overrides: [
     {

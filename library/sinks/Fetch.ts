@@ -1,4 +1,4 @@
-import { lookup } from "node:dns";
+import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";

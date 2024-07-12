@@ -91,7 +91,7 @@ function getApp(userMiddleware = true) {
   });
 
   app.use("/attack-in-middleware", (req, res, next) => {
-    require("node:fs").readdir(req.query.directory).unref();
+    require("fs").readdir(req.query.directory).unref();
     next();
   });
 
@@ -137,13 +137,13 @@ function getApp(userMiddleware = true) {
   });
 
   app.get("/files", (req, res) => {
-    require("node:fs").readdir(req.query.directory).unref();
+    require("fs").readdir(req.query.directory).unref();
 
     res.send(getContext());
   });
 
   app.get("/files-subdomains", (req, res) => {
-    require("node:fs").readdir(req.subdomains[2]).unref();
+    require("fs").readdir(req.subdomains[2]).unref();
 
     res.send(getContext());
   });

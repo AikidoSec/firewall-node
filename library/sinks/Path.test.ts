@@ -38,7 +38,7 @@ t.test("it works", async (t) => {
 
   agent.start([new Path()]);
 
-  const { join, resolve } = require("node:path");
+  const { join, resolve } = require("path");
 
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");

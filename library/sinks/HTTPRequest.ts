@@ -1,5 +1,5 @@
-import { lookup } from "node:dns";
-import type { RequestOptions } from "node:http";
+import { lookup } from "dns";
+import type { RequestOptions } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";

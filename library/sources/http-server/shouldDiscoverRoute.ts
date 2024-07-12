@@ -1,4 +1,4 @@
-import { extname } from "node:path";
+import { extname } from "path";
 
 const NOT_FOUND = 404;
 const METHOD_NOT_ALLOWED = 405;

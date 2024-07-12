@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import * as dns from "node:dns";
+import * as dns from "dns";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -58,8 +58,8 @@ t.test("it works", (t) => {
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const http = require("node:http");
-  const https = require("node:https");
+  const http = require("http");
+  const https = require("https");
 
   runWithContext(context, () => {
     const google = http.request("http://aikido.dev");

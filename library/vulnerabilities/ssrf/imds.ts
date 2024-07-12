@@ -1,4 +1,4 @@
-import { BlockList } from "node:net";
+import { BlockList } from "net";
 
 const IMDSAddresses = new BlockList();
 

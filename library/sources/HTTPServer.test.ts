@@ -52,7 +52,7 @@ t.beforeEach(() => {
 });
 
 t.test("it wraps the createServer function of http module", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -89,9 +89,9 @@ t.test("it wraps the createServer function of http module", async () => {
 });
 
 t.test("it wraps the createServer function of https module", async () => {
-  const https = require("node:https");
-  const { readFileSync } = require("node:fs");
-  const path = require("node:path");
+  const https = require("https");
+  const { readFileSync } = require("fs");
+  const path = require("path");
 
   // Otherwise, the self-signed certificate will be rejected
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -139,7 +139,7 @@ t.test("it wraps the createServer function of https module", async () => {
 });
 
 t.test("it parses query parameters", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -163,7 +163,7 @@ t.test("it parses query parameters", async () => {
 });
 
 t.test("it discovers routes", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -198,7 +198,7 @@ t.test("it discovers routes", async () => {
 t.test(
   "it does not discover route if server response is error code",
   async () => {
-    const http = require("node:http");
+    const http = require("http");
     const server = http.createServer((req, res) => {
       res.statusCode = 404;
       res.end();
@@ -228,7 +228,7 @@ t.test(
 );
 
 t.test("it parses cookies", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -254,7 +254,7 @@ t.test("it parses cookies", async () => {
 });
 
 t.test("it parses x-forwarded-for header with proxy", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -281,7 +281,7 @@ t.test("it parses x-forwarded-for header with proxy", async () => {
 });
 
 t.test("it uses x-forwarded-for header", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -307,7 +307,7 @@ t.test("it uses x-forwarded-for header", async () => {
 });
 
 t.test("it sets body in context", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -341,7 +341,7 @@ function generateJsonPayload(sizeInMb: number) {
 }
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
-  const http = require("node:http");
+  const http = require("http");
 
   const server = http.createServer((req, res) => {
     t.fail();
@@ -371,7 +371,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
 });
 
 t.test("body that is not JSON is ignored", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -398,7 +398,7 @@ t.test("body that is not JSON is ignored", async () => {
 });
 
 t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
-  const http = require("node:http");
+  const http = require("http");
 
   const server = http.createServer((req, res) => {
     res.end();
@@ -443,7 +443,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
 });
 
 t.test("it rate limits requests", async () => {
-  const http = require("node:http");
+  const http = require("http");
 
   const server = http.createServer((req, res) => {
     res.end();
@@ -504,7 +504,7 @@ t.test("it rate limits requests", async () => {
 });
 
 t.test("it wraps on request event of http", async () => {
-  const http = require("node:http");
+  const http = require("http");
   const server = http.createServer();
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -542,9 +542,9 @@ t.test("it wraps on request event of http", async () => {
 });
 
 t.test("it wraps on request event of https", async () => {
-  const https = require("node:https");
-  const { readFileSync } = require("node:fs");
-  const path = require("node:path");
+  const https = require("https");
+  const { readFileSync } = require("fs");
+  const path = require("path");
 
   // Otherwise, the self-signed certificate will be rejected
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
