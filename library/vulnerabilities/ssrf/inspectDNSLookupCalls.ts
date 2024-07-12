@@ -1,5 +1,5 @@
 import { isIP } from "net";
-import { LookupAddress } from "node:dns";
+import { LookupAddress } from "dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { Context, getContext } from "../../agent/Context";

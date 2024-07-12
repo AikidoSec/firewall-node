@@ -7,6 +7,7 @@ import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { wrap } from "../helpers/wrap";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
 const calls: Record<string, number> = {};
@@ -49,9 +50,8 @@ const context: Context = {
 t.test(
   "it works",
   {
-    skip: process.version.startsWith("v16")
-      ? "ReadableStream is not available"
-      : false,
+    skip:
+      getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
   async () => {
     const logger = new LoggerForTesting();

@@ -77,6 +77,7 @@ See list above for supported database drivers.
 
 * ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
 * ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
+* ✅ [`xml-js`](https://www.npmjs.com/package/xml-js) 1.x
 
 ### Shell tools
 
@@ -109,7 +110,7 @@ You will need an Aikido account and a token to report events to Aikido. If you d
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
-* Go to [Firewall](https://app.aikido.dev/runtime/events).
+* Go to [Firewall](https://app.aikido.dev/runtime/services).
 * Go to apps.
 * Click on **Add app**.
 * Choose a name for your app.
