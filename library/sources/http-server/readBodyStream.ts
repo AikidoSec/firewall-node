@@ -1,5 +1,4 @@
-import type { IncomingMessage } from "http";
-import { ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "http";
 import { PassThrough } from "stream";
 import { Agent } from "../../agent/Agent";
 import { getMaxBodySize } from "../../helpers/getMaxBodySize";

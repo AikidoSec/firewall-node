@@ -4,6 +4,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
@@ -131,6 +132,13 @@ export class Undici implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    if (getMajorNodeVersion() < 18) {
+      // Undici requires Node.js 18+
+      // Packages aren't scoped in npm workspaces, we'll try to require undici:
+      // ReferenceError: ReadableStream is not defined
+      return;
+    }
+
     const undici = hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
