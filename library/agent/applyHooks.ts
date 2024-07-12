@@ -19,6 +19,7 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
+import { AsyncLocalStorage } from "async_hooks";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -159,6 +160,12 @@ function wrapWithoutArgumentModification(
         const args = Array.from(arguments);
         const context = getContext();
 
+        for (let i = 0; i < args.length; i++) {
+          if (typeof args[i] === "function") {
+            args[i] = AsyncLocalStorage.bind(args[i]);
+          }
+        }
+
         if (context) {
           const match = agent.getConfig().getEndpoint(context);
 
@@ -166,8 +173,7 @@ function wrapWithoutArgumentModification(
             return original.apply(
               // @ts-expect-error We don't now the type of this
               this,
-              // eslint-disable-next-line prefer-rest-params
-              arguments
+              args
             );
           }
         }
@@ -228,8 +234,7 @@ function wrapWithoutArgumentModification(
         return original.apply(
           // @ts-expect-error We don't now the type of this
           this,
-          // eslint-disable-next-line prefer-rest-params
-          arguments
+          args
         );
       };
     });
@@ -263,6 +268,12 @@ function wrapWithArgumentModification(
             method: method.getName(),
             module: module,
           });
+        }
+
+        for (let i = 0; i < updatedArgs.length; i++) {
+          if (typeof updatedArgs[i] === "function") {
+            updatedArgs[i] = AsyncLocalStorage.bind(updatedArgs[i]);
+          }
         }
 
         return original.apply(

@@ -6,6 +6,7 @@ const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const { Client } = require("pg");
+const { getContext } = require("@aikidosec/firewall/agent/context");
 
 require("@aikidosec/firewall/nopp");
 
@@ -65,8 +66,20 @@ async function main(port) {
   app.get(
     "/clear",
     asyncHandler(async (req, res) => {
-      await db.query("DELETE FROM cats;");
-      res.redirect("/");
+      db.query("DELETE FROM cats;", function afterClear(err) {
+        if (err) {
+          res.status(500).send("Error clearing table");
+          return;
+        }
+
+        // End2end test check
+        if (!getContext()) {
+          res.status(500).send("Error: Aikido firewall context not found");
+          return;
+        }
+
+        res.redirect("/");
+      });
     })
   );
 
