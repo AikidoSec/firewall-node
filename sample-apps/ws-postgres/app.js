@@ -4,7 +4,6 @@ const express = require("express");
 const { Client } = require("pg");
 const http = require("http");
 const WebSocket = require("ws");
-const { getContext } = require("@aikidosec/firewall/agent/context");
 
 require("@aikidosec/firewall/nopp");
 
@@ -63,27 +62,24 @@ async function main(port) {
     // Handle incoming messages
     ws.on("message", (message) => {
       try {
+        const time = new Date().toLocaleTimeString();
+        // Broadcast message to all clients
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(`[${time}] ${message}`);
+          }
+        });
         // Insert message into the database
         db.query(
           `INSERT INTO messages (content) VALUES ('${message}') RETURNING *`,
           (err, res) => {
-            if (!err) {
-              if (!res.rows) {
-                return;
-              }
-
-              const time = new Date(res.rows[0].timestamp).toLocaleTimeString();
-              const msg = `[${time}] ${res.rows[0].content}`;
-              // Broadcast message to all clients
-              wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(msg);
-                }
-              });
+            if (err) {
+              ws.send("An error occurred");
             }
           }
         );
       } catch (err) {
+        console.error(err);
         ws.send("An error occurred");
       }
     });
@@ -103,4 +99,15 @@ async function main(port) {
   });
 }
 
-main(8090);
+function getPort() {
+  const port = parseInt(process.argv[2], 10) || 4000;
+
+  if (isNaN(port)) {
+    console.error("Invalid port");
+    process.exit(1);
+  }
+
+  return port;
+}
+
+main(getPort());

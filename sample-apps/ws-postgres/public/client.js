@@ -1,7 +1,7 @@
 const chat = document.getElementById("chat");
 const messageInput = document.getElementById("message");
 
-const ws = new WebSocket("ws://localhost:8090");
+const ws = new WebSocket("ws://localhost:4000");
 
 ws.onmessage = (event) => {
   const message = document.createElement("div");
