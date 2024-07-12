@@ -104,7 +104,7 @@ importers:
       '@types/supertest': 6.0.2
       '@typescript-eslint/eslint-plugin': 6.21.0_dq536s3tjlaw7l5ir4d3ty4bhu
       '@typescript-eslint/parser': 6.21.0_t2eqmplvx32hejxnzltmmmmq7q
-      aws-sdk: 2.1657.0
+      aws-sdk: 2.1658.0
       cookie-parser: 1.4.6
       eslint: 8.57.0
       eslint-config-prettier: 9.1.0_eslint@8.57.0
@@ -113,7 +113,7 @@ importers:
       express: 4.19.2
       express-async-handler: 1.2.0
       graphql: 16.9.0
-      hono: 4.4.12
+      hono: 4.4.13
       mongodb: 6.8.0
       mysql: 2.18.1
       mysql2: 3.10.2
@@ -155,11 +155,13 @@ importers:
       '@aikidosec/firewall': file:../../build
       express: ^4.19.2
       graphql: ^16.8.2
+      morgan: ^1.10.0
       mysql2: ^3.10.0
     dependencies:
       '@aikidosec/firewall': file:build
       express: 4.19.2
       graphql: 16.9.0
+      morgan: 1.10.0
       mysql2: 3.10.2
 
   sample-apps/express-mariadb:
@@ -168,13 +170,17 @@ importers:
       cookie-parser: ^1.4.6
       dotenv: ^16.4.1
       express: ^4.19.2
-      mariadb: ^3.2.3
+      express-async-handler: ^1.2.0
+      mariadb: ^3.3.1
+      morgan: ^1.10.0
     dependencies:
       '@aikidosec/firewall': file:build
       cookie-parser: 1.4.6
       dotenv: 16.4.5
       express: 4.19.2
+      express-async-handler: 1.2.0
       mariadb: 3.3.1
+      morgan: 1.10.0
 
   sample-apps/express-mongodb:
     specifiers:
@@ -299,7 +305,7 @@ importers:
     dependencies:
       '@aikidosec/firewall': file:build
       '@hono/node-server': 1.12.0
-      hono: 4.4.12
+      hono: 4.4.13
       mongodb: 6.8.0
 
   sample-apps/hono-sqlite3:
@@ -311,7 +317,7 @@ importers:
     dependencies:
       '@aikidosec/firewall': file:build
       '@hono/node-server': 1.12.0
-      hono: 4.4.12
+      hono: 4.4.13
       sqlite3: 5.1.7
 
   sample-apps/hono-xml:
@@ -326,7 +332,7 @@ importers:
       '@aikidosec/firewall': file:build
       '@hono/node-server': 1.12.0
       fast-xml-parser: 4.4.0
-      hono: 4.4.12
+      hono: 4.4.13
       mysql2: 3.10.2
       xml2js: 0.6.2
 
@@ -487,8 +493,8 @@ packages:
       - encoding
       - supports-color
 
-  /@grpc/grpc-js/1.10.10:
-    resolution: {integrity: sha512-HPa/K5NX6ahMoeBv15njAc/sfF4/jmiXLar9UlC2UfHFKZzsCVLc3wbe7+7qua7w9VPh2/L6EBxyAV7/E8Wftg==}
+  /@grpc/grpc-js/1.10.11:
+    resolution: {integrity: sha512-3RaoxOqkHHN2c05bwtBNVJmOf/UwMam0rZYtdl7dsRpsvDwcNpv6LkGgzltQ7xVf822LzBoKEPRvf4D7+xeIDw==}
     engines: {node: '>=12.10.0'}
     dependencies:
       '@grpc/proto-loader': 0.7.13
@@ -1002,7 +1008,7 @@ packages:
       '@npmcli/node-gyp': 3.0.0
       '@npmcli/package-json': 5.2.0
       '@npmcli/promise-spawn': 7.0.2
-      node-gyp: 10.1.0
+      node-gyp: 10.2.0
       which: 4.0.0
     transitivePeerDependencies:
       - bluebird
@@ -1115,7 +1121,7 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
     dependencies:
-      '@grpc/grpc-js': 1.10.10
+      '@grpc/grpc-js': 1.10.11
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 1.23.0_@opentelemetry+api@1.9.0
       '@opentelemetry/otlp-grpc-exporter-base': 0.50.0_@opentelemetry+api@1.9.0
@@ -1709,7 +1715,7 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
     dependencies:
-      '@grpc/grpc-js': 1.10.10
+      '@grpc/grpc-js': 1.10.11
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 1.23.0_@opentelemetry+api@1.9.0
       '@opentelemetry/otlp-exporter-base': 0.50.0_@opentelemetry+api@1.9.0
@@ -3162,8 +3168,8 @@ packages:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  /aws-sdk/2.1657.0:
-    resolution: {integrity: sha512-eo+C2WUeujaS6zouasoSnBafW2cdAc2baD2hkjsjBukGX6OanxuOu0bIOI/m5qOzwpRjDY3YkgQXxcPSb5r6OQ==}
+  /aws-sdk/2.1658.0:
+    resolution: {integrity: sha512-aJLps/LIRJtrfEv+1jQ//IfHbwDxJiBJJyXf+Oc9hH+l1PqLEwHtd+vWxSNGE4/YX1HFIVt2fCZJs4d/nL8HNg==}
     engines: {node: '>= 10.0.0'}
     requiresBuild: true
     dependencies:
@@ -3319,8 +3325,8 @@ packages:
       - bluebird
     optional: true
 
-  /cacache/18.0.3:
-    resolution: {integrity: sha512-qXCd4rh6I07cnDqh8V48/94Tc/WSfj+o3Gn6NZ0aZovS255bUx8O13uKxRFd2eWG0xgsco7+YItQNPaa5E85hg==}
+  /cacache/18.0.4:
+    resolution: {integrity: sha512-B+L5iIa9mgcjLbliir2th36yEwPftrzteHYujzsx3dFP/31GCHcIeS8f5MGd80odLOjaOvSpU3EEAmRQptkxLQ==}
     engines: {node: ^16.14.0 || >=18.0.0}
     dependencies:
       '@npmcli/fs': 3.1.1
@@ -4409,7 +4415,7 @@ packages:
     hasBin: true
     dependencies:
       foreground-child: 3.2.1
-      jackspeak: 3.4.2
+      jackspeak: 3.4.3
       minimatch: 9.0.5
       minipass: 7.1.2
       package-json-from-dist: 1.0.0
@@ -4471,7 +4477,7 @@ packages:
     resolution: {integrity: sha512-SKAQKtvdjtNW3PMOhmKEqpQP+2C5ZqNKfwWxy70efpSwxvRYuAcgMJs6aRHTBPJjz3SO6ZbiXwM6WIuGYFZ7LQ==}
     engines: {node: '>=14'}
     dependencies:
-      '@grpc/grpc-js': 1.10.10
+      '@grpc/grpc-js': 1.10.11
       '@grpc/proto-loader': 0.7.13
       '@types/long': 4.0.2
       abort-controller: 3.0.0
@@ -4563,8 +4569,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /hono/4.4.12:
-    resolution: {integrity: sha512-Lx4Vwbws0IqFfXIVYychxUW0A4EE+7dn/jsjVeM34OXSA2Xs45MkDDP14Mzznp7LlDemUNHQG2uv2N5jQld0hA==}
+  /hono/4.4.13:
+    resolution: {integrity: sha512-c6qqenclmQ6wpXzqiElMa2jt423PVCmgBreDfC5s2lPPpGk7d0lOymd8QTzFZyYC5mSSs6imiTMPip+gLwuW/g==}
     engines: {node: '>=16.0.0'}
 
   /hosted-git-info/2.8.9:
@@ -5019,9 +5025,8 @@ packages:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
-  /jackspeak/3.4.2:
-    resolution: {integrity: sha512-qH3nOSj8q/8+Eg8LUPOq3C+6HWkpUioIjDsq1+D4zY91oZvpPttw8GwtF1nReRYKXl+1AORyFqtm2f5Q1SB6/Q==}
-    engines: {node: 14 >=14.21 || 16 >=16.20 || >=18}
+  /jackspeak/3.4.3:
+    resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
     dependencies:
       '@isaacs/cliui': 8.0.2
     optionalDependencies:
@@ -5193,7 +5198,7 @@ packages:
     engines: {node: ^16.14.0 || >=18.0.0}
     dependencies:
       '@npmcli/agent': 2.2.2
-      cacache: 18.0.3
+      cacache: 18.0.4
       http-cache-semantics: 4.1.1
       is-lambda: 1.0.1
       minipass: 7.1.2
@@ -5603,8 +5608,8 @@ packages:
     dependencies:
       whatwg-url: 5.0.0
 
-  /node-gyp/10.1.0:
-    resolution: {integrity: sha512-B4J5M1cABxPc5PwfjhbV5hoy2DP9p8lFXASnEN6hugXOa61416tnTZ29x9sSwAd0o99XNIcpvDDy1swAExsVKA==}
+  /node-gyp/10.2.0:
+    resolution: {integrity: sha512-sp3FonBAaFe4aYTcFdZUn2NYkbP7xroPGYvQmP4Nl5PxamznItBnNCgjrVTKrEfQynInMsJvZrdmqUnysCJ8rw==}
     engines: {node: ^16.14.0 || >=18.0.0}
     hasBin: true
     dependencies:
@@ -5614,7 +5619,7 @@ packages:
       graceful-fs: 4.2.11
       make-fetch-happen: 13.0.1
       nopt: 7.2.1
-      proc-log: 3.0.0
+      proc-log: 4.2.0
       semver: 7.6.2
       tar: 6.2.1
       which: 4.0.0
@@ -5892,7 +5897,7 @@ packages:
       '@npmcli/installed-package-contents': 2.1.0
       '@npmcli/promise-spawn': 7.0.2
       '@npmcli/run-script': 7.0.4
-      cacache: 18.0.3
+      cacache: 18.0.4
       fs-minipass: 3.0.3
       minipass: 7.1.2
       npm-package-arg: 11.0.2
@@ -6146,10 +6151,6 @@ packages:
   /prismjs/1.29.0:
     resolution: {integrity: sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q==}
     engines: {node: '>=6'}
-
-  /proc-log/3.0.0:
-    resolution: {integrity: sha512-++Vn7NS4Xf9NacaU9Xq3URUuqZETPsf8L4j5/ckhaRYsfPeRyzGw+iDjFhV/Jr3uNmTvvddEJFWh5R1gRgUH8A==}
-    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
   /proc-log/4.2.0:
     resolution: {integrity: sha512-g8+OnU/L2v+wyiVK+D5fA34J7EH8jZ8DDlvwhRCMxmMj7UCBvxiO1mGeN+36JXIKF4zevU4kRBd8lVgG9vLelA==}
