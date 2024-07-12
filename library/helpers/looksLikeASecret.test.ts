@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { randomInt } from "crypto";
 import * as t from "tap";
 import { looksLikeASecret } from "./looksLikeASecret";
 
