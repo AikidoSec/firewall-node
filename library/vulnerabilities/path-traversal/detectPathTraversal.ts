@@ -45,8 +45,14 @@ export function detectPathTraversal(
   return false;
 }
 
-// This function is used to convert a file path as a URL to a file path.
-// It is used to handle cases where a URL object is passed to a fs function.
+/**
+ * This function is used to convert a file path as a URL to a file path.
+ * It is used to handle cases where a URL object is passed to a fs function.
+ * For example new URL("file:///../../test.txt") => file:///test.txt
+ * This function will convert ../../test.txt to /test.txt
+ * If the URL is not a file URL, it will return undefined.
+ * Another sample: new URL("file:///./test.txt") => /test.txt
+ */
 function parseAsFileUrl(path: string) {
   let url = path;
   if (!url.startsWith("file:")) {
