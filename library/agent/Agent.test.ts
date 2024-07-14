@@ -15,25 +15,31 @@ import {
   expectedDetectedAttackEvent,
 } from "../testSupport/fixtures/Agent.fixture";
 import Sinon from "sinon";
+import { ReportingAPIResponse } from "./api/ReportingAPI";
 
 t.test("Agent tests", (t) => {
+  const apiUrl = new URL("https:localhost:8000");
   t.plan(13);
 
   t.test("Starting up agent", async (t) => {
     let logger: LoggerNoop;
-    let api: ReportingAPIForTesting;
+    let api: ReportingAPINodeHTTP;
     let token: Token;
     let fakeAgent: Agent;
 
     t.plan(4);
 
     t.test("it throws error if serverless is empty string", async (t) => {
+      t.sinon
+        .stub(ReportingAPINodeHTTP.prototype, "report")
+        .resolves({} as ReportingAPIResponse);
+
       t.throws(
         () =>
           new Agent(
             true,
             new LoggerNoop(),
-            new ReportingAPIForTesting(),
+            new ReportingAPINodeHTTP(apiUrl),
             undefined,
             ""
           ),
@@ -43,14 +49,21 @@ t.test("Agent tests", (t) => {
 
     t.beforeEach(() => {
       logger = new LoggerNoop();
-      api = new ReportingAPIForTesting();
+      api = new ReportingAPINodeHTTP(apiUrl);
       token = new Token("123");
       fakeAgent = new Agent(true, logger, api, token, undefined);
     });
 
     t.test("it sends started event", async (t) => {
+      const apiSpy = t.sinon.spy(ReportingAPINodeHTTP.prototype, "report");
+      t.sinon
+        .stub(ReportingAPINodeHTTP.prototype, "report")
+        .resolves({} as ReportingAPIResponse);
+
       fakeAgent.start([new MongoDB()]);
-      t.match(api.getEvents(), [agentStartedEvent]);
+
+      t.sinon.assert.calledOnce(apiSpy);
+      t.match(apiSpy.getCall(0).args[1], agentStartedEvent);
     });
 
     t.test("it throws error if already started", async (t) => {
@@ -76,9 +89,12 @@ t.test("Agent tests", (t) => {
 
   t.test("it starts in non-blocking mode", async (t) => {
     const loggerSpy = t.sinon.spy(LoggerNoop.prototype, "log");
+    t.sinon
+      .stub(ReportingAPINodeHTTP.prototype, "report")
+      .resolves({} as ReportingAPIResponse);
 
     const logger = new LoggerNoop();
-    const api = new ReportingAPIForTesting();
+    const api = new ReportingAPINodeHTTP(apiUrl);
     const token = new Token("123");
     const agent = new Agent(false, logger, api, token, undefined);
     agent.start([new MongoDB()]);
