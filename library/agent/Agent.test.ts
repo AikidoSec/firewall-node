@@ -1,13 +1,12 @@
 import * as t from "tap";
-import { ip } from "../helpers/ipAddress";
+import type BuiltPlugins from "tap";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
-import { ReportingAPIThatThrows } from "./api/ReportingAPIThatThrows";
+import { ReportingAPINodeHTTP } from "./api/ReportingAPINodeHTTP";
 import { Event, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Hooks } from "./hooks/Hooks";
-import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
 import {
@@ -15,17 +14,18 @@ import {
   detectedAttackEvent,
   expectedDetectedAttackEvent,
 } from "../testSupport/fixtures/Agent.fixture";
+import Sinon from "sinon";
 
 t.test("Agent tests", (t) => {
-  t.plan(14);
+  t.plan(13);
 
   t.test("Starting up agent", async (t) => {
-    let logger: LoggerNoop | LoggerForTesting;
+    let logger: LoggerNoop;
     let api: ReportingAPIForTesting;
     let token: Token;
     let fakeAgent: Agent;
 
-    t.plan(3);
+    t.plan(4);
 
     t.test("it throws error if serverless is empty string", async (t) => {
       t.throws(
@@ -46,47 +46,51 @@ t.test("Agent tests", (t) => {
       api = new ReportingAPIForTesting();
       token = new Token("123");
       fakeAgent = new Agent(true, logger, api, token, undefined);
-      fakeAgent.start([new MongoDB()]);
     });
 
     t.test("it sends started event", async (t) => {
+      fakeAgent.start([new MongoDB()]);
       t.match(api.getEvents(), [agentStartedEvent]);
     });
 
     t.test("it throws error if already started", async (t) => {
+      fakeAgent.start([new MongoDB()]);
       t.throws(
         () => fakeAgent.start([new MongoDB()]),
         "Agent already started!"
       );
     });
-  });
 
-  t.test("should log unspported packages", async (t) => {
-    const logger = new LoggerForTesting();
-    const api = new ReportingAPIForTesting();
-    const token = new Token("123");
-    const agent = new Agent(true, logger, api, token, undefined);
-    agent.start([new WrapperForTesting()]);
+    t.test("should log unspported packages", async (t) => {
+      const loggerSpy = t.sinon.spy(LoggerNoop.prototype, "log");
+      fakeAgent.start([new WrapperForTesting()]);
+      const expectedLogs = [
+        "Starting agent...",
+        "Found token, reporting enabled!",
+        "shell-quote@1.8.1 is not supported!",
+      ];
 
-    t.same(logger.getMessages(), [
-      "Starting agent...",
-      "Found token, reporting enabled!",
-      "shell-quote@1.8.1 is not supported!",
-    ]);
+      assertLogs(t.sinon, loggerSpy, expectedLogs);
+    });
   });
 
   t.test("it starts in non-blocking mode", async (t) => {
-    const logger = new LoggerForTesting();
+    const loggerSpy = t.sinon.spy(LoggerNoop.prototype, "log");
+
+    const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting();
     const token = new Token("123");
     const agent = new Agent(false, logger, api, token, undefined);
     agent.start([new MongoDB()]);
-    t.same(logger.getMessages(), [
+
+    const expectedLogs = [
       "Starting agent...",
       "Dry mode enabled, no requests will be blocked!",
       "Found token, reporting enabled!",
       "mongodb@6.3.0 is supported!",
-    ]);
+    ];
+
+    assertLogs(t.sinon, loggerSpy, expectedLogs);
   });
 
   t.test("when prevent prototype pollution is enabled", async (t) => {
@@ -224,8 +228,12 @@ t.test("Agent tests", (t) => {
   });
 
   t.test("it logs when failed to report event", async (t) => {
-    const logger = new LoggerForTesting();
-    const api = new ReportingAPIThatThrows();
+    const loggerSpy = t.sinon.spy(LoggerNoop.prototype, "log");
+    t.sinon
+      .stub(ReportingAPINodeHTTP.prototype, "report")
+      .rejects("Failed to report event");
+    const logger = new LoggerNoop();
+    const api = new ReportingAPINodeHTTP(new URL("http://localhost:4000"));
     const token = new Token("123");
     const agent = new Agent(true, logger, api, token, undefined);
     agent.start([]);
@@ -237,59 +245,41 @@ t.test("Agent tests", (t) => {
 
     await waitForCalls();
 
-    agent.onDetectedAttack({
-      module: "mongodb",
-      kind: "nosql_injection",
-      blocked: true,
-      source: "body",
-      request: {
-        method: "POST",
-        cookies: {},
-        query: {},
-        headers: {
-          "user-agent": "agent",
-        },
-        body: {},
-        url: "http://localhost:4000",
-        remoteAddress: "::1",
-        source: "express",
-        route: "/posts/:id",
-        routeParams: {},
-      },
-      operation: "operation",
-      stack: "stack",
-      path: ".nested",
-      payload: "payload",
-      metadata: {
-        db: "app",
-      },
-    });
+    agent.onDetectedAttack(Object.assign(detectedAttackEvent));
 
     await waitForCalls();
 
-    t.same(logger.getMessages(), [
+    const expectedLogs = [
       "Starting agent...",
       "Found token, reporting enabled!",
       "Failed to start agent",
       "Heartbeat...",
       "Failed to do heartbeat",
       "Failed to report attack",
-    ]);
+    ];
+
+    assertLogs(t.sinon, loggerSpy, expectedLogs);
   });
 
   t.test("unable to prevent prototype pollution", async (t) => {
     const clock = t.sinon.useFakeTimers();
-    const logger = new LoggerForTesting();
+
+    const loggerSpy = t.sinon.spy(LoggerNoop.prototype, "log");
+    const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting();
     const token = new Token("123");
     const agent = new Agent(true, logger, api, token, undefined);
     agent.start([]);
+
     agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
-    t.same(logger.getMessages(), [
+
+    const expectedLogs = [
       "Starting agent...",
       "Found token, reporting enabled!",
       "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
-    ]);
+    ];
+
+    assertLogs(t.sinon, loggerSpy, expectedLogs);
 
     clock.tick(1000 * 60 * 30);
     await clock.nextAsync();
@@ -450,3 +440,15 @@ class WrapperForTesting implements Wrapper {
 
 // API calls are async, wait for them to finish
 const waitForCalls = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+const assertLogs = (
+  sinon: Sinon.SinonSandbox,
+  spy: Sinon.SinonSpy,
+  expectedLogs: string[]
+) => {
+  sinon.assert.callCount(spy, expectedLogs.length);
+
+  spy.getCall(0).args.forEach((value, i) => {
+    sinon.assert.match(value, expectedLogs[i]);
+  });
+};
