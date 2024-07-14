@@ -1,5 +1,3 @@
-import * as FakeTimers from "@sinonjs/fake-timers";
-import { hostname, platform, release } from "os";
 import * as t from "tap";
 import { ip } from "../helpers/ipAddress";
 import { MongoDB } from "../sinks/MongoDB";
@@ -13,6 +11,7 @@ import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
 import {
+  agentStartedEvent,
   detectedAttackEvent,
   expectedDetectedAttackEvent,
 } from "../testSupport/fixtures/Agent.fixture";
@@ -51,28 +50,7 @@ t.test("Agent tests", (t) => {
     });
 
     t.test("it sends started event", async (t) => {
-      t.match(api.getEvents(), [
-        {
-          type: "started",
-          agent: {
-            dryMode: false,
-            hostname: hostname(),
-            version: "0.0.0",
-            ipAddress: ip(),
-            packages: {
-              mongodb: "6.3.0",
-            },
-            preventedPrototypePollution: false,
-            nodeEnv: "",
-            serverless: false,
-            stack: ["mongodb"],
-            os: {
-              name: platform(),
-              version: release(),
-            },
-          },
-        },
-      ]);
+      t.match(api.getEvents(), [agentStartedEvent]);
     });
 
     t.test("it throws error if already started", async (t) => {
@@ -159,7 +137,7 @@ t.test("Agent tests", (t) => {
   });
 
   t.test("it sends heartbeat when reached max timings", async (t) => {
-    const clock = FakeTimers.install();
+    const clock = t.sinon.useFakeTimers();
 
     const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting();
@@ -242,7 +220,7 @@ t.test("Agent tests", (t) => {
       },
     ]);
 
-    clock.uninstall();
+    clock.restore();
   });
 
   t.test("it logs when failed to report event", async (t) => {
@@ -300,8 +278,7 @@ t.test("Agent tests", (t) => {
   });
 
   t.test("unable to prevent prototype pollution", async (t) => {
-    const clock = FakeTimers.install();
-
+    const clock = t.sinon.useFakeTimers();
     const logger = new LoggerForTesting();
     const api = new ReportingAPIForTesting();
     const token = new Token("123");
@@ -326,7 +303,7 @@ t.test("Agent tests", (t) => {
       },
     });
 
-    clock.uninstall();
+    clock.restore();
   });
 
   t.test("when payload is object", async (t) => {

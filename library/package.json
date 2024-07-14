@@ -45,6 +45,7 @@
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
     "@types/shell-quote": "^1.7.5",
+    "@types/sinon": "^17.0.3",
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
@@ -83,5 +84,11 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
+  },
+  "tap": {
+    "plugin": [
+      "@tapjs/sinon",
+      "!@tapjs/intercept"
+    ]
   }
 }
