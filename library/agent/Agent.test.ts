@@ -30,10 +30,6 @@ t.test("Agent tests", (t) => {
     t.plan(4);
 
     t.test("it throws error if serverless is empty string", async (t) => {
-      t.sinon
-        .stub(ReportingAPINodeHTTP.prototype, "report")
-        .resolves({} as ReportingAPIResponse);
-
       t.throws(
         () =>
           new Agent(
@@ -54,11 +50,12 @@ t.test("Agent tests", (t) => {
       fakeAgent = new Agent(true, logger, api, token, undefined);
     });
 
+    t.afterEach(() => {
+      t.sinon.restore();
+    });
+
     t.test("it sends started event", async (t) => {
       const apiSpy = t.sinon.spy(ReportingAPINodeHTTP.prototype, "report");
-      t.sinon
-        .stub(ReportingAPINodeHTTP.prototype, "report")
-        .resolves({} as ReportingAPIResponse);
 
       fakeAgent.start([new MongoDB()]);
 
@@ -147,13 +144,31 @@ t.test("Agent tests", (t) => {
   });
 
   t.test("it checks if user agent is a string", async (t) => {
+    const apiStub = t.sinon
+      .stub(ReportingAPINodeHTTP.prototype, "report")
+      .resolves({} as any);
     const logger = new LoggerNoop();
-    const api = new ReportingAPIForTesting();
+    const api = new ReportingAPINodeHTTP(apiUrl);
     const token = new Token("123");
     const agent = new Agent(true, logger, api, token, undefined);
-    agent.onDetectedAttack(Object.assign(detectedAttackEvent));
 
-    t.match(api.getEvents(), [expectedDetectedAttackEvent]);
+    agent.onDetectedAttack(
+      Object.assign({
+        ...detectedAttackEvent,
+        request: {
+          ...detectedAttackEvent.request,
+          headers: {
+            "user-agent": 1,
+          },
+        },
+      })
+    );
+
+    t.sinon.assert.calledOnce(apiStub);
+    t.sinon.assert.match(apiStub.getCall(0).args[1], {
+      request: { userAgent: undefined },
+    });
+    t.sinon.restore();
   });
 
   t.test("it sends heartbeat when reached max timings", async (t) => {
@@ -275,6 +290,7 @@ t.test("Agent tests", (t) => {
     ];
 
     assertLogs(t.sinon, loggerSpy, expectedLogs);
+    t.sinon.restore();
   });
 
   t.test("unable to prevent prototype pollution", async (t) => {
