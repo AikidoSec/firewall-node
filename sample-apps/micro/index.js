@@ -1,5 +1,4 @@
 const { send, json } = require("micro");
-const { getContext } = require("@aikidosec/firewall/agent/Context");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
