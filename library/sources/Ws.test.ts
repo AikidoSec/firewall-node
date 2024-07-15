@@ -37,7 +37,7 @@ const agent = new Agent(
 agent.start([new Ws(), new FileSystem(), new HTTPServer()]);
 setInstance(agent);
 
-process.env.AIKIDO_MAX_WS_MSG_SIZE_MB = "1";
+process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
 
 import { WebSocketServer, WebSocket } from "ws";
 import { Context, getContext } from "../agent/Context";
@@ -636,7 +636,7 @@ t.test("Send more than 2MB of data to WebSocket server", (t) => {
   ws.on("message", (data) => {
     t.match(
       data.toString(),
-      "WebSocket message size exceeded the maximum allowed size. Use AIKIDO_MAX_WS_MSG_SIZE_MB to increase the limit."
+      "WebSocket message size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
     );
     ws.close();
     testServer4.close();
