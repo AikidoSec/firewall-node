@@ -2,8 +2,8 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createUpgradeListener } from "./http-server/createUpgradeListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
@@ -40,10 +40,13 @@ export class HTTPServer implements Wrapper {
     ) {
       return args;
     }
-    if (args[0] !== "request") {
-      return args;
+    if (args[0] === "request") {
+      return this.wrapRequestListener(args, module, agent);
     }
-    return this.wrapRequestListener(args, module, agent);
+    if (args[0] === "upgrade") {
+      return [args[0], createUpgradeListener(args[1], module, agent)];
+    }
+    return args;
   }
 
   wrap(hooks: Hooks) {

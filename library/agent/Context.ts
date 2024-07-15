@@ -21,6 +21,7 @@ export type Context = {
   graphql?: string[];
   xml?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
+  ws?: unknown; // Additional data related to WebSocket connections, like the last message received
 };
 
 /**
@@ -56,6 +57,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.graphql = context.graphql;
     current.xml = context.xml;
     current.subdomains = context.subdomains;
+    current.ws = context.ws;
 
     return fn();
   }
