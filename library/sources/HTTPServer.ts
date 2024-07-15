@@ -2,7 +2,6 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { createRequestListener } from "./http-server/createRequestListener";
 
 export class HTTPServer implements Wrapper {
@@ -12,7 +11,7 @@ export class HTTPServer implements Wrapper {
     // This is tricky, see replaceRequestBody(...)
     // e.g. Hono uses web requests and web streams
     // (uses Readable.toWeb(req) to convert to a web stream)
-    const parseBody = isPackageInstalled("next");
+    const parseBody = isPackageInstalled("next") || isPackageInstalled("micro");
 
     // Without options
     // http(s).createServer(listener)
@@ -47,28 +46,21 @@ export class HTTPServer implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addBuiltinModule("http")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "http", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "http", agent);
-      });
-
-    hooks
-      .addBuiltinModule("https")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "https", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "https", agent);
-      });
+    ["http", "https"].forEach((module) => {
+      hooks
+        .addBuiltinModule(module)
+        .addSubject((exports) => exports)
+        .modifyArguments("Server", (args, subject, agent) => {
+          return this.wrapRequestListener(args, module, agent);
+        })
+        .modifyArguments("createServer", (args, subject, agent) => {
+          return this.wrapRequestListener(args, module, agent);
+        })
+        .inspectNewInstance("createServer")
+        .addSubject((exports) => exports)
+        .modifyArguments("on", (args, subject, agent) => {
+          return this.wrapOn(args, module, agent);
+        });
+    });
   }
 }
