@@ -22,10 +22,7 @@ function createLineFilter(libraryRoot: string) {
   );
 
   return function lineFilter(line: string) {
-    if (
-      line.includes("cleanupStackTrace(") &&
-      line.includes("new Error().stack!")
-    ) {
+    if (line.includes("cleanupStackTrace") && line.includes("new Error")) {
       return false;
     }
 
