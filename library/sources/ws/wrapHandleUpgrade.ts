@@ -26,16 +26,6 @@ export function wrapHandleUpgradeCallback(handler: any, agent: Agent): any {
         return socket.close(3000, "You are blocked by Aikido firewall.");
       }
 
-      const result = shouldRateLimitRequest(context, agent);
-      if (result.block) {
-        let message = "You are rate limited by Aikido firewall.";
-        if (result.trigger === "ip") {
-          message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-        }
-
-        return socket.close(3000, message);
-      }
-
       const methodNames = [
         "on",
         "once",
@@ -52,7 +42,7 @@ export function wrapHandleUpgradeCallback(handler: any, agent: Agent): any {
           continue;
         }
         // @ts-expect-error keyof does not exclude readonly properties
-        socket[key] = wrapSocketEvent(socket[key], socket);
+        socket[key] = wrapSocketEvent(socket[key], socket, agent);
       }
 
       return handler(socket, request);

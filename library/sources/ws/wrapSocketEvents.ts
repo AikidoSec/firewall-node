@@ -3,8 +3,13 @@ import { AsyncResource } from "async_hooks";
 import { Context, getContext } from "../../agent/Context";
 import type { WebSocket } from "ws";
 import { getMaxBodySize } from "../../helpers/getMaxBodySize";
+import { Agent } from "../../agent/Agent";
 
-export function wrapSocketEvent(handler: any, socket: WebSocket): any {
+export function wrapSocketEvent(
+  handler: any,
+  socket: WebSocket,
+  agent: Agent
+): any {
   return function wrapped() {
     const applyHandler = (args: unknown[] | undefined = undefined) => {
       return handler.apply(
@@ -29,7 +34,7 @@ export function wrapSocketEvent(handler: any, socket: WebSocket): any {
       typeof args[1] === "function"
     ) {
       args[1] = AsyncResource.bind(
-        wrapSocketEventHandler(args[0], args[1], socket)
+        wrapSocketEventHandler(args[0], args[1], socket, agent)
       );
 
       return applyHandler(args);
@@ -42,7 +47,8 @@ export function wrapSocketEvent(handler: any, socket: WebSocket): any {
 function wrapSocketEventHandler(
   event: string,
   handler: any,
-  socket: WebSocket
+  socket: WebSocket,
+  agent: Agent
 ): any {
   return async function wrappedHandler() {
     const applyHandler = () => {
@@ -62,13 +68,13 @@ function wrapSocketEventHandler(
     // Events with data
     if (event === "message" || event === "ping" || event === "pong") {
       // eslint-disable-next-line prefer-rest-params
-      await onWsData(Array.from(arguments), context, socket);
+      await onWsData(Array.from(arguments), context, socket, agent);
     }
 
     // eslint-disable-next-line prefer-rest-params
     if (event === "close" && arguments.length > 1) {
       // eslint-disable-next-line prefer-rest-params
-      await onWsData([arguments[1]], context, socket);
+      await onWsData([arguments[1]], context, socket, agent);
     }
 
     return applyHandler();
@@ -129,7 +135,8 @@ function checkWsDataSize(data: WsData) {
 export async function onWsData(
   args: any[],
   context: Context,
-  socket?: WebSocket
+  socket?: WebSocket,
+  agent?: Agent
 ) {
   if (!args.length) {
     return;
@@ -155,17 +162,17 @@ export async function onWsData(
       if (typeof messageStr !== "string" || messageStr.includes("\uFFFD")) {
         return;
       }
-    } // Handle ArrayBuffer or Buffer
+    } // Decode ArrayBuffer or Buffer to string if it is valid utf-8 (or ascii)
     else if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
       const decoder = new TextDecoder("utf-8", {
-        fatal: true,
+        fatal: true, // Throw error if buffer is not valid utf-8
       });
 
       messageStr = decoder.decode(data);
     } //Check if is string
     else if (typeof data === "string") {
       messageStr = data;
-    } // Check if is array of Buffers
+    } // Check if is array of Buffers, concat and decode
     else if (isBufferArray(data)) {
       // @ts-expect-error Typescript does not detect that data can not be an blob because of the global.Blob check required for Node.js 16
       const concatenatedBuffer = Buffer.concat(data);
@@ -179,7 +186,13 @@ export async function onWsData(
       return;
     }
   } catch (e) {
-    // Ignore
+    if (agent) {
+      if (e instanceof Error) {
+        agent.log(`Failed to parse WebSocket message: ${e.message}`);
+      } else {
+        agent.log(`Failed to parse WebSocket message`);
+      }
+    }
     return;
   }
 
