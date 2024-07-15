@@ -113,7 +113,7 @@ export async function onWsData(
     // Handle Blob
     if (global.Blob && data instanceof Blob) {
       if (data.size > maxMsgSize) {
-        tooLargeError();
+        return tooLargeError();
       }
       messageStr = await data.text();
       if (typeof messageStr !== "string" || messageStr.includes("\uFFFD")) {
@@ -122,7 +122,7 @@ export async function onWsData(
     } // Handle ArrayBuffer or Buffer
     else if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
       if (data.byteLength > maxMsgSize) {
-        tooLargeError();
+        return tooLargeError();
       }
 
       const decoder = new TextDecoder("utf-8", {
@@ -133,14 +133,14 @@ export async function onWsData(
     } //Check if is string
     else if (typeof data === "string") {
       if (Buffer.byteLength(data, "utf8") > maxMsgSize) {
-        tooLargeError();
+        return tooLargeError();
       }
       messageStr = data;
     } // Check if is array of Buffers
     else if (Array.isArray(data) && data.every((d) => Buffer.isBuffer(d))) {
       const concatenatedBuffer = Buffer.concat(data);
       if (concatenatedBuffer.byteLength > maxMsgSize) {
-        tooLargeError();
+        return tooLargeError();
       }
       const decoder = new TextDecoder("utf-8", {
         fatal: true,

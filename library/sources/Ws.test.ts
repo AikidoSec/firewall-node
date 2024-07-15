@@ -185,7 +185,7 @@ t.test("Connect to WebSocket server and get context", (t) => {
 });
 
 t.test("Connect to WebSocket server and send json object", (t) => {
-  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}/path?test=abc`);
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -200,6 +200,8 @@ t.test("Connect to WebSocket server and send json object", (t) => {
 
     t.match(context, {
       ...getExpectedContext(testServer1.port),
+      url: "/path?test=abc",
+      query: { test: "abc" },
       ws: { test: "test1" },
     });
 
@@ -209,7 +211,11 @@ t.test("Connect to WebSocket server and send json object", (t) => {
 });
 
 t.test("Connect to WebSocket server and send buffer", (t) => {
-  const ws = new WebSocket(`ws://localhost:${testServer1.port}`);
+  const ws = new WebSocket(`ws://localhost:${testServer1.port}`, {
+    headers: {
+      cookie: "test=cookievalue",
+    },
+  });
 
   ws.on("error", (err) => {
     t.fail(err);
@@ -225,6 +231,7 @@ t.test("Connect to WebSocket server and send buffer", (t) => {
     t.match(context, {
       ...getExpectedContext(testServer1.port),
       ws: "test-buffer",
+      cookies: { test: "cookievalue" },
     });
 
     ws.close();
@@ -338,7 +345,7 @@ t.test(
   }
 );
 
-// We use the function directly to test because the websocket client converts blobs to array buffers
+// We use the function directly to test because the websocket client converts blobs to array buffers (depending on the version?)
 t.test(
   "Pass text blob to onMessageEvent",
   { skip: !global.Blob ? "Blob is not available" : false },
@@ -376,6 +383,23 @@ t.test(
   }
 );
 
+t.test(
+  "Pass too large blob to onMessageEvent",
+  { skip: !global.Blob ? "Blob is not available" : false },
+  async (t) => {
+    const context = {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+    } as Context;
+    await onWsData([new Blob(["a".repeat(2 * 1024 * 1024)])], context);
+    t.match(context, {
+      ...getExpectedContext(testServer1.port),
+      remoteAddress: "",
+      ws: undefined,
+    });
+  }
+);
+
 t.test("Pass buffer array to onMessageEvent", async (t) => {
   const context = {
     ...getExpectedContext(testServer1.port),
@@ -401,6 +425,19 @@ t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
     [[Buffer.from("test-buffer-1"), Buffer.from([0x80, 0x81, 0x82, 0x83])]],
     context
   );
+  t.match(context, {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+    ws: undefined,
+  });
+});
+
+t.test("Pass too large buffer array to onMessageEvent", async (t) => {
+  const context = {
+    ...getExpectedContext(testServer1.port),
+    remoteAddress: "",
+  } as Context;
+  await onWsData([[Buffer.from("a".repeat(2 * 1024 * 1024))]], context);
   t.match(context, {
     ...getExpectedContext(testServer1.port),
     remoteAddress: "",

@@ -59,6 +59,10 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ Google Cloud Functions
 * ✅ AWS Lambda
 
+### Real time communication
+
+* ✅ [`ws`](https://www.npmjs.com/package/ws) 8.x, 7.x
+
 ### ORMs and query builders
 
 See list above for supported database drivers.
