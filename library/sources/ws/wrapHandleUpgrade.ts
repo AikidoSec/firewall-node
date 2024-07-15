@@ -7,7 +7,7 @@ import { wrapSocketEvent } from "./wrapSocketEvents";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { escapeHTML } from "../../helpers/escapeHTML";
 
-export function wrapConnectionHandler(handler: any, agent: Agent): any {
+export function wrapHandleUpgradeCallback(handler: any, agent: Agent): any {
   return async (socket: WebSocket, request: IncomingMessage) => {
     const context = contextFromConnection(request);
 

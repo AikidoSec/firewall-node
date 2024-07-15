@@ -48,7 +48,7 @@ import { AddressInfo } from "net";
 // Method to run a sample WebSocket server with different configurations
 function runServer(
   useHttpServer: boolean,
-  eventListenerType: "on" | "addEventListener" | "onlong" = "on",
+  eventListenerType: "on" | "addEventListener" | "onlong" | "once" = "on",
   customUpgrade = false
 ) {
   let wss: WebSocketServer;
@@ -99,6 +99,8 @@ function runServer(
 
   if (eventListenerType === "addEventListener") {
     wss.addListener("connection", onEvent);
+  } else if (eventListenerType === "once") {
+    wss.once("connection", onEvent);
   } else {
     wss.on("connection", onEvent);
   }
@@ -746,5 +748,55 @@ t.test("Test rate limiting on WebSocket server - 3rd request", (t) => {
     t.same(res.statusMessage, "Too Many Requests");
     testServer5.close();
     t.end();
+  });
+});
+
+// Check once
+const testServer6 = runServer(false, "once", false);
+
+t.test("Send message to WebSocket server using once", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer6.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnce");
+  });
+
+  ws.on("message", (data) => {
+    const context = JSON.parse(data.toString());
+
+    t.match(context, {
+      ...getExpectedContext(testServer6.port),
+      ws: "getContextOnce",
+    });
+    t.match(context.remoteAddress, /(::ffff:127\.0\.0\.1|127\.0\.0\.1|::1)/);
+
+    ws.close();
+    t.end();
+  });
+});
+
+t.test("Send message to WebSocket server using once - 2nd request", (t) => {
+  const ws = new WebSocket(`ws://localhost:${testServer6.port}`);
+
+  ws.on("error", (err) => {
+    t.fail(err);
+  });
+
+  ws.on("open", () => {
+    ws.send("getContextOnce");
+
+    setTimeout(() => {
+      ws.close();
+      testServer6.close();
+      t.end();
+    }, 150);
+  });
+
+  ws.on("message", (data) => {
+    t.fail("Should not receive message");
   });
 });
