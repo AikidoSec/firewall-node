@@ -18,7 +18,7 @@ node --require @aikidosec/firewall ./node_modules/.bin/micro
 
 That's it! Your app is now protected by Aikido firewall.
 
-If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
+If you want to see a full example, check our [micro sample app](../sample-apps/micro).
 
 ## Blocking mode
 
