@@ -1,5 +1,12 @@
 require("dotenv").config();
 require("@aikidosec/firewall");
+const Sentry = require("@sentry/node");
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  debug: true,
+  tracesSampleRate: 1.0,
+});
 
 const Cats = require("./Cats");
 const express = require("express");
@@ -52,6 +59,7 @@ async function main(port) {
 
   const app = express();
 
+  app.use(Sentry.Handlers.requestHandler());
   app.use(morgan("tiny"));
 
   app.get(
@@ -69,9 +77,7 @@ async function main(port) {
     "/cats",
     express.text({ type: "application/xml" }),
     asyncHandler(async (req, res) => {
-      console.log(req.body);
       const input = xml2js(req.body, { compact: true });
-      console.log(input);
 
       if (!input || !input.cat || !input.cat.name || !input.cat.name._text) {
         return res
@@ -86,6 +92,8 @@ async function main(port) {
       res.redirect("/");
     })
   );
+
+  app.use(Sentry.Handlers.errorHandler());
 
   return new Promise((resolve, reject) => {
     try {

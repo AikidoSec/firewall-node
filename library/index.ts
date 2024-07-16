@@ -1,3 +1,7 @@
-import { protect } from "./agent/protect";
+import isFirewallSupported from "./helpers/isFirewallSupported";
 
-protect();
+const supported = isFirewallSupported();
+
+if (supported) {
+  require("./agent/protect").protect();
+}
