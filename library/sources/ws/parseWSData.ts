@@ -1,8 +1,8 @@
-import type { WebSocket } from "ws";
+/* eslint-disable max-lines-per-function */
 import { Agent } from "../../agent/Agent";
 import { getMaxBodySize } from "../../helpers/getMaxBodySize";
 
-export type WsData = ArrayBuffer | Blob | Buffer | Buffer[] | string;
+type WsData = ArrayBuffer | Blob | Buffer | Buffer[] | string;
 
 /**
  * If the ws event arg is an event object, extract the data from it
