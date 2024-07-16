@@ -40,7 +40,7 @@ setInstance(agent);
 process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
 
 import { WebSocketServer, WebSocket } from "ws";
-import { Context, getContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { createServer, Server } from "http";
 import { parseWsData } from "./ws/parseWSData";
 import { AddressInfo } from "net";
@@ -402,6 +402,18 @@ t.test("Pass too large buffer array to onMessageEvent", async (t) => {
   ]);
   t.same(result.data, undefined);
   t.same(result.tooLarge, true);
+});
+
+t.test("Pass no data to onMessageEvent", async (t) => {
+  const result = await parseWsData([]);
+  t.same(result.data, undefined);
+  t.same(result.tooLarge, false);
+});
+
+t.test("Pass unsupported data to onMessageEvent", async (t) => {
+  const result = await parseWsData([new Date()]);
+  t.same(result.data, undefined);
+  t.same(result.tooLarge, false);
 });
 
 t.test("Pass unexpected data to onMessageEvent is ignored", async (t) => {

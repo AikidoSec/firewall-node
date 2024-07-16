@@ -57,7 +57,7 @@ export async function parseWsData(
   args: any[],
   agent?: Agent
 ): Promise<{ data: string | object | undefined; tooLarge: boolean }> {
-  if (!args.length) {
+  if (!args || !args.length) {
     return { data: undefined, tooLarge: false };
   }
   const data = extractWsDataFromEvent(args[0]);
