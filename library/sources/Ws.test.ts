@@ -42,7 +42,7 @@ process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
 import { WebSocketServer, WebSocket } from "ws";
 import { Context, getContext } from "../agent/Context";
 import { createServer, Server } from "http";
-import { onWsData } from "./ws/wrapSocketEvents";
+import { parseWsData } from "./ws/parseWSData";
 import { AddressInfo } from "net";
 
 // Method to run a sample WebSocket server with different configurations
@@ -352,16 +352,9 @@ t.test(
   "Pass text blob to onMessageEvent",
   { skip: !global.Blob ? "Blob is not available" : false },
   async (t) => {
-    const context = {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-    } as Context;
-    await onWsData([new Blob(["test-blob"])], context);
-    t.same(context, {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-      ws: "test-blob",
-    });
+    const result = await parseWsData([new Blob(["test-blob"])]);
+    t.same(result.data, "test-blob");
+    t.same(result.tooLarge, false);
   }
 );
 
@@ -369,19 +362,11 @@ t.test(
   "Pass binary blob to onMessageEvent",
   { skip: !global.Blob ? "Blob is not available" : false },
   async (t) => {
-    const context = {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-    } as Context;
-    await onWsData(
-      [new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])])],
-      context
-    );
-    t.match(context, {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-      ws: undefined,
-    });
+    const result = await parseWsData([
+      new Blob([new Uint8Array([0x80, 0x81, 0x82, 0x83])]),
+    ]);
+    t.same(result.data, undefined);
+    t.same(result.tooLarge, false);
   }
 );
 
@@ -389,78 +374,42 @@ t.test(
   "Pass too large blob to onMessageEvent",
   { skip: !global.Blob ? "Blob is not available" : false },
   async (t) => {
-    const context = {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-    } as Context;
-    await onWsData([new Blob(["a".repeat(2 * 1024 * 1024)])], context);
-    t.match(context, {
-      ...getExpectedContext(testServer1.port),
-      remoteAddress: "",
-      ws: undefined,
-    });
+    const result = await parseWsData([new Blob(["a".repeat(2 * 1024 * 1024)])]);
+    t.same(result.data, undefined);
+    t.same(result.tooLarge, true);
   }
 );
 
 t.test("Pass buffer array to onMessageEvent", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData(
-    [[Buffer.from("test-buffer-1"), Buffer.from("test-buffer-2")]],
-    context
-  );
-  t.match(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: "test-buffer-1test-buffer-2",
-  });
+  const result = await parseWsData([
+    [Buffer.from("test-buffer-1"), Buffer.from("test-buffer-2")],
+  ]);
+  t.same(result.data, "test-buffer-1test-buffer-2");
+  t.same(result.tooLarge, false);
 });
 
 t.test("Pass buffer array with non utf-8 to onMessageEvent", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData(
-    [[Buffer.from("test-buffer-1"), Buffer.from([0x80, 0x81, 0x82, 0x83])]],
-    context
-  );
-  t.match(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: undefined,
-  });
+  const result = await parseWsData([
+    [Buffer.from("test-buffer-1"), Buffer.from([0x80, 0x81, 0x82, 0x83])],
+  ]);
+  t.same(result.data, undefined);
+  t.same(result.tooLarge, false);
 });
 
 t.test("Pass too large buffer array to onMessageEvent", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData([[Buffer.from("a".repeat(2 * 1024 * 1024))]], context);
-  t.match(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: undefined,
-  });
+  const result = await parseWsData([
+    [Buffer.from("a".repeat(2 * 1024 * 1024))],
+  ]);
+  t.same(result.data, undefined);
+  t.same(result.tooLarge, true);
 });
 
 t.test("Pass unexpected data to onMessageEvent is ignored", async (t) => {
-  const context = {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-  } as Context;
-  await onWsData(
-    [[new Date(), 123, { test: "test" }, null, undefined]],
-    context
-  );
-  t.match(context, {
-    ...getExpectedContext(testServer1.port),
-    remoteAddress: "",
-    ws: undefined,
-  });
+  const result = await parseWsData([
+    [new Date(), 123, { test: "test" }, null, undefined],
+  ]);
+  t.same(result.data, undefined);
+  t.same(result.tooLarge, false);
 });
 
 t.test("Send ping with data to WebSocket server", (t) => {
