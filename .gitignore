@@ -12,7 +12,7 @@ yarn-error.log*
 .tap
 
 # Dependency directories
-node_modules/
+node_modules
 ../package-lock.json
 
 # Built files
