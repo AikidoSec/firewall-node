@@ -5,7 +5,7 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/firewall": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.48.0",
     "cookie-parser": "^1.4.6",
@@ -14,5 +14,10 @@
     "express-async-handler": "^1.2.0",
     "mongodb": "^6.8.0",
     "morgan": "^1.10.0"
+  },
+  "dependenciesMeta": {
+    "@aikidosec/firewall": {
+      "injected": true
+    }
   }
 }
