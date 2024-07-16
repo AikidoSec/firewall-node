@@ -4,35 +4,47 @@ containers:
 
 .PHONY: express-mongodb
 express-mongodb:
-	cd sample-apps/express-mongodb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-mongodb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-mongoose
 express-mongoose:
-	cd sample-apps/express-mongoose && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-mongoose && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-postgres
 express-postgres:
-	cd sample-apps/express-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-mysql
 express-mysql:
-	cd sample-apps/express-mysql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-mysql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-mysql2
 express-mysql2:
-	cd sample-apps/express-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-mariadb
 express-mariadb:
-	cd sample-apps/express-mariadb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-mariadb && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-path-traversal
 express-path-traversal:
-	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-path-traversal && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: express-graphql
 express-graphql:
-	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+	cd sample-apps/express-graphql && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
+.PHONY: hono-xml
+hono-xml:
+	cd sample-apps/hono-xml && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
+.PHONY: hono-sqlite3
+hono-sqlite3:
+	cd sample-apps/hono-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
+.PHONY: hapi-postgres
+hapi-postgres:
+	cd sample-apps/hapi-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
@@ -42,24 +54,15 @@ lambda-mongodb-nosql-injection:
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/safe-request.json
 
-.PHONY: hono-xml
-hono-xml:
-	cd sample-apps/hono-xml && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
-
-.PHONY: hono-sqlite3
-hono-sqlite3:
-	cd sample-apps/hono-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
-
-.PHONY: hapi-postgres
-hapi-postgres:
-	cd sample-apps/hapi-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
-
 .PHONY: install
 install:
 	mkdir -p build && cp library/package.json build/package.json
 	touch build/index.js
-	npm install --workspaces || true
-	npm install --workspaces
+	cd build && npm link
+	npm install
+	cd library && npm install
+	cd end2end && npm install
+	node scripts/install.js
 
 .PHONY: build
 build:
@@ -91,6 +94,6 @@ end2end:
 	cd end2end && npm run test
 
 benchmark: build
-	cd benchmarks/nosql-injection && node benchmark.js
-	cd benchmarks/shell-injection && node benchmark.js
-	cd benchmarks/sql-injection && node benchmark.js
+	cd benchmarks/nosql-injection && node --preserve-symlinks benchmark.js
+	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
+	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js

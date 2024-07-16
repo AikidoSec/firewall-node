@@ -1,0 +1,46 @@
+{
+  "/Users/hansott/Code/node-RASP/sample-apps/lambda-mongodb": {
+    "versionSfCore": null,
+    "versionFramework": "4.0.26",
+    "isWithinCompose": false,
+    "composeOrgName": null,
+    "servicePath": "/Users/hansott/Code/node-RASP/sample-apps/lambda-mongodb",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "lambda-mongodb",
+      "frameworkVersion": "3",
+      "useDotenv": true,
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x"
+      },
+      "functions": {
+        "login": {
+          "handler": "index.handler",
+          "events": [
+            {
+              "httpApi": {
+                "path": "/",
+                "method": "post"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "serviceRawFile": "service: lambda-mongodb\nframeworkVersion: '3'\n\nuseDotenv: true\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n\nfunctions:\n  login:\n    handler: index.handler\n    events:\n      - httpApi:\n          path: /\n          method: post\n",
+    "command": [],
+    "options": {
+      "help": true
+    },
+    "error": {
+      "message": "You must sign in or use a license key with Serverless Framework V.4 and later versions. Please use \"serverless login\".",
+      "stack": "Error: You must sign in or use a license key with Serverless Framework V.4 and later versions. Please use \"serverless login\".\n    at getAuthenticatedData (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/utils/auth/index.js:109:13)\n    at authenticate2 (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/lib/resolvers/dashboard.js:39:10)\n    at Object.resolveServiceConfig (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/lib/resolvers/index.js:137:29)\n    at <anonymous> (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/lib/router.js:83:14)\n    at route (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/lib/router.js:81:28)\n    at Object.run2 (/Users/hansott/.serverless/releases/4.0.26/sf-core/src/index.js:34:3)\n    at Object.handler (/Users/hansott/.serverless/releases/4.0.26/sf-core/bin/sf-core.js:217:11)"
+    },
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}
