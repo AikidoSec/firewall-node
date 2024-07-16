@@ -35,7 +35,7 @@ function isBufferArray(data: WsData): boolean {
   return Array.isArray(data) && data.every((d) => Buffer.isBuffer(d));
 }
 
-function checkWsDataSize(data: WsData) {
+function isMessageDataTooLarge(data: WsData) {
   const maxMsgSize = getMaxBodySize();
   let size = -1;
 
@@ -64,7 +64,7 @@ export async function parseWsData(
   let messageStr: string | undefined;
 
   try {
-    const tooLarge = checkWsDataSize(data);
+    const tooLarge = isMessageDataTooLarge(data);
     if (tooLarge) {
       return { data: undefined, tooLarge: true };
     }
