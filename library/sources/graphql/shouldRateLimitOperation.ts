@@ -3,6 +3,7 @@ import { FieldNode } from "graphql";
 import { Agent } from "../../agent/Agent";
 import { Endpoint } from "../../agent/Config";
 import { Context } from "../../agent/Context";
+import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import { extractTopLevelFieldsFromDocument } from "./extractTopLevelFieldsFromDocument";
 
 type Result =
@@ -44,13 +45,28 @@ export function shouldRateLimitOperation(
     return { block: false };
   }
 
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Allow requests from localhost in development to be rate limited
+  // In production, we don't want to rate limit localhost
+  const isFromLocalhostInProduction = context.remoteAddress
+    ? isLocalhostIP(context.remoteAddress) && isProduction
+    : false;
+
+  // Allow requests from allowed IPs, e.g. never rate limit office IPs
+  const isAllowedIP = context.remoteAddress
+    ? agent.getConfig().isAllowedIP(context.remoteAddress)
+    : false;
+
   for (const field of topLevelFields.fields) {
     const result = shouldRateLimitField(
       agent,
       context,
       field,
       topLevelFields.type,
-      match.endpoint.graphql
+      match.endpoint.graphql,
+      isFromLocalhostInProduction,
+      isAllowedIP
     );
 
     if (result.block) {
@@ -67,7 +83,9 @@ function shouldRateLimitField(
   context: Context,
   field: FieldNode,
   operationType: "query" | "mutation",
-  graphql: NonNullable<Endpoint["graphql"]>
+  graphql: NonNullable<Endpoint["graphql"]>,
+  isFromLocalhostInProduction: boolean,
+  isAllowedIP: boolean
 ): Result {
   const rateLimitedField = graphql.fields.find(
     (f) => f.name === field.name.value && f.type === operationType
@@ -81,7 +99,7 @@ function shouldRateLimitField(
     return { block: false };
   }
 
-  if (context.remoteAddress) {
+  if (context.remoteAddress && !isFromLocalhostInProduction && !isAllowedIP) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
