@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("@aikidosec/firewall");
 
 const express = require("express");

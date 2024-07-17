@@ -5,10 +5,10 @@ import type {
   OperationDefinitionNode,
 } from "graphql";
 
-type Result =
+export type Result =
   | undefined
-  | { type: "query"; fields: string[] }
-  | { type: "mutation"; fields: string[] };
+  | { type: "query"; fields: FieldNode[] }
+  | { type: "mutation"; fields: FieldNode[] };
 
 export function extractTopLevelFieldsFromDocument(
   document: DocumentNode,
@@ -38,9 +38,7 @@ export function extractTopLevelFieldsFromDocument(
 }
 
 function extractFields(node: OperationDefinitionNode): Result {
-  const fields = node.selectionSet.selections
-    .filter(isField)
-    .map((selection) => selection.name.value);
+  const fields = node.selectionSet.selections.filter(isField);
 
   if (node.operation === "query") {
     return {

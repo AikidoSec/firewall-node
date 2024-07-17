@@ -1,6 +1,20 @@
 import * as t from "tap";
-import { parse } from "graphql";
-import { extractTopLevelFieldsFromDocument } from "./extractTopLevelFieldsFromDocument";
+import { parse, FieldNode } from "graphql";
+import {
+  extractTopLevelFieldsFromDocument,
+  Result,
+} from "./extractTopLevelFieldsFromDocument";
+
+function convert(result: Result) {
+  if (!result) {
+    return result;
+  }
+
+  return {
+    type: result.type,
+    fields: result.fields.map((field) => field.name.value),
+  };
+}
 
 t.test("it extract field names from query", async () => {
   const document = parse(`
@@ -12,12 +26,15 @@ t.test("it extract field names from query", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, undefined)), {
     type: "query",
     fields: ["user"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "unknown"), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, "unknown")),
+    undefined
+  );
 });
 
 t.test("it extract field names from query", async () => {
@@ -34,7 +51,7 @@ t.test("it extract field names from query", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, undefined)), {
     type: "query",
     fields: ["user", "account"],
   });
@@ -57,19 +74,25 @@ t.test("it extract field names from query with multiple queries", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, undefined)),
+    undefined
+  );
 
-  t.same(extractTopLevelFieldsFromDocument(document, "getUser"), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, "getUser")), {
     type: "query",
     fields: ["user"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "getAccount"), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, "getAccount")), {
     type: "query",
     fields: ["account"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "unknown"), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, "unknown")),
+    undefined
+  );
 });
 
 t.test("it extract field names from query (without query)", async () => {
@@ -82,12 +105,15 @@ t.test("it extract field names from query (without query)", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, undefined)), {
     type: "query",
     fields: ["user"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "unknown"), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, "unknown")),
+    undefined
+  );
 });
 
 t.test("it extract field names from mutation", async () => {
@@ -100,12 +126,15 @@ t.test("it extract field names from mutation", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, undefined)), {
     type: "mutation",
     fields: ["user"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "unknown"), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, "unknown")),
+    undefined
+  );
 });
 
 t.test("it extract field names from mutation", async () => {
@@ -118,14 +147,17 @@ t.test("it extract field names from mutation", async () => {
     }
   `);
 
-  t.same(extractTopLevelFieldsFromDocument(document, undefined), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, undefined)), {
     type: "mutation",
     fields: ["addUser"],
   });
 
-  t.same(extractTopLevelFieldsFromDocument(document, "unknown"), undefined);
+  t.same(
+    convert(extractTopLevelFieldsFromDocument(document, "unknown")),
+    undefined
+  );
 
-  t.same(extractTopLevelFieldsFromDocument(document, "addUser"), {
+  t.same(convert(extractTopLevelFieldsFromDocument(document, "addUser")), {
     type: "mutation",
     fields: ["addUser"],
   });

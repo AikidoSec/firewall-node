@@ -1,11 +1,15 @@
 /* eslint-disable prefer-rest-params */
+import { GraphQLError } from "graphql/index";
 import { Agent } from "../agent/Agent";
+import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import type { ExecutionArgs } from "graphql/execution/execute";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
 import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
+import { wrap } from "../helpers/wrap";
 
 export class GraphQL implements Wrapper {
   private inspectGraphQLExecute(
@@ -35,7 +39,7 @@ export class GraphQL implements Wrapper {
           context.method,
           context.route,
           topLevelFields.type,
-          topLevelFields.fields
+          topLevelFields.fields.map((field) => field.name.value)
         );
       }
     }
@@ -62,12 +66,90 @@ export class GraphQL implements Wrapper {
     }
   }
 
+  private createExecuteWrapper(original: Function) {
+    const { GraphQLError } = require("graphql");
+
+    return function wrappedExecute() {
+      const context = getContext();
+      const agent = getInstance();
+
+      if (!context || !agent) {
+        return original.apply(this, arguments);
+      }
+
+      const args = Array.from(arguments);
+
+      if (!Array.isArray(args) || !isPlainObject(args[0])) {
+        return original.apply(this, arguments);
+      }
+
+      const match = agent.getConfig().getEndpoint(context);
+
+      if (!match || !match.endpoint.graphql) {
+        return original.apply(this, arguments);
+      }
+
+      const executeArgs = args[0] as unknown as ExecutionArgs;
+      const topLevelFields = extractTopLevelFieldsFromDocument(
+        executeArgs.document,
+        executeArgs.operationName ? executeArgs.operationName : undefined
+      );
+
+      if (!topLevelFields) {
+        return original.apply(this, arguments);
+      }
+
+      for (const field of topLevelFields.fields) {
+        const rateLimitedField = match.endpoint.graphql.fields.find(
+          (f) => f.name === field.name.value && f.type === topLevelFields.type
+        );
+
+        if (
+          rateLimitedField &&
+          rateLimitedField.rateLimiting &&
+          rateLimitedField.rateLimiting.enabled
+        ) {
+          const allowed = agent
+            .getRateLimiter()
+            .isAllowed(
+              `${context.method}:${context.route}:ip:${context.remoteAddress}:${topLevelFields.type}:${field.name.value}`,
+              rateLimitedField.rateLimiting.windowSizeInMS,
+              rateLimitedField.rateLimiting.maxRequests
+            );
+
+          if (!allowed) {
+            return {
+              errors: [
+                new GraphQLError("You are rate limited by Aikido firewall.", {
+                  nodes: [field],
+                  extensions: {
+                    code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
+                    ipAddress: context.remoteAddress,
+                  },
+                }),
+              ],
+            };
+          }
+        }
+      }
+
+      return original.apply(this, arguments);
+    };
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("graphql")
       .withVersion("^16.0.0")
       .addFile("execution/execute.js")
-      .addSubject((exports) => exports)
+      .addSubject((exports) => {
+        // We don't have a hook yet to modify the return value of a function
+        // We need to refactor this system to allow for that
+        // For now, we'll wrap the execute function manually
+        wrap(exports, "execute", this.createExecuteWrapper);
+
+        return exports;
+      })
       .inspect("execute", this.inspectGraphQLExecute)
       .inspect("executeSync", this.inspectGraphQLExecute);
   }
