@@ -5,7 +5,7 @@ export class Routes {
       method: string;
       path: string;
       hits: number;
-      graphQLFields: { type: "query" | "mutation"; name: string }[];
+      graphql: { fields: { type: "query" | "mutation"; name: string }[] };
     }
   > = new Map();
 
@@ -24,7 +24,7 @@ export class Routes {
       this.evictLeastUsedRoute();
     }
 
-    this.routes.set(key, { method, path, hits: 1, graphQLFields: [] });
+    this.routes.set(key, { method, path, hits: 1, graphql: { fields: [] } });
   }
 
   private getKey(method: string, path: string) {
@@ -40,8 +40,13 @@ export class Routes {
     const key = this.getKey(method, path);
     const route = this.routes.get(key);
 
-    if (route && !route.graphQLFields.some((field) => field.name === name)) {
-      route.graphQLFields.push({ type, name });
+    if (
+      route &&
+      !route.graphql.fields.some(
+        (field) => field.name === name && field.type === type
+      )
+    ) {
+      route.graphql.fields.push({ type, name });
     }
   }
 
@@ -71,6 +76,7 @@ export class Routes {
         method: route.method,
         path: route.path,
         hits: route.hits,
+        graphql: route.graphql,
       };
     });
   }
