@@ -1,4 +1,8 @@
-import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
+import {
+  LimitedContext,
+  matchEndpoint,
+  Matcher,
+} from "../helpers/matchEndpoint";
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
@@ -20,8 +24,8 @@ export class ServiceConfig {
     });
   }
 
-  getEndpoint(context: LimitedContext) {
-    return matchEndpoint(context, this.endpoints);
+  getEndpoint(context: LimitedContext, matcher: Matcher) {
+    return matchEndpoint(context, this.endpoints, matcher);
   }
 
   isAllowedIP(ip: string) {

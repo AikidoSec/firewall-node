@@ -4,7 +4,13 @@ import { tryParseURLPath } from "./tryParseURLPath";
 
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
-export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
+export type Matcher = (endpoint: Endpoint) => boolean;
+
+export function matchEndpoint(
+  context: LimitedContext,
+  endpoints: Endpoint[],
+  match: Matcher
+) {
   if (!context.method) {
     return undefined;
   }
@@ -18,7 +24,7 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
   });
 
   const endpoint = possible.find(
-    (endpoint) => endpoint.route === context.route
+    (endpoint) => endpoint.route === context.route && match(endpoint)
   );
 
   if (endpoint) {
@@ -50,7 +56,7 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
       "i"
     );
 
-    if (regex.test(path)) {
+    if (regex.test(path) && match(wildcard)) {
       return { endpoint: wildcard, route: wildcard.route };
     }
   }

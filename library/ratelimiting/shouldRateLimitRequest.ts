@@ -17,7 +17,12 @@ type Result =
 
 // eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const match = agent.getConfig().getEndpoint(context);
+  const match = agent
+    .getConfig()
+    .getEndpoint(
+      context,
+      (endpoint) => endpoint.rateLimiting && endpoint.rateLimiting.enabled
+    );
 
   if (!match) {
     return { block: false };
@@ -25,7 +30,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
   const { endpoint, route } = match;
 
-  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
+  if (!endpoint.rateLimiting) {
     return { block: false };
   }
 

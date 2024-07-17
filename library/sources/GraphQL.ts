@@ -1,5 +1,4 @@
 /* eslint-disable prefer-rest-params */
-import { GraphQLError } from "graphql/index";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
@@ -10,6 +9,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
 import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
 import { wrap } from "../helpers/wrap";
+import { shouldRateLimitOperation } from "./graphql/shouldRateLimitOperation";
 
 export class GraphQL implements Wrapper {
   private inspectGraphQLExecute(
@@ -34,6 +34,7 @@ export class GraphQL implements Wrapper {
         executeArgs.document,
         executeArgs.operationName ? executeArgs.operationName : undefined
       );
+
       if (topLevelFields) {
         agent.onGraphQLExecute(
           context.method,
@@ -69,7 +70,7 @@ export class GraphQL implements Wrapper {
   private createExecuteWrapper(original: Function) {
     const { GraphQLError } = require("graphql");
 
-    return function wrappedExecute() {
+    return function wrappedExecute(this: unknown) {
       const context = getContext();
       const agent = getInstance();
 
@@ -83,54 +84,24 @@ export class GraphQL implements Wrapper {
         return original.apply(this, arguments);
       }
 
-      const match = agent.getConfig().getEndpoint(context);
-
-      if (!match || !match.endpoint.graphql) {
-        return original.apply(this, arguments);
-      }
-
-      const executeArgs = args[0] as unknown as ExecutionArgs;
-      const topLevelFields = extractTopLevelFieldsFromDocument(
-        executeArgs.document,
-        executeArgs.operationName ? executeArgs.operationName : undefined
+      const result = shouldRateLimitOperation(
+        agent,
+        context,
+        args[0] as unknown as ExecutionArgs
       );
 
-      if (!topLevelFields) {
-        return original.apply(this, arguments);
-      }
-
-      for (const field of topLevelFields.fields) {
-        const rateLimitedField = match.endpoint.graphql.fields.find(
-          (f) => f.name === field.name.value && f.type === topLevelFields.type
-        );
-
-        if (
-          rateLimitedField &&
-          rateLimitedField.rateLimiting &&
-          rateLimitedField.rateLimiting.enabled
-        ) {
-          const allowed = agent
-            .getRateLimiter()
-            .isAllowed(
-              `${context.method}:${context.route}:ip:${context.remoteAddress}:${topLevelFields.type}:${field.name.value}`,
-              rateLimitedField.rateLimiting.windowSizeInMS,
-              rateLimitedField.rateLimiting.maxRequests
-            );
-
-          if (!allowed) {
-            return {
-              errors: [
-                new GraphQLError("You are rate limited by Aikido firewall.", {
-                  nodes: [field],
-                  extensions: {
-                    code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
-                    ipAddress: context.remoteAddress,
-                  },
-                }),
-              ],
-            };
-          }
-        }
+      if (result.block) {
+        return {
+          errors: [
+            new GraphQLError("You are rate limited by Aikido firewall.", {
+              nodes: [result.field],
+              extensions: {
+                code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
+                ipAddress: context.remoteAddress,
+              },
+            }),
+          ],
+        };
       }
 
       return original.apply(this, arguments);
