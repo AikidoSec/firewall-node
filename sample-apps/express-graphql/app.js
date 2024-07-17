@@ -10,8 +10,8 @@ const {
   GraphQLObjectType,
   GraphQLList,
   GraphQLInt,
-  graphql,
 } = require("graphql");
+const { createHandler } = require("graphql-http/lib/use/express");
 
 require("@aikidosec/firewall/nopp");
 
@@ -117,27 +117,7 @@ async function main() {
     res.send(getRootPage());
   });
 
-  app.post("/graphql", async (req, res) => {
-    try {
-      const query = req.body.query;
-      if (!query) {
-        res.status(400).send("No query provided");
-        return;
-      }
-
-      const variables = req.body.variables || {};
-      const result = await graphql({
-        schema,
-        source: query,
-        variableValues: variables,
-      });
-
-      res.json(result);
-    } catch (err) {
-      res.status(500).send();
-      console.error(err);
-    }
-  });
+  app.all("/graphql", createHandler({ schema }));
 
   app.listen(4000, () => {
     console.log("Listening on port 4000");

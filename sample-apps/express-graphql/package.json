@@ -8,7 +8,8 @@
     "@aikidosec/firewall": "file:../../build",
     "express": "^4.19.2",
     "graphql": "^16.8.2",
-    "mysql2": "^3.10.0",
-    "morgan": "^1.10.0"
+    "graphql-http": "^1.22.1",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.10.0"
   }
 }
