@@ -1,20 +1,43 @@
 /* eslint-disable prefer-rest-params */
+import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import type { ExecutionArgs } from "graphql/execution/execute";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
+import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
 
 export class GraphQL implements Wrapper {
-  private inspectGraphQLExecute(args: unknown[]): void {
+  private inspectGraphQLExecute(
+    args: unknown[],
+    subject: unknown,
+    agent: Agent
+  ): void {
     if (!Array.isArray(args) || typeof args[0] !== "object") {
       return;
     }
+
     const executeArgs = args[0] as ExecutionArgs;
     const context = getContext();
+
     if (!context) {
       // We expect the context to be set by the wrapped http server
       return;
+    }
+
+    if (context.method && context.route) {
+      const topLevelFields = extractTopLevelFieldsFromDocument(
+        executeArgs.document,
+        executeArgs.operationName ? executeArgs.operationName : undefined
+      );
+      if (topLevelFields) {
+        agent.onGraphQLExecute(
+          context.method,
+          context.route,
+          topLevelFields.type,
+          topLevelFields.fields
+        );
+      }
     }
 
     const userInputs = extractInputsFromDocument(executeArgs.document);
@@ -45,7 +68,7 @@ export class GraphQL implements Wrapper {
       .withVersion("^16.0.0")
       .addFile("execution/execute.js")
       .addSubject((exports) => exports)
-      .inspect("execute", (args) => this.inspectGraphQLExecute(args))
-      .inspect("executeSync", (args) => this.inspectGraphQLExecute(args));
+      .inspect("execute", this.inspectGraphQLExecute)
+      .inspect("executeSync", this.inspectGraphQLExecute);
   }
 }
