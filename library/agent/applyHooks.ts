@@ -4,6 +4,7 @@ import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
+import { escapeHTML } from "../helpers/escapeHTML";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
 import { getContext } from "./Context";
@@ -220,7 +221,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
+              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
             );
           }
         }
