@@ -122,7 +122,7 @@ t.test("it ignores non utf-8 Buffer", async () => {
   t.same(
     checkContextForPathTraversal({
       ...unsafeContext,
-      filename: Buffer.from([0x00, 0x01, 0x02]),
+      filename: Buffer.from([0x80, 0x81, 0x82, 0x83]),
     }),
     undefined
   );
