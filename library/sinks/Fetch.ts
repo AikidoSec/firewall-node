@@ -26,10 +26,16 @@ export class Fetch implements Wrapper {
       return undefined;
     }
 
+    // We'll set the outgoing request port in the context
+    // Its needed to prevent false positives when the hostname is the same but the port is different
+    // Because on inspectDNSLookupCalls we only have the hostname
+    context.outgoingReqPort = port;
+
     return checkContextForSSRF({
       hostname: hostname,
       operation: "fetch",
       context: context,
+      port: port,
     });
   }
 

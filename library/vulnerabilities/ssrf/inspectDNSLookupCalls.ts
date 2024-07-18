@@ -108,6 +108,9 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const port = context.outgoingReqPort;
+
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
@@ -116,7 +119,7 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const found = findHostnameInContext(hostname, context);
+    const found = findHostnameInContext(hostname, context, port);
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
@@ -159,13 +162,14 @@ type Location = {
 
 function findHostnameInContext(
   hostname: string,
-  context: Context
+  context: Context,
+  port: number | undefined
 ): Location | undefined {
   for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        const found = findHostnameInUserInput(str, hostname);
+        const found = findHostnameInUserInput(str, hostname, port);
         if (found) {
           return {
             source: source,
