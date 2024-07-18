@@ -1,11 +1,20 @@
 require("dotenv").config();
 require("@aikidosec/firewall");
+const Sentry = require("@sentry/node");
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  debug: true,
+  tracesSampleRate: 1.0,
+});
 
 const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const mysql = require("mysql");
+const { xml2js } = require("xml-js");
+const { escape } = require("./escape");
 
 require("@aikidosec/firewall/nopp");
 
@@ -50,6 +59,7 @@ async function main(port) {
 
   const app = express();
 
+  app.use(Sentry.Handlers.requestHandler());
   app.use(morgan("tiny"));
 
   app.get(
@@ -62,6 +72,28 @@ async function main(port) {
       res.send(getHTMLBody(await cats.getAll()));
     })
   );
+
+  app.post(
+    "/cats",
+    express.text({ type: "application/xml" }),
+    asyncHandler(async (req, res) => {
+      const input = xml2js(req.body, { compact: true });
+
+      if (!input || !input.cat || !input.cat.name || !input.cat.name._text) {
+        return res
+          .status(400)
+          .send(
+            `Invalid XML. Expected ${escape("<cat><name>...</name></cat>")}`
+          );
+      }
+
+      await cats.add(input.cat.name._text);
+
+      res.redirect("/");
+    })
+  );
+
+  app.use(Sentry.Handlers.errorHandler());
 
   return new Promise((resolve, reject) => {
     try {

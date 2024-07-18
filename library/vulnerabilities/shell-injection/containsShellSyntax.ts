@@ -28,6 +28,7 @@ const dangerousChars = [
   " ",
   "\n",
   "\t",
+  "~",
 ];
 
 const commands = [

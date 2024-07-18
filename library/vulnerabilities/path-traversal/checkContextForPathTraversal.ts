@@ -13,17 +13,19 @@ export function checkContextForPathTraversal({
   operation,
   context,
   checkPathStart = true,
+  isUrl = false,
 }: {
   filename: string;
   operation: string;
   context: Context;
   checkPathStart?: boolean;
+  isUrl?: boolean;
 }): InterceptorResult {
   for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        if (detectPathTraversal(filename, str, checkPathStart)) {
+        if (detectPathTraversal(filename, str, checkPathStart, isUrl)) {
           return {
             operation: operation,
             kind: "path_traversal",
