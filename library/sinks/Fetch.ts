@@ -8,6 +8,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { AikidoDispatcher } from "./undici/AikidoDispatcher";
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -25,11 +26,6 @@ export class Fetch implements Wrapper {
     if (!context) {
       return undefined;
     }
-
-    // We'll set the outgoing request port in the context
-    // Its needed to prevent false positives when the hostname is the same but the port is different
-    // Because on inspectDNSLookupCalls we only have the hostname
-    context.outgoingReqPort = port;
 
     return checkContextForSSRF({
       hostname: hostname,
@@ -95,7 +91,7 @@ export class Fetch implements Wrapper {
 
     try {
       // @ts-expect-error Type is not defined
-      globalThis[undiciGlobalDispatcherSymbol] = new dispatcher.constructor({
+      globalThis[undiciGlobalDispatcherSymbol] = new AikidoDispatcher({
         connect: {
           lookup: inspectDNSLookupCalls(lookup, agent, "fetch", "fetch"),
         },

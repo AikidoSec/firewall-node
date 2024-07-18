@@ -167,6 +167,9 @@ t.test("it works", (t) => {
     const google = https.request("https://google.com");
     google.end();
 
+    const localhostSafe = http.request("http://localhost:9876");
+    localhostSafe.end();
+
     // With string URL
     const error = t.throws(() =>
       https.request("https://localhost:4000/api/internal")

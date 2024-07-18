@@ -81,7 +81,7 @@ t.test(
     agent.getHostnames().clear();
 
     await runWithContext(context, async () => {
-      await fetch("https://google.com");
+      fetch("https://google.com");
 
       const error0 = await t.rejects(() => fetch("http://localhost:9876"));
       if (error0 instanceof Error) {

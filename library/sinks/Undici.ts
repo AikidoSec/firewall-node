@@ -13,6 +13,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { AikidoDispatcher } from "./undici/AikidoDispatcher";
 
 const methods = [
   "request",
@@ -40,11 +41,6 @@ export class Undici implements Wrapper {
     if (!context) {
       return undefined;
     }
-
-    // We'll set the outgoing request port in the context
-    // Its needed to prevent false positives when the hostname is the same but the port is different
-    // Because on inspectDNSLookupCalls we only have the hostname
-    context.outgoingReqPort = port;
 
     return checkContextForSSRF({
       hostname: hostname,
@@ -126,7 +122,7 @@ export class Undici implements Wrapper {
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(
-      new undici.Agent({
+      new AikidoDispatcher({
         connect: {
           lookup: inspectDNSLookupCalls(
             lookup,

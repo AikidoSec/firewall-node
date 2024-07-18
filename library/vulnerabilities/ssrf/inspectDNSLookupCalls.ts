@@ -9,6 +9,7 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
+import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -108,8 +109,13 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    let port: number | undefined;
+
     // This is set if this resolve is part of an outgoing request that we are inspecting
-    const port = context.outgoingReqPort;
+    const requestContext = RequestContextStorage.getStore();
+    if (requestContext) {
+      port = requestContext.port;
+    }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 

@@ -15,11 +15,12 @@ export function findHostnameInUserInput(
     return false;
   }
 
-  const variants = [userInput, `http://${userInput}`];
+  const variants = [userInput, `http://${userInput}`, `https://${userInput}`];
   for (const variant of variants) {
     const userInputURL = tryParseURL(variant);
     if (userInputURL && userInputURL.hostname === hostnameURL.hostname) {
       const userPort = getPortFromURL(userInputURL);
+
       if (!port) {
         return true;
       }

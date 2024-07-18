@@ -22,7 +22,6 @@ export type Context = {
   graphql?: string[];
   xml?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains,
-  outgoingReqPort?: number; // Used to store the port of the outgoing request for preventing SSRF false positives in dns lookup
 };
 
 /**
