@@ -8,7 +8,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -22,6 +22,11 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
       - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
       - run: make build
+      - run: make lint
+      - name: Run Unit Tests
+        uses: ./.github/workflows/unit-test.yml
+      - name: Run End-to-End Tests
+        uses: ./.github/workflows/end-to-end-tests.yml
       - run: cd build && npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

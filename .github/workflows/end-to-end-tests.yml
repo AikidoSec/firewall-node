@@ -1,5 +1,7 @@
 name: End to end tests
-on: push
+on:
+  push: {}
+  workflow_call: {}
 jobs:
   build:
     runs-on: ubuntu-latest
