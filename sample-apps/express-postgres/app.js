@@ -6,7 +6,6 @@ const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const { Client } = require("pg");
-const { getContext } = require("@aikidosec/firewall/agent/context");
 
 require("@aikidosec/firewall/nopp");
 
@@ -76,23 +75,6 @@ async function main(port) {
       });
     })
   );
-
-  app.get("/context-test", (req, res) => {
-    db.query("SELECT * FROM cats;", function afterSelect(err) {
-      if (err) {
-        res.status(500).send("Error selecting from table");
-        return;
-      }
-
-      // End2end test check
-      if (!getContext()) {
-        res.status(500).send("Error: Aikido firewall context not found");
-        return;
-      }
-
-      res.send("Context found");
-    });
-  });
 
   return new Promise((resolve, reject) => {
     try {
