@@ -1,5 +1,6 @@
 import type { ParsedQs } from "qs";
 import { ContextStorage } from "./context/ContextStorage";
+import { AsyncLocalStorage } from "async_hooks";
 
 export type User = { id: string; name?: string };
 
@@ -62,4 +63,12 @@ export function runWithContext<T>(context: Context, fn: () => T) {
 
   // If there's no context yet, we create a new context and run the function with it
   return ContextStorage.run(context, fn);
+}
+
+/**
+ * Binds the AsyncLocalStorage to a function
+ * This fixes the issue that context is not available in event handlers that are called outside of runWithContext
+ */
+export function bindContext<T>(fn: () => T) {
+  return AsyncLocalStorage.bind(fn);
 }

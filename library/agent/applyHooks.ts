@@ -6,7 +6,7 @@ import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
-import { getContext } from "./Context";
+import { bindContext, getContext } from "./Context";
 import { BuiltinModule } from "./hooks/BuiltinModule";
 import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
@@ -19,7 +19,6 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
-import { AsyncLocalStorage } from "async_hooks";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -162,7 +161,7 @@ function wrapWithoutArgumentModification(
 
         for (let i = 0; i < args.length; i++) {
           if (typeof args[i] === "function") {
-            args[i] = AsyncLocalStorage.bind(args[i]);
+            args[i] = bindContext(args[i]);
           }
         }
 
@@ -268,12 +267,6 @@ function wrapWithArgumentModification(
             method: method.getName(),
             module: module,
           });
-        }
-
-        for (let i = 0; i < updatedArgs.length; i++) {
-          if (typeof updatedArgs[i] === "function") {
-            updatedArgs[i] = AsyncLocalStorage.bind(updatedArgs[i]);
-          }
         }
 
         return original.apply(

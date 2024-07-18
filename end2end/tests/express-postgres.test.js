@@ -45,11 +45,15 @@ t.test("it blocks in blocking mode", (t) => {
         fetch("http://localhost:4000/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://localhost:4000/context-test", {
+          signal: AbortSignal.timeout(5000),
+        }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, normalSearch, contextTest]) => {
       t.equal(noSQLInjection.status, 500);
       t.equal(normalSearch.status, 200);
+      t.equal(contextTest.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido firewall has blocked an SQL injection/);
     })

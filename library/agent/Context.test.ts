@@ -1,5 +1,10 @@
 import * as t from "tap";
-import { type Context, getContext, runWithContext } from "./Context";
+import {
+  type Context,
+  getContext,
+  runWithContext,
+  bindContext,
+} from "./Context";
 
 const sampleContext: Context = {
   remoteAddress: "::1",
@@ -48,4 +53,48 @@ t.test("context is available in callback functions", (t) => {
       t.end();
     }, 10);
   });
+});
+
+t.test("Get context does work inside a event handler", async (t) => {
+  const { EventEmitter } = require("events");
+  const emitter = new EventEmitter();
+
+  await runWithContext(sampleContext, async () => {
+    emitter.on("event", () => {
+      t.same(getContext(), sampleContext);
+    });
+    emitter.emit("event");
+  });
+});
+
+t.test(
+  "Get context does not work inside a event handler if event is emitted outside of runWithContext",
+  async (t) => {
+    const { EventEmitter } = require("events");
+    const emitter = new EventEmitter();
+
+    await runWithContext(sampleContext, async () => {
+      emitter.on("event", () => {
+        t.same(getContext(), undefined);
+      });
+    });
+
+    emitter.emit("event");
+  }
+);
+
+t.test("Get context does work with bindContext", async (t) => {
+  const { EventEmitter } = require("events");
+  const emitter = new EventEmitter();
+
+  await runWithContext(sampleContext, async () => {
+    emitter.on(
+      "event",
+      bindContext(() => {
+        t.same(getContext(), sampleContext);
+      })
+    );
+  });
+
+  emitter.emit("event");
 });
