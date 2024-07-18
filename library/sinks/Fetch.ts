@@ -8,7 +8,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
-import { AikidoDispatcher } from "./undici/AikidoDispatcher";
+import { getDispatcher } from "./undici/AikidoDispatcher";
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -91,7 +91,10 @@ export class Fetch implements Wrapper {
 
     try {
       // @ts-expect-error Type is not defined
-      globalThis[undiciGlobalDispatcherSymbol] = new AikidoDispatcher({
+      globalThis[undiciGlobalDispatcherSymbol] = new getDispatcher(
+        // @ts-expect-error Type is not defined
+        globalThis[undiciGlobalDispatcherSymbol]
+      )({
         connect: {
           lookup: inspectDNSLookupCalls(lookup, agent, "fetch", "fetch"),
         },

@@ -13,7 +13,6 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
-import { AikidoDispatcher } from "./undici/AikidoDispatcher";
 
 const methods = [
   "request",
@@ -122,7 +121,7 @@ export class Undici implements Wrapper {
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(
-      new AikidoDispatcher({
+      new undici.Agent({
         connect: {
           lookup: inspectDNSLookupCalls(
             lookup,
