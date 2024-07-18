@@ -4,9 +4,10 @@ import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
+import { escapeHTML } from "../helpers/escapeHTML";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
-import { getContext } from "./Context";
+import { bindContext, getContext } from "./Context";
 import { BuiltinModule } from "./hooks/BuiltinModule";
 import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
@@ -159,6 +160,12 @@ function wrapWithoutArgumentModification(
         const args = Array.from(arguments);
         const context = getContext();
 
+        for (let i = 0; i < args.length; i++) {
+          if (typeof args[i] === "function") {
+            args[i] = bindContext(args[i]);
+          }
+        }
+
         if (context) {
           const match = agent
             .getConfig()
@@ -168,8 +175,7 @@ function wrapWithoutArgumentModification(
             return original.apply(
               // @ts-expect-error We don't now the type of this
               this,
-              // eslint-disable-next-line prefer-rest-params
-              arguments
+              args
             );
           }
         }
@@ -222,7 +228,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
+              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
             );
           }
         }
@@ -230,8 +236,7 @@ function wrapWithoutArgumentModification(
         return original.apply(
           // @ts-expect-error We don't now the type of this
           this,
-          // eslint-disable-next-line prefer-rest-params
-          arguments
+          args
         );
       };
     });
