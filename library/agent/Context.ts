@@ -1,6 +1,6 @@
 import type { ParsedQs } from "qs";
 import { ContextStorage } from "./context/ContextStorage";
-import { AsyncLocalStorage } from "async_hooks";
+import { AsyncResource } from "async_hooks";
 
 export type User = { id: string; name?: string };
 
@@ -66,9 +66,10 @@ export function runWithContext<T>(context: Context, fn: () => T) {
 }
 
 /**
- * Binds the AsyncLocalStorage to a function
+ * Binds the given function to the current execution context.
  * This fixes the issue that context is not available in event handlers that are called outside of runWithContext
+ * Static method AsyncLocalStorage.bind(fn) was added in Node.js v19.8.0 and v18.16.0, so we can't use it yet
  */
 export function bindContext<T>(fn: () => T) {
-  return AsyncLocalStorage.bind(fn);
+  return AsyncResource.bind(fn);
 }
