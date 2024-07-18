@@ -68,7 +68,8 @@ export function runWithContext<T>(context: Context, fn: () => T) {
 /**
  * Binds the given function to the current execution context.
  * This fixes the issue that context is not available in event handlers that are called outside of runWithContext
- * Static method AsyncLocalStorage.bind(fn) was added in Node.js v19.8.0 and v18.16.0, so we can't use it yet
+ * Static method AsyncLocalStorage.bind(fn) was added in Node.js v19.8.0 and v18.16.0, so we can't use it yet, but it does the same thing.
+ * Also done by OpenTelemetry: https://github.com/open-telemetry/opentelemetry-js/blob/a6020fb113a60ae6abc1aa925fa6744880e7fa15/api/src/api/context.ts#L86
  */
 export function bindContext<T>(fn: () => T) {
   return AsyncResource.bind(fn);
