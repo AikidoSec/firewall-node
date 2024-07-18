@@ -128,6 +128,15 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     runWithContext(context, () => {
       client.query("SELECT petname FROM cats;", (error, result) => {
         t.match(getContext(), context);
+
+        try {
+          client.query("-- should be blocked", () => {});
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Aikido firewall has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+          );
+        }
       });
     });
   } catch (error: any) {
