@@ -44,7 +44,7 @@ t.test("it works", async (t) => {
 });
 
 t.test("it adds GraphQL fields", async (t) => {
-  const routes = new Routes(3);
+  const routes = new Routes(200);
   routes.addRoute("POST", "/graphql");
   routes.addGraphQLField("POST", "/graphql", "query", "user");
   t.same(routes.asArray(), [
