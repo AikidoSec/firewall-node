@@ -216,6 +216,7 @@ t.test("it works", (t) => {
       );
     }
 
+    // ECONNREFUSED means that the request is not blocked
     http.request("http://localhost:9876").on("error", (e) => {
       t.same(e.code, "ECONNREFUSED");
     });
