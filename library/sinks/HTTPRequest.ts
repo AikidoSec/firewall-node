@@ -9,13 +9,14 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { getPortFromHTTPRequestOptions } from "./http-request/getPortFromRequest";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
     agent: Agent,
     hostname: string,
     port: number | undefined,
-    module: string
+    module: "http" | "https"
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
@@ -35,7 +36,11 @@ export class HTTPRequest implements Wrapper {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  private inspectHttpRequest(args: unknown[], agent: Agent, module: string) {
+  private inspectHttpRequest(
+    args: unknown[],
+    agent: Agent,
+    module: "http" | "https"
+  ) {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         try {
@@ -44,7 +49,7 @@ export class HTTPRequest implements Wrapper {
             const attack = this.inspectHostname(
               agent,
               url.hostname,
-              getPortFromURL(url),
+              getPortFromHTTPRequestOptions(args, module),
               module
             );
             if (attack) {
@@ -68,25 +73,28 @@ export class HTTPRequest implements Wrapper {
         }
       }
 
+      let options;
+
       if (
         isPlainObject(args[0]) &&
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
-        let port = module === "http" ? 80 : 443;
-        if (typeof args[0].port === "number") {
-          port = args[0].port;
-        } else if (
-          typeof args[0].port === "string" &&
-          Number.isInteger(parseInt(args[0].port, 10))
-        ) {
-          port = parseInt(args[0].port, 10);
-        }
+        options = args[0];
+      } else if (
+        args.length > 1 &&
+        isPlainObject(args[1]) &&
+        typeof args[1].hostname === "string" &&
+        args[1].hostname.length > 0
+      ) {
+        options = args[1];
+      }
 
+      if (options) {
         const attack = this.inspectHostname(
           agent,
-          args[0].hostname,
-          port,
+          options.hostname as string,
+          getPortFromHTTPRequestOptions(args, module),
           module
         );
         if (attack) {
@@ -113,6 +121,8 @@ export class HTTPRequest implements Wrapper {
       isPlainObject(arg)
     );
 
+    const port = getPortFromHTTPRequestOptions(args);
+
     if (!optionObj) {
       return args.concat([
         {
@@ -120,7 +130,8 @@ export class HTTPRequest implements Wrapper {
             lookup,
             agent,
             module,
-            `${module}.request`
+            `${module}.request`,
+            port
           ),
         },
       ]);
@@ -131,14 +142,16 @@ export class HTTPRequest implements Wrapper {
         optionObj.lookup,
         agent,
         module,
-        `${module}.request`
+        `${module}.request`,
+        port
       ) as RequestOptions["lookup"];
     } else {
       optionObj.lookup = inspectDNSLookupCalls(
         lookup,
         agent,
         module,
-        `${module}.request`
+        `${module}.request`,
+        port
       ) as RequestOptions["lookup"];
     }
 
@@ -146,7 +159,7 @@ export class HTTPRequest implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const modules = ["http", "https"];
+    const modules = ["http", "https"] as const;
 
     modules.forEach((module) => {
       hooks
@@ -156,9 +169,15 @@ export class HTTPRequest implements Wrapper {
         .inspect("request", (args, subject, agent) =>
           this.inspectHttpRequest(args, agent, module)
         )
+        .inspect("get", (args, subject, agent) =>
+          this.inspectHttpRequest(args, agent, module)
+        )
         // Whenever a request is made, we'll modify the options to pass a custom lookup function
         // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
         .modifyArguments("request", (args, subject, agent) =>
+          this.monitorDNSLookups(args, agent, module)
+        )
+        .modifyArguments("get", (args, subject, agent) =>
           this.monitorDNSLookups(args, agent, module)
         );
     });

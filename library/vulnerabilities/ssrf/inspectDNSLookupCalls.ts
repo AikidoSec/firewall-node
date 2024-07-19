@@ -16,7 +16,8 @@ export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
-  operation: string
+  operation: string,
+  port?: number
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -41,7 +42,8 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            port
           ),
         ]
       : [
@@ -51,7 +53,8 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            port
           ),
         ];
 
@@ -65,7 +68,8 @@ function wrapDNSLookupCallback(
   hostname: string,
   module: string,
   agent: Agent,
-  operation: string
+  operation: string,
+  portArg?: number
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -112,10 +116,14 @@ function wrapDNSLookupCallback(
 
     let port: number | undefined;
 
-    // This is set if this resolve is part of an outgoing request that we are inspecting
-    const requestContext = RequestContextStorage.getStore();
-    if (requestContext) {
-      port = requestContext.port;
+    if (portArg) {
+      port = portArg;
+    } else {
+      // This is set if this resolve is part of an outgoing request that we are inspecting
+      const requestContext = RequestContextStorage.getStore();
+      if (requestContext) {
+        port = requestContext.port;
+      }
     }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);

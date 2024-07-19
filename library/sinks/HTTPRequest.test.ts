@@ -167,9 +167,6 @@ t.test("it works", (t) => {
     const google = https.request("https://google.com");
     google.end();
 
-    const localhostSafe = http.request("http://localhost:9876");
-    localhostSafe.end();
-
     // With string URL
     const error = t.throws(() =>
       https.request("https://localhost:4000/api/internal")
@@ -207,6 +204,37 @@ t.test("it works", (t) => {
         "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
+
+    // Using .get
+    const error4 = t.throws(() =>
+      https.get("https://localhost:4000/api/internal")
+    );
+    if (error4 instanceof Error) {
+      t.same(
+        error4.message,
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    http.request("http://localhost:9876").on("error", (e) => {
+      t.same(e.code, "ECONNREFUSED");
+    });
+
+    https.request("https://localhost:9876").on("error", (e) => {
+      t.same(e.code, "ECONNREFUSED");
+    });
+
+    https
+      .request("https://localhost/api/internal", { port: 9876 })
+      .on("error", (e) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
+
+    https
+      .request("https://localhost/api/internal", { defaultPort: 9876 })
+      .on("error", (e) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
   });
 
   setTimeout(() => {
