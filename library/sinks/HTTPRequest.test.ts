@@ -62,8 +62,8 @@ t.test("it works", (t) => {
   const https = require("https");
 
   runWithContext(context, () => {
-    const google = http.request("http://aikido.dev");
-    google.end();
+    const aikido = http.request("http://aikido.dev");
+    aikido.end();
   });
 
   t.same(agent.getHostnames().asArray(), [
@@ -72,16 +72,16 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(context, () => {
-    const google = https.request("https://aikido.dev");
-    google.end();
+    const aikido = https.request("https://aikido.dev");
+    aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
   agent.getHostnames().clear();
 
-  const google = https.request(new URL("https://aikido.dev"));
-  google.end();
+  const aikido = https.request(new URL("https://aikido.dev"));
+  aikido.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
@@ -158,7 +158,7 @@ t.test("it works", (t) => {
     google.end();
 
     // With options object
-    const google2 = http.request("http://google.com", {});
+    const google2 = http.get("http://google.com", {});
     google2.end();
   });
 
@@ -235,6 +235,22 @@ t.test("it works", (t) => {
       .on("error", (e) => {
         t.same(e.code, "ECONNREFUSED");
       });
+
+    // With options object at index 1
+    const error5 = t.throws(() =>
+      https.request("", {
+        protocol: "https:",
+        hostname: "localhost",
+        port: 4000,
+        path: "/api/internal",
+      })
+    );
+    if (error5 instanceof Error) {
+      t.same(
+        error5.message,
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
   });
 
   setTimeout(() => {
