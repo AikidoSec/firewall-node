@@ -5,46 +5,19 @@ import { getPortFromURL } from "../../helpers/getPortFromURL";
 /**
  * Gets the port from the request options or URL of an HTTP request.
  */
-export function getPortFromHTTPRequestOptions(
+export function getPortFromHTTPRequestArgs(
   args: unknown[],
   module?: "http" | "https"
 ): number | undefined {
   if (!args || !args.length) {
     return undefined;
   }
-
-  let requestOptions: HTTPRequestOptions | HTTPSRequestOptions | undefined;
-
-  // Request options can be in the first or second position
-  if (typeof args[0] === "object" && !(args[0] instanceof URL)) {
-    requestOptions = args[0] as HTTPRequestOptions | HTTPSRequestOptions;
-  } else if (
-    args.length > 1 &&
-    typeof args[1] === "object" &&
-    !(args[1] instanceof URL)
-  ) {
-    requestOptions = args[1] as HTTPRequestOptions | HTTPSRequestOptions;
-  }
-
+  const requestOptions = getRequestOptions(args);
   if (requestOptions) {
-    // If port option is provided, its precedence is higher
-    if (typeof requestOptions.port === "number") {
-      return requestOptions.port;
-    }
-    if (typeof requestOptions.port === "string") {
-      const port = parseInt(requestOptions.port, 10);
-      if (Number.isInteger(port)) {
-        return port;
-      }
-    }
-    if (typeof requestOptions.defaultPort === "number") {
-      return requestOptions.defaultPort;
-    }
-    if (typeof requestOptions.defaultPort === "string") {
-      const port = parseInt(requestOptions.defaultPort, 10);
-      if (Number.isInteger(port)) {
-        return port;
-      }
+    // If port option is provided, its precedence is higher than in the URL
+    const port = getPortFromRequestOptions(requestOptions);
+    if (port) {
+      return port;
     }
   }
 
@@ -73,5 +46,46 @@ export function getPortFromHTTPRequestOptions(
     return 443;
   }
 
+  return undefined;
+}
+
+/**
+ * Request options can be provided as the first argument or as the second argument.
+ * But thy can also be not provided at all.
+ */
+function getRequestOptions(args: unknown[]) {
+  if (typeof args[0] === "object" && !(args[0] instanceof URL)) {
+    return args[0] as HTTPRequestOptions | HTTPSRequestOptions;
+  } else if (
+    args.length > 1 &&
+    typeof args[1] === "object" &&
+    !(args[1] instanceof URL)
+  ) {
+    return args[1] as HTTPRequestOptions | HTTPSRequestOptions;
+  }
+  return undefined;
+}
+
+function getPortFromRequestOptions(
+  options: HTTPRequestOptions | HTTPSRequestOptions
+) {
+  if (typeof options.port === "number") {
+    return options.port;
+  }
+  if (typeof options.port === "string") {
+    const port = parseInt(options.port, 10);
+    if (Number.isInteger(port)) {
+      return port;
+    }
+  }
+  if (typeof options.defaultPort === "number") {
+    return options.defaultPort;
+  }
+  if (typeof options.defaultPort === "string") {
+    const port = parseInt(options.defaultPort, 10);
+    if (Number.isInteger(port)) {
+      return port;
+    }
+  }
   return undefined;
 }

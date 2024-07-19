@@ -9,7 +9,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
-import { getPortFromHTTPRequestOptions } from "./http-request/getPortFromRequest";
+import { getPortFromHTTPRequestArgs } from "./http-request/getPortFromRequest";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -49,7 +49,7 @@ export class HTTPRequest implements Wrapper {
             const attack = this.inspectHostname(
               agent,
               url.hostname,
-              getPortFromHTTPRequestOptions(args, module),
+              getPortFromHTTPRequestArgs(args, module),
               module
             );
             if (attack) {
@@ -94,7 +94,7 @@ export class HTTPRequest implements Wrapper {
         const attack = this.inspectHostname(
           agent,
           options.hostname as string,
-          getPortFromHTTPRequestOptions(args, module),
+          getPortFromHTTPRequestArgs(args, module),
           module
         );
         if (attack) {
@@ -121,7 +121,7 @@ export class HTTPRequest implements Wrapper {
       isPlainObject(arg)
     );
 
-    const port = getPortFromHTTPRequestOptions(args);
+    const port = getPortFromHTTPRequestArgs(args);
 
     if (!optionObj) {
       return args.concat([
