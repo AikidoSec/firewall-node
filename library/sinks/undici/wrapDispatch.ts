@@ -7,7 +7,7 @@ import { getPortFromURL } from "../../helpers/getPortFromURL";
 type Dispatch = Dispatcher["dispatch"];
 
 export function wrapDispatch(orig: Dispatch): Dispatch {
-  return function (opts, handler) {
+  return function wrap(opts, handler) {
     const context = getContext();
 
     // If there is no context, we don't need to do anything special
