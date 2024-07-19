@@ -81,7 +81,10 @@ function wrapDNSLookupCallback(
     if (context) {
       const endpoint = agent
         .getConfig()
-        .getEndpoint(context, (endpoint) => endpoint.forceProtectionOff);
+        .getEndpoint(
+          context,
+          (endpoint) => endpoint.forceProtectionOff && !endpoint.graphql
+        );
 
       if (endpoint) {
         // User disabled protection for this endpoint, we don't need to inspect the resolved IPs

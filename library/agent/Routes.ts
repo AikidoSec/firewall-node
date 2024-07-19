@@ -5,7 +5,7 @@ export class Routes {
       method: string;
       path: string;
       hits: number;
-      graphql: { fields: { type: "query" | "mutation"; name: string }[] };
+      graphql?: { type: "query" | "mutation"; name: string };
     }
   > = new Map();
 
@@ -20,15 +20,27 @@ export class Routes {
       return;
     }
 
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, { method, path, hits: 1 });
+  }
+
+  private evictLeastUsedRouteIfNecessary() {
     if (this.routes.size >= this.maxEntries) {
       this.evictLeastUsedRoute();
     }
-
-    this.routes.set(key, { method, path, hits: 1, graphql: { fields: [] } });
   }
 
   private getKey(method: string, path: string) {
     return `${method}:${path}`;
+  }
+
+  private getGraphQLKey(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    return `${method}:${path}:${type}:${name}`;
   }
 
   addGraphQLField(
@@ -37,17 +49,16 @@ export class Routes {
     type: "query" | "mutation",
     name: string
   ) {
-    const key = this.getKey(method, path);
-    const route = this.routes.get(key);
+    const key = this.getGraphQLKey(method, path, type, name);
+    const existing = this.routes.get(key);
 
-    if (
-      route &&
-      !route.graphql.fields.some(
-        (field) => field.name === name && field.type === type
-      )
-    ) {
-      route.graphql.fields.push({ type, name });
+    if (existing) {
+      existing.hits++;
+      return;
     }
+
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, { method, path, hits: 1, graphql: { type, name } });
   }
 
   private evictLeastUsedRoute() {

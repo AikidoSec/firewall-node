@@ -21,7 +21,10 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
     .getConfig()
     .getEndpoint(
       context,
-      (endpoint) => endpoint.rateLimiting && endpoint.rateLimiting.enabled
+      (endpoint) =>
+        endpoint.rateLimiting &&
+        endpoint.rateLimiting.enabled &&
+        !endpoint.graphql
     );
 
   if (!match) {

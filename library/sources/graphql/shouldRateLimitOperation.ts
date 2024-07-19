@@ -1,7 +1,6 @@
 import type { ExecutionArgs } from "graphql/execution/execute";
 import { FieldNode } from "graphql";
 import { Agent } from "../../agent/Agent";
-import { Endpoint } from "../../agent/Config";
 import { Context } from "../../agent/Context";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import { extractTopLevelFieldsFromDocument } from "./extractTopLevelFieldsFromDocument";
@@ -28,14 +27,6 @@ export function shouldRateLimitOperation(
   context: Context,
   executeArgs: Pick<ExecutionArgs, "document" | "operationName">
 ): Result {
-  const match = agent
-    .getConfig()
-    .getEndpoint(context, (endpoint) => !!endpoint.graphql);
-
-  if (!match || !match.endpoint.graphql) {
-    return { block: false };
-  }
-
   const topLevelFields = extractTopLevelFieldsFromDocument(
     executeArgs.document,
     executeArgs.operationName ? executeArgs.operationName : undefined
@@ -64,7 +55,6 @@ export function shouldRateLimitOperation(
       context,
       field,
       topLevelFields.type,
-      match.endpoint.graphql,
       isFromLocalhostInProduction,
       isAllowedIP
     );
@@ -83,13 +73,25 @@ function shouldRateLimitField(
   context: Context,
   field: FieldNode,
   operationType: "query" | "mutation",
-  graphql: NonNullable<Endpoint["graphql"]>,
   isFromLocalhostInProduction: boolean,
   isAllowedIP: boolean
 ): Result {
-  const rateLimitedField = graphql.fields.find(
-    (f) => f.name === field.name.value && f.type === operationType
-  );
+  const match = agent.getConfig().getEndpoint(context, (endpoint) => {
+    if (!endpoint.graphql) {
+      return false;
+    }
+
+    return (
+      endpoint.graphql.name === field.name.value &&
+      endpoint.graphql.type === operationType
+    );
+  });
+
+  if (!match || !match.endpoint.graphql) {
+    return { block: false };
+  }
+
+  const rateLimitedField = match.endpoint;
 
   if (
     !rateLimitedField ||

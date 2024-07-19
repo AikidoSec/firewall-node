@@ -3,15 +3,8 @@ export type Endpoint = {
   route: string;
   forceProtectionOff: boolean;
   graphql?: {
-    fields: {
-      type: "query" | "mutation";
-      name: string;
-      rateLimiting: {
-        enabled: boolean;
-        maxRequests: number;
-        windowSizeInMS: number;
-      };
-    }[];
+    type: "query" | "mutation";
+    name: string;
   };
   rateLimiting: {
     enabled: boolean;

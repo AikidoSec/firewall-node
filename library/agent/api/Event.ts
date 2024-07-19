@@ -95,7 +95,7 @@ type Heartbeat = {
     path: string;
     method: string;
     hits: number;
-    graphql: { fields: { type: "query" | "mutation"; name: string }[] };
+    graphql?: { type: "query" | "mutation"; name: string };
   }[];
   users: {
     id: string;

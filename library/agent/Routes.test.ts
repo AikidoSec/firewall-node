@@ -7,36 +7,36 @@ t.test("it works", async (t) => {
 
   routes.addRoute("GET", "/users");
   t.same(routes.asArray(), [
-    { method: "GET", path: "/users", hits: 1, graphql: { fields: [] } },
+    { method: "GET", path: "/users", hits: 1, graphql: undefined },
   ]);
 
   routes.addRoute("GET", "/users");
   t.same(routes.asArray(), [
-    { method: "GET", path: "/users", hits: 2, graphql: { fields: [] } },
+    { method: "GET", path: "/users", hits: 2, graphql: undefined },
   ]);
 
   routes.addRoute("POST", "/users");
   t.same(
     routes.asArray(),
     [
-      { method: "GET", path: "/users", hits: 2, graphql: { fields: [] } },
-      { method: "POST", path: "/users", hits: 1, graphql: { fields: [] } },
+      { method: "GET", path: "/users", hits: 2, graphql: undefined },
+      { method: "POST", path: "/users", hits: 1, graphql: undefined },
     ],
     "Should add second route"
   );
 
   routes.addRoute("PUT", "/users/1");
   t.same(routes.asArray(), [
-    { method: "GET", path: "/users", hits: 2, graphql: { fields: [] } },
-    { method: "POST", path: "/users", hits: 1, graphql: { fields: [] } },
-    { method: "PUT", path: "/users/1", hits: 1, graphql: { fields: [] } },
+    { method: "GET", path: "/users", hits: 2, graphql: undefined },
+    { method: "POST", path: "/users", hits: 1, graphql: undefined },
+    { method: "PUT", path: "/users/1", hits: 1, graphql: undefined },
   ]);
 
   routes.addRoute("DELETE", "/users/1");
   t.same(routes.asArray(), [
-    { method: "GET", path: "/users", hits: 2, graphql: { fields: [] } },
-    { method: "PUT", path: "/users/1", hits: 1, graphql: { fields: [] } },
-    { method: "DELETE", path: "/users/1", hits: 1, graphql: { fields: [] } },
+    { method: "GET", path: "/users", hits: 2, graphql: undefined },
+    { method: "PUT", path: "/users/1", hits: 1, graphql: undefined },
+    { method: "DELETE", path: "/users/1", hits: 1, graphql: undefined },
   ]);
 
   routes.clear();
@@ -52,7 +52,13 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
-      graphql: { fields: [{ type: "query", name: "user" }] },
+      graphql: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      graphql: { type: "query", name: "user" },
     },
   ]);
 
@@ -62,7 +68,13 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
-      graphql: { fields: [{ type: "query", name: "user" }] },
+      graphql: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 2,
+      graphql: { type: "query", name: "user" },
     },
   ]);
 
@@ -72,11 +84,21 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      graphql: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 2,
+      graphql: { type: "query", name: "user" },
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
       graphql: {
-        fields: [
-          { type: "query", name: "user" },
-          { type: "query", name: "post" },
-        ],
+        type: "query",
+        name: "post",
       },
     },
   ]);
@@ -87,12 +109,30 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      graphql: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 2,
+      graphql: { type: "query", name: "user" },
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
       graphql: {
-        fields: [
-          { type: "query", name: "user" },
-          { type: "query", name: "post" },
-          { type: "mutation", name: "post" },
-        ],
+        type: "query",
+        name: "post",
+      },
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      graphql: {
+        type: "mutation",
+        name: "post",
       },
     },
   ]);

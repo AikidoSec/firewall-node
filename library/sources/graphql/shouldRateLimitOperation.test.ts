@@ -62,22 +62,13 @@ t.test("it rate limits query", async () => {
           route: "/graphql",
           forceProtectionOff: false,
           rateLimiting: {
-            enabled: false,
+            enabled: true,
             maxRequests: 3,
             windowSizeInMS: 60 * 1000,
           },
           graphql: {
-            fields: [
-              {
-                name: "user",
-                type: "query",
-                rateLimiting: {
-                  enabled: true,
-                  maxRequests: 3,
-                  windowSizeInMS: 60 * 1000,
-                },
-              },
-            ],
+            name: "user",
+            type: "query",
           },
         },
       ],
@@ -140,22 +131,13 @@ t.test("it rate limits mutation", async () => {
           route: "/graphql",
           forceProtectionOff: false,
           rateLimiting: {
-            enabled: false,
+            enabled: true,
             maxRequests: 3,
             windowSizeInMS: 60 * 1000,
           },
           graphql: {
-            fields: [
-              {
-                name: "signup",
-                type: "mutation",
-                rateLimiting: {
-                  enabled: true,
-                  maxRequests: 3,
-                  windowSizeInMS: 60 * 1000,
-                },
-              },
-            ],
+            name: "signup",
+            type: "mutation",
           },
         },
       ],

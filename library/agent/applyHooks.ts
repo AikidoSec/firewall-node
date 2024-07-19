@@ -169,7 +169,10 @@ function wrapWithoutArgumentModification(
         if (context) {
           const match = agent
             .getConfig()
-            .getEndpoint(context, (endpoint) => endpoint.forceProtectionOff);
+            .getEndpoint(
+              context,
+              (endpoint) => endpoint.forceProtectionOff && !endpoint.graphql
+            );
 
           if (match) {
             return original.apply(
