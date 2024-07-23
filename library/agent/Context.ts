@@ -1,6 +1,8 @@
 import type { ParsedQs } from "qs";
+import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserInput";
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
+import { Source, SOURCES } from "./Source";
 
 export type User = { id: string; name?: string };
 
@@ -22,13 +24,30 @@ export type Context = {
   graphql?: string[];
   xml?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
+  cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
 };
 
 /**
  * Get the current request context that is being handled
  */
-export function getContext() {
+export function getContext(): Readonly<Context> | undefined {
   return ContextStorage.getStore();
+}
+
+function isSourceKey(key: string): key is Source {
+  return SOURCES.includes(key as Source);
+}
+
+export function mutateContext<K extends keyof Context>(
+  context: Context,
+  key: K,
+  value: Context[K]
+) {
+  context[key] = value;
+
+  if (context.cache && isSourceKey(key)) {
+    context.cache.delete(key);
+  }
 }
 
 /**
@@ -57,6 +76,9 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.graphql = context.graphql;
     current.xml = context.xml;
     current.subdomains = context.subdomains;
+
+    // Clear all the cached user input strings
+    delete current.cache;
 
     return fn();
   }

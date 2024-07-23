@@ -5,7 +5,7 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { getContext } from "../agent/Context";
+import { getContext, mutateContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import {
   createCloudFunctionWrapper,
@@ -50,7 +50,7 @@ function getExpressApp() {
     asyncHandler(
       createCloudFunctionWrapper((req, res) => {
         const context = getContext();
-        context.attackDetected = true;
+        mutateContext(context, "attackDetected", true);
         res.send(context);
       })
     )
