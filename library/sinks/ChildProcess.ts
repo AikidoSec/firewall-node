@@ -1,4 +1,3 @@
-import { loopback } from "ip";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
@@ -19,7 +18,10 @@ export class ChildProcess implements Wrapper {
   private isShellCommand(command: string): boolean {
     for (const prefix of PATH_PREFIXES) {
       for (const shellCommand of ["bash", "zsh", "sh"]) {
-        if (command === `${prefix}${shellCommand}` || command === shellCommand) {
+        if (
+          command === `${prefix}${shellCommand}` ||
+          command === shellCommand
+        ) {
           return true;
         }
       }
@@ -47,8 +49,12 @@ export class ChildProcess implements Wrapper {
           "shell" in arg &&
           (arg.shell === true || typeof arg.shell === "string")
       );
-      
-      if (!unsafeShellOption && typeof args[0] == "string" && !this.isShellCommand(args[0])) {
+
+      if (
+        !unsafeShellOption &&
+        typeof args[0] == "string" &&
+        !this.isShellCommand(args[0])
+      ) {
         return undefined;
       }
     }

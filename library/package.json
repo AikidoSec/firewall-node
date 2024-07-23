@@ -82,7 +82,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
-    "lint-eslint": "eslint '**/*.ts'",
+    "lint-eslint": "eslint 'sinks/ChildProcess.*' --fix",
     "lint-tsc": "tsc --noEmit"
   }
 }

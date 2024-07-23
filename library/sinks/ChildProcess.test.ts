@@ -233,11 +233,7 @@ t.test("it works", async (t) => {
 
     throws(
       () =>
-        execFile(
-          "sh",
-          ["-c", "`echo .`"],
-          (err, stdout, stderr) => {}
-        ).unref(),
+        execFile("sh", ["-c", "`echo .`"], (err, stdout, stderr) => {}).unref(),
       "Aikido firewall has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
     );
 
