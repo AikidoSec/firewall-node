@@ -81,6 +81,9 @@ t.test(
     agent.getHostnames().clear();
 
     await runWithContext(context, async () => {
+      // Don't await fetch to see how it handles
+      // multiple requests at the same time
+      // Because there's a single instance of the dispatcher
       fetch("https://google.com");
 
       const error0 = await t.rejects(() => fetch("http://localhost:9876"));
