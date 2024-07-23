@@ -87,3 +87,17 @@ t.test("it find IP address with strange notation inside URL", async () => {
   t.same(findHostnameInUserInput("http://127.1", "127.1"), true);
   t.same(findHostnameInUserInput("http://127.0.1", "127.0.1"), true);
 });
+
+t.test("it works with ports", async () => {
+  t.same(findHostnameInUserInput("http://localhost", "localhost", 8080), false);
+  t.same(
+    findHostnameInUserInput("http://localhost:8080", "localhost", 8080),
+    true
+  );
+  // If port is not specified, it should return true
+  t.same(findHostnameInUserInput("http://localhost:8080", "localhost"), true);
+  t.same(
+    findHostnameInUserInput("http://localhost:8080", "localhost", 4321),
+    false
+  );
+});

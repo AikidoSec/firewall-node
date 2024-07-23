@@ -10,12 +10,14 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
+import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
-  operation: string
+  operation: string,
+  port?: number
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -40,7 +42,8 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            port
           ),
         ]
       : [
@@ -50,7 +53,8 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            port
           ),
         ];
 
@@ -64,7 +68,8 @@ function wrapDNSLookupCallback(
   hostname: string,
   module: string,
   agent: Agent,
-  operation: string
+  operation: string,
+  portArg?: number
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -109,6 +114,18 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    let port: number | undefined;
+
+    if (portArg) {
+      port = portArg;
+    } else {
+      // This is set if this resolve is part of an outgoing request that we are inspecting
+      const requestContext = RequestContextStorage.getStore();
+      if (requestContext) {
+        port = requestContext.port;
+      }
+    }
+
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
@@ -117,7 +134,7 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const found = findHostnameInContext(hostname, context);
+    const found = findHostnameInContext(hostname, context, port);
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
@@ -160,13 +177,14 @@ type Location = {
 
 function findHostnameInContext(
   hostname: string,
-  context: Context
+  context: Context,
+  port: number | undefined
 ): Location | undefined {
   for (const source of SOURCES) {
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        const found = findHostnameInUserInput(str, hostname);
+        const found = findHostnameInUserInput(str, hostname, port);
         if (found) {
           return {
             source: source,

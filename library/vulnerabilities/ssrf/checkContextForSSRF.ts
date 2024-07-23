@@ -11,10 +11,12 @@ import { findHostnameInUserInput } from "./findHostnameInUserInput";
  */
 export function checkContextForSSRF({
   hostname,
+  port,
   operation,
   context,
 }: {
   hostname: string;
+  port: number | undefined;
   operation: string;
   context: Context;
 }): InterceptorResult {
@@ -22,7 +24,7 @@ export function checkContextForSSRF({
     if (context[source]) {
       const userInput = extractStringsFromUserInput(context[source]);
       for (const [str, path] of userInput.entries()) {
-        const found = findHostnameInUserInput(str, hostname);
+        const found = findHostnameInUserInput(str, hostname, port);
         if (found && containsPrivateIPAddress(hostname)) {
           return {
             operation: operation,

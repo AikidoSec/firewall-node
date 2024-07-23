@@ -13,6 +13,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapDispatch } from "./undici/wrapDispatch";
 
 const methods = [
   "request",
@@ -45,6 +46,7 @@ export class Undici implements Wrapper {
       hostname: hostname,
       operation: `undici.${method}`,
       context,
+      port,
     });
   }
 
@@ -118,20 +120,22 @@ export class Undici implements Wrapper {
   private patchGlobalDispatcher(agent: Agent) {
     const undici = require("undici");
 
+    const dispatcher = new undici.Agent({
+      connect: {
+        lookup: inspectDNSLookupCalls(
+          lookup,
+          agent,
+          "undici",
+          // We don't know the method here, so we just use "undici.[method]"
+          "undici.[method]"
+        ),
+      },
+    });
+
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch);
+
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
-    undici.setGlobalDispatcher(
-      new undici.Agent({
-        connect: {
-          lookup: inspectDNSLookupCalls(
-            lookup,
-            agent,
-            "undici",
-            // We don't know the method here, so we just use "undici.[method]"
-            "undici.[method]"
-          ),
-        },
-      })
-    );
+    undici.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
