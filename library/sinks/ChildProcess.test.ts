@@ -128,6 +128,60 @@ t.test("it works", async (t) => {
 
     throws(
       () =>
+        spawn(
+          "sh",
+          ["-c", "`echo .`"],
+          { shell: false },
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        spawn(
+          "/bin/sh",
+          ["-c", "`echo .`"],
+          { shell: false },
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        spawn(
+          "bash",
+          ["-c", "`echo .`"],
+          { shell: false },
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        spawn(
+          "/bin/bash",
+          ["-c", "`echo .`"],
+          { shell: false },
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        spawnSync(
+          "/bin/bash",
+          ["-c", "`echo .`"],
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.spawnSync(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
         spawnSync(
           "ls `echo .`",
           [],
@@ -175,6 +229,31 @@ t.test("it works", async (t) => {
           (err, stdout, stderr) => {}
         ).unref(),
       "Aikido firewall has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        execFile(
+          "sh",
+          ["-c", "`echo .`"],
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
+    );
+
+    throws(
+      () =>
+        execFile(
+          "/bin/sh",
+          ["-c", "`echo .`"],
+          (err, stdout, stderr) => {}
+        ).unref(),
+      "Aikido firewall has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
+    );
+
+    throws(
+      () => execFileSync("/bin/sh", ["-c", "`echo .`"]),
+      "Aikido firewall has blocked a shell injection: child_process.execFileSync(...) originating from body.file.matches"
     );
 
     throws(
