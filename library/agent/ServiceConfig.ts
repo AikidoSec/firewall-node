@@ -4,7 +4,7 @@ import { Endpoint } from "./Config";
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
   private allowedIPAddresses: Map<string, string> = new Map();
-  private readonly endpoints: Endpoint[];
+  private readonly nonGraphQLEndpoints: Endpoint[];
   private readonly graphqlFields: Endpoint[];
 
   constructor(
@@ -21,14 +21,16 @@ export class ServiceConfig {
       this.allowedIPAddresses.set(ip, ip);
     });
 
-    this.endpoints = endpoints.filter((endpoint) => !endpoint.graphql);
+    this.nonGraphQLEndpoints = endpoints.filter(
+      (endpoint) => !endpoint.graphql
+    );
     this.graphqlFields = endpoints.filter((endpoint) =>
       endpoint.graphql ? true : false
     );
   }
 
   getEndpoint(context: LimitedContext) {
-    return matchEndpoint(context, this.endpoints);
+    return matchEndpoint(context, this.nonGraphQLEndpoints);
   }
 
   getGraphQLField(
