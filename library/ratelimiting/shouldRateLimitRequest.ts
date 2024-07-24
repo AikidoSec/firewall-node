@@ -25,7 +25,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
   const { endpoint, route } = match;
 
-  if (!endpoint.rateLimiting) {
+  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
     return { block: false };
   }
 
