@@ -45,7 +45,11 @@ t.test("it returns endpoint based on route", async () => {
       {
         method: "POST",
         route: "/posts/:number",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
     ]),
@@ -96,7 +100,11 @@ t.test("it returns endpoint based on wildcard", async () => {
       {
         method: "*",
         route: "/posts/*",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
     ]),
@@ -118,7 +126,11 @@ t.test("it returns endpoint based on wildcard with relative URL", async () => {
       {
         method: "*",
         route: "/posts/*",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
     ]),

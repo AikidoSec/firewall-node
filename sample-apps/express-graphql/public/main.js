@@ -1,15 +1,26 @@
 document.addEventListener("DOMContentLoaded", async () => {
   fetchCats();
+
   document
     .getElementById("add-cat-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
       const petname = document.getElementById("petname").value;
       const age = document.getElementById("age").value;
-      const res = await fetch("/add-cat", {
+      const res = await fetch("/graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ petname, age }),
+        body: JSON.stringify({
+          query: `
+            mutation addCat($name: String!, $age: Int!) {
+              addCat(petname: $name, age: $age)
+            }
+          `,
+          variables: {
+            name: petname,
+            age: parseInt(age, 10),
+          },
+        }),
       });
       if (res.ok) {
         fetchCats();
@@ -27,7 +38,14 @@ async function fetchCats() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      query: 'query { cats(name: "1\' OR 1=1; -- ") { petname age } }',
+      query: `
+        query {
+          cats(name: "1' OR 1=1; -- ") {
+            petname
+            age
+          }
+        }
+      `,
     }),
   });
   const json = await response.json();

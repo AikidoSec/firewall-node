@@ -1,11 +1,18 @@
 export class Routes {
-  private routes: Map<string, { method: string; path: string; hits: number }> =
-    new Map();
+  private routes: Map<
+    string,
+    {
+      method: string;
+      path: string;
+      hits: number;
+      graphql?: { type: "query" | "mutation"; name: string };
+    }
+  > = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
   addRoute(method: string, path: string) {
-    const key = `${method}:${path}`;
+    const key = this.getKey(method, path);
     const existing = this.routes.get(key);
 
     if (existing) {
@@ -13,11 +20,45 @@ export class Routes {
       return;
     }
 
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, { method, path, hits: 1 });
+  }
+
+  private evictLeastUsedRouteIfNecessary() {
     if (this.routes.size >= this.maxEntries) {
       this.evictLeastUsedRoute();
     }
+  }
 
-    this.routes.set(key, { method, path, hits: 1 });
+  private getKey(method: string, path: string) {
+    return `${method}:${path}`;
+  }
+
+  private getGraphQLKey(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    return `${method}:${path}:${type}:${name}`;
+  }
+
+  addGraphQLField(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    const key = this.getGraphQLKey(method, path, type, name);
+    const existing = this.routes.get(key);
+
+    if (existing) {
+      existing.hits++;
+      return;
+    }
+
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, { method, path, hits: 1, graphql: { type, name } });
   }
 
   private evictLeastUsedRoute() {
@@ -46,6 +87,7 @@ export class Routes {
         method: route.method,
         path: route.path,
         hits: route.hits,
+        graphql: route.graphql,
       };
     });
   }
