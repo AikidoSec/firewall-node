@@ -7,10 +7,7 @@ t.test("it returns false if empty rules", async () => {
   t.same(config.isUserBlocked("id"), false);
   t.same(config.isAllowedIP("1.2.3.4"), false);
   t.same(
-    config.getEndpoint(
-      { url: undefined, method: undefined, route: undefined },
-      () => true
-    ),
+    config.getEndpoint({ url: undefined, method: undefined, route: undefined }),
     undefined
   );
 });
@@ -57,14 +54,11 @@ t.test("it works", async () => {
   t.same(config.isUserBlocked("123"), true);
   t.same(config.isUserBlocked("567"), false);
   t.same(
-    config.getEndpoint(
-      {
-        url: undefined,
-        method: "GET",
-        route: "/foo",
-      },
-      () => true
-    ),
+    config.getEndpoint({
+      url: undefined,
+      method: "GET",
+      route: "/foo",
+    }),
     {
       endpoint: {
         method: "GET",

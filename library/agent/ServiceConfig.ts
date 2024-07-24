@@ -1,16 +1,14 @@
-import {
-  LimitedContext,
-  matchEndpoint,
-  Matcher,
-} from "../helpers/matchEndpoint";
+import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
   private allowedIPAddresses: Map<string, string> = new Map();
+  private readonly endpoints: Endpoint[];
+  private readonly graphqlFields: Endpoint[];
 
   constructor(
-    private readonly endpoints: Endpoint[],
+    endpoints: Endpoint[],
     private readonly lastUpdatedAt: number,
     blockedUserIds: string[],
     allowedIPAddresses: string[]
@@ -22,10 +20,34 @@ export class ServiceConfig {
     allowedIPAddresses.forEach((ip) => {
       this.allowedIPAddresses.set(ip, ip);
     });
+
+    this.endpoints = endpoints.filter((endpoint) => !endpoint.graphql);
+    this.graphqlFields = endpoints.filter((endpoint) =>
+      endpoint.graphql ? true : false
+    );
   }
 
-  getEndpoint(context: LimitedContext, matcher: Matcher) {
-    return matchEndpoint(context, this.endpoints, matcher);
+  getEndpoint(context: LimitedContext) {
+    return matchEndpoint(context, this.endpoints);
+  }
+
+  getGraphQLField(
+    context: LimitedContext,
+    name: string,
+    operationType: string
+  ) {
+    return matchEndpoint(
+      context,
+      this.graphqlFields.filter((field) => {
+        if (!field.graphql) {
+          return false;
+        }
+
+        return (
+          field.graphql.name === name && field.graphql.type === operationType
+        );
+      })
+    );
   }
 
   isAllowedIP(ip: string) {

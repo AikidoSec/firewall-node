@@ -19,54 +19,40 @@ const context: Context = {
 
 t.test("invalid URL and no route", async () => {
   t.same(
-    matchEndpoint({ ...context, route: undefined, url: "abc" }, [], () => true),
+    matchEndpoint({ ...context, route: undefined, url: "abc" }, []),
     undefined
   );
 });
 
 t.test("no URL and no route", async () => {
   t.same(
-    matchEndpoint(
-      { ...context, route: undefined, url: undefined },
-      [],
-      () => true
-    ),
+    matchEndpoint({ ...context, route: undefined, url: undefined }, []),
     undefined
   );
 });
 
 t.test("no method", async () => {
-  t.same(
-    matchEndpoint({ ...context, method: undefined }, [], () => true),
-    undefined
-  );
+  t.same(matchEndpoint({ ...context, method: undefined }, []), undefined);
 });
 
 t.test("it returns undefined if nothing found", async () => {
-  t.same(
-    matchEndpoint(context, [], () => true),
-    undefined
-  );
+  t.same(matchEndpoint(context, []), undefined);
 });
 
 t.test("it returns endpoint based on route", async () => {
   t.same(
-    matchEndpoint(
-      context,
-      [
-        {
-          method: "POST",
-          route: "/posts/:number",
-          rateLimiting: {
-            enabled: true,
-            maxRequests: 10,
-            windowSizeInMS: 1000,
-          },
-          forceProtectionOff: false,
+    matchEndpoint(context, [
+      {
+        method: "POST",
+        route: "/posts/:number",
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
         },
-      ],
-      () => true
-    ),
+        forceProtectionOff: false,
+      },
+    ]),
     {
       endpoint: {
         method: "POST",
@@ -94,8 +80,7 @@ t.test("it returns endpoint based on relative url", async () => {
           },
           forceProtectionOff: false,
         },
-      ],
-      () => true
+      ]
     ),
     {
       endpoint: {
@@ -111,22 +96,18 @@ t.test("it returns endpoint based on relative url", async () => {
 
 t.test("it returns endpoint based on wildcard", async () => {
   t.same(
-    matchEndpoint(
-      { ...context, route: undefined },
-      [
-        {
-          method: "*",
-          route: "/posts/*",
-          rateLimiting: {
-            enabled: true,
-            maxRequests: 10,
-            windowSizeInMS: 1000,
-          },
-          forceProtectionOff: false,
+    matchEndpoint({ ...context, route: undefined }, [
+      {
+        method: "*",
+        route: "/posts/*",
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
         },
-      ],
-      () => true
-    ),
+        forceProtectionOff: false,
+      },
+    ]),
     {
       endpoint: {
         method: "*",
@@ -141,22 +122,18 @@ t.test("it returns endpoint based on wildcard", async () => {
 
 t.test("it returns endpoint based on wildcard with relative URL", async () => {
   t.same(
-    matchEndpoint(
-      { ...context, route: undefined, url: "/posts/3" },
-      [
-        {
-          method: "*",
-          route: "/posts/*",
-          rateLimiting: {
-            enabled: true,
-            maxRequests: 10,
-            windowSizeInMS: 1000,
-          },
-          forceProtectionOff: false,
+    matchEndpoint({ ...context, route: undefined, url: "/posts/3" }, [
+      {
+        method: "*",
+        route: "/posts/*",
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
         },
-      ],
-      () => true
-    ),
+        forceProtectionOff: false,
+      },
+    ]),
     {
       endpoint: {
         method: "*",
@@ -198,8 +175,7 @@ t.test("it favors more specific wildcard", async () => {
           },
           forceProtectionOff: false,
         },
-      ],
-      () => true
+      ]
     ),
     {
       endpoint: {
@@ -233,8 +209,7 @@ t.test("it matches wildcard route with specific method", async () => {
           },
           forceProtectionOff: false,
         },
-      ],
-      () => true
+      ]
     ),
     {
       endpoint: {
@@ -278,8 +253,7 @@ t.test("it prefers specific route over wildcard", async () => {
             windowSizeInMS: 60000,
           },
         },
-      ],
-      () => true
+      ]
     ),
     {
       endpoint: {

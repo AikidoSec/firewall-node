@@ -17,15 +17,7 @@ type Result =
 
 // eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const match = agent
-    .getConfig()
-    .getEndpoint(
-      context,
-      (endpoint) =>
-        endpoint.rateLimiting &&
-        endpoint.rateLimiting.enabled &&
-        !endpoint.graphql
-    );
+  const match = agent.getConfig().getEndpoint(context);
 
   if (!match) {
     return { block: false };
