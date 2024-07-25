@@ -295,6 +295,18 @@ t.test("It flags function calls as SQL injections", async () => {
   isNotSqlInjection("€foobar()", "€foobar()");
 });
 
+t.test("It does not match VIEW keyword", async () => {
+  isNotSqlInjection(
+    `
+      SELECT views.id AS view_id, view_settings.user_id, view_settings.settings
+        FROM views
+        INNER JOIN view_settings ON views.id = view_settings.view_id AND view_settings.user_id = ?
+        WHERE views.business_id = ?
+    `,
+    "view_id"
+  );
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
