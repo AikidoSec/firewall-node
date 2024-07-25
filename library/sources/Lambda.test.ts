@@ -5,7 +5,7 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { getContext } from "../agent/Context";
+import { getContext, updateContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
 
@@ -427,7 +427,7 @@ t.test("it counts attacks", async () => {
 
   const handler = createLambdaWrapper(async (event, context) => {
     const ctx = getContext();
-    ctx.attackDetected = true;
+    updateContext(ctx, "attackDetected", true);
     return ctx;
   });
 
