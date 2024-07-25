@@ -176,3 +176,31 @@ t.test("Ignores with invalid lang", async (t) => {
     })
   );
 });
+
+t.test("Ignores without code", async (t) => {
+  t.notOk(
+    detectDbJsInjection("a` && sleep(2000) && `b", {
+      $accumulator: {
+        lang: "js",
+      },
+    })
+  );
+
+  t.notOk(
+    detectDbJsInjection("a` && sleep(2000) && `b", {
+      $function: {
+        lang: "js",
+      },
+    })
+  );
+});
+
+t.test("Ignores where with object", async (t) => {
+  t.notOk(
+    detectDbJsInjection("a` && sleep(2000) && `b", {
+      $where: {
+        lang: "js",
+      },
+    })
+  );
+});

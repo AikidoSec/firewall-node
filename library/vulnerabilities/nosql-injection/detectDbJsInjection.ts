@@ -3,6 +3,11 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 
 const serverSideJsFunctions = ["$where", "$accumulator", "$function"];
 
+/**
+ * Checks if the user input is part of queries that execute JS code on the server.
+ * If the user input is part of the query and not safely encapsulated, it's considered an injection.
+ * Because strings are always encapsulated in quotes in JS, every non-encapsulated user input is an injection.
+ */
 export function detectDbJsInjection(
   userInput: string,
   filterPart: Record<string, unknown>
@@ -22,33 +27,27 @@ export function detectDbJsInjection(
     if (typeof value === "string") {
       strToCheck = value;
     } else {
-      // We can ignore args, because mongo is interpreting the body as JS code and passes the args to the function as string arguments.
-      // You can not break out of a JS string with quotes inside a JS string.
-      if (key === "$function" && isPlainObject(value) && value) {
-        if (typeof value.lang === "string" && value.lang !== "js") {
-          continue;
-        }
-        if (typeof value.body === "string") {
-          strToCheck = value.body;
-        }
+      if (!isPlainObject(value) || !value) {
+        continue;
       }
 
-      if (key === "$accumulator" && isPlainObject(value) && value) {
-        if (typeof value.lang === "string" && value.lang !== "js") {
+      if (key !== "$function" && key !== "$accumulator") {
+        continue;
+      }
+
+      if (typeof value.lang === "string" && value.lang !== "js") {
+        continue;
+      }
+
+      // We can ignore args, because mongo is interpreting the body as JS code and passes the args to the function as string arguments.
+      // You can not break out of a JS string with quotes inside a JS string.
+      if (key === "$function") {
+        if (typeof value.body !== "string") {
           continue;
         }
-        if (typeof value.init === "string") {
-          strToCheck = value.init;
-        }
-        if (typeof value.accumulate === "string") {
-          strToCheck += value.accumulate;
-        }
-        if (typeof value.merge === "string") {
-          strToCheck += value.merge;
-        }
-        if (typeof value.finalize === "string") {
-          strToCheck += value.finalize;
-        }
+        strToCheck = value.body;
+      } else if (key === "$accumulator") {
+        strToCheck = extractCodeFromAccumulator(value);
       }
     }
 
@@ -108,4 +107,24 @@ function isSafelyEncapsulated(filterString: string, userInput: string) {
       return true;
     }
   );
+}
+
+/**
+ * Gets all js code strings from the $accumulator object and concatenates them
+ */
+function extractCodeFromAccumulator(accumulator: Record<string, unknown>) {
+  let strToCheck = "";
+  if (typeof accumulator.init === "string") {
+    strToCheck = accumulator.init;
+  }
+  if (typeof accumulator.accumulate === "string") {
+    strToCheck += accumulator.accumulate;
+  }
+  if (typeof accumulator.merge === "string") {
+    strToCheck += accumulator.merge;
+  }
+  if (typeof accumulator.finalize === "string") {
+    strToCheck += accumulator.finalize;
+  }
+  return strToCheck;
 }
