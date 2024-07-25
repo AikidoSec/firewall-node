@@ -731,3 +731,22 @@ t.test("it ignores safe pipeline aggregations", async () => {
     }
   );
 });
+
+t.test("$where js inject sleep", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { name: "a' && sleep(2000) && 'b" },
+      }),
+      {
+        $where: "this.name === 'a' && sleep(2000) && 'b'",
+      }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".name",
+      payload: { $where: "this.name === 'a' && sleep(2000) && 'b'" },
+    }
+  );
+});
