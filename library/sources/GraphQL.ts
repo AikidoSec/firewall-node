@@ -1,7 +1,7 @@
 /* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { getContext, mutateContext } from "../agent/Context";
+import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import type { ExecutionArgs } from "graphql/execution/execute";
@@ -60,9 +60,9 @@ export class GraphQL implements Wrapper {
 
     if (userInputs.length > 0) {
       if (Array.isArray(context.graphql)) {
-        mutateContext(context, "graphql", context.graphql.concat(userInputs));
+        updateContext(context, "graphql", context.graphql.concat(userInputs));
       } else {
-        mutateContext(context, "graphql", userInputs);
+        updateContext(context, "graphql", userInputs);
       }
     }
   }

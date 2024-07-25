@@ -7,7 +7,7 @@ import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { escapeHTML } from "../helpers/escapeHTML";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
-import { bindContext, getContext, mutateContext } from "./Context";
+import { bindContext, getContext, updateContext } from "./Context";
 import { BuiltinModule } from "./hooks/BuiltinModule";
 import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
@@ -209,7 +209,7 @@ function wrapWithoutArgumentModification(
 
         if (result && context && !isAllowedIP) {
           // Flag request as having an attack detected
-          mutateContext(context, "attackDetected", true);
+          updateContext(context, "attackDetected", true);
 
           agent.onDetectedAttack({
             module: module,

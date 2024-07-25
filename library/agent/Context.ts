@@ -40,7 +40,8 @@ function isSourceKey(key: string): key is Source {
   return SOURCES.includes(key as Source);
 }
 
-export function mutateContext<K extends keyof Context>(
+// We need to use a function to mutate the context because we need to clear the cache when the user input changes
+export function updateContext<K extends keyof Context>(
   context: Context,
   key: K,
   value: Context[K]
