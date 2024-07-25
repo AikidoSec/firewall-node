@@ -39,3 +39,5 @@ jobs:
         run: cd benchmarks/sql-injection && node benchmark.js
       - name: Run shell injection Benchmark
         run: cd benchmarks/shell-injection && node benchmark.js
+      - name: Run Hono with Postgres Benchmark
+        run: cd benchmarks/hono-pg && node benchmark.js
