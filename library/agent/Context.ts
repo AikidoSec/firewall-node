@@ -29,6 +29,8 @@ export type Context = {
 
 /**
  * Get the current request context that is being handled
+ *
+ * We don't want to allow the user to modify the context directly, so we use `Readonly<Context>`
  */
 export function getContext(): Readonly<Context> | undefined {
   return ContextStorage.getStore();
