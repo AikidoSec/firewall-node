@@ -295,6 +295,22 @@ t.test("It flags function calls as SQL injections", async () => {
   isNotSqlInjection("€foobar()", "€foobar()");
 });
 
+t.test("It flags lowercased input as SQL injection", async () => {
+  isSqlInjection(
+    `
+      SELECT id,
+               email,
+               password_hash,
+               registered_at,
+               is_confirmed,
+               first_name,
+               last_name
+        FROM users WHERE email_lowercase = '' or 1=1 -- a',
+    `,
+    "' OR 1=1 -- a"
+  );
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
