@@ -126,6 +126,10 @@ t.test("it works", async (t) => {
       "Aikido firewall has blocked a shell injection: child_process.spawn(...) originating from body.file.matches"
     );
 
+    // The following tests should be blocking, because user input is passed to a shell spawned by the developer.
+    // This is basically the equivalent of shell: true.
+    // While shell: false (and thus native functionality of spawning a shell is not used), we should check if the developer directly invokes 
+    // the shell via sh -c, and validate the arguments of the command.
     throws(
       () =>
         spawn(
