@@ -86,17 +86,25 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     return fn();
   }
 
-  // `attackDetected`, `consumedRateLimitForIP` and `consumedRateLimitForUser`
-  // are carried over if there's an existing context
-  // Only in case of a top level context, we should reset them first
-  // This is more for tests than for real usage
-  delete context.cache;
-  delete context.attackDetected;
-  delete context.consumedRateLimitForIP;
-  delete context.consumedRateLimitForUser;
+  // We need to create a new context without `attackDetected`, `consumedRateLimitForIP`, ...
+  const topLevelContext: Context = {
+    url: context.url,
+    method: context.method,
+    query: context.query,
+    headers: context.headers,
+    routeParams: context.routeParams,
+    remoteAddress: context.remoteAddress,
+    body: context.body,
+    cookies: context.cookies,
+    source: context.source,
+    route: context.route,
+    graphql: context.graphql,
+    xml: context.xml,
+    subdomains: context.subdomains,
+  };
 
   // If there's no context yet, we create a new context and run the function with it
-  return ContextStorage.run(context, fn);
+  return ContextStorage.run(topLevelContext, fn);
 }
 
 /**
