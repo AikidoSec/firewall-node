@@ -17,15 +17,42 @@ export function detectDbJsInjection(
       continue;
     }
 
-    let strToCheck = value;
+    let strToCheck = "";
 
-    if (key === "$function" && isPlainObject(value) && value) {
-      if (typeof value.body === "string") {
-        strToCheck = value.body;
+    if (typeof value === "string") {
+      strToCheck = value;
+    } else {
+      // We can ignore args, because mongo is interpreting the body as JS code and passes the args to the function as string arguments.
+      // You can not break out of a JS string with quotes inside a JS string.
+      if (key === "$function" && isPlainObject(value) && value) {
+        if (typeof value.lang === "string" && value.lang !== "js") {
+          continue;
+        }
+        if (typeof value.body === "string") {
+          strToCheck = value.body;
+        }
+      }
+
+      if (key === "$accumulator" && isPlainObject(value) && value) {
+        if (typeof value.lang === "string" && value.lang !== "js") {
+          continue;
+        }
+        if (typeof value.init === "string") {
+          strToCheck = value.init;
+        }
+        if (typeof value.accumulate === "string") {
+          strToCheck += value.accumulate;
+        }
+        if (typeof value.merge === "string") {
+          strToCheck += value.merge;
+        }
+        if (typeof value.finalize === "string") {
+          strToCheck += value.finalize;
+        }
       }
     }
 
-    if (typeof strToCheck !== "string") {
+    if (typeof strToCheck !== "string" || strToCheck.length < 1) {
       continue;
     }
 

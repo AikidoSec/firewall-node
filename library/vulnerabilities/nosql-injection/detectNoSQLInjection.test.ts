@@ -750,3 +750,19 @@ t.test("$where js inject sleep", async (t) => {
     }
   );
 });
+
+t.test("does not detect if not a string (js injection)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { test: 123 },
+      }),
+      {
+        $where: "this.name === 123",
+      }
+    ),
+    {
+      injection: false,
+    }
+  );
+});
