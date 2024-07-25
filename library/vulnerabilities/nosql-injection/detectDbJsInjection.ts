@@ -22,35 +22,7 @@ export function detectDbJsInjection(
       continue;
     }
 
-    let strToCheck = "";
-
-    if (typeof value === "string") {
-      strToCheck = value;
-    } else {
-      if (!isPlainObject(value) || !value) {
-        continue;
-      }
-
-      if (key !== "$function" && key !== "$accumulator") {
-        continue;
-      }
-
-      if (typeof value.lang === "string" && value.lang !== "js") {
-        continue;
-      }
-
-      // We can ignore args, because mongo is interpreting the body as JS code and passes the args to the function as string arguments.
-      // You can not break out of a JS string with quotes inside a JS string.
-      if (key === "$function") {
-        if (typeof value.body !== "string") {
-          continue;
-        }
-        strToCheck = value.body;
-      } else if (key === "$accumulator") {
-        strToCheck = extractCodeFromAccumulator(value);
-      }
-    }
-
+    const strToCheck = extractStringToCheck(key, value);
     if (typeof strToCheck !== "string" || strToCheck.length < 1) {
       continue;
     }
@@ -107,6 +79,37 @@ function isSafelyEncapsulated(filterString: string, userInput: string) {
       return true;
     }
   );
+}
+
+/**
+ * Gets the code string to check for injections from a $where, $function or $accumulator object
+ */
+function extractStringToCheck(key: string, value: unknown) {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (!isPlainObject(value) || !value) {
+    return undefined;
+  }
+
+  if (key !== "$function" && key !== "$accumulator") {
+    return undefined;
+  }
+
+  if (typeof value.lang === "string" && value.lang !== "js") {
+    return undefined;
+  }
+
+  // We can ignore args, because mongo is interpreting the body as JS code and passes the args to the function as string arguments.
+  // You can not break out of a JS string with quotes inside a JS string.
+  if (key === "$function") {
+    if (typeof value.body !== "string") {
+      return undefined;
+    }
+    return value.body;
+  } else if (key === "$accumulator") {
+    return extractCodeFromAccumulator(value);
+  }
 }
 
 /**

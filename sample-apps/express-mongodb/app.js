@@ -101,6 +101,22 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/where",
+    express.json(),
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to JS injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      // Always validate and sanitize user input!
+      const title = req.query.title;
+      if (!title) {
+        return res.status(400).send("title parameter is required");
+      }
+      res.send(await posts.where(title));
+    })
+  );
+
   app.post("/ls", express.json(), (req, res) => {
     const { directory } = req.body;
 
