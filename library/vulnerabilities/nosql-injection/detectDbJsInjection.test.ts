@@ -60,10 +60,15 @@ t.test(
   }
 );
 
-t.test("does not detect injection if securly encapsulated", async (t) => {
+t.test("does not detect if securly encapsulated", async (t) => {
   t.notOk(
     detectDbJsInjection('a" sleep(2000) && "', {
       $where: "this.name === 'a\" sleep(2000) && \"'",
+    })
+  );
+  t.notOk(
+    detectDbJsInjection("abc", {
+      $where: "this.name === 'abc'",
     })
   );
 });

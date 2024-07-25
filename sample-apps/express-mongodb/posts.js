@@ -39,7 +39,6 @@ class Posts {
   }
 
   async where(title) {
-    console.log(`this.title === '${title}'`);
     return await this.postsCollection
       .find({ $where: `this.title === '${title}'` })
       .toArray();
