@@ -86,9 +86,10 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     return fn();
   }
 
-  // Reset the context
-  // We should copy the context to avoid modifying the original object
-  // For performance reasons, we don't copy the cache
+  // `attackDetected`, `consumedRateLimitForIP` and `consumedRateLimitForUser`
+  // are carried over if there's an existing context
+  // Only in case of a top level context, we should reset them first
+  // This is more for tests than for real usage
   delete context.cache;
   delete context.attackDetected;
   delete context.consumedRateLimitForIP;
