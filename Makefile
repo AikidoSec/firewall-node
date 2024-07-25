@@ -97,3 +97,4 @@ benchmark: build
 	cd benchmarks/nosql-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
+	cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js

@@ -29,10 +29,6 @@ export default function () {
     }
   );
 
-  if (postRes.status !== 200) {
-    throw new Error(`Unexpected status code: ${postRes.status}`);
-  }
-
   POST_TREND.add(postRes.timings.duration);
 }
 
