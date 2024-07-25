@@ -1,4 +1,5 @@
 import { getCurrentAndNextSegments } from "../../helpers/getCurrentAndNextSegments";
+import { isPlainObject } from "../../helpers/isPlainObject";
 
 const serverSideJsFunctions = ["$where", "$accumulator", "$function"];
 
@@ -12,36 +13,45 @@ export function detectDbJsInjection(
   }
 
   for (const [key, value] of Object.entries(filterPart)) {
-    if (serverSideJsFunctions.includes(key)) {
-      // Todo check functions
-      if (typeof value !== "string") {
-        continue;
-      }
-
-      // We ignore cases where the user input is longer than the command.
-      // Because the user input can't be part of the command.
-      if (userInput.length > value.length) {
-        continue;
-      }
-
-      // User input is not part of the command
-      if (!value.includes(userInput)) {
-        continue;
-      }
-
-      // User input is safely encapsulated
-      if (isSafelyEncapsulated(value, userInput)) {
-        continue;
-      }
-
-      return true;
+    if (!serverSideJsFunctions.includes(key)) {
+      continue;
     }
+
+    let strToCheck = value;
+
+    if (key === "$function" && isPlainObject(value) && value) {
+      if (typeof value.body === "string") {
+        strToCheck = value.body;
+      }
+    }
+
+    if (typeof strToCheck !== "string") {
+      continue;
+    }
+
+    // We ignore cases where the user input is longer than the command.
+    // Because the user input can't be part of the command.
+    if (userInput.length > strToCheck.length) {
+      continue;
+    }
+
+    // User input is not part of the command
+    if (!strToCheck.includes(userInput)) {
+      continue;
+    }
+
+    // User input is safely encapsulated
+    if (isSafelyEncapsulated(strToCheck, userInput)) {
+      continue;
+    }
+
+    return true;
   }
 
   return false;
 }
 
-const escapeChars = ['"', "'"];
+const escapeChars = ['"', "'", "`"];
 
 /**
  * Check if the user input is safely encapsulated in the query
