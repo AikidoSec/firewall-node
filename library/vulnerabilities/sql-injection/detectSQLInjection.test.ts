@@ -296,15 +296,16 @@ t.test("It flags function calls as SQL injections", async () => {
 });
 
 t.test("It does not match VIEW keyword", async () => {
-  isNotSqlInjection(
-    `
+  const query = `
       SELECT views.id AS view_id, view_settings.user_id, view_settings.settings
         FROM views
         INNER JOIN view_settings ON views.id = view_settings.view_id AND view_settings.user_id = ?
         WHERE views.business_id = ?
-    `,
-    "view_id"
-  );
+    `;
+
+  isNotSqlInjection(query, "view_id");
+  isNotSqlInjection(query, "view_settings");
+  isNotSqlInjection(query, "view_settings.user_id");
 });
 
 const files = [
