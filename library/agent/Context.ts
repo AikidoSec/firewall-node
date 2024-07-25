@@ -83,6 +83,14 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     return fn();
   }
 
+  // Reset the context
+  // We should copy the context to avoid modifying the original object
+  // For performance reasons, we don't copy the cache
+  delete context.cache;
+  delete context.attackDetected;
+  delete context.consumedRateLimitForIP;
+  delete context.consumedRateLimitForUser;
+
   // If there's no context yet, we create a new context and run the function with it
   return ContextStorage.run(context, fn);
 }
