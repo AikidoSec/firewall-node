@@ -2,6 +2,10 @@ export type Endpoint = {
   method: string;
   route: string;
   forceProtectionOff: boolean;
+  graphql?: {
+    type: "query" | "mutation";
+    name: string;
+  };
   rateLimiting: {
     enabled: boolean;
     maxRequests: number;

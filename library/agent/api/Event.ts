@@ -91,7 +91,12 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
-  routes: { path: string; method: string; hits: number }[];
+  routes: {
+    path: string;
+    method: string;
+    hits: number;
+    graphql?: { type: "query" | "mutation"; name: string };
+  }[];
   users: {
     id: string;
     name: string | undefined;
