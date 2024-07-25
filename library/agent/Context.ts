@@ -86,25 +86,13 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     return fn();
   }
 
-  // We need to create a new context without `attackDetected`, `consumedRateLimitForIP`, ...
-  const topLevelContext: Context = {
-    url: context.url,
-    method: context.method,
-    query: context.query,
-    headers: context.headers,
-    routeParams: context.routeParams,
-    remoteAddress: context.remoteAddress,
-    body: context.body,
-    cookies: context.cookies,
-    source: context.source,
-    route: context.route,
-    graphql: context.graphql,
-    xml: context.xml,
-    subdomains: context.subdomains,
-  };
+  // Cleanup lingering cache
+  // In tests the context is often passed by reference
+  // Make sure to clean up the cache before running the function
+  delete context.cache;
 
   // If there's no context yet, we create a new context and run the function with it
-  return ContextStorage.run(topLevelContext, fn);
+  return ContextStorage.run(context, fn);
 }
 
 /**
