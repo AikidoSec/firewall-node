@@ -274,6 +274,23 @@ SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
   );
 });
 
+t.test("It does not flag key keyword as SQL injection", async () => {
+  isNotSqlInjection(
+    `
+      INSERT INTO businesses (
+            business_id,
+            created_at,
+            updated_at,
+            changed_at
+          )
+          VALUES (?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE updated_at = VALUES(updated_at),
+                                  changed_at = VALUES(changed_at)
+    `,
+    "KEY"
+  );
+});
+
 t.test("It flags function calls as SQL injections", async () => {
   isSqlInjection("foobar()", "foobar()");
   isSqlInjection("foobar(1234567)", "foobar(1234567)");
