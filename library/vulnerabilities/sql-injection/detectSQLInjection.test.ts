@@ -275,8 +275,7 @@ SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
 });
 
 t.test("It does not flag key keyword as SQL injection", async () => {
-  isNotSqlInjection(
-    `
+  const query = `
       INSERT INTO businesses (
             business_id,
             created_at,
@@ -286,9 +285,14 @@ t.test("It does not flag key keyword as SQL injection", async () => {
           VALUES (?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE updated_at = VALUES(updated_at),
                                   changed_at = VALUES(changed_at)
-    `,
-    "KEY"
-  );
+    `;
+
+  isNotSqlInjection(query, "KEY");
+  isNotSqlInjection(query, "VALUES");
+  isNotSqlInjection(query, "ON");
+  isNotSqlInjection(query, "UPDATE");
+  isNotSqlInjection(query, "INSERT");
+  isNotSqlInjection(query, "INTO");
 });
 
 t.test("It flags function calls as SQL injections", async () => {
