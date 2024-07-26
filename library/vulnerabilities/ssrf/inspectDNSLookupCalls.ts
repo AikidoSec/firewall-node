@@ -4,8 +4,8 @@ import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { Context, getContext } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
-import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 import { escapeHTML } from "../../helpers/escapeHTML";
+import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
@@ -181,17 +181,19 @@ function findHostnameInContext(
   port: number | undefined
 ): Location | undefined {
   for (const source of SOURCES) {
-    if (context[source]) {
-      const userInput = extractStringsFromUserInput(context[source]);
-      for (const [str, path] of userInput.entries()) {
-        const found = findHostnameInUserInput(str, hostname, port);
-        if (found) {
-          return {
-            source: source,
-            pathToPayload: path,
-            payload: str,
-          };
-        }
+    const userInput = extractStringsFromUserInputCached(context, source);
+    if (!userInput) {
+      continue;
+    }
+
+    for (const [str, path] of userInput.entries()) {
+      const found = findHostnameInUserInput(str, hostname, port);
+      if (found) {
+        return {
+          source: source,
+          pathToPayload: path,
+          payload: str,
+        };
       }
     }
   }

@@ -1,5 +1,5 @@
 import { Agent } from "../agent/Agent";
-import { Context } from "../agent/Context";
+import { Context, updateContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 
 type Result =
@@ -16,7 +16,10 @@ type Result =
     };
 
 // eslint-disable-next-line max-lines-per-function
-export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
+export function shouldRateLimitRequest(
+  context: Readonly<Context>,
+  agent: Agent
+): Result {
   const match = agent.getConfig().getEndpoint(context);
 
   if (!match) {
@@ -61,7 +64,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.consumedRateLimitForIP = true;
+    updateContext(context, "consumedRateLimitForIP", true);
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
@@ -79,7 +82,7 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.consumedRateLimitForUser = true;
+    updateContext(context, "consumedRateLimitForUser", true);
 
     if (!allowed) {
       return { block: true, trigger: "user" };

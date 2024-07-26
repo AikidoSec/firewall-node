@@ -174,7 +174,7 @@ t.test("it deals with 400", async () => {
 });
 
 t.test("it deals with 500", async () => {
-  const stop = await createTestEndpoint({ statusCode: 400, port: 3007 });
+  const stop = await createTestEndpoint({ statusCode: 500, port: 3007 });
   const api = new ReportingAPINodeHTTP(new URL("http://localhost:3007"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,

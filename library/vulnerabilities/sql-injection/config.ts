@@ -113,6 +113,8 @@ export const COMMON_SQL_KEYWORDS = [
   "UNIQUE",
   "UPDATE",
   "INTO",
+  "KEY",
+  "VALUES",
 ];
 
 export const SQL_OPERATORS = [

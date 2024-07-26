@@ -1,6 +1,8 @@
 import type { ParsedQs } from "qs";
+import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserInput";
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
+import { Source, SOURCES } from "./Source";
 
 export type User = { id: string; name?: string };
 
@@ -22,13 +24,33 @@ export type Context = {
   graphql?: string[];
   xml?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
+  cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
 };
 
 /**
  * Get the current request context that is being handled
+ *
+ * We don't want to allow the user to modify the context directly, so we use `Readonly<Context>`
  */
-export function getContext() {
+export function getContext(): Readonly<Context> | undefined {
   return ContextStorage.getStore();
+}
+
+function isSourceKey(key: string): key is Source {
+  return SOURCES.includes(key as Source);
+}
+
+// We need to use a function to mutate the context because we need to clear the cache when the user input changes
+export function updateContext<K extends keyof Context>(
+  context: Context,
+  key: K,
+  value: Context[K]
+) {
+  context[key] = value;
+
+  if (context.cache && isSourceKey(key)) {
+    context.cache.delete(key);
+  }
 }
 
 /**
@@ -58,8 +80,16 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.xml = context.xml;
     current.subdomains = context.subdomains;
 
+    // Clear all the cached user input strings
+    delete current.cache;
+
     return fn();
   }
+
+  // Cleanup lingering cache
+  // In tests the context is often passed by reference
+  // Make sure to clean up the cache before running the function
+  delete context.cache;
 
   // If there's no context yet, we create a new context and run the function with it
   return ContextStorage.run(context, fn);
