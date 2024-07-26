@@ -8,6 +8,7 @@ import {
   getMajorNodeVersion,
   getMinorNodeVersion,
 } from "../helpers/getNodeVersion";
+import { isPackageInstalled } from "../helpers/isPackageInstalled";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -53,11 +54,7 @@ t.test("does not break when the Node.js version is too low", async (t) => {
 t.test(
   "it detects SQL injections",
   {
-    skip:
-      getMajorNodeVersion() < 22 ||
-      (getMajorNodeVersion() === 22 && getMinorNodeVersion() < 5)
-        ? "SQLite was added in Node.js 22.5.0"
-        : false,
+    skip: !isPackageInstalled("node:sqlite"),
   },
   async () => {
     const agent = new Agent(

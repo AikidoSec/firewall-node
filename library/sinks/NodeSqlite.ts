@@ -2,10 +2,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
+import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import type { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
@@ -14,12 +11,7 @@ export class NodeSQLite implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectSQLite();
 
   wrap(hooks: Hooks) {
-    const supported =
-      getMajorNodeVersion() > 22 ||
-      (getMajorNodeVersion() === 22 && getMinorNodeVersion() >= 5);
-
-    if (!supported) {
-      // Was added in Node.js 22.5.0
+    if (!isPackageInstalled("node:sqlite")) {
       return;
     }
 
