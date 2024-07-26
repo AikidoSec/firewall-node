@@ -77,8 +77,8 @@
     "xml2js": "^0.6.2"
   },
   "scripts": {
-    "test": "tap --allow-incomplete-coverage",
-    "test:ci": "tap --coverage-report=lcov --allow-incomplete-coverage",
+    "test": "node ../scripts/run-tap.js",
+    "test:ci": "CI=true node ../scripts/run-tap.js",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
