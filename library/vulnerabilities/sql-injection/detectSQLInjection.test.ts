@@ -316,6 +316,22 @@ t.test("It flags function calls as SQL injections", async () => {
   isNotSqlInjection("€foobar()", "€foobar()");
 });
 
+t.test("It flags lowercased input as SQL injection", async () => {
+  isSqlInjection(
+    `
+      SELECT id,
+               email,
+               password_hash,
+               registered_at,
+               is_confirmed,
+               first_name,
+               last_name
+        FROM users WHERE email_lowercase = '' or 1=1 -- a',
+    `,
+    "' OR 1=1 -- a"
+  );
+});
+
 t.test("It does not match VIEW keyword", async () => {
   const query = `
       SELECT views.id AS view_id, view_settings.user_id, view_settings.settings
