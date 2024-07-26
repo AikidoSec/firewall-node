@@ -2,7 +2,6 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import type { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
@@ -11,10 +10,6 @@ export class NodeSQLite implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectSQLite();
 
   wrap(hooks: Hooks) {
-    if (!isPackageInstalled("node:sqlite")) {
-      return;
-    }
-
     const database = hooks
       .addBuiltinModule("node:sqlite")
       .addSubject((exports) => {
