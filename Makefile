@@ -54,6 +54,10 @@ lambda-mongodb-nosql-injection:
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/safe-request.json
 
+.PHONY: socket.io-postgres
+socket.io-postgres:
+	cd sample-apps/socket.io-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
 .PHONY: install
 install:
 	mkdir -p build && cp library/package.json build/package.json
