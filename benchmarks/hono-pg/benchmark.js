@@ -134,7 +134,7 @@ async function getResult() {
 
   // Check if difference is larger than 0.5ms
   if (getAvgDiff > 0.5 || postAvgDiff > 0.5) {
-    console.error(
+    console.log(
       "Firewall is causing a performance impact thats larger than 0.5ms"
     );
     process.exit(1);

@@ -4,7 +4,6 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { isJsonContentType } from "../../helpers/isJsonContentType";
 import { parse } from "../../helpers/parseCookies";
-import { setTimeout } from "timers/promises";
 
 export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const { req } = c;
@@ -35,8 +34,6 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
       }
     }
   }
-
-  await setTimeout(20);
 
   const cookieHeader = req.header("cookie");
 
