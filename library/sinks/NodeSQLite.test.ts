@@ -37,6 +37,19 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
+t.test("does not break when the Node.js version is too low", async (t) => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+  agent.start([new NodeSQLite()]);
+
+  t.end();
+});
+
 t.test(
   "it detects SQL injections",
   {
@@ -95,13 +108,13 @@ t.test(
 
       runWithContext(safeContext, () => {
         db.prepare("SELECT 1;-- This is a comment");
-      });
 
-      try {
-        db.exec();
-      } catch (error: any) {
-        t.match(error.message, /The "sql" argument must be a string./);
-      }
+        try {
+          db.exec();
+        } catch (error: any) {
+          t.match(error.message, /The "sql" argument must be a string./);
+        }
+      });
     } catch (error: any) {
       t.fail(error);
     } finally {
