@@ -20,18 +20,6 @@ t.test("SQL_KEYWORDS are uppercase", async () => {
   });
 });
 
-t.test("COMMON_SQL_KEYWORDS are not empty", async () => {
-  COMMON_SQL_KEYWORDS.forEach((keyword) => {
-    t.ok(keyword.length > 0);
-  });
-});
-
-t.test("COMMON_SQL_KEYWORDS are uppercase", async () => {
-  COMMON_SQL_KEYWORDS.forEach((keyword) => {
-    t.same(keyword, keyword.toUpperCase());
-  });
-});
-
 t.test("SQL_OPERATORS are not empty", async () => {
   SQL_OPERATORS.forEach((operator) => {
     t.ok(operator.length > 0);
