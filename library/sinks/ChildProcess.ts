@@ -15,18 +15,71 @@ const PATH_PREFIXES = [
 ];
 
 export class ChildProcess implements Wrapper {
-  private isShellCommand(command: string): boolean {
-    for (const prefix of PATH_PREFIXES) {
-      for (const shellCommand of ["bash", "zsh", "sh"]) {
-        if (
-          command === `${prefix}${shellCommand}` ||
-          command === shellCommand
-        ) {
-          return true;
-        }
-      }
+  wrap(hooks: Hooks) {
+    const childProcess = hooks.addBuiltinModule("child_process");
+
+    childProcess
+      .addSubject((exports) => exports)
+      .inspect("exec", (args) => this.inspectExec(args, "exec"))
+      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
+      .inspect("spawn", (args) => this.inspectSpawn(args, "spawn"))
+      .inspect("spawnSync", (args) => this.inspectSpawn(args, "spawnSync"))
+      .inspect("execFile", (args) => this.inspectExecFile(args, "execFile"))
+      .inspect("execFileSync", (args) =>
+        this.inspectExecFile(args, "execFileSync")
+      );
+  }
+
+  private inspectSpawn(args: unknown[], name: string) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
     }
-    return false;
+
+    if (!this.usingShell(args)) {
+      return undefined;
+    }
+
+    if (args.length > 0 && typeof args[0] === "string") {
+      let command = args[0];
+
+      if (args.length > 1 && Array.isArray(args[1]) && args[1].length > 0) {
+        command = `${command} ${args[1].join(" ")}`;
+      }
+
+      return checkContextForShellInjection({
+        command: command,
+        operation: `child_process.${name}`,
+        context: context,
+      });
+    }
+  }
+
+  private inspectExecFile(args: unknown[], name: string) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (!this.usingShell(args)) {
+      return undefined;
+    }
+
+    if (args.length > 0 && typeof args[0] === "string") {
+      let command = args[0];
+
+      if (args.length > 1 && Array.isArray(args[1]) && args[1].length > 0) {
+        command = `${command} ${args[1].join(" ")}`;
+      }
+
+      return checkContextForShellInjection({
+        command: command,
+        operation: `child_process.${name}`,
+        context: context,
+      });
+    }
   }
 
   private inspectExec(args: unknown[], name: string): InterceptorResult {
@@ -36,43 +89,8 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
-    // Ignore calls to spawn, spawnSync, execFile and execFileSync if shell option is not enabled
-    if (
-      name === "spawn" ||
-      name === "spawnSync" ||
-      name === "execFile" ||
-      name === "execFileSync"
-    ) {
-      const unsafeShellOption = args.find(
-        (arg) =>
-          isPlainObject(arg) &&
-          "shell" in arg &&
-          (arg.shell === true || typeof arg.shell === "string")
-      );
-
-      if (
-        !unsafeShellOption &&
-        typeof args[0] == "string" &&
-        !this.isShellCommand(args[0])
-      ) {
-        return undefined;
-      }
-    }
-
     if (args.length > 0 && typeof args[0] === "string") {
-      let command = args[0];
-
-      if (
-        (name === "spawn" ||
-          name === "spawnSync" ||
-          name === "execFile" ||
-          name === "execFileSync") &&
-        args.length > 1 &&
-        Array.isArray(args[1]) &&
-        args[1].length > 0
-      ) {
-        command += " " + args[1].join(" ");
-      }
+      const command = args[0];
 
       return checkContextForShellInjection({
         command: command,
@@ -84,18 +102,35 @@ export class ChildProcess implements Wrapper {
     return undefined;
   }
 
-  wrap(hooks: Hooks) {
-    const childProcess = hooks.addBuiltinModule("child_process");
+  private isShellCommand(command: string): boolean {
+    for (const prefix of PATH_PREFIXES) {
+      for (const shellCommand of ["bash", "zsh", "sh"]) {
+        if (
+          command === `${prefix}${shellCommand}` ||
+          command === shellCommand
+        ) {
+          return true;
+        }
+      }
+    }
 
-    childProcess
-      .addSubject((exports) => exports)
-      .inspect("exec", (args) => this.inspectExec(args, "exec"))
-      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
-      .inspect("spawn", (args) => this.inspectExec(args, "spawn"))
-      .inspect("spawnSync", (args) => this.inspectExec(args, "spawnSync"))
-      .inspect("execFile", (args) => this.inspectExec(args, "execFile"))
-      .inspect("execFileSync", (args) =>
-        this.inspectExec(args, "execFileSync")
-      );
+    return false;
+  }
+
+  private usingShell(args: unknown[]): boolean {
+    if (
+      args.length > 0 &&
+      typeof args[0] === "string" &&
+      this.isShellCommand(args[0])
+    ) {
+      return true;
+    }
+
+    return args.some(
+      (arg) =>
+        isPlainObject(arg) &&
+        "shell" in arg &&
+        (arg.shell === true || typeof arg.shell === "string")
+    );
   }
 }
