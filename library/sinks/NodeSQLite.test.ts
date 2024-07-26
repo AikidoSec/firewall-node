@@ -1,0 +1,111 @@
+import * as t from "tap";
+import { Agent } from "../agent/Agent";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { runWithContext, type Context } from "../agent/Context";
+import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { NodeSQLite } from "./NodeSqlite";
+import {
+  getMajorNodeVersion,
+  getMinorNodeVersion,
+} from "../helpers/getNodeVersion";
+
+const dangerousContext: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: {
+    myTitle: `-- should be blocked`,
+  },
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
+const safeContext: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000/",
+  query: {},
+  headers: {},
+  body: {},
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
+t.test(
+  "it detects SQL injections",
+  {
+    skip:
+      getMajorNodeVersion() < 22 ||
+      (getMajorNodeVersion() === 22 && getMinorNodeVersion() < 5)
+        ? "SQLite was added in Node.js 22.5.0"
+        : false,
+  },
+  async () => {
+    const agent = new Agent(
+      true,
+      new LoggerNoop(),
+      new ReportingAPIForTesting(),
+      undefined,
+      undefined
+    );
+    agent.start([new NodeSQLite()]);
+
+    const { DatabaseSync } = require("node:sqlite");
+
+    const db = new DatabaseSync(":memory:");
+
+    try {
+      db.exec("CREATE TABLE IF NOT EXISTS cats (petname varchar(255));");
+      // Does not detect SQL injection, function does not return anything
+      db.exec("SELECT petname FROM `cats`;");
+
+      runWithContext(dangerousContext, () => {
+        try {
+          db.exec("SELECT 1;-- should be blocked");
+          t.fail("Expected an error");
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Aikido firewall has blocked an SQL injection: node:sqlite.exec/
+          );
+        }
+      });
+
+      runWithContext(safeContext, () => {
+        db.exec("SELECT 1;-- This is a comment");
+      });
+
+      runWithContext(dangerousContext, () => {
+        try {
+          db.prepare("SELECT 1;-- should be blocked");
+          t.fail("Expected an error");
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Aikido firewall has blocked an SQL injection: node:sqlite.prepare/
+          );
+        }
+      });
+
+      runWithContext(safeContext, () => {
+        db.prepare("SELECT 1;-- This is a comment");
+      });
+
+      try {
+        db.exec();
+      } catch (error: any) {
+        t.match(error.message, /The "sql" argument must be a string./);
+      }
+    } catch (error: any) {
+      t.fail(error);
+    } finally {
+      db.close();
+    }
+  }
+);
