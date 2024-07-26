@@ -36,7 +36,7 @@ async function main() {
   });
 
   app.post("/api/posts", async (c) => {
-    const body = c.req.json();
+    const body = await c.req.json();
     await posts.add(body.title, body.text);
 
     return c.json({ success: true });

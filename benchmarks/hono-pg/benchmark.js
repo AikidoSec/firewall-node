@@ -100,6 +100,11 @@ async function getResult() {
   console.log(
     `POST duration: avg=${customPostFirewall.avg}ms, min=${customPostFirewall.min}ms, max=${customPostFirewall.max}ms`
   );
+  console.log(
+    `Total requests: ${resultWithFirewall.metrics.http_reqs.values.count}`
+  );
+
+  console.log("------------------------------------");
   console.log("Results with firewall disabled:");
   const customGetNoFirewall =
     resultWithoutFirewall.metrics.custom_get_duration.values;
@@ -111,15 +116,30 @@ async function getResult() {
   console.log(
     `POST duration: avg=${customPostNoFirewall.avg}ms, min=${customPostNoFirewall.min}ms, max=${customPostNoFirewall.max}ms`
   );
+  console.log(
+    `Total requests: ${resultWithoutFirewall.metrics.http_reqs.values.count}`
+  );
 
   const getAvgDiff = customGetFirewall.avg - customGetNoFirewall.avg;
   const postAvgDiff = customPostFirewall.avg - customPostNoFirewall.avg;
   const getDiffPercent = (getAvgDiff / customGetNoFirewall.avg) * 100;
   const postDiffPercent = (postAvgDiff / customPostNoFirewall.avg) * 100;
 
+  console.log("------------------------------------");
   console.log("Firewall performance impact:");
-  console.log(`GET avg dif: ${getAvgDiff}ms (${getDiffPercent.toFixed(2)}%)`);
+  console.log(`GET avg diff: ${getAvgDiff}ms (${getDiffPercent.toFixed(2)}%)`);
   console.log(
-    `POST avg dif: ${postAvgDiff}ms (${postDiffPercent.toFixed(2)}%)`
+    `POST avg diff: ${postAvgDiff}ms (${postDiffPercent.toFixed(2)}%)`
   );
+
+  // Check if difference is larger than 0.5ms
+  if (getAvgDiff > 0.5 || postAvgDiff > 0.5) {
+    console.error(
+      "Firewall is causing a performance impact thats larger than 0.5ms"
+    );
+    process.exit(1);
+  }
+
+  console.log("Test passed successfully, no significant performance impact.");
+  process.exit(0);
 })();
