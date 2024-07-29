@@ -343,6 +343,22 @@ t.test("It does not match VIEW keyword", async () => {
   isNotSqlInjection(query, "view_id");
   isNotSqlInjection(query, "view_settings");
   isNotSqlInjection(query, "view_settings.user_id");
+
+  const query2 = `
+    SELECT id,
+           business_id,
+           object_type,
+           name,
+           \`condition\`,
+           settings,
+           \`read_only\`,
+           created_at,
+           updated_at
+    FROM views
+    WHERE business_id = ?
+  `;
+
+  isNotSqlInjection(query2, "view");
 });
 
 const files = [
