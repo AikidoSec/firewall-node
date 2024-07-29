@@ -115,6 +115,7 @@ export const COMMON_SQL_KEYWORDS = [
   "INTO",
   "KEY",
   "VALUES",
+  "VIEW",
 ];
 
 export const SQL_OPERATORS = [
