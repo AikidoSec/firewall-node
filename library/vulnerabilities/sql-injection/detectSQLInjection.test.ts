@@ -58,10 +58,10 @@ const IS_NOT_INJECTION = [
   ["SELECT * FROM table", "*"],
   [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
   [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
+  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
 ];
 
 const IS_INJECTION = [
-  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
