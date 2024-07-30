@@ -4,9 +4,12 @@ import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap() {
+  return function wrap(name: string) {
     // So that it thinks next is installed
-    return true;
+    if (name === "next") {
+      return true;
+    }
+    return false;
   };
 });
 
