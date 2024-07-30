@@ -75,48 +75,6 @@ export const SQL_KEYWORDS = [
   "IS",
 ];
 
-// This is a list of common SQL keywords that are not dangerous by themselves
-// They will appear in almost any SQL query
-// e.g. SELECT * FROM table WHERE column = 'value' LIMIT 1
-// If a query parameter is ?LIMIT=1 it would be blocked
-// If the body contains "LIMIT" or "SELECT" it would be blocked
-export const COMMON_SQL_KEYWORDS = [
-  "SELECT",
-  "INSERT",
-  "FROM",
-  "WHERE",
-  "DELETE",
-  "GROUP",
-  "BY",
-  "ORDER",
-  "LIMIT",
-  "OFFSET",
-  "HAVING",
-  "COUNT",
-  "SUM",
-  "AVG",
-  "MIN",
-  "MAX",
-  "DISTINCT",
-  "AS",
-  "AND",
-  "OR",
-  "NOT",
-  "IN",
-  "LIKE",
-  "BETWEEN",
-  "IS",
-  "NULL",
-  "ALL",
-  "ANY",
-  "EXISTS",
-  "UNIQUE",
-  "UPDATE",
-  "INTO",
-  "KEY",
-  "VALUES",
-];
-
 export const SQL_OPERATORS = [
   "=",
   "!",
