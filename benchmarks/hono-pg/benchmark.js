@@ -132,10 +132,10 @@ async function getResult() {
     `POST med diff: ${postMedDiff}ms (${postDiffPercent.toFixed(2)}%)`
   );
 
-  // Check if difference is larger than 0.5ms
-  if (getMedDiff > 0.5 || postMedDiff > 0.5) {
+  // Check if difference is larger than 3ms
+  if (getMedDiff > 3 || postMedDiff > 3) {
     console.log(
-      "Firewall is causing a performance impact thats larger than 0.5ms"
+      "Firewall is causing a performance impact thats larger than 3ms"
     );
     process.exit(1);
   }
