@@ -1,9 +1,10 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import * as t from "tap";
-import { SQL_KEYWORDS } from "./config";
+import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS } from "./config";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
+import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
 
 t.test("it flags dialect specific keywords", async () => {
@@ -14,13 +15,28 @@ t.test("it does not flag common SQL keywords", async () => {
   t.same(userInputContainsSQLSyntax("SELECT", new SQLDialectMySQL()), false);
 });
 
+const alphanumeric = ["1", "123", "1313", "0", "abc", "ABC"];
+
 t.test("it ignores alphanumeric input", async () => {
-  t.same(userInputContainsSQLSyntax("1", new SQLDialectMySQL()), false);
-  t.same(userInputContainsSQLSyntax("123", new SQLDialectMySQL()), false);
-  t.same(userInputContainsSQLSyntax("1313", new SQLDialectMySQL()), false);
-  t.same(userInputContainsSQLSyntax("0", new SQLDialectMySQL()), false);
-  t.same(userInputContainsSQLSyntax("abc", new SQLDialectMySQL()), false);
-  t.same(userInputContainsSQLSyntax("ABC", new SQLDialectMySQL()), false);
+  alphanumeric.forEach((input) => {
+    t.same(userInputContainsSQLSyntax(input, new SQLDialectMySQL()), false);
+    t.same(userInputContainsSQLSyntax(input, new SQLDialectPostgres()), false);
+    t.same(userInputContainsSQLSyntax(input, new SQLDialectSQLite()), false);
+  });
+});
+
+t.test("it flags alphanumeric input if contains dangerous string", async () => {
+  alphanumeric.forEach((input) => {
+    SQL_DANGEROUS_IN_STRING.forEach((string) => {
+      const payload = `${input}${string}`;
+      t.same(userInputContainsSQLSyntax(payload, new SQLDialectMySQL()), true);
+      t.same(
+        userInputContainsSQLSyntax(payload, new SQLDialectPostgres()),
+        true
+      );
+      t.same(userInputContainsSQLSyntax(payload, new SQLDialectSQLite()), true);
+    });
+  });
 });
 
 t.test("it does not flag SQL keyword as dangerous", async () => {
@@ -36,6 +52,47 @@ t.test("it does not flag SQL keyword as dangerous", async () => {
     );
   });
 });
+
+t.test("it does flag SQL keyword as dangerous if contains space", async () => {
+  // They just contain alpha characters
+  SQL_KEYWORDS.forEach((keyword) => {
+    const payload = ` ${keyword}`;
+    t.same(
+      userInputContainsSQLSyntax(payload.toLowerCase(), new SQLDialectMySQL()),
+      true
+    );
+    t.same(
+      userInputContainsSQLSyntax(payload.toUpperCase(), new SQLDialectMySQL()),
+      true
+    );
+  });
+});
+
+t.test(
+  "it does flag SQL keyword as dangerous if contains dangerous string",
+  async () => {
+    // They just contain alpha characters
+    SQL_KEYWORDS.forEach((keyword) => {
+      SQL_DANGEROUS_IN_STRING.forEach((string) => {
+        const payload = `${keyword}${string}`;
+        t.same(
+          userInputContainsSQLSyntax(
+            payload.toLowerCase(),
+            new SQLDialectMySQL()
+          ),
+          true
+        );
+        t.same(
+          userInputContainsSQLSyntax(
+            payload.toUpperCase(),
+            new SQLDialectMySQL()
+          ),
+          true
+        );
+      });
+    });
+  }
+);
 
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
