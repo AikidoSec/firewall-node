@@ -2,7 +2,7 @@ import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_DANGEROUS_IN_STRING } from "./config";
+import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
@@ -359,6 +359,36 @@ t.test("It does not match VIEW keyword", async () => {
   `;
 
   isNotSqlInjection(query2, "view");
+});
+
+t.test("It does not flag SQL keyword if part of another word", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    isNotSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      keyword
+    );
+
+    isNotSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword.toLowerCase()}
+        WHERE business_id = ?
+    `,
+      keyword
+    );
+  });
 });
 
 const files = [

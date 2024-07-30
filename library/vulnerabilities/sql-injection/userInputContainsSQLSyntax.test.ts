@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import * as t from "tap";
+import { SQL_KEYWORDS } from "./config";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
@@ -11,6 +12,29 @@ t.test("it flags dialect specific keywords", async () => {
 
 t.test("it does not flag common SQL keywords", async () => {
   t.same(userInputContainsSQLSyntax("SELECT", new SQLDialectMySQL()), false);
+});
+
+t.test("it ignores alphanumeric input", async () => {
+  t.same(userInputContainsSQLSyntax("1", new SQLDialectMySQL()), false);
+  t.same(userInputContainsSQLSyntax("123", new SQLDialectMySQL()), false);
+  t.same(userInputContainsSQLSyntax("1313", new SQLDialectMySQL()), false);
+  t.same(userInputContainsSQLSyntax("0", new SQLDialectMySQL()), false);
+  t.same(userInputContainsSQLSyntax("abc", new SQLDialectMySQL()), false);
+  t.same(userInputContainsSQLSyntax("ABC", new SQLDialectMySQL()), false);
+});
+
+t.test("it does not flag SQL keyword as dangerous", async () => {
+  // They just contain alpha characters
+  SQL_KEYWORDS.forEach((keyword) => {
+    t.same(
+      userInputContainsSQLSyntax(keyword.toLowerCase(), new SQLDialectMySQL()),
+      false
+    );
+    t.same(
+      userInputContainsSQLSyntax(keyword.toUpperCase(), new SQLDialectMySQL()),
+      false
+    );
+  });
 });
 
 const files = [
