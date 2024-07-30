@@ -46,7 +46,7 @@ export class HTTPServer implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    ["http", "https"].forEach((module) => {
+    ["http", "https", "http2"].forEach((module) => {
       hooks
         .addBuiltinModule(module)
         .addSubject((exports) => exports)
