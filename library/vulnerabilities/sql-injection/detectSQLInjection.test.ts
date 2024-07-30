@@ -391,6 +391,69 @@ t.test("It does not flag SQL keyword if part of another word", async () => {
   });
 });
 
+t.test("It flags SQL keyword if it contains space", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    isSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      " " + keyword
+    );
+
+    isSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      " " + keyword.toLowerCase()
+    );
+  });
+});
+
+t.test("It flags SQL keyword if it contains dangerous character", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    SQL_DANGEROUS_IN_STRING.forEach((string) => {
+      const payload = `${string}${keyword}`;
+      isSqlInjection(
+        `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${payload}
+        WHERE business_id = ?
+    `,
+        payload
+      );
+
+      isSqlInjection(
+        `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${payload}
+        WHERE business_id = ?
+    `,
+        payload.toLowerCase()
+      );
+    });
+  });
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
