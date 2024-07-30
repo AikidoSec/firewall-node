@@ -11,6 +11,15 @@ http.setResponseCallback(http.expectedStatuses({ min: 200, max: 204 }));
 const payload = {
   title: "Hello, world!",
   text: "This is a test blog post. Lorem ipsum dolor sit amet.",
+  authors: ["John Doe", "Jane Doe"],
+  metadata: {
+    tags: ["test", "blog", "post"],
+    createdAt: new Date().toISOString(),
+    revisions: {
+      count: 1,
+      last: new Date().toISOString(),
+    },
+  },
 };
 
 const GET_TREND = new Trend("custom_get_duration");
@@ -25,7 +34,11 @@ export default function () {
     "http://localhost:4000/api/posts",
     JSON.stringify(payload),
     {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization:
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.Bw8sSk3kdnT9d803kqqE_LZJzY1PzMl5cbmuanQKxrI",
+      },
     }
   );
 

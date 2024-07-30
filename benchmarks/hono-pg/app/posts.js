@@ -18,11 +18,32 @@ class Posts {
     this.db = db;
   }
 
-  async add(title, text) {
+  async add(title, text, authors) {
     // This is unsafe! This is for demo purposes only, you should use parameterized queries.
-    await this.db.query(
-      `INSERT INTO posts (title, text) VALUES ('${title}', '${text}');`
+    const articleRes = await this.db.query(
+      `INSERT INTO posts (title, text) VALUES ('${title}', '${text}') RETURNING id;`
     );
+
+    const articleId = articleRes.rows[0].id;
+
+    for (const author of authors) {
+      const authorExists = await this.db.query(
+        `SELECT id FROM authors WHERE name = '${author}';`
+      );
+      let authorId;
+      if (authorExists.rows.length === 0) {
+        const authorRes = await this.db.query(
+          `INSERT INTO authors (name) VALUES ('${author}') RETURNING id;`
+        );
+        authorId = authorRes.rows[0].id;
+      } else {
+        authorId = authorExists.rows[0].id;
+      }
+
+      await this.db.query(
+        `INSERT INTO post_authors (post_id, author_id) VALUES (${articleId}, ${authorId});`
+      );
+    }
   }
 
   async find(title) {
