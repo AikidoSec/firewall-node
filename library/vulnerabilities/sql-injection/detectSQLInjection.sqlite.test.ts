@@ -3,8 +3,15 @@ import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
 t.test("It flags the VACUUM command as SQL injection", async () => {
-  isNotSQLInjection("VACUUM;", "VACUUM");
+  isSqlInjection("VACUUM;", "VACUUM;");
 });
+
+t.test(
+  "It does not flag the VACUUM command without semicolon as SQL injection",
+  async () => {
+    isNotSQLInjection("VACUUM;", "VACUUM");
+  }
+);
 
 t.test("It flags the ATTACH command as SQL injection", async () => {
   isSqlInjection("ATTACH DATABASE 'test.db' AS test;", "'test.db' AS test");
