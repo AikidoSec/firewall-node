@@ -1,16 +1,20 @@
-import { Agent } from "../../agent/Agent";
+import { Agent } from "../../../agent/Agent";
 import {
   bindContext,
   Context,
   getContext,
   runWithContext,
-} from "../../agent/Context";
-import { escapeHTML } from "../../helpers/escapeHTML";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
+} from "../../../agent/Context";
+import { escapeHTML } from "../../../helpers/escapeHTML";
+import { shouldRateLimitRequest } from "../../../ratelimiting/shouldRateLimitRequest";
 import { contextFromStream } from "./contextFromStream";
-import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
+import { shouldDiscoverRoute } from "../shouldDiscoverRoute";
 import { IncomingHttpHeaders, ServerHttp2Stream } from "http2";
 
+/**
+ * Wraps the http2 stream listener to get the request context of http2 requests.
+ * Also implements route discovery and rate limiting.
+ */
 export function createStreamListener(
   listener: Function,
   module: string,
@@ -30,7 +34,7 @@ export function createStreamListener(
         bindContext(() => {
           const context = getContext();
 
-          discoverStream(context, stream, agent);
+          discoverRouteFromStream(context, stream, agent);
 
           agent.getInspectionStatistics().onRequest();
           if (context && context.attackDetected) {
@@ -62,7 +66,7 @@ export function createStreamListener(
   };
 }
 
-function discoverStream(
+function discoverRouteFromStream(
   context: Readonly<Context> | undefined,
   stream: ServerHttp2Stream,
   agent: Agent

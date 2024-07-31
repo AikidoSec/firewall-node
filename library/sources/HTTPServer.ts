@@ -3,7 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
-import { createStreamListener } from "./http-server/createStreamListener";
+import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {

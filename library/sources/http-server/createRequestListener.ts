@@ -46,6 +46,9 @@ function callListenerWithContext(
   const context = contextFromRequest(req, body, module);
 
   return runWithContext(context, () => {
+    // This method is called when the response is finished and discovers the routes for display in the dashboard
+    // The bindContext function is used to ensure that the context is available in the callback
+    // If using http2, the context is not available in the callback without this
     res.on(
       "finish",
       bindContext(() => {

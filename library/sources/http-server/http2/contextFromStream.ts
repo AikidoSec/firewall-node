@@ -1,10 +1,13 @@
-import { Context } from "../../agent/Context";
-import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
-import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
-import { parse } from "../../helpers/parseCookies";
-import { tryParseURLParams } from "../../helpers/tryParseURLParams";
+import { Context } from "../../../agent/Context";
+import { buildRouteFromURL } from "../../../helpers/buildRouteFromURL";
+import { getIPAddressFromRequest } from "../../../helpers/getIPAddressFromRequest";
+import { parse } from "../../../helpers/parseCookies";
+import { tryParseURLParams } from "../../../helpers/tryParseURLParams";
 import { ServerHttp2Stream, IncomingHttpHeaders } from "http2";
 
+/**
+ * Extracts required information from the http2 stream and headers to create a context object.
+ */
 export function contextFromStream(
   stream: ServerHttp2Stream,
   headers: IncomingHttpHeaders,

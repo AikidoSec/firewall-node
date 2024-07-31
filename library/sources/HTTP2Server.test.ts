@@ -663,3 +663,47 @@ t.test("real injection test", async (t) => {
     });
   });
 });
+
+t.test("using http2 push still works", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.pushStream({ ":path": "/pushed" }, (err, pushStream) => {
+      pushStream.respond({ ":status": 200 });
+      pushStream.end("pushed");
+    });
+    stream.respond({ ":status": 200 });
+    stream.end("main");
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.listen(3432, () => {
+      const client = connect("http://localhost:3432");
+
+      client.on("stream", (pushedStream, requestHeaders) => {
+        pushedStream.on("data", (chunk) => {
+          t.same(chunk.toString(), "pushed");
+        });
+        pushedStream.on("end", () => {
+          client.close();
+          server.close();
+          resolve();
+        });
+      });
+
+      const req = client.request({
+        ":path": "/",
+        ":method": "GET",
+      });
+
+      req.on("error", (err) => {
+        reject(err);
+      });
+
+      req.on("data", (chunk) => {
+        t.same(chunk.toString(), "main");
+      });
+
+      req.end();
+    });
+  });
+});
