@@ -38,7 +38,7 @@ Note: Including `@aikidosec/firewall` in `middleware.js` or `instrumentation.js`
 
 1. Rate limiting by user ID is not supported because `setUser` is not supported due to the bundling process of Next.js.
 2. Same for blocking of specific users (requires `setUser`).
-3Attack detection only works for modules that are listed in the [`serverComponentsExternalPackages`](https://nextjs.org/docs/app/api-reference/next-config-js/serverComponentsExternalPackages). For example, `pg` is supported, but `mysql` is not.
+3. Attack detection only works for modules that are listed in the [`serverComponentsExternalPackages`](https://nextjs.org/docs/app/api-reference/next-config-js/serverComponentsExternalPackages). For example, `pg` is supported, but `mysql` is not.
 
 ## Blocking mode
 
