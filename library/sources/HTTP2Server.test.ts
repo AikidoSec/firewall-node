@@ -12,6 +12,7 @@ import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { FileSystem } from "../sinks/FileSystem";
 
 wrap(pkg, "isPackageInstalled", function wrap() {
   return function wrap(name: string) {
@@ -63,7 +64,7 @@ const agent = new Agent(
   new Token("abc"),
   undefined
 );
-agent.start([new HTTPServer()]);
+agent.start([new HTTPServer(), new FileSystem()]);
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
@@ -626,6 +627,39 @@ t.test("it rate limits requests using stream event", async () => {
 
       server.close();
       resolve();
+    });
+  });
+});
+
+t.test("real injection test", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    const url = new URL(headers[":path"] as string, "http://localhost");
+    const path = url.searchParams.get("path");
+    if (!path) {
+      return stream.end();
+    }
+    try {
+      const file = readFileSync(path);
+      stream.respond({ ":status": 200 });
+      stream.end(file);
+    } catch (e) {
+      stream.respond({ ":status": 500 });
+      stream.end(e.message);
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3431, () => {
+      http2Request(
+        new URL("http://localhost:3431?path=/etc/passwd"),
+        "GET",
+        {}
+      ).then(({ body }) => {
+        t.match(body, /Aikido firewall has blocked a path traversal attack/);
+        server.close();
+        resolve();
+      });
     });
   });
 });
