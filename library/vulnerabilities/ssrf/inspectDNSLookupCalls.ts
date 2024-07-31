@@ -114,13 +114,14 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const requestContext = RequestContextStorage.getStore();
+
     let port: number | undefined;
 
     if (portArg) {
       port = portArg;
     } else {
-      // This is set if this resolve is part of an outgoing request that we are inspecting
-      const requestContext = RequestContextStorage.getStore();
       if (requestContext) {
         port = requestContext.port;
       }
@@ -134,7 +135,19 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const found = findHostnameInContext(hostname, context, port);
+    let found: Location | undefined;
+
+    console.log("inspectDNSLookupCalls", hostname, requestContext);
+
+    if (requestContext && requestContext.redirected) {
+      found = findHostnameInContext(
+        requestContext.hostname,
+        context,
+        requestContext.port
+      );
+    } else {
+      found = findHostnameInContext(hostname, context, port);
+    }
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack

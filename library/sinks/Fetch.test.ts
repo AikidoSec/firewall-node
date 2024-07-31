@@ -135,5 +135,43 @@ t.test(
         t.same(calls["thisdomainpointstointernalip.com"], 1);
       }
     );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test-domain")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
   }
 );

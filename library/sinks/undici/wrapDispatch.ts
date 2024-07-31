@@ -3,8 +3,12 @@ import { RequestContextStorage } from "./RequestContextStorage";
 import { getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
+import { parseHeaders } from "./parseHeaders";
+import { containsPrivateIPAddress } from "../../vulnerabilities/ssrf/containsPrivateIPAddress";
 
 type Dispatch = Dispatcher["dispatch"];
+type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
 
 /**
  * Wraps the dispatch function of the undici client to store the port of the request in the context.
@@ -37,6 +41,9 @@ export function wrapDispatch(orig: Dispatch): Dispatch {
       );
     }
 
+    // Wrap onHeaders to check for redirects
+    handler.onHeaders = wrapOnHeaders(handler.onHeaders);
+
     let url: URL | undefined;
     if (typeof opts.origin === "string") {
       url = tryParseURL(opts.origin);
@@ -54,12 +61,56 @@ export function wrapDispatch(orig: Dispatch): Dispatch {
 
     const port = getPortFromURL(url);
 
-    return RequestContextStorage.run({ port }, () => {
+    console.log("-> RequestContextStorage.run", url.hostname, port);
+
+    return RequestContextStorage.run({ port, hostname: url.hostname }, () => {
       return orig.apply(
         // @ts-expect-error We dont know the type of this
         this,
         [opts, handler]
       );
     });
+  };
+}
+
+function wrapOnHeaders(orig: OnHeaders): OnHeaders {
+  return function onHeaders() {
+    const args = Array.from(arguments);
+
+    if (args.length > 1) {
+      const statusCode = args[0];
+      if (isRedirectStatusCode(statusCode)) {
+        const requestContext = RequestContextStorage.getStore();
+        if (requestContext) {
+          try {
+            // Get redirect location
+            const headers = parseHeaders(args[1]);
+            if (typeof headers.location === "string") {
+              const url = new URL(headers.location);
+
+              if (containsPrivateIPAddress(url.hostname)) {
+                // Todo block
+              }
+
+              requestContext.redirected = true;
+
+              console.log("Setting redirected", url.hostname, url.port);
+            }
+          } catch (e) {
+            // Todo log?
+          }
+        }
+      }
+    }
+
+    if (orig) {
+      return orig.apply(
+        // @ts-expect-error We dont know the type of this
+        this,
+        // @ts-expect-error Arguments are not typed
+        // eslint-disable-next-line prefer-rest-params
+        arguments
+      );
+    }
   };
 }
