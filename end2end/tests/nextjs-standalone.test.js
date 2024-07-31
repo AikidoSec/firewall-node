@@ -13,7 +13,7 @@ t.before(() => {
   });
 
   if (stderr) {
-    console.error(stderr.toString());
+    throw new Error(`Failed to build: ${stderr.toString()}`);
   }
 });
 
