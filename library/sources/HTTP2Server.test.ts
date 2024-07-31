@@ -43,6 +43,16 @@ const api = new ReportingAPIForTesting({
         windowSizeInMS: 60 * 60 * 1000,
       },
     },
+    {
+      route: "/rate-limited-2",
+      method: "GET",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 60 * 60 * 1000,
+      },
+    },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
@@ -373,29 +383,29 @@ t.test("it works then using the on stream event", async () => {
 
   await new Promise<void>((resolve) => {
     server.listen(3424, () => {
-      http2Request(new URL("http://localhost:3424"), "GET", {}).then(
-        ({ body }) => {
-          const context = JSON.parse(body);
-          t.match(context, {
-            url: "/",
-            method: "GET",
-            headers: {
-              ":path": "/",
-              ":method": "GET",
-              ":authority": "localhost:3424",
-              ":scheme": "http",
-            },
-            query: {},
-            route: "/",
-            source: "http2.createServer",
-            routeParams: {},
-            cookies: {},
-          });
-          t.ok(isLocalhostIP(context.remoteAddress));
-          server.close();
-          resolve();
-        }
-      );
+      http2Request(new URL("http://localhost:3424?test=abc"), "GET", {
+        cookie: "foo=bar; baz=qux",
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.match(context, {
+          url: "/",
+          method: "GET",
+          headers: {
+            ":path": "/",
+            ":method": "GET",
+            ":authority": "localhost:3424",
+            ":scheme": "http",
+          },
+          query: { test: "abc" },
+          route: "/",
+          source: "http2.createServer",
+          routeParams: {},
+          cookies: { foo: "bar", baz: "qux" },
+        });
+        t.ok(isLocalhostIP(context.remoteAddress));
+        server.close();
+        resolve();
+      });
     });
   });
 });
@@ -577,6 +587,45 @@ t.test("it wraps the createSecureServer stream event", async () => {
           resolve();
         }
       );
+    });
+  });
+});
+
+t.test("it rate limits requests using stream event", async () => {
+  const server = createMinimalTestServerWithStream();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3430, async () => {
+      const { headers } = await http2Request(
+        new URL("http://localhost:3430/rate-limited-2"),
+        "GET",
+        {}
+      );
+      t.same(headers[":status"], 200);
+
+      const { headers: headers2 } = await http2Request(
+        new URL("http://localhost:3430/rate-limited-2"),
+        "GET",
+        {}
+      );
+      t.same(headers2[":status"], 200);
+
+      const { headers: headers3 } = await http2Request(
+        new URL("http://localhost:3430/rate-limited-2"),
+        "GET",
+        {}
+      );
+      t.same(headers3[":status"], 200);
+
+      const { headers: headers4 } = await http2Request(
+        new URL("http://localhost:3430/rate-limited-2"),
+        "GET",
+        {}
+      );
+      t.same(headers4[":status"], 429);
+
+      server.close();
+      resolve();
     });
   });
 });

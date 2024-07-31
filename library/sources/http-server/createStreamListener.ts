@@ -1,5 +1,10 @@
 import { Agent } from "../../agent/Agent";
-import { bindContext, getContext, runWithContext } from "../../agent/Context";
+import {
+  bindContext,
+  Context,
+  getContext,
+  runWithContext,
+} from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromStream } from "./contextFromStream";
@@ -25,22 +30,7 @@ export function createStreamListener(
         bindContext(() => {
           const context = getContext();
 
-          if (context && context.route && context.method) {
-            const statusCode = parseInt(
-              stream.sentHeaders[":status"] as string
-            );
-
-            if (
-              !isNaN(statusCode) &&
-              shouldDiscoverRoute({
-                statusCode: statusCode,
-                route: context.route,
-                method: context.method,
-              })
-            ) {
-              agent.onRouteExecute(context.method, context.route);
-            }
-          }
+          discoverStream(context, stream, agent);
 
           agent.getInspectionStatistics().onRequest();
           if (context && context.attackDetected) {
@@ -70,4 +60,25 @@ export function createStreamListener(
       return listener(stream, headers, flags, rawHeaders);
     });
   };
+}
+
+function discoverStream(
+  context: Readonly<Context> | undefined,
+  stream: ServerHttp2Stream,
+  agent: Agent
+) {
+  if (context && context.route && context.method) {
+    const statusCode = parseInt(stream.sentHeaders[":status"] as string);
+
+    if (
+      !isNaN(statusCode) &&
+      shouldDiscoverRoute({
+        statusCode: statusCode,
+        route: context.route,
+        method: context.method,
+      })
+    ) {
+      agent.onRouteExecute(context.method, context.route);
+    }
+  }
 }
