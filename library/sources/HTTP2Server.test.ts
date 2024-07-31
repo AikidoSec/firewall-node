@@ -110,6 +110,16 @@ function createMinimalTestServer() {
   return server;
 }
 
+function createMinimalTestServerWithStream() {
+  const http2 = require("http2");
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+  return server;
+}
+
 t.test("it wraps the createServer function of http2 module", async () => {
   const server = createMinimalTestServer();
 
@@ -313,6 +323,134 @@ t.test("it rate limits requests", async () => {
 
       server.close();
       resolve();
+    });
+  });
+});
+
+t.test("it works then using the on request event", async () => {
+  const http2 = require("http2");
+  const server = http2.createServer();
+
+  server.on("request", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3423, () => {
+      http2Request(new URL("http://localhost:3423"), "GET", {}).then(
+        ({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "/",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3423",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+});
+
+t.test("it works then using the on stream event", async () => {
+  const server = createMinimalTestServerWithStream();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3424, () => {
+      http2Request(new URL("http://localhost:3424"), "GET", {}).then(
+        ({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "/",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3424",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+});
+
+t.test("it discovers routes using stream event", async () => {
+  const server = createMinimalTestServerWithStream();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3425, () => {
+      http2Request(
+        new URL("http://localhost:3425/foo/bar/stream"),
+        "GET",
+        {}
+      ).then(({}) => {
+        t.same(
+          agent
+            .getRoutes()
+            .asArray()
+            .find((route) => route.path === "/foo/bar/stream"),
+          {
+            path: "/foo/bar/stream",
+            method: "GET",
+            hits: 1,
+            graphql: undefined,
+          }
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it does not discover routes with 404 status code", async () => {
+  const http2 = require("http2");
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 404 });
+    stream.end();
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3426, () => {
+      http2Request(
+        new URL("http://localhost:3426/not-found-stream"),
+        "GET",
+        {}
+      ).then(({}) => {
+        t.same(
+          agent
+            .getRoutes()
+            .asArray()
+            .find((route) => route.path === "/not-found-stream"),
+          undefined
+        );
+        server.close();
+        resolve();
+      });
     });
   });
 });

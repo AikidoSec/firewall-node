@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createStreamListener } from "./http-server/createStreamListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
@@ -39,10 +40,16 @@ export class HTTPServer implements Wrapper {
     ) {
       return args;
     }
-    if (args[0] !== "request") {
-      return args;
+
+    if (args[0] === "request") {
+      return this.wrapRequestListener(args, module, agent);
     }
-    return this.wrapRequestListener(args, module, agent);
+
+    if (module === "http2" && args[0] === "stream") {
+      return [args[0], createStreamListener(args[1], module, agent)];
+    }
+
+    return args;
   }
 
   wrap(hooks: Hooks) {
