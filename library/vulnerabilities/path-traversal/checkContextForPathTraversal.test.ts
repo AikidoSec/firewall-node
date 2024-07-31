@@ -1,37 +1,36 @@
 import * as t from "tap";
 import { checkContextForPathTraversal } from "./checkContextForPathTraversal";
 
+const unsafeContext = {
+  filename: "../file/test.txt",
+  operation: "operation",
+  context: {
+    cookies: {},
+    headers: {},
+    remoteAddress: "ip",
+    method: "POST",
+    url: "url",
+    query: {},
+    body: {},
+    routeParams: {
+      path: "../file",
+    },
+    source: "express",
+    route: undefined,
+  },
+};
+
 t.test("it detects path traversal from route parameter", async () => {
-  t.same(
-    checkContextForPathTraversal({
+  t.same(checkContextForPathTraversal(unsafeContext), {
+    operation: "operation",
+    kind: "path_traversal",
+    source: "routeParams",
+    pathToPayload: ".path",
+    metadata: {
       filename: "../file/test.txt",
-      operation: "operation",
-      context: {
-        cookies: {},
-        headers: {},
-        remoteAddress: "ip",
-        method: "POST",
-        url: "url",
-        query: {},
-        body: {},
-        routeParams: {
-          path: "../file",
-        },
-        source: "express",
-        route: undefined,
-      },
-    }),
-    {
-      operation: "operation",
-      kind: "path_traversal",
-      source: "routeParams",
-      pathToPayload: ".path",
-      metadata: {
-        filename: "../file/test.txt",
-      },
-      payload: "../file",
-    }
-  );
+    },
+    payload: "../file",
+  });
 });
 
 t.test("it does not flag safe operation", async () => {
@@ -76,6 +75,65 @@ t.test("it does not flag safe operation", async () => {
         body: undefined,
         remoteAddress: "127.0.0.1",
       },
+    }),
+    undefined
+  );
+});
+
+t.test("it detects path traversal with URL", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      filename: new URL("file:///../file/test.txt"),
+    }),
+    {
+      operation: "operation",
+      kind: "path_traversal",
+      source: "routeParams",
+      pathToPayload: ".path",
+      metadata: {
+        filename: "/file/test.txt",
+      },
+      payload: "../file",
+    }
+  );
+});
+
+t.test("it detects path traversal with Buffer", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      filename: Buffer.from("../file/test.txt"),
+    }),
+    {
+      operation: "operation",
+      kind: "path_traversal",
+      source: "routeParams",
+      pathToPayload: ".path",
+      metadata: {
+        filename: "../file/test.txt",
+      },
+      payload: "../file",
+    }
+  );
+});
+
+t.test("it ignores non utf-8 Buffer", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      filename: Buffer.from([0x80, 0x81, 0x82, 0x83]),
+    }),
+    undefined
+  );
+});
+
+t.test("it ignores invalid filename type", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      // @ts-expect-error Testing invalid type
+      filename: new Date(),
     }),
     undefined
   );

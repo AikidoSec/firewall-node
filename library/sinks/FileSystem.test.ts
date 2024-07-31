@@ -96,6 +96,8 @@ t.test("it works", async (t) => {
       { encoding: "utf-8" }
     );
     rename("./test.txt", "./test2.txt", (err) => {});
+    rename(new URL("file:///test123.txt"), "test2.txt", (err) => {});
+    rename(Buffer.from("./test123.txt"), "test2.txt", (err) => {});
   };
 
   await runSafeCommands();
@@ -165,6 +167,11 @@ t.test("it works", async (t) => {
     throws(
       () =>
         rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {}),
+      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+
+    throws(
+      () => rename(Buffer.from("../test.txt"), "../test2.txt", (err) => {}),
       "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });

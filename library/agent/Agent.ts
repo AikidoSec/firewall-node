@@ -430,6 +430,17 @@ export class Agent {
     this.routes.addRoute(method, path);
   }
 
+  onGraphQLExecute(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    topLevelFields: string[]
+  ) {
+    topLevelFields.forEach((field) => {
+      this.routes.addGraphQLField(method, path, type, field);
+    });
+  }
+
   getRoutes() {
     return this.routes;
   }

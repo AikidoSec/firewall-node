@@ -1,5 +1,7 @@
 name: Benchmark
-on: push
+on:
+  push: {}
+  workflow_call: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,6 +31,8 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install K6
+        uses: grafana/setup-k6-action@v1
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
@@ -37,3 +41,5 @@ jobs:
         run: cd benchmarks/sql-injection && node benchmark.js
       - name: Run shell injection Benchmark
         run: cd benchmarks/shell-injection && node benchmark.js
+      - name: Run Hono with Postgres Benchmark
+        run: cd benchmarks/hono-pg && node benchmark.js
