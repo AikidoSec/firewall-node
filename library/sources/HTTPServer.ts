@@ -54,9 +54,11 @@ export class HTTPServer implements Wrapper {
 
   wrap(hooks: Hooks) {
     ["http", "https", "http2"].forEach((module) => {
-      hooks
+      const subjects = hooks
         .addBuiltinModule(module)
-        .addSubject((exports) => exports)
+        .addSubject((exports) => exports);
+
+      subjects
         .modifyArguments("Server", (args, subject, agent) => {
           return this.wrapRequestListener(args, module, agent);
         })
@@ -68,6 +70,22 @@ export class HTTPServer implements Wrapper {
         .modifyArguments("on", (args, subject, agent) => {
           return this.wrapOn(args, module, agent);
         });
+
+      if (module === "http2") {
+        subjects.modifyArguments(
+          "createSecureServer",
+          (args, subject, agent) => {
+            return this.wrapRequestListener(args, module, agent);
+          }
+        );
+
+        subjects
+          .inspectNewInstance("createSecureServer")
+          .addSubject((exports) => exports)
+          .modifyArguments("on", (args, subject, agent) => {
+            return this.wrapOn(args, module, agent);
+          });
+      }
     });
   }
 }

@@ -10,6 +10,8 @@ import { IncomingHttpHeaders } from "http2";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 wrap(pkg, "isPackageInstalled", function wrap() {
   return function wrap(name: string) {
@@ -20,6 +22,9 @@ wrap(pkg, "isPackageInstalled", function wrap() {
     return false;
   };
 });
+
+// Allow self-signed certificates
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Before require
 const api = new ReportingAPIForTesting({
@@ -101,8 +106,9 @@ function http2Request(
   );
 }
 
+const http2 = require("http2");
+
 function createMinimalTestServer() {
-  const http2 = require("http2");
   const server = http2.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -111,7 +117,6 @@ function createMinimalTestServer() {
 }
 
 function createMinimalTestServerWithStream() {
-  const http2 = require("http2");
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {
     stream.respond({ ":status": 200 });
@@ -199,7 +204,6 @@ t.test("it discovers routes", async () => {
 });
 
 t.test("it does not discover routes with 404 status code", async () => {
-  const http2 = require("http2");
   const server = http2.createServer((req, res) => {
     res.statusCode = 404;
     res.end();
@@ -328,7 +332,6 @@ t.test("it rate limits requests", async () => {
 });
 
 t.test("it works then using the on request event", async () => {
-  const http2 = require("http2");
   const server = http2.createServer();
 
   server.on("request", (req, res) => {
@@ -427,7 +430,6 @@ t.test("it discovers routes using stream event", async () => {
 });
 
 t.test("it does not discover routes with 404 status code", async () => {
-  const http2 = require("http2");
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {
     stream.respond({ ":status": 404 });
@@ -451,6 +453,130 @@ t.test("it does not discover routes with 404 status code", async () => {
         server.close();
         resolve();
       });
+    });
+  });
+});
+
+t.test("it wraps the createSecureServer function of http2 module", async () => {
+  const server = http2.createSecureServer(
+    {
+      key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+      cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+      secureContext: {},
+    },
+    (req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    }
+  );
+
+  await new Promise<void>((resolve) => {
+    server.listen(3427, () => {
+      http2Request(new URL("https://localhost:3427"), "GET", {}).then(
+        ({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "/",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3427",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+});
+
+t.test("it wraps the createSecureServer on request event", async () => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+    secureContext: {},
+  });
+
+  server.on("request", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3428, () => {
+      http2Request(new URL("https://localhost:3428"), "GET", {}).then(
+        ({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "/",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3428",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        }
+      );
+    });
+  });
+});
+
+t.test("it wraps the createSecureServer stream event", async () => {
+  const server = http2.createSecureServer({
+    key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
+    cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
+    secureContext: {},
+  });
+
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 200 });
+    stream.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3429, () => {
+      http2Request(new URL("https://localhost:3429"), "GET", {}).then(
+        ({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "/",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3429",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        }
+      );
     });
   });
 });
