@@ -1,0 +1,13 @@
+{
+  "name": "hono-pg-benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "benchmark.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.12.0",
+    "hono": "^4.5.1",
+    "pg": "^8.12.0"
+  }
+}

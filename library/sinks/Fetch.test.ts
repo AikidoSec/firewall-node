@@ -81,7 +81,17 @@ t.test(
     agent.getHostnames().clear();
 
     await runWithContext(context, async () => {
-      await fetch("https://google.com");
+      // Don't await fetch to see how it handles
+      // multiple requests at the same time
+      // Because there's a single instance of the dispatcher
+      fetch("https://google.com");
+
+      const error0 = await t.rejects(() => fetch("http://localhost:9876"));
+      if (error0 instanceof Error) {
+        // @ts-expect-error Added in Node.js 16.9.0, but because this test is skipped in Node.js 16 because of the lack of fetch, it's fine
+        t.same(error0.cause.code, "ECONNREFUSED");
+      }
+
       const error = await t.rejects(() =>
         fetch("http://localhost:4000/api/internal")
       );

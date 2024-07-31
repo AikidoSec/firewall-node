@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("@aikidosec/firewall");
 
 const express = require("express");
@@ -6,11 +7,12 @@ const mysql2 = require("mysql2/promise");
 const {
   GraphQLSchema,
   GraphQLString,
+  GraphQLBoolean,
   GraphQLObjectType,
   GraphQLList,
   GraphQLInt,
-  graphql,
 } = require("graphql");
+const { createHandler } = require("graphql-http/lib/use/express");
 
 require("@aikidosec/firewall/nopp");
 
@@ -18,6 +20,26 @@ require("@aikidosec/firewall/nopp");
 let dbConnection;
 
 const schema = new GraphQLSchema({
+  mutation: new GraphQLObjectType({
+    name: "RootMutationType",
+    fields: {
+      addCat: {
+        type: GraphQLBoolean,
+        args: {
+          petname: { type: GraphQLString },
+          age: { type: GraphQLInt },
+        },
+        async resolve(_, args) {
+          await dbConnection.execute(
+            "INSERT INTO cats2 (petname, age) VALUES (?, ?)",
+            [args.petname, args.age]
+          );
+
+          return true;
+        },
+      },
+    },
+  }),
   query: new GraphQLObjectType({
     name: "RootQueryType",
     fields: {
@@ -37,6 +59,7 @@ const schema = new GraphQLSchema({
         async resolve(_, args) {
           const query = `SELECT petname, age FROM cats2 WHERE petname = '${args.name}'`;
           const [rows] = await dbConnection.execute(query);
+
           return rows.map((row) => ({ petname: row.petname, age: row.age }));
         },
       },
@@ -95,41 +118,7 @@ async function main() {
     res.send(getRootPage());
   });
 
-  app.post("/graphql", async (req, res) => {
-    try {
-      const query = req.body.query;
-      if (!query) {
-        res.status(400).send("No query provided");
-        return;
-      }
-      const result = await graphql({ schema, source: query });
-
-      res.json(result);
-    } catch (err) {
-      res.status(500).send();
-      console.error(err);
-    }
-  });
-
-  app.post("/add-cat", async (req, res) => {
-    try {
-      const { petname, age } = req.body;
-      if (!petname || !age) {
-        res.status(400).send("Petname and age are required");
-        return;
-      }
-
-      await dbConnection.execute(
-        "INSERT INTO cats2 (petname, age) VALUES (?, ?)",
-        [petname, age]
-      );
-
-      res.status(201).send();
-    } catch (err) {
-      res.status(500).send();
-      console.error(err);
-    }
-  });
+  app.all("/graphql", createHandler({ schema }));
 
   app.listen(4000, () => {
     console.log("Listening on port 4000");

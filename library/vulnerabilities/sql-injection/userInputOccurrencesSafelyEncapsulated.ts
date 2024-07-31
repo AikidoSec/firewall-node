@@ -11,7 +11,9 @@ export function userInputOccurrencesSafelyEncapsulated(
   query: string,
   userInput: string
 ) {
-  const segmentsInBetween = getCurrentAndNextSegments(query.split(userInput));
+  const segmentsInBetween = getCurrentAndNextSegments(
+    query.toLowerCase().split(userInput.toLowerCase())
+  );
 
   return segmentsInBetween.every(({ currentSegment, nextSegment }) => {
     let input = userInput;

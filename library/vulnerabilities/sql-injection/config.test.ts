@@ -1,7 +1,6 @@
 import * as t from "tap";
 import {
   SQL_DANGEROUS_IN_STRING,
-  COMMON_SQL_KEYWORDS,
   SQL_ESCAPE_SEQUENCES,
   SQL_KEYWORDS,
   SQL_OPERATORS,
@@ -16,18 +15,6 @@ t.test("SQL_KEYWORDS are not empty", async () => {
 
 t.test("SQL_KEYWORDS are uppercase", async () => {
   SQL_KEYWORDS.forEach((keyword) => {
-    t.same(keyword, keyword.toUpperCase());
-  });
-});
-
-t.test("COMMON_SQL_KEYWORDS are not empty", async () => {
-  COMMON_SQL_KEYWORDS.forEach((keyword) => {
-    t.ok(keyword.length > 0);
-  });
-});
-
-t.test("COMMON_SQL_KEYWORDS are uppercase", async () => {
-  COMMON_SQL_KEYWORDS.forEach((keyword) => {
     t.same(keyword, keyword.toUpperCase());
   });
 });

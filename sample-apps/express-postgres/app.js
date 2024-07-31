@@ -65,8 +65,14 @@ async function main(port) {
   app.get(
     "/clear",
     asyncHandler(async (req, res) => {
-      await db.query("DELETE FROM cats;");
-      res.redirect("/");
+      db.query("DELETE FROM cats;", function afterClear(err) {
+        if (err) {
+          res.status(500).send("Error clearing table");
+          return;
+        }
+
+        res.redirect("/");
+      });
     })
   );
 

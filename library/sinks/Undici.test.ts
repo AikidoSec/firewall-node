@@ -137,12 +137,19 @@ t.test(
 
     await runWithContext(context, async () => {
       await request("https://google.com");
-      const error = await t.rejects(() =>
+
+      const error0 = await t.rejects(() => request("http://localhost:9876"));
+      if (error0 instanceof Error) {
+        // @ts-expect-error Added in Node.js 16.9.0, but because this test is skipped in Node.js 16 because of the lack of fetch, it's fine
+        t.same(error0.code, "ECONNREFUSED");
+      }
+
+      const error1 = await t.rejects(() =>
         request("http://localhost:4000/api/internal")
       );
-      if (error instanceof Error) {
+      if (error1 instanceof Error) {
         t.same(
-          error.message,
+          error1.message,
           "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
