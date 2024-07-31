@@ -21,7 +21,7 @@ export function createStreamListener(
 
     return runWithContext(context, () => {
       stream.on(
-        "finish",
+        "close",
         bindContext(() => {
           const context = getContext();
 
@@ -29,7 +29,7 @@ export function createStreamListener(
             const statusCode = parseInt(
               stream.sentHeaders[":status"] as string
             );
-            console.log("statusCode", statusCode);
+
             if (
               !isNaN(statusCode) &&
               shouldDiscoverRoute({
