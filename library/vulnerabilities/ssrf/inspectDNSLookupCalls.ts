@@ -2,15 +2,16 @@ import { isIP } from "net";
 import { LookupAddress } from "dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
-import { Context, getContext } from "../../agent/Context";
-import { Source, SOURCES } from "../../agent/Source";
+import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { isPlainObject } from "../../helpers/isPlainObject";
-import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
+import {
+  findHostnameInContext,
+  HostnameLocation,
+} from "./findHostnameInContext";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -135,19 +136,12 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    let found: Location | undefined;
+    let found: HostnameLocation | undefined;
 
-    console.log("inspectDNSLookupCalls", hostname, requestContext);
+    //console.log("inspectDNSLookupCalls", hostname, requestContext);
 
-    if (requestContext && requestContext.redirected) {
-      found = findHostnameInContext(
-        requestContext.hostname,
-        context,
-        requestContext.port
-      );
-    } else {
-      found = findHostnameInContext(hostname, context, port);
-    }
+    // Todo check if is redirect
+    found = findHostnameInContext(hostname, context, port);
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
@@ -180,38 +174,6 @@ function wrapDNSLookupCallback(
     // Just call the original callback to allow the DNS lookup
     return callback(err, addresses, family);
   };
-}
-
-type Location = {
-  source: Source;
-  pathToPayload: string;
-  payload: string;
-};
-
-function findHostnameInContext(
-  hostname: string,
-  context: Context,
-  port: number | undefined
-): Location | undefined {
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const [str, path] of userInput.entries()) {
-      const found = findHostnameInUserInput(str, hostname, port);
-      if (found) {
-        return {
-          source: source,
-          pathToPayload: path,
-          payload: str,
-        };
-      }
-    }
-  }
-
-  return undefined;
 }
 
 function getResolvedIPAddresses(addresses: string | LookupAddress[]): string[] {

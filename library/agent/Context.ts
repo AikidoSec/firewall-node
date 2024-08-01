@@ -25,6 +25,7 @@ export type Context = {
   xml?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
+  outgoingRequestRedirects?: { source: URL; destination: URL }[];
 };
 
 /**

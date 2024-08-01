@@ -6,7 +6,6 @@ import { AsyncLocalStorage } from "async_hooks";
  * If the port does not match, it would be a false positive ssrf detection.
  */
 export const RequestContextStorage = new AsyncLocalStorage<{
-  hostname: string;
+  url: URL;
   port?: number;
-  redirected?: boolean;
 }>();

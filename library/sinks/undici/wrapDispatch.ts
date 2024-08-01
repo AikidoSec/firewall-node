@@ -1,11 +1,16 @@
 import type { Dispatcher } from "undici";
 import { RequestContextStorage } from "./RequestContextStorage";
-import { getContext } from "../../agent/Context";
+import { getContext, updateContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { parseHeaders } from "./parseHeaders";
 import { containsPrivateIPAddress } from "../../vulnerabilities/ssrf/containsPrivateIPAddress";
+import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
+import { Agent } from "../../agent/Agent";
+import { attackKindHumanName } from "../../agent/Attack";
+import { escapeHTML } from "../../helpers/escapeHTML";
+import { getRedirectOriginHostname } from "../../vulnerabilities/ssrf/getRedirectOriginHostname";
 
 type Dispatch = Dispatcher["dispatch"];
 type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
@@ -20,7 +25,7 @@ type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
  * We can not store the port in the context directly inside our inspect functions, because the order in which the requests are made is not guaranteed.
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
  */
-export function wrapDispatch(orig: Dispatch): Dispatch {
+export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   return function wrap(opts, handler) {
     const context = getContext();
 
@@ -41,14 +46,15 @@ export function wrapDispatch(orig: Dispatch): Dispatch {
       );
     }
 
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(handler.onHeaders);
-
     let url: URL | undefined;
-    if (typeof opts.origin === "string") {
-      url = tryParseURL(opts.origin);
+    if (typeof opts.origin === "string" && typeof opts.path === "string") {
+      url = tryParseURL(opts.origin + opts.path);
     } else if (opts.origin instanceof URL) {
-      url = opts.origin;
+      if (typeof opts.path === "string") {
+        url = tryParseURL(opts.origin.href + opts.path);
+      } else {
+        url = opts.origin;
+      }
     }
 
     if (!url) {
@@ -59,11 +65,11 @@ export function wrapDispatch(orig: Dispatch): Dispatch {
       );
     }
 
+    // Wrap onHeaders to check for redirects
+    handler.onHeaders = wrapOnHeaders(handler.onHeaders, agent);
+
     const port = getPortFromURL(url);
-
-    console.log("-> RequestContextStorage.run", url.hostname, port);
-
-    return RequestContextStorage.run({ port, hostname: url.hostname }, () => {
+    return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
         // @ts-expect-error We dont know the type of this
         this,
@@ -73,7 +79,7 @@ export function wrapDispatch(orig: Dispatch): Dispatch {
   };
 }
 
-function wrapOnHeaders(orig: OnHeaders): OnHeaders {
+function wrapOnHeaders(orig: OnHeaders, agent: Agent): OnHeaders {
   return function onHeaders() {
     const args = Array.from(arguments);
 
@@ -88,13 +94,7 @@ function wrapOnHeaders(orig: OnHeaders): OnHeaders {
             if (typeof headers.location === "string") {
               const url = new URL(headers.location);
 
-              if (containsPrivateIPAddress(url.hostname)) {
-                // Todo block
-              }
-
-              requestContext.redirected = true;
-
-              console.log("Setting redirected", url.hostname, url.port);
+              onRedirect(url, requestContext, agent);
             }
           } catch (e) {
             // Todo log?
@@ -113,4 +113,82 @@ function wrapOnHeaders(orig: OnHeaders): OnHeaders {
       );
     }
   };
+}
+
+function onRedirect(
+  destination: URL,
+  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
+  agent: Agent
+) {
+  if (!requestContext) {
+    return;
+  }
+  console.log(
+    `Redirect: ${requestContext.url.toString()} -> ${destination.toString()}`
+  );
+
+  const context = getContext();
+  if (!context) {
+    return;
+  }
+
+  let redirectOriginHostname: string | undefined;
+
+  let found = findHostnameInContext(
+    requestContext.url.hostname,
+    context,
+    requestContext.port
+  );
+
+  if (!found && context.outgoingRequestRedirects) {
+    redirectOriginHostname = getRedirectOriginHostname(
+      context.outgoingRequestRedirects,
+      requestContext.url
+    );
+
+    if (redirectOriginHostname) {
+      found = findHostnameInContext(
+        redirectOriginHostname,
+        context,
+        requestContext.port
+      );
+    }
+  }
+
+  if (found && containsPrivateIPAddress(destination.hostname)) {
+    agent.onDetectedAttack({
+      module: "undici",
+      operation: "fetch",
+      kind: "ssrf",
+      source: found.source,
+      blocked: agent.shouldBlock(),
+      stack: new Error().stack!,
+      path: found.pathToPayload,
+      metadata: {},
+      request: context,
+      payload: found.payload,
+    });
+
+    if (agent.shouldBlock()) {
+      // Todo does not block the redirect
+      console.log(`SSRF redirect to ip should get blocked here`);
+      throw new Error(
+        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+      );
+    }
+  }
+
+  const outgoingRedirects = context.outgoingRequestRedirects || [];
+
+  if (redirectOriginHostname || found) {
+    console.log(
+      `Adding redirect to context ${requestContext.url} -> ${destination}`
+    );
+    outgoingRedirects.push({
+      source: requestContext.url,
+      destination,
+    });
+
+    updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
+  }
 }
