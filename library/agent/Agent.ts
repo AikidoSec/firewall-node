@@ -21,6 +21,7 @@ import { Source } from "./Source";
 import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
+import { isAikidoCI } from "../helpers/isAikidoCI";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -387,6 +388,13 @@ export class Agent {
       this.logger.log("Found token, reporting enabled!");
     } else {
       this.logger.log("No token provided, disabling reporting.");
+
+      if (!this.block && !isAikidoCI()) {
+        // eslint-disable-next-line no-console
+        console.log(
+          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+        );
+      }
     }
 
     this.wrappedPackages = wrapInstalledPackages(this, wrappers);
