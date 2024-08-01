@@ -1,16 +1,13 @@
-import { createConnection } from "@/db";
 import { Cats } from "@/Cats";
 
 export async function GET(request) {
-  const db = await createConnection();
-  const cats = new Cats(db);
+  const cats = new Cats();
 
   return Response.json(await cats.getAll());
 }
 
 export async function POST(request) {
-  const db = await createConnection();
-  const cats = new Cats(db);
+  const cats = new Cats();
   const json = await request.json();
 
   if (!json.name) {
