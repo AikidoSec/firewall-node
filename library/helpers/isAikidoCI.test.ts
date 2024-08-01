@@ -1,13 +1,13 @@
 import * as t from "tap";
 import { isAikidoCI } from "./isAikidoCI";
 
-t.test("detects GitHub Actions in Repo AikidoSec/firewall-node", async (t) => {
-  process.env.GITHUB_ACTION_REPOSITORY = "AikidoSec/firewall-node";
+t.test("get aikido ci env", async (t) => {
+  process.env.AIKIDO_CI = "true";
   t.ok(isAikidoCI());
-  process.env.GITHUB_ACTION_REPOSITORY = undefined;
+  process.env.AIKIDO_CI = undefined;
   t.notOk(isAikidoCI());
-  process.env.GITHUB_ACTION_REPOSITORY = "aikidosec/firewall-node";
+  process.env.AIKIDO_CI = "1";
   t.ok(isAikidoCI());
-  process.env.GITHUB_ACTION_REPOSITORY = "another/repo";
+  process.env.AIKIDO_CI = "false";
   t.notOk(isAikidoCI());
 });

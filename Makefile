@@ -94,7 +94,7 @@ end2end:
 	cd end2end && npm run test
 
 benchmark: build
-	cd benchmarks/nosql-injection && node --preserve-symlinks benchmark.js
+	cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
 	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js

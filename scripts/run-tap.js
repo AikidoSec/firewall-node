@@ -15,4 +15,7 @@ if (major === 22 && minor >= 5) {
   args += " --node-arg=--experimental-sqlite --node-arg=--no-warnings";
 }
 
-execSync(`tap ${args}`, { stdio: "inherit" });
+execSync(`tap ${args}`, {
+  stdio: "inherit",
+  env: { ...process.env, AIKIDO_CI: "true" },
+});

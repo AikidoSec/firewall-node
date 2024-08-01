@@ -390,8 +390,9 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
 
       if (!this.block && !isAikidoCI()) {
+        // eslint-disable-next-line no-console
         console.log(
-          "Aikido: Running in monitoring only mode without reporting to Aikido Cloud"
+          "Aikido: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
       }
     }
