@@ -38,6 +38,8 @@ You can also use the firewall when developing locally by updating the `dev` and 
 }
 ```
 
+You don't need to copy the `@aikidosec/firewall` directory when using `npm run dev` or `npm run start`.
+
 Note: Including `@aikidosec/firewall` in `middleware.js` or `instrumentation.js` will not work due to the build process of Next.js.
 
 ## Caveats
