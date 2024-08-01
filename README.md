@@ -41,7 +41,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 * ✅ [Hono](docs/hono.md) 4.x
 * ✅ [hapi](docs/hapi.md) 21.x
 * ✅ [micro](docs/micro.md) 10.x
-* ✅ Next.js (upcoming)
+* ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
 * ✅ Fastify (upcoming)
 
 ### Database drivers
