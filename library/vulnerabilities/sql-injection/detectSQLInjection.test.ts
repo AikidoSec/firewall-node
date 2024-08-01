@@ -2,7 +2,7 @@ import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { SQL_DANGEROUS_IN_STRING } from "./config";
+import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS } from "./config";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
@@ -58,10 +58,10 @@ const IS_NOT_INJECTION = [
   ["SELECT * FROM table", "*"],
   [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
   [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
+  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
 ];
 
 const IS_INJECTION = [
-  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
 
@@ -343,6 +343,115 @@ t.test("It does not match VIEW keyword", async () => {
   isNotSqlInjection(query, "view_id");
   isNotSqlInjection(query, "view_settings");
   isNotSqlInjection(query, "view_settings.user_id");
+
+  const query2 = `
+    SELECT id,
+           business_id,
+           object_type,
+           name,
+           \`condition\`,
+           settings,
+           \`read_only\`,
+           created_at,
+           updated_at
+    FROM views
+    WHERE business_id = ?
+  `;
+
+  isNotSqlInjection(query2, "view");
+});
+
+t.test("It does not flag SQL keyword if part of another word", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    isNotSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      keyword
+    );
+
+    isNotSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword.toLowerCase()}
+        WHERE business_id = ?
+    `,
+      keyword
+    );
+  });
+});
+
+t.test("It flags SQL keyword if it contains space", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    isSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      " " + keyword
+    );
+
+    isSqlInjection(
+      `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${keyword}
+        WHERE business_id = ?
+    `,
+      " " + keyword.toLowerCase()
+    );
+  });
+});
+
+t.test("It flags SQL keyword if it contains dangerous character", async () => {
+  SQL_KEYWORDS.forEach((keyword) => {
+    SQL_DANGEROUS_IN_STRING.forEach((string) => {
+      const payload = `${string}${keyword}`;
+      isSqlInjection(
+        `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${payload}
+        WHERE business_id = ?
+    `,
+        payload
+      );
+
+      isSqlInjection(
+        `
+      SELECT id,
+             business_id,
+             name,
+             created_at,
+             updated_at
+        FROM ${payload}
+        WHERE business_id = ?
+    `,
+        payload.toLowerCase()
+      );
+    });
+  });
 });
 
 const files = [

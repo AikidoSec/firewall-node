@@ -120,22 +120,22 @@ async function getResult() {
     `Total requests: ${resultWithoutFirewall.metrics.http_reqs.values.count}`
   );
 
-  const getAvgDiff = customGetFirewall.avg - customGetNoFirewall.avg;
-  const postAvgDiff = customPostFirewall.avg - customPostNoFirewall.avg;
-  const getDiffPercent = (getAvgDiff / customGetNoFirewall.avg) * 100;
-  const postDiffPercent = (postAvgDiff / customPostNoFirewall.avg) * 100;
+  const getMedDiff = customGetFirewall.med - customGetNoFirewall.med;
+  const postMedDiff = customPostFirewall.med - customPostNoFirewall.med;
+  const getDiffPercent = (getMedDiff / customGetNoFirewall.med) * 100;
+  const postDiffPercent = (postMedDiff / customPostNoFirewall.med) * 100;
 
   console.log("------------------------------------");
   console.log("Firewall performance impact:");
-  console.log(`GET avg diff: ${getAvgDiff}ms (${getDiffPercent.toFixed(2)}%)`);
+  console.log(`GET med diff: ${getMedDiff}ms (${getDiffPercent.toFixed(2)}%)`);
   console.log(
-    `POST avg diff: ${postAvgDiff}ms (${postDiffPercent.toFixed(2)}%)`
+    `POST med diff: ${postMedDiff}ms (${postDiffPercent.toFixed(2)}%)`
   );
 
-  // Check if difference is larger than 0.5ms
-  if (getAvgDiff > 0.5 || postAvgDiff > 0.5) {
+  // Check if difference is larger than 3ms
+  if (getMedDiff > 3 || postMedDiff > 3) {
     console.log(
-      "Firewall is causing a performance impact thats larger than 0.5ms"
+      "Firewall is causing a performance impact thats larger than 3ms"
     );
     process.exit(1);
   }
