@@ -80,6 +80,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.graphql = context.graphql;
     current.xml = context.xml;
     current.subdomains = context.subdomains;
+    current.outgoingRequestRedirects = context.outgoingRequestRedirects;
 
     // Clear all the cached user input strings
     delete current.cache;

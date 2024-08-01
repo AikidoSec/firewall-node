@@ -80,6 +80,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 }
 
 function wrapOnHeaders(orig: OnHeaders, agent: Agent): OnHeaders {
+  // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
   return function onHeaders() {
     const args = Array.from(arguments);
 
@@ -172,6 +173,7 @@ function onRedirect(
     if (agent.shouldBlock()) {
       // Todo does not block the redirect
       console.log(`SSRF redirect to ip should get blocked here`);
+      console.log("---");
       throw new Error(
         `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
@@ -182,8 +184,11 @@ function onRedirect(
 
   if (redirectOriginHostname || found) {
     console.log(
-      `Adding redirect to context ${requestContext.url} -> ${destination}`
+      `Adding redirect to context: ${requestContext.url.toString()} -> ${destination.toString()}`
     );
+    console.log(`context body url: ${context.body.image}`);
+    console.log("...");
+
     outgoingRedirects.push({
       source: requestContext.url,
       destination,

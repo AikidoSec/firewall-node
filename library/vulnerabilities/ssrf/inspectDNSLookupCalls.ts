@@ -8,10 +8,8 @@ import { isPlainObject } from "../../helpers/isPlainObject";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
-import {
-  findHostnameInContext,
-  HostnameLocation,
-} from "./findHostnameInContext";
+import { findHostnameInContext } from "./findHostnameInContext";
+import { getRedirectOriginHostname } from "./getRedirectOriginHostname";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -136,12 +134,26 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    let found: HostnameLocation | undefined;
+    let found = findHostnameInContext(hostname, context, port);
 
-    //console.log("inspectDNSLookupCalls", hostname, requestContext);
+    console.log(`inspectDNSLookupCalls for ${hostname}`);
+    console.log(`context body url: ${context.body.image}`);
+    console.log("---");
 
-    // Todo check if is redirect
-    found = findHostnameInContext(hostname, context, port);
+    if (!found && requestContext && context.outgoingRequestRedirects) {
+      const redirectOriginHostname = getRedirectOriginHostname(
+        context.outgoingRequestRedirects,
+        requestContext.url
+      );
+
+      console.log(
+        `- inspectDNSLookupCalls: redirectOriginHostname: ${redirectOriginHostname}`
+      );
+
+      if (redirectOriginHostname) {
+        found = findHostnameInContext(redirectOriginHostname, context, port);
+      }
+    }
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
