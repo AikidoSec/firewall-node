@@ -392,7 +392,7 @@ export class Agent {
       if (!this.block && !isAikidoCI()) {
         // eslint-disable-next-line no-console
         console.log(
-          "Aikido: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
       }
     }
