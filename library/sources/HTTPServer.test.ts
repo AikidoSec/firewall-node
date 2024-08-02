@@ -59,6 +59,7 @@ t.setTimeout(30 * 1000);
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+  delete process.env.NODE_ENV;
 });
 
 t.test("it wraps the createServer function of http module", async () => {
@@ -607,6 +608,8 @@ t.test("it checks if IP can access route", async () => {
     res.setHeader("Content-Type", "text/plain");
     res.end("OK");
   });
+
+  process.env.NODE_ENV = "production";
 
   await new Promise<void>((resolve) => {
     server.listen(3324, () => {
