@@ -2,6 +2,12 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 
 export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!isProduction) {
+    return true;
+  }
+
   const match = agent.getConfig().getEndpoint(context);
 
   if (!match) {
