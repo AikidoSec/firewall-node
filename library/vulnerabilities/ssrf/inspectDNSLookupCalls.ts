@@ -10,7 +10,6 @@ import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
-import { getPortFromURL } from "../../helpers/getPortFromURL";
 
 export function inspectDNSLookupCalls(
   lookup: Function,

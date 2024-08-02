@@ -24,21 +24,15 @@ type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
  *
  * We can not store the port in the context directly inside our inspect functions, because the order in which the requests are made is not guaranteed.
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
+ *
+ * This function also wraps the onHeaders function to check for redirects and store them in the context, if they are originating from user input.
+ * This allows us to block redirects to private IPs or domains that resolve to private IPs.
  */
 export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   return function wrap(opts, handler) {
     const context = getContext();
 
-    // If there is no context, we don't need to do anything special
-    if (!context) {
-      return orig.apply(
-        // @ts-expect-error We dont know the type of this
-        this,
-        [opts, handler]
-      );
-    }
-
-    if (!opts || !opts.origin) {
+    if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
         // @ts-expect-error We dont know the type of this
         this,
@@ -65,46 +59,9 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
+    blockRedirectToPrivateIP(url, context, agent);
+
     const port = getPortFromURL(url);
-
-    if (
-      context.outgoingRequestRedirects &&
-      containsPrivateIPAddress(url.hostname)
-    ) {
-      const redirectOrigin = getRedirectOrigin(
-        context.outgoingRequestRedirects,
-        url
-      );
-
-      if (redirectOrigin) {
-        const found = findHostnameInContext(
-          redirectOrigin.hostname,
-          context,
-          parseInt(redirectOrigin.port, 10)
-        );
-
-        if (found) {
-          agent.onDetectedAttack({
-            module: "undici",
-            operation: "fetch",
-            kind: "ssrf",
-            source: found.source,
-            blocked: agent.shouldBlock(),
-            stack: new Error().stack!,
-            path: found.pathToPayload,
-            metadata: {},
-            request: context,
-            payload: found.payload,
-          });
-
-          if (agent.shouldBlock()) {
-            throw new Error(
-              `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
-            );
-          }
-        }
-      }
-    }
 
     // Wrap onHeaders to check for redirects
     handler.onHeaders = wrapOnHeaders(
@@ -203,5 +160,49 @@ function onRedirect(
     });
 
     updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
+  }
+}
+
+/**
+ * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
+ */
+function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+  if (
+    context.outgoingRequestRedirects &&
+    containsPrivateIPAddress(url.hostname)
+  ) {
+    const redirectOrigin = getRedirectOrigin(
+      context.outgoingRequestRedirects,
+      url
+    );
+
+    if (redirectOrigin) {
+      const found = findHostnameInContext(
+        redirectOrigin.hostname,
+        context,
+        parseInt(redirectOrigin.port, 10)
+      );
+
+      if (found) {
+        agent.onDetectedAttack({
+          module: "undici",
+          operation: "fetch",
+          kind: "ssrf",
+          source: found.source,
+          blocked: agent.shouldBlock(),
+          stack: new Error().stack!,
+          path: found.pathToPayload,
+          metadata: {},
+          request: context,
+          payload: found.payload,
+        });
+
+        if (agent.shouldBlock()) {
+          throw new Error(
+            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+          );
+        }
+      }
+    }
   }
 }

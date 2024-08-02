@@ -3,7 +3,7 @@ import { Source, SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 
-export type HostnameLocation = {
+type HostnameLocation = {
   source: Source;
   pathToPayload: string;
   payload: string;
