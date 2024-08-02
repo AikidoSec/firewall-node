@@ -67,10 +67,48 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     const port = getPortFromURL(url);
 
+    if (
+      context.outgoingRequestRedirects &&
+      containsPrivateIPAddress(url.hostname)
+    ) {
+      const redirectOrigin = getRedirectOrigin(
+        context.outgoingRequestRedirects,
+        url
+      );
+
+      if (redirectOrigin) {
+        const found = findHostnameInContext(
+          redirectOrigin.hostname,
+          context,
+          parseInt(redirectOrigin.port, 10)
+        );
+
+        if (found) {
+          agent.onDetectedAttack({
+            module: "undici",
+            operation: "fetch",
+            kind: "ssrf",
+            source: found.source,
+            blocked: agent.shouldBlock(),
+            stack: new Error().stack!,
+            path: found.pathToPayload,
+            metadata: {},
+            request: context,
+            payload: found.payload,
+          });
+
+          if (agent.shouldBlock()) {
+            throw new Error(
+              `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+            );
+          }
+        }
+      }
+    }
+
     // Wrap onHeaders to check for redirects
     handler.onHeaders = wrapOnHeaders(
       handler.onHeaders,
-      agent,
       { port, url },
       context
     );
@@ -87,12 +125,12 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
 function wrapOnHeaders(
   orig: OnHeaders,
-  agent: Agent,
   requestContext: ReturnType<typeof RequestContextStorage.getStore>,
   context: Context
 ): OnHeaders {
   // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
   return function onHeaders() {
+    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
 
     if (args.length > 1) {
@@ -104,10 +142,10 @@ function wrapOnHeaders(
           if (typeof headers.location === "string") {
             const destinationUrl = new URL(headers.location);
 
-            onRedirect(destinationUrl, requestContext, agent, context);
+            onRedirect(destinationUrl, requestContext, context);
           }
         } catch (e) {
-          // Todo log?
+          // Ignore, log later if we have log levels
         }
       }
     }
@@ -127,7 +165,6 @@ function wrapOnHeaders(
 function onRedirect(
   destination: URL,
   requestContext: ReturnType<typeof RequestContextStorage.getStore>,
-  agent: Agent,
   context: Context
 ) {
   if (!requestContext) {
@@ -153,28 +190,6 @@ function onRedirect(
         redirectOrigin.hostname,
         context,
         parseInt(redirectOrigin.port, 10)
-      );
-    }
-  }
-
-  if (found && containsPrivateIPAddress(destination.hostname)) {
-    agent.onDetectedAttack({
-      module: "undici",
-      operation: "fetch",
-      kind: "ssrf",
-      source: found.source,
-      blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
-      path: found.pathToPayload,
-      metadata: {},
-      request: context,
-      payload: found.payload,
-    });
-
-    if (agent.shouldBlock()) {
-      // Todo does not block the redirect
-      throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
     }
   }
