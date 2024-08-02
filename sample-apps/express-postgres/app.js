@@ -78,6 +78,19 @@ async function main(port) {
   );
 
   app.get(
+    "/string-concat",
+    asyncHandler(async (req, res) => {
+      if (!req.query.petname) {
+        return res.status(400).send("Missing petname");
+      }
+      await db.query(
+        `INSERT INTO cats_2 (petname, comment) VALUES ('${req.query.petname}');`
+      );
+      res.send(await cats.getAll());
+    })
+  );
+
+  app.get(
     "/clear",
     asyncHandler(async (req, res) => {
       db.query("DELETE FROM cats_2;", function afterClear(err) {
