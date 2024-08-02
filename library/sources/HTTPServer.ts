@@ -39,9 +39,11 @@ export class HTTPServer implements Wrapper {
     ) {
       return args;
     }
+
     if (args[0] !== "request") {
       return args;
     }
+
     return this.wrapRequestListener(args, module, agent);
   }
 
