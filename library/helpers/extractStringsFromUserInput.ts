@@ -31,6 +31,8 @@ export function extractStringsFromUserInput(
         pathToPayload.concat([{ type: "array", index: i }])
       ).forEach((value, key) => results.set(key, value));
     }
+    // Add array as string to results
+    results.set(obj.join(), buildPathToPayload(pathToPayload));
   }
 
   if (typeof obj == "string") {
