@@ -4,6 +4,7 @@ import { getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
+import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
@@ -46,29 +47,19 @@ function callListenerWithContext(
   const context = contextFromRequest(req, body, module);
 
   return runWithContext(context, () => {
-    res.on("finish", () => {
-      const context = getContext();
+    res.on("finish", createOnFinishRequestHandler(res, agent));
 
-      if (
-        context &&
-        context.route &&
-        context.method &&
-        shouldDiscoverRoute({
-          statusCode: res.statusCode,
-          route: context.route,
-          method: context.method,
-        })
-      ) {
-        agent.onRouteExecute(context.method, context.route);
+    if (!ipAllowedToAccessRoute(context, agent)) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      let message = "Your IP address is not allowed to access this resource.";
+      if (context.remoteAddress) {
+        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
       }
 
-      agent.getInspectionStatistics().onRequest();
-      if (context && context.attackDetected) {
-        agent.getInspectionStatistics().onDetectedAttack({
-          blocked: agent.shouldBlock(),
-        });
-      }
-    });
+      return res.end(message);
+    }
 
     const result = shouldRateLimitRequest(context, agent);
 
@@ -86,4 +77,33 @@ function callListenerWithContext(
 
     return listener(req, res);
   });
+}
+
+function createOnFinishRequestHandler(
+  res: ServerResponse<IncomingMessage>,
+  agent: Agent
+) {
+  return function onFinishRequest() {
+    const context = getContext();
+
+    if (
+      context &&
+      context.route &&
+      context.method &&
+      shouldDiscoverRoute({
+        statusCode: res.statusCode,
+        route: context.route,
+        method: context.method,
+      })
+    ) {
+      agent.onRouteExecute(context.method, context.route);
+    }
+
+    agent.getInspectionStatistics().onRequest();
+    if (context && context.attackDetected) {
+      agent.getInspectionStatistics().onDetectedAttack({
+        blocked: agent.shouldBlock(),
+      });
+    }
+  };
 }
