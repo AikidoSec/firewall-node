@@ -638,7 +638,7 @@ t.test("it checks if IP can access route", async () => {
         t.equal(response2.statusCode, 403);
         t.same(
           response2.body,
-          "Your IP address is not allowed to access this resource. (Your IP: ::1)"
+          `Your IP address is not allowed to access this resource. (Your IP: ${getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1"})`
         );
         t.equal(response3.statusCode, 403);
         t.same(
