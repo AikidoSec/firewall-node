@@ -1,9 +1,9 @@
 import * as t from "tap";
-import { getRedirectOriginHostname } from "./getRedirectOriginHostname";
+import { getRedirectOrigin } from "./getRedirectOrigin";
 
 t.test("it gets the origin URL of a redirect", async (t) => {
   t.equal(
-    getRedirectOriginHostname(
+    getRedirectOrigin(
       [
         {
           source: new URL("https://example.com"),
@@ -12,12 +12,12 @@ t.test("it gets the origin URL of a redirect", async (t) => {
       ],
 
       new URL("https://hackers.com")
-    ),
+    )?.hostname,
     "example.com"
   );
 
   t.equal(
-    getRedirectOriginHostname(
+    getRedirectOrigin(
       [
         {
           source: new URL("https://example.com"),
@@ -30,21 +30,22 @@ t.test("it gets the origin URL of a redirect", async (t) => {
       ],
 
       new URL("https://hackers.com/test")
-    ),
-    "example.com"
+    )?.href,
+    new URL("https://example.com").href
   );
 });
 
 t.test("it returns undefined if there are no redirects", async (t) => {
+  t.equal(getRedirectOrigin([], new URL("https://hackers.com")), undefined);
   t.equal(
-    getRedirectOriginHostname([], new URL("https://hackers.com")),
+    getRedirectOrigin(undefined, new URL("https://hackers.com")),
     undefined
   );
 });
 
 t.test("it returns undefined if the URL is not a destination", async (t) => {
   t.equal(
-    getRedirectOriginHostname(
+    getRedirectOrigin(
       [
         {
           source: new URL("https://example.com"),
@@ -59,7 +60,7 @@ t.test("it returns undefined if the URL is not a destination", async (t) => {
 
 t.test("it returns undefined if the URL is not in the redirects", async (t) => {
   t.equal(
-    getRedirectOriginHostname(
+    getRedirectOrigin(
       [
         {
           source: new URL("https://example.com"),
@@ -76,7 +77,7 @@ t.test(
   "it returns the hostname if the url is in the middle of multiple redirects",
   async (t) => {
     t.equal(
-      getRedirectOriginHostname(
+      getRedirectOrigin(
         [
           {
             source: new URL("https://example.com"),
@@ -92,7 +93,7 @@ t.test(
           },
         ],
         new URL("https://hackers.com/test")
-      ),
+      )?.hostname,
       "example.com"
     );
   }

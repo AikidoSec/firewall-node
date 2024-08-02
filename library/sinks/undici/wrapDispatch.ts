@@ -1,6 +1,6 @@
 import type { Dispatcher } from "undici";
 import { RequestContextStorage } from "./RequestContextStorage";
-import { getContext, updateContext } from "../../agent/Context";
+import { Context, getContext, updateContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
@@ -10,7 +10,7 @@ import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameIn
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { getRedirectOriginHostname } from "../../vulnerabilities/ssrf/getRedirectOriginHostname";
+import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
 
 type Dispatch = Dispatcher["dispatch"];
 type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
@@ -65,10 +65,16 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(handler.onHeaders, agent);
-
     const port = getPortFromURL(url);
+
+    // Wrap onHeaders to check for redirects
+    handler.onHeaders = wrapOnHeaders(
+      handler.onHeaders,
+      agent,
+      { port, url },
+      context
+    );
+
     return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
         // @ts-expect-error We dont know the type of this
@@ -79,7 +85,12 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   };
 }
 
-function wrapOnHeaders(orig: OnHeaders, agent: Agent): OnHeaders {
+function wrapOnHeaders(
+  orig: OnHeaders,
+  agent: Agent,
+  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
+  context: Context
+): OnHeaders {
   // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
   return function onHeaders() {
     const args = Array.from(arguments);
@@ -87,19 +98,16 @@ function wrapOnHeaders(orig: OnHeaders, agent: Agent): OnHeaders {
     if (args.length > 1) {
       const statusCode = args[0];
       if (isRedirectStatusCode(statusCode)) {
-        const requestContext = RequestContextStorage.getStore();
-        if (requestContext) {
-          try {
-            // Get redirect location
-            const headers = parseHeaders(args[1]);
-            if (typeof headers.location === "string") {
-              const url = new URL(headers.location);
+        try {
+          // Get redirect location
+          const headers = parseHeaders(args[1]);
+          if (typeof headers.location === "string") {
+            const destinationUrl = new URL(headers.location);
 
-              onRedirect(url, requestContext, agent);
-            }
-          } catch (e) {
-            // Todo log?
+            onRedirect(destinationUrl, requestContext, agent, context);
           }
+        } catch (e) {
+          // Todo log?
         }
       }
     }
@@ -119,21 +127,14 @@ function wrapOnHeaders(orig: OnHeaders, agent: Agent): OnHeaders {
 function onRedirect(
   destination: URL,
   requestContext: ReturnType<typeof RequestContextStorage.getStore>,
-  agent: Agent
+  agent: Agent,
+  context: Context
 ) {
   if (!requestContext) {
     return;
   }
-  console.log(
-    `Redirect: ${requestContext.url.toString()} -> ${destination.toString()}`
-  );
 
-  const context = getContext();
-  if (!context) {
-    return;
-  }
-
-  let redirectOriginHostname: string | undefined;
+  let redirectOrigin: URL | undefined;
 
   let found = findHostnameInContext(
     requestContext.url.hostname,
@@ -142,16 +143,16 @@ function onRedirect(
   );
 
   if (!found && context.outgoingRequestRedirects) {
-    redirectOriginHostname = getRedirectOriginHostname(
+    redirectOrigin = getRedirectOrigin(
       context.outgoingRequestRedirects,
       requestContext.url
     );
 
-    if (redirectOriginHostname) {
+    if (redirectOrigin) {
       found = findHostnameInContext(
-        redirectOriginHostname,
+        redirectOrigin.hostname,
         context,
-        requestContext.port
+        parseInt(redirectOrigin.port, 10)
       );
     }
   }
@@ -172,8 +173,6 @@ function onRedirect(
 
     if (agent.shouldBlock()) {
       // Todo does not block the redirect
-      console.log(`SSRF redirect to ip should get blocked here`);
-      console.log("---");
       throw new Error(
         `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
@@ -182,13 +181,7 @@ function onRedirect(
 
   const outgoingRedirects = context.outgoingRequestRedirects || [];
 
-  if (redirectOriginHostname || found) {
-    console.log(
-      `Adding redirect to context: ${requestContext.url.toString()} -> ${destination.toString()}`
-    );
-    console.log(`context body url: ${context.body.image}`);
-    console.log("...");
-
+  if (redirectOrigin || found) {
     outgoingRedirects.push({
       source: requestContext.url,
       destination,

@@ -1,6 +1,6 @@
 import { Context } from "../../agent/Context";
 
-export function getRedirectOriginHostname(
+export function getRedirectOrigin(
   redirects: Context["outgoingRequestRedirects"],
   url: URL
 ) {
@@ -20,5 +20,5 @@ export function getRedirectOriginHostname(
     currentUrl = redirect.source;
   }
 
-  return currentUrl.href === url.href ? undefined : currentUrl.hostname;
+  return currentUrl.href === url.href ? undefined : currentUrl;
 }

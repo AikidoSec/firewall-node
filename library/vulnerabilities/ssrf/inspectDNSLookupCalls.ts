@@ -9,7 +9,8 @@ import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 import { findHostnameInContext } from "./findHostnameInContext";
-import { getRedirectOriginHostname } from "./getRedirectOriginHostname";
+import { getRedirectOrigin } from "./getRedirectOrigin";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -136,22 +137,18 @@ function wrapDNSLookupCallback(
 
     let found = findHostnameInContext(hostname, context, port);
 
-    console.log(`inspectDNSLookupCalls for ${hostname}`);
-    console.log(`context body url: ${context.body.image}`);
-    console.log("---");
-
     if (!found && requestContext && context.outgoingRequestRedirects) {
-      const redirectOriginHostname = getRedirectOriginHostname(
+      const redirectOrigin = getRedirectOrigin(
         context.outgoingRequestRedirects,
         requestContext.url
       );
 
-      console.log(
-        `- inspectDNSLookupCalls: redirectOriginHostname: ${redirectOriginHostname}`
-      );
-
-      if (redirectOriginHostname) {
-        found = findHostnameInContext(redirectOriginHostname, context, port);
+      if (redirectOrigin) {
+        found = findHostnameInContext(
+          redirectOrigin.hostname,
+          context,
+          parseInt(redirectOrigin.port, 10)
+        );
       }
     }
 
