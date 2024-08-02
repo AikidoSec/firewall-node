@@ -211,5 +211,23 @@ t.test(
         }
       }
     );
+
+    // Redirect to a different domain that resolves to a private IP
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch("https://bit.ly/3WOLuir"));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
   }
 );

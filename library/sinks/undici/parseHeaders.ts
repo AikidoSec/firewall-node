@@ -6,7 +6,7 @@
  */
 
 export function parseHeaders(
-  headers: Buffer[],
+  headers: (string | Buffer | Buffer[])[],
   obj?: Record<string, string | string[]>
 ) {
   if (obj === undefined) obj = {};
@@ -26,8 +26,7 @@ export function parseHeaders(
         obj[key] = headersValue;
       } else {
         obj[key] = Array.isArray(headersValue)
-          ? // @ts-expect-error Ignore
-            headersValue.map((x) => x.toString("utf8"))
+          ? headersValue.map((x) => x.toString("utf8"))
           : headersValue.toString("utf8");
       }
     }
@@ -44,7 +43,7 @@ export function parseHeaders(
   return obj;
 }
 
-function headerNameToString(value: string | Buffer) {
+function headerNameToString(value: string | Buffer | Buffer[]) {
   return typeof value === "string"
     ? value.toLowerCase()
     : value.toString("latin1").toLowerCase();
