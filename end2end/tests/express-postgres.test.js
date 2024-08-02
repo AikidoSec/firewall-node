@@ -79,11 +79,13 @@ t.test("it does not block in dry mode", (t) => {
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.log(data.toString());
     stderr += data.toString();
   });
 
@@ -108,14 +110,16 @@ t.test("it does not block in dry mode", (t) => {
         }),
       ])
     )
-    .then(([sqlInjection, sqlInjection2, normalSearch]) => {
+    .then(async ([sqlInjection, sqlInjection2, normalSearch]) => {
       t.equal(sqlInjection.status, 200);
+      console.log(await sqlInjection.text());
       t.equal(sqlInjection2.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
     })
     .catch((error) => {
+      console.log(error);
       t.fail(error.message);
     })
     .finally(() => {
