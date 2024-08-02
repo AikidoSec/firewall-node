@@ -42,13 +42,20 @@ t.test("it blocks in blocking mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(`http://localhost:4000/string-concat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petname: ["'", "1)", "(0,1)", "(1", "'"] }),
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://localhost:4000/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 500);
+    .then(async ([sqlInjection, sqlInjection2, normalSearch]) => {
+      t.equal(sqlInjection.status, 500);
+      t.equal(sqlInjection2.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Aikido firewall has blocked an SQL injection/);
@@ -90,13 +97,20 @@ t.test("it does not block in dry mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(`http://localhost:4001/string-concat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petname: ["'", "1)", "(0,1)", "(1", "'"] }),
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://localhost:4001/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
     )
-    .then(([noSQLInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 200);
+    .then(([sqlInjection, sqlInjection2, normalSearch]) => {
+      t.equal(sqlInjection.status, 200);
+      t.equal(sqlInjection2.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
