@@ -1,0 +1,168 @@
+import * as t from "tap";
+import { Agent } from "../../agent/Agent";
+import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
+import { Token } from "../../agent/api/Token";
+import { Context } from "../../agent/Context";
+import { LoggerNoop } from "../../agent/logger/LoggerNoop";
+import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+
+let agent: Agent;
+const context: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: undefined,
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
+t.beforeEach(async () => {
+  delete process.env.NODE_ENV;
+
+  agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting({
+      success: true,
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+      blockedUserIds: [],
+      heartbeatIntervalInMS: 10 * 1000,
+      endpoints: [
+        {
+          route: "/posts/:id",
+          rateLimiting: undefined,
+          method: "POST",
+          allowedIPAddresses: ["1.2.3.4"],
+          forceProtectionOff: false,
+        },
+      ],
+      block: true,
+    }),
+    new Token("123"),
+    undefined
+  );
+
+  agent.start([]);
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+});
+
+t.test("it always allows request if not production", async () => {
+  process.env.NODE_ENV = "development";
+  t.same(ipAllowedToAccessRoute(context, agent), true);
+});
+
+t.test("it always allows request if no match", async () => {
+  process.env.NODE_ENV = "production";
+  t.same(
+    ipAllowedToAccessRoute(
+      { ...context, route: "/", method: "GET", remoteAddress: "1.2.3.4" },
+      agent
+    ),
+    true
+  );
+});
+
+t.test("it always allows request if allowed IP address", async () => {
+  process.env.NODE_ENV = "production";
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "1.2.3.4" }, agent),
+    true
+  );
+});
+
+t.test("it blocks request if no IP address", async () => {
+  process.env.NODE_ENV = "production";
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: undefined }, agent),
+    false
+  );
+});
+
+t.test("it allows request if configuration is broken", async () => {
+  process.env.NODE_ENV = "production";
+
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting({
+      success: true,
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+      blockedUserIds: [],
+      heartbeatIntervalInMS: 10 * 1000,
+      endpoints: [
+        {
+          route: "/posts/:id",
+          rateLimiting: undefined,
+          method: "POST",
+          // @ts-expect-error We're testing a broken configuration
+          allowedIPAddresses: {},
+          forceProtectionOff: false,
+        },
+      ],
+      block: true,
+    }),
+    new Token("123"),
+    undefined
+  );
+
+  agent.start([]);
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
+    true
+  );
+});
+
+t.test("it allows request if allowed IP addresses is empty", async () => {
+  process.env.NODE_ENV = "production";
+
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting({
+      success: true,
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+      blockedUserIds: [],
+      heartbeatIntervalInMS: 10 * 1000,
+      endpoints: [
+        {
+          route: "/posts/:id",
+          rateLimiting: undefined,
+          method: "POST",
+          allowedIPAddresses: [],
+          forceProtectionOff: false,
+        },
+      ],
+      block: true,
+    }),
+    new Token("123"),
+    undefined
+  );
+
+  agent.start([]);
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
+    true
+  );
+});
+
+t.test("it blocks request if not allowed IP address", async () => {
+  process.env.NODE_ENV = "production";
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
+    false
+  );
+});

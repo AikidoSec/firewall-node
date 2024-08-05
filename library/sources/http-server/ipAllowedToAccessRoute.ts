@@ -24,11 +24,11 @@ export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
     return true;
   }
 
-  const { allowedIPAddresses } = endpoint;
-
   if (!context.remoteAddress) {
     return false;
   }
+
+  const { allowedIPAddresses } = endpoint;
 
   return allowedIPAddresses.includes(context.remoteAddress);
 }
