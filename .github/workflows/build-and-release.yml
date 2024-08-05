@@ -7,10 +7,13 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
   run-end-to-end-tests:
     uses: ./.github/workflows/end-to-end-tests.yml
+  run-benchmarks:
+    uses: ./.github/workflows/benchmark.yml
   build:
     needs:
       - run-unit-tests
       - run-end-to-end-tests
+      - run-benchmarks
     runs-on: ubuntu-latest
     permissions:
       contents: read

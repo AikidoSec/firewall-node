@@ -20,6 +20,7 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
+import { isPackageInstalled } from "../helpers/isPackageInstalled";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -125,6 +126,9 @@ function wrapBuiltInModule(
   subjects: WrappableSubject[],
   agent: Agent
 ) {
+  if (!isPackageInstalled(module.getName())) {
+    return;
+  }
   const exports = require(module.getName());
 
   subjects.forEach(

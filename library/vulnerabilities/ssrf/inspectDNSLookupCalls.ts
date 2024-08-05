@@ -150,7 +150,9 @@ function wrapDNSLookupCallback(
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
       path: found.pathToPayload,
-      metadata: {},
+      metadata: {
+        hostname: hostname,
+      },
       request: context,
       payload: found.payload,
     });
