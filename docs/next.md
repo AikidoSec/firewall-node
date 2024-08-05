@@ -11,7 +11,8 @@ const nextConfig = {
 Next.js will create a `standalone` directory in your `.next` directory. This directory contains the standalone server that you can run with Node.js. Next.js will only copy dependencies that are required for the server to run. It does not know about @aikidosec/firewall, so you need to copy it manually:
 
 ```sh
-cp -r node_modules/@aikidosec/firewall .next/standalone/node_modules/@aikidosec/firewall
+mkdir -p .next/standalone/node_modules/@aikidosec
+cp -r node_modules/@aikidosec/firewall .next/standalone/node_modules/@aikidosec
 ```
 
 After building your Next.js app, you can run the standalone server with the following command:
@@ -32,6 +33,7 @@ You can also use the firewall when developing locally by updating the `dev` and 
 {
   "scripts": {
     "build": "next build",
+    "postbuild": "mkdir -p .next/standalone/node_modules/@aikidosec && cp -r node_modules/@aikidosec/firewall .next/standalone/node_modules/@aikidosec",
     "dev": "NODE_OPTIONS='-r @aikidosec/firewall' next dev",
     "start": "NODE_OPTIONS='-r @aikidosec/firewall' next start"
   }
