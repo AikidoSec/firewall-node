@@ -1,12 +1,11 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import { connect } from "http2";
+import { connect, IncomingHttpHeaders } from "http2";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPServer } from "./HTTPServer";
-import { IncomingHttpHeaders } from "http2";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
