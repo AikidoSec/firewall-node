@@ -146,7 +146,7 @@ function onRedirect(
       found = findHostnameInContext(
         redirectOrigin.hostname,
         context,
-        parseInt(redirectOrigin.port, 10)
+        getPortFromURL(redirectOrigin)
       );
     }
   }

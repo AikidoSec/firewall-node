@@ -1,5 +1,5 @@
 import { lookup } from "dns";
-import type { RequestOptions } from "http";
+import { ClientRequest, type RequestOptions } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -10,6 +10,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { getPortFromHTTPRequestArgs } from "./http-request/getPortFromRequest";
+import { onHTTPResponse } from "./http-request/onHTTPResponse";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -158,6 +159,20 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
+  private wrapResponseEvent(req: unknown) {
+    if (!req || !(req instanceof ClientRequest)) {
+      return;
+    }
+
+    const context = getContext();
+    if (!context) {
+      return;
+    }
+    req.on("response", (res) => {
+      onHTTPResponse(req, res, context);
+    });
+  }
+
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
 
@@ -179,7 +194,14 @@ export class HTTPRequest implements Wrapper {
         )
         .modifyArguments("get", (args, subject, agent) =>
           this.monitorDNSLookups(args, agent, module)
-        );
+        )
+        // Inspect the response object to get the headers for ssrf redirect protection
+        .inspectResult("request", (args, result, subject, agent) => {
+          this.wrapResponseEvent(result);
+        })
+        .inspectResult("get", (args, result, subject, agent) => {
+          this.wrapResponseEvent(result);
+        });
     });
   }
 }
