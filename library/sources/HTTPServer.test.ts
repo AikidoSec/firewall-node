@@ -3,13 +3,14 @@ import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
+const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
   return function wrap(name: string) {
     // So that it thinks next is installed
     if (name === "next") {
       return true;
     }
-    return false;
+    return originalIsPackageInstalled(name);
   };
 });
 

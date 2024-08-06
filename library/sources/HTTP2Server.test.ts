@@ -14,13 +14,14 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 
+const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
   return function wrap(name: string) {
     // So that it thinks next is installed
     if (name === "next") {
       return true;
     }
-    return false;
+    return originalIsPackageInstalled(name);
   };
 });
 
