@@ -21,8 +21,6 @@ const context: Context = {
 };
 
 t.beforeEach(async () => {
-  delete process.env.NODE_ENV;
-
   agent = new Agent(
     true,
     new LoggerNoop(),
@@ -53,12 +51,10 @@ t.beforeEach(async () => {
 });
 
 t.test("it always allows request if not production", async () => {
-  process.env.NODE_ENV = "development";
   t.same(ipAllowedToAccessRoute(context, agent), true);
 });
 
 t.test("it always allows request if no match", async () => {
-  process.env.NODE_ENV = "production";
   t.same(
     ipAllowedToAccessRoute(
       { ...context, route: "/", method: "GET", remoteAddress: "1.2.3.4" },
@@ -69,15 +65,20 @@ t.test("it always allows request if no match", async () => {
 });
 
 t.test("it always allows request if allowed IP address", async () => {
-  process.env.NODE_ENV = "production";
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "1.2.3.4" }, agent),
     true
   );
 });
 
+t.test("it always allows request if localhost", async () => {
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "::1" }, agent),
+    true
+  );
+});
+
 t.test("it blocks request if no IP address", async () => {
-  process.env.NODE_ENV = "production";
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: undefined }, agent),
     false
@@ -85,8 +86,6 @@ t.test("it blocks request if no IP address", async () => {
 });
 
 t.test("it allows request if configuration is broken", async () => {
-  process.env.NODE_ENV = "production";
-
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -123,8 +122,6 @@ t.test("it allows request if configuration is broken", async () => {
 });
 
 t.test("it allows request if allowed IP addresses is empty", async () => {
-  process.env.NODE_ENV = "production";
-
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -160,7 +157,6 @@ t.test("it allows request if allowed IP addresses is empty", async () => {
 });
 
 t.test("it blocks request if not allowed IP address", async () => {
-  process.env.NODE_ENV = "production";
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
     false
