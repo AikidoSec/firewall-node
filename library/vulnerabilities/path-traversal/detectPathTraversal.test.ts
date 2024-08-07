@@ -64,6 +64,10 @@ t.test("it flags ..\\..\\..\\", async () => {
   t.same(detectPathTraversal("..\\..\\..\\test.txt", "..\\..\\..\\"), true);
 });
 
+t.test("it flags ./../", async () => {
+  t.same(detectPathTraversal("./../test.txt", "./../"), true);
+});
+
 t.test("user input is longer than file path", async () => {
   t.same(detectPathTraversal("../file.txt", "../../file.txt"), false);
 });
@@ -78,6 +82,17 @@ t.test("linux user directory", async () => {
 
 t.test("windows drive letter", async () => {
   t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+});
+
+t.test("possible bypass", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc/passwd"), true);
+});
+
+t.test("another bypass", async () => {
+  t.same(
+    detectPathTraversal("/./././root/test.txt", "/./././root/test.txt"),
+    true
+  );
 });
 
 t.test("no path traversal", async () => {
