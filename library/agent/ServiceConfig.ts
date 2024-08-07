@@ -30,7 +30,9 @@ export class ServiceConfig {
   }
 
   getEndpoint(context: LimitedContext) {
-    return matchEndpoint(context, this.nonGraphQLEndpoints);
+    const endpoints = matchEndpoint(context, this.nonGraphQLEndpoints);
+
+    return endpoints.length > 0 ? endpoints[0] : undefined;
   }
 
   getGraphQLField(
@@ -38,7 +40,7 @@ export class ServiceConfig {
     name: string,
     operationType: string
   ) {
-    return matchEndpoint(
+    const endpoints = matchEndpoint(
       context,
       this.graphqlFields.filter((field) => {
         if (!field.graphql) {
@@ -50,6 +52,8 @@ export class ServiceConfig {
         );
       })
     );
+
+    return endpoints.length > 0 ? endpoints[0] : undefined;
   }
 
   isAllowedIP(ip: string) {

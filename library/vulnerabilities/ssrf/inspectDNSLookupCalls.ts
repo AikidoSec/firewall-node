@@ -86,7 +86,7 @@ function wrapDNSLookupCallback(
     if (context) {
       const endpoint = agent.getConfig().getEndpoint(context);
 
-      if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      if (endpoint && endpoint.forceProtectionOff) {
         // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
         // Just call the original callback to allow the DNS lookup
         return callback(err, addresses, family);
