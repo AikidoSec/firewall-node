@@ -162,3 +162,45 @@ t.test("it blocks request if not allowed IP address", async () => {
     false
   );
 });
+
+t.test("it checks every matching endpoint", async () => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting({
+      success: true,
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+      blockedUserIds: [],
+      heartbeatIntervalInMS: 10 * 1000,
+      endpoints: [
+        {
+          route: "/posts/:id",
+          rateLimiting: undefined,
+          method: "POST",
+          allowedIPAddresses: ["3.4.5.6"],
+          forceProtectionOff: false,
+        },
+        {
+          route: "/posts/*",
+          rateLimiting: undefined,
+          method: "POST",
+          allowedIPAddresses: ["1.2.3.4"],
+          forceProtectionOff: false,
+        },
+      ],
+      block: true,
+    }),
+    new Token("123"),
+    undefined
+  );
+
+  agent.start([]);
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
+    true
+  );
+});

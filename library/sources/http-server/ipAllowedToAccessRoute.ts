@@ -7,27 +7,27 @@ export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
     return true;
   }
 
-  const match = agent.getConfig().getEndpoint(context);
+  const matches = agent.getConfig().getEndpoints(context);
 
-  if (!match) {
-    return true;
+  for (const endpoint of matches) {
+    if (!Array.isArray(endpoint.allowedIPAddresses)) {
+      return true;
+    }
+
+    if (endpoint.allowedIPAddresses.length === 0) {
+      return true;
+    }
+
+    if (!context.remoteAddress) {
+      return false;
+    }
+
+    const { allowedIPAddresses } = endpoint;
+
+    if (!allowedIPAddresses.includes(context.remoteAddress)) {
+      return false;
+    }
   }
 
-  const { endpoint } = match;
-
-  if (!Array.isArray(endpoint.allowedIPAddresses)) {
-    return true;
-  }
-
-  if (endpoint.allowedIPAddresses.length === 0) {
-    return true;
-  }
-
-  if (!context.remoteAddress) {
-    return false;
-  }
-
-  const { allowedIPAddresses } = endpoint;
-
-  return allowedIPAddresses.includes(context.remoteAddress);
+  return true;
 }
