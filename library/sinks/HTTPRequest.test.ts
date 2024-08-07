@@ -254,7 +254,33 @@ t.test("it works", (t) => {
     }
   });
 
+  runWithContext(
+    {
+      ...context,
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+    },
+    () => {
+      const response1 = https.request(
+        "https://dub.sh/aikido-ssrf-test",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, "http://127.0.0.1/test");
+          const error = t.throws(() => http.request("http://127.0.0.1/test"));
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            );
+          }
+        }
+      );
+      response1.end();
+    }
+  );
+
   setTimeout(() => {
     t.end();
+    process.exit(0);
   }, 1000);
 });

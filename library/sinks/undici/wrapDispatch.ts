@@ -11,6 +11,7 @@ import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
+import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 
 type Dispatch = Dispatcher["dispatch"];
 type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
@@ -167,42 +168,26 @@ function onRedirect(
  * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
-  if (
-    context.outgoingRequestRedirects &&
-    containsPrivateIPAddress(url.hostname)
-  ) {
-    const redirectOrigin = getRedirectOrigin(
-      context.outgoingRequestRedirects,
-      url
-    );
+  const found = isRedirectToPrivateIP(url, context);
 
-    if (redirectOrigin) {
-      const found = findHostnameInContext(
-        redirectOrigin.hostname,
-        context,
-        parseInt(redirectOrigin.port, 10)
+  if (found) {
+    agent.onDetectedAttack({
+      module: "undici",
+      operation: "fetch",
+      kind: "ssrf",
+      source: found.source,
+      blocked: agent.shouldBlock(),
+      stack: new Error().stack!,
+      path: found.pathToPayload,
+      metadata: {},
+      request: context,
+      payload: found.payload,
+    });
+
+    if (agent.shouldBlock()) {
+      throw new Error(
+        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
-
-      if (found) {
-        agent.onDetectedAttack({
-          module: "undici",
-          operation: "fetch",
-          kind: "ssrf",
-          source: found.source,
-          blocked: agent.shouldBlock(),
-          stack: new Error().stack!,
-          path: found.pathToPayload,
-          metadata: {},
-          request: context,
-          payload: found.payload,
-        });
-
-        if (agent.shouldBlock()) {
-          throw new Error(
-            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
-          );
-        }
-      }
     }
   }
 }

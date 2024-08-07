@@ -28,7 +28,6 @@ export function onHTTPResponse(
     return;
   }
 
-  console.log(source.toString(), "->", destination.toString());
   addRedirectToContext(source, destination, context);
 }
 
@@ -63,6 +62,5 @@ function addRedirectToContext(source: URL, destination: URL, context: Context) {
     });
 
     updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
-    console.log(outgoingRedirects);
   }
 }

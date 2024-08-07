@@ -11,29 +11,47 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { onHTTPResponse } from "./http-request/onHTTPResponse";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
+import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
     agent: Agent,
-    hostname: string,
+    url: URL,
     port: number | undefined,
     module: "http" | "https"
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
+    agent.onConnectHostname(url.hostname, port);
     const context = getContext();
 
     if (!context) {
       return undefined;
     }
 
-    return checkContextForSSRF({
-      hostname: hostname,
+    const found = checkContextForSSRF({
+      hostname: url.hostname,
       operation: `${module}.request`,
       context: context,
       port: port,
     });
+    if (found) {
+      return found;
+    }
+
+    const foundRedirect = isRedirectToPrivateIP(url, context);
+    if (foundRedirect) {
+      return {
+        operation: `${module}.request`,
+        kind: "ssrf",
+        source: foundRedirect.source,
+        pathToPayload: foundRedirect.pathToPayload,
+        metadata: {},
+        payload: foundRedirect.payload,
+      };
+    }
+
+    return undefined;
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -54,7 +72,7 @@ export class HTTPRequest implements Wrapper {
     if (url.hostname.length > 0) {
       const attack = this.inspectHostname(
         agent,
-        url.hostname,
+        url,
         getPortFromURL(url),
         module
       );
@@ -127,9 +145,7 @@ export class HTTPRequest implements Wrapper {
     if (!context) {
       return;
     }
-    req.on("response", (res) => {
-      onHTTPResponse(req, res, context);
-    });
+    req.prependListener("response", (res) => onHTTPResponse(req, res, context));
   }
 
   wrap(hooks: Hooks) {
