@@ -245,6 +245,68 @@ t.test("it checks if user agent is a string", async () => {
   ]);
 });
 
+t.test(
+  "it sends heartbeat when config says we didn't receive any stats",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      receivedAnyStats: false,
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After 5 seconds, nothing should happen
+    clock.tick(1000 * 5);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After a minute, we'll see that the dashboard didn't receive any stats yet
+    // And then send a heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+      {
+        type: "heartbeat",
+      },
+    ]);
+
+    // We already reported initial stats, so we won't send another heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+      {
+        type: "heartbeat",
+      },
+    ]);
+
+    clock.uninstall();
+  }
+);
+
 t.test("it sends heartbeat when reached max timings", async () => {
   const clock = FakeTimers.install();
 

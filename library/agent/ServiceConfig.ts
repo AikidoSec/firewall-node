@@ -12,7 +12,8 @@ export class ServiceConfig {
     endpoints: Endpoint[],
     private readonly lastUpdatedAt: number,
     blockedUserIds: string[],
-    allowedIPAddresses: string[]
+    allowedIPAddresses: string[],
+    private readonly receivedAnyStats: boolean
   ) {
     blockedUserIds.forEach((userId) => {
       this.blockedUserIds.set(userId, userId);
@@ -67,5 +68,9 @@ export class ServiceConfig {
 
   getLastUpdatedAt() {
     return this.lastUpdatedAt;
+  }
+
+  hasReceivedAnyStats() {
+    return this.receivedAnyStats;
   }
 }
