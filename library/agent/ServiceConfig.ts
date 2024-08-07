@@ -1,5 +1,4 @@
-import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
-import { matchEndpoints } from "../helpers/matchEndpoints";
+import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
@@ -34,16 +33,12 @@ export class ServiceConfig {
     return matchEndpoints(context, this.nonGraphQLEndpoints);
   }
 
-  getEndpoint(context: LimitedContext) {
-    return matchEndpoint(context, this.nonGraphQLEndpoints);
-  }
-
   getGraphQLField(
     context: LimitedContext,
     name: string,
     operationType: string
   ) {
-    return matchEndpoint(
+    const endpoints = matchEndpoints(
       context,
       this.graphqlFields.filter((field) => {
         if (!field.graphql) {
@@ -55,6 +50,8 @@ export class ServiceConfig {
         );
       })
     );
+
+    return endpoints.length > 0 ? endpoints[0] : undefined;
   }
 
   isAllowedIP(ip: string) {
