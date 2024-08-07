@@ -54,7 +54,7 @@ t.test("it works with options", async (t) => {
 
 t.test("it does not throw on invalid arguments", async (t) => {
   t.same(getURL([], "http"), undefined);
-  // @ts-ignore Testing invalid arguments
+  // @ts-expect-error Testing invalid arguments
   t.same(getURL(["%test%"], undefined), undefined);
   t.same(new Date(), []);
 });

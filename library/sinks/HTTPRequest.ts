@@ -102,17 +102,21 @@ export class HTTPRequest implements Wrapper {
     const url = getUrlFromHTTPRequestArgs(args, module);
 
     if (!optionObj) {
-      return args.concat([
-        {
-          lookup: inspectDNSLookupCalls(
-            lookup,
-            agent,
-            module,
-            `${module}.request`,
-            url
-          ),
-        },
-      ]);
+      const newOpts = {
+        lookup: inspectDNSLookupCalls(
+          lookup,
+          agent,
+          module,
+          `${module}.request`,
+          url
+        ),
+      };
+      // You can also pass on response event handler as a callback as the second argument
+      // But if the options object is added at the third position, it will be ignored
+      if (args.length === 2 && typeof args[1] === "function") {
+        return [args[0], newOpts, args[1]];
+      }
+      return args.concat(newOpts);
     }
 
     if (optionObj.lookup) {

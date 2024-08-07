@@ -20,7 +20,10 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "thisdomainpointstointernalip2.com"
+    ) {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -144,6 +147,26 @@ t.test("it works", (t) => {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        })
+        .on("finish", () => {
+          t.fail("should not finish");
+        })
+        .end();
+    }
+  );
+
+  runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
+    () => {
+      https
+        .request("https://thisdomainpointstointernalip2.com", (res) => {
+          t.fail("should not respond");
+        })
+        .on("error", (error) => {
+          t.match(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+          );
         })
         .on("finish", () => {
           t.fail("should not finish");
