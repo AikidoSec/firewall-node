@@ -20,13 +20,13 @@ export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
 ): Result {
-  const match = agent.getConfig().getEndpoint(context);
+  const matches = agent.getConfig().getEndpoints(context);
 
-  if (!match) {
+  if (matches.length === 0) {
     return { block: false };
   }
 
-  const { endpoint, route } = match;
+  const endpoint = matches[0];
 
   if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
     return { block: false };
@@ -57,7 +57,7 @@ export function shouldRateLimitRequest(
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${route}:ip:${context.remoteAddress}`,
+        `${context.method}:${context.route}:ip:${context.remoteAddress}`,
         windowSizeInMS,
         maxRequests
       );
@@ -75,7 +75,7 @@ export function shouldRateLimitRequest(
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${route}:user:${context.user.id}`,
+        `${context.method}:${context.route}:user:${context.user.id}`,
         windowSizeInMS,
         maxRequests
       );
