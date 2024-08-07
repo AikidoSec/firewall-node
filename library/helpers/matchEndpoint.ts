@@ -4,9 +4,12 @@ import { tryParseURLPath } from "./tryParseURLPath";
 
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
-export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
+export function matchEndpoint(
+  context: LimitedContext,
+  endpoints: Endpoint[]
+): Endpoint[] {
   if (!context.method) {
-    return undefined;
+    return [];
   }
 
   const possible = endpoints.filter((endpoint) => {
@@ -17,24 +20,11 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
     return endpoint.method === context.method;
   });
 
-  const endpoint = possible.find(
-    (endpoint) => endpoint.route === context.route
-  );
+  const matches: Endpoint[] = [];
+  const exact = possible.find((endpoint) => endpoint.route === context.route);
 
-  if (endpoint) {
-    return { endpoint: endpoint, route: endpoint.route };
-  }
-
-  if (!context.url) {
-    return undefined;
-  }
-
-  // req.url is relative, so we need to prepend a host to make it absolute
-  // We just match the pathname, we don't use the host for matching
-  const path = tryParseURLPath(context.url);
-
-  if (!path) {
-    return undefined;
+  if (exact) {
+    matches.push(exact);
   }
 
   const wildcards = possible
@@ -44,16 +34,24 @@ export function matchEndpoint(context: LimitedContext, endpoints: Endpoint[]) {
       return b.route.split("*").length - a.route.split("*").length;
     });
 
-  for (const wildcard of wildcards) {
-    const regex = new RegExp(
-      `^${wildcard.route.replace(/\*/g, "(.*)")}\/?$`,
-      "i"
-    );
+  if (context.url) {
+    // req.url is relative, so we need to prepend a host to make it absolute
+    // We just match the pathname, we don't use the host for matching
+    const path = tryParseURLPath(context.url);
 
-    if (regex.test(path)) {
-      return { endpoint: wildcard, route: wildcard.route };
+    if (path) {
+      for (const wildcard of wildcards) {
+        const regex = new RegExp(
+          `^${wildcard.route.replace(/\*/g, "(.*)")}\/?$`,
+          "i"
+        );
+
+        if (regex.test(path)) {
+          matches.push(wildcard);
+        }
+      }
     }
   }
 
-  return undefined;
+  return matches;
 }

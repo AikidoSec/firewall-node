@@ -18,25 +18,22 @@ const context: Context = {
 };
 
 t.test("invalid URL and no route", async () => {
-  t.same(
-    matchEndpoint({ ...context, route: undefined, url: "abc" }, []),
-    undefined
-  );
+  t.same(matchEndpoint({ ...context, route: undefined, url: "abc" }, []), []);
 });
 
 t.test("no URL and no route", async () => {
   t.same(
     matchEndpoint({ ...context, route: undefined, url: undefined }, []),
-    undefined
+    []
   );
 });
 
 t.test("no method", async () => {
-  t.same(matchEndpoint({ ...context, method: undefined }, []), undefined);
+  t.same(matchEndpoint({ ...context, method: undefined }, []), []);
 });
 
 t.test("it returns undefined if nothing found", async () => {
-  t.same(matchEndpoint(context, []), undefined);
+  t.same(matchEndpoint(context, []), []);
 });
 
 t.test("it returns endpoint based on route", async () => {
@@ -53,15 +50,18 @@ t.test("it returns endpoint based on route", async () => {
         forceProtectionOff: false,
       },
     ]),
-    {
-      endpoint: {
+    [
+      {
         method: "POST",
         route: "/posts/:number",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
-      route: "/posts/:number",
-    }
+    ]
   );
 });
 
@@ -82,15 +82,18 @@ t.test("it returns endpoint based on relative url", async () => {
         },
       ]
     ),
-    {
-      endpoint: {
+    [
+      {
         method: "POST",
         route: "/posts/:number",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
-      route: "/posts/:number",
-    }
+    ]
   );
 });
 
@@ -108,15 +111,18 @@ t.test("it returns endpoint based on wildcard", async () => {
         forceProtectionOff: false,
       },
     ]),
-    {
-      endpoint: {
+    [
+      {
         method: "*",
         route: "/posts/*",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
-      route: "/posts/*",
-    }
+    ]
   );
 });
 
@@ -134,15 +140,18 @@ t.test("it returns endpoint based on wildcard with relative URL", async () => {
         forceProtectionOff: false,
       },
     ]),
-    {
-      endpoint: {
+    [
+      {
         method: "*",
         route: "/posts/*",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
-      route: "/posts/*",
-    }
+    ]
   );
 });
 
@@ -177,15 +186,28 @@ t.test("it favors more specific wildcard", async () => {
         },
       ]
     ),
-    {
-      endpoint: {
+    [
+      {
         method: "*",
         route: "/posts/*/comments/*",
-        rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
         forceProtectionOff: false,
       },
-      route: "/posts/*/comments/*",
-    }
+      {
+        method: "*",
+        route: "/posts/*",
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 10,
+          windowSizeInMS: 1000,
+        },
+        forceProtectionOff: false,
+      },
+    ]
   );
 });
 
@@ -211,15 +233,14 @@ t.test("it matches wildcard route with specific method", async () => {
         },
       ]
     ),
-    {
-      endpoint: {
+    [
+      {
         method: "POST",
         route: "/posts/*/comments/*",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
       },
-      route: "/posts/*/comments/*",
-    }
+    ]
   );
 });
 
@@ -255,8 +276,8 @@ t.test("it prefers specific route over wildcard", async () => {
         },
       ]
     ),
-    {
-      endpoint: {
+    [
+      {
         method: "POST",
         route: "/api/coach",
         forceProtectionOff: false,
@@ -266,7 +287,16 @@ t.test("it prefers specific route over wildcard", async () => {
           windowSizeInMS: 60000,
         },
       },
-      route: "/api/coach",
-    }
+      {
+        method: "*",
+        route: "/api/*",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 20,
+          windowSizeInMS: 60000,
+        },
+      },
+    ]
   );
 });
