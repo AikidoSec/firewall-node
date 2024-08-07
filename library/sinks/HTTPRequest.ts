@@ -9,8 +9,8 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
-import { getPortFromHTTPRequestArgs } from "./http-request/getPortFromRequest";
 import { onHTTPResponse } from "./http-request/onHTTPResponse";
+import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -42,65 +42,24 @@ export class HTTPRequest implements Wrapper {
     agent: Agent,
     module: "http" | "https"
   ) {
-    if (args.length > 0) {
-      if (typeof args[0] === "string" && args[0].length > 0) {
-        try {
-          const url = new URL(args[0]);
-          if (url.hostname.length > 0) {
-            const attack = this.inspectHostname(
-              agent,
-              url.hostname,
-              getPortFromHTTPRequestArgs(args, module),
-              module
-            );
-            if (attack) {
-              return attack;
-            }
-          }
-        } catch (e) {
-          // Ignore
-        }
-      }
+    if (args.length <= 0) {
+      return undefined;
+    }
 
-      if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        const attack = this.inspectHostname(
-          agent,
-          args[0].hostname,
-          getPortFromURL(args[0]),
-          module
-        );
-        if (attack) {
-          return attack;
-        }
-      }
+    const url = getUrlFromHTTPRequestArgs(args, module);
+    if (!url) {
+      return undefined;
+    }
 
-      let options;
-
-      if (
-        isPlainObject(args[0]) &&
-        typeof args[0].hostname === "string" &&
-        args[0].hostname.length > 0
-      ) {
-        options = args[0];
-      } else if (
-        args.length > 1 &&
-        isPlainObject(args[1]) &&
-        typeof args[1].hostname === "string" &&
-        args[1].hostname.length > 0
-      ) {
-        options = args[1];
-      }
-
-      if (options) {
-        const attack = this.inspectHostname(
-          agent,
-          options.hostname as string,
-          getPortFromHTTPRequestArgs(args, module),
-          module
-        );
-        if (attack) {
-          return attack;
-        }
+    if (url.hostname.length > 0) {
+      const attack = this.inspectHostname(
+        agent,
+        url.hostname,
+        getPortFromURL(url),
+        module
+      );
+      if (attack) {
+        return attack;
       }
     }
 
@@ -110,7 +69,7 @@ export class HTTPRequest implements Wrapper {
   private monitorDNSLookups(
     args: unknown[],
     agent: Agent,
-    module: string
+    module: "http" | "https"
   ): unknown[] {
     const context = getContext();
 
@@ -122,7 +81,7 @@ export class HTTPRequest implements Wrapper {
       isPlainObject(arg)
     );
 
-    const port = getPortFromHTTPRequestArgs(args);
+    const url = getUrlFromHTTPRequestArgs(args, module);
 
     if (!optionObj) {
       return args.concat([
@@ -132,7 +91,7 @@ export class HTTPRequest implements Wrapper {
             agent,
             module,
             `${module}.request`,
-            port
+            url
           ),
         },
       ]);
@@ -144,7 +103,7 @@ export class HTTPRequest implements Wrapper {
         agent,
         module,
         `${module}.request`,
-        port
+        url
       ) as RequestOptions["lookup"];
     } else {
       optionObj.lookup = inspectDNSLookupCalls(
@@ -152,7 +111,7 @@ export class HTTPRequest implements Wrapper {
         agent,
         module,
         `${module}.request`,
-        port
+        url
       ) as RequestOptions["lookup"];
     }
 

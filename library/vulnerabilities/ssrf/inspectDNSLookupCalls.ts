@@ -10,13 +10,14 @@ import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
   operation: string,
-  port?: number
+  url?: URL
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -42,7 +43,7 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            port
+            url
           ),
         ]
       : [
@@ -53,7 +54,7 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            port
+            url
           ),
         ];
 
@@ -68,7 +69,7 @@ function wrapDNSLookupCallback(
   module: string,
   agent: Agent,
   operation: string,
-  portArg?: number
+  urlArg?: URL
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -118,12 +119,10 @@ function wrapDNSLookupCallback(
 
     let port: number | undefined;
 
-    if (portArg) {
-      port = portArg;
-    } else {
-      if (requestContext) {
-        port = requestContext.port;
-      }
+    if (urlArg) {
+      port = getPortFromURL(urlArg);
+    } else if (requestContext) {
+      port = requestContext.port;
     }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
@@ -136,18 +135,27 @@ function wrapDNSLookupCallback(
 
     let found = findHostnameInContext(hostname, context, port);
 
-    if (!found && requestContext && context.outgoingRequestRedirects) {
-      const redirectOrigin = getRedirectOrigin(
-        context.outgoingRequestRedirects,
-        requestContext.url
-      );
+    if (!found && context.outgoingRequestRedirects) {
+      let url: URL | undefined;
+      if (urlArg) {
+        url = urlArg;
+      } else if (requestContext) {
+        url = new URL(requestContext.url);
+      }
 
-      if (redirectOrigin) {
-        found = findHostnameInContext(
-          redirectOrigin.hostname,
-          context,
-          parseInt(redirectOrigin.port, 10)
+      if (url) {
+        const redirectOrigin = getRedirectOrigin(
+          context.outgoingRequestRedirects,
+          url
         );
+
+        if (redirectOrigin) {
+          found = findHostnameInContext(
+            redirectOrigin.hostname,
+            context,
+            getPortFromURL(redirectOrigin)
+          );
+        }
       }
     }
 
