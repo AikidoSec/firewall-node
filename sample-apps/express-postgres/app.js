@@ -35,9 +35,8 @@ async function createConnection() {
 
   await client.connect();
   await client.query(`
-    CREATE TABLE IF NOT EXISTS cats_2 (
-        petname varchar(255),
-        comment varchar(255)
+    CREATE TABLE IF NOT EXISTS cats (
+        petname varchar(255)
     );
   `);
 
@@ -51,7 +50,6 @@ async function main(port) {
   const app = express();
 
   app.use(morgan("tiny"));
-  app.use(express.json());
 
   app.get(
     "/",
@@ -64,36 +62,10 @@ async function main(port) {
     })
   );
 
-  app.post(
-    "/string-concat",
-    asyncHandler(async (req, res) => {
-      if (!req.body.petname) {
-        return res.status(400).send("Missing petname");
-      }
-      await db.query(
-        `INSERT INTO cats_2 (petname, comment) VALUES ('${req.body.petname}');`
-      );
-      res.send(await cats.getAll());
-    })
-  );
-
-  app.get(
-    "/string-concat",
-    asyncHandler(async (req, res) => {
-      if (!req.query.petname) {
-        return res.status(400).send("Missing petname");
-      }
-      await db.query(
-        `INSERT INTO cats_2 (petname, comment) VALUES ('${req.query.petname}');`
-      );
-      res.send(await cats.getAll());
-    })
-  );
-
   app.get(
     "/clear",
     asyncHandler(async (req, res) => {
-      db.query("DELETE FROM cats_2;", function afterClear(err) {
+      db.query("DELETE FROM cats;", function afterClear(err) {
         if (err) {
           res.status(500).send("Error clearing table");
           return;

@@ -37,19 +37,7 @@ t.test("it blocks in blocking mode", (t) => {
     .then(() => {
       return Promise.all([
         fetch(
-          `http://localhost:4000/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_2;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
-        ),
-        fetch(`http://localhost:4000/string-concat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ petname: ["'", "1)", "(0,1)", "(1", "'"] }),
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch(
-          `http://localhost:4000/string-concat?petname='&petname=1)&petname=(0,1)&petname=(1&petname='`,
+          `http://localhost:4000/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats;-- H")}`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -59,16 +47,12 @@ t.test("it blocks in blocking mode", (t) => {
         }),
       ]);
     })
-    .then(
-      async ([sqlInjection, sqlInjection2, sqlInjection3, normalSearch]) => {
-        t.equal(sqlInjection.status, 500);
-        t.equal(sqlInjection2.status, 500);
-        t.equal(sqlInjection3.status, 500);
-        t.equal(normalSearch.status, 200);
-        t.match(stdout, /Starting agent/);
-        t.match(stderr, /Aikido firewall has blocked an SQL injection/);
-      }
-    )
+    .then(([noSQLInjection, normalSearch]) => {
+      t.equal(noSQLInjection.status, 500);
+      t.equal(normalSearch.status, 200);
+      t.match(stdout, /Starting agent/);
+      t.match(stderr, /Aikido firewall has blocked an SQL injection/);
+    })
     .catch((error) => {
       t.fail(error.message);
     })
@@ -101,19 +85,7 @@ t.test("it does not block in dry mode", (t) => {
     .then(() =>
       Promise.all([
         fetch(
-          `http://localhost:4001/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_2;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
-        ),
-        fetch(`http://localhost:4001/string-concat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ petname: ["'", "1)", "(0,1)", "(1", "'"] }),
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch(
-          `http://localhost:4001/string-concat?petname='&petname=1)&petname=(0,1)&petname=(1&petname='`,
+          `http://localhost:4001/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats;-- H")}`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -123,16 +95,12 @@ t.test("it does not block in dry mode", (t) => {
         }),
       ])
     )
-    .then(
-      async ([sqlInjection, sqlInjection2, sqlInjection3, normalSearch]) => {
-        t.equal(sqlInjection.status, 200);
-        t.equal(sqlInjection2.status, 200);
-        t.equal(sqlInjection3.status, 200);
-        t.equal(normalSearch.status, 200);
-        t.match(stdout, /Starting agent/);
-        t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
-      }
-    )
+    .then(([noSQLInjection, normalSearch]) => {
+      t.equal(noSQLInjection.status, 200);
+      t.equal(normalSearch.status, 200);
+      t.match(stdout, /Starting agent/);
+      t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
+    })
     .catch((error) => {
       t.fail(error.message);
     })

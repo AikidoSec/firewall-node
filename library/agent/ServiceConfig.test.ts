@@ -60,14 +60,17 @@ t.test("it works", async () => {
       route: "/foo",
     }),
     {
-      method: "GET",
-      route: "/foo",
-      forceProtectionOff: false,
-      rateLimiting: {
-        enabled: false,
-        maxRequests: 0,
-        windowSizeInMS: 0,
+      endpoint: {
+        method: "GET",
+        route: "/foo",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
       },
+      route: "/foo",
     }
   );
 });

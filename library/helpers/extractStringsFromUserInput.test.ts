@@ -33,7 +33,6 @@ t.test("it can extract query objects", async () => {
       age: ".",
       whaat: ".user_input.[0]",
       dangerous: ".user_input.[1]",
-      "whaat,dangerous": ".user_input",
     })
   );
 });
@@ -149,46 +148,6 @@ t.test("it also adds the JWT itself as string", async () => {
     fromObj({
       header: ".",
       "/;ping%20localhost;.e30=.": ".header",
-    })
-  );
-});
-
-t.test("it concatenates array values", async () => {
-  t.same(
-    extractStringsFromUserInput({ arr: ["1", "2", "3"] }),
-    fromObj({
-      arr: ".",
-      "1,2,3": ".arr",
-      "1": ".arr.[0]",
-      "2": ".arr.[1]",
-      "3": ".arr.[2]",
-    })
-  );
-
-  t.same(
-    extractStringsFromUserInput({
-      arr: ["1", 2, true, null, undefined, { test: "test" }],
-    }),
-    fromObj({
-      arr: ".",
-      "1": ".arr.[0]",
-      test: ".arr.[5].test",
-      "1,2,true,,,[object Object]": ".arr",
-    })
-  );
-
-  t.same(
-    extractStringsFromUserInput({
-      arr: ["1", 2, true, null, undefined, { test: ["test123", "test345"] }],
-    }),
-    fromObj({
-      arr: ".",
-      "1": ".arr.[0]",
-      test: ".arr.[5]",
-      test123: ".arr.[5].test.[0]",
-      test345: ".arr.[5].test.[1]",
-      "test123,test345": ".arr.[5].test",
-      "1,2,true,,,[object Object]": ".arr",
     })
   );
 });
