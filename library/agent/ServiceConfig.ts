@@ -1,4 +1,5 @@
 import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
+import { matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
@@ -27,6 +28,10 @@ export class ServiceConfig {
     this.graphqlFields = endpoints.filter((endpoint) =>
       endpoint.graphql ? true : false
     );
+  }
+
+  getEndpoints(context: LimitedContext) {
+    return matchEndpoints(context, this.nonGraphQLEndpoints);
   }
 
   getEndpoint(context: LimitedContext) {
