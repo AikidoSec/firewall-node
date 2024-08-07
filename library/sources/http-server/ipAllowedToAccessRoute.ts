@@ -1,10 +1,9 @@
 import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
+import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 
 export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
-  const isProduction = process.env.NODE_ENV === "production";
-
-  if (!isProduction) {
+  if (context.remoteAddress && isLocalhostIP(context.remoteAddress)) {
     return true;
   }
 
