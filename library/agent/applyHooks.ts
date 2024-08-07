@@ -171,9 +171,9 @@ function wrapWithoutArgumentModification(
         }
 
         if (context) {
-          const match = agent.getConfig().getEndpoint(context);
+          const endpoint = agent.getConfig().getEndpoint(context);
 
-          if (match && match.endpoint.forceProtectionOff) {
+          if (endpoint && endpoint.forceProtectionOff) {
             return original.apply(
               // @ts-expect-error We don't now the type of this
               this,

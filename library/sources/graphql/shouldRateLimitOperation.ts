@@ -76,15 +76,13 @@ function shouldRateLimitField(
   isFromLocalhostInProduction: boolean,
   isAllowedIP: boolean
 ): Result {
-  const match = agent
+  const rateLimitedField = agent
     .getConfig()
     .getGraphQLField(context, field.name.value, operationType);
 
-  if (!match || !match.endpoint.graphql) {
+  if (!rateLimitedField || !rateLimitedField.graphql) {
     return { block: false };
   }
-
-  const rateLimitedField = match.endpoint;
 
   if (
     !rateLimitedField ||

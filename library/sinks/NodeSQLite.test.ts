@@ -4,10 +4,6 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { NodeSQLite } from "./NodeSqlite";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 
 const dangerousContext: Context = {
@@ -54,7 +50,9 @@ t.test("does not break when the Node.js version is too low", async (t) => {
 t.test(
   "it detects SQL injections",
   {
-    skip: !isPackageInstalled("node:sqlite"),
+    skip: !isPackageInstalled("node:sqlite")
+      ? "node:sqlite not available"
+      : false,
   },
   async () => {
     const agent = new Agent(
