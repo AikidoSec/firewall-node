@@ -8,7 +8,7 @@ import { isPlainObject } from "../../helpers/isPlainObject";
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
-  module?: "http" | "https"
+  module: "http" | "https"
 ): URL | undefined {
   if (!args || !args.length) {
     return undefined;
@@ -57,12 +57,12 @@ function getRequestOptions(args: unknown[]) {
 
 function getUrlFromRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
-  module?: "http" | "https"
+  module: "http" | "https"
 ): URL | undefined {
   let str = "";
   if (typeof options.protocol === "string") {
     str += options.protocol;
-  } else {
+  } else if (module) {
     str += `${module}:`;
   }
   str += "//";
