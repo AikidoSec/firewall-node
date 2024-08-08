@@ -1,7 +1,7 @@
-import { RequireBuiltinInterceptor } from "./RequireInterceptor";
+import { RequireInterceptor } from "./RequireInterceptor";
 
 export class BuiltinModule {
-  private requireInterceptors: RequireBuiltinInterceptor[] = [];
+  private requireInterceptors: RequireInterceptor[] = [];
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -13,7 +13,7 @@ export class BuiltinModule {
     return this.name;
   }
 
-  onRequire(interceptor: RequireBuiltinInterceptor) {
+  onRequire(interceptor: RequireInterceptor) {
     this.requireInterceptors.push(interceptor);
   }
 
