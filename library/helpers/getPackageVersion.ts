@@ -1,4 +1,5 @@
 import { sep } from "path";
+import { getOrignalRequire } from "../agent/hooks/wrapRequire";
 
 /**
  * Get the installed version of a package
@@ -23,7 +24,18 @@ export function getPackageVersion(pkg: string): string | null {
     const index = parts.indexOf(lookup);
     const root = parts.slice(0, index + 1).join(sep);
 
-    return require(`${root}/package.json`).version;
+    return getPackageVersionWithPath(root);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Get the installed version of a package from its base path
+ */
+export function getPackageVersionWithPath(path: string): string | null {
+  try {
+    return getOrignalRequire()(`${path}/package.json`).version;
   } catch (error) {
     return null;
   }
