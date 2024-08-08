@@ -280,6 +280,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to http://127.0.0.1/test
       ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
     },
     () => {
@@ -305,6 +306,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to http://local.aikido.io/test
       ...{ body: { test: "https://dub.sh/aikido-ssrf-test-domain" } },
     },
     () => {
@@ -329,6 +331,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test
       ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
     },
     () => {
@@ -362,6 +365,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test-domain
       ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
     },
     () => {
@@ -392,6 +396,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test-domain
       ...{ body: { image: "https://bit.ly/3WOLuir" } },
     },
     () => {
@@ -421,6 +426,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to http://127.0.0.1/test
       ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
     },
     () => {
@@ -444,6 +450,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
+      // Redirects to http://local.aikido.io/test
       ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
     },
     () => {

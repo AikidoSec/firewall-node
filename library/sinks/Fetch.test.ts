@@ -139,6 +139,7 @@ t.test(
     await runWithContext(
       {
         ...context,
+        // Redirects to http://127.0.0.1/test
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
       },
       async () => {
@@ -158,6 +159,7 @@ t.test(
     await runWithContext(
       {
         ...context,
+        // Redirects to http://local.aikido.io/test
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
       },
       async () => {
@@ -177,6 +179,7 @@ t.test(
     await runWithContext(
       {
         ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
       },
       async () => {
@@ -196,6 +199,7 @@ t.test(
     await runWithContext(
       {
         ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
       },
       async () => {
@@ -212,10 +216,10 @@ t.test(
       }
     );
 
-    // Redirect to a different domain that resolves to a private IP
     await runWithContext(
       {
         ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
         ...{ body: { image: "https://bit.ly/3WOLuir" } },
       },
       async () => {
@@ -234,6 +238,7 @@ t.test(
     await runWithContext(
       {
         ...context,
+        // Redirects to http://127.0.0.1/test
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
       },
       async () => {
@@ -254,9 +259,11 @@ t.test(
       }
     );
 
+    // Manual redirect
     await runWithContext(
       {
         ...context,
+        // Redirects to http://local.aikido.io/test
         ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
       },
       async () => {
@@ -279,10 +286,10 @@ t.test(
       }
     );
 
-    // Manual redirect to a different domain that resolves to a private IP
     await runWithContext(
       {
         ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
         ...{ body: { image: "https://bit.ly/3WOLuir" } },
       },
       async () => {
