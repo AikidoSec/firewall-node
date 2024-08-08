@@ -187,7 +187,7 @@ t.test("it works", (t) => {
 
   runWithContext(context, () => {
     // Safe request
-    const google = https.request("https://google.com");
+    const google = https.request("https://www.google.com");
     google.end();
 
     // With string URL
@@ -413,6 +413,54 @@ t.test("it works", (t) => {
         response2.end();
       });
       response1.end();
+    }
+  );
+
+  const { https: httpsFr } = require("follow-redirects");
+
+  runWithContext(
+    {
+      ...context,
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+    },
+    () => {
+      const response = httpsFr.request(
+        "https://dub.sh/aikido-ssrf-test",
+        (res) => {
+          t.fail("should not respond");
+        }
+      );
+      response.on("error", (e) => {
+        t.ok(e instanceof Error);
+        t.same(
+          e.message,
+          "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      });
+      response.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+    },
+    () => {
+      const response = httpsFr.request(
+        "https://dub.sh/aikido-ssrf-test-domain",
+        (res) => {
+          t.fail("should not respond");
+        }
+      );
+      response.on("error", (e) => {
+        t.ok(e instanceof Error);
+        t.same(
+          e.message,
+          "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      });
+      response.end();
     }
   );
 

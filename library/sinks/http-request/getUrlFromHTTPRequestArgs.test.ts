@@ -81,3 +81,22 @@ t.test("it works without url and only options", async (t) => {
     new URL("https://localhost/test?q=1")
   );
 });
+
+t.test("Do not get port 0 from request options", async (t) => {
+  t.same(
+    getURL([{ protocol: "https:", hostname: "localhost", port: 0 }], "http"),
+    new URL("https://localhost")
+  );
+  t.same(
+    getURL([{ hostname: "localhost", port: 0 }], "http"),
+    new URL("http://localhost")
+  );
+  t.same(
+    getURL([{ protocol: "https:", hostname: "localhost", port: 0 }], "https"),
+    new URL("https://localhost")
+  );
+  t.same(
+    getURL([{ hostname: "localhost", port: 0 }], "https"),
+    new URL("https://localhost")
+  );
+});

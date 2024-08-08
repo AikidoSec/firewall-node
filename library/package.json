@@ -58,6 +58,7 @@
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "fast-xml-parser": "^4.4.0",
+    "follow-redirects": "^1.15.6",
     "graphql": "^16.8.2",
     "hono": "^4.4.2",
     "mongodb": "^6.3.0",

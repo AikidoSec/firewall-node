@@ -69,7 +69,7 @@ function getUrlFromRequestOptions(
   if (typeof options.hostname === "string") {
     str += options.hostname;
   }
-  if (typeof options.port === "number") {
+  if (typeof options.port === "number" && options.port > 0) {
     str += `:${options.port}`;
   }
   if (typeof options.path === "string") {
