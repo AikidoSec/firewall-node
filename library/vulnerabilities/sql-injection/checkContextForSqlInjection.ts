@@ -33,7 +33,9 @@ export function checkContextForSqlInjection({
           kind: "sql_injection",
           source: source,
           pathToPayload: path,
-          metadata: {},
+          metadata: {
+            sql: sql,
+          },
           payload: str,
         };
       }

@@ -34,7 +34,9 @@ export function checkContextForSSRF({
           kind: "ssrf",
           source: source,
           pathToPayload: path,
-          metadata: {},
+          metadata: {
+            hostname: hostname,
+          },
           payload: str,
         };
       }

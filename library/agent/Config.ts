@@ -6,6 +6,7 @@ export type Endpoint = {
     type: "query" | "mutation";
     name: string;
   };
+  allowedIPAddresses?: string[];
   rateLimiting: {
     enabled: boolean;
     maxRequests: number;
@@ -20,4 +21,5 @@ export type Config = {
   blockedUserIds: string[];
   allowedIPAddresses: string[];
   block?: boolean;
+  receivedAnyStats?: boolean;
 };

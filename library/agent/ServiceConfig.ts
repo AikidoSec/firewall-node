@@ -1,4 +1,5 @@
 import { LimitedContext, matchEndpoint } from "../helpers/matchEndpoint";
+import { matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
 
 export class ServiceConfig {
@@ -11,7 +12,8 @@ export class ServiceConfig {
     endpoints: Endpoint[],
     private readonly lastUpdatedAt: number,
     blockedUserIds: string[],
-    allowedIPAddresses: string[]
+    allowedIPAddresses: string[],
+    private readonly receivedAnyStats: boolean
   ) {
     blockedUserIds.forEach((userId) => {
       this.blockedUserIds.set(userId, userId);
@@ -27,6 +29,10 @@ export class ServiceConfig {
     this.graphqlFields = endpoints.filter((endpoint) =>
       endpoint.graphql ? true : false
     );
+  }
+
+  getEndpoints(context: LimitedContext) {
+    return matchEndpoints(context, this.nonGraphQLEndpoints);
   }
 
   getEndpoint(context: LimitedContext) {
@@ -62,5 +68,9 @@ export class ServiceConfig {
 
   getLastUpdatedAt() {
     return this.lastUpdatedAt;
+  }
+
+  hasReceivedAnyStats() {
+    return this.receivedAnyStats;
   }
 }
