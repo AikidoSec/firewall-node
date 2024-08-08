@@ -1,9 +1,7 @@
-import { WrappableSubject } from "./WrappableSubject";
-import { WrappableFile } from "./WrappableFile";
+import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
-  private subjects: WrappableSubject[] = [];
-  private files: WrappableFile[] = [];
+  private requireInterceptors: RequireInterceptor[] = [];
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -15,25 +13,11 @@ export class VersionedPackage {
     return this.range;
   }
 
-  addFile(relativePath: string): WrappableFile {
-    const file = new WrappableFile(relativePath);
-    this.files.push(file);
-
-    return file;
+  onRequire(interceptor: RequireInterceptor) {
+    this.requireInterceptors.push(interceptor);
   }
 
-  addSubject(selector: (exports: any) => unknown): WrappableSubject {
-    const fn = new WrappableSubject(selector);
-    this.subjects.push(fn);
-
-    return fn;
-  }
-
-  getSubjects() {
-    return this.subjects;
-  }
-
-  getFiles() {
-    return this.files;
+  getRequireInterceptors() {
+    return this.requireInterceptors;
   }
 }

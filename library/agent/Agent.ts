@@ -403,12 +403,12 @@ export class Agent {
       }
     }
 
-    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
+    wrapInstalledPackages(this, wrappers);
 
+    /* Todo: Implement logging of supported packages and versions
     for (const pkg in this.wrappedPackages) {
       const details = this.wrappedPackages[pkg];
 
-      /* c8 ignore next 3 */
       if (!details.version) {
         continue;
       }
@@ -418,7 +418,7 @@ export class Agent {
       } else {
         this.logger.log(`${pkg}@${details.version} is not supported!`);
       }
-    }
+    }*/
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
