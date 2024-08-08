@@ -12,10 +12,9 @@ const originalRequire = mod.prototype.require;
 let isPatched = false;
 
 /**
- * Todos
+ * Todo
  * - process.getBuiltinModule
  * - https://nodejs.org/api/packages.html#package-entry-points
- * - support builtin module detection for older Node.js versions
  */
 
 let packages: Package[] = [];
@@ -70,16 +69,12 @@ function patchedRequire(this: mod, args: IArguments) {
    * Parameter that is passed to the require function
    */
   const id = args[0] as string;
-  /**
-   * If true, its for sure a builtin module. If undefined, it's not clear if it's a builtin module.
-   */
   let isBuiltin = isBuiltinModule(id);
   let moduleName: string | undefined;
   let filename: string | undefined;
   let interceptors: RequireInterceptor[] = [];
 
   try {
-    // Only true in Node.js v18.6.0, v16.17.0 or newer - should improve the performance
     if (isBuiltin) {
       moduleName = removeNodePrefix(id);
 
