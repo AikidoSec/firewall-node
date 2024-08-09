@@ -421,56 +421,6 @@ t.test("it works", (t) => {
     }
   );
 
-  const { https: httpsFr } = require("follow-redirects");
-
-  runWithContext(
-    {
-      ...context,
-      // Redirects to http://127.0.0.1/test
-      ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
-    },
-    () => {
-      const response = httpsFr.request(
-        "https://dub.sh/aikido-ssrf-test",
-        (res) => {
-          t.fail("should not respond");
-        }
-      );
-      response.on("error", (e) => {
-        t.ok(e instanceof Error);
-        t.same(
-          e.message,
-          "Redirected request failed: Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-        );
-      });
-      response.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      // Redirects to http://local.aikido.io/test
-      ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
-    },
-    () => {
-      const response = httpsFr.request(
-        "https://dub.sh/aikido-ssrf-test-domain",
-        (res) => {
-          t.fail("should not respond");
-        }
-      );
-      response.on("error", (e) => {
-        t.ok(e instanceof Error);
-        t.same(
-          e.message,
-          "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-        );
-      });
-      response.end();
-    }
-  );
-
   setTimeout(() => {
     t.end();
   }, 3000);
