@@ -201,7 +201,7 @@ t.test("it checks every matching endpoint", async () => {
 
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
-    true
+    false
   );
 });
 
