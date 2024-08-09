@@ -10,7 +10,7 @@ let agent: Agent;
 const context: Context = {
   remoteAddress: "::1",
   method: "POST",
-  url: "http://localhost:4000",
+  url: "http://localhost:4000/posts/3",
   query: {},
   headers: {},
   body: undefined,
@@ -204,3 +204,73 @@ t.test("it checks every matching endpoint", async () => {
     true
   );
 });
+
+t.test(
+  "if allowed IPs is empty or broken, it ignores the endpoint but does check the other ones",
+  async () => {
+    const agent = new Agent(
+      true,
+      new LoggerNoop(),
+      new ReportingAPIForTesting({
+        success: true,
+        allowedIPAddresses: [],
+        configUpdatedAt: 0,
+        blockedUserIds: [],
+        heartbeatIntervalInMS: 10 * 1000,
+        endpoints: [
+          {
+            route: "/posts/:id",
+            rateLimiting: undefined,
+            method: "POST",
+            allowedIPAddresses: [],
+            forceProtectionOff: false,
+          },
+          {
+            route: "/posts/*",
+            rateLimiting: undefined,
+            method: "POST",
+            // @ts-expect-error We're testing a broken configuration
+            allowedIPAddresses: {},
+            forceProtectionOff: false,
+          },
+          {
+            route: "/posts/*",
+            rateLimiting: undefined,
+            method: "POST",
+            allowedIPAddresses: ["1.2.3.4"],
+            forceProtectionOff: false,
+          },
+        ],
+        block: true,
+      }),
+      new Token("123"),
+      undefined
+    );
+
+    agent.start([]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          remoteAddress: "1.2.3.4",
+        },
+        agent
+      ),
+      true
+    );
+
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          remoteAddress: "3.4.5.6",
+        },
+        agent
+      ),
+      false
+    );
+  }
+);
