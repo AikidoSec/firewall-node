@@ -6,4 +6,5 @@ t.test("it works", async (t) => {
   t.same(getPortFromURL(new URL("http://localhost")), 80);
   t.same(getPortFromURL(new URL("https://localhost")), 443);
   t.same(getPortFromURL(new URL("ftp://localhost")), undefined);
+  t.same(getPortFromURL(new URL("https://test.com:8080/test?abc=123")), 8080);
 });

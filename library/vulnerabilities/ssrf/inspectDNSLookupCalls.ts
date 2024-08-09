@@ -2,22 +2,22 @@ import { isIP } from "net";
 import { LookupAddress } from "dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
-import { Context, getContext } from "../../agent/Context";
-import { Source, SOURCES } from "../../agent/Source";
+import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { isPlainObject } from "../../helpers/isPlainObject";
-import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
+import { findHostnameInContext } from "./findHostnameInContext";
+import { getRedirectOrigin } from "./getRedirectOrigin";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
   operation: string,
-  port?: number
+  url?: URL
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -43,7 +43,7 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            port
+            url
           ),
         ]
       : [
@@ -54,7 +54,7 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            port
+            url
           ),
         ];
 
@@ -69,7 +69,7 @@ function wrapDNSLookupCallback(
   module: string,
   agent: Agent,
   operation: string,
-  portArg?: number
+  urlArg?: URL
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -114,16 +114,15 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const requestContext = RequestContextStorage.getStore();
+
     let port: number | undefined;
 
-    if (portArg) {
-      port = portArg;
-    } else {
-      // This is set if this resolve is part of an outgoing request that we are inspecting
-      const requestContext = RequestContextStorage.getStore();
-      if (requestContext) {
-        port = requestContext.port;
-      }
+    if (urlArg) {
+      port = getPortFromURL(urlArg);
+    } else if (requestContext) {
+      port = requestContext.port;
     }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
@@ -134,7 +133,31 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const found = findHostnameInContext(hostname, context, port);
+    let found = findHostnameInContext(hostname, context, port);
+
+    if (!found && context.outgoingRequestRedirects) {
+      let url: URL | undefined;
+      if (urlArg) {
+        url = urlArg;
+      } else if (requestContext) {
+        url = new URL(requestContext.url);
+      }
+
+      if (url) {
+        const redirectOrigin = getRedirectOrigin(
+          context.outgoingRequestRedirects,
+          url
+        );
+
+        if (redirectOrigin) {
+          found = findHostnameInContext(
+            redirectOrigin.hostname,
+            context,
+            getPortFromURL(redirectOrigin)
+          );
+        }
+      }
+    }
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
@@ -169,38 +192,6 @@ function wrapDNSLookupCallback(
     // Just call the original callback to allow the DNS lookup
     return callback(err, addresses, family);
   };
-}
-
-type Location = {
-  source: Source;
-  pathToPayload: string;
-  payload: string;
-};
-
-function findHostnameInContext(
-  hostname: string,
-  context: Context,
-  port: number | undefined
-): Location | undefined {
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const [str, path] of userInput.entries()) {
-      const found = findHostnameInUserInput(str, hostname, port);
-      if (found) {
-        return {
-          source: source,
-          pathToPayload: path,
-          payload: str,
-        };
-      }
-    }
-  }
-
-  return undefined;
 }
 
 function getResolvedIPAddresses(addresses: string | LookupAddress[]): string[] {

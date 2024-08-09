@@ -100,7 +100,8 @@ export class Fetch implements Wrapper {
       // @ts-expect-error Type is not defined
       globalThis[undiciGlobalDispatcherSymbol].dispatch = wrapDispatch(
         // @ts-expect-error Type is not defined
-        globalThis[undiciGlobalDispatcherSymbol].dispatch
+        globalThis[undiciGlobalDispatcherSymbol].dispatch,
+        agent
       );
     } catch (error) {
       agent.log(
