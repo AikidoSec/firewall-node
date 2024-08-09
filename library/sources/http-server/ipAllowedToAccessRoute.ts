@@ -11,11 +11,11 @@ export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
 
   for (const endpoint of matches) {
     if (!Array.isArray(endpoint.allowedIPAddresses)) {
-      return true;
+      continue;
     }
 
     if (endpoint.allowedIPAddresses.length === 0) {
-      return true;
+      continue;
     }
 
     if (!context.remoteAddress) {
