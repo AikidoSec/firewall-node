@@ -1,14 +1,11 @@
 /* eslint-disable max-lines-per-function */
-import { join, resolve } from "path";
+import { resolve } from "path";
 import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
-import { getPackageVersion } from "../helpers/getPackageVersion";
-import { satisfiesVersion } from "../helpers/satisfiesVersion";
 import { escapeHTML } from "../helpers/escapeHTML";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
 import { bindContext, getContext, updateContext } from "./Context";
-import { BuiltinModule } from "./hooks/BuiltinModule";
 import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
 import {
@@ -16,11 +13,13 @@ import {
   MethodInterceptor,
 } from "./hooks/MethodInterceptor";
 import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
-import { Package } from "./hooks/Package";
-import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
-import { isPackageInstalled } from "../helpers/isPackageInstalled";
+import {
+  setBuiltinModulesToPatch,
+  setPackagesToPatch,
+  wrapRequire,
+} from "./hooks/wrapRequire";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -30,62 +29,9 @@ import { isPackageInstalled } from "../helpers/isPackageInstalled";
  * its methods and do the actual wrapping so that we can intercept method calls.
  */
 export function applyHooks(hooks: Hooks, agent: Agent) {
-  const wrapped: Record<string, { version: string; supported: boolean }> = {};
-
-  hooks.getPackages().forEach((pkg) => {
-    const version = getPackageVersion(pkg.getName());
-
-    if (!version) {
-      return;
-    }
-
-    wrapped[pkg.getName()] = {
-      version,
-      supported: false,
-    };
-
-    const versions = pkg
-      .getVersions()
-      .map((versioned) => {
-        if (!satisfiesVersion(versioned.getRange(), version)) {
-          return [];
-        }
-
-        return {
-          subjects: versioned.getSubjects(),
-          files: versioned.getFiles(),
-        };
-      })
-      .flat();
-
-    const files = versions.map((hook) => hook.files).flat();
-    const subjects = versions.map((hook) => hook.subjects).flat();
-
-    if (subjects.length === 0 && files.length === 0) {
-      return;
-    }
-
-    wrapped[pkg.getName()] = {
-      version,
-      supported: true,
-    };
-
-    if (subjects.length > 0) {
-      wrapPackage(pkg, subjects, agent);
-    }
-
-    if (files.length > 0) {
-      wrapFiles(pkg, files, agent);
-    }
-  });
-
-  hooks.getBuiltInModules().forEach((module) => {
-    const subjects = module.getSubjects();
-
-    if (subjects.length > 0) {
-      wrapBuiltInModule(module, subjects, agent);
-    }
-  });
+  setPackagesToPatch(hooks.getPackages());
+  setBuiltinModulesToPatch(hooks.getBuiltInModules());
+  wrapRequire();
 
   hooks.getGlobals().forEach((g) => {
     const name = g.getName();
@@ -104,46 +50,6 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
         }
       });
   });
-
-  return wrapped;
-}
-
-function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
-  files.forEach((file) => {
-    const exports = require(join(pkg.getName(), file.getRelativePath()));
-
-    file
-      .getSubjects()
-      .forEach(
-        (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
-        agent
-      );
-  });
-}
-
-function wrapBuiltInModule(
-  module: BuiltinModule,
-  subjects: WrappableSubject[],
-  agent: Agent
-) {
-  if (!isPackageInstalled(module.getName())) {
-    return;
-  }
-  const exports = require(module.getName());
-
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, module.getName(), agent),
-    agent
-  );
-}
-
-function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
-  const exports = require(pkg.getName());
-
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
-    agent
-  );
 }
 
 /**
