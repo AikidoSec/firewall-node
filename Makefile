@@ -46,6 +46,10 @@ hono-sqlite3:
 hapi-postgres:
 	cd sample-apps/hapi-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
+.PHONY: micro
+micro:
+	cd sample-apps/micro && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks --require @aikidosec/firewall ./node_modules/.bin/micro
+
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/nosql-injection-request.json
