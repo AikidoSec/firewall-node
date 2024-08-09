@@ -1,5 +1,20 @@
 import { sep } from "path";
 
+export type ModulePathInfo = {
+  /**
+   * Name of the module, including the scope if it exists.
+   */
+  name: string;
+  /**
+   * Absolute path to the package inside node_modules.
+   */
+  base: string;
+  /**
+   * Relative path to required file inside the package folder.
+   */
+  path: string;
+};
+
 /**
  * Get the module name and dir from a path that is inside a node_modules folder.
  */
