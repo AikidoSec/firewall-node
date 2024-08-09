@@ -1,5 +1,5 @@
 import { lookup } from "dns";
-import { ClientRequest, type RequestOptions } from "http";
+import { type RequestOptions } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -9,9 +9,9 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
-import { onHTTPResponse } from "./http-request/onHTTPResponse";
-import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
+import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
+import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -111,11 +111,13 @@ export class HTTPRequest implements Wrapper {
           url
         ),
       };
+
       // You can also pass on response event handler as a callback as the second argument
       // But if the options object is added at the third position, it will be ignored
       if (args.length === 2 && typeof args[1] === "function") {
         return [args[0], newOpts, args[1]];
       }
+
       return args.concat(newOpts);
     }
 
@@ -140,16 +142,18 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
-  private wrapResponseEvent(req: unknown) {
-    if (!req || !(req instanceof ClientRequest)) {
-      return;
+  wrapResponseHandler(args: unknown[], module: "http" | "https") {
+    if (args.find((arg) => typeof arg === "function")) {
+      return args.map((arg) => {
+        if (typeof arg === "function") {
+          return wrapResponseHandler(args, module, arg);
+        }
+
+        return arg;
+      });
     }
 
-    const context = getContext();
-    if (!context) {
-      return;
-    }
-    req.prependListener("response", (res) => onHTTPResponse(req, res, context));
+    return args.concat([wrapResponseHandler(args, module, () => {})]);
   }
 
   wrap(hooks: Hooks) {
@@ -168,18 +172,17 @@ export class HTTPRequest implements Wrapper {
         )
         // Whenever a request is made, we'll modify the options to pass a custom lookup function
         // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
-        .modifyArguments("request", (args, subject, agent) =>
-          this.monitorDNSLookups(args, agent, module)
-        )
-        .modifyArguments("get", (args, subject, agent) =>
-          this.monitorDNSLookups(args, agent, module)
-        )
-        // Inspect the response object to get the headers for ssrf redirect protection
-        .inspectResult("request", (args, result, subject, agent) => {
-          this.wrapResponseEvent(result);
+        .modifyArguments("request", (args, subject, agent) => {
+          return this.wrapResponseHandler(
+            this.monitorDNSLookups(args, agent, module),
+            module
+          );
         })
-        .inspectResult("get", (args, result, subject, agent) => {
-          this.wrapResponseEvent(result);
+        .modifyArguments("get", (args, subject, agent) => {
+          return this.wrapResponseHandler(
+            this.monitorDNSLookups(args, agent, module),
+            module
+          );
         });
     });
   }

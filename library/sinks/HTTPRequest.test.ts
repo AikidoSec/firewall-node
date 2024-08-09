@@ -473,6 +473,5 @@ t.test("it works", (t) => {
 
   setTimeout(() => {
     t.end();
-    process.exit(0);
-  }, 1000);
+  }, 3000);
 });

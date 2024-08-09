@@ -1,19 +1,47 @@
-import { ClientRequest, IncomingMessage } from "http";
+import { IncomingMessage } from "http";
+import { Context, getContext, updateContext } from "../../agent/Context";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
-import { Context, updateContext } from "../../agent/Context";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
-import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
+import { getUrlFromHTTPRequestArgs } from "./getUrlFromHTTPRequestArgs";
 
-export function onHTTPResponse(
-  req: ClientRequest,
+export function wrapResponseHandler(
+  args: unknown[],
+  module: "http" | "https",
+  fn: Function
+) {
+  return function responseHandler(res: IncomingMessage) {
+    // Need to attach data & end event handler otherwise the response will never end
+    // And the process will keep running...
+    if (res.rawListeners("data").length === 0) {
+      res.on("data", () => {});
+    }
+
+    if (res.rawListeners("end").length === 0) {
+      res.on("end", () => {});
+    }
+
+    const context = getContext();
+    if (context) {
+      onHTTPResponse(args, module, res, context);
+    }
+
+    fn(...arguments);
+  };
+}
+
+function onHTTPResponse(
+  args: unknown[],
+  module: "http" | "https",
   res: IncomingMessage,
   context: Context
 ) {
   if (!res.statusCode || !isRedirectStatusCode(res.statusCode)) {
     return;
   }
+
   if (typeof res.headers.location !== "string") {
     return;
   }
@@ -23,7 +51,7 @@ export function onHTTPResponse(
     return;
   }
 
-  const source = tryParseURL(req.protocol + "//" + req.host + req.path);
+  const source = getUrlFromHTTPRequestArgs(args, module);
   if (!source) {
     return;
   }
