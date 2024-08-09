@@ -1,1 +1,6 @@
-export type RequireInterceptor = (exports: any) => void | unknown;
+import { WrapPackageInfo } from "./WrapPackageInfo";
+
+export type RequireInterceptor = (
+  exports: any,
+  pkgInfo: WrapPackageInfo
+) => void | unknown;

@@ -14,6 +14,9 @@ export class VersionedPackage {
   }
 
   onRequire(interceptor: RequireInterceptor) {
+    if (typeof interceptor !== "function") {
+      throw new Error("Interceptor must be a function");
+    }
     this.requireInterceptors.push(interceptor);
   }
 

@@ -8,6 +8,7 @@ import { removeNodePrefix } from "../../helpers/removeNodePrefix";
 import { RequireInterceptor } from "./RequireInterceptor";
 import type { PackageJson } from "type-fest";
 import { isMainJsFile } from "./isMainJsFile";
+import { WrapPackageInfo } from "./WrapPackageInfo";
 
 const originalRequire = mod.prototype.require;
 let isRequireWrapped = false;
@@ -125,7 +126,11 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     interceptors,
     originalExports,
     builtinCache,
-    moduleName
+    moduleName,
+    {
+      name: moduleName,
+      isBuiltin: true,
+    }
   );
 }
 
@@ -146,11 +151,11 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   }
 
   // Parses the filename to extract the module name, the base dir of the module and the relative path of the included file
-  const info = getModuleInfoFromPath(filename);
-  if (!info) {
-    throw new Error("Could not get module info from path");
+  const pathInfo = getModuleInfoFromPath(filename);
+  if (!pathInfo) {
+    throw new Error("Could not get module path info from path");
   }
-  const moduleName = info.name;
+  const moduleName = pathInfo.name;
 
   const versionedPackages = packages
     .find((pkg) => pkg.getName() === moduleName)
@@ -161,7 +166,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   }
 
   const packageJson = originalRequire(
-    `${info.base}/package.json`
+    `${pathInfo.base}/package.json`
   ) as PackageJson;
 
   const installedPkgVersion = packageJson.version;
@@ -179,7 +184,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     return originalExports;
   }
 
-  const isMainFile = isMainJsFile(info, id, filename, packageJson);
+  const isMainFile = isMainJsFile(pathInfo, id, filename, packageJson);
 
   let interceptors: RequireInterceptor[] = [];
 
@@ -196,7 +201,16 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     interceptors,
     originalExports,
     pkgCache,
-    filename as string
+    filename as string,
+    {
+      name: pathInfo.name,
+      version: installedPkgVersion,
+      isBuiltin: false,
+      path: {
+        base: pathInfo.base,
+        relative: pathInfo.path,
+      },
+    }
   );
 }
 
@@ -207,7 +221,8 @@ function executeInterceptors(
   interceptors: RequireInterceptor[],
   exports: unknown,
   cache: Map<string, unknown>,
-  cacheKey: string
+  cacheKey: string,
+  wrapPackageInfo: WrapPackageInfo
 ) {
   // Cache because we need to prevent this called again if module is imported inside interceptors
   cache.set(cacheKey, exports);
@@ -221,8 +236,9 @@ function executeInterceptors(
   for (const interceptor of interceptors) {
     // If one interceptor fails, we don't want to stop the other interceptors
     try {
-      const returnVal = interceptor(exports);
-      if (returnVal) {
+      const returnVal = interceptor(exports, wrapPackageInfo);
+      // If the interceptor returns a value, we want to use this value as the new exports
+      if (typeof returnVal !== "undefined") {
         exports = returnVal;
       }
     } catch (error) {

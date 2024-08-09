@@ -8,27 +8,27 @@ import { isPlainObject } from "../../helpers/isPlainObject";
  * It does this by checking the package.json file of the package.
  */
 export function isMainJsFile(
-  modulePathInfo: ModulePathInfo,
+  pathInfo: ModulePathInfo,
   requireId: string,
   filename: string,
   packageJson: PackageJson
 ) {
   // If the name of the package is the same as the requireId (the argument passed to require), then it is the main file
-  if (modulePathInfo.name === requireId) {
+  if (pathInfo.name === requireId) {
     return true;
   }
 
   // Check package.json main field
   if (
     typeof packageJson.main === "string" &&
-    resolve(modulePathInfo.base, packageJson.main) === filename
+    resolve(pathInfo.base, packageJson.main) === filename
   ) {
     return true;
   }
 
   // Defaults to index.js if main field is not set
   if (packageJson.main === undefined) {
-    if (resolve(modulePathInfo.base, "index.js") === filename) {
+    if (resolve(pathInfo.base, "index.js") === filename) {
       return true;
     }
   }
@@ -36,7 +36,7 @@ export function isMainJsFile(
   // Check exports field
   return doesMainExportMatchFilename(
     packageJson.exports,
-    modulePathInfo.base,
+    pathInfo.base,
     filename
   );
 }
