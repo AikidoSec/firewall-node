@@ -1,5 +1,6 @@
 import { IncomingMessage } from "http";
 import { Context, getContext, updateContext } from "../../agent/Context";
+import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
@@ -13,14 +14,18 @@ export function wrapResponseHandler(
   fn: Function
 ) {
   return function responseHandler(res: IncomingMessage) {
-    // Need to attach data & end event handler otherwise the response will never end
-    // And the process will keep running...
-    if (res.rawListeners("data").length === 0) {
-      res.on("data", () => {});
-    }
+    // If you don't have a response handler, pre node 19, the process will exit
+    // From node 19 onwards, the process will not exit if there is no response handler
+    if (getMajorNodeVersion() >= 19) {
+      // Need to attach data & end event handler otherwise the process will not exit
+      // As safety we'll attach the handlers only if there are no listeners
+      if (res.rawListeners("data").length === 0) {
+        res.on("data", () => {});
+      }
 
-    if (res.rawListeners("end").length === 0) {
-      res.on("end", () => {});
+      if (res.rawListeners("end").length === 0) {
+        res.on("end", () => {});
+      }
     }
 
     const context = getContext();
