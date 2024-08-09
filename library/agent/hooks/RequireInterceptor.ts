@@ -1,1 +1,1 @@
-export type RequireInterceptor = (exports: any) => void;
+export type RequireInterceptor = (exports: any) => void | unknown;

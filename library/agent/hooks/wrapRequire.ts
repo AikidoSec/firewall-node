@@ -45,12 +45,18 @@ export function wrapRequire() {
   };
 }
 
+/**
+ * Update the list of external packages that should be patched.
+ */
 export function setPackagesToPatch(packagesToPatch: Package[]) {
   packages = packagesToPatch;
   // Reset cache
   pkgCache = new Map();
 }
 
+/**
+ * Update the list of builtin modules that should be patched.
+ */
 export function setBuiltinModulesToPatch(
   builtinModulesToPatch: BuiltinModule[]
 ) {
@@ -59,6 +65,9 @@ export function setBuiltinModulesToPatch(
   builtinCache = new Map();
 }
 
+/**
+ * Our custom require function that intercepts the require calls.
+ */
 function patchedRequire(this: mod, args: IArguments) {
   // Apply the original require function
   const originalExports = originalRequire.apply(
@@ -92,9 +101,13 @@ function patchedRequire(this: mod, args: IArguments) {
   }
 }
 
+/**
+ * Run all require interceptors for the builtin module and cache the result.
+ */
 function patchBuiltinModule(id: string, originalExports: unknown) {
   const moduleName = removeNodePrefix(id);
 
+  // Check if already cached
   if (builtinCache.has(moduleName)) {
     return builtinCache.get(moduleName);
   }
@@ -116,6 +129,10 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
   );
 }
 
+/**
+ * Run all require interceptors for the package and cache the result.
+ * Checks package versions.
+ */
 function patchPackage(this: mod, id: string, originalExports: unknown) {
   // @ts-expect-error Not included in the Node.js types
   const filename = mod._resolveFilename(id, this);
@@ -123,10 +140,12 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     throw new Error("Could not resolve filename using _resolveFilename");
   }
 
+  // Check if cache has the filename
   if (pkgCache.has(filename)) {
     return pkgCache.get(filename);
   }
 
+  // Parses the filename to extract the module name, the base dir of the module and the relative path of the included file
   const info = getModuleInfoFromPath(filename);
   if (!info) {
     throw new Error("Could not get module info from path");
@@ -186,33 +205,35 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
  */
 function executeInterceptors(
   interceptors: RequireInterceptor[],
-  originalExports: unknown,
+  exports: unknown,
   cache: Map<string, unknown>,
   cacheKey: string
 ) {
   // Cache because we need to prevent this called again if module is imported inside interceptors
-  cache.set(cacheKey, originalExports);
+  cache.set(cacheKey, exports);
 
   // Return early if no interceptors
   if (!interceptors.length) {
-    return originalExports;
+    return exports;
   }
 
   // Foreach interceptor function
   for (const interceptor of interceptors) {
     // If one interceptor fails, we don't want to stop the other interceptors
     try {
-      interceptor(originalExports);
+      const returnVal = interceptor(exports);
+      if (returnVal) {
+        exports = returnVal;
+      }
     } catch (error) {
       // Todo handle (logger)
       console.error(error);
     }
   }
 
-  // Variable originalExports now contains the changes made by the interceptors (if any)
-  cache.set(cacheKey, originalExports);
+  cache.set(cacheKey, exports);
 
-  return originalExports;
+  return exports;
 }
 
 export function getOrignalRequire() {

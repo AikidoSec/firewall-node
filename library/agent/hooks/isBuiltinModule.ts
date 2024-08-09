@@ -12,5 +12,10 @@ export function isBuiltinModule(moduleName: string) {
     return mod.isBuiltin(moduleName);
   }
 
+  // The modulelist does not include the node: prefix
+  if (moduleName.startsWith("node:")) {
+    return moduleList.includes(moduleName.slice(5));
+  }
+
   return moduleList.includes(moduleName);
 }
