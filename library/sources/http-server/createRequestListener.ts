@@ -89,18 +89,18 @@ function createOnFinishRequestHandler(
   return function onFinishRequest() {
     const context = getContext();
 
-        if (
-          context &&
-          context.route &&
-          context.method &&
-          shouldDiscoverRoute({
-            statusCode: res.statusCode,
-            route: context.route,
-            method: context.method,
-          })
-        ) {
-          agent.onRouteExecute(context.method, context.route);
-        }
+    if (
+      context &&
+      context.route &&
+      context.method &&
+      shouldDiscoverRoute({
+        statusCode: res.statusCode,
+        route: context.route,
+        method: context.method,
+      })
+    ) {
+      agent.onRouteExecute(context.method, context.route);
+    }
 
     agent.getInspectionStatistics().onRequest();
     if (context && context.attackDetected) {
