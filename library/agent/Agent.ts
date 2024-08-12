@@ -35,7 +35,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private timeoutInMS = 5000;
+  private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
   private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
