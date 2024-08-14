@@ -1,6 +1,8 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
@@ -67,15 +69,17 @@ export class AwsSDKVersion2 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const s3 = hooks
+    hooks
       .addPackage("aws-sdk")
       .withVersion("^2.0.0")
-      .addSubject((exports) => exports)
-      .inspectNewInstance("S3")
-      .addSubject((exports) => exports);
-
-    operationsWithKey.forEach((operation) => {
-      s3.inspect(operation, (args) => this.inspectS3Operation(args, operation));
-    });
+      .onRequire((exports, pkgInfo) => {
+        wrapNewInstance(exports, "S3", pkgInfo, (instance) => {
+          for (const operation of operationsWithKey) {
+            wrapExport(instance, operation, pkgInfo, {
+              inspectArgs: (args) => this.inspectS3Operation(args, operation),
+            });
+          }
+        });
+      });
   }
 }

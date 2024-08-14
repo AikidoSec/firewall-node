@@ -5,7 +5,7 @@ import { wrap } from "../../helpers/wrap";
 import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { attackKindHumanName } from "../Attack";
-import { getContext, updateContext } from "../Context";
+import { bindContext, getContext, updateContext } from "../Context";
 import { InterceptorResult } from "./MethodInterceptor";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 
@@ -61,7 +61,12 @@ export function wrapExport(
           );
         }
 
-        // Todo bindContext
+        // Bind context to functions in arguments
+        for (let i = 0; i < args.length; i++) {
+          if (typeof args[i] === "function") {
+            args[i] = bindContext(args[i]);
+          }
+        }
 
         // Run modifyArgs interceptor if provided
         if (typeof interceptors.modifyArgs === "function") {
