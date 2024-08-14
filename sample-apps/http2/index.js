@@ -41,12 +41,6 @@ async function main() {
         return;
       }
 
-      /*stream.respond({
-        ":status": 200,
-      });
-      stream.end("OK");
-      return;*/
-
       try {
         const response = await fetch(url);
         const data = await response.arrayBuffer();
