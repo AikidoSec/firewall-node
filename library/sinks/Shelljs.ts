@@ -1,6 +1,6 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
@@ -45,7 +45,7 @@ export class Shelljs implements Wrapper {
       .addPackage("shelljs")
       .withVersion("^0.8.0 || ^0.7.0")
       .onRequire((exports, pkgInfo) => {
-        // Todo wrap single file only because of dynamic require of exports of other files
+        // Todo fix
         // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
         wrapExport(exports, "exec", pkgInfo, {
           inspectArgs: (args) => this.inspectExec("exec", args),

@@ -1,7 +1,7 @@
 /* eslint-disable prefer-rest-params */
 import type { Collection } from "mongodb";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";

@@ -6,7 +6,7 @@ import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { attackKindHumanName } from "../Attack";
 import { bindContext, getContext, updateContext } from "../Context";
-import { InterceptorResult } from "./MethodInterceptor";
+import { InterceptorResult } from "./InterceptorResult";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 
 type InspectArgsInterceptor = (
