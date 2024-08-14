@@ -129,7 +129,7 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     moduleName,
     {
       name: moduleName,
-      isBuiltin: true,
+      type: "builtin",
     }
   );
 }
@@ -211,7 +211,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     {
       name: pathInfo.name,
       version: installedPkgVersion,
-      isBuiltin: false,
+      type: "external",
       path: {
         base: pathInfo.base,
         relative: pathInfo.path,

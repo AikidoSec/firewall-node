@@ -8,9 +8,9 @@ export type WrapPackageInfo = {
    */
   version?: string;
   /**
-   * If the module is a internal Node.js module.
+   * Type of the wrap target.
    */
-  isBuiltin: boolean;
+  type: "builtin" | "external" | "global";
   /**
    * Only set if the module is not a builtin module.
    */

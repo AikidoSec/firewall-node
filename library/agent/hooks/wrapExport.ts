@@ -23,17 +23,19 @@ type ModifyReturnValueInterceptor = (
   agent: Agent
 ) => unknown;
 
+export type InterceptorObject = {
+  inspectArgs?: InspectArgsInterceptor;
+  modifyArgs?: ModifyArgsInterceptor;
+  modifyReturnValue?: ModifyReturnValueInterceptor;
+};
+
 const libraryRoot = resolve(__dirname, "../..");
 
 export function wrapExport(
   subject: unknown,
   methodName: string,
   pkgInfo: WrapPackageInfo,
-  interceptors: {
-    inspectArgs?: InspectArgsInterceptor;
-    modifyArgs?: ModifyArgsInterceptor;
-    modifyReturnValue?: ModifyReturnValueInterceptor;
-  }
+  interceptors: InterceptorObject
 ) {
   const agent = getInstance();
   if (!agent) {
