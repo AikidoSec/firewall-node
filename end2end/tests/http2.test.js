@@ -9,25 +9,30 @@ const pathToApp = resolve(__dirname, "../../sample-apps/http2", "index.js");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 t.test("it blocks in blocking mode", (t) => {
+  console.log("Running test 1");
   const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
   server.on("close", () => {
+    console.log("Close 1");
     t.end();
   });
 
   server.on("error", (err) => {
+    console.log(err);
     t.fail(err.message);
   });
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.log(data.toString());
     stderr += data.toString();
   });
 
@@ -42,6 +47,7 @@ t.test("it blocks in blocking mode", (t) => {
       ]);
     })
     .then(([nonSSRF, ssrf]) => {
+      console.log("Then");
       t.equal(nonSSRF.status, 200);
       t.equal(ssrf.status, 500);
       t.match(stdout, /Starting agent/);
@@ -51,29 +57,35 @@ t.test("it blocks in blocking mode", (t) => {
       );
     })
     .catch((error) => {
+      console.log(error);
       t.fail(error.message);
     })
     .finally(() => {
+      console.log("Finally 1");
       server.kill();
     });
 });
 
 t.test("it does not block in dry mode", (t) => {
+  console.log("Running test 2");
   const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
   server.on("close", () => {
+    console.log("Close 2");
     t.end();
   });
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.log(data.toString());
     stderr += data.toString();
   });
 
@@ -88,6 +100,7 @@ t.test("it does not block in dry mode", (t) => {
       ])
     )
     .then(([nonSSRF, ssrf]) => {
+      console.log("Then 2");
       t.equal(nonSSRF.status, 200);
       t.equal(ssrf.status, 500);
       t.match(stdout, /Starting agent/);
@@ -102,6 +115,7 @@ t.test("it does not block in dry mode", (t) => {
       t.fail(error.message);
     })
     .finally(() => {
+      console.log("Finally 2");
       server.kill();
     });
 });
