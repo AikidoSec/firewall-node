@@ -2,6 +2,7 @@ import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
   private requireInterceptors: RequireInterceptor[] = [];
+  private requireFileInterceptors = new Map<string, RequireInterceptor>();
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -18,9 +19,48 @@ export class VersionedPackage {
       throw new Error("Interceptor must be a function");
     }
     this.requireInterceptors.push(interceptor);
+    // Allow chaining
+    return this;
+  }
+
+  onFileRequire(relativePath: string, interceptor: RequireInterceptor) {
+    if (typeof relativePath !== "string") {
+      throw new Error("Relative path must be a string");
+    }
+    if (typeof interceptor !== "function") {
+      throw new Error("Interceptor must be a function");
+    }
+
+    if (this.requireFileInterceptors.has(relativePath)) {
+      throw new Error(`Interceptor for ${relativePath} already exists`);
+    }
+
+    if (relativePath.startsWith("/")) {
+      throw new Error(
+        "Absolute paths are not allowed for require file interceptors"
+      );
+    }
+
+    if (relativePath.includes("..")) {
+      throw new Error(
+        "Relative paths with '..' are not allowed for require file interceptors"
+      );
+    }
+
+    if (relativePath.startsWith("./")) {
+      relativePath = relativePath.slice(2);
+    }
+
+    this.requireFileInterceptors.set(relativePath, interceptor);
+    // Allow chaining
+    return this;
   }
 
   getRequireInterceptors() {
     return this.requireInterceptors;
+  }
+
+  getRequireFileInterceptor(relativePath: string) {
+    return this.requireFileInterceptors.get(relativePath);
   }
 }

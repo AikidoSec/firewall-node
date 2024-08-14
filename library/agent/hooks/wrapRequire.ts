@@ -198,8 +198,9 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
       .map((pkg) => pkg.getRequireInterceptors())
       .flat();
   } else {
-    // Todo add support for onFileRequire interceptors
-    return originalExports;
+    interceptors = matchingVersionedPackages
+      .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
+      .flat();
   }
 
   return executeInterceptors(
