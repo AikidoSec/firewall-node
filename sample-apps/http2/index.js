@@ -3,6 +3,7 @@ require("@aikidosec/firewall");
 const http2 = require("http2");
 const { readFile } = require("fs/promises");
 const { join } = require("path");
+const { getContext } = require("@aikidosec/firewall/agent/context");
 
 async function main() {
   const key = await readFile(join(__dirname, "key.pem"));
@@ -12,7 +13,7 @@ async function main() {
   server.on("stream", (stream, headers) => {
     const method = headers[":method"];
 
-    if (method !== "POST") {
+    if (method !== "GET") {
       stream.respond({
         ":status": 405,
       });
@@ -25,41 +26,43 @@ async function main() {
       rawBody += chunk;
     });
 
-    stream.on("end", () => {
-      let body;
+    stream.on("end", async () => {
+      const requestUrl = new URL(
+        headers[":path"],
+        headers[":scheme"] + "://" + headers[":authority"]
+      );
+
+      const url = requestUrl.searchParams.get("url");
+
+      if (typeof url !== "string") {
+        stream.respond({
+          ":status": 400,
+        });
+        stream.end("Missing URL in request query");
+        return;
+      }
+
+      /*stream.respond({
+        ":status": 200,
+      });
+      stream.end("OK");
+      return;*/
+
       try {
-        body = JSON.parse(rawBody);
+        const response = await fetch(url);
+        const data = await response.arrayBuffer();
+        stream.respond({
+          "content-type": "image/jpeg",
+          ":status": 200,
+        });
+        stream.end(Buffer.from(data));
       } catch (error) {
+        console.error(error.message);
         stream.respond({
-          ":status": 400,
+          ":status": 500,
         });
-        stream.end("Invalid JSON");
-        return;
+        stream.end(error.message);
       }
-
-      if (!body.url) {
-        stream.respond({
-          ":status": 400,
-        });
-        stream.end("Missing URL in request body");
-        return;
-      }
-
-      fetch(body.url)
-        .then((response) => response.arrayBuffer())
-        .then((data) => {
-          stream.respond({
-            "content-type": "image/jpeg",
-            ":status": 200,
-          });
-          stream.end(Buffer.from(data));
-        })
-        .catch((error) => {
-          stream.respond({
-            ":status": 500,
-          });
-          stream.end(error);
-        });
     });
   });
 

@@ -24,29 +24,21 @@ t.test("it blocks in blocking mode", (t) => {
   let stdout = "";
   server.stdout.on("data", (data) => {
     stdout += data.toString();
-    console.log(data.toString());
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
-    console.error(data.toString());
   });
 
   // Wait for the server to start
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("https://127.0.0.1:4002", {
-          method: "POST",
-          body: JSON.stringify({
-            url: "https://www.cloudflare.com/favicon.ico",
-          }),
-        }),
-        fetch("https://127.0.0.1:4002", {
-          method: "POST",
-          body: JSON.stringify({ url: "http://localhost" }),
-        }),
+        fetch(
+          "https://127.0.0.1:4002?url=https://www.cloudflare.com/favicon.ico"
+        ),
+        fetch("https://127.0.0.1:4002?url=http://localhost"),
       ]);
     })
     .then(([nonSSRF, ssrf]) => {
@@ -78,39 +70,32 @@ t.test("it does not block in dry mode", (t) => {
   let stdout = "";
   server.stdout.on("data", (data) => {
     stdout += data.toString();
-    console.log(data.toString());
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
-    console.log(data.toString());
   });
 
   // Wait for the server to start
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("https://127.0.0.1:4003", {
-          method: "POST",
-          body: JSON.stringify({
-            url: "https://www.cloudflare.com/favicon.ico",
-          }),
-        }),
-        fetch("https://127.0.0.1:4003", {
-          method: "POST",
-          body: JSON.stringify({ url: "http://localhost" }),
-        }),
+        fetch(
+          "https://127.0.0.1:4003?url=https://www.cloudflare.com/favicon.ico"
+        ),
+        fetch("https://127.0.0.1:4003?url=http://localhost"),
       ])
     )
     .then(([nonSSRF, ssrf]) => {
       t.equal(nonSSRF.status, 200);
-      t.equal(ssrf.status, 200);
+      t.equal(ssrf.status, 500);
       t.match(stdout, /Starting agent/);
       t.notMatch(
         stderr,
         /Aikido firewall has blocked a server-side request forgery/
       );
+      t.match(stderr, /fetch failed/);
     })
     .catch((error) => {
       console.log(error);
