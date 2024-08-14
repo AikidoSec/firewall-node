@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
@@ -58,17 +59,23 @@ export class ChildProcess implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const childProcess = hooks.addBuiltinModule("child_process");
+    const methods = [
+      "exec",
+      "execSync",
+      "spawn",
+      "spawnSync",
+      "execFile",
+      "execFileSync",
+    ];
 
-    childProcess
-      .addSubject((exports) => exports)
-      .inspect("exec", (args) => this.inspectExec(args, "exec"))
-      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
-      .inspect("spawn", (args) => this.inspectExec(args, "spawn"))
-      .inspect("spawnSync", (args) => this.inspectExec(args, "spawnSync"))
-      .inspect("execFile", (args) => this.inspectExec(args, "execFile"))
-      .inspect("execFileSync", (args) =>
-        this.inspectExec(args, "execFileSync")
-      );
+    hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
+      for (const method of methods) {
+        wrapExport(exports, method, pkgInfo, {
+          inspectArgs: (args) => {
+            return this.inspectExec(args, method);
+          },
+        });
+      }
+    });
   }
 }

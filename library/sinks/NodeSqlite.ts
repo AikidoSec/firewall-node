@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import type { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -10,19 +11,16 @@ export class NodeSQLite implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectSQLite();
 
   wrap(hooks: Hooks) {
-    const database = hooks
-      .addBuiltinModule("node:sqlite")
-      .addSubject((exports) => {
-        return exports.DatabaseSync.prototype;
-      });
-
     const sqlFunctions = ["exec", "prepare"];
 
-    for (const func of sqlFunctions) {
-      database.inspect(func, (args) => {
-        return this.inspectQuery(`node:sqlite.${func}`, args);
-      });
-    }
+    hooks.addBuiltinModule("node:sqlite").onRequire((exports, pkgInfo) => {
+      const dbSyncProto = exports.DatabaseSync.prototype;
+      for (const func of sqlFunctions) {
+        wrapExport(dbSyncProto, func, pkgInfo, {
+          inspectArgs: (args) => this.inspectQuery(`node:sqlite.${func}`, args),
+        });
+      }
+    });
   }
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {

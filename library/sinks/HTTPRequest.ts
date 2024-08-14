@@ -10,6 +10,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { getPortFromHTTPRequestArgs } from "./http-request/getPortFromRequest";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -160,26 +161,22 @@ export class HTTPRequest implements Wrapper {
 
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
+    const methods = ["request", "get"] as const;
 
-    modules.forEach((module) => {
-      hooks
-        .addBuiltinModule(module)
-        .addSubject((exports) => exports)
-        // Whenever a request is made, we'll check the hostname whether it's a private IP
-        .inspect("request", (args, subject, agent) =>
-          this.inspectHttpRequest(args, agent, module)
-        )
-        .inspect("get", (args, subject, agent) =>
-          this.inspectHttpRequest(args, agent, module)
-        )
-        // Whenever a request is made, we'll modify the options to pass a custom lookup function
-        // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
-        .modifyArguments("request", (args, subject, agent) =>
-          this.monitorDNSLookups(args, agent, module)
-        )
-        .modifyArguments("get", (args, subject, agent) =>
-          this.monitorDNSLookups(args, agent, module)
-        );
-    });
+    for (const module of modules) {
+      hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        for (const method of methods) {
+          wrapExport(exports, method, pkgInfo, {
+            // Whenever a request is made, we'll check the hostname whether it's a private IP
+            inspectArgs: (args, agent) =>
+              this.inspectHttpRequest(args, agent, module),
+            // Whenever a request is made, we'll modify the options to pass a custom lookup function
+            // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
+            modifyArgs: (args, agent) =>
+              this.monitorDNSLookups(args, agent, module),
+          });
+        }
+      });
+    }
   }
 }
