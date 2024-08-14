@@ -4,6 +4,7 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./hono/wrapRequestHandler";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class Hono implements Wrapper {
   // Wrap all the functions passed to hono.METHOD(...)
@@ -25,17 +26,13 @@ export class Hono implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const hono = hooks
+    hooks
       .addPackage("hono")
       .withVersion("^4.0.0")
-      .addFile("hono-base");
-
-    hono
-      .addSubject((exports) => {
-        return exports.HonoBase.prototype;
-      })
-      .modifyArguments("addRoute", (args, original, agent) => {
-        return this.wrapArgs(args, agent);
+      .onFileRequire("hono-base.js", (exports, pkgInfo) => {
+        wrapExport(exports.HonoBase.prototype, "addRoute", pkgInfo, {
+          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+        });
       });
   }
 }

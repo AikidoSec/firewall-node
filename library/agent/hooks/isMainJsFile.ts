@@ -41,7 +41,12 @@ export function isMainJsFile(
   );
 }
 
-const allowedExportConditions = ["default", "node", "node-addons", "require"];
+const allowedExportConditions = [
+  "default",
+  "node",
+  "node-addons",
+  "require",
+] as const;
 
 /**
  * This function checks if the main package exported js file is the same as the passed file.
@@ -77,7 +82,9 @@ function doesMainExportMatchFilename(
           for (const condition of allowedExportConditions) {
             if (
               condition in value &&
+              // @ts-expect-error Can not cast type because not exported
               typeof value[condition] === "string" &&
+              // @ts-expect-error Can not cast type because not exported
               resolve(base, value[condition]) === filename
             ) {
               return true;

@@ -9,6 +9,7 @@ import { RequireInterceptor } from "./RequireInterceptor";
 import type { PackageJson } from "type-fest";
 import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
+import { getInstance } from "../AgentSingleton";
 
 const originalRequire = mod.prototype.require;
 let isRequireWrapped = false;
@@ -181,9 +182,19 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     );
   }
 
+  const agent = getInstance();
+
   const matchingVersionedPackages = versionedPackages.filter((pkg) =>
     satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
+
+  if (agent) {
+    agent.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: !!matchingVersionedPackages.length,
+    });
+  }
+
   if (!matchingVersionedPackages.length) {
     // We don't want to patch this package version
     return originalExports;

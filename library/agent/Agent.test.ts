@@ -79,6 +79,9 @@ t.test("it logs if package is supported or not", async () => {
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new WrapperForTesting()]);
+
+  agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
+
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
@@ -92,6 +95,10 @@ t.test("it starts in non-blocking mode", async () => {
   const token = new Token("123");
   const agent = new Agent(false, logger, api, token, undefined);
   agent.start([new MongoDB()]);
+
+  // Todo: Not reported to this agent, because we have multiple agents and only the first one wraps the require function
+  const mongodb = require("mongodb");
+
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Dry mode enabled, no requests will be blocked!",

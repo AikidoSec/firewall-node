@@ -412,21 +412,6 @@ export class Agent {
 
     wrapInstalledPackages(this, wrappers);
 
-    /* Todo: Implement logging of supported packages and versions
-    for (const pkg in this.wrappedPackages) {
-      const details = this.wrappedPackages[pkg];
-
-      if (!details.version) {
-        continue;
-      }
-
-      if (details.supported) {
-        this.logger.log(`${pkg}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${pkg}@${details.version} is not supported!`);
-      }
-    }*/
-
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
     this.onStart()
@@ -441,6 +426,22 @@ export class Agent {
 
   onFailedToWrapMethod(module: string, name: string) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
+
+  onPackageWrapped(name: string, details: WrappedPackage) {
+    if (this.wrappedPackages[name]) {
+      // Already reported as wrapped
+      return;
+    }
+    this.wrappedPackages[name] = details;
+
+    if (details.version) {
+      if (details.supported) {
+        this.logger.log(`${name}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${name}@${details.version} is not supported!`);
+      }
+    }
   }
 
   onConnectHostname(hostname: string, port: number | undefined) {

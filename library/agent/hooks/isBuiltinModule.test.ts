@@ -8,5 +8,5 @@ t.test("it works", async (t) => {
   t.equal(isBuiltinModule("node:http"), true);
   t.equal(isBuiltinModule("test"), false);
   // @ts-expect-error Testing the undefined case
-  t.equal(isBuiltinModule(undefined), expect(false));
+  t.equal(isBuiltinModule(undefined), false);
 });
