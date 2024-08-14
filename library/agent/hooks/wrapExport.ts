@@ -51,6 +51,13 @@ export function wrapExport(
 
         // Run inspectArgs interceptor if provided
         if (typeof interceptors.inspectArgs === "function") {
+          // Bind context to functions in arguments
+          for (let i = 0; i < args.length; i++) {
+            if (typeof args[i] === "function") {
+              args[i] = bindContext(args[i]);
+            }
+          }
+
           inspectArgs.call(
             // @ts-expect-error We don't now the type of this
             this,
@@ -61,13 +68,6 @@ export function wrapExport(
             pkgInfo,
             methodName
           );
-        }
-
-        // Bind context to functions in arguments
-        for (let i = 0; i < args.length; i++) {
-          if (typeof args[i] === "function") {
-            args[i] = bindContext(args[i]);
-          }
         }
 
         // Run modifyArgs interceptor if provided

@@ -116,6 +116,8 @@ export class FileSystem implements Wrapper {
       });
     });
 
+    // Todo wrap fs.promises
+
     // Wrap fs/promises
     hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
       Object.keys(functions).forEach((name) => {
@@ -123,9 +125,7 @@ export class FileSystem implements Wrapper {
 
         if (promise) {
           wrapExport(exports, name, pkgInfo, {
-            inspectArgs: (args) => {
-              return this.inspectPath(args, name, pathsArgs);
-            },
+            inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
           });
         }
       });

@@ -158,7 +158,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   // Parses the filename to extract the module name, the base dir of the module and the relative path of the included file
   const pathInfo = getModuleInfoFromPath(filename);
   if (!pathInfo) {
-    throw new Error("Could not get module path info from path");
+    return originalExports;
   }
   const moduleName = pathInfo.name;
 

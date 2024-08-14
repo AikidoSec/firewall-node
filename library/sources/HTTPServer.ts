@@ -1,5 +1,7 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
@@ -49,20 +51,27 @@ export class HTTPServer implements Wrapper {
 
   wrap(hooks: Hooks) {
     ["http", "https"].forEach((module) => {
-      hooks
-        .addBuiltinModule(module)
-        .addSubject((exports) => exports)
-        .modifyArguments("Server", (args, subject, agent) => {
-          return this.wrapRequestListener(args, module, agent);
-        })
-        .modifyArguments("createServer", (args, subject, agent) => {
-          return this.wrapRequestListener(args, module, agent);
-        })
-        .inspectNewInstance("createServer")
-        .addSubject((exports) => exports)
-        .modifyArguments("on", (args, subject, agent) => {
-          return this.wrapOn(args, module, agent);
+      hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        wrapExport(exports, "Server", pkgInfo, {
+          modifyArgs: (args, agent) => {
+            return this.wrapRequestListener(args, module, agent);
+          },
         });
+
+        wrapExport(exports, "createServer", pkgInfo, {
+          modifyArgs: (args, agent) => {
+            return this.wrapRequestListener(args, module, agent);
+          },
+        });
+
+        wrapNewInstance(exports, "createServer", pkgInfo, (instance) => {
+          wrapExport(instance, "on", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapOn(args, module, agent);
+            },
+          });
+        });
+      });
     });
   }
 }
