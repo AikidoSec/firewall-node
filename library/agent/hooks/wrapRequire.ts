@@ -145,6 +145,11 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     throw new Error("Could not resolve filename using _resolveFilename");
   }
 
+  // Ignore .json files
+  if (filename.endsWith(".json")) {
+    return originalExports;
+  }
+
   // Check if cache has the filename
   if (pkgCache.has(filename)) {
     return pkgCache.get(filename);

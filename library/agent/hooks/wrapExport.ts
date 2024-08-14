@@ -11,7 +11,8 @@ import { WrapPackageInfo } from "./WrapPackageInfo";
 
 type InspectArgsInterceptor = (
   args: unknown[],
-  agent: Agent
+  agent: Agent,
+  subject: unknown
 ) => InterceptorResult | void;
 
 type ModifyArgsInterceptor = (args: unknown[], agent: Agent) => unknown[];
@@ -48,7 +49,9 @@ export function wrapExport(
 
         // Run inspectArgs interceptor if provided
         if (typeof interceptors.inspectArgs === "function") {
-          inspectArgs(
+          inspectArgs.call(
+            // @ts-expect-error We don't now the type of this
+            this,
             args,
             interceptors.inspectArgs,
             context,
@@ -120,7 +123,12 @@ function inspectArgs(
   let result: InterceptorResult = undefined;
 
   try {
-    result = interceptor(args, agent);
+    result = interceptor(
+      args,
+      agent,
+      // @ts-expect-error We don't now the type of this
+      this
+    );
   } catch (error: any) {
     agent.getInspectionStatistics().interceptorThrewError(pkgInfo.name);
     agent.onErrorThrownByInterceptor({
