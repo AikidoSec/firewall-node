@@ -22,6 +22,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { getInstance, setInstance } from "./AgentSingleton";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -401,6 +402,12 @@ export class Agent {
           "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
       }
+    }
+
+    // Register this instance as the singleton instance if no instance is already registered
+    // This can happen in tests where not the main export is used
+    if (!getInstance()) {
+      setInstance(this);
     }
 
     wrapInstalledPackages(this, wrappers);

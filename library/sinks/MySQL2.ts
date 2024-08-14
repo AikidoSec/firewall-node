@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -49,17 +50,25 @@ export class MySQL2 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const mysql2 = hooks.addPackage("mysql2").withVersion("^3.0.0");
-    const connection = mysql2.addSubject(
-      (exports) => exports.Connection.prototype
-    );
+    let i = 0;
 
-    connection.inspect("query", (args) =>
-      this.inspectQuery("mysql2.query", args)
-    );
+    hooks
+      .addPackage("mysql2")
+      .withVersion("^3.0.0")
+      .onRequire((exports, pkgInfo) => {
+        // Wrap connection.query
+        wrapExport(exports.Connection.prototype, "query", pkgInfo, {
+          inspectArgs: (args, agent) => {
+            return this.inspectQuery("mysql2.query", args);
+          },
+        });
 
-    connection.inspect("execute", (args) =>
-      this.inspectQuery("mysql2.execute", args)
-    );
+        // Wrap connection.execute
+        wrapExport(exports.Connection.prototype, "execute", pkgInfo, {
+          inspectArgs: (args, agent) => {
+            return this.inspectQuery("mysql2.execute", args);
+          },
+        });
+      });
   }
 }
