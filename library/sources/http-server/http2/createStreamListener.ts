@@ -98,7 +98,7 @@ function discoverRouteFromStream(
  * This function wraps stream events to ensure that the event handler is always run in the context of the request.
  */
 function wrapStreamEvent(orig: Function) {
-  return function on() {
+  return function wrap() {
     // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (args.length < 2 || typeof args[1] !== "function") {
