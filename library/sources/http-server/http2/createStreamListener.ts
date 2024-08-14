@@ -61,6 +61,13 @@ export function createStreamListener(
         return stream.end(message);
       }
 
+      // Wrap all stream events to prevent context loss
+      stream.on = wrapStreamEvent(stream.on);
+      stream.once = wrapStreamEvent(stream.once);
+      stream.addListener = wrapStreamEvent(stream.addListener);
+      stream.prependListener = wrapStreamEvent(stream.prependListener);
+      stream.prependOnceListener = wrapStreamEvent(stream.prependOnceListener);
+
       return listener(stream, headers, flags, rawHeaders);
     });
   };
@@ -85,4 +92,26 @@ function discoverRouteFromStream(
       agent.onRouteExecute(context.method, context.route);
     }
   }
+}
+
+/**
+ * This function wraps stream events to ensure that the event handler is always run in the context of the request.
+ */
+function wrapStreamEvent(orig: Function) {
+  return function on() {
+    const args = Array.from(arguments);
+    if (args.length < 2 || typeof args[1] !== "function") {
+      return orig.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        arguments
+      );
+    }
+    args[1] = bindContext(args[1]);
+    return orig.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      args
+    );
+  };
 }

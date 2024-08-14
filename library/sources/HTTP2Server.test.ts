@@ -707,3 +707,41 @@ t.test("using http2 push still works", async (t) => {
     });
   });
 });
+
+t.test("it works then using the on stream end event", async () => {
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.on("end", () => {
+      stream.respond({ ":status": 200 });
+      stream.end(JSON.stringify(getContext()));
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3433, () => {
+      http2Request(new URL("http://localhost:3433?test=abc"), "POST", {
+        cookie: "foo=bar; baz=qux",
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.match(context, {
+          url: "/",
+          method: "POST",
+          headers: {
+            ":path": "/",
+            ":method": "POST",
+            ":authority": "localhost:3433",
+            ":scheme": "http",
+          },
+          query: { test: "abc" },
+          route: "/",
+          source: "http2.createServer",
+          routeParams: {},
+          cookies: { foo: "bar", baz: "qux" },
+        });
+        t.ok(isLocalhostIP(context.remoteAddress));
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
