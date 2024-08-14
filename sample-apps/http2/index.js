@@ -3,7 +3,6 @@ require("@aikidosec/firewall");
 const http2 = require("http2");
 const { readFile } = require("fs/promises");
 const { join } = require("path");
-const { getContext } = require("@aikidosec/firewall/agent/context");
 
 async function main() {
   const key = await readFile(join(__dirname, "key.pem"));
