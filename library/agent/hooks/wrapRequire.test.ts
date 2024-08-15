@@ -199,3 +199,90 @@ t.test("Require json file", async (t) => {
   const json = require("../../package.json");
   t.same(json.name, "@aikidosec/firewall");
 });
+
+t.test("Pass invalid arguments to VersionedPackage", async (t) => {
+  t.same(
+    // @ts-expect-error Test with invalid arguments
+    (t.throws(() => new Package()) as Error).message,
+    "Package name is required"
+  );
+  t.same(
+    // @ts-expect-error Test with invalid arguments
+    (t.throws(() => new Package("test").withVersion()) as Error).message,
+    "Version range is required"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        // @ts-expect-error Test with invalid arguments
+        new Package("test").withVersion("^1.0.0").onRequire()
+      ) as Error
+    ).message,
+    "Interceptor must be a function"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        // @ts-expect-error Test with invalid arguments
+        new Package("test").withVersion("^1.0.0").onFileRequire()
+      ) as Error
+    ).message,
+    "Relative path must be a string"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        // @ts-expect-error Test with invalid arguments
+        new Package("test").withVersion("^1.0.0").onFileRequire("")
+      ) as Error
+    ).message,
+    "Interceptor must be a function"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        new Package("test").withVersion("^1.0.0").onFileRequire("", () => {})
+      ) as Error
+    ).message,
+    "Relative path must not be empty"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        new Package("test")
+          .withVersion("^1.0.0")
+          .onFileRequire("test", () => {})
+          .onFileRequire("test", () => {})
+      ) as Error
+    ).message,
+    "Interceptor for test already exists"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        new Package("test")
+          .withVersion("^1.0.0")
+          .onFileRequire("/test", () => {})
+      ) as Error
+    ).message,
+    "Absolute paths are not allowed for require file interceptors"
+  );
+  t.same(
+    (
+      t.throws(() =>
+        new Package("test")
+          .withVersion("^1.0.0")
+          .onFileRequire("../test", () => {})
+      ) as Error
+    ).message,
+    "Relative paths with '..' are not allowed for require file interceptors"
+  );
+
+  t.same(
+    new Package("test")
+      .withVersion("^1.0.0")
+      .onFileRequire("./test", () => {})
+      .getRequireFileInterceptor("test"),
+    () => {}
+  );
+});

@@ -31,6 +31,10 @@ export class VersionedPackage {
       throw new Error("Interceptor must be a function");
     }
 
+    if (relativePath.length === 0) {
+      throw new Error("Relative path must not be empty");
+    }
+
     if (this.requireFileInterceptors.has(relativePath)) {
       throw new Error(`Interceptor for ${relativePath} already exists`);
     }

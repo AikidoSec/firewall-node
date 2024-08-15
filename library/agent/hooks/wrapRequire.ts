@@ -11,7 +11,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
-const originalRequire = mod.prototype.require;
+let originalRequire: NodeJS.Require;
 let isRequireWrapped = false;
 
 /**
@@ -40,6 +40,7 @@ export function wrapRequire() {
     );
   }
   isRequireWrapped = true;
+  originalRequire = mod.prototype.require;
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
