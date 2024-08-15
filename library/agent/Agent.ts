@@ -410,7 +410,7 @@ export class Agent {
       setInstance(this);
     }
 
-    wrapInstalledPackages(this, wrappers);
+    wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes

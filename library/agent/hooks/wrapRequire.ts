@@ -43,6 +43,7 @@ export function wrapRequire() {
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
+    // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
 }
@@ -159,6 +160,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   // Parses the filename to extract the module name, the base dir of the module and the relative path of the included file
   const pathInfo = getModuleInfoFromPath(filename);
   if (!pathInfo) {
+    // Can happen if the package is not inside a node_modules folder, like the dev build of our library itself
     return originalExports;
   }
   const moduleName = pathInfo.name;

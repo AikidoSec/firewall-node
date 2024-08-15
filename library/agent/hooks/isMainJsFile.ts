@@ -82,9 +82,7 @@ function doesMainExportMatchFilename(
           for (const condition of allowedExportConditions) {
             if (
               condition in value &&
-              // @ts-expect-error Can not cast type because not exported
               typeof value[condition] === "string" &&
-              // @ts-expect-error Can not cast type because not exported
               resolve(base, value[condition]) === filename
             ) {
               return true;

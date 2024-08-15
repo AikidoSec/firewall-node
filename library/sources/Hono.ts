@@ -29,7 +29,12 @@ export class Hono implements Wrapper {
     hooks
       .addPackage("hono")
       .withVersion("^4.0.0")
-      .onFileRequire("hono-base.js", (exports, pkgInfo) => {
+      .onFileRequire("dist/hono-base.js", (exports, pkgInfo) => {
+        wrapExport(exports.HonoBase.prototype, "addRoute", pkgInfo, {
+          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+        });
+      })
+      .onFileRequire("dist/cjs/hono-base.js", (exports, pkgInfo) => {
         wrapExport(exports.HonoBase.prototype, "addRoute", pkgInfo, {
           modifyArgs: (args, agent) => this.wrapArgs(args, agent),
         });

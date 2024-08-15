@@ -50,8 +50,6 @@ export class MySQL2 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    let i = 0;
-
     hooks
       .addPackage("mysql2")
       .withVersion("^3.0.0")

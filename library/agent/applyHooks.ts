@@ -14,7 +14,7 @@ import { wrapExport } from "./hooks/wrapExport";
  * This method wraps the require function and sets up the hooks.
  * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks, agent: Agent) {
+export function applyHooks(hooks: Hooks) {
   setPackagesToPatch(hooks.getPackages());
   setBuiltinModulesToPatch(hooks.getBuiltInModules());
   wrapRequire();
