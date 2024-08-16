@@ -131,29 +131,25 @@ function onRedirect(
 
   let redirectOrigin: URL | undefined;
 
-  let found = findHostnameInContext(
+  // Check if the source hostname is in the context - is true if it's the first redirect in the chain and the user input is the source
+  const found = findHostnameInContext(
     requestContext.url.hostname,
     context,
     requestContext.port
   );
 
+  // If the source hostname is not in the context, check if it's a redirect in a already existing chain
   if (!found && context.outgoingRequestRedirects) {
     redirectOrigin = getRedirectOrigin(
       context.outgoingRequestRedirects,
       requestContext.url
     );
-
-    if (redirectOrigin) {
-      found = findHostnameInContext(
-        redirectOrigin.hostname,
-        context,
-        getPortFromURL(redirectOrigin)
-      );
-    }
   }
 
+  // Get existing redirects or create a new array
   const outgoingRedirects = context.outgoingRequestRedirects || [];
 
+  // If it's 1. a initial redirect with user provided url or 2. a redirect in an existing chain, add it to the context
   if (redirectOrigin || found) {
     outgoingRedirects.push({
       source: requestContext.url,
