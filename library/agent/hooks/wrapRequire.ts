@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import * as mod from "module";
 import { BuiltinModule } from "./BuiltinModule";
 import { isBuiltinModule } from "./isBuiltinModule";
@@ -11,7 +12,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
-let originalRequire = mod.prototype.require;
+const originalRequire = mod.prototype.require;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -99,8 +100,9 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
 
     return patchPackage.call(this as mod, id, originalExports);
   } catch (error) {
-    // Todo handle (logger)
-    console.error(error);
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(id, error);
+    }
     return originalExports;
   }
 }
@@ -268,8 +270,9 @@ function executeInterceptors(
         exports = returnVal;
       }
     } catch (error) {
-      // Todo handle (logger)
-      console.error(error);
+      if (error instanceof Error) {
+        getInstance()?.onFailedToWrapModule(wrapPackageInfo.name, error);
+      }
     }
   }
 

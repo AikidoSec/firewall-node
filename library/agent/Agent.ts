@@ -428,6 +428,10 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapModule(module: string, error: Error) {
+    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+  }
+
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped

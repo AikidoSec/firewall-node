@@ -351,7 +351,7 @@ t.test("Add two builtin modules with same name", async (t) => {
 t.test(
   "Wraps process.getBuiltinModule",
   {
-    skip: !process.builtinModules
+    skip: !process.getBuiltinModule
       ? "Not available in Node.js < v22.3.0"
       : false,
   },
@@ -378,7 +378,7 @@ t.test(
 t.test(
   "process.getBuiltinModule with non-existing module",
   {
-    skip: !process.builtinModules
+    skip: !process.getBuiltinModule
       ? "Not available in Node.js < v22.3.0"
       : false,
   },
@@ -394,7 +394,7 @@ t.test(
 t.test(
   "process.getBuiltinModule with non-builtin module",
   {
-    skip: !process.builtinModules
+    skip: !process.getBuiltinModule
       ? "Not available in Node.js < v22.3.0"
       : false,
   },

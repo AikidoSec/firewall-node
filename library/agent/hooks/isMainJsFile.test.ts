@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { isMainJsFile } from "./isMainJsFile";
-import { PackageJson } from "type-fest";
+import type { PackageJson } from "type-fest";
 
 const basePackageJson: PackageJson = {
   name: "aikido-module",

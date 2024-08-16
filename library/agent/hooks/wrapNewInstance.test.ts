@@ -41,7 +41,7 @@ t.test("Inspect args", async (t) => {
     "test",
     { name: "test", type: "external" },
     (exports) => {
-      exports.testMethod = function () {
+      exports.testMethod = function test() {
         return "aikido";
       };
     }
