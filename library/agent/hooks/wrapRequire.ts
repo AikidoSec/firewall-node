@@ -115,14 +115,18 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     return builtinCache.get(moduleName);
   }
 
-  const builtinModule = builtinModules.find((m) => m.getName() === moduleName);
+  const matchingBuiltins = builtinModules.filter(
+    (m) => m.getName() === moduleName
+  );
 
   // We don't want to patch this builtin module
-  if (!builtinModule) {
+  if (!matchingBuiltins.length) {
     return originalExports;
   }
 
-  const interceptors = builtinModule.getRequireInterceptors();
+  const interceptors = matchingBuiltins
+    .map((m) => m.getRequireInterceptors())
+    .flat();
 
   return executeInterceptors(
     interceptors,
@@ -166,10 +170,12 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   const moduleName = pathInfo.name;
 
   const versionedPackages = packages
-    .find((pkg) => pkg.getName() === moduleName)
-    ?.getVersions();
+    .filter((pkg) => pkg.getName() === moduleName)
+    .map((pkg) => pkg.getVersions())
+    .flat();
+
   // We don't want to patch this package
-  if (!versionedPackages) {
+  if (!versionedPackages.length) {
     return originalExports;
   }
 

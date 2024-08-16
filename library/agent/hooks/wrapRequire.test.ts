@@ -307,3 +307,43 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
     () => {}
   );
 });
+
+t.test("Add two packages with same name", async (t) => {
+  let intercepted = 0;
+  const pkg = new Package("sqlite3");
+  pkg.withVersion("^5.0.0").onRequire(() => {
+    intercepted++;
+  });
+  const pkg2 = new Package("sqlite3");
+  pkg2.withVersion("^5.0.0").onRequire(() => {
+    intercepted++;
+  });
+
+  setPackagesToPatch([pkg, pkg2]);
+
+  // Require patched sqlite3
+  const sqlite3 = require("sqlite3");
+  t.same(intercepted, 2);
+
+  setPackagesToPatch([]);
+});
+
+t.test("Add two builtin modules with same name", async (t) => {
+  let intercepted = 0;
+  const mod = new BuiltinModule("fs");
+  mod.onRequire(() => {
+    intercepted++;
+  });
+  const mod2 = new BuiltinModule("fs");
+  mod2.onRequire(() => {
+    intercepted++;
+  });
+
+  setBuiltinModulesToPatch([mod, mod2]);
+
+  // Require patched fs
+  const fs = require("fs");
+  t.same(intercepted, 2);
+
+  setBuiltinModulesToPatch([]);
+});
