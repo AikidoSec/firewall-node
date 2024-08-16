@@ -2,6 +2,9 @@ import { wrap } from "../../helpers/wrap";
 import { getInstance } from "../AgentSingleton";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 
+/**
+ * Intercepts the creation of a new instance of a class, to wrap it's methods and properties.
+ */
 export function wrapNewInstance(
   subject: unknown,
   className: string,

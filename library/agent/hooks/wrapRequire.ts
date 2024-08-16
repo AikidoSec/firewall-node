@@ -34,6 +34,7 @@ export function wrapRequire() {
       `Could not find the _resolveFilename function in node:module using Node.js version ${process.version}`
     );
   }
+  // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
@@ -42,6 +43,7 @@ export function wrapRequire() {
     return patchedRequire.call(this, arguments);
   };
 
+  // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
   if (typeof process.getBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
       // eslint-disable-next-line prefer-rest-params
@@ -95,9 +97,11 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
     // They are easier to patch (no file patching)
     // Seperate handling for builtin modules improves the performance
     if (isBuiltinModule(id)) {
+      // Call function for patching builtin modules with the same context (this)
       return patchBuiltinModule.call(this, id, originalExports);
     }
 
+    // Call function for patching external packages
     return patchPackage.call(this as mod, id, originalExports);
   } catch (error) {
     if (error instanceof Error) {
@@ -118,6 +122,7 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     return builtinCache.get(moduleName);
   }
 
+  // Check if we want to patch this builtin module
   const matchingBuiltins = builtinModules.filter(
     (m) => m.getName() === moduleName
   );
@@ -127,6 +132,7 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     return originalExports;
   }
 
+  // Get interceptors from all matching builtin modules
   const interceptors = matchingBuiltins
     .map((m) => m.getRequireInterceptors())
     .flat();
@@ -145,9 +151,10 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
 
 /**
  * Run all require interceptors for the package and cache the result.
- * Checks package versions.
+ * Also checks the package versions. Not used for builtin modules.
  */
 function patchPackage(this: mod, id: string, originalExports: unknown) {
+  // Get the full filepath of the required js file
   // @ts-expect-error Not included in the Node.js types
   const filename = mod._resolveFilename(id, this);
   if (!filename) {
@@ -172,20 +179,23 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   }
   const moduleName = pathInfo.name;
 
+  // Get all versioned packages for the module name
   const versionedPackages = packages
     .filter((pkg) => pkg.getName() === moduleName)
     .map((pkg) => pkg.getVersions())
     .flat();
 
-  // We don't want to patch this package
+  // We don't want to patch this package because we do not have any hooks for it
   if (!versionedPackages.length) {
     return originalExports;
   }
 
+  // Read the package.json of the required package
   const packageJson = originalRequire(
     `${pathInfo.base}/package.json`
   ) as PackageJson;
 
+  // Get the version of the installed package
   const installedPkgVersion = packageJson.version;
   if (!installedPkgVersion) {
     throw new Error(
@@ -193,13 +203,14 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     );
   }
 
-  const agent = getInstance();
-
+  // Check if the installed package version is supported (get all matching versioned packages)
   const matchingVersionedPackages = versionedPackages.filter((pkg) =>
     satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
+  const agent = getInstance();
   if (agent) {
+    // Report to the agent that the package was wrapped or not if it's version is not supported
     agent.onPackageWrapped(moduleName, {
       version: installedPkgVersion,
       supported: !!matchingVersionedPackages.length,
@@ -211,6 +222,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     return originalExports;
   }
 
+  // Check if the required file is the main file of the package or another js file inside the package
   const isMainFile = isMainJsFile(pathInfo, id, filename, packageJson);
 
   let interceptors: RequireInterceptor[] = [];
@@ -220,6 +232,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
       .map((pkg) => pkg.getRequireInterceptors())
       .flat();
   } else {
+    // If its not the main file, we want to check if the want to patch the required file
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
@@ -276,11 +289,15 @@ function executeInterceptors(
     }
   }
 
+  // Finally cache the result
   cache.set(cacheKey, exports);
 
   return exports;
 }
 
+/**
+ * Returns the unwrapped require function.
+ */
 export function getOrignalRequire() {
   return originalRequire;
 }
