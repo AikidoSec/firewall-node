@@ -9,7 +9,6 @@ import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
-import { readFileSync } from "fs";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 
@@ -65,6 +64,8 @@ const agent = new Agent(
   undefined
 );
 agent.start([new HTTPServer(), new FileSystem()]);
+
+const { readFileSync } = require("fs");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
