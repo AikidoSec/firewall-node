@@ -116,8 +116,6 @@ export class FileSystem implements Wrapper {
       });
     });
 
-    // Todo wrap fs.promises
-
     // Wrap fs/promises
     hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
       Object.keys(functions).forEach((name) => {

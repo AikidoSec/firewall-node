@@ -347,3 +347,38 @@ t.test("Add two builtin modules with same name", async (t) => {
 
   setBuiltinModulesToPatch([]);
 });
+
+t.test("Wraps process.getBuiltinModule", async (t) => {
+  const originalFs = require("fs");
+
+  const mod = new BuiltinModule("fs");
+  mod.onRequire(() => {
+    return "aikido";
+  });
+  setBuiltinModulesToPatch([mod]);
+
+  // Require patched fs
+  const fs = process.getBuiltinModule("fs");
+  t.same(fs, "aikido");
+
+  setBuiltinModulesToPatch([]);
+
+  const fsUnpatched = require("fs");
+  t.same(fsUnpatched, originalFs);
+});
+
+t.test("process.getBuiltinModule with non-existing module", async (t) => {
+  const error = t.throws(() => process.getBuiltinModule("unknown"));
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(error.message, /Cannot find module .unknown./);
+  }
+});
+
+t.test("process.getBuiltinModule with non-builtin module", async (t) => {
+  const error = t.throws(() => process.getBuiltinModule("sqlite3"));
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(error.message, /Cannot find module .sqlite3./);
+  }
+});

@@ -13,7 +13,8 @@ export class NodeSQLite implements Wrapper {
   wrap(hooks: Hooks) {
     const sqlFunctions = ["exec", "prepare"];
 
-    hooks.addBuiltinModule("node:sqlite").onRequire((exports, pkgInfo) => {
+    // Omit node: prefix because its an internal module
+    hooks.addBuiltinModule("sqlite").onRequire((exports, pkgInfo) => {
       const dbSyncProto = exports.DatabaseSync.prototype;
       for (const func of sqlFunctions) {
         wrapExport(dbSyncProto, func, pkgInfo, {

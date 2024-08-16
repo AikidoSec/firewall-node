@@ -14,12 +14,6 @@ import { getInstance } from "../AgentSingleton";
 let originalRequire = mod.prototype.require;
 let isRequireWrapped = false;
 
-/**
- * Todo
- * - process.getBuiltinModule
- * - https://nodejs.org/api/packages.html#package-entry-points
- */
-
 let packages: Package[] = [];
 let builtinModules: BuiltinModule[] = [];
 let pkgCache = new Map<string, unknown>();
@@ -46,6 +40,13 @@ export function wrapRequire() {
     // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
+
+  if (typeof process.getBuiltinModule === "function") {
+    process.getBuiltinModule = function wrappedGetBuiltinModule() {
+      // eslint-disable-next-line prefer-rest-params
+      return patchedRequire.call(this, arguments);
+    };
+  }
 }
 
 /**
@@ -71,7 +72,7 @@ export function setBuiltinModulesToPatch(
 /**
  * Our custom require function that intercepts the require calls.
  */
-function patchedRequire(this: mod, args: IArguments) {
+function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
   // Apply the original require function
   const originalExports = originalRequire.apply(
     this,
@@ -96,7 +97,7 @@ function patchedRequire(this: mod, args: IArguments) {
       return patchBuiltinModule.call(this, id, originalExports);
     }
 
-    return patchPackage.call(this, id, originalExports);
+    return patchPackage.call(this as mod, id, originalExports);
   } catch (error) {
     // Todo handle (logger)
     console.error(error);

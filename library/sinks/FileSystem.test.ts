@@ -62,6 +62,7 @@ t.test("it works", async (t) => {
     writeFileSync,
     rename,
     realpath,
+    promises: fsDotPromise,
     realpathSync,
   } = require("fs");
   const { writeFile: writeFilePromise } = require("fs/promises");
@@ -91,6 +92,11 @@ t.test("it works", async (t) => {
       encoding: "utf-8",
     });
     await writeFilePromise(
+      "./test.txt",
+      "some other file content to test with",
+      { encoding: "utf-8" }
+    );
+    await fsDotPromise.writeFile(
       "./test.txt",
       "some other file content to test with",
       { encoding: "utf-8" }
@@ -135,10 +141,25 @@ t.test("it works", async (t) => {
         { encoding: "utf-8" }
       )
     );
-
+    t.ok(error instanceof Error);
     if (error instanceof Error) {
       t.match(
         error.message,
+        "Aikido firewall has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+      );
+    }
+
+    const error2 = await t.rejects(() =>
+      fsDotPromise.writeFile(
+        "../../test.txt",
+        "some other file content to test with",
+        { encoding: "utf-8" }
+      )
+    );
+    t.ok(error2 instanceof Error);
+    if (error2 instanceof Error) {
+      t.match(
+        error2.message,
         "Aikido firewall has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
     }
