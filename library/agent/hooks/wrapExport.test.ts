@@ -194,3 +194,23 @@ t.test("Wrap non existing method", async (t) => {
     "Failed to wrap method test123 in module test",
   ]);
 });
+
+t.test("Wrap default export", async (t) => {
+  t.plan(2);
+  const toWrap = (input: string) => {
+    return input;
+  };
+
+  const patched = wrapExport(
+    toWrap,
+    undefined,
+    { name: "test", type: "external" },
+    {
+      inspectArgs: (args) => {
+        t.same(args, ["input"]);
+      },
+    }
+  ) as Function;
+
+  t.same(patched("input"), "input");
+});

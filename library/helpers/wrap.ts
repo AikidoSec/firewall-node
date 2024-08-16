@@ -1,19 +1,30 @@
 export function wrap(
-  nodule: any,
+  module: any,
   name: string,
   wrapper: (original: Function) => Function
 ) {
-  if (!nodule[name]) {
+  if (!module[name]) {
     throw new Error(`no original function ${name} to wrap`);
   }
 
-  if (typeof nodule[name] !== "function") {
+  if (typeof module[name] !== "function") {
     throw new Error(
-      `original must be a function, instead found: ${typeof nodule[name]}`
+      `original must be a function, instead found: ${typeof module[name]}`
     );
   }
 
-  const original = nodule[name];
+  const original = module[name];
+  const wrapped = createWrappedFunction(original, wrapper);
+
+  defineProperty(module, name, wrapped);
+
+  return wrapped;
+}
+
+export function createWrappedFunction(
+  original: Function,
+  wrapper: (original: Function) => Function
+): Function {
   const wrapped = wrapper(original);
 
   defineProperty(wrapped, "__original", original);
@@ -24,13 +35,11 @@ export function wrap(
   // .inspect("realpath", (args) => {...})
   // We don't want to lose the original function's properties.
   // Most of the functions we're wrapping don't have any properties, so this is a rare case.
-  for (const prop in nodule[name]) {
-    if (nodule[name].hasOwnProperty(prop)) {
-      defineProperty(wrapped, prop, nodule[name][prop]);
+  for (const prop in original) {
+    if (original.hasOwnProperty(prop)) {
+      defineProperty(wrapped, prop, original[prop as keyof Function]);
     }
   }
-
-  defineProperty(nodule, name, wrapped);
 
   return wrapped;
 }

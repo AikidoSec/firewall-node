@@ -24,7 +24,7 @@ export function getPackageVersion(pkg: string): string | null {
     const index = parts.indexOf(lookup);
     const root = parts.slice(0, index + 1).join(sep);
 
-    return getOrignalRequire()(`${path}/package.json`).version;
+    return getOrignalRequire()(`${root}/package.json`).version;
   } catch (error) {
     return null;
   }

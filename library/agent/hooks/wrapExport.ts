@@ -1,7 +1,7 @@
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { wrap } from "../../helpers/wrap";
+import { createWrappedFunction, wrap } from "../../helpers/wrap";
 import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { attackKindHumanName } from "../Attack";
@@ -29,11 +29,16 @@ export type InterceptorObject = {
   modifyReturnValue?: ModifyReturnValueInterceptor;
 };
 
+// Used for cleaning up the stack trace
 const libraryRoot = resolve(__dirname, "../..");
 
+/**
+ * Wraps a function with the provided interceptors.
+ * If the function is not part of an object, like default exports, pass undefined as methodName and the function as subject.
+ */
 export function wrapExport(
   subject: unknown,
-  methodName: string,
+  methodName: string | undefined,
   pkgInfo: WrapPackageInfo,
   interceptors: InterceptorObject
 ) {
@@ -42,69 +47,77 @@ export function wrapExport(
     throw new Error("Can not wrap exports if agent is not initialized");
   }
 
-  try {
-    wrap(subject, methodName, function wrap(original: Function) {
-      return function wrap() {
-        // eslint-disable-next-line prefer-rest-params
-        let args = Array.from(arguments);
-        const context = getContext();
+  if (!methodName) {
+    methodName = "default";
+  }
 
-        // Run inspectArgs interceptor if provided
-        if (typeof interceptors.inspectArgs === "function") {
-          // Bind context to functions in arguments
-          for (let i = 0; i < args.length; i++) {
-            if (typeof args[i] === "function") {
-              args[i] = bindContext(args[i]);
+  try {
+    return wrapDefaultOrNamed(
+      subject,
+      methodName,
+      function wrap(original: Function) {
+        return function wrap() {
+          // eslint-disable-next-line prefer-rest-params
+          let args = Array.from(arguments);
+          const context = getContext();
+
+          // Run inspectArgs interceptor if provided
+          if (typeof interceptors.inspectArgs === "function") {
+            // Bind context to functions in arguments
+            for (let i = 0; i < args.length; i++) {
+              if (typeof args[i] === "function") {
+                args[i] = bindContext(args[i]);
+              }
+            }
+
+            inspectArgs.call(
+              // @ts-expect-error We don't now the type of this
+              this,
+              args,
+              interceptors.inspectArgs,
+              context,
+              agent,
+              pkgInfo,
+              methodName
+            );
+          }
+
+          // Run modifyArgs interceptor if provided
+          if (typeof interceptors.modifyArgs === "function") {
+            try {
+              args = interceptors.modifyArgs(args, agent);
+            } catch (error: any) {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: methodName,
+                module: pkgInfo.name,
+              });
             }
           }
 
-          inspectArgs.call(
+          const returnVal = original.apply(
             // @ts-expect-error We don't now the type of this
             this,
-            args,
-            interceptors.inspectArgs,
-            context,
-            agent,
-            pkgInfo,
-            methodName
+            args
           );
-        }
 
-        // Run modifyArgs interceptor if provided
-        if (typeof interceptors.modifyArgs === "function") {
-          try {
-            args = interceptors.modifyArgs(args, agent);
-          } catch (error: any) {
-            agent.onErrorThrownByInterceptor({
-              error: error,
-              method: methodName,
-              module: pkgInfo.name,
-            });
+          // Run modifyReturnValue interceptor if provided
+          if (typeof interceptors.modifyReturnValue === "function") {
+            try {
+              return interceptors.modifyReturnValue(args, returnVal, agent);
+            } catch (error: any) {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: methodName,
+                module: pkgInfo.name,
+              });
+            }
           }
-        }
 
-        const returnVal = original.apply(
-          // @ts-expect-error We don't now the type of this
-          this,
-          args
-        );
-
-        // Run modifyReturnValue interceptor if provided
-        if (typeof interceptors.modifyReturnValue === "function") {
-          try {
-            return interceptors.modifyReturnValue(args, returnVal, agent);
-          } catch (error: any) {
-            agent.onErrorThrownByInterceptor({
-              error: error,
-              method: methodName,
-              module: pkgInfo.name,
-            });
-          }
-        }
-
-        return returnVal;
-      };
-    });
+          return returnVal;
+        };
+      }
+    );
   } catch (error) {
     agent.onFailedToWrapMethod(pkgInfo.name, methodName);
   }
@@ -182,4 +195,15 @@ function inspectArgs(
       );
     }
   }
+}
+
+function wrapDefaultOrNamed(
+  module: any,
+  name: string,
+  wrapper: (original: Function) => Function
+) {
+  if (name === "default") {
+    return createWrappedFunction(module, wrapper);
+  }
+  return wrap(module, name, wrapper);
 }

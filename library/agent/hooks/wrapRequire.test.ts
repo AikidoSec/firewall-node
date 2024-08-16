@@ -154,6 +154,27 @@ t.test("Replace default export", async (t) => {
   t.same(initialSqlite3, unpatchedSqlite3);
 });
 
+t.test("Confirm its caching the exports", async (t) => {
+  let counter = 0;
+
+  const pkg = new Package("sqlite3");
+  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+    counter++;
+    return "aikido";
+  });
+  setPackagesToPatch([pkg]);
+
+  // Require patched sqlite3
+  const sqlite3 = require("sqlite3");
+  t.same(sqlite3, "aikido");
+  const sqlite3Cached = require("sqlite3");
+  t.same(sqlite3Cached, "aikido");
+
+  setPackagesToPatch([]);
+
+  t.same(counter, 1);
+});
+
 t.test("Returns original exports on exception", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
