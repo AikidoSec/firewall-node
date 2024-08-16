@@ -150,7 +150,7 @@ function onRedirect(
   const outgoingRedirects = context.outgoingRequestRedirects || [];
 
   // If it's 1. a initial redirect with user provided url or 2. a redirect in an existing chain, add it to the context
-  if (redirectOrigin || found) {
+  if (found || redirectOrigin) {
     outgoingRedirects.push({
       source: requestContext.url,
       destination,
