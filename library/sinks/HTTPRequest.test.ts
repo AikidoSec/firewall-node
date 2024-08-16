@@ -20,7 +20,10 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "thisdomainpointstointernalip2.com"
+    ) {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -152,6 +155,26 @@ t.test("it works", (t) => {
     }
   );
 
+  runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
+    () => {
+      https
+        .request("https://thisdomainpointstointernalip2.com", (res) => {
+          t.fail("should not respond");
+        })
+        .on("error", (error) => {
+          t.match(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+          );
+        })
+        .on("finish", () => {
+          t.fail("should not finish");
+        })
+        .end();
+    }
+  );
+
   runWithContext(context, () => {
     // With lookup function specified
     const google = http.request("http://google.com", { lookup: dns.lookup });
@@ -164,7 +187,7 @@ t.test("it works", (t) => {
 
   runWithContext(context, () => {
     // Safe request
-    const google = https.request("https://google.com");
+    const google = https.request("https://www.google.com");
     google.end();
 
     // With string URL
@@ -254,7 +277,151 @@ t.test("it works", (t) => {
     }
   });
 
+  runWithContext(
+    {
+      ...context,
+      // Redirects to http://127.0.0.1/test
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+    },
+    () => {
+      const response1 = https.request(
+        "https://dub.sh/aikido-ssrf-test",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, "http://127.0.0.1/test");
+          const error = t.throws(() => http.request("http://127.0.0.1/test"));
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            );
+          }
+        }
+      );
+      response1.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+      // Redirects to http://local.aikido.io/test
+      ...{ body: { test: "https://dub.sh/aikido-ssrf-test-domain" } },
+    },
+    () => {
+      const response1 = https.request(
+        "https://dub.sh/aikido-ssrf-test-domain",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, "http://local.aikido.io/test");
+          http.request("http://local.aikido.io/test").on("error", (e) => {
+            t.ok(e instanceof Error);
+            t.same(
+              e.message,
+              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.test"
+            );
+          });
+        }
+      );
+      response1.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
+    },
+    () => {
+      const response1 = https.request(
+        "https://dub.sh/aikido-ssrf-test-twice",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, "/aikido-ssrf-test");
+          const response2 = https.request(
+            "https://dub.sh/aikido-ssrf-test",
+            (res) => {
+              const error = t.throws(() =>
+                http.request("http://127.0.0.1/test")
+              );
+              t.ok(error instanceof Error);
+              if (error instanceof Error) {
+                t.same(
+                  error.message,
+                  "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+                );
+              }
+            }
+          );
+          response2.end();
+        }
+      );
+      response1.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test-domain
+      ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
+    },
+    () => {
+      const response1 = https.request(
+        "https://dub.sh/aikido-ssrf-test-domain-twice",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, "/aikido-ssrf-test-domain");
+          const response2 = https.request(
+            "https://dub.sh/aikido-ssrf-test-domain",
+            (res) => {
+              http.request("http://local.aikido.io/test").on("error", (e) => {
+                t.ok(e instanceof Error);
+                t.same(
+                  e.message,
+                  "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+                );
+              });
+            }
+          );
+          response2.end();
+        }
+      );
+      response1.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+      // Redirects to https://dub.sh/aikido-ssrf-test-domain
+      ...{ body: { image: "https://bit.ly/3WOLuir" } },
+    },
+    () => {
+      const response1 = https.request("https://bit.ly/3WOLuir", (res) => {
+        t.same(res.statusCode, 301);
+        t.same(res.headers.location, "https://dub.sh/aikido-ssrf-test-domain");
+        const response2 = https.request(
+          "https://dub.sh/aikido-ssrf-test-domain",
+          (res) => {
+            http.request("http://local.aikido.io/test").on("error", (e) => {
+              t.ok(e instanceof Error);
+              t.same(
+                e.message,
+                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              );
+            });
+          }
+        );
+        response2.end();
+      });
+      response1.end();
+    }
+  );
+
   setTimeout(() => {
     t.end();
-  }, 1000);
+  }, 3000);
 });
