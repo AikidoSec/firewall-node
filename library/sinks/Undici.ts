@@ -133,7 +133,7 @@ export class Undici implements Wrapper {
       },
     });
 
-    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch);
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(dispatcher);
