@@ -178,21 +178,21 @@ t.test("Require non-existing package", async (t) => {
 });
 
 t.test("Not wrapped using original require", async (t) => {
-  const initialSqlite3 = require("sqlite3");
+  const initialFs = require("fs");
 
-  const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  const mod = new BuiltinModule("fs");
+  mod.onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
   });
-  setPackagesToPatch([pkg]);
+  setBuiltinModulesToPatch([mod]);
 
   // Require patched sqlite3
-  const sqlite3 = require("sqlite3");
-  t.same(sqlite3._test, "aikido");
+  const fs = require("fs");
+  t.same(fs._test, "aikido");
 
   // Require original sqlite3
-  const sqlite3Original = getOrignalRequire()("sqlite3");
-  t.same(sqlite3Original, initialSqlite3);
+  const fsOriginal = getOrignalRequire()("fs");
+  t.same(fsOriginal, initialFs);
 });
 
 t.test("Require json file", async (t) => {

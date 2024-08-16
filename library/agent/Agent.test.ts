@@ -28,11 +28,13 @@ t.test("it throws error if serverless is empty string", async () => {
 });
 
 t.test("it sends started event", async (t) => {
-  const logger = new LoggerNoop();
+  const logger = new LoggerForTesting();
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(true, logger, api, token, undefined);
   agent.start([new MongoDB()]);
+
+  const mongodb = require("mongodb");
 
   t.match(api.getEvents(), [
     {
@@ -42,19 +44,23 @@ t.test("it sends started event", async (t) => {
         hostname: hostname(),
         version: "0.0.0",
         ipAddress: ip(),
-        packages: {
-          mongodb: "6.8.0",
-        },
+        packages: {},
         preventedPrototypePollution: false,
         nodeEnv: "",
         serverless: false,
-        stack: ["mongodb"],
+        stack: [],
         os: {
           name: platform(),
           version: release(),
         },
       },
     },
+  ]);
+
+  t.same(logger.getMessages(), [
+    "Starting agent...",
+    "Found token, reporting enabled!",
+    "mongodb@6.8.0 is supported!",
   ]);
 });
 
@@ -94,16 +100,12 @@ t.test("it starts in non-blocking mode", async () => {
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
   const agent = new Agent(false, logger, api, token, undefined);
-  agent.start([new MongoDB()]);
-
-  // Todo: Not reported to this agent, because we have multiple agents and only the first one wraps the require function
-  const mongodb = require("mongodb");
+  agent.start([]);
 
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Dry mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
-    "mongodb@6.8.0 is supported!",
   ]);
 });
 

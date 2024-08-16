@@ -10,7 +10,7 @@ export function wrapNewInstance(
 ) {
   const agent = getInstance();
   if (!agent) {
-    throw new Error("Can not wrap exports if agent is not initialized");
+    throw new Error("Can not wrap new instance if agent is not initialized");
   }
   try {
     wrap(subject, className, function wrap(original: Function) {
