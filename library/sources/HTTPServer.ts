@@ -5,6 +5,7 @@ import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
@@ -42,15 +43,19 @@ export class HTTPServer implements Wrapper {
       return args;
     }
 
-    if (args[0] !== "request") {
-      return args;
+    if (args[0] === "request") {
+      return this.wrapRequestListener(args, module, agent);
     }
 
-    return this.wrapRequestListener(args, module, agent);
+    if (module === "http2" && args[0] === "stream") {
+      return [args[0], createStreamListener(args[1], module, agent)];
+    }
+
+    return args;
   }
 
   wrap(hooks: Hooks) {
-    ["http", "https"].forEach((module) => {
+    ["http", "https", "http2"].forEach((module) => {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
         wrapExport(exports, "Server", pkgInfo, {
           modifyArgs: (args, agent) => {
@@ -71,6 +76,27 @@ export class HTTPServer implements Wrapper {
             },
           });
         });
+
+        if (module === "http2") {
+          wrapExport(exports, "createSecureServer", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapRequestListener(args, module, agent);
+            },
+          });
+
+          wrapNewInstance(
+            exports,
+            "createSecureServer",
+            pkgInfo,
+            (instance) => {
+              wrapExport(instance, "on", pkgInfo, {
+                modifyArgs: (args, agent) => {
+                  return this.wrapOn(args, module, agent);
+                },
+              });
+            }
+          );
+        }
       });
     });
   }
