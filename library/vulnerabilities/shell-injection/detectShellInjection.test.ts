@@ -398,6 +398,13 @@ t.test("no shell injection with ~", async () => {
   isNotShellInjection("ls ~/path", "path");
 });
 
+t.test("false positive with email address", async () => {
+  isNotShellInjection(
+    "echo token | docker login --username john.doe@acme.com --password-stdin hub.acme.com",
+    "john.doe@acme.com"
+  );
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
