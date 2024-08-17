@@ -405,6 +405,11 @@ t.test("false positive with email address", async () => {
   );
 });
 
+t.test("it flags @ inside shell syntax", async () => {
+  isShellInjection('echo "${array[@]}"', "${array[@]}");
+  isShellInjection("echo $@", "$@");
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
