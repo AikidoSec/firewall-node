@@ -410,6 +410,23 @@ t.test("it flags @ inside shell syntax", async () => {
   isShellInjection("echo $@", "$@");
 });
 
+t.test("it allows comma separated list", async () => {
+  isNotShellInjection(
+    `command -tags php,laravel,drupal,phpmyadmin,symfony -stats `,
+    "php,laravel,drupal,phpmyadmin,symfony"
+  );
+});
+
+t.test("it flags comma in loop", async () => {
+  isShellInjection(
+    `command for (( i=0, j=10; i<j; i++, j-- ))
+do
+    echo "$i $j"
+done`,
+    "for (( i=0, j=10; i<j; i++, j-- ))"
+  );
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
