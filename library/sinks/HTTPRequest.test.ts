@@ -386,16 +386,20 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...context,
-      // Redirects to https://dub.sh/aikido-ssrf-test-domain
-      ...{ body: { image: "https://bit.ly/3WOLuir" } },
+      ...{
+        body: {
+          image:
+            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+        },
+      },
     },
     () => {
-      const response1 = https.request("https://bit.ly/3WOLuir", (res) => {
-        t.same(res.statusCode, 301);
-        t.same(res.headers.location, "https://dub.sh/aikido-ssrf-test-domain");
-        const response2 = https.request(
-          "https://dub.sh/aikido-ssrf-test-domain",
-          (res) => {
+      const response1 = http.request(
+        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, redirectUrl.domain);
+          const response2 = http.request(redirectUrl.domain, (res) => {
             http.request("http://local.aikido.io/test").on("error", (e) => {
               t.ok(e instanceof Error);
               t.same(
@@ -403,10 +407,10 @@ t.test("it works", (t) => {
                 "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
               );
             });
-          }
-        );
-        response2.end();
-      });
+          });
+          response2.end();
+        }
+      );
       response1.end();
     }
   );

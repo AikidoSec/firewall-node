@@ -221,11 +221,19 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+        ...{
+          body: {
+            image:
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          },
+        },
       },
       async () => {
-        const error = await t.rejects(() => fetch("https://bit.ly/3WOLuir"));
+        const error = await t.rejects(() =>
+          fetch(
+            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
+          )
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -291,14 +299,21 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+        ...{
+          body: {
+            image:
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          },
+        },
       },
       async () => {
-        const response = await fetch("https://bit.ly/3WOLuir", {
-          redirect: "manual",
-        });
-        t.same(response.status, 301);
+        const response = await fetch(
+          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          {
+            redirect: "manual",
+          }
+        );
+        t.same(response.status, 302);
         const error = await t.rejects(() =>
           fetch(response.headers.get("location")!)
         );
