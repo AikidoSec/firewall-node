@@ -53,7 +53,7 @@ export class Fetch implements Wrapper {
 
       // Fetch accepts any object with a stringifier. User input may be an array if the user provides an array
       // query parameter (e.g., ?example[0]=https://example.com/) in frameworks like Express. Since an Array has
-      // a default stringifier, this is exploitable in every default set-up.
+      // a default stringifier, this is exploitable in a default setup.
       // The following condition ensures that we see the same value as what's passed down to the sink.
       if (Array.isArray(args[0])) {
         const url = tryParseURL(args[0].toString());
