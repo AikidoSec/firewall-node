@@ -45,6 +45,16 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const redirectTestUrl =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
+const redirectUrl = {
+  ip: `${redirectTestUrl}/ssrf-test`,
+  domain: `${redirectTestUrl}/ssrf-test-domain`,
+  ipTwice: `${redirectTestUrl}/ssrf-test-twice`,
+  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`,
+};
+
 t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
@@ -140,12 +150,10 @@ t.test(
       {
         ...context,
         // Redirects to http://127.0.0.1/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+        ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.ip));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -160,12 +168,10 @@ t.test(
       {
         ...context,
         // Redirects to http://local.aikido.io/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+        ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-domain")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.domain));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -179,13 +185,11 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
+        // Redirects to /ssrf-test
+        ...{ body: { image: redirectUrl.ipTwice } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-twice")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -199,13 +203,11 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
+        // Redirects to /ssrf-test-domain
+        ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-domain-twice")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.domainTwice));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -239,10 +241,10 @@ t.test(
       {
         ...context,
         // Redirects to http://127.0.0.1/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+        ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
-        const response = await fetch("https://dub.sh/aikido-ssrf-test", {
+        const response = await fetch(redirectUrl.ip, {
           redirect: "manual",
         });
         t.same(response.status, 302);
@@ -264,10 +266,10 @@ t.test(
       {
         ...context,
         // Redirects to http://local.aikido.io/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+        ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
-        const response = await fetch("https://dub.sh/aikido-ssrf-test-domain", {
+        const response = await fetch(redirectUrl.domain, {
           redirect: "manual",
         });
         t.same(response.status, 302);
