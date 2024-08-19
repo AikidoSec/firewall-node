@@ -51,6 +51,20 @@ export class Fetch implements Wrapper {
         }
       }
 
+      if (Array.isArray(args[0])) {
+        const url = tryParseURL(args[0].toString());
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url)
+          );
+          if (attack) {
+            return attack;
+          }
+        }
+      }
+
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,

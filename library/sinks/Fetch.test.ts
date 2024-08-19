@@ -26,6 +26,13 @@ wrap(dns, "lookup", function lookup(original) {
       ]);
     }
 
+    if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
     original.apply(this, arguments);
   };
 });
@@ -111,12 +118,30 @@ t.test(
           "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const error3 = await t.rejects(() =>
+        fetch(["http://localhost:4000/api/internal"])
+      );
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
     });
 
     await runWithContext(
       {
         ...context,
-        ...{ body: { image: "http://thisdomainpointstointernalip.com" } },
+        ...{
+          body: {
+            image2: [
+              "http://example",
+              "prefix.thisdomainpointstointernalip.com",
+            ],
+            image: "http://thisdomainpointstointernalip.com/path",
+          },
+        },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -127,6 +152,17 @@ t.test(
             // @ts-expect-error Type is not defined
             error.cause.message,
             "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+
+        const error2 = await t.rejects(() =>
+          fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
+        );
+        if (error2 instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error2.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image2"
           );
         }
 
