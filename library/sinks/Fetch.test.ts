@@ -49,10 +49,10 @@ const redirectTestUrl =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
-  ip: `${redirectTestUrl}/ssrf-test`,
-  domain: `${redirectTestUrl}/ssrf-test-domain`,
-  ipTwice: `${redirectTestUrl}/ssrf-test-twice`,
-  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`,
+  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
+  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
+  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
+  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
 };
 
 t.test(
@@ -149,7 +149,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://127.0.0.1/test
         ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
@@ -167,7 +166,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://local.aikido.io/test
         ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
@@ -185,7 +183,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to /ssrf-test
         ...{ body: { image: redirectUrl.ipTwice } },
       },
       async () => {
@@ -203,7 +200,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to /ssrf-test-domain
         ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
@@ -248,7 +244,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://127.0.0.1/test
         ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
@@ -273,7 +268,6 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://local.aikido.io/test
         ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
