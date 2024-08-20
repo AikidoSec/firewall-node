@@ -35,10 +35,10 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private timeoutInMS = 5000;
+  private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -236,7 +236,10 @@ export class Agent {
           response.allowedIPAddresses &&
           Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
-            : []
+            : [],
+          typeof response.receivedAnyStats === "boolean"
+            ? response.receivedAnyStats
+            : true
         );
       }
 
@@ -310,8 +313,11 @@ export class Agent {
       const now = Date.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
+      const hasCompressedStats = this.statistics.hasCompressedStats();
+      const hasReceivedAnyStats = this.serviceConfig.hasReceivedAnyStats();
       const shouldReportInitialStats =
-        this.statistics.hasCompressedStats() && !this.reportedInitialStats;
+        !this.reportedInitialStats &&
+        (hasCompressedStats || !hasReceivedAnyStats);
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();

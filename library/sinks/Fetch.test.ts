@@ -26,6 +26,13 @@ wrap(dns, "lookup", function lookup(original) {
       ]);
     }
 
+    if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
     original.apply(this, arguments);
   };
 });
@@ -111,12 +118,30 @@ t.test(
           "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const error3 = await t.rejects(() =>
+        fetch(["http://localhost:4000/api/internal"])
+      );
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
     });
 
     await runWithContext(
       {
         ...context,
-        ...{ body: { image: "http://thisdomainpointstointernalip.com" } },
+        ...{
+          body: {
+            image2: [
+              "http://example",
+              "prefix.thisdomainpointstointernalip.com",
+            ],
+            image: "http://thisdomainpointstointernalip.com/path",
+          },
+        },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -130,9 +155,194 @@ t.test(
           );
         }
 
+        const error2 = await t.rejects(() =>
+          fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
+        );
+        if (error2 instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error2.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image2"
+          );
+        }
+
         // Ensure the lookup is only called once per hostname
         // Otherwise, it could be vulnerable to TOCTOU
         t.same(calls["thisdomainpointstointernalip.com"], 1);
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to http://127.0.0.1/test
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to http://local.aikido.io/test
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test-domain")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test-twice")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("https://dub.sh/aikido-ssrf-test-domain-twice")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
+        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch("https://bit.ly/3WOLuir"));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    // Manual redirect
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to http://127.0.0.1/test
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+      },
+      async () => {
+        const response = await fetch("https://dub.sh/aikido-ssrf-test", {
+          redirect: "manual",
+        });
+        t.same(response.status, 302);
+        const error = await t.rejects(() =>
+          fetch(response.headers.get("location")!)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    // Manual redirect
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to http://local.aikido.io/test
+        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+      },
+      async () => {
+        const response = await fetch("https://dub.sh/aikido-ssrf-test-domain", {
+          redirect: "manual",
+        });
+        t.same(response.status, 302);
+        const error = await t.rejects(() =>
+          fetch(response.headers.get("location")!, {
+            redirect: "manual",
+          })
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        // Redirects to https://dub.sh/aikido-ssrf-test-domain
+        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+      },
+      async () => {
+        const response = await fetch("https://bit.ly/3WOLuir", {
+          redirect: "manual",
+        });
+        t.same(response.status, 301);
+        const error = await t.rejects(() =>
+          fetch(response.headers.get("location")!)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
       }
     );
   }
