@@ -1,6 +1,7 @@
 import { Agent } from "../agent/Agent";
 import { Context, updateContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { getRateLimitedEndpoint } from "./getRateLimitedEndpoint";
 
 type Result =
   | {
@@ -20,15 +21,9 @@ export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
 ): Result {
-  const matches = agent.getConfig().getEndpoints(context);
+  const endpoint = getRateLimitedEndpoint(context, agent.getConfig());
 
-  if (matches.length === 0) {
-    return { block: false };
-  }
-
-  const endpoint = matches[0];
-
-  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
+  if (!endpoint) {
     return { block: false };
   }
 
