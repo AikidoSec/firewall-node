@@ -80,11 +80,11 @@ function shouldRateLimitField(
     .getConfig()
     .getGraphQLField(context, field.name.value, operationType);
 
-  if (!match || !match.endpoint.graphql) {
+  if (!match || !match.graphql) {
     return { block: false };
   }
 
-  const rateLimitedField = match.endpoint;
+  const rateLimitedField = match;
 
   if (
     !rateLimitedField ||
