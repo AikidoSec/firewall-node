@@ -59,4 +59,31 @@ t.test("it works", async (t) => {
       "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
+
+  await runWithContext(
+    {
+      ...context,
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test-domain` } },
+    },
+    async () => {
+      await new Promise<void>((resolve) => {
+        needle.request(
+          "get",
+          `${redirectTestUrl}/ssrf-test-domain`,
+          {},
+          {
+            follow_max: 1,
+          },
+          (error, response) => {
+            t.ok(error instanceof Error);
+            t.match(
+              error?.message,
+              /Aikido firewall has blocked a server-side request forgery/
+            );
+            resolve();
+          }
+        );
+      });
+    }
+  );
 });
