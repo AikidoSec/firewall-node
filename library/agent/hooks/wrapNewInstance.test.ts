@@ -67,3 +67,29 @@ t.test("Wrap non existing class", async (t) => {
     "Failed to wrap method test in module testmod",
   ]);
 });
+
+t.test("Can wrap default export", async (t) => {
+  let testExport = class Test {
+    constructor(private input: string) {}
+
+    getInput() {
+      return this.input;
+    }
+  };
+
+  testExport = wrapNewInstance(
+    testExport,
+    undefined,
+    { name: "test", type: "external" },
+    (exports) => {
+      exports.testMethod = function test() {
+        return "aikido";
+      };
+    }
+  ) as any;
+
+  const instance = new testExport("input");
+  t.same(instance.getInput(), "input");
+  // @ts-expect-error Test method is added by interceptor
+  t.same(instance.testMethod(), "aikido");
+});

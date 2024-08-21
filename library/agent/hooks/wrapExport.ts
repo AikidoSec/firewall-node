@@ -2,13 +2,13 @@
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { createWrappedFunction, wrap } from "../../helpers/wrap";
 import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { attackKindHumanName } from "../Attack";
 import { bindContext, getContext, updateContext } from "../Context";
 import { InterceptorResult } from "./InterceptorResult";
 import { WrapPackageInfo } from "./WrapPackageInfo";
+import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 
 type InspectArgsInterceptor = (
   args: unknown[],
@@ -196,15 +196,4 @@ function inspectArgs(
       );
     }
   }
-}
-
-function wrapDefaultOrNamed(
-  module: any,
-  name: string,
-  wrapper: (original: Function) => Function
-) {
-  if (name === "default") {
-    return createWrappedFunction(module, wrapper);
-  }
-  return wrap(module, name, wrapper);
 }
