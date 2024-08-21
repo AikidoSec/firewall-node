@@ -53,6 +53,14 @@ export class InspectionStatistics {
     );
   }
 
+  isEmpty() {
+    return (
+      this.requests.total === 0 &&
+      Object.keys(this.stats).length === 0 &&
+      this.requests.attacksDetected.total === 0
+    );
+  }
+
   reset() {
     this.stats = {};
     this.requests = {
