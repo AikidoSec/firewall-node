@@ -1,4 +1,3 @@
-import { wrap } from "../../helpers/wrap";
 import { getInstance } from "../AgentSingleton";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { WrapPackageInfo } from "./WrapPackageInfo";
