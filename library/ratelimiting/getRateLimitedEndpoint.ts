@@ -14,12 +14,17 @@ export function getRateLimitedEndpoint(
     return undefined;
   }
 
-  matches.sort((a, b) => {
-    if (a.rateLimiting.windowSizeInMS === b.rateLimiting.windowSizeInMS) {
-      return a.rateLimiting.maxRequests - b.rateLimiting.maxRequests;
-    }
+  const exact = matches.find((m) => m.route === context.route);
 
-    return a.rateLimiting.windowSizeInMS - b.rateLimiting.windowSizeInMS;
+  if (exact) {
+    return exact;
+  }
+
+  matches.sort((a, b) => {
+    const aRate = a.rateLimiting.maxRequests / a.rateLimiting.windowSizeInMS;
+    const bRate = b.rateLimiting.maxRequests / b.rateLimiting.windowSizeInMS;
+
+    return aRate - bRate;
   });
 
   return matches[0];

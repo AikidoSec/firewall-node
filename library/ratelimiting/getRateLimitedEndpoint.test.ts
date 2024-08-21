@@ -125,7 +125,7 @@ t.test("it returns endpoint with lowest max requests", async () => {
         [
           {
             method: "POST",
-            route: "/api/login",
+            route: "/api/log*",
             forceProtectionOff: false,
             allowedIPAddresses: [],
             rateLimiting: {
@@ -174,17 +174,6 @@ t.test("it returns endpoint with smallest window size", async () => {
         [
           {
             method: "POST",
-            route: "/api/login",
-            forceProtectionOff: false,
-            allowedIPAddresses: [],
-            rateLimiting: {
-              enabled: true,
-              maxRequests: 3,
-              windowSizeInMS: 5000,
-            },
-          },
-          {
-            method: "POST",
             route: "/api/*",
             forceProtectionOff: false,
             allowedIPAddresses: [],
@@ -192,6 +181,17 @@ t.test("it returns endpoint with smallest window size", async () => {
               enabled: true,
               maxRequests: 3,
               windowSizeInMS: 1000,
+            },
+          },
+          {
+            method: "POST",
+            route: "/api/log*",
+            forceProtectionOff: false,
+            allowedIPAddresses: [],
+            rateLimiting: {
+              enabled: true,
+              maxRequests: 3,
+              windowSizeInMS: 5000,
             },
           },
         ],
@@ -203,13 +203,62 @@ t.test("it returns endpoint with smallest window size", async () => {
     ),
     {
       method: "POST",
-      route: "/api/*",
+      route: "/api/log*",
       forceProtectionOff: false,
       allowedIPAddresses: [],
       rateLimiting: {
         enabled: true,
         maxRequests: 3,
-        windowSizeInMS: 1000,
+        windowSizeInMS: 5000,
+      },
+    }
+  );
+});
+
+t.test("it always returns exact matches first", async () => {
+  t.same(
+    getRateLimitedEndpoint(
+      context,
+      new ServiceConfig(
+        [
+          {
+            method: "POST",
+            route: "/api/login",
+            forceProtectionOff: false,
+            allowedIPAddresses: [],
+            rateLimiting: {
+              enabled: true,
+              maxRequests: 10,
+              windowSizeInMS: 5000,
+            },
+          },
+          {
+            method: "POST",
+            route: "/api/*",
+            forceProtectionOff: false,
+            allowedIPAddresses: [],
+            rateLimiting: {
+              enabled: true,
+              maxRequests: 3,
+              windowSizeInMS: 5000,
+            },
+          },
+        ],
+        0,
+        [],
+        [],
+        false
+      )
+    ),
+    {
+      method: "POST",
+      route: "/api/login",
+      forceProtectionOff: false,
+      allowedIPAddresses: [],
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 10,
+        windowSizeInMS: 5000,
       },
     }
   );
