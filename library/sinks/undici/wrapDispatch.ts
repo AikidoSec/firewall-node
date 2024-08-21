@@ -1,20 +1,15 @@
 import type { Dispatcher } from "undici";
 import { RequestContextStorage } from "./RequestContextStorage";
-import { Context, getContext, updateContext } from "../../agent/Context";
+import { Context, getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
-import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
-import { parseHeaders } from "./parseHeaders";
-import { containsPrivateIPAddress } from "../../vulnerabilities/ssrf/containsPrivateIPAddress";
-import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
+import { wrapOnHeaders } from "./wrapOnHeaders";
 
 type Dispatch = Dispatcher["dispatch"];
-type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
 
 /**
  * Wraps the dispatch function of the undici client to store the port of the request in the context.
@@ -26,8 +21,6 @@ type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
  * We can not store the port in the context directly inside our inspect functions, because the order in which the requests are made is not guaranteed.
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
  *
- * This function also wraps the onHeaders function to check for redirects and store them in the context, if they are originating from user input.
- * This allows us to block redirects to private IPs or domains that resolve to private IPs.
  */
 export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   return function wrap(opts, handler) {
@@ -79,89 +72,6 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     });
   };
-}
-
-function wrapOnHeaders(
-  orig: OnHeaders,
-  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
-  context: Context
-): OnHeaders {
-  // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
-  return function onHeaders() {
-    // eslint-disable-next-line prefer-rest-params
-    const args = Array.from(arguments);
-
-    if (args.length > 1) {
-      const statusCode = args[0];
-      if (isRedirectStatusCode(statusCode)) {
-        try {
-          // Get redirect location
-          const headers = parseHeaders(args[1]);
-          if (typeof headers.location === "string") {
-            const destinationUrl = new URL(headers.location);
-
-            onRedirect(destinationUrl, requestContext, context);
-          }
-        } catch (e) {
-          // Ignore, log later if we have log levels
-        }
-      }
-    }
-
-    if (orig) {
-      return orig.apply(
-        // @ts-expect-error We dont know the type of this
-        this,
-        // @ts-expect-error Arguments are not typed
-        // eslint-disable-next-line prefer-rest-params
-        arguments
-      );
-    }
-  };
-}
-
-function onRedirect(
-  destination: URL,
-  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
-  context: Context
-) {
-  if (!requestContext) {
-    return;
-  }
-
-  let redirectOrigin: URL | undefined;
-
-  let found = findHostnameInContext(
-    requestContext.url.hostname,
-    context,
-    requestContext.port
-  );
-
-  if (!found && context.outgoingRequestRedirects) {
-    redirectOrigin = getRedirectOrigin(
-      context.outgoingRequestRedirects,
-      requestContext.url
-    );
-
-    if (redirectOrigin) {
-      found = findHostnameInContext(
-        redirectOrigin.hostname,
-        context,
-        getPortFromURL(redirectOrigin)
-      );
-    }
-  }
-
-  const outgoingRedirects = context.outgoingRequestRedirects || [];
-
-  if (redirectOrigin || found) {
-    outgoingRedirects.push({
-      source: requestContext.url,
-      destination,
-    });
-
-    updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
-  }
 }
 
 /**

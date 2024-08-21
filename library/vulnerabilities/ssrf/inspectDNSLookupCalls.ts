@@ -84,9 +84,9 @@ function wrapDNSLookupCallback(
     const context = getContext();
 
     if (context) {
-      const endpoint = agent.getConfig().getEndpoint(context);
+      const matches = agent.getConfig().getEndpoints(context);
 
-      if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      if (matches.find((endpoint) => endpoint.forceProtectionOff)) {
         // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
         // Just call the original callback to allow the DNS lookup
         return callback(err, addresses, family);
@@ -135,8 +135,12 @@ function wrapDNSLookupCallback(
 
     let found = findHostnameInContext(hostname, context, port);
 
+    // The hostname is not found in the context, check if it's a redirect
     if (!found && context.outgoingRequestRedirects) {
       let url: URL | undefined;
+      // Url arg is passed when wrapping node:http(s), but not for unidic / fetch because of the way they are wrapped
+      // For unidic / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
+      // not to be confused with the "normal" context used in wide parts of this library
       if (urlArg) {
         url = urlArg;
       } else if (requestContext) {
@@ -144,11 +148,13 @@ function wrapDNSLookupCallback(
       }
 
       if (url) {
+        // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
         const redirectOrigin = getRedirectOrigin(
           context.outgoingRequestRedirects,
           url
         );
 
+        // If the URL is the result of a redirect, get the origin of the redirect chain for reporting the attack source
         if (redirectOrigin) {
           found = findHostnameInContext(
             redirectOrigin.hostname,

@@ -28,6 +28,13 @@ wrap(dns, "lookup", function lookup(original) {
       ]);
     }
 
+    if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
     original.apply(this, arguments);
   };
 });
@@ -176,6 +183,16 @@ t.test(
           "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
+
+      const error4 = await t.rejects(() =>
+        fetch(["http://localhost:4000/api/internal"])
+      );
+      if (error4 instanceof Error) {
+        t.same(
+          error4.message,
+          "Aikido firewall has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
+        );
+      }
     });
 
     await runWithContext(
@@ -194,7 +211,15 @@ t.test(
     await runWithContext(
       {
         ...context,
-        body: { image: "http://thisdomainpointstointernalip.com" },
+        ...{
+          body: {
+            image2: [
+              "http://example",
+              "prefix.thisdomainpointstointernalip.com",
+            ],
+            image: "http://thisdomainpointstointernalip.com/path",
+          },
+        },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -204,6 +229,17 @@ t.test(
           t.same(
             error.message,
             "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+
+        const error2 = await t.rejects(() =>
+          fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
+        );
+        if (error2 instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error2.cause.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image2"
           );
         }
 

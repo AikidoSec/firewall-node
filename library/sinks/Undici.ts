@@ -73,6 +73,25 @@ export class Undici implements Wrapper {
         }
       }
 
+      // Fetch accepts any object with a stringifier. User input may be an array if the user provides an array
+      // query parameter (e.g., ?example[0]=https://example.com/) in frameworks like Express. Since an Array has
+      // a default stringifier, this is exploitable in a default setup.
+      // The following condition ensures that we see the same value as what's passed down to the sink.
+      if (Array.isArray(args[0])) {
+        const url = tryParseURL(args[0].toString());
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url),
+            method
+          );
+          if (attack) {
+            return attack;
+          }
+        }
+      }
+
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,

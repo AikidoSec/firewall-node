@@ -30,25 +30,27 @@ export class HTTPRequest implements Wrapper {
       return undefined;
     }
 
-    const found = checkContextForSSRF({
+    // Check if the hostname is inside the context
+    const foundDirectSSRF = checkContextForSSRF({
       hostname: url.hostname,
       operation: `${module}.request`,
       context: context,
       port: port,
     });
-    if (found) {
-      return found;
+    if (foundDirectSSRF) {
+      return foundDirectSSRF;
     }
 
-    const foundRedirect = isRedirectToPrivateIP(url, context);
-    if (foundRedirect) {
+    // Check if the hostname is a private IP and if it's a redirect that was initiated by user input
+    const foundSSRFRedirect = isRedirectToPrivateIP(url, context);
+    if (foundSSRFRedirect) {
       return {
         operation: `${module}.request`,
         kind: "ssrf",
-        source: foundRedirect.source,
-        pathToPayload: foundRedirect.pathToPayload,
+        source: foundSSRFRedirect.source,
+        pathToPayload: foundSSRFRedirect.pathToPayload,
         metadata: {},
-        payload: foundRedirect.payload,
+        payload: foundSSRFRedirect.payload,
       };
     }
 

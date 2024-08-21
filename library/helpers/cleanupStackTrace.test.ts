@@ -109,3 +109,25 @@ Error
 
   t.same(cleaned, expected);
 });
+
+t.test("dns stack trace", async () => {
+  const stack = `
+Error
+    at GetAddrInfoReqWrap.wrappedDNSLookupCallback [as callback] (/var/task/node_modules/@aikidosec/firewall/vulnerabilities/ssrf/inspectDNSLookupCalls.js:96:20)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:111:8)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+  `.trim();
+
+  const cleaned = cleanupStackTrace(
+    stack,
+    "/var/task/node_modules/@aikidosec/firewall"
+  );
+
+  const expected = `
+Error
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:111:8)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+  `.trim();
+
+  t.same(cleaned, expected);
+});

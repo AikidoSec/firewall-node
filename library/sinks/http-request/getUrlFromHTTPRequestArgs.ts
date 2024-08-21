@@ -4,7 +4,7 @@ import { tryParseURL } from "../../helpers/tryParseURL";
 import { isPlainObject } from "../../helpers/isPlainObject";
 
 /**
- * Gets the port from the request options or URL of an HTTP request.
+ * Gets the url from the arguments of an node:http(s) outgoing request function call.
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
@@ -55,6 +55,9 @@ function getRequestOptions(args: unknown[]) {
   return undefined;
 }
 
+/**
+ * Build a URL object from the outgoing http(s) request options.
+ */
 function getUrlFromRequestOptions(
   options: HTTPRequestOptions | HTTPSRequestOptions,
   module: "http" | "https"
