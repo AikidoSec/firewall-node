@@ -314,10 +314,11 @@ export class Agent {
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const hasCompressedStats = this.statistics.hasCompressedStats();
-      const hasReceivedAnyStats = this.serviceConfig.hasReceivedAnyStats();
+      const canSendInitialStats =
+        !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
       const shouldReportInitialStats =
         !this.reportedInitialStats &&
-        (hasCompressedStats || !hasReceivedAnyStats);
+        (hasCompressedStats || canSendInitialStats);
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();
