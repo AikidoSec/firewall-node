@@ -54,6 +54,16 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const redirectTestUrl =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
+const redirectUrl = {
+  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
+  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
+  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
+  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
+};
+
 t.test(
   "it works",
   {
@@ -254,5 +264,26 @@ t.test(
     t.same(logger.getMessages(), [
       "undici.setGlobalDispatcher was called, we can't provide protection!",
     ]);
+
+    await runWithContext(
+      {
+        ...context,
+        body: { image: redirectUrl.ip },
+      },
+      async () => {
+        const error = await t.rejects(
+          async () =>
+            await request(redirectUrl.ip, {
+              maxRedirections: 1,
+            })
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+      }
+    );
   }
 );

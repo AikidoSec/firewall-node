@@ -4,6 +4,10 @@ import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import type { Dispatcher } from "undici";
 import { Context } from "../../agent/Context";
 import { onRedirect } from "./onRedirect";
+import { getUrlFromOptions } from "./getUrlFromOptions";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { wrapDispatch } from "./wrapDispatch";
+import { getInstance } from "../../agent/AgentSingleton";
 
 type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
 
@@ -13,14 +17,33 @@ type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
 export function wrapOnHeaders(
   orig: OnHeaders,
   requestContext: ReturnType<typeof RequestContextStorage.getStore>,
-  context: Context
+  context: Context,
+  isRedirectHandler = false // True if undici is used directly with a redirect handler
 ): OnHeaders {
   // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
-  return function onHeaders() {
+  return function onHeadersWrapped() {
     // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
 
-    if (args.length > 1) {
+    // Request context is required, but not set if it's a direct undici request with a redirect handler (not fetch)
+    // In this case, we get the request url from the class object that contains the onHeaders function we are wrapping
+    // @ts-expect-error No types for this
+    if (isRedirectHandler && typeof this.opts === "object") {
+      // @ts-expect-error No types for this
+      const url = getUrlFromOptions(this.opts);
+      if (url) {
+        requestContext = { port: getPortFromURL(url), url };
+
+        const agent = getInstance();
+        if (agent) {
+          // Wrap dispatch of redirect handler to set the request context for dns lookups and check for SSRF with private IPs
+          // @ts-expect-error No types for this
+          this.dispatch = wrapDispatch(this.dispatch, agent, false);
+        }
+      }
+    }
+
+    if (requestContext && args.length > 1) {
       const statusCode = args[0];
       if (isRedirectStatusCode(statusCode)) {
         try {
@@ -28,7 +51,6 @@ export function wrapOnHeaders(
           const headers = parseHeaders(args[1]);
           if (typeof headers.location === "string") {
             const destinationUrl = new URL(headers.location);
-
             onRedirect(destinationUrl, requestContext, context);
           }
         } catch (e) {
@@ -37,7 +59,7 @@ export function wrapOnHeaders(
       }
     }
 
-    if (orig) {
+    if (typeof orig === "function") {
       return orig.apply(
         // @ts-expect-error We dont know the type of this
         this,

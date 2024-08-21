@@ -15,6 +15,8 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import { wrapOnHeaders } from "./undici/wrapOnHeaders";
 
 const methods = [
   "request",
@@ -152,10 +154,32 @@ export class Undici implements Wrapper {
       },
     });
 
-    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent, false);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(dispatcher);
+  }
+
+  private patchRedirectHandler(instance: unknown) {
+    if (typeof instance !== "object") {
+      return instance;
+    }
+
+    const context = getContext();
+    if (!context) {
+      return instance;
+    }
+
+    // @ts-expect-error Not typed
+    instance.onHeaders = wrapOnHeaders(
+      // @ts-expect-error Not typed
+      instance.onHeaders,
+      undefined,
+      context,
+      true
+    );
+
+    return instance;
   }
 
   wrap(hooks: Hooks) {
@@ -170,7 +194,7 @@ export class Undici implements Wrapper {
       return;
     }
 
-    const undici = hooks
+    hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
@@ -198,6 +222,11 @@ export class Undici implements Wrapper {
             },
           });
         }
+      })
+      .onFileRequire("lib/handler/redirect-handler.js", (exports, pkgInfo) => {
+        return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
+          return this.patchRedirectHandler(instance);
+        });
       });
   }
 }

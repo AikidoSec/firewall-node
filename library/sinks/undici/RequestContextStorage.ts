@@ -8,4 +8,5 @@ import { AsyncLocalStorage } from "async_hooks";
 export const RequestContextStorage = new AsyncLocalStorage<{
   url: URL;
   port?: number;
+  isFetch?: boolean;
 }>();
