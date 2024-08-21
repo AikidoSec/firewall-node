@@ -100,3 +100,28 @@ t.test("Do not get port 0 from request options", async (t) => {
     new URL("https://localhost")
   );
 });
+
+t.test("Pass port as string", async (t) => {
+  t.same(
+    getURL(
+      [{ protocol: "https:", hostname: "localhost", port: "4000" }],
+      "https"
+    ),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { port: "4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+});
+
+t.test("Pass host instead of hostname", async (t) => {
+  t.same(
+    getURL([{ protocol: "https:", host: "localhost:4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { host: "test.dev" }], "https"),
+    new URL("https://test.dev")
+  );
+});
