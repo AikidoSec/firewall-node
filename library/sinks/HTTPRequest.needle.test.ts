@@ -72,6 +72,7 @@ t.test("it works", async (t) => {
           `${redirectTestUrl}/ssrf-test-domain`,
           {},
           {
+            // eslint-disable-next-line camelcase
             follow_max: 1,
           },
           (error, response) => {
