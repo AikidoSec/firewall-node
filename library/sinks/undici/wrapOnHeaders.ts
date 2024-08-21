@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { RequestContextStorage } from "./RequestContextStorage";
 import { parseHeaders } from "./parseHeaders";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";

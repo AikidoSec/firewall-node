@@ -70,7 +70,7 @@ t.test(
     skip:
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
-  async () => {
+  async (t) => {
     const logger = new LoggerForTesting();
     const agent = new Agent(
       true,
@@ -275,6 +275,27 @@ t.test(
           async () =>
             await request(redirectUrl.ip, {
               maxRedirections: 1,
+            })
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        body: { image: redirectUrl.ipTwice },
+      },
+      async () => {
+        const error = await t.rejects(
+          async () =>
+            await request(redirectUrl.ipTwice, {
+              maxRedirections: 2,
             })
         );
         if (error instanceof Error) {
