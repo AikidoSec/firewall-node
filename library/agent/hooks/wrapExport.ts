@@ -133,9 +133,9 @@ function inspectArgs(
   methodName: string
 ) {
   if (context) {
-    const match = agent.getConfig().getEndpoint(context);
+    const matches = agent.getConfig().getEndpoints(context);
 
-    if (match && match.endpoint.forceProtectionOff) {
+    if (matches.find((match) => match.forceProtectionOff)) {
       return;
     }
   }
