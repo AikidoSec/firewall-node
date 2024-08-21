@@ -270,6 +270,9 @@ t.test(
       },
     ]);
 
+    // Increment total requests
+    agent.getInspectionStatistics().onRequest();
+
     // After 5 seconds, nothing should happen
     clock.tick(1000 * 5);
     t.match(api.getEvents(), [
@@ -300,6 +303,53 @@ t.test(
       },
       {
         type: "heartbeat",
+      },
+    ]);
+
+    clock.uninstall();
+  }
+);
+
+t.test(
+  "it does not heartbeat when config says we didn't receive any stats and stats is empty",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      receivedAnyStats: false,
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After 5 seconds, nothing should happen
+    clock.tick(1000 * 5);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After a minute, we'll see that the dashboard didn't receive any stats yet
+    // But the stats is still empty, so we won't send a heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
       },
     ]);
 
