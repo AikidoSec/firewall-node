@@ -100,7 +100,7 @@ t.test("it detects SQL injections", async (t) => {
       });
     });
 
-    runWithContext(safeContext, () => {
+    await runWithContext(safeContext, async () => {
       db.exec("SELECT 1;-- This is a comment");
 
       const error = t.throws(() => db.exec([]));
@@ -108,9 +108,16 @@ t.test("it detects SQL injections", async (t) => {
       if (error instanceof Error) {
         t.same(error.message, "Expected first argument to be a string");
       }
+
+      try {
+        await db.backup();
+        t.fail("Expected an error");
+      } catch (error: any) {
+        t.same(error.message, "Expected first argument to be a string");
+      }
     });
 
-    runWithContext(dangerousPathContext, () => {
+    await runWithContext(dangerousPathContext, async () => {
       const error = t.throws(() => db.backup("/tmp/insecure"));
       t.ok(error instanceof Error);
       if (error instanceof Error) {
@@ -119,7 +126,17 @@ t.test("it detects SQL injections", async (t) => {
           "Aikido firewall has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
         );
       }
+      await db.backup("/tmp/sqlite-test-secure");
     });
+
+    await db.backup("/tmp/sqlite-test-secure-2");
+
+    try {
+      await db.backup();
+      t.fail("Expected an error");
+    } catch (error: any) {
+      t.same(error.message, "Expected first argument to be a string");
+    }
   } catch (error: any) {
     t.fail(error);
   } finally {
