@@ -259,12 +259,6 @@ t.test(
       }
     );
 
-    logger.clear();
-    setGlobalDispatcher(new UndiciAgent({}));
-    t.same(logger.getMessages(), [
-      "undici.setGlobalDispatcher was called, we can't provide protection!",
-    ]);
-
     await runWithContext(
       {
         ...context,
@@ -306,5 +300,32 @@ t.test(
         }
       }
     );
+
+    await runWithContext(
+      {
+        ...context,
+        body: { image: redirectUrl.domain },
+      },
+      async () => {
+        const error = await t.rejects(
+          async () =>
+            await request(redirectUrl.domain, {
+              maxRedirections: 2,
+            })
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    logger.clear();
+    setGlobalDispatcher(new UndiciAgent({}));
+    t.same(logger.getMessages(), [
+      "undici.setGlobalDispatcher was called, we can't provide protection!",
+    ]);
   }
 );
