@@ -52,6 +52,16 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const redirectTestUrl =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
+const redirectUrl = {
+  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
+  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
+  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
+  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
+};
+
 t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
@@ -175,13 +185,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://127.0.0.1/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+        ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.ip));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -195,13 +202,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://local.aikido.io/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+        ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-domain")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.domain));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -215,13 +219,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-twice" } },
+        ...{ body: { image: redirectUrl.ipTwice } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-twice")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -235,13 +236,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain-twice" } },
+        ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
-        const error = await t.rejects(() =>
-          fetch("https://dub.sh/aikido-ssrf-test-domain-twice")
-        );
+        const error = await t.rejects(() => fetch(redirectUrl.domainTwice));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -255,11 +253,19 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+        ...{
+          body: {
+            image:
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          },
+        },
       },
       async () => {
-        const error = await t.rejects(() => fetch("https://bit.ly/3WOLuir"));
+        const error = await t.rejects(() =>
+          fetch(
+            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
+          )
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -274,11 +280,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://127.0.0.1/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+        ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
-        const response = await fetch("https://dub.sh/aikido-ssrf-test", {
+        const response = await fetch(redirectUrl.ip, {
           redirect: "manual",
         });
         t.same(response.status, 302);
@@ -299,11 +304,10 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to http://local.aikido.io/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+        ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
-        const response = await fetch("https://dub.sh/aikido-ssrf-test-domain", {
+        const response = await fetch(redirectUrl.domain, {
           redirect: "manual",
         });
         t.same(response.status, 302);
@@ -325,14 +329,21 @@ t.test(
     await runWithContext(
       {
         ...context,
-        // Redirects to https://dub.sh/aikido-ssrf-test-domain
-        ...{ body: { image: "https://bit.ly/3WOLuir" } },
+        ...{
+          body: {
+            image:
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          },
+        },
       },
       async () => {
-        const response = await fetch("https://bit.ly/3WOLuir", {
-          redirect: "manual",
-        });
-        t.same(response.status, 301);
+        const response = await fetch(
+          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          {
+            redirect: "manual",
+          }
+        );
+        t.same(response.status, 302);
         const error = await t.rejects(() =>
           fetch(response.headers.get("location")!)
         );
