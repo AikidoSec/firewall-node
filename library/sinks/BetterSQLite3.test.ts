@@ -4,7 +4,6 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { BetterSQLite3 } from "./BetterSQLite3";
-import { promisify } from "util";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",

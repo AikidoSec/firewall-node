@@ -39,7 +39,7 @@ import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
-import { BetterSQLite3 } from "../sinks/BetterSqlite3";
+import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 
 function isDebugging() {
   return (
