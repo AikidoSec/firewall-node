@@ -21,6 +21,9 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const redirectTestUrl =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
 t.test("it works", async (t) => {
   const agent = new Agent(
     true,
@@ -49,10 +52,10 @@ t.test("it works", async (t) => {
       {
         ...context,
         // Redirects to http://127.0.0.1/test
-        ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+        ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
       },
       async () => {
-        await fetch("https://dub.sh/aikido-ssrf-test");
+        await fetch(`${redirectTestUrl}/ssrf-test`);
       }
     )
   );

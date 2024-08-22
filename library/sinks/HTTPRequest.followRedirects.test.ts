@@ -21,6 +21,9 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const redirectTestUrl =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
 t.test("it works", (t) => {
   const agent = new Agent(
     true,
@@ -31,21 +34,18 @@ t.test("it works", (t) => {
   );
   agent.start([new HTTPRequest()]);
 
-  const { https } = require("follow-redirects");
+  const { http } = require("follow-redirects");
 
   runWithContext(
     {
       ...context,
       // Redirects to http://127.0.0.1/test
-      ...{ body: { image: "https://dub.sh/aikido-ssrf-test" } },
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
     },
     () => {
-      const response = https.request(
-        "https://dub.sh/aikido-ssrf-test",
-        (res) => {
-          t.fail("should not respond");
-        }
-      );
+      const response = http.request(`${redirectTestUrl}/ssrf-test`, (res) => {
+        t.fail("should not respond");
+      });
       response.on("error", (e) => {
         t.ok(e instanceof Error);
         t.same(
@@ -61,11 +61,11 @@ t.test("it works", (t) => {
     {
       ...context,
       // Redirects to http://local.aikido.io/test
-      ...{ body: { image: "https://dub.sh/aikido-ssrf-test-domain" } },
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test-domain` } },
     },
     () => {
-      const response = https.request(
-        "https://dub.sh/aikido-ssrf-test-domain",
+      const response = http.request(
+        `${redirectTestUrl}/ssrf-test-domain`,
         (res) => {
           t.fail("should not respond");
         }
