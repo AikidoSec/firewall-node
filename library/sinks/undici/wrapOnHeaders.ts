@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import { RequestContextStorage } from "./RequestContextStorage";
+import type { UndiciRequestContext } from "./RequestContextStorage";
 import { parseHeaders } from "./parseHeaders";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import type { Dispatcher } from "undici";
@@ -17,7 +17,7 @@ type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
  */
 export function wrapOnHeaders(
   orig: OnHeaders,
-  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
+  requestContext: UndiciRequestContext | undefined,
   context: Context,
   isRedirectHandler = false // True if undici is used directly with a redirect handler
 ): OnHeaders {

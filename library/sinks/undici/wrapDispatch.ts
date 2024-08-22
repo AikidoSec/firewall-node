@@ -1,5 +1,6 @@
+/* eslint-disable max-lines-per-function */
 import type { Dispatcher } from "undici";
-import { RequestContextStorage } from "./RequestContextStorage";
+import { runWithUndiciRequestContext } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { Agent } from "../../agent/Agent";
@@ -26,12 +27,13 @@ export function wrapDispatch(
   orig: Dispatch,
   agent: Agent,
   isFetch: boolean,
-  contextArg?: Context
+  contextArg?: Context // Only set if its a nth dispatch after a redirect
 ): Dispatch {
   return function wrap(opts, handler) {
     let context = getContext();
 
     // Prefer passed context over the context from the async local storage
+    // Context is passed as arg if its a nth dispatch after a redirect
     if (contextArg) {
       context = contextArg;
     }
@@ -65,22 +67,14 @@ export function wrapDispatch(
       context
     );
 
-    const requestContext = RequestContextStorage.getStore();
-    if (requestContext) {
-      // Request context is already set if this is a redirect, so we have to modify it
-      // We also pass the incoming context as part of the outgoing request context to prevent context mismatch
-      requestContext.port = port;
-      requestContext.url = url;
-      requestContext.inContext = contextArg;
-      return orig.apply(
-        // @ts-expect-error We dont know the type of this
-        this,
-        [opts, handler]
-      );
-    }
-
-    return RequestContextStorage.run(
-      { port, url, isFetch, inContext: undefined },
+    // We also pass the incoming context as part of the outgoing request context to prevent context mismatch, if the request is a redirect (argContext is set)
+    return runWithUndiciRequestContext(
+      {
+        port,
+        url,
+        isFetch,
+        inContext: contextArg,
+      },
       () => {
         return orig.apply(
           // @ts-expect-error We dont know the type of this
