@@ -1,7 +1,7 @@
 import { Context, updateContext } from "../../agent/Context";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
-import { RequestContextStorage } from "./RequestContextStorage";
+import type { UndiciRequestContext } from "./RequestContextStorage";
 
 /**
  * Is called by wrapOnHeaders if a request results in a redirect.
@@ -9,13 +9,9 @@ import { RequestContextStorage } from "./RequestContextStorage";
  */
 export function onRedirect(
   destination: URL,
-  requestContext: ReturnType<typeof RequestContextStorage.getStore>,
+  requestContext: UndiciRequestContext,
   context: Context
 ) {
-  if (!requestContext) {
-    return;
-  }
-
   let redirectOrigin: URL | undefined;
 
   // Check if the source hostname is in the context - is true if it's the first redirect in the chain and the user input is the source

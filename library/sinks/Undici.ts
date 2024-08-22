@@ -4,10 +4,6 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
@@ -15,6 +11,8 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import { wrapOnHeaders } from "./undici/wrapOnHeaders";
 
 const methods = [
   "request",
@@ -152,25 +150,36 @@ export class Undici implements Wrapper {
       },
     });
 
-    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent, false);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undici.setGlobalDispatcher(dispatcher);
   }
 
-  wrap(hooks: Hooks) {
-    const supported =
-      getMajorNodeVersion() >= 17 ||
-      (getMajorNodeVersion() === 16 && getMinorNodeVersion() >= 8);
-
-    if (!supported) {
-      // Undici requires Node.js 16.8+
-      // Packages aren't scoped in npm workspaces, we'll try to require undici:
-      // ReferenceError: ReadableStream is not defined
-      return;
+  private patchRedirectHandler(instance: unknown) {
+    if (typeof instance !== "object") {
+      return instance;
     }
 
-    const undici = hooks
+    const context = getContext();
+    if (!context) {
+      return instance;
+    }
+
+    // @ts-expect-error Not typed
+    instance.onHeaders = wrapOnHeaders(
+      // @ts-expect-error Not typed
+      instance.onHeaders,
+      undefined,
+      context,
+      true
+    );
+
+    return instance;
+  }
+
+  wrap(hooks: Hooks) {
+    hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
@@ -198,6 +207,11 @@ export class Undici implements Wrapper {
             },
           });
         }
+      })
+      .onFileRequire("lib/handler/redirect-handler.js", (exports, pkgInfo) => {
+        return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
+          return this.patchRedirectHandler(instance);
+        });
       });
   }
 }

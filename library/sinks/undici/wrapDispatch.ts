@@ -1,13 +1,14 @@
+/* eslint-disable max-lines-per-function */
 import type { Dispatcher } from "undici";
-import { RequestContextStorage } from "./RequestContextStorage";
+import { runWithUndiciRequestContext } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
-import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { wrapOnHeaders } from "./wrapOnHeaders";
+import { getUrlFromOptions } from "./getUrlFromOptions";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -22,9 +23,20 @@ type Dispatch = Dispatcher["dispatch"];
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
  *
  */
-export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
+export function wrapDispatch(
+  orig: Dispatch,
+  agent: Agent,
+  isFetch: boolean,
+  contextArg?: Context // Only set if its a nth dispatch after a redirect
+): Dispatch {
   return function wrap(opts, handler) {
-    const context = getContext();
+    let context = getContext();
+
+    // Prefer passed context over the context from the async local storage
+    // Context is passed as arg if its a nth dispatch after a redirect
+    if (contextArg) {
+      context = contextArg;
+    }
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
@@ -34,16 +46,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    let url: URL | undefined;
-    if (typeof opts.origin === "string" && typeof opts.path === "string") {
-      url = tryParseURL(opts.origin + opts.path);
-    } else if (opts.origin instanceof URL) {
-      if (typeof opts.path === "string") {
-        url = tryParseURL(opts.origin.href + opts.path);
-      } else {
-        url = opts.origin;
-      }
-    }
+    const url = getUrlFromOptions(opts);
 
     if (!url) {
       return orig.apply(
@@ -53,7 +56,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    blockRedirectToPrivateIP(url, context, agent);
+    blockRedirectToPrivateIP(url, context, agent, isFetch);
 
     const port = getPortFromURL(url);
 
@@ -64,26 +67,42 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       context
     );
 
-    return RequestContextStorage.run({ port, url }, () => {
-      return orig.apply(
-        // @ts-expect-error We dont know the type of this
-        this,
-        [opts, handler]
-      );
-    });
+    // We also pass the incoming context as part of the outgoing request context to prevent context mismatch, if the request is a redirect (argContext is set)
+    return runWithUndiciRequestContext(
+      {
+        port,
+        url,
+        isFetch,
+        inContext: contextArg,
+      },
+      () => {
+        return orig.apply(
+          // @ts-expect-error We dont know the type of this
+          this,
+          [opts, handler]
+        );
+      }
+    );
   };
 }
 
 /**
  * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
  */
-function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+function blockRedirectToPrivateIP(
+  url: URL,
+  context: Context,
+  agent: Agent,
+  isFetch: boolean
+) {
   const found = isRedirectToPrivateIP(url, context);
+
+  const operation = isFetch ? "fetch" : "undici.[method]";
 
   if (found) {
     agent.onDetectedAttack({
       module: "undici",
-      operation: "fetch",
+      operation: operation,
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
@@ -96,7 +115,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
     }
   }
