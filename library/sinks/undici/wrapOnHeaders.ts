@@ -38,8 +38,9 @@ export function wrapOnHeaders(
         const agent = getInstance();
         if (agent) {
           // Wrap dispatch of redirect handler to set the request context for dns lookups and check for SSRF with private IPs
+          // We also pass the context because the AsyncLocalStorage context is broken after a redirect
           // @ts-expect-error No types for this
-          this.dispatch = wrapDispatch(this.dispatch, agent, false);
+          this.dispatch = wrapDispatch(this.dispatch, agent, false, context);
         }
       }
     }

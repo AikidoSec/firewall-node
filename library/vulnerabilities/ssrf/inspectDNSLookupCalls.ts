@@ -81,7 +81,14 @@ function wrapDNSLookupCallback(
       return callback(err);
     }
 
-    const context = getContext();
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const requestContext = RequestContextStorage.getStore();
+    let context = getContext();
+
+    // If requestContext.inContext is set, its a request after an redirect. Because the normal context get broken after a redirect, we passed it in the requestContext
+    if (requestContext?.inContext) {
+      context = requestContext.inContext;
+    }
 
     if (context) {
       const matches = agent.getConfig().getEndpoints(context);
@@ -113,9 +120,6 @@ function wrapDNSLookupCallback(
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
-
-    // This is set if this resolve is part of an outgoing request that we are inspecting
-    const requestContext = RequestContextStorage.getStore();
 
     let port: number | undefined;
 

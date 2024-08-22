@@ -1,7 +1,6 @@
 import type { Dispatcher } from "undici";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
-import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
@@ -26,10 +25,16 @@ type Dispatch = Dispatcher["dispatch"];
 export function wrapDispatch(
   orig: Dispatch,
   agent: Agent,
-  isFetch: boolean
+  isFetch: boolean,
+  contextArg?: Context
 ): Dispatch {
   return function wrap(opts, handler) {
-    const context = getContext();
+    let context = getContext();
+
+    // Prefer passed context over the context from the async local storage
+    if (contextArg) {
+      context = contextArg;
+    }
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
@@ -60,13 +65,30 @@ export function wrapDispatch(
       context
     );
 
-    return RequestContextStorage.run({ port, url, isFetch }, () => {
+    const requestContext = RequestContextStorage.getStore();
+    if (requestContext) {
+      // Request context is already set if this is a redirect, so we have to modify it
+      // We also pass the incoming context as part of the outgoing request context to prevent context mismatch
+      requestContext.port = port;
+      requestContext.url = url;
+      requestContext.inContext = contextArg;
       return orig.apply(
         // @ts-expect-error We dont know the type of this
         this,
         [opts, handler]
       );
-    });
+    }
+
+    return RequestContextStorage.run(
+      { port, url, isFetch, inContext: undefined },
+      () => {
+        return orig.apply(
+          // @ts-expect-error We dont know the type of this
+          this,
+          [opts, handler]
+        );
+      }
+    );
   };
 }
 
