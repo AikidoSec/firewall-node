@@ -52,7 +52,7 @@ export function shouldRateLimitRequest(
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${context.route}:ip:${context.remoteAddress}`,
+        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
         windowSizeInMS,
         maxRequests
       );
@@ -70,7 +70,7 @@ export function shouldRateLimitRequest(
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${context.route}:user:${context.user.id}`,
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
         windowSizeInMS,
         maxRequests
       );
