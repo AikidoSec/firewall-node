@@ -195,7 +195,6 @@ t.test(
       }
 
       const oldUrl = require("url");
-      // With object on the second argument
       const error5 = t.throws(() =>
         request(oldUrl.parse("https://localhost:4000/api/internal"))
       );

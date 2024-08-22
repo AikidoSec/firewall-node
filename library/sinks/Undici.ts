@@ -13,7 +13,7 @@ import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
-import { isOptionsObjects } from "./http-request/isOptionsObjects";
+import { isOptionsObject } from "./http-request/isOptionsObject";
 
 const methods = [
   "request",
@@ -104,7 +104,7 @@ export class Undici implements Wrapper {
       }
 
       if (
-        isOptionsObjects(args[0]) &&
+        isOptionsObject(args[0]) &&
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {

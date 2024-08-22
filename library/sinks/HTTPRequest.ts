@@ -11,7 +11,7 @@ import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupC
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
-import { isOptionsObjects } from "./http-request/isOptionsObjects";
+import { isOptionsObject } from "./http-request/isOptionsObject";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -98,7 +98,7 @@ export class HTTPRequest implements Wrapper {
     }
 
     const optionObj = args.find((arg): arg is RequestOptions =>
-      isOptionsObjects(arg)
+      isOptionsObject(arg)
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
