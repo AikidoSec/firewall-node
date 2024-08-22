@@ -58,6 +58,10 @@ lambda-mongodb-nosql-injection:
 lambda-mongodb-safe:
 	cd sample-apps/lambda-mongodb && npx serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_DEBUG=true --function login --path payloads/safe-request.json
 
+.PHONY: nestjs-sentry
+nestjs-sentry:
+	cd sample-apps/nestjs-sentry && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true NODE_OPTIONS=--preserve-symlinks npm run start
+
 .PHONY: install
 install:
 	mkdir -p build
