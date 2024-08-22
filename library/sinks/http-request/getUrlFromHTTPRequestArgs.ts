@@ -71,10 +71,18 @@ function getUrlFromRequestOptions(
   str += "//";
   if (typeof options.hostname === "string") {
     str += options.hostname;
+  } else if (typeof options.host === "string") {
+    str += options.host;
   }
-  if (typeof options.port === "number" && options.port > 0) {
-    str += `:${options.port}`;
+  if (options.port) {
+    if (typeof options.port === "number" && options.port > 0) {
+      str += `:${options.port}`;
+    }
+    if (typeof options.port === "string" && options.port.length > 0) {
+      str += `:${options.port}`;
+    }
   }
+
   if (typeof options.path === "string") {
     str += options.path;
   }
@@ -98,6 +106,8 @@ function mergeURLWithRequestOptions(
   urlStr += "//";
   if (options.hostname) {
     urlStr += options.hostname;
+  } else if (options.host) {
+    urlStr += options.host;
   } else {
     urlStr += url.hostname;
   }
