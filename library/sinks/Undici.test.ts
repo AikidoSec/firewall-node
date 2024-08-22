@@ -322,6 +322,54 @@ t.test(
       }
     );
 
+    await runWithContext(
+      {
+        ...context,
+        body: { image: redirectUrl.domainTwice },
+      },
+      async () => {
+        const error = await t.rejects(
+          async () =>
+            await request(redirectUrl.domainTwice, {
+              maxRedirections: 2,
+            })
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        body: {
+          image:
+            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+        },
+      },
+      async () => {
+        const error = await t.rejects(
+          async () =>
+            await request(
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+              {
+                maxRedirections: 2,
+              }
+            )
+        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+          );
+        }
+      }
+    );
+
     logger.clear();
     setGlobalDispatcher(new UndiciAgent({}));
     t.same(logger.getMessages(), [

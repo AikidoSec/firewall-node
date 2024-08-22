@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { Context } from "../../agent/Context";
 
 /**
  * This storage is used to store the port of outgoing fetch / undici requests.
@@ -8,5 +9,6 @@ import { AsyncLocalStorage } from "async_hooks";
 export const RequestContextStorage = new AsyncLocalStorage<{
   url: URL;
   port?: number;
-  isFetch?: boolean;
+  isFetch?: boolean; // True if the request is a fetch request, false if it's an direct undici request
+  inContext?: Context; // Incoming request context
 }>();
