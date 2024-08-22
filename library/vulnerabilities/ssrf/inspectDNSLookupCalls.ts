@@ -7,7 +7,7 @@ import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
-import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
+import { getUndiciRequestContext } from "../../sinks/undici/RequestContextStorage";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
@@ -82,7 +82,7 @@ function wrapDNSLookupCallback(
     }
 
     // This is set if this resolve is part of an outgoing request that we are inspecting
-    const requestContext = RequestContextStorage.getStore();
+    const requestContext = getUndiciRequestContext();
     let context = getContext();
 
     // If requestContext.inContext is set, its a request after an redirect. Because the normal context get broken after a redirect, we passed it in the requestContext
