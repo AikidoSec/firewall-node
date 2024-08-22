@@ -287,3 +287,56 @@ t.test("it rate limits with wildcard", async () => {
     }
   );
 });
+
+t.test("it rate limits with wildcard", async () => {
+  const agent = await createAgent([
+    {
+      method: "*",
+      route: "/api/*",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login", "POST"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/logout", "GET"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/reset-password", "PUT"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login", "GET"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "ip",
+    }
+  );
+});
