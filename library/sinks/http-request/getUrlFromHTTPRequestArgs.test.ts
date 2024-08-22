@@ -125,3 +125,12 @@ t.test("Pass host instead of hostname", async (t) => {
     new URL("https://test.dev")
   );
 });
+
+t.test("it works with node:url object as first argument", async (t) => {
+  const oldUrl = require("url");
+
+  t.same(
+    getURL([oldUrl.parse("http://localhost:4000")], "http"),
+    new URL("http://localhost:4000")
+  );
+});

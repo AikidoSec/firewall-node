@@ -285,6 +285,18 @@ t.test("it works", (t) => {
         "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
+
+    const oldUrl = require("url");
+    // With object on the second argument
+    const error6 = t.throws(() =>
+      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
+    );
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
   });
 
   runWithContext(

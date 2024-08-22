@@ -60,7 +60,7 @@ t.test(
     skip:
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
-  async () => {
+  async (t) => {
     const logger = new LoggerForTesting();
     const agent = new Agent(
       true,
@@ -191,6 +191,18 @@ t.test(
         t.same(
           error4.message,
           "Aikido firewall has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
+        );
+      }
+
+      const oldUrl = require("url");
+      // With object on the second argument
+      const error5 = t.throws(() =>
+        request(oldUrl.parse("https://localhost:4000/api/internal"))
+      );
+      if (error5 instanceof Error) {
+        t.same(
+          error5.message,
+          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
     });

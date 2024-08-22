@@ -6,12 +6,12 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
+import { isOptionsObjects } from "./http-request/isOptionsObjects";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -98,7 +98,7 @@ export class HTTPRequest implements Wrapper {
     }
 
     const optionObj = args.find((arg): arg is RequestOptions =>
-      isPlainObject(arg)
+      isOptionsObjects(arg)
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);

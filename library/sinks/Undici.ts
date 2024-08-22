@@ -9,11 +9,11 @@ import {
   getMinorNodeVersion,
 } from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
+import { isOptionsObjects } from "./http-request/isOptionsObjects";
 
 const methods = [
   "request",
@@ -104,7 +104,7 @@ export class Undici implements Wrapper {
       }
 
       if (
-        isPlainObject(args[0]) &&
+        isOptionsObjects(args[0]) &&
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {

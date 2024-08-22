@@ -1,7 +1,7 @@
 import type { RequestOptions as HTTPSRequestOptions } from "https";
 import type { RequestOptions as HTTPRequestOptions } from "http";
 import { tryParseURL } from "../../helpers/tryParseURL";
-import { isPlainObject } from "../../helpers/isPlainObject";
+import { isOptionsObjects } from "./isOptionsObjects";
 
 /**
  * Gets the url from the arguments of an node:http(s) outgoing request function call.
@@ -43,11 +43,11 @@ export function getUrlFromHTTPRequestArgs(
  * But thy can also be not provided at all.
  */
 function getRequestOptions(args: unknown[]) {
-  if (isPlainObject(args[0]) && !(args[0] instanceof URL)) {
+  if (isOptionsObjects(args[0]) && !(args[0] instanceof URL)) {
     return args[0] as HTTPRequestOptions | HTTPSRequestOptions;
   } else if (
     args.length > 1 &&
-    isPlainObject(args[1]) &&
+    isOptionsObjects(args[1]) &&
     !(args[1] instanceof URL)
   ) {
     return args[1] as HTTPRequestOptions | HTTPSRequestOptions;
@@ -74,6 +74,7 @@ function getUrlFromRequestOptions(
   } else if (typeof options.host === "string") {
     str += options.host;
   }
+
   if (options.port) {
     if (typeof options.port === "number" && options.port > 0) {
       str += `:${options.port}`;
