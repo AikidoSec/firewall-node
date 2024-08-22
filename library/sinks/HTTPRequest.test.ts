@@ -411,6 +411,37 @@ t.test("it works", (t) => {
     }
   );
 
+  runWithContext(
+    {
+      ...context,
+      ...{
+        body: {
+          image: "http://13.60.120.68/ssrf-test-absolute-domain",
+        },
+      },
+    },
+    () => {
+      const response1 = http.request(
+        "http://13.60.120.68/ssrf-test-absolute-domain",
+        (res) => {
+          t.same(res.statusCode, 302);
+          t.same(res.headers.location, redirectUrl.domain);
+          const response2 = http.request(redirectUrl.domain, (res) => {
+            http.request("http://local.aikido.io/test").on("error", (e) => {
+              t.ok(e instanceof Error);
+              t.same(
+                e.message,
+                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              );
+            });
+          });
+          response2.end();
+        }
+      );
+      response1.end();
+    }
+  );
+
   setTimeout(() => {
     t.end();
   }, 3000);
