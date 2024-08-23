@@ -368,9 +368,12 @@ t.test("It does not match GROUP keyword", async () => {
         INNER JOIN group_settings ON groups.id = group_settings.group_id AND group_settings.user_id = ?
         WHERE groups.business_id = ?
         GROUP BY group_id
+        ORDER BY group_id DESC, group_settings.user_id ASC
     `;
 
   isNotSqlInjection(query, "group_id");
+  isNotSqlInjection(query, "DESC");
+  isNotSqlInjection(query, "ASC");
 });
 
 t.test("It does not flag SQL keyword if part of another word", async () => {
