@@ -138,8 +138,8 @@ function wrapDNSLookupCallback(
     // The hostname is not found in the context, check if it's a redirect
     if (!found && context.outgoingRequestRedirects) {
       let url: URL | undefined;
-      // Url arg is passed when wrapping node:http(s), but not for unidic / fetch because of the way they are wrapped
-      // For unidic / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
+      // Url arg is passed when wrapping node:http(s), but not for undici / fetch because of the way they are wrapped
+      // For undici / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
       // not to be confused with the "normal" context used in wide parts of this library
       if (urlArg) {
         url = urlArg;
