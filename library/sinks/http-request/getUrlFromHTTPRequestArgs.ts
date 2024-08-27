@@ -1,5 +1,6 @@
 import type { RequestOptions as HTTPSRequestOptions } from "https";
 import type { RequestOptions as HTTPRequestOptions } from "http";
+import { isIPv6 } from "net";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isOptionsObject } from "./isOptionsObject";
 
@@ -68,11 +69,12 @@ function getUrlFromRequestOptions(
   } else if (module) {
     str += `${module}:`;
   }
+
   str += "//";
   if (typeof options.hostname === "string") {
-    str += options.hostname;
+    str += wrapWithSquareBracketsIfNeeded(options.hostname);
   } else if (typeof options.host === "string") {
-    str += options.host;
+    str += wrapWithSquareBracketsIfNeeded(options.host);
   }
 
   if (options.port) {
@@ -87,7 +89,16 @@ function getUrlFromRequestOptions(
   if (typeof options.path === "string") {
     str += options.path;
   }
+
   return tryParseURL(str);
+}
+
+function wrapWithSquareBracketsIfNeeded(hostname: string): string {
+  if (isIPv6(hostname)) {
+    return `[${hostname}]`;
+  }
+
+  return hostname;
 }
 
 /**

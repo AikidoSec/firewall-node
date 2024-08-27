@@ -52,9 +52,19 @@ t.test("it works with options", async (t) => {
   );
 });
 
+t.test("it wraps host and hostname with square brackets", async (t) => {
+  t.same(
+    getURL([{ protocol: "http:", host: "::", port: 80 }], "http"),
+    new URL("http://[::]:80")
+  );
+  t.same(
+    getURL([{ protocol: "http:", hostname: "::", port: 80 }], "http"),
+    new URL("http://[::]:80")
+  );
+});
+
 t.test("it does not throw on invalid arguments", async (t) => {
   t.same(getURL([], "http"), undefined);
-  // @ts-expect-error Testing invalid arguments
   t.same(getURL(["%test%"], undefined), undefined);
   t.same(new Date(), []);
 });

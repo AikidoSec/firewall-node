@@ -81,6 +81,26 @@ t.test("it works", (t) => {
     }
   );
 
+  runWithContext(
+    {
+      ...context,
+      ...{ body: { image: "http://vuln.atwebpages.com" } },
+    },
+    () => {
+      const response = http.request("http://vuln.atwebpages.com", (res) => {
+        t.fail("should not respond");
+      });
+      response.on("error", (e) => {
+        t.ok(e instanceof Error);
+        t.same(
+          e.message,
+          "Redirected request failed: Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+        );
+      });
+      response.end();
+    }
+  );
+
   setTimeout(() => {
     t.end();
   }, 3000);

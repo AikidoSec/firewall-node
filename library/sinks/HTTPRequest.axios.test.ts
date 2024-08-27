@@ -67,4 +67,24 @@ t.test("it works", async (t) => {
       "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
+
+  const error2 = await t.rejects(
+    runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "http://vuln.atwebpages.com" } },
+      },
+      async () => {
+        await axios.request("http://vuln.atwebpages.com");
+      }
+    )
+  );
+
+  t.ok(error2 instanceof Error);
+  if (error2 instanceof Error) {
+    t.match(
+      error2.message,
+      "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+    );
+  }
 });
