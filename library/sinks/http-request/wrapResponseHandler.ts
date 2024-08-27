@@ -29,7 +29,7 @@ export function wrapResponseHandler(
         // Remove our listener if res.read get's called :
         res.off("data", dataListener);
         return originalReadFunction(size);
-      }
+      };
 
       if (res.rawListeners("data").length === 0) {
         res.on("data", dataListener);
