@@ -24,8 +24,10 @@ export function wrapResponseHandler(
     if (getMajorNodeVersion() >= 19) {
       // Need to attach data & end event handler otherwise the process will not exit
       // As safety we'll attach the handlers only if there are no listeners
-      const passThrough = new PassThrough();
-      res.pipe(passThrough);
+      if (res.listenerCount("data") === 0) {
+        const passThrough = new PassThrough();
+        res.pipe(passThrough);
+      }
     }
 
     const context = getContext();
