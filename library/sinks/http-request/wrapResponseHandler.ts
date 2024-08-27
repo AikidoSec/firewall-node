@@ -7,6 +7,7 @@ import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
 import { getUrlFromHTTPRequestArgs } from "./getUrlFromHTTPRequestArgs";
+import { PassThrough } from "stream";
 
 /**
  * We are wrapping the response handler for outgoing HTTP requests to detect redirects.
@@ -23,15 +24,8 @@ export function wrapResponseHandler(
     if (getMajorNodeVersion() >= 19) {
       // Need to attach data & end event handler otherwise the process will not exit
       // As safety we'll attach the handlers only if there are no listeners
-      process.on("exit", () => {
-        if (res.listenerCount("data") === 0) {
-          res.on("data", () => {});
-        }
-
-        if (res.listenerCount("end") === 0) {
-          res.on("end", () => {});
-        }
-      });
+      const passThrough = new PassThrough();
+      res.pipe(passThrough);
     }
 
     const context = getContext();
