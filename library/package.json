@@ -89,5 +89,9 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.637.0",
+    "@aws-sdk/credential-providers": "^3.637.0"
   }
 }

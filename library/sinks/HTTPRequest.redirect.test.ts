@@ -32,7 +32,7 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
 };
 
-t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
+t.test("it works", (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
