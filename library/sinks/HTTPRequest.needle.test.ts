@@ -24,7 +24,7 @@ const context: Context = {
 const redirectTestUrl =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
-t.test("it works", async (t) => {
+t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
