@@ -1,5 +1,7 @@
 import { lookup } from "dns";
 import { type RequestOptions } from "http";
+import { ClientRequest as HttpClientRequest } from "node:http";
+import { ClientRequest as HttpsClientRequest } from "node:https";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -12,6 +14,7 @@ import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPriva
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { wrap } from "../helpers/wrap";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -145,17 +148,47 @@ export class HTTPRequest implements Wrapper {
   }
 
   wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return wrapResponseHandler(args, module, arg);
+      }
 
-        return arg;
+      return arg;
+    });
+  }
+
+  wrapOnResponse(
+    requestArgs: unknown[],
+    module: "http" | "https",
+    returnVal: unknown
+  ) {
+    if (
+      returnVal instanceof HttpClientRequest ||
+      returnVal instanceof HttpsClientRequest
+    ) {
+      wrap(returnVal, "on", function createWrappedOn(original) {
+        return function wrappedOn(
+          this: HttpClientRequest | HttpsClientRequest
+        ) {
+          // eslint-disable-next-line prefer-rest-params
+          const args = Array.from(arguments);
+
+          if (
+            args.length === 2 &&
+            args[0] === "response" &&
+            typeof args[1] === "function"
+          ) {
+            const responseHandler = args[1];
+            args[1] = wrapResponseHandler(requestArgs, module, responseHandler);
+
+            return original.apply(this, args);
+          }
+
+          // eslint-disable-next-line prefer-rest-params
+          return original.apply(this, arguments);
+        };
       });
     }
-
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
   }
 
   wrap(hooks: Hooks) {
@@ -185,7 +218,13 @@ export class HTTPRequest implements Wrapper {
             this.monitorDNSLookups(args, agent, module),
             module
           );
-        });
+        })
+        .inspectResult("request", (args, result, subject, agent) =>
+          this.wrapOnResponse(args, module, result)
+        )
+        .inspectResult("get", (args, result, subject, agent) =>
+          this.wrapOnResponse(args, module, result)
+        );
     });
   }
 }
