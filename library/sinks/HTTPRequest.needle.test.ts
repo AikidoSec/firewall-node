@@ -72,8 +72,12 @@ t.test("it works", async (t) => {
           `${redirectTestUrl}/ssrf-test-domain`,
           {},
           {
-            // eslint-disable-next-line camelcase
+            /* eslint-disable camelcase */
             follow_max: 1,
+            open_timeout: 5000,
+            response_timeout: 5000,
+            read_timeout: 5000,
+            /* eslint-enable camelcase */
           },
           (error, response) => {
             t.ok(error instanceof Error);
