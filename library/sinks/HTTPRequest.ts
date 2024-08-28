@@ -175,16 +175,10 @@ export class HTTPRequest implements Wrapper {
         // Whenever a request is made, we'll modify the options to pass a custom lookup function
         // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
         .modifyArguments("request", (args, subject, agent) => {
-          return this.wrapResponseHandler(
-            this.monitorDNSLookups(args, agent, module),
-            module
-          );
+          return this.monitorDNSLookups(args, agent, module);
         })
         .modifyArguments("get", (args, subject, agent) => {
-          return this.wrapResponseHandler(
-            this.monitorDNSLookups(args, agent, module),
-            module
-          );
+          return this.monitorDNSLookups(args, agent, module);
         });
     });
   }
