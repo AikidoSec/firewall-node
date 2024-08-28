@@ -1,7 +1,6 @@
 import { lookup } from "dns";
 import { type RequestOptions } from "http";
-import { ClientRequest as HttpClientRequest } from "node:http";
-import { ClientRequest as HttpsClientRequest } from "node:https";
+import { ClientRequest } from "node:http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -162,14 +161,9 @@ export class HTTPRequest implements Wrapper {
     module: "http" | "https",
     returnVal: unknown
   ) {
-    if (
-      returnVal instanceof HttpClientRequest ||
-      returnVal instanceof HttpsClientRequest
-    ) {
+    if (returnVal instanceof ClientRequest) {
       wrap(returnVal, "on", function createWrappedOn(original) {
-        return function wrappedOn(
-          this: HttpClientRequest | HttpsClientRequest
-        ) {
+        return function wrappedOn(this: ClientRequest) {
           // eslint-disable-next-line prefer-rest-params
           const args = Array.from(arguments);
 
