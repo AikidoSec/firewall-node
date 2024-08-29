@@ -1,4 +1,5 @@
 /* eslint-disable prefer-rest-params */
+import { type IncomingMessage } from "http";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -32,6 +33,14 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
 };
 
+function consumeBody(res: IncomingMessage) {
+  // Consume body to prevent memory leak
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {}
+  });
+}
+
 t.test("it works", (t) => {
   const agent = new Agent(
     true,
@@ -53,6 +62,9 @@ t.test("it works", (t) => {
       const response1 = http.request(redirectUrl.ip, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "http://127.0.0.1/test");
+
+        consumeBody(res);
+
         const error = t.throws(() => http.request("http://127.0.0.1/test"));
         t.ok(error instanceof Error);
         if (error instanceof Error) {
@@ -75,6 +87,8 @@ t.test("it works", (t) => {
       const response1 = http.request(redirectUrl.domain, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "http://local.aikido.io/test");
+        consumeBody(res);
+
         http.request("http://local.aikido.io/test").on("error", (e) => {
           t.ok(e instanceof Error);
           t.same(
@@ -96,7 +110,12 @@ t.test("it works", (t) => {
       const response1 = http.request(redirectUrl.ipTwice, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "/ssrf-test");
+
+        consumeBody(res);
+
         const response2 = http.request(redirectUrl.ip, (res) => {
+          consumeBody(res);
+
           const error = t.throws(() => http.request("http://127.0.0.1/test"));
           t.ok(error instanceof Error);
           if (error instanceof Error) {
@@ -121,7 +140,12 @@ t.test("it works", (t) => {
       const response1 = http.request(redirectUrl.domainTwice, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "/ssrf-test-domain");
+
+        consumeBody(res);
+
         const response2 = http.request(redirectUrl.domain, (res) => {
+          consumeBody(res);
+
           http.request("http://local.aikido.io/test").on("error", (e) => {
             t.ok(e instanceof Error);
             t.same(
@@ -152,7 +176,12 @@ t.test("it works", (t) => {
         (res) => {
           t.same(res.statusCode, 302);
           t.same(res.headers.location, redirectUrl.domain);
+
+          consumeBody(res);
+
           const response2 = http.request(redirectUrl.domain, (res) => {
+            consumeBody(res);
+
             http.request("http://local.aikido.io/test").on("error", (e) => {
               t.ok(e instanceof Error);
               t.same(
