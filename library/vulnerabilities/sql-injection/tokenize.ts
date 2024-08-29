@@ -1,4 +1,8 @@
 import { tokenize as wasmTokenize } from "../../sql-tokenizer/sql_tokenizer";
+import { SQLDialect } from "./dialects/SQLDialect";
+import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
+import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
+import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
 type Whitespace =
   | "Space"
@@ -37,9 +41,22 @@ export type Token =
   | { CustomBinaryOperator: string }
   | string; // for tokens like Arrow, ArrowAt, RArrow, etc.
 
-export function tokenize(
-  dialect: "mysql" | "postgres" | "sqlite",
-  sql: string
-): Token[] {
-  return wasmTokenize(dialect, sql);
+function dialectToString(dialect: SQLDialect) {
+  if (dialect instanceof SQLDialectMySQL) {
+    return "mysql";
+  }
+
+  if (dialect instanceof SQLDialectSQLite) {
+    return "sqlite";
+  }
+
+  if (dialect instanceof SQLDialectPostgres) {
+    return "postgres";
+  }
+
+  throw new Error("Unsupported dialect: " + dialect.constructor.name);
+}
+
+export function tokenize(dialect: SQLDialect, sql: string): Token[] {
+  return wasmTokenize(dialectToString(dialect), sql);
 }
