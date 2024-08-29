@@ -88,12 +88,14 @@ function addRedirectToChain(source: URL, destination: URL, context: Context) {
       r.destination.toString() === destination.toString()
   );
 
-  if (!alreadyAdded) {
-    outgoingRedirects.push({
-      source,
-      destination,
-    });
-
-    updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
+  if (alreadyAdded) {
+    return;
   }
+
+  outgoingRedirects.push({
+    source,
+    destination,
+  });
+
+  updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
 }
