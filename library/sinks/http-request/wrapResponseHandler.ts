@@ -74,24 +74,26 @@ function addRedirectToContext(source: URL, destination: URL, context: Context) {
     );
   }
 
-  // Get existing redirects or create a new array
-  const outgoingRedirects = context.outgoingRequestRedirects || [];
-
   // If it's 1. an initial redirect with user provided url or 2. a redirect in an existing chain, add it to the context
   if (found || redirectOrigin) {
-    if (
-      !outgoingRedirects.find(
-        (r) =>
-          r.source.toString() === source.toString() &&
-          r.destination.toString() === destination.toString()
-      )
-    ) {
-      outgoingRedirects.push({
-        source,
-        destination,
-      });
+    addRedirectToChain(source, destination, context);
+  }
+}
 
-      updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
-    }
+function addRedirectToChain(source: URL, destination: URL, context: Context) {
+  const outgoingRedirects = context.outgoingRequestRedirects || [];
+  const alreadyAdded = outgoingRedirects.find(
+    (r) =>
+      r.source.toString() === source.toString() &&
+      r.destination.toString() === destination.toString()
+  );
+
+  if (!alreadyAdded) {
+    outgoingRedirects.push({
+      source,
+      destination,
+    });
+
+    updateContext(context, "outgoingRequestRedirects", outgoingRedirects);
   }
 }
