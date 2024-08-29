@@ -1,6 +1,6 @@
 SQL_TOKENIZER = sql-tokenizer/pkg/sql_tokenizer.js
 
-sql-tokenizer/pkg/sql_tokenizer.js:
+$(SQL_TOKENIZER): sql-tokenizer/src/lib.rs sql-tokenizer/src/utils.rs sql-tokenizer/Cargo.toml
 	cd sql-tokenizer && wasm-pack build --target nodejs
 
 .PHONY: containers
