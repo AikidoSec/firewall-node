@@ -1,3 +1,8 @@
+SQL_TOKENIZER = sql-tokenizer/pkg/sql_tokenizer.js
+
+sql-tokenizer/pkg/sql_tokenizer.js:
+	cd sql-tokenizer && wasm-pack build --target nodejs
+
 .PHONY: containers
 containers:
 	cd sample-apps && docker-compose up -d --remove-orphans
@@ -74,20 +79,24 @@ install:
 	node scripts/install.js
 
 .PHONY: build
-build:
+build: $(SQL_TOKENIZER)
 	mkdir -p build
 	rm -r build
 	cd library && npm run build
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
+	mkdir -p library/sql-tokenizer
+	cp sql-tokenizer/pkg/sql_tokenizer_bg.wasm library/sql-tokenizer/sql_tokenizer_bg.wasm
+	cp sql-tokenizer/pkg/sql_tokenizer.js library/sql-tokenizer/sql_tokenizer.js
+	cp sql-tokenizer/pkg/sql_tokenizer.d.ts library/sql-tokenizer/sql_tokenizer.d.ts
 
 .PHONY: watch
 watch: build
 	cd library && npm run build:watch
 
 .PHONY: test
-test:
+test: $(SQL_TOKENIZER)
 	cd library && npm run test
 
 .PHONY: test-ci

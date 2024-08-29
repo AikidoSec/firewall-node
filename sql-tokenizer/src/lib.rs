@@ -7,7 +7,7 @@ use serde_wasm_bindgen::to_value;
 use std::panic;
 
 #[wasm_bindgen]
-pub fn tokenize_query(dialect_name: &str, sql: &str) -> Result<JsValue, JsValue> {
+pub fn tokenize(dialect_name: &str, sql: &str) -> Result<JsValue, JsValue> {
     panic::set_hook(Box::new(console_error_panic_hook::hook));
 
     let dialect: Box<dyn Dialect> = match dialect_name {
