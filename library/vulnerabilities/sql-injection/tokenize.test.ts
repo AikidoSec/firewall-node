@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import * as t from "tap";
-import { tokenize } from "./tokenize";
+import { Token, tokenize } from "./tokenize";
 
 t.test("it tokenizes query", async () => {
   const query = `SELECT * FROM users WHERE name = 'John';`;
   const tokens = tokenize("mysql", query);
-  const expected = [
+  const expected: Token[] = [
     { Word: { value: "SELECT", quote_style: undefined, keyword: "SELECT" } },
     { Whitespace: "Space" },
     "Mul",
