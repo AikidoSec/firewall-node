@@ -156,13 +156,25 @@ export class HTTPRequest implements Wrapper {
     });
   }
 
-  wrapOnResponse(
+  wrapEventListeners(
     requestArgs: unknown[],
     module: "http" | "https",
     returnVal: unknown
   ) {
-    if (returnVal instanceof ClientRequest) {
-      wrap(returnVal, "on", function createWrappedOn(original) {
+    if (!(returnVal instanceof ClientRequest)) {
+      return;
+    }
+
+    const methods = [
+      "on",
+      "addListener",
+      "once",
+      "prependListener",
+      "prependOnceListener",
+    ];
+
+    for (const method of methods) {
+      wrap(returnVal, method, function createWrappedOn(original) {
         return function wrappedOn(this: ClientRequest) {
           // eslint-disable-next-line prefer-rest-params
           const args = Array.from(arguments);
@@ -214,10 +226,10 @@ export class HTTPRequest implements Wrapper {
           );
         })
         .inspectResult("request", (args, result, subject, agent) =>
-          this.wrapOnResponse(args, module, result)
+          this.wrapEventListeners(args, module, result)
         )
         .inspectResult("get", (args, result, subject, agent) =>
-          this.wrapOnResponse(args, module, result)
+          this.wrapEventListeners(args, module, result)
         );
     });
   }
