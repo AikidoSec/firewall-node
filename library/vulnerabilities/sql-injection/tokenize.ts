@@ -4,22 +4,26 @@ import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
-type Whitespace =
-  | "Space"
-  | "Newline"
-  | "Tab"
-  | { SingleLineComment: { comment: string; prefix: string } }
-  | { MultiLineComment: string };
+type Whitespace = {
+  Whitespace:
+    | "Space"
+    | "Newline"
+    | "Tab"
+    | { SingleLineComment: { comment: string; prefix: string } }
+    | { MultiLineComment: string };
+};
+
+type Word = {
+  Word: {
+    value: string;
+    quote_style?: string | undefined;
+    keyword: string;
+  };
+};
 
 export type Token =
-  | {
-      Word: {
-        value: string;
-        quote_style?: string | undefined;
-        keyword: string;
-      };
-    }
-  | { Whitespace: Whitespace }
+  | Word
+  | Whitespace
   | { SingleQuotedString: string }
   | { DoubleQuotedString: string }
   | { TripleSingleQuotedString: string }
@@ -40,6 +44,14 @@ export type Token =
   | { Placeholder: string }
   | { CustomBinaryOperator: string }
   | string; // for tokens like Arrow, ArrowAt, RArrow, etc.
+
+export function getType(token: Token): string {
+  if (typeof token === "string") {
+    return token;
+  }
+
+  return Object.keys(token)[0];
+}
 
 function dialectToString(dialect: SQLDialect) {
   if (dialect instanceof SQLDialectMySQL) {

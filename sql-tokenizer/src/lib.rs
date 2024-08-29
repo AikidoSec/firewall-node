@@ -1,8 +1,8 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
-use sqlparser::dialect::*; // Import all the dialects you are using
-use sqlparser::tokenizer::*; // Import the tokenizer
+use sqlparser::dialect::*;
+use sqlparser::tokenizer::*;
 use serde_wasm_bindgen::to_value;
 use std::panic;
 

@@ -1,7 +1,7 @@
+import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQLDialect } from "./dialects/SQLDialect";
 import { queryContainsUserInput } from "./queryContainsUserInput";
-import { userInputContainsSQLSyntax } from "./userInputContainsSQLSyntax";
-import { userInputOccurrencesSafelyEncapsulated } from "./userInputOccurrencesSafelyEncapsulated";
+import { getType, tokenize } from "./tokenize";
 
 export function detectSQLInjection(
   query: string,
@@ -25,10 +25,43 @@ export function detectSQLInjection(
     return false;
   }
 
-  if (userInputOccurrencesSafelyEncapsulated(query, userInput)) {
+  let tokens;
+  try {
+    tokens = tokenize(dialect, query);
+  } catch (error) {
+    console.log("error", query, error);
     return false;
   }
 
-  // Executing our final check with the massive RegEx
-  return userInputContainsSQLSyntax(userInput, dialect);
+  const replaced = query.replace(
+    new RegExp(escapeStringRegexp(userInput), "gi"),
+    "str"
+  );
+
+  let replacedTokens;
+  try {
+    replacedTokens = tokenize(dialect, replaced);
+  } catch (error) {
+    console.log("error", replaced, error);
+    return false;
+  }
+
+  if (query === "SELECT $$") {
+    console.log("original", query, tokens);
+    console.log("replaced", replaced, replacedTokens);
+  }
+
+  if (tokens.length !== replacedTokens.length) {
+    // If the token count is different, the user input is part of a string.
+    return true;
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    if (getType(tokens[i]) !== getType(replacedTokens[i])) {
+      // If the token type is different, the user input is part of a string.
+      return true;
+    }
+  }
+
+  return false;
 }
