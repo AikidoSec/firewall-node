@@ -34,7 +34,7 @@ const redirectUrl = {
 };
 
 function consumeBody(res: IncomingMessage) {
-  // Consume body to prevent memory leak
+  // We need to consume the body
   // From Node.19+ this would otherwise hang the test
   res.on("readable", () => {
     while (res.read() !== null) {}
