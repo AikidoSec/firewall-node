@@ -1,28 +1,40 @@
+type Ports = Set<number | undefined>;
+
 export class Hostnames {
-  private map: Map<string, number | undefined> = new Map();
+  private map: Map<string, Ports> = new Map();
 
   constructor(private readonly maxEntries: number = 200) {}
 
   add(hostname: string, port: number | undefined) {
-    if (this.map.has(hostname)) {
-      return;
+    if (!this.map.has(hostname)) {
+      this.map.set(hostname, new Set());
     }
+    (this.map.get(hostname) as Ports).add(port);
 
-    if (this.map.size >= this.maxEntries) {
-      const firstAdded = this.map.keys().next().value;
-      this.map.delete(firstAdded);
+    if (this.length > this.maxEntries) {
+      const firstAdded: string = this.map.keys().next().value;
+      const ports: Ports = this.map.get(firstAdded) as Ports;
+
+      if (ports.size > 1) {
+        const firstPort = ports.values().next().value;
+        ports.delete(firstPort);
+      } else {
+        this.map.delete(firstAdded);
+      }
     }
+  }
 
-    this.map.set(hostname, port);
+  get length() {
+    return Array.from(this.map.values()).reduce(
+      (total: number, ports: Ports) => total + ports.size,
+      0
+    );
   }
 
   asArray() {
-    return Array.from(this.map.entries()).map(([hostname, port]) => {
-      return {
-        hostname,
-        port,
-      };
-    });
+    return Array.from(this.map.entries()).flatMap(([hostname, ports]) =>
+      Array.from(ports).map((port) => ({ hostname, port }))
+    );
   }
 
   clear() {
