@@ -53,6 +53,11 @@ t.test("it sends started event", async (t) => {
           name: platform(),
           version: release(),
         },
+        platform: {
+          version: process.version.startsWith("v")
+            ? process.version.slice(1)
+            : process.version,
+        },
       },
     },
   ]);
