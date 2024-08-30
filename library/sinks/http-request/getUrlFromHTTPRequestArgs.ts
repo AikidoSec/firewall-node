@@ -93,6 +93,17 @@ function getUrlFromRequestOptions(
   return tryParseURL(str);
 }
 
+// Many HTTP clients pass the separate URL parts as properties of the options object, example:
+// http.request({ protocol: 'http:', hostname: 'example.com', port: 80, path: '/path' })
+//
+// When you have an IPv6 address as the hostname, a client might pass it without square brackets:
+// http.request({ hostname: '::', ... })
+//
+// When we reconstruct a URL from these options, we need to wrap the hostname in square brackets if it's an IPv6 address
+// Otherwise the URL will be invalid
+// http://:::80/path
+// should be
+// http://[::]:80/path
 function wrapWithSquareBracketsIfNeeded(hostname: string): string {
   if (isIPv6(hostname)) {
     return `[${hostname}]`;
