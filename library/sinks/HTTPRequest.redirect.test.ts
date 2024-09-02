@@ -171,29 +171,30 @@ t.test("it works", (t) => {
       },
     },
     () => {
-      const response1 = http.request(
-        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        (res) => {
-          t.same(res.statusCode, 302);
-          t.same(res.headers.location, redirectUrl.domain);
+      const req1 = http.request(
+        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
+      );
+      req1.on("response", (res) => {
+        t.same(res.statusCode, 302);
+        t.same(res.headers.location, redirectUrl.domain);
 
+        consumeBody(res);
+
+        const req2 = http.request(redirectUrl.domain);
+        req2.prependOnceListener("response", (res) => {
           consumeBody(res);
 
-          const response2 = http.request(redirectUrl.domain, (res) => {
-            consumeBody(res);
-
-            http.request("http://local.aikido.io/test").on("error", (e) => {
-              t.ok(e instanceof Error);
-              t.same(
-                e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-              );
-            });
+          http.request("http://local.aikido.io/test").on("error", (e) => {
+            t.ok(e instanceof Error);
+            t.same(
+              e.message,
+              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            );
           });
-          response2.end();
-        }
-      );
-      response1.end();
+        });
+        req2.end();
+      });
+      req1.end();
     }
   );
 
