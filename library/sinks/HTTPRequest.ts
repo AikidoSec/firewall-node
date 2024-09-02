@@ -1,5 +1,5 @@
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import { type RequestOptions, ClientRequest } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -12,6 +12,7 @@ import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPriva
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { wrap } from "../helpers/wrap";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -145,17 +146,66 @@ export class HTTPRequest implements Wrapper {
   }
 
   wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+    // Wrap the response handler if there is one
+    // so that we can inspect the response for SSRF attacks (using redirects)
+    // e.g. http.request("http://example.com", (response) => {})
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return wrapResponseHandler(args, module, arg);
+      }
 
-        return arg;
-      });
+      return arg;
+    });
+  }
+
+  wrapEventListeners(
+    requestArgs: unknown[],
+    module: "http" | "https",
+    returnVal: unknown
+  ) {
+    if (!(returnVal instanceof ClientRequest)) {
+      return;
     }
 
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
+    // Whenever a response event is added, we'll wrap the handler
+    // so that we can inspect the response for SSRF attacks (using redirects)
+
+    // You can add listeners in multiple ways:
+    // http.request("http://example.com").on("response", (response) => {})
+    // http.request("http://example.com").addListener("response", (response) => {})
+    // http.request("http://example.com").once("response", (response) => {})
+    // http.request("http://example.com").prependListener("response", (response) => {})
+    // http.request("http://example.com").prependOnceListener("response", (response) => {})
+    const methods = [
+      "on",
+      "addListener",
+      "once",
+      "prependListener",
+      "prependOnceListener",
+    ];
+
+    for (const method of methods) {
+      wrap(returnVal, method, function createWrappedOn(original) {
+        return function wrappedOn(this: ClientRequest) {
+          // eslint-disable-next-line prefer-rest-params
+          const args = Array.from(arguments);
+
+          if (
+            args.length === 2 &&
+            args[0] === "response" &&
+            typeof args[1] === "function"
+          ) {
+            const responseHandler = args[1];
+            args[1] = wrapResponseHandler(requestArgs, module, responseHandler);
+
+            return original.apply(this, args);
+          }
+
+          // eslint-disable-next-line prefer-rest-params
+          return original.apply(this, arguments);
+        };
+      });
+    }
   }
 
   wrap(hooks: Hooks) {
@@ -175,11 +225,23 @@ export class HTTPRequest implements Wrapper {
         // Whenever a request is made, we'll modify the options to pass a custom lookup function
         // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
         .modifyArguments("request", (args, subject, agent) => {
-          return this.monitorDNSLookups(args, agent, module);
+          return this.wrapResponseHandler(
+            this.monitorDNSLookups(args, agent, module),
+            module
+          );
         })
         .modifyArguments("get", (args, subject, agent) => {
-          return this.monitorDNSLookups(args, agent, module);
-        });
+          return this.wrapResponseHandler(
+            this.monitorDNSLookups(args, agent, module),
+            module
+          );
+        })
+        .inspectResult("request", (args, result, subject, agent) =>
+          this.wrapEventListeners(args, module, result)
+        )
+        .inspectResult("get", (args, result, subject, agent) =>
+          this.wrapEventListeners(args, module, result)
+        );
     });
   }
 }

@@ -1,4 +1,5 @@
 /* eslint-disable prefer-rest-params */
+import { type IncomingMessage } from "http";
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -32,7 +33,15 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
 };
 
-t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {}
+  });
+}
+
+t.test("it works", (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -53,6 +62,9 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       const response1 = http.request(redirectUrl.ip, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "http://127.0.0.1/test");
+
+        consumeBody(res);
+
         const error = t.throws(() => http.request("http://127.0.0.1/test"));
         t.ok(error instanceof Error);
         if (error instanceof Error) {
@@ -75,6 +87,8 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       const response1 = http.request(redirectUrl.domain, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "http://local.aikido.io/test");
+        consumeBody(res);
+
         http.request("http://local.aikido.io/test").on("error", (e) => {
           t.ok(e instanceof Error);
           t.same(
@@ -96,7 +110,12 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       const response1 = http.request(redirectUrl.ipTwice, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "/ssrf-test");
+
+        consumeBody(res);
+
         const response2 = http.request(redirectUrl.ip, (res) => {
+          consumeBody(res);
+
           const error = t.throws(() => http.request("http://127.0.0.1/test"));
           t.ok(error instanceof Error);
           if (error instanceof Error) {
@@ -121,7 +140,12 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       const response1 = http.request(redirectUrl.domainTwice, (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, "/ssrf-test-domain");
+
+        consumeBody(res);
+
         const response2 = http.request(redirectUrl.domain, (res) => {
+          consumeBody(res);
+
           http.request("http://local.aikido.io/test").on("error", (e) => {
             t.ok(e instanceof Error);
             t.same(
@@ -147,24 +171,30 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       },
     },
     () => {
-      const response1 = http.request(
-        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        (res) => {
-          t.same(res.statusCode, 302);
-          t.same(res.headers.location, redirectUrl.domain);
-          const response2 = http.request(redirectUrl.domain, (res) => {
-            http.request("http://local.aikido.io/test").on("error", (e) => {
-              t.ok(e instanceof Error);
-              t.same(
-                e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-              );
-            });
-          });
-          response2.end();
-        }
+      const req1 = http.request(
+        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
       );
-      response1.end();
+      req1.on("response", (res) => {
+        t.same(res.statusCode, 302);
+        t.same(res.headers.location, redirectUrl.domain);
+
+        consumeBody(res);
+
+        const req2 = http.request(redirectUrl.domain);
+        req2.prependOnceListener("response", (res) => {
+          consumeBody(res);
+
+          http.request("http://local.aikido.io/test").on("error", (e) => {
+            t.ok(e instanceof Error);
+            t.same(
+              e.message,
+              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            );
+          });
+        });
+        req2.end();
+      });
+      req1.end();
     }
   );
 
