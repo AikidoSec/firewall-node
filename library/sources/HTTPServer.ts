@@ -58,10 +58,14 @@ export class HTTPServer implements Wrapper {
         .addBuiltinModule(module)
         .addSubject((exports) => exports);
 
-      subjects
-        .modifyArguments("Server", (args, subject, agent) => {
+      // Server classes are not exported in the http2 module
+      if (module !== "http2") {
+        subjects.modifyArguments("Server", (args, subject, agent) => {
           return this.wrapRequestListener(args, module, agent);
-        })
+        });
+      }
+
+      subjects
         .modifyArguments("createServer", (args, subject, agent) => {
           return this.wrapRequestListener(args, module, agent);
         })
