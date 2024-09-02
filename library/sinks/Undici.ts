@@ -14,6 +14,7 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { getHostInfoFromArgs } from "./undici/getHostInfoFromArgs";
 
 const methods = [
   "request",
@@ -56,80 +57,16 @@ export class Undici implements Wrapper {
     agent: Agent,
     method: string
   ): InterceptorResult {
-    if (args.length > 0) {
-      if (typeof args[0] === "string" && args[0].length > 0) {
-        const url = tryParseURL(args[0]);
-        if (url) {
-          const attack = this.inspectHostname(
-            agent,
-            url.hostname,
-            getPortFromURL(url),
-            method
-          );
-          if (attack) {
-            return attack;
-          }
-        }
-      }
-
-      // Fetch accepts any object with a stringifier. User input may be an array if the user provides an array
-      // query parameter (e.g., ?example[0]=https://example.com/) in frameworks like Express. Since an Array has
-      // a default stringifier, this is exploitable in a default setup.
-      // The following condition ensures that we see the same value as what's passed down to the sink.
-      if (Array.isArray(args[0])) {
-        const url = tryParseURL(args[0].toString());
-        if (url) {
-          const attack = this.inspectHostname(
-            agent,
-            url.hostname,
-            getPortFromURL(url),
-            method
-          );
-          if (attack) {
-            return attack;
-          }
-        }
-      }
-
-      if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        const attack = this.inspectHostname(
-          agent,
-          args[0].hostname,
-          getPortFromURL(args[0]),
-          method
-        );
-        if (attack) {
-          return attack;
-        }
-      }
-
-      if (
-        isOptionsObject(args[0]) &&
-        typeof args[0].hostname === "string" &&
-        args[0].hostname.length > 0
-      ) {
-        let port = 80;
-        if (typeof args[0].protocol === "string") {
-          port = args[0].protocol === "https:" ? 443 : 80;
-        }
-        if (typeof args[0].port === "number") {
-          port = args[0].port;
-        } else if (
-          typeof args[0].port === "string" &&
-          Number.isInteger(parseInt(args[0].port, 10))
-        ) {
-          port = parseInt(args[0].port, 10);
-        }
-
-        const attack = this.inspectHostname(
-          agent,
-          args[0].hostname,
-          port,
-          method
-        );
-        if (attack) {
-          return attack;
-        }
+    const hostInfo = getHostInfoFromArgs(args);
+    if (hostInfo) {
+      const attack = this.inspectHostname(
+        agent,
+        hostInfo.hostname,
+        hostInfo.port,
+        method
+      );
+      if (attack) {
+        return attack;
       }
     }
 
