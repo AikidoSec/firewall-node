@@ -100,3 +100,37 @@ t.test("Do not get port 0 from request options", async (t) => {
     new URL("https://localhost")
   );
 });
+
+t.test("Pass port as string", async (t) => {
+  t.same(
+    getURL(
+      [{ protocol: "https:", hostname: "localhost", port: "4000" }],
+      "https"
+    ),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { port: "4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+});
+
+t.test("Pass host instead of hostname", async (t) => {
+  t.same(
+    getURL([{ protocol: "https:", host: "localhost:4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { host: "test.dev" }], "https"),
+    new URL("https://test.dev")
+  );
+});
+
+t.test("it works with node:url object as first argument", async (t) => {
+  const oldUrl = require("url");
+
+  t.same(
+    getURL([oldUrl.parse("http://localhost:4000")], "http"),
+    new URL("http://localhost:4000")
+  );
+});

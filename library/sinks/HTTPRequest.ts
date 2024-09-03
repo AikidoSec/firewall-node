@@ -6,13 +6,13 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { isOptionsObject } from "./http-request/isOptionsObject";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -99,7 +99,7 @@ export class HTTPRequest implements Wrapper {
     }
 
     const optionObj = args.find((arg): arg is RequestOptions =>
-      isPlainObject(arg)
+      isOptionsObject(arg)
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
@@ -173,10 +173,7 @@ export class HTTPRequest implements Wrapper {
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
-              this.wrapResponseHandler(
-                this.monitorDNSLookups(args, agent, module),
-                module
-              ),
+              this.monitorDNSLookups(args, agent, module),
           });
         }
       });

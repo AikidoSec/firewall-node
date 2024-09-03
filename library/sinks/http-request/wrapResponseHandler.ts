@@ -77,7 +77,7 @@ function addRedirectToContext(source: URL, destination: URL, context: Context) {
 
   const sourcePort = getPortFromURL(source);
 
-  // Check if the source hostname is in the context - is true if its the first redirect in the chain and the user input is the source
+  // Check if the source hostname is in the context - is true if it's the first redirect in the chain and the user input is the source
   const found = findHostnameInContext(source.hostname, context, sourcePort);
 
   // If the source hostname is not in the context, check if it's a redirect in a already existing chain

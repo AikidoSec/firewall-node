@@ -361,6 +361,21 @@ t.test("It does not match VIEW keyword", async () => {
   isNotSqlInjection(query2, "view");
 });
 
+t.test("It does not match GROUP keyword", async () => {
+  const query = `
+      SELECT groups.id AS group_id, group_settings.user_id, group_settings.settings
+        FROM groups
+        INNER JOIN group_settings ON groups.id = group_settings.group_id AND group_settings.user_id = ?
+        WHERE groups.business_id = ?
+        GROUP BY group_id
+        ORDER BY group_id DESC, group_settings.user_id ASC
+    `;
+
+  isNotSqlInjection(query, "group_id");
+  isNotSqlInjection(query, "DESC");
+  isNotSqlInjection(query, "ASC");
+});
+
 t.test("It does not flag SQL keyword if part of another word", async () => {
   SQL_KEYWORDS.forEach((keyword) => {
     isNotSqlInjection(

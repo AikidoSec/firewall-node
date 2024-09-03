@@ -57,11 +57,14 @@ export class HTTPServer implements Wrapper {
   wrap(hooks: Hooks) {
     ["http", "https", "http2"].forEach((module) => {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
-        wrapExport(exports, "Server", pkgInfo, {
-          modifyArgs: (args, agent) => {
-            return this.wrapRequestListener(args, module, agent);
-          },
-        });
+        // Server classes are not exported in the http2 module
+        if (module !== "http2") {
+          wrapExport(exports, "Server", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapRequestListener(args, module, agent);
+            },
+          });
+        }
 
         wrapExport(exports, "createServer", pkgInfo, {
           modifyArgs: (args, agent) => {

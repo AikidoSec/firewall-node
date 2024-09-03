@@ -285,131 +285,18 @@ t.test("it works", (t) => {
         "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
-  });
 
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ip } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.ip, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "http://127.0.0.1/test");
-        const error = t.throws(() => http.request("http://127.0.0.1/test"));
-        t.ok(error instanceof Error);
-        if (error instanceof Error) {
-          t.same(
-            error.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-          );
-        }
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { test: redirectUrl.domain } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.domain, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "http://local.aikido.io/test");
-        http.request("http://local.aikido.io/test").on("error", (e) => {
-          t.ok(e instanceof Error);
-          t.same(
-            e.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.test"
-          );
-        });
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ipTwice } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.ipTwice, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "/ssrf-test");
-        const response2 = http.request(redirectUrl.ip, (res) => {
-          const error = t.throws(() => http.request("http://127.0.0.1/test"));
-          t.ok(error instanceof Error);
-          if (error instanceof Error) {
-            t.same(
-              error.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-            );
-          }
-        });
-        response2.end();
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.domainTwice } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.domainTwice, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "/ssrf-test-domain");
-        const response2 = http.request(redirectUrl.domain, (res) => {
-          http.request("http://local.aikido.io/test").on("error", (e) => {
-            t.ok(e instanceof Error);
-            t.same(
-              e.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-            );
-          });
-        });
-        response2.end();
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{
-        body: {
-          image:
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        },
-      },
-    },
-    () => {
-      const response1 = http.request(
-        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        (res) => {
-          t.same(res.statusCode, 302);
-          t.same(res.headers.location, redirectUrl.domain);
-          const response2 = http.request(redirectUrl.domain, (res) => {
-            http.request("http://local.aikido.io/test").on("error", (e) => {
-              t.ok(e instanceof Error);
-              t.same(
-                e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-              );
-            });
-          });
-          response2.end();
-        }
+    const oldUrl = require("url");
+    const error6 = t.throws(() =>
+      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
+    );
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
-      response1.end();
     }
-  );
+  });
 
   setTimeout(() => {
     t.end();

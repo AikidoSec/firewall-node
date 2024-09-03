@@ -13,7 +13,7 @@ const context: Context = {
   query: {},
   headers: {},
   body: {
-    image: "http://localhost:4000/api/internal",
+    image: "http://localhost:5000/api/internal",
   },
   cookies: {},
   routeParams: {},
@@ -36,10 +36,10 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const axios = require("axios");
+  const needle = require("needle");
 
   await runWithContext(context, async () => {
-    await axios.request("https://www.aikido.dev");
+    await needle("get", "https://www.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
@@ -48,23 +48,43 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   agent.getHostnames().clear();
 
   const error = await t.rejects(
-    runWithContext(
-      {
-        ...context,
-        // Redirects to http://127.0.0.1/test
-        ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
-      },
-      async () => {
-        await axios.request(`${redirectTestUrl}/ssrf-test`);
-      }
-    )
+    async () =>
+      await runWithContext(context, async () => {
+        await needle("get", "http://localhost:5000/api/internal");
+      })
   );
-
-  t.ok(error instanceof Error);
   if (error instanceof Error) {
-    t.match(
+    t.same(
       error.message,
       "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
+
+  await runWithContext(
+    {
+      ...context,
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test-domain` } },
+    },
+    async () => {
+      await new Promise<void>((resolve) => {
+        needle.request(
+          "get",
+          `${redirectTestUrl}/ssrf-test-domain`,
+          {},
+          {
+            // eslint-disable-next-line camelcase
+            follow_max: 1,
+          },
+          (error, response) => {
+            t.ok(error instanceof Error);
+            t.match(
+              error?.message,
+              /Aikido firewall has blocked a server-side request forgery/
+            );
+            resolve();
+          }
+        );
+      });
+    }
+  );
 });

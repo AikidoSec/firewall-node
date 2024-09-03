@@ -87,6 +87,8 @@ See list above for supported database drivers.
 
 ## Installation
 
+We recommend you test Aikido's Firewall on local or staging first before moving to production.
+
 ```shell
 # The --save-exact makes sure that you don't automatically install a newer version
 $ npm install --save-exact @aikidosec/firewall
