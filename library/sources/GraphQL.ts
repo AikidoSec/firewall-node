@@ -84,8 +84,14 @@ export class GraphQL implements Wrapper {
     );
 
     if (result.block) {
-      const { GraphQLError } = require("graphql");
-
+      let GraphQLError;
+      // This try-catch is necessary because esbuild will fail bundling the file if graphql is not installed
+      try {
+        GraphQLError = require("graphql").GraphQLError;
+      } catch (e) {
+        // If we can't require graphql, we can't return a GraphQLError
+        return origReturnVal;
+      }
       return {
         errors: [
           new GraphQLError("You are rate limited by Aikido firewall.", {

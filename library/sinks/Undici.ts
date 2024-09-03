@@ -138,7 +138,14 @@ export class Undici implements Wrapper {
   }
 
   private patchGlobalDispatcher(agent: Agent) {
-    const undici = require("undici");
+    let undici;
+    // This try-catch is necessary because esbuild will fail bundling the file if undici is not installed
+    try {
+      undici = require("undici");
+    } catch (e) {
+      // If we can't require undici, we can't patch it
+      return;
+    }
 
     const dispatcher = new undici.Agent({
       connect: {

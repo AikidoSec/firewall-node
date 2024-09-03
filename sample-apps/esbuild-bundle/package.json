@@ -1,0 +1,13 @@
+{
+  "name": "esbuild-bundle",
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.11.2",
+    "esbuild": "0.23.1",
+    "hono": "^4.4.2",
+    "sqlite3": "^5.1.7"
+  },
+  "scripts": {
+    "build": "esbuild src/app.ts --bundle --platform=node --outfile=build/app.js && cp node_modules/sqlite3/build/Release/*.node build/"
+  }
+}
