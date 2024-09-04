@@ -4,6 +4,7 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { isJsonContentType } from "../../helpers/isJsonContentType";
 import { parse } from "../../helpers/parseCookies";
+import { getRemoteAddress } from "./getRemoteAddress";
 
 export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const { req } = c;
@@ -41,7 +42,7 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
     method: c.req.method,
     remoteAddress: getIPAddressFromRequest({
       headers: req.header(),
-      remoteAddress: c.env?.remoteAddress,
+      remoteAddress: getRemoteAddress(c),
     }),
     body: body,
     url: req.url,

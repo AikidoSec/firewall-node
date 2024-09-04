@@ -7,6 +7,8 @@ import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { fetch } from "../helpers/fetch";
 
 const agent = new Agent(
   true,
@@ -37,7 +39,9 @@ agent.start([new HonoInternal(), new HTTPServer()]);
 setInstance(agent);
 
 import { Hono } from "hono";
+import { serve } from "@hono/node-server";
 import { getContext } from "../agent/Context";
+import { isLocalhostIP } from "../helpers/isLocalhostIP";
 
 function getApp() {
   const app = new Hono();
@@ -66,7 +70,12 @@ function getApp() {
   return app;
 }
 
-t.test("it adds context from request for GET", async (t) => {
+const opts = {
+  skip:
+    getMajorNodeVersion() < 18 ? "Hono does not support Node.js < 18" : false,
+};
+
+t.test("it adds context from request for GET", opts, async (t) => {
   const response = await getApp().request("/?title=test", {
     method: "GET",
     headers: {
@@ -86,7 +95,7 @@ t.test("it adds context from request for GET", async (t) => {
   });
 });
 
-t.test("it adds JSON body to context", async (t) => {
+t.test("it adds JSON body to context", opts, async (t) => {
   const response = await getApp().request("/", {
     method: "POST",
     headers: {
@@ -104,7 +113,7 @@ t.test("it adds JSON body to context", async (t) => {
   });
 });
 
-t.test("it adds form body to context", async (t) => {
+t.test("it adds form body to context", opts, async (t) => {
   const response = await getApp().request("/", {
     method: "POST",
     headers: {
@@ -122,7 +131,7 @@ t.test("it adds form body to context", async (t) => {
   });
 });
 
-t.test("it adds text body to context", async (t) => {
+t.test("it adds text body to context", opts, async (t) => {
   const response = await getApp().request("/", {
     method: "POST",
     headers: {
@@ -140,7 +149,7 @@ t.test("it adds text body to context", async (t) => {
   });
 });
 
-t.test("it adds xml body to context", async (t) => {
+t.test("it adds xml body to context", opts, async (t) => {
   const response = await getApp().request("/", {
     method: "POST",
     headers: {
@@ -158,7 +167,7 @@ t.test("it adds xml body to context", async (t) => {
   });
 });
 
-t.test("it sets the user in the context", async (t) => {
+t.test("it sets the user in the context", opts, async (t) => {
   const response = await getApp().request("/user", {
     method: "GET",
   });
@@ -172,7 +181,7 @@ t.test("it sets the user in the context", async (t) => {
   });
 });
 
-t.test("it blocks user", async (t) => {
+t.test("it blocks user", opts, async (t) => {
   const response = await getApp().request("/user/blocked", {
     method: "GET",
   });
@@ -181,7 +190,7 @@ t.test("it blocks user", async (t) => {
   t.equal(body, "You are blocked by Aikido firewall.");
 });
 
-t.test("it rate limits based on IP address", async (t) => {
+t.test("it rate limits based on IP address", opts, async (t) => {
   const response = await getApp().request("/rate-limited", {
     method: "GET",
     headers: {
@@ -209,11 +218,11 @@ t.test("it rate limits based on IP address", async (t) => {
   t.match(response3.status, 429);
   t.match(
     await response3.text(),
-    "ou are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
   );
 });
 
-t.test("it ignores invalid json body", async (t) => {
+t.test("it ignores invalid json body", opts, async (t) => {
   const response = await getApp().request("/", {
     method: "POST",
     headers: {
@@ -229,4 +238,27 @@ t.test("it ignores invalid json body", async (t) => {
     source: "hono",
     route: "/",
   });
+});
+
+t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8765,
+  });
+  const response = await fetch({
+    url: new URL("http://127.0.0.1:8765/?abc=test"),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.same(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    query: { abc: "test" },
+    source: "hono",
+    route: "/",
+  });
+  t.ok(isLocalhostIP(body.remoteAddress));
+  server.close();
 });
