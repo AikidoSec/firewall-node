@@ -120,7 +120,7 @@ function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
           agent
         );
     } catch (error) {
-      agent.onFailedToWrapMethod(pkg.getName(), file.getRelativePath());
+      agent.onFailedToWrapFile(pkg.getName(), file.getRelativePath());
     }
   });
 }
