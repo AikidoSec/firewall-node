@@ -9,6 +9,8 @@ import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { fetch } from "../helpers/fetch";
+import { getContext } from "../agent/Context";
+import { isLocalhostIP } from "../helpers/isLocalhostIP";
 
 const agent = new Agent(
   true,
@@ -38,12 +40,8 @@ const agent = new Agent(
 agent.start([new HonoInternal(), new HTTPServer()]);
 setInstance(agent);
 
-import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { getContext } from "../agent/Context";
-import { isLocalhostIP } from "../helpers/isLocalhostIP";
-
 function getApp() {
+  const { Hono } = require("hono");
   const app = new Hono();
 
   app.all("/", (c) => {
@@ -241,6 +239,7 @@ t.test("it ignores invalid json body", opts, async (t) => {
 });
 
 t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
+  const { serve } = require("@hono/node-server");
   const server = serve({
     fetch: getApp().fetch,
     port: 8765,
