@@ -41,7 +41,7 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
     method: c.req.method,
     remoteAddress: getIPAddressFromRequest({
       headers: req.header(),
-      remoteAddress: c.env.remoteAddress,
+      remoteAddress: c.env?.remoteAddress,
     }),
     body: body,
     url: req.url,
