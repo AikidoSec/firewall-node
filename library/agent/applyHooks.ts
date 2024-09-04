@@ -110,14 +110,18 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
-    const exports = require(join(pkg.getName(), file.getRelativePath()));
+    try {
+      const exports = require(join(pkg.getName(), file.getRelativePath()));
 
-    file
-      .getSubjects()
-      .forEach(
-        (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
-        agent
-      );
+      file
+        .getSubjects()
+        .forEach(
+          (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
+          agent
+        );
+    } catch (error) {
+      agent.onFailedToWrapMethod(pkg.getName(), file.getRelativePath());
+    }
   });
 }
 
@@ -129,12 +133,16 @@ function wrapBuiltInModule(
   if (!isPackageInstalled(module.getName())) {
     return;
   }
-  const exports = require(module.getName());
+  try {
+    const exports = require(module.getName());
 
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, module.getName(), agent),
-    agent
-  );
+    subjects.forEach(
+      (selector) => wrapSubject(exports, selector, module.getName(), agent),
+      agent
+    );
+  } catch (error) {
+    agent.onFailedToWrapPackage(module.getName());
+  }
 }
 
 function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
