@@ -7,9 +7,10 @@ export class Hostnames {
 
   add(hostname: string, port: number | undefined) {
     if (!this.map.has(hostname)) {
-      this.map.set(hostname, new Set());
+      this.map.set(hostname, new Set([port]));
+    } else {
+      this.map.get(hostname)?.add(port);
     }
-    (this.map.get(hostname) as Ports).add(port);
 
     if (this.length > this.maxEntries) {
       const firstAdded: string = this.map.keys().next().value;
