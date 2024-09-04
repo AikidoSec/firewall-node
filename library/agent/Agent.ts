@@ -437,6 +437,14 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapPackage(module: string) {
+    this.logger.log(`Failed to wrap package ${module}`);
+  }
+
+  onFailedToWrapFile(module: string, filename: string) {
+    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+  }
+
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
   }
