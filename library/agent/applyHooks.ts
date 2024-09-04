@@ -138,12 +138,16 @@ function wrapBuiltInModule(
 }
 
 function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
-  const exports = require(pkg.getName());
+  try {
+    const exports = require(pkg.getName());
 
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
-    agent
-  );
+    subjects.forEach(
+      (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
+      agent
+    );
+  } catch (error) {
+    agent.onFailedToWrapPackage(pkg.getName());
+  }
 }
 
 /**
