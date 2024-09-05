@@ -1,3 +1,7 @@
+import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
+import { DataShape, getDataShape } from "./api-discovery/getDataShape";
+import { Context } from "./Context";
+
 export class Routes {
   private routes: Map<
     string,
@@ -6,22 +10,52 @@ export class Routes {
       path: string;
       hits: number;
       graphql?: { type: "query" | "mutation"; name: string };
+      body?: {
+        type: BodyDataType;
+        shape: DataShape;
+      };
     }
   > = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
-  addRoute(method: string, path: string) {
+  addRoute(context: Context) {
+    const { method, route: path } = context;
+    if (!method || !path) {
+      return;
+    }
+
     const key = this.getKey(method, path);
     const existing = this.routes.get(key);
 
     if (existing) {
+      // Todo merge body
       existing.hits++;
       return;
     }
 
     this.evictLeastUsedRouteIfNecessary();
-    this.routes.set(key, { method, path, hits: 1 });
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      body: this.getBodyInfo(context),
+    });
+  }
+
+  private getBodyInfo(context: Context) {
+    if (!context.body || typeof context.body !== "object") {
+      // Ignore body if it's not an object and only a primitive (string, number, etc.)
+      return undefined;
+    }
+    try {
+      return {
+        type: getBodyDataType(context.headers),
+        shape: getDataShape(context.body),
+      };
+    } catch {
+      return undefined;
+    }
   }
 
   private evictLeastUsedRouteIfNecessary() {
