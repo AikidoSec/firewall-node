@@ -1,19 +1,19 @@
 import * as t from "tap";
-import { getDataShape } from "./getDataShape";
+import { getDataSchema } from "./getDataSchema";
 
 t.test("it works", async (t) => {
-  t.same(getDataShape("test"), {
+  t.same(getDataSchema("test"), {
     type: "string",
   });
 
-  t.same(getDataShape(["test"]), {
+  t.same(getDataSchema(["test"]), {
     type: "array",
     items: {
       type: "string",
     },
   });
 
-  t.same(getDataShape({ test: "abc" }), {
+  t.same(getDataSchema({ test: "abc" }), {
     type: "object",
     properties: {
       test: {
@@ -22,7 +22,7 @@ t.test("it works", async (t) => {
     },
   });
 
-  t.same(getDataShape({ test: 123, arr: [1, 2, 3] }), {
+  t.same(getDataSchema({ test: 123, arr: [1, 2, 3] }), {
     type: "object",
     properties: {
       test: {
@@ -37,7 +37,7 @@ t.test("it works", async (t) => {
     },
   });
 
-  t.same(getDataShape({ test: 123, arr: [{ sub: true }], x: null }), {
+  t.same(getDataSchema({ test: 123, arr: [{ sub: true }], x: null }), {
     type: "object",
     properties: {
       test: {
@@ -61,7 +61,7 @@ t.test("it works", async (t) => {
   });
 
   t.same(
-    getDataShape({
+    getDataSchema({
       test: {
         x: {
           y: {
@@ -115,10 +115,10 @@ function generateTestObjectWithDepth(depth: number): any {
 
 t.test("test max depth", async (t) => {
   const obj = generateTestObjectWithDepth(10);
-  const shape = getDataShape(obj);
+  const shape = getDataSchema(obj);
   t.ok(JSON.stringify(shape).includes('"type":"string"'));
 
   const obj2 = generateTestObjectWithDepth(21);
-  const shape2 = getDataShape(obj2);
+  const shape2 = getDataSchema(obj2);
   t.notOk(JSON.stringify(shape2).includes('"type":"string"'));
 });

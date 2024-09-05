@@ -10,7 +10,7 @@ const maxDepth = 20;
 /**
  * Get the shape of the data (for example http json body) as a schema.
  */
-export function getDataShape(data: unknown, depth = 0): DataShape {
+export function getDataSchema(data: unknown, depth = 0): DataShape {
   // If the data is not an object (or an array), return the type
   if (typeof data !== "object") {
     return { type: typeof data };
@@ -24,7 +24,7 @@ export function getDataShape(data: unknown, depth = 0): DataShape {
     return {
       type: "array",
       // Assume that the array is homogenous (for performance reasons)
-      items: data.length > 0 ? getDataShape(data[0]) : undefined,
+      items: data.length > 0 ? getDataSchema(data[0]) : undefined,
     };
   }
 
@@ -36,7 +36,7 @@ export function getDataShape(data: unknown, depth = 0): DataShape {
   if (depth < maxDepth) {
     for (const key in data) {
       if (data.hasOwnProperty(key)) {
-        schema.properties![key] = getDataShape(
+        schema.properties![key] = getDataSchema(
           (data as { [index: string]: unknown })[key],
           depth + 1
         );

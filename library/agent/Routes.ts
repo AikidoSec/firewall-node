@@ -1,6 +1,6 @@
 import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
-import { DataShape, getDataShape } from "./api-discovery/getDataShape";
-import { mergeDataShapes } from "./api-discovery/mergeDataShapes";
+import { DataShape, getDataSchema } from "./api-discovery/getDataSchema";
+import { mergeDataSchemas } from "./api-discovery/mergeDataSchemas";
 import { Context } from "./Context";
 
 export class Routes {
@@ -34,7 +34,7 @@ export class Routes {
       if (bodyInfo) {
         // Body already exists, merge the data shapes if the types are the same
         if (existing.body) {
-          existing.body.shape = mergeDataShapes(
+          existing.body.shape = mergeDataSchemas(
             existing.body.shape,
             bodyInfo.shape
           );
@@ -63,7 +63,7 @@ export class Routes {
     try {
       return {
         type: getBodyDataType(context.headers),
-        shape: getDataShape(context.body),
+        shape: getDataSchema(context.body),
       };
     } catch {
       return undefined;

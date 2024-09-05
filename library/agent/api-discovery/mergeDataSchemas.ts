@@ -1,4 +1,4 @@
-//import { DataShape } from "./getDataShape";
+//import { DataShape } from "./getDataSchema";
 
 type DataShape = {
   type: string | string[];
@@ -14,7 +14,7 @@ type DataShape = {
  * The first shape is preferred over the second shape because it can already contain multiple merged shapes.
  * If the types are the same, the properties of the second shape are merged into the first shape.
  */
-export function mergeDataShapes(first: DataShape, second: DataShape) {
+export function mergeDataSchemas(first: DataShape, second: DataShape) {
   const result: DataShape = { ...first };
 
   // Can not merge different types
@@ -31,7 +31,7 @@ export function mergeDataShapes(first: DataShape, second: DataShape) {
 
     for (const key in second.properties) {
       if (result.properties[key]) {
-        result.properties[key] = mergeDataShapes(
+        result.properties[key] = mergeDataSchemas(
           result.properties[key],
           second.properties[key]
         );
@@ -42,7 +42,7 @@ export function mergeDataShapes(first: DataShape, second: DataShape) {
   }
 
   if (first.items && second.items) {
-    result.items = mergeDataShapes(first.items, second.items);
+    result.items = mergeDataSchemas(first.items, second.items);
   }
 
   return result;

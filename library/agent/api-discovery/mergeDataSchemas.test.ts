@@ -1,12 +1,12 @@
 import * as t from "tap";
-import { mergeDataShapes } from "./mergeDataShapes";
-import { getDataShape } from "./getDataShape";
+import { mergeDataSchemas } from "./mergeDataSchemas";
+import { getDataSchema } from "./getDataSchema";
 
 t.test("it works", async (t) => {
   t.same(
-    mergeDataShapes(
-      getDataShape({ test: "abc" }),
-      getDataShape({ test2: "abc" })
+    mergeDataSchemas(
+      getDataSchema({ test: "abc" }),
+      getDataSchema({ test2: "abc" })
     ),
     {
       type: "object",
@@ -22,9 +22,9 @@ t.test("it works", async (t) => {
   );
 
   t.same(
-    mergeDataShapes(
-      getDataShape({ test: "abc", x: { a: 1 } }),
-      getDataShape({ test: "abc", x: { b: 2 } })
+    mergeDataSchemas(
+      getDataSchema({ test: "abc", x: { a: 1 } }),
+      getDataSchema({ test: "abc", x: { b: 2 } })
     ),
     {
       type: "object",
@@ -48,9 +48,9 @@ t.test("it works", async (t) => {
   );
 
   t.same(
-    mergeDataShapes(
-      getDataShape({ test: "abc", x: { a: 1 }, arr: [1, 2] }),
-      getDataShape({ test: "abc", x: { a: 1, b: 2 }, arr: [1, 2, 3] })
+    mergeDataSchemas(
+      getDataSchema({ test: "abc", x: { a: 1 }, arr: [1, 2] }),
+      getDataSchema({ test: "abc", x: { a: 1, b: 2 }, arr: [1, 2, 3] })
     ),
     {
       type: "object",
@@ -81,21 +81,27 @@ t.test("it works", async (t) => {
 });
 
 t.test("it prefers non-null type", async (t) => {
-  t.same(mergeDataShapes(getDataShape({ test: "abc" }), getDataShape(null)), {
-    type: "object",
-    properties: {
-      test: {
-        type: "string",
+  t.same(
+    mergeDataSchemas(getDataSchema({ test: "abc" }), getDataSchema(null)),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+        },
       },
-    },
-  });
+    }
+  );
 
-  t.same(mergeDataShapes(getDataShape(null), getDataShape({ test: "abc" })), {
-    type: "object",
-    properties: {
-      test: {
-        type: "string",
+  t.same(
+    mergeDataSchemas(getDataSchema(null), getDataSchema({ test: "abc" })),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+        },
       },
-    },
-  });
+    }
+  );
 });

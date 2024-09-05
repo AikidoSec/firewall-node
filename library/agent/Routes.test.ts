@@ -37,6 +37,8 @@ t.test("it works", async (t) => {
     },
   ]);
 
+  // @ts-expect-error - Invalid arguments
+  routes.addRoute(getContext(undefined, undefined));
   routes.addRoute(getContext("GET", "/users"));
   t.same(routes.asArray(), [
     {
