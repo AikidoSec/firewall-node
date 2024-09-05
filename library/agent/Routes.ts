@@ -122,6 +122,7 @@ export class Routes {
         path: route.path,
         hits: route.hits,
         graphql: route.graphql,
+        body: route.body,
       };
     });
   }

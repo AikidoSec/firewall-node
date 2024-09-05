@@ -250,6 +250,39 @@ t.test("it adds context from request for POST", async (t) => {
   });
 });
 
+t.test("it adds body shape to stored routes", async (t) => {
+  agent.getRoutes().clear();
+  const response = await request(getApp())
+    .post("/")
+    .send({ title: "Title", authors: ["Author"], settings: { theme: "Dark" } });
+
+  t.same(response.statusCode, 200);
+  t.same(agent.getRoutes().asArray(), [
+    {
+      method: "POST",
+      path: "/",
+      hits: 1,
+      graphql: undefined,
+      body: {
+        type: "json",
+        shape: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            authors: { type: "array", items: { type: "string" } },
+            settings: {
+              type: "object",
+              properties: {
+                theme: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
+});
+
 t.test("it adds context from request for route", async (t) => {
   const response = await request(getApp()).get("/route");
 
