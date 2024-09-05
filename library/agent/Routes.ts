@@ -1,5 +1,6 @@
 import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
 import { DataShape, getDataShape } from "./api-discovery/getDataShape";
+import { mergeDataShapes } from "./api-discovery/mergeDataShapes";
 import { Context } from "./Context";
 
 export class Routes {
@@ -29,7 +30,18 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Todo merge body
+      const bodyInfo = this.getBodyInfo(context);
+      if (bodyInfo) {
+        // Body already exists, merge the data shapes if the types are the same
+        if (existing.body) {
+          existing.body.shape = mergeDataShapes(
+            existing.body.shape,
+            bodyInfo.shape
+          );
+        } else {
+          existing.body = bodyInfo;
+        }
+      }
       existing.hits++;
       return;
     }

@@ -275,3 +275,109 @@ t.test("it adds body shape", async (t) => {
     },
   ]);
 });
+
+t.test("it merges body shape", async (t) => {
+  const routes = new Routes(200);
+  t.same(routes.asArray(), []);
+  routes.addRoute(getContext("POST", "/body"));
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/body",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+    },
+  ]);
+
+  routes.addRoute(
+    getContext(
+      "POST",
+      "/body",
+      { "content-type": "application/json" },
+      { test: "abc", arr: [1, 2, 3], sub: { y: 123 } }
+    )
+  );
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/body",
+      hits: 2,
+      graphql: undefined,
+      body: {
+        type: "json",
+        shape: {
+          type: "object",
+          properties: {
+            test: {
+              type: "string",
+            },
+            arr: {
+              type: "array",
+              items: {
+                type: "number",
+              },
+            },
+            sub: {
+              type: "object",
+              properties: {
+                y: {
+                  type: "number",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ]);
+
+  routes.addRoute(
+    getContext(
+      "POST",
+      "/body",
+      { "content-type": "application/json" },
+      { test: "abc", arr: [1, 2, 3], test2: 1, sub: { x: 123 } }
+    )
+  );
+  routes.addRoute(getContext("POST", "/body"));
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/body",
+      hits: 4,
+      graphql: undefined,
+      body: {
+        type: "json",
+        shape: {
+          type: "object",
+          properties: {
+            test: {
+              type: "string",
+            },
+            arr: {
+              type: "array",
+              items: {
+                type: "number",
+              },
+            },
+            sub: {
+              type: "object",
+              properties: {
+                y: {
+                  type: "number",
+                },
+                x: {
+                  type: "number",
+                },
+              },
+            },
+            test2: {
+              type: "number",
+            },
+          },
+        },
+      },
+    },
+  ]);
+});

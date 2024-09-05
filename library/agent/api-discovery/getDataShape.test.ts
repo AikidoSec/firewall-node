@@ -2,6 +2,17 @@ import * as t from "tap";
 import { getDataShape } from "./getDataShape";
 
 t.test("it works", async (t) => {
+  t.same(getDataShape("test"), {
+    type: "string",
+  });
+
+  t.same(getDataShape(["test"]), {
+    type: "array",
+    items: {
+      type: "string",
+    },
+  });
+
   t.same(getDataShape({ test: "abc" }), {
     type: "object",
     properties: {
@@ -26,7 +37,7 @@ t.test("it works", async (t) => {
     },
   });
 
-  t.same(getDataShape({ test: 123, arr: [{ sub: true }] }), {
+  t.same(getDataShape({ test: 123, arr: [{ sub: true }], x: null }), {
     type: "object",
     properties: {
       test: {
@@ -42,6 +53,9 @@ t.test("it works", async (t) => {
             },
           },
         },
+      },
+      x: {
+        type: "null",
       },
     },
   });

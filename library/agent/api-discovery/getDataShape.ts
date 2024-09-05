@@ -1,5 +1,5 @@
 export type DataShape = {
-  type: string;
+  type: string | string[];
   properties?: { [key: string]: DataShape };
   items?: DataShape;
 };
@@ -11,8 +11,13 @@ const maxDepth = 20;
  * Get the shape of the data (for example http json body) as a schema.
  */
 export function getDataShape(data: unknown, depth = 0): DataShape {
-  if (typeof data !== "object" || data === null) {
+  // If the data is not an object (or an array), return the type
+  if (typeof data !== "object") {
     return { type: typeof data };
+  }
+
+  if (data === null) {
+    return { type: "null" };
   }
 
   if (Array.isArray(data)) {
