@@ -703,7 +703,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           graphql: undefined,
           body: {
             type: "json",
-            shape: {
+            schema: {
               type: "object",
               properties: {
                 a: { type: "number" },

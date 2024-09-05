@@ -250,7 +250,7 @@ t.test("it adds context from request for POST", async (t) => {
   });
 });
 
-t.test("it adds body shape to stored routes", async (t) => {
+t.test("it adds body schema to stored routes", async (t) => {
   agent.getRoutes().clear();
   const response = await request(getApp())
     .post("/")
@@ -265,7 +265,7 @@ t.test("it adds body shape to stored routes", async (t) => {
       graphql: undefined,
       body: {
         type: "json",
-        shape: {
+        schema: {
           type: "object",
           properties: {
             title: { type: "string" },

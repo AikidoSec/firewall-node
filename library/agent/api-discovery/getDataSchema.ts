@@ -1,16 +1,16 @@
-export type DataShape = {
+export type DataSchema = {
   type: string | string[];
-  properties?: { [key: string]: DataShape };
-  items?: DataShape;
+  properties?: { [key: string]: DataSchema };
+  items?: DataSchema;
 };
 
-// Maximum depth to traverse the data structure to get the shape for improved performance
+// Maximum depth to traverse the data structure to get the schema for improved performance
 const maxDepth = 20;
 
 /**
- * Get the shape of the data (for example http json body) as a schema.
+ * Get the schema of the data (for example http json body) as a schema.
  */
-export function getDataSchema(data: unknown, depth = 0): DataShape {
+export function getDataSchema(data: unknown, depth = 0): DataSchema {
   // If the data is not an object (or an array), return the type
   if (typeof data !== "object") {
     return { type: typeof data };
@@ -28,7 +28,7 @@ export function getDataSchema(data: unknown, depth = 0): DataShape {
     };
   }
 
-  const schema: DataShape = {
+  const schema: DataSchema = {
     type: "object",
     properties: {},
   };

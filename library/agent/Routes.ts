@@ -1,6 +1,7 @@
 import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
-import { DataShape, getDataSchema } from "./api-discovery/getDataSchema";
-import { mergeDataSchemas } from "./api-discovery/mergeDataSchemas";
+import { getBodyInfo } from "./api-discovery/getBodyInfo";
+import { DataSchema } from "./api-discovery/getDataSchema";
+import { updateBodyInfo } from "./api-discovery/updateBodyInfo";
 import { Context } from "./Context";
 
 export class Routes {
@@ -13,7 +14,7 @@ export class Routes {
       graphql?: { type: "query" | "mutation"; name: string };
       body?: {
         type: BodyDataType;
-        shape: DataShape;
+        schema: DataSchema;
       };
     }
   > = new Map();
@@ -30,17 +31,10 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      const bodyInfo = this.getBodyInfo(context);
-      if (bodyInfo) {
-        // Body already exists, merge the data shapes if the types are the same
-        if (existing.body) {
-          existing.body.shape = mergeDataSchemas(
-            existing.body.shape,
-            bodyInfo.shape
-          );
-        } else {
-          existing.body = bodyInfo;
-        }
+      // Update body schema if necessary
+      const newBodyInfo = getBodyInfo(context);
+      if (newBodyInfo) {
+        existing.body = updateBodyInfo(newBodyInfo, existing.body);
       }
       existing.hits++;
       return;
@@ -51,23 +45,8 @@ export class Routes {
       method,
       path,
       hits: 1,
-      body: this.getBodyInfo(context),
+      body: getBodyInfo(context),
     });
-  }
-
-  private getBodyInfo(context: Context) {
-    if (!context.body || typeof context.body !== "object") {
-      // Ignore body if it's not an object and only a primitive (string, number, etc.)
-      return undefined;
-    }
-    try {
-      return {
-        type: getBodyDataType(context.headers),
-        shape: getDataSchema(context.body),
-      };
-    } catch {
-      return undefined;
-    }
   }
 
   private evictLeastUsedRouteIfNecessary() {

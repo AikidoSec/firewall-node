@@ -232,7 +232,7 @@ t.test("it adds GraphQL fields", async (t) => {
   ]);
 });
 
-t.test("it adds body shape", async (t) => {
+t.test("it adds body schema", async (t) => {
   const routes = new Routes(200);
 
   routes.addRoute(
@@ -251,7 +251,7 @@ t.test("it adds body shape", async (t) => {
       graphql: undefined,
       body: {
         type: "json",
-        shape: {
+        schema: {
           type: "object",
           properties: {
             test: {
@@ -278,7 +278,7 @@ t.test("it adds body shape", async (t) => {
   ]);
 });
 
-t.test("it merges body shape", async (t) => {
+t.test("it merges body schema", async (t) => {
   const routes = new Routes(200);
   t.same(routes.asArray(), []);
   routes.addRoute(getContext("POST", "/body"));
@@ -308,7 +308,7 @@ t.test("it merges body shape", async (t) => {
       graphql: undefined,
       body: {
         type: "json",
-        shape: {
+        schema: {
           type: "object",
           properties: {
             test: {
@@ -351,7 +351,7 @@ t.test("it merges body shape", async (t) => {
       graphql: undefined,
       body: {
         type: "json",
-        shape: {
+        schema: {
           type: "object",
           properties: {
             test: {

@@ -115,10 +115,10 @@ function generateTestObjectWithDepth(depth: number): any {
 
 t.test("test max depth", async (t) => {
   const obj = generateTestObjectWithDepth(10);
-  const shape = getDataSchema(obj);
-  t.ok(JSON.stringify(shape).includes('"type":"string"'));
+  const schema = getDataSchema(obj);
+  t.ok(JSON.stringify(schema).includes('"type":"string"'));
 
   const obj2 = generateTestObjectWithDepth(21);
-  const shape2 = getDataSchema(obj2);
-  t.notOk(JSON.stringify(shape2).includes('"type":"string"'));
+  const schema2 = getDataSchema(obj2);
+  t.notOk(JSON.stringify(schema2).includes('"type":"string"'));
 });
