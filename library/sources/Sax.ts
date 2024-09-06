@@ -38,11 +38,13 @@ export class Sax implements Wrapper {
       return;
     }
 
+    // Check if the xml string is in the body
     if (
       typeof context.body !== "string" ||
       !context.body.includes(xmlPartStr)
     ) {
-      // If write is called a second time with xml that is not in the body, we won't add it to the context. It's safer to store this state in the parser object instead of globally.
+      // If write is called a second time with xml that is not in the body, we won't add it to the context.
+      // It's safer to store this state in the parser object instead of globally, because there could be multiple parsers at the same time.
       (subject as { [key: string]: any })["_aikido_add_to_context"] = false;
       // The XML string is not in the body, so currently we don't check it
       return;

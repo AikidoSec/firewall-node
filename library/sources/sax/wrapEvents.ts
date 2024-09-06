@@ -1,6 +1,7 @@
 import { Context, updateContext } from "../../agent/Context";
 import { wrap, isFunctionWrapped } from "../../helpers/wrap";
 
+// Events that are emitted by the sax parser and provide any data
 const eventsToWrap = [
   "text",
   "processinginstruction",
@@ -20,7 +21,7 @@ const eventsToWrap = [
 ];
 
 /**
- * Wrap the event functions if set by the user and not already wrapped to get thre parsed results
+ * Wrap the event functions if set by the user get the parser results
  */
 export function wrapEvents(
   saxParser: { [index: string]: any },
@@ -29,10 +30,13 @@ export function wrapEvents(
   for (const event of eventsToWrap) {
     const eventFunctionName = `on${event}`;
     const eventFunction = saxParser[eventFunctionName];
+
+    // Check if the event function is set by the user and not already wrapped
     if (
       typeof eventFunction === "function" &&
       !isFunctionWrapped(eventFunction)
     ) {
+      // Wrap the event function to get the results
       wrap(saxParser, eventFunctionName, (original) => {
         return function wrappedEventFunction() {
           const result = original.apply(
@@ -54,6 +58,9 @@ export function wrapEvents(
   }
 }
 
+/**
+ * Modify the context with the parsed xml
+ */
 function addToContext(args: unknown[], context: Context) {
   let xmlContext: unknown[] = [];
   if (context.xml) {
