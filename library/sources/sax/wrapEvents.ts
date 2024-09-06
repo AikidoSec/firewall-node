@@ -1,6 +1,5 @@
 import { Context, updateContext } from "../../agent/Context";
-import { wrap } from "../../helpers/wrap";
-import { isFunctionWrapped } from "../../helpers/wrap";
+import { wrap, isFunctionWrapped } from "../../helpers/wrap";
 
 const eventsToWrap = [
   "text",
@@ -39,12 +38,14 @@ export function wrapEvents(
           const result = original.apply(
             // @ts-expect-error We don't know the type of this
             this,
+            // eslint-disable-next-line prefer-rest-params
             arguments
           );
           // If false, write was called a second time with xml that is not in the body
           if (!saxParser["_aikido_add_to_context"]) {
             return result;
           }
+          // eslint-disable-next-line prefer-rest-params
           addToContext(Array.from(arguments), context);
           return result;
         };

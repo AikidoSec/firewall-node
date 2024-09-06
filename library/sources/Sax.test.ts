@@ -38,7 +38,7 @@ t.test("it works", async (t) => {
 
   let parser1Text = "";
   const parser1 = sax.parser(true);
-  parser1.ontext = function (txt) {
+  parser1.ontext = function onTxt(txt) {
     parser1Text += txt;
   };
   parser1.onend = function onEnd() {
@@ -51,7 +51,7 @@ t.test("it works", async (t) => {
   runWithContext(context, () => {
     let text = "";
     const parser = sax.parser(true);
-    parser.ontext = function (txt) {
+    parser.ontext = function onText(txt) {
       text += txt;
     };
     parser.onend = function onEnd() {
@@ -70,9 +70,9 @@ t.test("it works", async (t) => {
   updateContext(context, "xml", undefined);
 
   runWithContext(context, () => {
-    let attrs: { name: string; value: any }[] = [];
+    const attrs: { name: string; value: any }[] = [];
     const parser = sax.parser(true);
-    parser.onattribute = function (attr) {
+    parser.onattribute = function onAttr(attr) {
       attrs.push(attr);
     };
     parser.onend = function onEnd() {
@@ -93,7 +93,7 @@ t.test("it works", async (t) => {
   runWithContext(context, () => {
     let text = "";
     const parser = sax.parser(true);
-    parser.ontext = function (txt) {
+    parser.ontext = function onText(txt) {
       text += txt;
     };
     parser.onend = function onEnd() {
@@ -116,7 +116,7 @@ t.test("it works", async (t) => {
   runWithContext(context, () => {
     let text = "";
     const parser = sax.parser(true);
-    parser.ontext = function (txt) {
+    parser.ontext = function onText(txt) {
       text += txt;
     };
     parser.onend = function onEnd() {
@@ -134,7 +134,7 @@ t.test("it works", async (t) => {
   runWithContext(context, () => {
     let text = "";
     const parser = sax.parser(true);
-    parser.ontext = function (txt) {
+    parser.ontext = function onText(txt) {
       text += txt;
     };
     parser.onend = function onEnd() {
