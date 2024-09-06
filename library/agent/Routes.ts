@@ -32,8 +32,8 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Check if feature flag API_DISCOVERY is enabled
-      if (isFeatureEnabled("API_DISCOVERY")) {
+      // Check if feature flag COLLECT_API_SCHEMA is enabled
+      if (isFeatureEnabled("COLLECT_API_SCHEMA")) {
         // Update body schema if necessary
         const newBodyInfo = getBodyInfo(context);
         if (newBodyInfo) {
@@ -49,7 +49,7 @@ export class Routes {
       method,
       path,
       hits: 1,
-      body: isFeatureEnabled("API_DISCOVERY")
+      body: isFeatureEnabled("COLLECT_API_SCHEMA")
         ? getBodyInfo(context)
         : undefined,
     });
