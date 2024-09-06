@@ -16,6 +16,9 @@ export type AgentInfo = {
     name: string;
     version: string;
   };
+  platform: {
+    version: string;
+  };
   nodeEnv: string;
   serverless: boolean;
   stack: string[];

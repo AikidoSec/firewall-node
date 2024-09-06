@@ -2,6 +2,7 @@
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -376,6 +377,9 @@ export class Agent {
         name: platform(),
         version: release(),
       },
+      platform: {
+        version: getSemverNodeVersion(),
+      },
     };
   }
 
@@ -447,6 +451,14 @@ export class Agent {
         this.logger.log(`${name}@${details.version} is not supported!`);
       }
     }
+  }
+
+  onFailedToWrapPackage(module: string) {
+    this.logger.log(`Failed to wrap package ${module}`);
+  }
+
+  onFailedToWrapFile(module: string, filename: string) {
+    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
   }
 
   onConnectHostname(hostname: string, port: number | undefined) {
