@@ -13,9 +13,11 @@ t.test("it works", async (t) => {
       properties: {
         test: {
           type: "string",
+          optional: true,
         },
         test2: {
           type: "string",
+          optional: true,
         },
       },
     }
@@ -37,9 +39,11 @@ t.test("it works", async (t) => {
           properties: {
             a: {
               type: "number",
+              optional: true,
             },
             b: {
               type: "number",
+              optional: true,
             },
           },
         },
@@ -66,6 +70,7 @@ t.test("it works", async (t) => {
             },
             b: {
               type: "number",
+              optional: true,
             },
           },
         },

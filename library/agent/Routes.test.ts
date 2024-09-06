@@ -368,14 +368,17 @@ t.test("it merges body schema", async (t) => {
               properties: {
                 y: {
                   type: "number",
+                  optional: true,
                 },
                 x: {
                   type: "number",
+                  optional: true,
                 },
               },
             },
             test2: {
               type: "number",
+              optional: true,
             },
           },
         },

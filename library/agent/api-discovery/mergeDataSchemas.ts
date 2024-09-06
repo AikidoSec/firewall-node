@@ -29,6 +29,16 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
         );
       } else {
         result.properties[key] = second.properties[key];
+        // If a property is not in the first schema, we can assume it is optional
+        // because we only store schemas for requests with status 2xx
+        result.properties[key].optional = true;
+      }
+    }
+
+    for (const key in first.properties) {
+      // Check if removed in second schema
+      if (!second.properties[key]) {
+        result.properties[key].optional = true;
       }
     }
   }
