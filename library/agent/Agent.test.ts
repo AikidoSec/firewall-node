@@ -1,6 +1,7 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
@@ -52,6 +53,9 @@ t.test("it sends started event", async (t) => {
         os: {
           name: platform(),
           version: release(),
+        },
+        platform: {
+          version: getSemverNodeVersion(),
         },
       },
     },
