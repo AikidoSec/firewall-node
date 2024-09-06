@@ -1,3 +1,4 @@
+import { isFeatureEnabled } from "../helpers/featureFlags";
 import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
 import { getBodyInfo } from "./api-discovery/getBodyInfo";
 import { DataSchema } from "./api-discovery/getDataSchema";
@@ -31,10 +32,13 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Update body schema if necessary
-      const newBodyInfo = getBodyInfo(context);
-      if (newBodyInfo) {
-        existing.body = updateBodyInfo(newBodyInfo, existing.body);
+      // Check if feature flag API_DISCOVERY is enabled
+      if (isFeatureEnabled("API_DISCOVERY")) {
+        // Update body schema if necessary
+        const newBodyInfo = getBodyInfo(context);
+        if (newBodyInfo) {
+          existing.body = updateBodyInfo(newBodyInfo, existing.body);
+        }
       }
       existing.hits++;
       return;
@@ -45,7 +49,9 @@ export class Routes {
       method,
       path,
       hits: 1,
-      body: getBodyInfo(context),
+      body: isFeatureEnabled("API_DISCOVERY")
+        ? getBodyInfo(context)
+        : undefined,
     });
   }
 
