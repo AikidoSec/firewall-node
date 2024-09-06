@@ -72,6 +72,7 @@
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "prettier": "^3.2.4",
+    "sax": "^1.4.1",
     "shell-quote": "^1.8.1",
     "shelljs": "^0.8.5",
     "sqlite3": "^5.1.7",
