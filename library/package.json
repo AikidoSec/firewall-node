@@ -32,6 +32,7 @@
     "node": ">=16"
   },
   "devDependencies": {
+    "@fastify/cookie": "^9.4.0",
     "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",
     "@hapi/hapi": "^21.3.10",

@@ -67,6 +67,8 @@ function getApp(
     throw new Error("Unknown import type");
   }
 
+  app.register(require("@fastify/cookie"));
+
   app.addHook("onRequest", async (request, reply) => {
     reply.header("X-Powered-By", "Aikido");
 
@@ -143,7 +145,9 @@ t.test("it adds context from request for all", async (t) => {
     routeParams: {},
     source: "fastify",
     route: "/",
-    cookies: {},
+    cookies: {
+      session: "123",
+    },
   });
 });
 
@@ -176,7 +180,9 @@ t.test("it adds context from request by using default import", async (t) => {
     routeParams: {},
     source: "fastify",
     route: "/",
-    cookies: {},
+    cookies: {
+      session: "123",
+    },
   });
 });
 
@@ -211,7 +217,9 @@ t.test(
       routeParams: {},
       source: "fastify",
       route: "/",
-      cookies: {},
+      cookies: {
+        session: "123",
+      },
     });
   }
 );
@@ -245,7 +253,9 @@ t.test("it adds context from request for all", async (t) => {
     routeParams: {},
     source: "fastify",
     route: "/context",
-    cookies: {},
+    cookies: {
+      session: "123",
+    },
   });
 });
 
@@ -323,7 +333,21 @@ t.test("it rate limits requests by ip address", async (t) => {
     url: "/rate-limited",
   });
 
-  t.same(response2.statusCode, 429);
+  t.same(response2.statusCode, 200);
+
+  const response3 = await app.inject({
+    method: "GET",
+    url: "/rate-limited",
+  });
+
+  t.same(response3.statusCode, 200);
+
+  const response4 = await app.inject({
+    method: "GET",
+    url: "/rate-limited",
+  });
+
+  t.same(response4.statusCode, 429);
 });
 
 t.test(

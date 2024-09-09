@@ -5,9 +5,10 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapHookHandler } from "./fastify/wrapHookHandler";
 
 export class Fastify implements Wrapper {
-  private wrapArgs(args: unknown[], agent: Agent) {
+  private wrapRequestArgs(args: unknown[], agent: Agent) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
@@ -15,6 +16,39 @@ export class Fastify implements Wrapper {
       }
 
       return wrapRequestHandler(arg as RouteHandlerMethod, agent);
+    });
+  }
+
+  private wrapAddHookArgs(args: unknown[], agent: Agent) {
+    if (args.length < 2 || typeof args[0] !== "string") {
+      return args;
+    }
+    const hookName = args[0] as string;
+
+    const hooksToWrap = [
+      "onRequest",
+      "preParsing",
+      "preValidation",
+      "preHandler",
+      "preSerialization",
+      "onError",
+      "onSend",
+      "onResponse",
+      "onTimeout",
+      "onRequestAbort",
+    ];
+
+    if (!hooksToWrap.includes(hookName)) {
+      return args;
+    }
+
+    return args.map((arg) => {
+      // Ignore non-function arguments
+      if (typeof arg !== "function") {
+        return arg;
+      }
+
+      return wrapHookHandler(arg, agent, hookName);
     });
   }
 
@@ -48,7 +82,6 @@ export class Fastify implements Wrapper {
       "options",
       "patch",
       "all",
-      "addHook",
     ];
 
     hooks
@@ -58,11 +91,14 @@ export class Fastify implements Wrapper {
         const onNewInstance = (instance: any) => {
           for (const func of requestFunctions) {
             wrapExport(instance, func, pkgInfo, {
-              modifyArgs: this.wrapArgs,
+              modifyArgs: this.wrapRequestArgs,
             });
           }
           wrapExport(instance, "route", pkgInfo, {
             modifyArgs: this.wrapRouteMethod,
+          });
+          wrapExport(instance, "addHook", pkgInfo, {
+            modifyArgs: this.wrapAddHookArgs,
           });
         };
 
