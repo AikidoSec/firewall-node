@@ -28,6 +28,16 @@ const agent = new Agent(
       },
       {
         method: "GET",
+        route: "/rate-limited-2",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 2,
+          enabled: true,
+        },
+      },
+      {
+        method: "GET",
         route: "/white-listed-ip-address",
         forceProtectionOff: false,
         rateLimiting: {
@@ -51,7 +61,8 @@ setInstance(agent);
 import { getContext } from "../agent/Context";
 
 function getApp(
-  importType: "default" | "fastify" | "defaultNamed" = "default"
+  importType: "default" | "fastify" | "defaultNamed" = "default",
+  withoutHooks = false
 ) {
   let app: FastifyInstance;
 
@@ -67,29 +78,36 @@ function getApp(
     throw new Error("Unknown import type");
   }
 
-  app.register(require("@fastify/cookie"));
+  if (!withoutHooks) {
+    app.register(require("@fastify/cookie"));
 
-  app.addHook("onRequest", async (request, reply) => {
-    reply.header("X-Powered-By", "Aikido");
+    app.addHook("onRequest", async (request, reply) => {
+      reply.header("X-Powered-By", "Aikido");
 
-    if (request.url.startsWith("/blocked-user")) {
-      setUser({ id: "567", name: "User" });
-    }
-  });
-
-  app.addHook("onRequest", async (request, reply) => {
-    if (request.url.startsWith("/on-request-attack")) {
-      // @ts-expect-error not typed here
-      if (typeof request.query.directory !== "string") {
-        reply.code(400).send("directory query parameter is required");
-        return;
+      if (request.url.startsWith("/blocked-user")) {
+        setUser({ id: "567", name: "User" });
       }
-      // @ts-expect-error not typed here
-      require("fs").readdir(request.query.directory).unref();
+    });
 
-      reply.send(getContext());
-    }
-  });
+    app.addHook("onRequest", async (request, reply) => {
+      if (request.url.startsWith("/on-request-attack")) {
+        // @ts-expect-error not typed here
+        if (typeof request.query.directory !== "string") {
+          reply.code(400).send("directory query parameter is required");
+          return;
+        }
+        // @ts-expect-error not typed here
+        require("fs").readdir(request.query.directory).unref();
+
+        reply.send(getContext());
+      }
+    });
+
+    app.addHook("onReady", function (done) {
+      // Some code
+      done();
+    });
+  }
 
   app.get("/", (request, reply) => {
     const context = getContext();
@@ -110,6 +128,10 @@ function getApp(
   });
 
   app.get("/blocked-user", (request, reply) => {
+    reply.code(200).send("ok");
+  });
+
+  app.get("/rate-limited-2", (request, reply) => {
     reply.code(200).send("ok");
   });
 
@@ -427,3 +449,31 @@ t.test("It works with route params", async (t) => {
     cookies: {},
   });
 });
+
+t.test(
+  "it rate limits requests by ip address in app withouth hooks",
+  async (t) => {
+    const app = getApp("default", true);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rate-limited-2",
+    });
+
+    t.same(response.statusCode, 200);
+
+    const response2 = await app.inject({
+      method: "GET",
+      url: "/rate-limited-2",
+    });
+
+    t.same(response2.statusCode, 200);
+
+    const response3 = await app.inject({
+      method: "GET",
+      url: "/rate-limited-2",
+    });
+
+    t.same(response3.statusCode, 429);
+  }
+);
