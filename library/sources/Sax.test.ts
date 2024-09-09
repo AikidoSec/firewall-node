@@ -168,7 +168,6 @@ t.test("it works with streams", (t) => {
     let text = "";
     const saxStream = sax.createStream(true);
     saxStream.on("text", function onTxt(txt) {
-      console.log("text", txt);
       text += txt;
     });
 
