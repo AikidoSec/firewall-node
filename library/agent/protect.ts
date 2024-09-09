@@ -40,6 +40,7 @@ import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
+import { HTTP2Request } from "../sinks/HTTP2Request";
 
 function isDebugging() {
   return (
@@ -139,6 +140,7 @@ function getWrappers() {
     new Hapi(),
     new NodeSQLite(),
     new BetterSQLite3(),
+    new HTTP2Request(),
   ];
 }
 
