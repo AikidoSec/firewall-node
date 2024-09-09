@@ -103,7 +103,7 @@ function getApp(
       }
     });
 
-    app.addHook("onReady", function (done) {
+    app.addHook("onReady", function onReady(done) {
       // Some code
       done();
     });
