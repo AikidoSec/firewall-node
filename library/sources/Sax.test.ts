@@ -9,6 +9,7 @@ import {
 } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Sax } from "./Sax";
+import { Readable } from "stream";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -144,5 +145,45 @@ t.test("it works", async (t) => {
     t.same(getContext()?.xml, undefined);
     parser.write(true).close();
     t.same(getContext()?.xml, undefined);
+  });
+});
+
+t.test("it works with streams", (t) => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+
+  agent.start([new Sax()]);
+
+  const sax = require("sax");
+
+  // Reset the context
+  updateContext(context, "xml", undefined);
+
+  runWithContext(context, () => {
+    let text = "";
+    const saxStream = sax.createStream(true);
+    saxStream.on("text", function onTxt(txt) {
+      console.log("text", txt);
+      text += txt;
+    });
+
+    t.same(getContext()?.xml, undefined);
+
+    const inputStream = new Readable();
+    inputStream.pipe(saxStream);
+    inputStream.push('<root><child name="test">text</child><child>');
+    inputStream.push("13</child></root>");
+    inputStream.push(null);
+
+    saxStream.on("end", function onEnd() {
+      t.equal(text, "text13");
+      t.same(getContext()?.xml, ["text", "13"]);
+      t.end();
+    });
   });
 });
