@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Agent } from "../../agent/Agent";
 import { getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -21,6 +22,7 @@ export function wrapHookHandler(
       );
     };
 
+    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (args.length < 2 || typeof args[0] !== "object") {
       return applyOriginal();
