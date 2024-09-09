@@ -16,10 +16,6 @@ export function wrapNewInstance(
     throw new Error("Can not wrap new instance if agent is not initialized");
   }
 
-  if (!className) {
-    className = "default";
-  }
-
   try {
     return wrapDefaultOrNamed(
       subject,

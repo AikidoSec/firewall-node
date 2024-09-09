@@ -48,10 +48,6 @@ export function wrapExport(
     throw new Error("Can not wrap exports if agent is not initialized");
   }
 
-  if (!methodName) {
-    methodName = "default";
-  }
-
   try {
     return wrapDefaultOrNamed(
       subject,
@@ -79,7 +75,7 @@ export function wrapExport(
               context,
               agent,
               pkgInfo,
-              methodName
+              methodName || ""
             );
           }
 
@@ -90,7 +86,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName,
+                method: methodName || "",
                 module: pkgInfo.name,
               });
             }
@@ -109,7 +105,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName,
+                method: methodName || "",
                 module: pkgInfo.name,
               });
             }
