@@ -25,7 +25,7 @@ const context: Context = {
 let _client: ReturnType<typeof connect> | undefined;
 
 function http2Request(
-  url: URL,
+  url: URL | string,
   method: string,
   headers: Record<string, string>,
   body?: string,
@@ -35,6 +35,9 @@ function http2Request(
     (resolve, reject) => {
       if (!reuseClient || !_client) {
         _client = connect(url);
+      }
+      if (typeof url === "string") {
+        url = new URL(url);
       }
       const req = _client.request({
         ":path": url.pathname + url.search,
@@ -82,12 +85,42 @@ t.test("it works", async (t) => {
   t.same(agent.getHostnames().asArray(), []);
 
   await runWithContext(context, async () => {
-    const url = new URL("https://aikido.dev");
-    const { headers, body } = await http2Request(url, "GET", {});
+    const { headers, body } = await http2Request(
+      new URL("https://aikido.dev"),
+      "GET",
+      {}
+    );
     t.same(headers[":status"], 301);
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 443 },
     ]);
+  });
+
+  await runWithContext(context, async () => {
+    agent.getHostnames().clear();
+
+    const { headers, body } = await http2Request(
+      "https://aikido.dev",
+      "GET",
+      {}
+    );
+    t.same(headers[":status"], 301);
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+  });
+
+  await runWithContext(context, async () => {
+    try {
+      await http2Request("https://localhost:4000/api/internal", "GET", {});
+      t.fail("should not reach here");
+    } catch (e) {
+      t.same(
+        e.message,
+        "Aikido firewall has blocked a server-side request forgery: http2.connect(...) originating from body.image"
+      );
+    }
   });
 });
