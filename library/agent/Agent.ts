@@ -429,7 +429,7 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
+  onFailedToWrapMethod(module: string, name: string | undefined) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
