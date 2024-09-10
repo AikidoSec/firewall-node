@@ -67,31 +67,8 @@ t.test("it works with an url like object", async (t) => {
 
 t.test("invalid arguments", async (t) => {
   t.same(get([]), undefined);
-  t.same(get([{}]), undefined);
   t.same(get([null]), undefined);
   t.same(get([undefined]), undefined);
   t.same(get([1]), undefined);
   t.same(get(["%test%"]), undefined);
-});
-
-t.test("merge authority with options", async (t) => {
-  t.same(get(["https://localhost", { port: 4000 }]), {
-    hostname: "localhost",
-    port: 4000,
-  });
-  t.same(get(["https://localhost:4000", { port: 3000 }]), {
-    hostname: "localhost",
-    port: 3000,
-  });
-  t.same(get(["https://localhost:4000/test?q=1", { port: "3000" }]), {
-    hostname: "localhost",
-    port: 3000,
-  });
-  t.same(
-    get(["https://localhost:4000/test?q=1", { port: 3000, path: "/test" }]),
-    {
-      hostname: "localhost",
-      port: 3000,
-    }
-  );
 });

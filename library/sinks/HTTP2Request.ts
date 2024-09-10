@@ -1,4 +1,4 @@
-import type { ClientSessionOptions, SecureClientSessionOptions } from "http2";
+import type { ClientSessionOptions } from "http2";
 import type { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import type { Hooks } from "../agent/hooks/Hooks";
