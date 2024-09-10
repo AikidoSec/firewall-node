@@ -28,13 +28,18 @@ function http2Request(
   url: URL | string,
   method: string,
   headers: Record<string, string>,
-  body?: string,
-  reuseClient?: boolean
+  connectOptions?: Record<string, unknown>,
+  reuseClient?: boolean,
+  body?: string
 ) {
   return new Promise<{ headers: IncomingHttpHeaders; body: string }>(
     (resolve, reject) => {
       if (!reuseClient || !_client) {
-        _client = connect(url);
+        if (connectOptions) {
+          _client = connect(url, connectOptions);
+        } else {
+          _client = connect(url);
+        }
       }
       if (typeof url === "string") {
         url = new URL(url);
@@ -100,10 +105,48 @@ t.test("it works", async (t) => {
   await runWithContext(context, async () => {
     agent.getHostnames().clear();
 
-    const { headers, body } = await http2Request(
-      "https://aikido.dev",
+    const { headers } = await http2Request("https://aikido.dev", "GET", {});
+    t.same(headers[":status"], 301);
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+  });
+
+  await runWithContext(context, async () => {
+    agent.getHostnames().clear();
+    const { headers } = await http2Request(
+      // @ts-expect-error Passing a url like object
+      {
+        hostname: "aikido.dev",
+        port: "443",
+        pathname: "/",
+      },
       "GET",
       {}
+    );
+    t.same(headers[":status"], 301);
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443 },
+    ]);
+  });
+
+  await runWithContext(context, async () => {
+    agent.getHostnames().clear();
+
+    const { headers } = await http2Request(
+      // @ts-expect-error Passing a url like object
+      {
+        hostname: "aikido.dev",
+        port: "80",
+        pathname: "/",
+      },
+      "GET",
+      {},
+      {
+        port: 443,
+      }
     );
     t.same(headers[":status"], 301);
 

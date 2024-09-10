@@ -1,33 +1,23 @@
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
+import { getHostFromHTTP2RequestArgs } from "./http2-request/getHostFromHTTP2RequestArgs";
 
 export class HTTP2Request implements Wrapper {
-  private inspectHttp2Connect(args: unknown[], agent: Agent) {
-    if (args.length <= 0 || !args[0]) {
-      return undefined;
-    }
-
-    let url: URL | undefined;
-    if (typeof args[0] === "string") {
-      url = tryParseURL(args[0]);
-    } else if (args[0] instanceof URL) {
-      url = args[0];
-    }
-
-    if (!url) {
-      return undefined;
-    }
-
-    const port = getPortFromURL(url);
-
+  private inspectHostname(
+    agent: Agent,
+    hostname: string,
+    port: number | undefined
+  ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(url.hostname, port);
+    agent.onConnectHostname(hostname, port);
     const context = getContext();
 
     if (!context) {
@@ -36,13 +26,34 @@ export class HTTP2Request implements Wrapper {
 
     // Check if the hostname is inside the context
     const foundDirectSSRF = checkContextForSSRF({
-      hostname: url.hostname,
+      hostname: hostname,
       operation: `http2.connect`,
       context: context,
       port: port,
     });
     if (foundDirectSSRF) {
       return foundDirectSSRF;
+    }
+    return undefined;
+  }
+
+  private inspectHttp2Connect(args: unknown[], agent: Agent) {
+    if (args.length <= 0) {
+      return undefined;
+    }
+
+    const hostInfo = getHostFromHTTP2RequestArgs(args);
+    if (!hostInfo) {
+      return undefined;
+    }
+
+    const attack = this.inspectHostname(
+      agent,
+      hostInfo.hostname,
+      hostInfo.port
+    );
+    if (attack) {
+      return attack;
     }
 
     return undefined;
