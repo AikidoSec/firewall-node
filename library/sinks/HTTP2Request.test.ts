@@ -6,6 +6,8 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { HTTP2Request } from "./HTTP2Request";
 import { Context, runWithContext } from "../agent/Context";
+import { wrap } from "../helpers/wrap";
+import * as dns from "dns";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,6 +23,31 @@ const context: Context = {
   source: "express",
   route: "/posts/:id",
 };
+
+const calls: Record<string, number> = {};
+wrap(dns, "lookup", function lookup(original) {
+  return function lookup() {
+    const hostname = arguments[0];
+
+    if (!calls[hostname]) {
+      calls[hostname] = 0;
+    }
+
+    calls[hostname]++;
+
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "thisdomainpointstointernalip2.com"
+    ) {
+      return original.apply(this, [
+        "localhost",
+        ...Array.from(arguments).slice(1),
+      ]);
+    }
+
+    original.apply(this, arguments);
+  };
+});
 
 let _client: ReturnType<typeof connect> | undefined;
 
@@ -44,6 +71,10 @@ function http2Request(
       if (typeof url === "string") {
         url = new URL(url);
       }
+      _client.on("error", (err) => {
+        reject(err);
+      });
+
       const req = _client.request({
         ":path": url.pathname + url.search,
         ":method": method,
@@ -166,4 +197,53 @@ t.test("it works", async (t) => {
       );
     }
   });
+
+  await runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
+    async () => {
+      try {
+        await http2Request(
+          "https://thisdomainpointstointernalip.com",
+          "GET",
+          {}
+        );
+        t.fail("should not reach here");
+      } catch (e) {
+        t.match(
+          e.message,
+          /Aikido firewall has blocked a server-side request forgery: http2.connect.* originating from body.image/
+        );
+
+        // Ensure the lookup is only called once per hostname
+        // Otherwise, it could be vulnerable to TOCTOU
+        t.same(calls["thisdomainpointstointernalip.com"], 1);
+      }
+    }
+  );
+
+  await runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
+    async () => {
+      try {
+        await http2Request(
+          "https://thisdomainpointstointernalip2.com",
+          "GET",
+          {},
+          {
+            lookup: dns.lookup,
+          }
+        );
+        t.fail("should not reach here");
+      } catch (e) {
+        t.match(
+          e.message,
+          /Aikido firewall has blocked a server-side request forgery: http2.connect.* originating from body.image/
+        );
+
+        // Ensure the lookup is only called once per hostname
+        // Otherwise, it could be vulnerable to TOCTOU
+        t.same(calls["thisdomainpointstointernalip2.com"], 1);
+      }
+    }
+  );
 });

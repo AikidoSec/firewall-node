@@ -1,13 +1,13 @@
-import { Agent } from "../agent/Agent";
+import type { ClientSessionOptions, SecureClientSessionOptions } from "http2";
+import type { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
-import { Hooks } from "../agent/hooks/Hooks";
+import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { getPortFromURL } from "../helpers/getPortFromURL";
-import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
-import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { getHostFromHTTP2RequestArgs } from "./http2-request/getHostFromHTTP2RequestArgs";
+import { lookup } from "dns";
+import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 
 export class HTTP2Request implements Wrapper {
   private inspectHostname(
@@ -59,12 +59,62 @@ export class HTTP2Request implements Wrapper {
     return undefined;
   }
 
+  private monitorDNSLookups(args: unknown[], agent: Agent): unknown[] {
+    const context = getContext();
+
+    if (!context) {
+      return args;
+    }
+
+    let optionObj = undefined;
+    if (args.length > 1 && typeof args[1] === "object") {
+      optionObj = args[1] as ClientSessionOptions & {
+        lookup?: Function;
+      };
+    }
+
+    if (!optionObj) {
+      const newOpts = {
+        lookup: inspectDNSLookupCalls(lookup, agent, "http2", "http2.connect"),
+      };
+
+      // You can also pass on handler as a callback as the second argument
+      // But if the options object is added at the third position, it will be ignored
+      if (args.length === 2 && typeof args[1] === "function") {
+        return [args[0], newOpts, args[1]];
+      }
+
+      return args.concat(newOpts);
+    }
+
+    if (typeof optionObj.lookup === "function") {
+      optionObj.lookup = inspectDNSLookupCalls(
+        optionObj.lookup,
+        agent,
+        "http2",
+        "http2.connect"
+      );
+    } else {
+      optionObj.lookup = inspectDNSLookupCalls(
+        lookup,
+        agent,
+        "http2",
+        "http2.connect"
+      );
+    }
+
+    return args;
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addBuiltinModule("http2")
       .addSubject((exports) => exports)
       .inspect("connect", (args, subject, agent) =>
         this.inspectHttp2Connect(args, agent)
+      )
+      .modifyArguments("connect", (args, subject, agent) =>
+        this.monitorDNSLookups(args, agent)
       );
   }
 }
