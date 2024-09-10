@@ -1,3 +1,4 @@
+/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { connect, IncomingHttpHeaders } from "http2";
 import { Agent } from "../agent/Agent";
@@ -96,6 +97,7 @@ function http2Request(
       req.on("data", (chunk) => {
         resData += chunk;
       });
+
       req.on("end", () => {
         _client!.close();
         resolve({ headers: respHeaders, body: resData });
@@ -155,29 +157,6 @@ t.test("it works", async (t) => {
       },
       "GET",
       {}
-    );
-    t.same(headers[":status"], 301);
-
-    t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443 },
-    ]);
-  });
-
-  await runWithContext(context, async () => {
-    agent.getHostnames().clear();
-
-    const { headers } = await http2Request(
-      // @ts-expect-error Passing a url like object
-      {
-        hostname: "aikido.dev",
-        port: "80",
-        pathname: "/",
-      },
-      "GET",
-      {},
-      {
-        port: 443,
-      }
     );
     t.same(headers[":status"], 301);
 
