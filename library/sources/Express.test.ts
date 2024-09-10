@@ -80,7 +80,7 @@ function getApp(userMiddleware = true) {
   app.set("env", "test");
   app.use(cookieParser());
 
-  app.use("/*", (req, res, next) => {
+  app.use("/.*path", (req, res, next) => {
     res.setHeader("X-Powered-By", "Aikido");
     next();
   });
@@ -106,7 +106,7 @@ function getApp(userMiddleware = true) {
   }
 
   // A middleware that is used as a route
-  app.use("/api/*", (req, res, next) => {
+  app.use("/api/*path", (req, res, next) => {
     const context = getContext();
 
     res.send(context);
@@ -206,11 +206,12 @@ function getApp(userMiddleware = true) {
     res.send({ hello: "world" });
   });
 
-  app.get("/white-listed-ip-address", (req, res) => {
+  app.route("/white-listed-ip-address").get((req, res) => {
     res.send({ hello: "world" });
   });
 
-  app.use("/middleware-rate-limited", (req, res, next) => {
+  // @ts-expect-error Not types for express 5 available yet
+  app.router.use("/middleware-rate-limited", (req, res, next) => {
     res.send({ hello: "world" });
   });
 
@@ -223,14 +224,14 @@ function getApp(userMiddleware = true) {
 
 t.test("it adds context from request for GET", async (t) => {
   const response = await request(getApp())
-    .get("/?title[$ne]=null")
+    .get("/?title=test&x=5")
     .set("Cookie", "session=123")
     .set("Accept", "application/json")
     .set("X-Forwarded-For", "1.2.3.4");
 
   t.match(response.body, {
     method: "GET",
-    query: { title: { $ne: "null" } },
+    query: { title: "test", x: "5" },
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",

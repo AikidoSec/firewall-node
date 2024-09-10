@@ -36,7 +36,7 @@ Aikido Firewall for Node.js 16+ is compatible with:
 
 ### Web frameworks
 
-* ✅ [Express](docs/express.md) 4.x
+* ✅ [Express](docs/express.md) 4.x, 5.x
 * ✅ [Hono](docs/hono.md) 4.x
 * ✅ [hapi](docs/hapi.md) 21.x
 * ✅ [micro](docs/micro.md) 10.x
