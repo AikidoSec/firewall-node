@@ -32,10 +32,7 @@ export class Routes {
 
     if (existing) {
       // Update body schema if necessary
-      const newBodyInfo = getBodyInfo(context);
-      if (newBodyInfo) {
-        existing.body = updateBodyInfo(newBodyInfo, existing.body);
-      }
+      existing.body = updateBodyInfo(context, existing.body);
 
       existing.hits++;
       return;
