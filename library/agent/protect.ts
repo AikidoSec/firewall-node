@@ -41,6 +41,7 @@ import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { Koa } from "../sources/Koa";
+import { KoaRouter } from "../sources/KoaRouter";
 
 function isDebugging() {
   return (
@@ -141,6 +142,7 @@ function getWrappers() {
     new NodeSQLite(),
     new BetterSQLite3(),
     new Koa(),
+    new KoaRouter(),
   ];
 }
 
