@@ -40,9 +40,12 @@ agent.start([new Koa(), new HTTPServer()]);
 setInstance(agent);
 
 const koa = require("koa");
+const Router = require("@koa/router");
+const { bodyParser } = require("@koa/bodyparser");
 
 function getApp() {
   const app = new koa();
+  app.use(bodyParser());
 
   // Sync middleware
   app.use((ctx, next) => {
@@ -70,7 +73,7 @@ function getApp() {
   });
 
   // v1 Generator function middleware
-  app.use(function* (next) {
+  app.use(function* test(next) {
     yield next;
     if (this.path === "/v1") {
       this.headers["legacy"] = "true";
@@ -84,6 +87,23 @@ function getApp() {
       ctx.body = "OK";
     }
   });
+
+  const router = new Router({
+    prefix: "/router",
+  });
+
+  router.get("/context", (ctx) => {
+    ctx.type = "application/json";
+    ctx.body = getContext();
+  });
+
+  router.post("/add/:id", (ctx) => {
+    ctx.type = "application/json";
+    ctx.body = getContext();
+  });
+
+  app.use(router.routes());
+  app.use(router.allowedMethods());
 
   return app;
 }
@@ -160,4 +180,65 @@ t.test("it rate limits a request", async (t) => {
 
   t.equal(response.status, 429);
   t.match(response.text, "You are rate limited by Aikido firewall.");
+});
+
+t.test("it adds body to the context", async (t) => {
+  const app = getApp();
+  const response = await request(app.callback())
+    .post("/context?title=test")
+    .set("Content-Type", "application/json")
+    .send({ key: "value", array: [1, 2, 3] });
+
+  t.equal(response.status, 200);
+  t.match(response.body, {
+    method: "POST",
+    query: { title: "test" },
+    body: { key: "value", array: [1, 2, 3] },
+    cookies: {},
+    headers: {
+      "content-type": "application/json",
+      "content-length": "31",
+    },
+    source: "koa",
+    route: "/context",
+    subdomains: [],
+  });
+});
+
+t.test("works with koa router", async (t) => {
+  const app = getApp();
+  const response = await request(app.callback()).get(
+    "/router/context?title=test"
+  );
+
+  t.equal(response.status, 200);
+  t.match(response.body, {
+    method: "GET",
+    query: {
+      title: "test",
+    },
+    cookies: {},
+    headers: {},
+    source: "koa",
+    route: "/router/context",
+    subdomains: [],
+  });
+});
+
+t.test("gets route params using koa router", async (t) => {
+  const app = getApp();
+  const response = await request(app.callback()).post("/router/add/123");
+
+  t.equal(response.status, 200);
+  t.match(response.body, {
+    method: "POST",
+    routeParams: {
+      id: "123",
+    },
+    cookies: {},
+    headers: {},
+    source: "koa",
+    route: "/router/add/:number",
+    subdomains: [],
+  });
 });

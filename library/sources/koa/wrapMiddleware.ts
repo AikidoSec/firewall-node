@@ -1,8 +1,8 @@
-import type { Middleware } from "koa";
+/* eslint-disable max-lines-per-function */
 import type { Agent } from "../../agent/Agent";
 import { contextFromRequest } from "./contextFromRequest";
 import { getContext, runWithContext } from "../../agent/Context";
-import type { Context as KoaContext } from "koa";
+import type { Middleware, Context as KoaContext } from "koa";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { escapeHTML } from "../../helpers/escapeHTML";
 
@@ -21,6 +21,7 @@ export function wrapMiddleware(
       );
     };
 
+    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (
       typeof args[0] !== "object" ||
