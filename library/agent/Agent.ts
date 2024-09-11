@@ -453,8 +453,8 @@ export class Agent {
     this.hostnames.add(hostname, port);
   }
 
-  onRouteExecute(method: string, path: string) {
-    this.routes.addRoute(method, path);
+  onRouteExecute(context: Context) {
+    this.routes.addRoute(context);
   }
 
   onGraphQLExecute(

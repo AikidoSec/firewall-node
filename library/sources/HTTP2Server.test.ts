@@ -204,6 +204,7 @@ t.test("it discovers routes", async () => {
               method: "GET",
               hits: 1,
               graphql: undefined,
+              body: undefined,
             }
           );
           server.close();
@@ -431,6 +432,7 @@ t.test("it discovers routes using stream event", async () => {
             method: "GET",
             hits: 1,
             graphql: undefined,
+            body: undefined,
           }
         );
         server.close();
