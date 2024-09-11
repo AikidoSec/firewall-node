@@ -1,3 +1,5 @@
+/* eslint-disable func-names */
+
 import * as t from "tap";
 import { isDeprecatedGenerator } from "./isDeprecatedGenerator";
 

@@ -76,7 +76,8 @@ function getApp() {
   app.use(function* test(next) {
     yield next;
     if (this.path === "/v1") {
-      this.headers["legacy"] = "true";
+      this.type = "text/plain";
+      this.body = "v1";
     }
   });
 
@@ -180,6 +181,14 @@ t.test("it rate limits a request", async (t) => {
 
   t.equal(response.status, 429);
   t.match(response.text, "You are rate limited by Aikido firewall.");
+});
+
+t.test("test legacy generator function middleware", async (t) => {
+  const app = getApp();
+  const response = await request(app.callback()).get("/v1");
+
+  t.equal(response.status, 200);
+  t.equal(response.text, "v1");
 });
 
 t.test("it adds body to the context", async (t) => {
