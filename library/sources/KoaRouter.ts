@@ -7,6 +7,7 @@ import type { Agent } from "../agent/Agent";
 import type { Middleware } from "koa";
 import { wrapRouterMiddleware } from "./koa/wrapRouterMiddleware";
 import { METHODS } from "http";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class KoaRouter implements Wrapper {
   private wrapArgs(args: unknown[], agent: Agent) {
@@ -25,18 +26,25 @@ export class KoaRouter implements Wrapper {
 
     const methodsToWrap = ["use", "all", "param", ...methods];
 
-    // Todo wrap koa-router (same package)
+    const onRequire = (exports: any, pkgInfo: WrapPackageInfo) => {
+      return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
+        for (const method of methodsToWrap) {
+          wrapExport(instance, method, pkgInfo, {
+            modifyArgs: this.wrapArgs,
+          });
+        }
+      });
+    };
+
     hooks
       .addPackage("@koa/router")
-      .withVersion("^13.0.0")
-      .onRequire((exports, pkgInfo) => {
-        return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
-          for (const method of methodsToWrap) {
-            wrapExport(instance, method, pkgInfo, {
-              modifyArgs: this.wrapArgs,
-            });
-          }
-        });
-      });
+      .withVersion("^13.0.0 || ^12.0.0 || ^11.0.0 || ^10.0.0")
+      .onRequire(onRequire);
+
+    // Same package
+    hooks
+      .addPackage("koa-router")
+      .withVersion("^13.0.0 || ^12.0.0 || ^11.0.0 || ^10.0.0")
+      .onRequire(onRequire);
   }
 }

@@ -40,18 +40,21 @@ agent.start([new Koa(), new KoaRouter(), new HTTPServer()]);
 setInstance(agent);
 
 const koa = require("koa");
-const Router = require("@koa/router");
 const { bodyParser } = require("@koa/bodyparser");
 
-function getApp() {
+function getApp(routerImport = 1) {
   const app = new koa();
   app.use(bodyParser());
+
+  let Router = require("@koa/router");
+  if (routerImport === 2) {
+    Router = require("koa-router");
+  }
 
   const router = new Router();
 
   router.use(async (ctx, next) => {
     if (ctx.path === "/user/blocked") {
-      console.log("setUser");
       setUser({ id: "567" });
     } else if (ctx.path === "/context/user") {
       setUser({ id: "123" });
@@ -76,7 +79,6 @@ function getApp() {
   });
 
   router.all("/user/blocked", (ctx) => {
-    console.log("blocked");
     ctx.status = 200;
     ctx.body = "Ok";
   });
@@ -163,6 +165,24 @@ t.test("it rate limits a request", async (t) => {
 
 t.test("gets route params using koa router", async (t) => {
   const app = getApp();
+  const response = await request(app.callback()).post("/add/123");
+
+  t.equal(response.status, 200);
+  t.match(response.body, {
+    method: "POST",
+    routeParams: {
+      id: "123",
+    },
+    cookies: {},
+    headers: {},
+    source: "koa",
+    route: "/add/:number",
+    subdomains: [],
+  });
+});
+
+t.test("Works with different npm package name", async (t) => {
+  const app = getApp(2);
   const response = await request(app.callback()).post("/add/123");
 
   t.equal(response.status, 200);
