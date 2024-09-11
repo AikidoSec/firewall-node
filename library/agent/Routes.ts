@@ -1,9 +1,8 @@
-import { isFeatureEnabled } from "../helpers/featureFlags";
-import { BodyDataType, getBodyDataType } from "./api-discovery/getBodyDataType";
+import type { BodyDataType } from "./api-discovery/getBodyDataType";
 import { getBodyInfo } from "./api-discovery/getBodyInfo";
-import { DataSchema } from "./api-discovery/getDataSchema";
+import type { DataSchema } from "./api-discovery/getDataSchema";
 import { updateBodyInfo } from "./api-discovery/updateBodyInfo";
-import { Context } from "./Context";
+import type { Context } from "./Context";
 
 export class Routes {
   private routes: Map<
@@ -32,14 +31,12 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Check if feature flag COLLECT_API_SCHEMA is enabled
-      if (isFeatureEnabled("COLLECT_API_SCHEMA")) {
-        // Update body schema if necessary
-        const newBodyInfo = getBodyInfo(context);
-        if (newBodyInfo) {
-          existing.body = updateBodyInfo(newBodyInfo, existing.body);
-        }
+      // Update body schema if necessary
+      const newBodyInfo = getBodyInfo(context);
+      if (newBodyInfo) {
+        existing.body = updateBodyInfo(newBodyInfo, existing.body);
       }
+
       existing.hits++;
       return;
     }
@@ -49,9 +46,7 @@ export class Routes {
       method,
       path,
       hits: 1,
-      body: isFeatureEnabled("COLLECT_API_SCHEMA")
-        ? getBodyInfo(context)
-        : undefined,
+      body: getBodyInfo(context),
     });
   }
 
