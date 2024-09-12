@@ -47,7 +47,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stdout, /Starting agent/);
       t.match(
         stderr,
-        /Aikido firewall has blocked a server-side request forgery/
+        /Zen by Aikido has blocked a server-side request forgery/
       );
     })
     .catch((error) => {
@@ -93,7 +93,7 @@ t.test("it does not block in dry mode", (t) => {
       t.match(stdout, /Starting agent/);
       t.notMatch(
         stderr,
-        /Aikido firewall has blocked a server-side request forgery/
+        /Zen by Aikido has blocked a server-side request forgery/
       );
       t.match(stderr, /fetch failed/);
     })

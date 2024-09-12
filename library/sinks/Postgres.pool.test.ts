@@ -58,7 +58,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen by Aikido has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
