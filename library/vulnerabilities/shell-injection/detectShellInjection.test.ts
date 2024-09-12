@@ -427,6 +427,21 @@ done`,
   );
 });
 
+t.test("it does not flag domains with path and query", async () => {
+  isNotShellInjection(
+    "binary --domain https://www.example.com/path?query",
+    "https://www.example.com/path?query"
+  );
+  isNotShellInjection(
+    "binary --domain https://www.example.com/path/subpath?query=test&abc=12#fragment",
+    "https://www.example.com/path/subpath?query=test&abc=12#fragment"
+  );
+  isNotShellInjection(
+    "binary --domain https://user:pass@example.com/path/subpath?query=test&abc=12#fragment",
+    "https://user:pass@example.com/path/subpath?query=test&abc=12#fragment"
+  );
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),
