@@ -1,4 +1,4 @@
-![Aikido Zen for Node.js](./docs/banner.svg)
+![Zen by Aikido for Node.js](./docs/banner.svg)
 
 # Zen, in-app firewall for Node.js | by Aikido
 
@@ -141,7 +141,7 @@ See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn
 This program is offered under a commercial and under the AGPL license.
 You can be released from the requirements of the AGPL license by purchasing
 a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the Aikido Zen software without
+develop commercial activities involving the Zen software without
 disclosing the source code of your own applications. 
 
 For more information, please contact Aikido Security at this
