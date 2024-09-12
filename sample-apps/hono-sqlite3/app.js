@@ -1,9 +1,9 @@
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { getDB } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
+const Aikido = require("@aikidosec/zen/context");
 const Cats = require("./Cats");
 
 async function main() {

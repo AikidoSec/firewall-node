@@ -1,10 +1,10 @@
-require("@aikidosec/firewall/cloud-function");
+require("@aikidosec/zen/cloud-function");
 
 const functions = require("@google-cloud/functions-framework");
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
 

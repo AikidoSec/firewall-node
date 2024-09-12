@@ -1,9 +1,9 @@
-const protect = require("@aikidosec/firewall/cloud-function");
+const protect = require("@aikidosec/zen/cloud-function");
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 exports.getToken = protect(async (req, res) => {
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");

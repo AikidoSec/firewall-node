@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 const Sentry = require("@sentry/node");
 
 Sentry.init({
@@ -16,7 +16,7 @@ const mysql = require("mysql");
 const { xml2js } = require("xml-js");
 const { escape } = require("./escape");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 function getHTMLBody(cats) {
   return `

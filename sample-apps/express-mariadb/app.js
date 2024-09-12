@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const Cats = require("./Cats");
 const express = require("express");
@@ -7,7 +7,7 @@ const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const mariadb = require("mariadb");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 function getHTMLBody(cats) {
   return `

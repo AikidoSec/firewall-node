@@ -1,4 +1,4 @@
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const http2 = require("http2");
 const { readFile } = require("fs/promises");

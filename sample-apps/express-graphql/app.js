@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const express = require("express");
 const morgan = require("morgan");
@@ -14,7 +14,7 @@ const {
 } = require("graphql");
 const { createHandler } = require("graphql-http/lib/use/express");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 /** @type {mysql2.Connection} */
 let dbConnection;

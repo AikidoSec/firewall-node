@@ -1,9 +1,9 @@
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { MongoClient } = require("mongodb");
-const Aikido = require("@aikidosec/firewall/context");
+const Aikido = require("@aikidosec/zen/context");
 const { Post, Posts } = require("./posts");
 const { escape } = require("./escape");
 

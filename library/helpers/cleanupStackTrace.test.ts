@@ -36,12 +36,12 @@ Error
 
 t.test("it works with error on top", async () => {
   const stack = `
-/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152
+/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen/agent/applyHooks.js:152
                     stack: cleanupStackTrace(new Error().stack!, libraryRoot),
                                              ^
 
 Error
-    at wrap (/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152:33)
+    at wrap (/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen/agent/applyHooks.js:152:33)
     at HttpClientUndici.send (/Users/hansott/Code/my-project/server/src/HttpClient.ts:166:22)
     at HttpClientTracingElasticsearch.send (/Users/hansott/Code/my-project/server/src/HttpClient.ts:144:36)
     at ElasticsearchClient.getIndex (/Users/hansott/Code/my-project/server/src/domain/Elasticsearch.ts:785:44)
@@ -49,12 +49,12 @@ Error
     at UsersAndActivitiesElasticsearch.getIndex (/Users/hansott/Code/my-project/server/src/domain/UsersAndActivities.ts:1897:26)
     at UsersAndActivitiesElasticsearch.listUsers (/Users/hansott/Code/my-project/server/src/domain/UsersAndActivities.ts:3164:25)
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
-    at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall
+    at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen
 `.trim();
 
   const cleaned = cleanupStackTrace(
     stack,
-    "/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall"
+    "/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen"
   );
 
   const expected = `
@@ -74,12 +74,12 @@ Error
 
 t.test("it works with error on top with compiled code", async () => {
   const stack = `
-/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152
+/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen/agent/applyHooks.js:152
                     stack: (0, cleanupStackTrace_1.cleanupStackTrace)(new Error().stack, libraryRoot),
                                                                       ^
 
 Error
-    at wrap (/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152:33)
+    at wrap (/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen/agent/applyHooks.js:152:33)
     at HttpClientUndici.send (/Users/hansott/Code/my-project/server/src/HttpClient.ts:166:22)
     at HttpClientTracingElasticsearch.send (/Users/hansott/Code/my-project/server/src/HttpClient.ts:144:36)
     at ElasticsearchClient.getIndex (/Users/hansott/Code/my-project/server/src/domain/Elasticsearch.ts:785:44)
@@ -87,12 +87,12 @@ Error
     at UsersAndActivitiesElasticsearch.getIndex (/Users/hansott/Code/my-project/server/src/domain/UsersAndActivities.ts:1897:26)
     at UsersAndActivitiesElasticsearch.listUsers (/Users/hansott/Code/my-project/server/src/domain/UsersAndActivities.ts:3164:25)
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
-    at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall
+    at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen
 `.trim();
 
   const cleaned = cleanupStackTrace(
     stack,
-    "/Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall"
+    "/Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen"
   );
 
   const expected = `
@@ -113,14 +113,14 @@ Error
 t.test("dns stack trace", async () => {
   const stack = `
 Error
-    at GetAddrInfoReqWrap.wrappedDNSLookupCallback [as callback] (/var/task/node_modules/@aikidosec/firewall/vulnerabilities/ssrf/inspectDNSLookupCalls.js:96:20)
+    at GetAddrInfoReqWrap.wrappedDNSLookupCallback [as callback] (/var/task/node_modules/@aikidosec/zen/vulnerabilities/ssrf/inspectDNSLookupCalls.js:96:20)
     at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:111:8)
     at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
   `.trim();
 
   const cleaned = cleanupStackTrace(
     stack,
-    "/var/task/node_modules/@aikidosec/firewall"
+    "/var/task/node_modules/@aikidosec/zen"
   );
 
   const expected = `

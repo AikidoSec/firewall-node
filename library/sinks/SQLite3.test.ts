@@ -81,7 +81,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: sqlite3.run(...) originating from body.myTitle"
+        "Zen by Aikido has blocked an SQL injection: sqlite3.run(...) originating from body.myTitle"
       );
     }
 
@@ -110,7 +110,7 @@ t.test("it detects SQL injections", async () => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido firewall has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
+        "Zen by Aikido has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
       );
     }
   } catch (error: any) {

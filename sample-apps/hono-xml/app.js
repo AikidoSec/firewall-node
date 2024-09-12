@@ -1,10 +1,10 @@
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { createConnection } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
+const Aikido = require("@aikidosec/zen/context");
 const Cats = require("./Cats");
 const { XMLParser } = require("fast-xml-parser");
 

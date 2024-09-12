@@ -12,7 +12,7 @@ async function startServer(firewallEnabled) {
     env = {
       ...env,
       AIKIDO_BLOCKING: "true",
-      NODE_OPTIONS: "-r @aikidosec/firewall",
+      NODE_OPTIONS: "-r @aikidosec/zen",
     };
   }
 

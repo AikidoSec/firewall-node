@@ -3,10 +3,10 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/zen": "file:../../build",
     "micro": "^10.0.1"
   },
   "scripts": {
-    "start": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_DEBUG=true micro"
+    "start": "NODE_OPTIONS='-r @aikidosec/zen' AIKIDO_DEBUG=true micro"
   }
 }

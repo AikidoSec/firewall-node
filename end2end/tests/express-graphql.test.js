@@ -59,10 +59,10 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(normalSearch.status, 200);
       const sqlInjectionText = await sqlInjection.text();
       const normalSearchText = await normalSearch.text();
-      t.match(sqlInjectionText, /Aikido firewall has blocked an SQL injection/);
+      t.match(sqlInjectionText, /Zen by Aikido has blocked an SQL injection/);
       t.notMatch(
         normalSearchText,
-        /Aikido firewall has blocked an SQL injection/
+        /Zen by Aikido has blocked an SQL injection/
       );
       t.match(stdout, /Starting agent/);
     })
@@ -122,14 +122,14 @@ t.test("it does not block in dry mode", (t) => {
       const normalSearchText = await normalSearch.text();
       t.notMatch(
         sqlInjectionText,
-        /Aikido firewall has blocked an SQL injection/
+        /Zen by Aikido has blocked an SQL injection/
       );
       t.notMatch(
         normalSearchText,
-        /Aikido firewall has blocked an SQL injection/
+        /Zen by Aikido has blocked an SQL injection/
       );
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
+      t.notMatch(stderr, /Zen by Aikido has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);

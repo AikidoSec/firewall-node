@@ -1,9 +1,9 @@
-const protect = require("@aikidosec/firewall/lambda");
+const protect = require("@aikidosec/zen/lambda");
 
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 async function main(client, event) {
   const users = new Users(client);

@@ -58,7 +58,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
           );
         }
       });
@@ -79,7 +79,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
           t.ok(e instanceof Error);
           t.same(
             e.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.test"
+            "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.test"
           );
         });
       });
@@ -102,7 +102,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
           if (error instanceof Error) {
             t.same(
               error.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
             );
           }
         });
@@ -126,7 +126,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
             t.ok(e instanceof Error);
             t.same(
               e.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
             );
           });
         });
@@ -157,7 +157,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
               t.ok(e instanceof Error);
               t.same(
                 e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+                "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
               );
             });
           });

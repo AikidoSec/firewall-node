@@ -1,10 +1,10 @@
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const { PubSub } = require("@google-cloud/pubsub");
 const { MongoClient } = require("mongodb");
 const { Users, User } = require("./users");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
 async function receiveMessage(client, body) {
   const users = new Users(client);

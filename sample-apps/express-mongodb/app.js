@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+require("@aikidosec/zen");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -10,9 +10,9 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { exec } = require("child_process");
 
-require("@aikidosec/firewall/nopp");
+require("@aikidosec/zen/nopp");
 
-const Aikido = require("@aikidosec/firewall/context");
+const Aikido = require("@aikidosec/zen/context");
 
 async function getPosts() {
   // Normally you'd use environment variables for this

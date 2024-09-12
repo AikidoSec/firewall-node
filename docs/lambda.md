@@ -3,7 +3,7 @@
 At the very beginning of the file that contains your handler, add the following line:
 
 ```js
-const protect = require("@aikidosec/firewall/lambda"); // <-- Include this before any other code or imports
+const protect = require("@aikidosec/zen/lambda"); // <-- Include this before any other code or imports
 
 const dependency = require("dependency");
 
@@ -16,7 +16,7 @@ exports.handler = protect(async (event, context) => {
 or ESM import style:
 
 ```js
-import protect from "@aikidosec/firewall/lambda";
+import protect from "@aikidosec/zen/lambda";
 
 // ...
 ```

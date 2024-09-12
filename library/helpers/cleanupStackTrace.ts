@@ -26,7 +26,7 @@ function createLineFilter(libraryRoot: string) {
       return false;
     }
 
-    // /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall/agent/applyHooks.js:152
+    // /Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen/agent/applyHooks.js:152
     if (pathRegexWithLineNumbers.test(line.trimStart())) {
       return false;
     }
@@ -74,7 +74,7 @@ function createLineMapper(libraryRoot: string) {
         const lastPart = parts[parts.length - 1];
         // Cleanup our own stack traces
         // Examples
-        // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall
+        // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/zen
         return line.replace(pathRegex, "");
       }
     }

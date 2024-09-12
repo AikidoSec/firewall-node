@@ -5,7 +5,7 @@
   "main": "benchmark.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/zen": "file:../../build",
     "@hono/node-server": "^1.12.0",
     "hono": "^4.5.1",
     "pg": "^8.12.0"
