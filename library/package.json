@@ -1,7 +1,7 @@
 {
-  "name": "@aikidosec/zen",
+  "name": "@aikidosec/firewall",
   "version": "0.0.0",
-  "description": "Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks",
+  "description": "Aikido firewall protects your application against NoSQL injections and more",
   "repository": "https://github.com/AikidoSec/firewall-node",
   "keywords": [
     "security",
@@ -16,6 +16,7 @@
     "postgres",
     "express",
     "rasp",
+    "firewall",
     "aikido",
     "guard",
     "firewall",

@@ -133,7 +133,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (bulkError instanceof Error) {
       t.same(
         bulkError.message,
-        "Zen by Aikido has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
+        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
       );
     }
 
@@ -146,7 +146,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen by Aikido has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
       );
     }
 
@@ -181,7 +181,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (aggregateError instanceof Error) {
       t.same(
         aggregateError.message,
-        "Zen by Aikido has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
+        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
       );
     }
 

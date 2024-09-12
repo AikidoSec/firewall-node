@@ -3,11 +3,11 @@
 To set the current user, you can use the `setUser` function. Here's an example for express:
 
 ```js
-require("@aikidosec/zen");
+require('@aikidosec/firewall');
 
 // ...
 
-const Aikido = require("@aikidosec/zen/context");
+const Aikido = require('@aikidosec/firewall/context');
 
 app.use((req, res, next) => {
   // Get the user from your authentication middleware
@@ -22,7 +22,6 @@ app.use((req, res, next) => {
 ```
 
 Using `setUser` has the following benefits:
-
 - The user ID is used for more accurate rate limiting (you can change IP addresses, but you can't change your user ID).
 - Whenever attacks are detected, the user will be included in the report to Aikido.
 - The dashboard will show all your users, where you can also block them.

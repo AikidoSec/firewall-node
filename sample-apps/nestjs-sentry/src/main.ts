@@ -1,4 +1,4 @@
-import '@aikidosec/zen';
+import '@aikidosec/firewall';
 import * as Sentry from '@sentry/nestjs';
 
 Sentry.init({

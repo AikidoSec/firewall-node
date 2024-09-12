@@ -96,7 +96,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen by Aikido has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
       );
     }
   }

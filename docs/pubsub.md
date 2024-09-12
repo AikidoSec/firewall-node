@@ -3,7 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require("@aikidosec/zen"); // <-- Include this before any other code or imports
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
 
 const { PubSub } = require("@google-cloud/pubsub");
 
@@ -22,7 +22,7 @@ subscription.on("message", (message) => {
 or ESM import style:
 
 ```js
-import "@aikidosec/zen";
+import "@aikidosec/firewall";
 
 // ...
 ```

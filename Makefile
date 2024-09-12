@@ -48,7 +48,7 @@ hapi-postgres:
 
 .PHONY: micro
 micro:
-	cd sample-apps/micro && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks --require @aikidosec/zen ./node_modules/.bin/micro
+	cd sample-apps/micro && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks --require @aikidosec/firewall ./node_modules/.bin/micro
 
 .PHONY: lambda-mongodb-nosql-injection
 lambda-mongodb-nosql-injection:

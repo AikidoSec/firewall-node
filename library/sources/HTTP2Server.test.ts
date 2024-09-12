@@ -658,7 +658,7 @@ t.test("real injection test", async (t) => {
         "GET",
         {}
       ).then(({ body }) => {
-        t.match(body, /Zen by Aikido has blocked a path traversal attack/);
+        t.match(body, /Aikido firewall has blocked a path traversal attack/);
         server.close();
         resolve();
       });

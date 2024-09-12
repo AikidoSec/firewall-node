@@ -102,7 +102,7 @@ function wrapDNSLookupCallback(
       if (agent.shouldBlock()) {
         return callback(
           new Error(
-            `Zen by Aikido has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
           )
         );
       }
@@ -189,7 +189,7 @@ function wrapDNSLookupCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Zen by Aikido has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+          `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
         )
       );
     }

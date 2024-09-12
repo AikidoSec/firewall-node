@@ -5,7 +5,7 @@ Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to
 ```json
 {
   "scripts": {
-    "start": "NODE_OPTIONS='-r @aikidosec/zen' micro"
+    "start": "NODE_OPTIONS='-r @aikidosec/firewall' micro"
   }
 }
 ```
@@ -13,7 +13,7 @@ Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to
 or when using `node`:
 
 ```sh
-node --require @aikidosec/zen ./node_modules/.bin/micro
+node --require @aikidosec/firewall ./node_modules/.bin/micro
 ```
 
 That's it! Your app is now protected by Zen.

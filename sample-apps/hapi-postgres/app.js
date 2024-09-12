@@ -1,10 +1,10 @@
-require("@aikidosec/zen");
+require("@aikidosec/firewall");
 
 const Cats = require("./Cats");
 const Hapi = require("@hapi/hapi");
 const { Client } = require("pg");
 
-require("@aikidosec/zen/nopp");
+require("@aikidosec/firewall/nopp");
 
 function getHTMLBody(cats) {
   return `

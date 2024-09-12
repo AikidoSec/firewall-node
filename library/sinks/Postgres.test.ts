@@ -78,7 +78,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen by Aikido has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,7 +90,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Zen by Aikido has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -134,7 +134,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
         } catch (error: any) {
           t.match(
             error.message,
-            /Zen by Aikido has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+            /Aikido firewall has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
           );
         }
       });

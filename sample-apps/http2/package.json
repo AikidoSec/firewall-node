@@ -3,6 +3,6 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/zen": "file:../../build"
+    "@aikidosec/firewall": "file:../../build"
   }
 }

@@ -18,8 +18,8 @@ t.before(() => {
   }
 
   cpSync(
-    join(pathToApp, "./node_modules/@aikidosec/zen"),
-    join(pathToApp, "./.next/standalone/node_modules/@aikidosec/zen"),
+    join(pathToApp, "./node_modules/@aikidosec/firewall"),
+    join(pathToApp, "./.next/standalone/node_modules/@aikidosec/firewall"),
     {
       recursive: true,
       dereference: true,
@@ -29,7 +29,7 @@ t.before(() => {
   const pkg = require(join(pathToApp, ".next/standalone/package.json"));
   // We use a file: reference to load the local firewall package
   // next.js copies the package.json to the .next/standalone directory
-  pkg.dependencies["@aikidosec/zen"] = "0.0.0";
+  pkg.dependencies["@aikidosec/firewall"] = "0.0.0";
   writeFileSync(
     join(pathToApp, ".next/standalone/package.json"),
     JSON.stringify(pkg, null, 2)
@@ -39,7 +39,7 @@ t.before(() => {
 t.test("it blocks in blocking mode", (t) => {
   const server = spawn(
     `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/zen", "server.js"],
+    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
     {
       env: {
         ...process.env,
@@ -106,8 +106,8 @@ t.test("it blocks in blocking mode", (t) => {
         t.equal(noInjection.status, 200);
         t.equal(sqlInjection.status, 500);
         t.match(stdout, /Starting agent/);
-        t.match(stderr, /Zen by Aikido has blocked a shell injection/);
-        t.match(stderr, /Zen by Aikido has blocked an SQL injection/);
+        t.match(stderr, /Aikido firewall has blocked a shell injection/);
+        t.match(stderr, /Aikido firewall has blocked an SQL injection/);
       }
     )
     .catch((error) => {
@@ -121,7 +121,7 @@ t.test("it blocks in blocking mode", (t) => {
 t.test("it does not block in dry mode", (t) => {
   const server = spawn(
     `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/zen", "server.js"],
+    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
     {
       env: {
         ...process.env,
@@ -187,8 +187,8 @@ t.test("it does not block in dry mode", (t) => {
         t.equal(noInjection.status, 200);
         t.equal(sqlInjection.status, 200);
         t.match(stdout, /Starting agent/);
-        t.notMatch(stderr, /Zen by Aikido has blocked a shell injection/);
-        t.notMatch(stderr, /Zen by Aikido has blocked an SQL injection/);
+        t.notMatch(stderr, /Aikido firewall has blocked a shell injection/);
+        t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
       }
     )
     .catch((error) => {

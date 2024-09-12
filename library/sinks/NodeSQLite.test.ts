@@ -80,7 +80,7 @@ t.test(
         } catch (error: any) {
           t.match(
             error.message,
-            /Zen by Aikido has blocked an SQL injection: node:sqlite.exec/
+            /Aikido firewall has blocked an SQL injection: node:sqlite.exec/
           );
         }
       });
@@ -96,7 +96,7 @@ t.test(
         } catch (error: any) {
           t.match(
             error.message,
-            /Zen by Aikido has blocked an SQL injection: node:sqlite.prepare/
+            /Aikido firewall has blocked an SQL injection: node:sqlite.prepare/
           );
         }
       });

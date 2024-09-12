@@ -53,7 +53,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stdout, /Starting agent/);
       t.match(
         await noSQLInjection.text(),
-        /Zen by Aikido has blocked an SQL injection/
+        /Aikido firewall has blocked an SQL injection/
       );
     })
     .catch((error) => {
@@ -104,7 +104,7 @@ t.test("it does not block in dry mode", (t) => {
       t.match(stdout, /Starting agent/);
       t.notMatch(
         await noSQLInjection.text(),
-        /Zen by Aikido has blocked an SQL injection/
+        /Aikido firewall has blocked an SQL injection/
       );
     })
     .catch((error) => {

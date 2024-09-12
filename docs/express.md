@@ -3,7 +3,7 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require("@aikidosec/zen"); // <-- Include this before any other code or imports
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
 
 const express = require("express");
 
@@ -15,7 +15,7 @@ const app = express();
 or ESM import style:
 
 ```js
-import "@aikidosec/zen";
+import "@aikidosec/firewall";
 
 // ...
 ```
