@@ -427,7 +427,7 @@ done`,
   );
 });
 
-t.test("it does not flag domains with path and query", async () => {
+t.test("it does not flag urls with path and query", async () => {
   isNotShellInjection(
     "binary --domain https://www.example.com/path?query",
     "https://www.example.com/path?query"
@@ -439,6 +439,17 @@ t.test("it does not flag domains with path and query", async () => {
   isNotShellInjection(
     "binary --domain https://user:pass@example.com/path/subpath?query=test&abc=12#fragment",
     "https://user:pass@example.com/path/subpath?query=test&abc=12#fragment"
+  );
+});
+
+t.test("it does flag dangerous urls", async () => {
+  isShellInjection(
+    "binary -target https://test.com;#|+%23curl+abcd.xyz.com",
+    "https://test.com;#|+%23curl+abcd.xyz.com"
+  );
+  isShellInjection(
+    "binary -target https://examplx.com|curl+https://abc.test.com+%23",
+    "https://examplx.com|curl+https://abc.test.com+%23"
   );
 });
 
