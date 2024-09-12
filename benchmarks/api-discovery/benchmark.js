@@ -19,11 +19,11 @@ function main() {
   const avgTime = getAvgBenchmark();
   if (avgTime > MAX_TIME_LIMIT) {
     console.error(
-      `Average time it took for cre : ${avgTime}ms, this exceeds the allowed time of ${MAX_TIME_LIMIT}ms!`
+      `Average time it took for analyzing api route: ${avgTime}ms, this exceeds the allowed time of ${MAX_TIME_LIMIT}ms!`
     );
     process.exit(1);
   }
-  console.info(`Average time it took for analyzing api route : ${avgTime}ms`);
+  console.info(`Average time it took for analyzing api route: ${avgTime}ms`);
   process.exit(0);
 }
 

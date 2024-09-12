@@ -31,8 +31,11 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Update body schema if necessary
-      existing.body = updateBodyInfo(context, existing.body);
+      // Only sample first 20 hits of a route during one heartbeat window
+      if (existing.hits <= 20) {
+        // Update body schema if necessary
+        existing.body = updateBodyInfo(context, existing.body);
+      }
 
       existing.hits++;
       return;
