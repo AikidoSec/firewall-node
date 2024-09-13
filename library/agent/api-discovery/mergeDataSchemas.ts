@@ -1,4 +1,5 @@
 import { DataSchema } from "./getDataSchema";
+import { onlyContainsPrimitiveTypes } from "./isPrimitiveType";
 
 /**
  * Merge two data schemas into one, getting all properties from both schemas to capture optional properties.
@@ -10,12 +11,8 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
   const result: DataSchema = { ...first };
 
   // Can not merge different types
-  if (first.type !== second.type) {
-    // Prefer non-null type
-    if (first.type === "null") {
-      return { ...second };
-    }
-    return result;
+  if (!isSameType(first.type, second.type)) {
+    return mergeTypes(first, second);
   }
 
   if (first.properties && second.properties) {
@@ -48,4 +45,69 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
   }
 
   return result;
+}
+
+/**
+ * Check if both types are the same.
+ */
+function isSameType(
+  first: string | string[],
+  second: string | string[]
+): boolean {
+  if (Array.isArray(first) && Array.isArray(second)) {
+    return doTypeArraysMatch(first, second);
+  }
+
+  if (Array.isArray(first) && !Array.isArray(second)) {
+    return doTypeArraysMatch(first, [second]);
+  }
+
+  if (!Array.isArray(first) && Array.isArray(second)) {
+    return doTypeArraysMatch([first], second);
+  }
+
+  return first === second;
+}
+
+/**
+ * Compare two arrays of types and ignore the order.
+ */
+function doTypeArraysMatch(first: string[], second: string[]): boolean {
+  if (first.length !== second.length) {
+    return false;
+  }
+
+  return first.every((type) => second.includes(type));
+}
+
+/**
+ * Merge types into one schema if they are different.
+ */
+function mergeTypes(first: DataSchema, second: DataSchema): DataSchema {
+  // Currently we do not support merging arrays and other objects and arrays / objects with primitive types
+  if (
+    !onlyContainsPrimitiveTypes(first.type) ||
+    !onlyContainsPrimitiveTypes(second.type)
+  ) {
+    // Prefer non-null type
+    if (first.type === "null") {
+      return second;
+    }
+    return first;
+  }
+
+  first.type = mergeTypeArrays(first.type, second.type);
+  return first;
+}
+
+function mergeTypeArrays(first: string | string[], second: string | string[]) {
+  if (!Array.isArray(first)) {
+    first = [first];
+  }
+
+  if (!Array.isArray(second)) {
+    second = [second];
+  }
+
+  return Array.from(new Set([...first, ...second]));
 }
