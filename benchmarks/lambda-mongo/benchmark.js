@@ -132,8 +132,8 @@ async function main() {
   await setupEnvironment();
 
   const withoutFirewall = await runBenchmark(true, false);
-  const withFirewall = await runBenchmark(true, false);
-  const withFirewallAndReporting = await runBenchmark(true, true);
+  const withFirewall = await runBenchmark(false, false);
+  const withFirewallAndReporting = await runBenchmark(false, true);
 
   await setTimeout(500); // To ensure that our logs are printed at the end (after container is stopped)
 
@@ -143,11 +143,17 @@ async function main() {
 
   console.log("------------------------");
   console.log(
-    `Avg difference with firewall: ${withFirewallDiff.toFixed(2)}ms (${((withFirewallDiff / withoutFirewall) * 100).toFixed(2)}%)`
+    `Avg difference with Zen: ${withFirewallDiff.toFixed(2)}ms (${((withFirewallDiff / withoutFirewall) * 100).toFixed(2)}%)`
   );
   console.log(
-    `Difference with firewall and reporting: ${withFirewallAndReportingDiff.toFixed(2)}ms (${((withFirewallAndReportingDiff / withoutFirewall) * 100).toFixed(2)}%)`
+    `Difference with Zen and reporting: ${withFirewallAndReportingDiff.toFixed(2)}ms (${((withFirewallAndReportingDiff / withoutFirewall) * 100).toFixed(2)}%)`
   );
+
+  // Check if difference is larger than 3ms
+  if (withFirewallDiff > 3 || withFirewallAndReportingDiff > 3) {
+    console.log("Zen is causing a performance impact thats larger than 3ms");
+    process.exit(1);
+  }
 }
 
 main();
