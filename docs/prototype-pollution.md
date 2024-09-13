@@ -1,6 +1,6 @@
 # Protect against prototype pollution
 
-Aikido firewall can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
+Zen can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
 
 It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) for some built-in JavaScript objects.
 
@@ -30,7 +30,7 @@ or ESM import style:
 import "@aikidosec/firewall/nopp";
 ```
 
-in combination with the actual firewall (you can skip this if you only want protection against prototype pollution):
+in combination with the actual firewall import (you can skip this if you only want protection against prototype pollution):
 
 ```js
 import "@aikidosec/firewall"; // <-- Include this before any other code or imports

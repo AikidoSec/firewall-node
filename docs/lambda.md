@@ -28,7 +28,7 @@ Right now, we support the following triggers:
 
 - If you're using a different trigger, please let us know.
 
-That's it! Your AWS Lambda function is now protected by Aikido firewall.
+That's it! Your AWS Lambda function is now protected by Zen.
 
 If you want to see a full example, check our [lambda sample app](../sample-apps/lambda-mongodb).
 
@@ -48,6 +48,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido firewall can also protect your application against prototype pollution attacks.
+Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

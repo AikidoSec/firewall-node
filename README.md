@@ -1,6 +1,6 @@
-![Aikido Firewall for Node.js](./docs/banner.svg)
+![Zen by Aikido for Node.js](./docs/banner.svg)
 
-# Aikido Firewall for Node.js
+# Zen, in-app firewall for Node.js | by Aikido
 
 [![NPM Version](https://img.shields.io/npm/v/%40aikidosec%2Ffirewall?style=flat-square)](https://www.npmjs.com/package/@aikidosec/firewall)
 [![Codecov](https://img.shields.io/codecov/c/github/AikidoSec/firewall-node?style=flat-square&token=AJK9LU35GY)](https://app.codecov.io/gh/aikidosec/firewall-node)
@@ -9,13 +9,15 @@
 [![Unit tests](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/unit-test.yml)
 [![End to end tests](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml/badge.svg)](https://github.com/AikidoSec/firewall-node/actions/workflows/end-to-end-tests.yml)
 
-Aikido Firewall is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
+Zen, your in-app firewall for peace of mind– at runtime.
+
+Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
 
 It protects your Node.js apps by preventing user input containing dangerous strings, which allow injection, pollution, and path traversal attacks. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
 
 ## Features
 
-Firewall autonomously protects your Node.js applications against:
+Zen will autonomously protect your Node.js applications against:
 
 - 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
 - 🛡️ [SQL injection attacks](<[https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection)>)
@@ -24,7 +26,7 @@ Firewall autonomously protects your Node.js applications against:
 - 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 - 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 
-Firewall operates autonomously on the same server as your Node.js app to:
+Zen operates autonomously on the same server as your Node.js app to:
 
 - ✅ Secure your app like a classic web application firewall (WAF), but with none of the infrastructure or cost.
 - ✅ Rate limit specific API endpoints by IP or by user
@@ -32,7 +34,7 @@ Firewall operates autonomously on the same server as your Node.js app to:
 
 ## Supported libraries and frameworks
 
-Aikido Firewall for Node.js 16+ is compatible with:
+Zen for Node.js 16+ is compatible with:
 
 ### Web frameworks
 
@@ -87,7 +89,7 @@ See list above for supported database drivers.
 
 ## Installation
 
-We recommend you test Aikido's Firewall on local or staging first before moving to production.
+We recommend you test Aikido's Zen on local or staging first before moving to production.
 
 ```shell
 # The --save-exact makes sure that you don't automatically install a newer version
@@ -106,16 +108,20 @@ For framework- and provider- specific instructions, check out our docs:
 
 ## Reporting to your Aikido Security dashboard
 
-> Aikido Security is a developer-first software security platform. We scan your source code & cloud to show you which vulnerabilities are actually important.
+> Aikido is your no nonsense application security platform. One central system that scans your source code & cloud, shows you what vulnerabilities matter, and how to fix them - fast. So you can get back to building.
 
-You can use some of Firewalls's features without Aikido, but you will get the most value by reporting your data to Aikido.
+Zen is a new product by Aikido. Built for developers to level up their security. While Aikido scans, get Zen for always-on protection.
+
+You can use some of Zen’s features without Aikido, of course. Peace of mind is just a few lines of code away.
+
+But you will get the most value by reporting your data to Aikido.
 
 You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login).
 
 Here's how:
 
 - [Log in to your Aikido account](https://app.aikido.dev/login).
-- Go to [Firewall](https://app.aikido.dev/runtime/services).
+- Go to [Zen](https://app.aikido.dev/runtime/services).
 - Go to apps.
 - Click on **Add app**.
 - Choose a name for your app.
@@ -125,9 +131,9 @@ Here's how:
 
 ## Running in production (blocking) mode
 
-By default, Firewall will only detect and report attacks to Aikido.
+By default, Zen will only detect and report attacks to Aikido.
 
-To block requests, set the `AIKIDO_BLOCKING` environment variable to `true`.
+To block requests, set the `AIKIDO_BLOCK` environment variable to `true`.
 
 See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn how to send events to Aikido.
 
@@ -136,7 +142,7 @@ See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn
 This program is offered under a commercial and under the AGPL license.
 You can be released from the requirements of the AGPL license by purchasing
 a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the Aikido Firewall software without
+develop commercial activities involving the Zen software without
 disclosing the source code of your own applications.
 
 For more information, please contact Aikido Security at this
@@ -144,13 +150,13 @@ address: support@aikido.dev or create an account at https://app.aikido.dev.
 
 ## Performance
 
-We run a benchmark on every commit to ensure Firewall has a minimal impact on your application's performance.
+We run a benchmark on every commit to ensure Zen has a minimal impact on your application's performance.
 
-The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Firewall:
+The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Zen:
 
-| Without Firewall | With Firewall | Difference in ms |
-| ---------------- | ------------- | ---------------- |
-| 0.214ms          | 0.222ms       | +0.008ms         |
+| Without Zen | With Zen | Difference in ms |
+| ----------- | -------- | ---------------- |
+| 0.214ms     | 0.222ms  | +0.008ms         |
 
 (Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
 

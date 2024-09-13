@@ -20,7 +20,7 @@ import "@aikidosec/firewall";
 // ...
 ```
 
-That's it! Your app is now protected by Aikido firewall.
+That's it! Your app is now protected by Zen.
 
 If you want to see a full example, check our [express sample app](../sample-apps/express-mongodb).
 
@@ -48,6 +48,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido firewall can also protect your application against prototype pollution attacks.
+Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

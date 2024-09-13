@@ -1,4 +1,4 @@
-# Contributing to Aikido Security's firewall for Node.js
+# Contributing to Zen by Aikido for Node.js
 
 First off, thanks for taking the time to contribute! ❤️
 
