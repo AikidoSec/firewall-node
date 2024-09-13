@@ -5,7 +5,7 @@ import { tryParseURL } from "../../helpers/tryParseURL";
 import { isOptionsObject } from "./isOptionsObject";
 
 /**
- * Gets the url from the arguments of an node:http(s) outgoing request function call.
+ * Gets the url from the arguments of a node:http(s) outgoing request function call.
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
@@ -121,18 +121,21 @@ function mergeURLWithRequestOptions(
   url: URL
 ): URL | undefined {
   let urlStr = "";
+
   if (options.protocol) {
     urlStr += options.protocol;
   } else {
     urlStr += url.protocol;
   }
+
   urlStr += "//";
+
   if (options.hostname) {
-    urlStr += options.hostname;
+    urlStr += wrapWithSquareBracketsIfNeeded(options.hostname);
   } else if (options.host) {
-    urlStr += options.host;
+    urlStr += wrapWithSquareBracketsIfNeeded(options.host);
   } else {
-    urlStr += url.hostname;
+    urlStr += wrapWithSquareBracketsIfNeeded(url.hostname);
   }
 
   if (options.port) {
