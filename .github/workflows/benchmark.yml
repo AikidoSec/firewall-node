@@ -46,4 +46,4 @@ jobs:
       - name: Run API Discovery Benchmark
         run: cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
       - name: Run Lamda with MongoDB Benchmark
-        run: cd benchmarks/lamda-mongodb && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/lamda-mongo && node --preserve-symlinks benchmark.js
