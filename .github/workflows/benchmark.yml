@@ -45,5 +45,5 @@ jobs:
         run: cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
       - name: Run API Discovery Benchmark
         run: cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
-      - name: Run Lamda with MongoDB Benchmark
-        run: cd benchmarks/lamda-mongo && node --preserve-symlinks benchmark.js
+      - name: Run Lambda with MongoDB Benchmark
+        run: cd benchmarks/lambda-mongo && node --preserve-symlinks benchmark.js
