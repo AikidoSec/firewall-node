@@ -3,8 +3,9 @@ import { onlyContainsPrimitiveTypes } from "./isPrimitiveType";
 
 /**
  * Merge two data schemas into one, getting all properties from both schemas to capture optional properties.
- * If the types are different, a merge is not possible and the first schema is returned. (Except one is null, then the other is returned)
- * The first schema is preferred over the second schema because it can already contain multiple merged schemas.
+ * If the types are different, only primitive types are merged.
+ * Merging of arrays with objects or objects / arrays with primitive types is not supported.
+ * In this case the first schema is preferred over the second schema because it can already contain multiple merged schemas.
  * If the types are the same, the properties of the second schema are merged into the first schema.
  */
 export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
