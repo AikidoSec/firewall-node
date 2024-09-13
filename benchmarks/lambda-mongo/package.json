@@ -1,0 +1,15 @@
+{
+  "name": "lambda-mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-offline": "^13.8.0"
+  }
+}

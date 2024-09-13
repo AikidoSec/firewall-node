@@ -1,0 +1,27 @@
+service: lambda-mongodb
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+
+functions:
+  login:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: /
+          method: post
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    httpPort: 4000
+    host: 127.0.0.1
+    useDocker: true
+    localEnvironment: true
