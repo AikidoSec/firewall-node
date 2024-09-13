@@ -85,7 +85,7 @@ t.test("it blocks lookup in blocking mode", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(address, undefined);
       t.match(api.getEvents(), [
@@ -227,7 +227,7 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(addresses, undefined);
       t.end();
@@ -350,7 +350,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
         t.same(err instanceof Error, true);
         t.same(
           err.message,
-          "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+          "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
         );
         t.same(addresses, undefined);
         resolve();
@@ -362,7 +362,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
           t.same(err instanceof Error, true);
           t.same(
             err.message,
-            "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+            "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
           );
           t.same(addresses, undefined);
           resolve();

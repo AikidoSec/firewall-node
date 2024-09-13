@@ -1,3 +1,9 @@
+import type { BodyDataType } from "./api-discovery/getBodyDataType";
+import { getBodyInfo } from "./api-discovery/getBodyInfo";
+import type { DataSchema } from "./api-discovery/getDataSchema";
+import { updateBodyInfo } from "./api-discovery/updateBodyInfo";
+import type { Context } from "./Context";
+
 export class Routes {
   private routes: Map<
     string,
@@ -6,22 +12,42 @@ export class Routes {
       path: string;
       hits: number;
       graphql?: { type: "query" | "mutation"; name: string };
+      body?: {
+        type: BodyDataType;
+        schema: DataSchema;
+      };
     }
   > = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
-  addRoute(method: string, path: string) {
+  addRoute(context: Context) {
+    const { method, route: path } = context;
+    if (!method || !path) {
+      return;
+    }
+
     const key = this.getKey(method, path);
     const existing = this.routes.get(key);
 
     if (existing) {
+      // Only sample first 20 hits of a route during one heartbeat window
+      if (existing.hits <= 20) {
+        // Update body schema if necessary
+        existing.body = updateBodyInfo(context, existing.body);
+      }
+
       existing.hits++;
       return;
     }
 
     this.evictLeastUsedRouteIfNecessary();
-    this.routes.set(key, { method, path, hits: 1 });
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      body: getBodyInfo(context),
+    });
   }
 
   private evictLeastUsedRouteIfNecessary() {
@@ -88,6 +114,7 @@ export class Routes {
         path: route.path,
         hits: route.hits,
         graphql: route.graphql,
+        body: route.body,
       };
     });
   }

@@ -72,7 +72,7 @@ t.test("it detects shell injections", async () => {
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Aikido firewall has blocked a shell injection: shelljs.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: shelljs.exec(...) originating from body.myTitle"
     );
   }
 });
@@ -141,7 +141,7 @@ t.test("it detects async shell injections", async () => {
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Aikido firewall has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
     );
   }
 
@@ -155,7 +155,7 @@ t.test("it detects async shell injections", async () => {
   if (error2 instanceof Error) {
     t.same(
       error2.message,
-      "Aikido firewall has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
     );
   }
 
@@ -169,7 +169,7 @@ t.test("it detects async shell injections", async () => {
   if (error3 instanceof Error) {
     t.same(
       error3.message,
-      "Aikido firewall has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
     );
   }
 });
@@ -216,7 +216,7 @@ t.test("it prevents path injections using cat", async () => {
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Aikido firewall has blocked a path traversal attack: fs.existsSync(...) originating from body.myTitle"
+      "Zen has blocked a path traversal attack: fs.existsSync(...) originating from body.myTitle"
     );
   }
 });

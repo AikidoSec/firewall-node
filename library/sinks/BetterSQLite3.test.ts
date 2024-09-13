@@ -73,7 +73,7 @@ t.test("it detects SQL injections", async (t) => {
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Aikido firewall has blocked an SQL injection: better-sqlite3.exec(...) originating from body.myTitle"
+          "Zen has blocked an SQL injection: better-sqlite3.exec(...) originating from body.myTitle"
         );
       }
 
@@ -84,7 +84,7 @@ t.test("it detects SQL injections", async (t) => {
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Aikido firewall has blocked an SQL injection: better-sqlite3.prepare(...) originating from body.myTitle"
+          "Zen has blocked an SQL injection: better-sqlite3.prepare(...) originating from body.myTitle"
         );
       }
 
@@ -94,7 +94,7 @@ t.test("it detects SQL injections", async (t) => {
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido firewall has blocked an SQL injection: better-sqlite3.exec(...) originating from body.myTitle"
+            "Zen has blocked an SQL injection: better-sqlite3.exec(...) originating from body.myTitle"
           );
         }
       });
@@ -123,7 +123,7 @@ t.test("it detects SQL injections", async (t) => {
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Aikido firewall has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
+          "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
         );
       }
       await db.backup("/tmp/sqlite-test-secure");

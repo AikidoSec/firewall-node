@@ -89,7 +89,7 @@ function discoverRouteFromStream(
         method: context.method,
       })
     ) {
-      agent.onRouteExecute(context.method, context.route);
+      agent.onRouteExecute(context);
     }
   }
 }

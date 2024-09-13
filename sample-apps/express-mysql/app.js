@@ -5,7 +5,7 @@ const Sentry = require("@sentry/node");
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   debug: true,
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0,
 });
 
 const Cats = require("./Cats");
