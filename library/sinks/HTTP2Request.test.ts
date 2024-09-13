@@ -9,6 +9,7 @@ import { HTTP2Request } from "./HTTP2Request";
 import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import * as dns from "dns";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -181,12 +182,17 @@ t.test("it works", async (t) => {
     { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
     async () => {
       try {
-        await http2Request(
+        const { headers, body } = await http2Request(
           "https://thisdomainpointstointernalip.com",
           "GET",
           {}
         );
-        t.fail("should not reach here");
+        if (getMajorNodeVersion() > 16) {
+          t.fail("should not reach here");
+          return;
+        }
+        t.same(headers, undefined);
+        t.same(body, "");
       } catch (e) {
         t.match(
           e.message,
@@ -204,7 +210,7 @@ t.test("it works", async (t) => {
     { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
     async () => {
       try {
-        await http2Request(
+        const { headers, body } = await http2Request(
           "https://thisdomainpointstointernalip2.com",
           "GET",
           {},
@@ -212,7 +218,12 @@ t.test("it works", async (t) => {
             lookup: dns.lookup,
           }
         );
-        t.fail("should not reach here");
+        if (getMajorNodeVersion() > 16) {
+          t.fail("should not reach here");
+          return;
+        }
+        t.same(headers, undefined);
+        t.same(body, "");
       } catch (e) {
         t.match(
           e.message,
