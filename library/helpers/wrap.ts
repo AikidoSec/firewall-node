@@ -47,3 +47,11 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
     value: value,
   });
 }
+
+/**
+ * Check if a function was wrapped by the wrap function
+ */
+export function isFunctionWrapped(fn: Function): boolean {
+  // @ts-expect-error Not type safe
+  return fn.__wrapped === true;
+}
