@@ -149,6 +149,7 @@ t.test("it works", async (t) => {
 
   await runWithContext(context, async () => {
     agent.getHostnames().clear();
+    let callbackCalled = false;
     const { headers } = await http2Request(
       // @ts-expect-error Passing a url like object
       {
@@ -157,13 +158,16 @@ t.test("it works", async (t) => {
         pathname: "/",
       },
       "GET",
-      {}
+      {},
+      () => {
+        callbackCalled = true;
+      }
     );
     t.same(headers[":status"], 301);
-
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 443 },
     ]);
+    t.same(callbackCalled, true);
   });
 
   await runWithContext(context, async () => {
@@ -185,6 +189,7 @@ t.test("it works", async (t) => {
         const { headers, body } = await http2Request(
           "https://thisdomainpointstointernalip.com",
           "GET",
+          {},
           {}
         );
         if (getMajorNodeVersion() > 16) {
