@@ -5,9 +5,9 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/firewall'); // <-- Include this before any other code or imports
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
 
-const { Hono } = require('hono');
+const { Hono } = require("hono");
 
 const app = Hono();
 
@@ -17,7 +17,7 @@ const app = Hono();
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall';
+import "@aikidosec/firewall";
 
 // ...
 ```

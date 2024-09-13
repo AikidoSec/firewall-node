@@ -15,7 +15,7 @@ functions.http("handler", async (req, res) => {
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall/cloud-function';
+import "@aikidosec/firewall/cloud-function";
 
 // ...
 ```
@@ -29,7 +29,8 @@ const protect = require("@aikidosec/firewall/cloud-function"); // <-- Include th
 
 const dependency = require("dependency");
 
-exports.handler = protect(async (event, context) => { // <-- Wrap your handler with protect
+exports.handler = protect(async (event, context) => {
+  // <-- Wrap your handler with protect
   // ...
 });
 ```
@@ -37,7 +38,7 @@ exports.handler = protect(async (event, context) => { // <-- Wrap your handler w
 or ESM import style:
 
 ```js
-import protect from '@aikidosec/firewall/cloud-function';
+import protect from "@aikidosec/firewall/cloud-function";
 
 // ...
 ```

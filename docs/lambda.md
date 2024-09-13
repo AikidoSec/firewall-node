@@ -7,7 +7,8 @@ const protect = require("@aikidosec/firewall/lambda"); // <-- Include this befor
 
 const dependency = require("dependency");
 
-exports.handler = protect(async (event, context) => { // <-- Wrap your handler with protect
+exports.handler = protect(async (event, context) => {
+  // <-- Wrap your handler with protect
   // ...
 });
 ```
@@ -15,12 +16,13 @@ exports.handler = protect(async (event, context) => { // <-- Wrap your handler w
 or ESM import style:
 
 ```js
-import protect from '@aikidosec/firewall/lambda';
+import protect from "@aikidosec/firewall/lambda";
 
 // ...
 ```
 
 Right now, we support the following triggers:
+
 - Gateway API
 - SQS (Simple Queue Service)
 

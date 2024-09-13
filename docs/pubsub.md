@@ -3,16 +3,16 @@
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/firewall'); // <-- Include this before any other code or imports
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
 
-const { PubSub } = require('@google-cloud/pubsub');
+const { PubSub } = require("@google-cloud/pubsub");
 
 const client = new PubSub();
-const topic = client.createTopic('my-topic');
-const subscription = topic.createSubscription('my-subscription');
+const topic = client.createTopic("my-topic");
+const subscription = topic.createSubscription("my-subscription");
 
-subscription.on('message', (message) => {
-  console.log('Received message:', message.data.toString());
+subscription.on("message", (message) => {
+  console.log("Received message:", message.data.toString());
   message.ack();
 });
 
@@ -22,7 +22,7 @@ subscription.on('message', (message) => {
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall';
+import "@aikidosec/firewall";
 
 // ...
 ```
