@@ -54,22 +54,25 @@ t.test("it works with options", async (t) => {
 
 t.test("it wraps host and hostname with square brackets", async (t) => {
   t.same(
-    getURL([{ protocol: "http:", host: "::", port: 80 }], "http"),
-    new URL("http://[::]:80")
+    getURL([{ protocol: "http:", host: "::", port: 80 }], "http").href,
+    new URL("http://[::]:80").href
   );
   t.same(
-    getURL([{ protocol: "http:", hostname: "::", port: 80 }], "http"),
-    new URL("http://[::]:80")
+    getURL([{ protocol: "http:", hostname: "::", port: 80 }], "http").href,
+    new URL("http://[::]:80").href
   );
   t.same(
-    getURL([new URL("http://domain.com"), { hostname: "::" }], "http"),
-    new URL("http://[::]:80")
+    getURL([new URL("http://domain.com"), { hostname: "::" }], "http").href,
+    new URL("http://[::]:80").href
   );
   t.same(
-    getURL([new URL("http://domain.com"), { host: "::" }], "http"),
-    new URL("http://[::]:80")
+    getURL([new URL("http://domain.com"), { host: "::" }], "http").href,
+    new URL("http://[::]:80").href
   );
-  t.same(getURL([new URL("http://[::]")], "http"), new URL("http://[::]:80"));
+  t.same(
+    getURL([new URL("http://[::]")], "http").href,
+    new URL("http://[::]:80").href
+  );
 });
 
 t.test("it does not throw on invalid arguments", async (t) => {
