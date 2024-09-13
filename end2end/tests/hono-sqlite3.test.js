@@ -58,7 +58,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(sqlInjection.status, 500);
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Zen by Aikido has blocked an SQL injection/);
+      t.match(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -113,7 +113,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(sqlInjection.status, 200);
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Zen by Aikido has blocked an SQL injection/);
+      t.notMatch(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);

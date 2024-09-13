@@ -50,7 +50,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         t.ok(e instanceof Error);
         t.same(
           e.message,
-          "Redirected request failed: Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
+          "Redirected request failed: Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
         );
       });
       response.end();
@@ -74,7 +74,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         t.ok(e instanceof Error);
         t.same(
           e.message,
-          "Zen by Aikido has blocked a server-side request forgery: http.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
         );
       });
       response.end();

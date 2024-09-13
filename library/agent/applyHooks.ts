@@ -242,7 +242,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Zen by Aikido has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
+              `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
             );
           }
         }

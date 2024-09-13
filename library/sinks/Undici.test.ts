@@ -157,7 +157,7 @@ t.test(
       if (error1 instanceof Error) {
         t.same(
           error1.message,
-          "Zen by Aikido has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
       const error2 = await t.rejects(() =>
@@ -166,7 +166,7 @@ t.test(
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Zen by Aikido has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
       const error3 = await t.rejects(() =>
@@ -180,7 +180,7 @@ t.test(
       if (error3 instanceof Error) {
         t.same(
           error3.message,
-          "Zen by Aikido has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
 
@@ -190,7 +190,7 @@ t.test(
       if (error4 instanceof Error) {
         t.same(
           error4.message,
-          "Zen by Aikido has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
         );
       }
 
@@ -201,7 +201,7 @@ t.test(
       if (error5 instanceof Error) {
         t.same(
           error5.message,
-          "Zen by Aikido has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
     });
@@ -213,7 +213,7 @@ t.test(
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Zen by Aikido has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
+            "Zen has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
           );
         }
       }
@@ -239,7 +239,7 @@ t.test(
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Zen by Aikido has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
 
@@ -250,7 +250,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error2.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: undici.[method](...) originating from body.image2"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image2"
           );
         }
 

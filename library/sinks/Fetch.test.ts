@@ -115,7 +115,7 @@ t.test(
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
 
@@ -125,7 +125,7 @@ t.test(
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
 
@@ -135,7 +135,7 @@ t.test(
       if (error3 instanceof Error) {
         t.same(
           error3.message,
-          "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
     });
@@ -161,7 +161,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
 
@@ -172,7 +172,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error2.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image2"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image2"
           );
         }
 
@@ -193,7 +193,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -210,7 +210,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -227,7 +227,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -244,7 +244,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -270,7 +270,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -294,7 +294,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -320,7 +320,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -351,7 +351,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Zen by Aikido has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }

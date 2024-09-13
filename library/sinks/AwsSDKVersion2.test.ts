@@ -97,7 +97,7 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen by Aikido has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
       );
     }
 
@@ -106,7 +106,7 @@ t.test("it works", async (t) => {
     if (signedURLError instanceof Error) {
       t.same(
         signedURLError.message,
-        "Zen by Aikido has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
       );
     }
   });

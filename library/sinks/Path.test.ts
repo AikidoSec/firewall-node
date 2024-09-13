@@ -55,37 +55,37 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     t.throws(
       () => join(__dirname, "../test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "../test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "some_directory", "../test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "some_directory", "../test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "some_directory", "../../test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve(__dirname, "../test.txt", "some_directory"),
-      "Zen by Aikido has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
 
     t.throws(
       () => join(__dirname, "../test.txt", "some_directory"),
-      "Zen by Aikido has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
   });
 
@@ -96,12 +96,12 @@ t.test("it works", async (t) => {
   runWithContext(unsafeAbsoluteContext, () => {
     t.throws(
       () => join("/etc/", "test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
       () => resolve("/etc/some_directory", "test.txt"),
-      "Zen by Aikido has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
   });
 });

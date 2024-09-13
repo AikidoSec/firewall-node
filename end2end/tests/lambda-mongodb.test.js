@@ -46,7 +46,7 @@ t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
   );
 
   t.same(stdout, "");
-  t.match(stderr, /Zen by Aikido has blocked a NoSQL injection/);
+  t.match(stderr, /Zen has blocked a NoSQL injection/);
 });
 
 t.test(

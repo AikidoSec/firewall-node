@@ -332,7 +332,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Zen by Aikido has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -414,7 +414,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Zen by Aikido has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -426,7 +426,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Zen by Aikido has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
