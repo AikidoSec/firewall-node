@@ -28,7 +28,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -47,7 +47,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     if (!url) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -66,7 +66,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -75,7 +75,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 }
 
 /**
- * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
+ * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
   const found = isRedirectToPrivateIP(url, context);
