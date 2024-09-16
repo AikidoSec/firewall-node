@@ -72,6 +72,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
     runWithContext(
       {
         ...context,
+        // http://vuln.atwebpages.com redirects to http://[::]
         ...{ body: { image: "http://vuln.atwebpages.com" } },
       },
       async () => {
