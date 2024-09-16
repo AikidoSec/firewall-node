@@ -177,7 +177,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
           lastFlushStatsAt === undefined ||
           lastFlushStatsAt + flushEveryMS < Date.now()
         ) {
-          await agent.flushStats(1000);
+          await agent.flushStats(50);
           lastFlushStatsAt = Date.now();
         }
       }
