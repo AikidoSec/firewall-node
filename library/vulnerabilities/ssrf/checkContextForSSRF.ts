@@ -34,12 +34,28 @@ export function checkContextForSSRF({
           kind: "ssrf",
           source: source,
           pathToPayload: path,
-          metadata: {
-            hostname: hostname,
-          },
+          metadata: getMetadataForSSRFAttack({ hostname, port }),
           payload: str,
         };
       }
     }
   }
+}
+
+function getMetadataForSSRFAttack({
+  hostname,
+  port,
+}: {
+  hostname: string;
+  port: number | undefined;
+}): Record<string, string> {
+  const metadata: Record<string, string> = {
+    hostname: hostname,
+  };
+
+  if (port) {
+    metadata.port = port.toString();
+  }
+
+  return metadata;
 }
