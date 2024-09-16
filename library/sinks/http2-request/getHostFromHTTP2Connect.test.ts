@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { getHostFromHTTP2RequestArgs as get } from "./getHostFromHTTP2RequestArgs";
+import { getHostFromHTTP2Connect as get } from "./getHostFromHTTP2Connect";
 
 t.test("it works with authority as string", async (t) => {
   t.same(get(["https://localhost"]), { hostname: "localhost", port: 443 });

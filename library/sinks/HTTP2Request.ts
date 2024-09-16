@@ -5,10 +5,11 @@ import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
-import { getHostFromHTTP2RequestArgs } from "./http2-request/getHostFromHTTP2RequestArgs";
+import { getHostFromHTTP2Connect } from "./http2-request/getHostFromHTTP2Connect";
 import { lookup } from "dns";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapRequestMethod } from "./http2-request/wrapRequestMethod";
 
 export class HTTP2Request implements Wrapper {
   private inspectHostname(
@@ -43,7 +44,7 @@ export class HTTP2Request implements Wrapper {
       return undefined;
     }
 
-    const hostInfo = getHostFromHTTP2RequestArgs(args);
+    const hostInfo = getHostFromHTTP2Connect(args);
     if (!hostInfo) {
       return undefined;
     }
@@ -113,7 +114,16 @@ export class HTTP2Request implements Wrapper {
         inspectArgs: (args, agent) => this.inspectHttp2Connect(args, agent),
         modifyArgs: (args, agent) => this.monitorDNSLookups(args, agent),
         modifyReturnValue: (args, returnValue) => {
-          // Next step
+          // Wrap .request method
+          if (typeof returnValue === "object" && returnValue !== null) {
+            if (
+              "request" in returnValue &&
+              typeof returnValue.request === "function"
+            ) {
+              returnValue.request = wrapRequestMethod(returnValue);
+            }
+          }
+
           return returnValue;
         },
       });

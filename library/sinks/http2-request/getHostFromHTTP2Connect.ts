@@ -4,7 +4,7 @@ import { tryParseURL } from "../../helpers/tryParseURL";
  * Determines the hostname and port from the arguments of an http2.connect call.
  * We are parsing the arguments to URL objects to support domains with special characters.
  */
-export function getHostFromHTTP2RequestArgs(
+export function getHostFromHTTP2Connect(
   args: unknown[]
 ): { hostname: string; port: number | undefined } | undefined {
   if (!args || !args.length) {

@@ -78,8 +78,10 @@ function http2Request(
         reject(err);
       });
 
+      const path = url.pathname + url.search ? url.search : "";
+
       const req = _client.request({
-        ":path": url.pathname + url.search,
+        ":path": path || "/",
         ":method": method,
         "content-length": body ? Buffer.byteLength(body) : 0,
         ...headers,
