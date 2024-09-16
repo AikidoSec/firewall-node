@@ -15,7 +15,7 @@ export function wrapOnHeaders(
   requestContext: ReturnType<typeof RequestContextStorage.getStore>,
   context: Context
 ): OnHeaders {
-  // @ts-expect-error We return undefined if there is no original function, thats fine because the onHeaders function is optional
+  // @ts-expect-error We return undefined if there is no original function, that's fine because the onHeaders function is optional
   return function onHeaders() {
     // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
@@ -39,7 +39,7 @@ export function wrapOnHeaders(
 
     if (orig) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         // @ts-expect-error Arguments are not typed
         // eslint-disable-next-line prefer-rest-params

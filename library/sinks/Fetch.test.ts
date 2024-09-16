@@ -60,6 +60,8 @@ const redirectUrl = {
   domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
   ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
+  ipv6: `${redirectTestUrl}/ssrf-test-ipv6`, // Redirects to http://[::1]/test
+  ipv6Twice: `${redirectTestUrl}/ssrf-test-ipv6-twice`, // Redirects to /ssrf-test-ipv6
 };
 
 t.test(
@@ -240,6 +242,40 @@ t.test(
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.domainTwice));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: redirectUrl.ipv6 } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch(redirectUrl.ipv6));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: redirectUrl.ipv6Twice } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch(redirectUrl.ipv6Twice));
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined

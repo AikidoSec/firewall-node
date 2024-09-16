@@ -67,4 +67,25 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
       "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
+
+  const error2 = await t.rejects(
+    runWithContext(
+      {
+        ...context,
+        // Redirects to http://[::1]/test
+        ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
+      },
+      async () => {
+        await axios.request(`${redirectTestUrl}/ssrf-test-ipv6`);
+      }
+    )
+  );
+
+  t.ok(error2 instanceof Error);
+  if (error2 instanceof Error) {
+    t.match(
+      error2.message,
+      "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+    );
+  }
 });

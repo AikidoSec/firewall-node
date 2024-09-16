@@ -21,6 +21,24 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+let server;
+const port = 3000;
+
+t.before(async () => {
+  const { createServer } = require("http");
+
+  server = createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Hello World\n");
+  });
+
+  server.unref();
+
+  return new Promise((resolve) => {
+    server.listen(port, resolve);
+  });
+});
+
 const redirectTestUrl =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
@@ -81,7 +99,49 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     }
   );
 
+  runWithContext(
+    {
+      ...context,
+      // Redirects to http://[::1]/test
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
+    },
+    () => {
+      const response = http.request(`${redirectTestUrl}/ssrf-test-ipv6`, () => {
+        t.fail("should not respond");
+      });
+      response.on("error", (e) => {
+        t.ok(e instanceof Error);
+        t.same(
+          e.message,
+          "Redirected request failed: Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+        );
+      });
+      response.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...context,
+    },
+    () => {
+      const response = http.request(`http://[::]:${port}`, (res) => {
+        // consume body
+        while (res.read()) {}
+
+        t.same(res.statusCode, 200);
+      });
+      response.end();
+    }
+  );
+
   setTimeout(() => {
     t.end();
   }, 3000);
+});
+
+t.after(async () => {
+  return new Promise((resolve) => {
+    server.close(resolve);
+  });
 });
