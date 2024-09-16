@@ -1,8 +1,8 @@
-import type { ClientHttp2Stream } from "http2";
+import type { ClientHttp2Session } from "http2";
 import { tryParseURL } from "../../helpers/tryParseURL";
 
 export function getUrlFromRequest(
-  subject: ClientHttp2Stream,
+  subject: ClientHttp2Session,
   headers: Record<string, string>
 ) {
   try {
