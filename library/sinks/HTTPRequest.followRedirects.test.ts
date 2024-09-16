@@ -84,13 +84,16 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      // http://vuln.atwebpages.com redirects to http://[::]
-      ...{ body: { image: "http://vuln.atwebpages.com" } },
+      // Redirects to http://[::1]/test
+      ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
     },
     () => {
-      const response = http.request("http://vuln.atwebpages.com", (res) => {
-        t.fail("should not respond");
-      });
+      const response = http.request(
+        `${redirectTestUrl}/ssrf-test-ipv6`,
+        (res) => {
+          t.fail("should not respond");
+        }
+      );
       response.on("error", (e) => {
         t.ok(e instanceof Error);
         t.same(
