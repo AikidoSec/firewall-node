@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { connect, IncomingHttpHeaders } from "http2";
+import type { IncomingHttpHeaders } from "http2";
 import { Agent } from "../agent/Agent";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -51,7 +51,7 @@ wrap(dns, "lookup", function lookup(original) {
   };
 });
 
-let _client: ReturnType<typeof connect> | undefined;
+let _client;
 
 function http2Request(
   url: URL | string,
@@ -61,6 +61,7 @@ function http2Request(
   reuseClient?: boolean,
   body?: string
 ) {
+  const { connect } = require("http2");
   return new Promise<{ headers: IncomingHttpHeaders; body: string }>(
     (resolve, reject) => {
       if (!reuseClient || !_client) {

@@ -2,12 +2,13 @@ import type { ClientSessionOptions } from "http2";
 import type { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import type { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { getHostFromHTTP2RequestArgs } from "./http2-request/getHostFromHTTP2RequestArgs";
 import { lookup } from "dns";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class HTTP2Request implements Wrapper {
   private inspectHostname(
@@ -107,14 +108,15 @@ export class HTTP2Request implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addBuiltinModule("http2")
-      .addSubject((exports) => exports)
-      .inspect("connect", (args, subject, agent) =>
-        this.inspectHttp2Connect(args, agent)
-      )
-      .modifyArguments("connect", (args, subject, agent) =>
-        this.monitorDNSLookups(args, agent)
-      );
+    hooks.addBuiltinModule("http2").onRequire((exports, pkgInfo) => {
+      wrapExport(exports, "connect", pkgInfo, {
+        inspectArgs: (args, agent) => this.inspectHttp2Connect(args, agent),
+        modifyArgs: (args, agent) => this.monitorDNSLookups(args, agent),
+        modifyReturnValue: (args, returnValue) => {
+          // Next step
+          return returnValue;
+        },
+      });
+    });
   }
 }
