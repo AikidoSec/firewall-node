@@ -30,7 +30,7 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private lastHeartbeat = Date.now();
+  private lastHeartbeat = performance.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
@@ -311,7 +311,7 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = Date.now();
+      const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const hasCompressedStats = this.statistics.hasCompressedStats();
