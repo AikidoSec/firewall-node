@@ -45,7 +45,13 @@ export function extractStringsFromUserInput(
       extractStringsFromUserInput(
         jwt.object,
         pathToPayload.concat([{ type: "jwt" }])
-      ).forEach((value, key) => results.set(key, value));
+      ).forEach((value, key) => {
+        // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
+        if (key === "iss" || value.endsWith("<jwt>.iss")) {
+          return;
+        }
+        results.set(key, value);
+      });
     }
   }
 
