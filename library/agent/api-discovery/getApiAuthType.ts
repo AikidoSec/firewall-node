@@ -32,6 +32,7 @@ const commonAuthCookieNames = [
   "jwt",
   "token",
   "sid",
+  "connect.sid",
   "auth_token",
   "access_token",
   "refresh_token",
