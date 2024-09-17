@@ -531,7 +531,7 @@ t.test("it adds auth schema", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
-      auth: [{ type: "http", scheme: "Bearer" }],
+      auth: [{ type: "http", scheme: "bearer" }],
     },
     {
       method: "GET",
@@ -574,8 +574,8 @@ t.test("it merges auth schema", async (t) => {
       body: undefined,
       query: undefined,
       auth: [
-        { type: "http", scheme: "Bearer" },
-        { type: "http", scheme: "Basic" },
+        { type: "http", scheme: "bearer" },
+        { type: "http", scheme: "basic" },
         { type: "apiKey", in: "header", name: "x-api-key" },
       ],
     },

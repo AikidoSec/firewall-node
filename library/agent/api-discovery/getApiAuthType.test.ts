@@ -22,10 +22,10 @@ function getContext(
 
 t.test("it detects authorization header", async (t) => {
   t.same(get(getContext({ authorization: "Bearer token" })), [
-    { type: "http", scheme: "Bearer" },
+    { type: "http", scheme: "bearer" },
   ]);
   t.same(get(getContext({ authorization: "Basic base64" })), [
-    { type: "http", scheme: "Basic" },
+    { type: "http", scheme: "basic" },
   ]);
   t.same(get(getContext({ authorization: "custom" })), [
     { type: "apiKey", in: "header", name: "Authorization" },

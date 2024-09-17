@@ -1,4 +1,5 @@
 import type { Context } from "../Context";
+import type { Route } from "../Routes";
 import { APIAuthType } from "./getApiAuthType";
 import { APIBodyInfo, getApiInfo } from "./getApiInfo";
 import { DataSchema } from "./getDataSchema";
@@ -6,56 +7,36 @@ import { mergeApiAuthTypes } from "./mergeApiAuthTypes";
 import { mergeDataSchemas } from "./mergeDataSchemas";
 
 /**
- * Merges two body info objects into one, getting all properties from both schemas to capture optional properties.
- * If the body info is not defined, the existing body info is returned (if any).
- * If there is no existing body info, but the new body info is defined, the new body info is returned without merging.
+ * Updates the body, query, and auth info of an existing route with new info from the context.
  */
-export function updateApiInfo(
-  context: Context,
-  existingBodyInfo?: APIBodyInfo,
-  existingQueryInfo?: DataSchema,
-  existingAuthInfo?: APIAuthType[]
-):
-  | {
-      body?: APIBodyInfo;
-      query?: DataSchema;
-      auth?: APIAuthType[];
-    }
-  | undefined {
+export function updateApiInfo(context: Context, existingRoute: Route): void {
   const {
     body: newBody,
     query: newQuery,
     auth: newAuth,
   } = getApiInfo(context) || {};
 
-  let bodyInfo = existingBodyInfo;
-
   // Merge body schemas if both exists, otherwise set the new body schema if it exists
-  if (existingBodyInfo && newBody) {
-    bodyInfo = {
+  if (existingRoute.body && newBody) {
+    existingRoute.body = {
       type: newBody.type,
-      schema: mergeDataSchemas(existingBodyInfo?.schema, newBody.schema),
+      schema: mergeDataSchemas(existingRoute.body?.schema, newBody.schema),
     };
   } else if (newBody) {
-    bodyInfo = newBody;
+    existingRoute.body = newBody;
   }
 
-  let queryInfo = existingQueryInfo;
   if (
     newQuery &&
     typeof newQuery === "object" &&
     Object.keys(newQuery).length > 0
   ) {
-    if (existingQueryInfo && newQuery) {
-      queryInfo = mergeDataSchemas(existingQueryInfo, newQuery);
+    if (existingRoute.query && newQuery) {
+      existingRoute.query = mergeDataSchemas(existingRoute.query, newQuery);
     } else {
-      queryInfo = newQuery;
+      existingRoute.query = newQuery;
     }
   }
 
-  return {
-    body: bodyInfo,
-    query: queryInfo,
-    auth: mergeApiAuthTypes(existingAuthInfo, newAuth),
-  };
+  existingRoute.auth = mergeApiAuthTypes(existingRoute.auth, newAuth);
 }

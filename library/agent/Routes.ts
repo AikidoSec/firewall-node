@@ -5,22 +5,21 @@ import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
 import { APIAuthType } from "./api-discovery/getApiAuthType";
 
+export type Route = {
+  method: string;
+  path: string;
+  hits: number;
+  graphql?: { type: "query" | "mutation"; name: string };
+  body?: {
+    type: BodyDataType;
+    schema: DataSchema;
+  };
+  query?: DataSchema;
+  auth?: APIAuthType[];
+};
+
 export class Routes {
-  private routes: Map<
-    string,
-    {
-      method: string;
-      path: string;
-      hits: number;
-      graphql?: { type: "query" | "mutation"; name: string };
-      body?: {
-        type: BodyDataType;
-        schema: DataSchema;
-      };
-      query?: DataSchema;
-      auth?: APIAuthType[];
-    }
-  > = new Map();
+  private routes: Map<string, Route> = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
@@ -37,16 +36,7 @@ export class Routes {
       // Only sample first 20 hits of a route during one heartbeat window
       if (existing.hits <= 20) {
         // Update api schemas if necessary
-        const { body, query, auth } =
-          updateApiInfo(
-            context,
-            existing.body,
-            existing.query,
-            existing.auth
-          ) || {};
-        existing.body = body;
-        existing.query = query;
-        existing.auth = auth;
+        updateApiInfo(context, existing);
       }
 
       existing.hits++;

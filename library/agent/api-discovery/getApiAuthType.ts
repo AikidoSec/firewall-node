@@ -83,7 +83,7 @@ function getAuthorizationHeaderType(
 
     if (typeof type === "string" && typeof value === "string") {
       if (isHTTPAuthScheme(type)) {
-        return { type: "http", scheme: type };
+        return { type: "http", scheme: type.toLowerCase() as HTTPAuthScheme };
       }
     }
   }
