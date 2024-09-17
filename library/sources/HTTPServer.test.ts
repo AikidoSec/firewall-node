@@ -203,6 +203,7 @@ t.test("it discovers routes", async () => {
             hits: 1,
             graphql: undefined,
             body: undefined,
+            query: undefined,
           }
         );
         server.close();

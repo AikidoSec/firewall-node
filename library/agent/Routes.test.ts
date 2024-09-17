@@ -6,7 +6,8 @@ function getContext(
   method: string,
   route: string,
   headers: Record<string, string> = {},
-  body: any = undefined
+  body: any = undefined,
+  query: Record<string, string> = {}
 ): Context {
   return {
     method,
@@ -16,7 +17,7 @@ function getContext(
     remoteAddress: "",
     url: `http://localhost${route}`,
     routeParams: {},
-    query: {},
+    query,
     cookies: {},
     source: "test",
   };
@@ -34,6 +35,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -47,6 +49,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -60,6 +63,7 @@ t.test("it works", async (t) => {
         hits: 2,
         graphql: undefined,
         body: undefined,
+        query: undefined,
       },
       {
         method: "POST",
@@ -67,6 +71,7 @@ t.test("it works", async (t) => {
         hits: 1,
         graphql: undefined,
         body: undefined,
+        query: undefined,
       },
     ],
     "Should add second route"
@@ -80,6 +85,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -87,6 +93,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "PUT",
@@ -94,6 +101,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -105,6 +113,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "PUT",
@@ -112,6 +121,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "DELETE",
@@ -119,6 +129,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -137,6 +148,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -144,6 +156,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: { type: "query", name: "user" },
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -155,6 +168,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -162,6 +176,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -173,6 +188,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -180,6 +196,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -190,6 +207,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -201,6 +219,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -208,6 +227,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -218,6 +238,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       body: undefined,
+      query: undefined,
     },
     {
       method: "POST",
@@ -228,6 +249,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       body: undefined,
+      query: undefined,
     },
   ]);
 });
@@ -249,6 +271,7 @@ t.test("it adds body schema", async (t) => {
       path: "/body",
       hits: 1,
       graphql: undefined,
+      query: undefined,
       body: {
         type: "json",
         schema: {
@@ -289,6 +312,7 @@ t.test("it merges body schema", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      query: undefined,
     },
   ]);
 
@@ -306,6 +330,7 @@ t.test("it merges body schema", async (t) => {
       path: "/body",
       hits: 2,
       graphql: undefined,
+      query: undefined,
       body: {
         type: "json",
         schema: {
@@ -349,6 +374,7 @@ t.test("it merges body schema", async (t) => {
       path: "/body",
       hits: 4,
       graphql: undefined,
+      query: undefined,
       body: {
         type: "json",
         schema: {
@@ -380,6 +406,76 @@ t.test("it merges body schema", async (t) => {
               type: "number",
               optional: true,
             },
+          },
+        },
+      },
+    },
+  ]);
+});
+
+t.test("it adds query schema", async (t) => {
+  const routes = new Routes(200);
+
+  routes.addRoute(
+    getContext("GET", "/query", {}, undefined, { test: "abc", t: "123" })
+  );
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/query",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+      query: {
+        type: "object",
+        properties: {
+          test: {
+            type: "string",
+          },
+          t: {
+            type: "string",
+          },
+        },
+      },
+    },
+  ]);
+});
+
+t.test("it merges query schema", async (t) => {
+  const routes = new Routes(200);
+  t.same(routes.asArray(), []);
+  routes.addRoute(getContext("GET", "/query"));
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/query",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+      query: undefined,
+    },
+  ]);
+  routes.addRoute(getContext("GET", "/query", {}, undefined, { test: "abc" }));
+  routes.addRoute(
+    getContext("GET", "/query", {}, undefined, { x: "123", test: "abc" })
+  );
+  routes.addRoute(getContext("GET", "/query"));
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/query",
+      hits: 4,
+      graphql: undefined,
+      body: undefined,
+      query: {
+        type: "object",
+        properties: {
+          test: {
+            type: "string",
+          },
+          x: {
+            type: "string",
+            optional: true,
           },
         },
       },

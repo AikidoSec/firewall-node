@@ -1,7 +1,7 @@
 import type { BodyDataType } from "./api-discovery/getBodyDataType";
-import { getBodyInfo } from "./api-discovery/getBodyInfo";
-import type { DataSchema } from "./api-discovery/getDataSchema";
-import { updateBodyInfo } from "./api-discovery/updateBodyInfo";
+import { getApiInfo } from "./api-discovery/getApiInfo";
+import { type DataSchema } from "./api-discovery/getDataSchema";
+import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
 
 export class Routes {
@@ -16,6 +16,7 @@ export class Routes {
         type: BodyDataType;
         schema: DataSchema;
       };
+      query?: DataSchema;
     }
   > = new Map();
 
@@ -33,20 +34,27 @@ export class Routes {
     if (existing) {
       // Only sample first 20 hits of a route during one heartbeat window
       if (existing.hits <= 20) {
-        // Update body schema if necessary
-        existing.body = updateBodyInfo(context, existing.body);
+        // Update api schemas if necessary
+        const { body, query } =
+          updateApiInfo(context, existing.body, existing.query) || {};
+        existing.body = body;
+        existing.query = query;
       }
 
       existing.hits++;
       return;
     }
 
+    // Get info about body and query schema
+    const { body, query } = getApiInfo(context) || {};
+
     this.evictLeastUsedRouteIfNecessary();
     this.routes.set(key, {
       method,
       path,
       hits: 1,
-      body: getBodyInfo(context),
+      body,
+      query,
     });
   }
 
@@ -115,6 +123,7 @@ export class Routes {
         hits: route.hits,
         graphql: route.graphql,
         body: route.body,
+        query: route.query,
       };
     });
   }
