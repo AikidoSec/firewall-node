@@ -89,7 +89,7 @@ See list above for supported database drivers.
 
 ## Installation
 
-We recommend you test Aikido's Zen on local or staging first before moving to production.
+We recommend testing Zen locally or on staging before deploying to production.
 
 ```shell
 # The --save-exact makes sure that you don't automatically install a newer version
