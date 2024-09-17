@@ -46,6 +46,6 @@ export function updateApiInfo(context: Context, existingRoute: Route): void {
       existingRoute.apispec = {};
     }
   } catch {
-    //
+    // ignore
   }
 }
