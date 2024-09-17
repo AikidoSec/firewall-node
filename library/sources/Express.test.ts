@@ -264,21 +264,25 @@ t.test("it adds body schema to stored routes", async (t) => {
       path: "/",
       hits: 1,
       graphql: undefined,
-      body: {
-        type: "json",
-        schema: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            authors: { type: "array", items: { type: "string" } },
-            settings: {
-              type: "object",
-              properties: {
-                theme: { type: "string" },
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              authors: { type: "array", items: { type: "string" } },
+              settings: {
+                type: "object",
+                properties: {
+                  theme: { type: "string" },
+                },
               },
             },
           },
         },
+        query: undefined,
+        auth: undefined,
       },
     },
   ]);

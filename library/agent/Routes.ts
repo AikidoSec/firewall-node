@@ -1,23 +1,17 @@
-import type { BodyDataType } from "./api-discovery/getBodyDataType";
-import { getBodyInfo } from "./api-discovery/getBodyInfo";
-import type { DataSchema } from "./api-discovery/getDataSchema";
-import { updateBodyInfo } from "./api-discovery/updateBodyInfo";
+import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
+import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
 
+export type Route = {
+  method: string;
+  path: string;
+  hits: number;
+  graphql?: { type: "query" | "mutation"; name: string };
+  apispec: APISpec;
+};
+
 export class Routes {
-  private routes: Map<
-    string,
-    {
-      method: string;
-      path: string;
-      hits: number;
-      graphql?: { type: "query" | "mutation"; name: string };
-      body?: {
-        type: BodyDataType;
-        schema: DataSchema;
-      };
-    }
-  > = new Map();
+  private routes: Map<string, Route> = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
@@ -33,20 +27,23 @@ export class Routes {
     if (existing) {
       // Only sample first 20 hits of a route during one heartbeat window
       if (existing.hits <= 20) {
-        // Update body schema if necessary
-        existing.body = updateBodyInfo(context, existing.body);
+        // Update api schemas if necessary
+        updateApiInfo(context, existing);
       }
 
       existing.hits++;
       return;
     }
 
+    // Get info about body and query schema
+    const apispec = getApiInfo(context) || {};
+
     this.evictLeastUsedRouteIfNecessary();
     this.routes.set(key, {
       method,
       path,
       hits: 1,
-      body: getBodyInfo(context),
+      apispec,
     });
   }
 
@@ -84,7 +81,13 @@ export class Routes {
     }
 
     this.evictLeastUsedRouteIfNecessary();
-    this.routes.set(key, { method, path, hits: 1, graphql: { type, name } });
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      graphql: { type, name },
+      apispec: {},
+    });
   }
 
   private evictLeastUsedRoute() {
@@ -114,7 +117,7 @@ export class Routes {
         path: route.path,
         hits: route.hits,
         graphql: route.graphql,
-        body: route.body,
+        apispec: route.apispec,
       };
     });
   }
