@@ -58,6 +58,5 @@ t.test("no auth", async (t) => {
   t.same(get(getContext()), undefined);
   t.same(get(getContext({})), undefined);
   t.same(get(getContext({ authorization: "" })), undefined);
-  // @ts-ignore Testing invalid input
   t.same(get({}), undefined);
 });
