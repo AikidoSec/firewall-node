@@ -101,19 +101,19 @@ t.test("it works", async (t) => {
   );
 });
 
-function generateTestObjectWithDepth(depth: number): any {
-  if (depth === 0) {
-    return "testValue";
-  }
+t.test("test max depth", async (t) => {
+  const generateTestObjectWithDepth = (depth: number) => {
+    if (depth === 0) {
+      return "testValue";
+    }
 
-  const obj = {
-    prop: generateTestObjectWithDepth(depth - 1),
+    const obj = {
+      prop: generateTestObjectWithDepth(depth - 1),
+    };
+
+    return obj;
   };
 
-  return obj;
-}
-
-t.test("test max depth", async (t) => {
   const obj = generateTestObjectWithDepth(10);
   const schema = getDataSchema(obj);
   t.ok(JSON.stringify(schema).includes('"type":"string"'));
@@ -121,4 +121,22 @@ t.test("test max depth", async (t) => {
   const obj2 = generateTestObjectWithDepth(21);
   const schema2 = getDataSchema(obj2);
   t.notOk(JSON.stringify(schema2).includes('"type":"string"'));
+});
+
+t.test("test max properties", async (t) => {
+  const generateObjectWithProperties = (count: number) => {
+    const obj: any = {};
+    for (let i = 0; i < count; i++) {
+      obj[`prop${i}`] = i;
+    }
+    return obj;
+  };
+
+  const obj = generateObjectWithProperties(80);
+  const schema = getDataSchema(obj);
+  t.same(Object.keys(schema.properties!).length, 80);
+
+  const obj2 = generateObjectWithProperties(120);
+  const schema2 = getDataSchema(obj2);
+  t.same(Object.keys(schema2.properties!).length, 100);
 });
