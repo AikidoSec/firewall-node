@@ -4,7 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
-import { execFile, execFileSync } from "child_process";
+import { execFile, execFileSync, fork } from "child_process";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -41,7 +41,7 @@ t.test("it works", async (t) => {
 
   agent.start([new ChildProcess()]);
 
-  const { exec, execSync, spawn, spawnSync } = require("child_process");
+  const { exec, execSync, spawn, spawnSync, fork } = require("child_process");
 
   const runCommandsWithInvalidArgs = () => {
     throws(
@@ -83,6 +83,8 @@ t.test("it works", async (t) => {
 
     execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
     execFileSync("ls", ["-la"], {});
+
+    fork("./fixtures/helloWorld.js").unref();
   };
 
   runSafeCommands();
@@ -261,4 +263,14 @@ t.test("it works", async (t) => {
       "Zen has blocked a shell injection: child_process.execFileSync(...) originating from body.file.matches"
     );
   });
+
+  runWithContext(
+    { ...unsafeContext, body: { file: { matches: "/../rce.js" } } },
+    () => {
+      throws(
+        () => fork("./fixtures/../rce.js", [], {}),
+        "Zen has blocked a path traversal attack: child_process.fork(...) originating from body.file.matches"
+      );
+    }
+  );
 });

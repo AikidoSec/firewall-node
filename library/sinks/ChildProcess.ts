@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
 const PATH_PREFIXES = [
@@ -27,7 +28,28 @@ export class ChildProcess implements Wrapper {
       .inspect("execFile", (args) => this.inspectExecFile(args, "execFile"))
       .inspect("execFileSync", (args) =>
         this.inspectExecFile(args, "execFileSync")
-      );
+      )
+      .inspect("fork", (args) => this.inspectFork(args, "fork"));
+  }
+
+  private inspectFork(args: unknown[], name: string) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length > 0 && typeof args[0] === "string") {
+      const modulePath = args[0];
+
+      return checkContextForPathTraversal({
+        filename: modulePath,
+        operation: `child_process.${name}`,
+        context: context,
+      });
+    }
+
+    return undefined;
   }
 
   private inspectSpawn(args: unknown[], name: string) {
