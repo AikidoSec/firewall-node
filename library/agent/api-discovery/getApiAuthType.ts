@@ -52,7 +52,7 @@ export function getApiAuthType(context: Context): APIAuthType[] | undefined {
   }
 
   // Allow multiple auth types
-  let result: APIAuthType[] = [];
+  const result: APIAuthType[] = [];
 
   // Check the Authorization header
   const authHeader = context.headers.authorization;
@@ -95,7 +95,7 @@ function getAuthorizationHeaderType(
  * Search for api keys in headers and cookies.
  */
 function findApiKeys(context: Context): APIAuthType[] {
-  let result: APIAuthType[] = [];
+  const result: APIAuthType[] = [];
 
   for (const header of commonApiKeyHeaderNames) {
     if (context.headers[header]) {

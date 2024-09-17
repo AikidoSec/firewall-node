@@ -1,6 +1,8 @@
 import type { Context } from "../Context";
+import { APIAuthType } from "./getApiAuthType";
 import { APIBodyInfo, getApiInfo } from "./getApiInfo";
 import { DataSchema } from "./getDataSchema";
+import { mergeApiAuthTypes } from "./mergeApiAuthTypes";
 import { mergeDataSchemas } from "./mergeDataSchemas";
 
 /**
@@ -11,14 +13,20 @@ import { mergeDataSchemas } from "./mergeDataSchemas";
 export function updateApiInfo(
   context: Context,
   existingBodyInfo?: APIBodyInfo,
-  existingQueryInfo?: DataSchema
+  existingQueryInfo?: DataSchema,
+  existingAuthInfo?: APIAuthType[]
 ):
   | {
       body?: APIBodyInfo;
       query?: DataSchema;
+      auth?: APIAuthType[];
     }
   | undefined {
-  const { body: newBody, query: newQuery } = getApiInfo(context) || {};
+  const {
+    body: newBody,
+    query: newQuery,
+    auth: newAuth,
+  } = getApiInfo(context) || {};
 
   let bodyInfo = existingBodyInfo;
 
@@ -48,5 +56,6 @@ export function updateApiInfo(
   return {
     body: bodyInfo,
     query: queryInfo,
+    auth: mergeApiAuthTypes(existingAuthInfo, newAuth),
   };
 }

@@ -7,7 +7,8 @@ function getContext(
   route: string,
   headers: Record<string, string> = {},
   body: any = undefined,
-  query: Record<string, string> = {}
+  query: Record<string, string> = {},
+  cookies: Record<string, string> = {}
 ): Context {
   return {
     method,
@@ -18,7 +19,7 @@ function getContext(
     url: `http://localhost${route}`,
     routeParams: {},
     query,
-    cookies: {},
+    cookies,
     source: "test",
   };
 }
@@ -36,6 +37,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -50,6 +52,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -64,6 +67,7 @@ t.test("it works", async (t) => {
         graphql: undefined,
         body: undefined,
         query: undefined,
+        auth: undefined,
       },
       {
         method: "POST",
@@ -72,6 +76,7 @@ t.test("it works", async (t) => {
         graphql: undefined,
         body: undefined,
         query: undefined,
+        auth: undefined,
       },
     ],
     "Should add second route"
@@ -86,6 +91,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -94,6 +100,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "PUT",
@@ -102,6 +109,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -114,6 +122,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "PUT",
@@ -122,6 +131,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "DELETE",
@@ -130,6 +140,7 @@ t.test("it works", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -149,6 +160,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -157,6 +169,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: { type: "query", name: "user" },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -169,6 +182,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -177,6 +191,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: { type: "query", name: "user" },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -189,6 +204,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -197,6 +213,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: { type: "query", name: "user" },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -208,6 +225,7 @@ t.test("it adds GraphQL fields", async (t) => {
       },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -220,6 +238,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -228,6 +247,7 @@ t.test("it adds GraphQL fields", async (t) => {
       graphql: { type: "query", name: "user" },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -239,6 +259,7 @@ t.test("it adds GraphQL fields", async (t) => {
       },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
     {
       method: "POST",
@@ -250,6 +271,7 @@ t.test("it adds GraphQL fields", async (t) => {
       },
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 });
@@ -272,6 +294,7 @@ t.test("it adds body schema", async (t) => {
       hits: 1,
       graphql: undefined,
       query: undefined,
+      auth: undefined,
       body: {
         type: "json",
         schema: {
@@ -313,6 +336,7 @@ t.test("it merges body schema", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
 
@@ -331,6 +355,7 @@ t.test("it merges body schema", async (t) => {
       hits: 2,
       graphql: undefined,
       query: undefined,
+      auth: undefined,
       body: {
         type: "json",
         schema: {
@@ -375,6 +400,7 @@ t.test("it merges body schema", async (t) => {
       hits: 4,
       graphql: undefined,
       query: undefined,
+      auth: undefined,
       body: {
         type: "json",
         schema: {
@@ -426,6 +452,7 @@ t.test("it adds query schema", async (t) => {
       hits: 1,
       graphql: undefined,
       body: undefined,
+      auth: undefined,
       query: {
         type: "object",
         properties: {
@@ -453,6 +480,7 @@ t.test("it merges query schema", async (t) => {
       graphql: undefined,
       body: undefined,
       query: undefined,
+      auth: undefined,
     },
   ]);
   routes.addRoute(getContext("GET", "/query", {}, undefined, { test: "abc" }));
@@ -467,6 +495,7 @@ t.test("it merges query schema", async (t) => {
       hits: 4,
       graphql: undefined,
       body: undefined,
+      auth: undefined,
       query: {
         type: "object",
         properties: {
@@ -479,6 +508,76 @@ t.test("it merges query schema", async (t) => {
           },
         },
       },
+    },
+  ]);
+});
+
+t.test("it adds auth schema", async (t) => {
+  const routes = new Routes(200);
+
+  routes.addRoute(
+    getContext("GET", "/auth", { authorization: "Bearer token" })
+  );
+  routes.addRoute(
+    getContext("GET", "/auth2", {}, undefined, {}, { session: "test" })
+  );
+  routes.addRoute(getContext("GET", "/auth3", { "x-api-key": "token" }));
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/auth",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+      query: undefined,
+      auth: [{ type: "http", scheme: "Bearer" }],
+    },
+    {
+      method: "GET",
+      path: "/auth2",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+      query: undefined,
+      auth: [{ type: "apiKey", in: "cookie", name: "session" }],
+    },
+    {
+      method: "GET",
+      path: "/auth3",
+      hits: 1,
+      graphql: undefined,
+      body: undefined,
+      query: undefined,
+      auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
+    },
+  ]);
+});
+
+t.test("it merges auth schema", async (t) => {
+  const routes = new Routes(200);
+  t.same(routes.asArray(), []);
+  routes.addRoute(getContext("GET", "/auth"));
+  routes.addRoute(
+    getContext("GET", "/auth", { authorization: "Bearer token" })
+  );
+  routes.addRoute(getContext("GET", "/auth", { authorization: "Basic token" }));
+  routes.addRoute(getContext("GET", "/auth", { "x-api-key": "token" }));
+  routes.addRoute(getContext("GET", "/auth"));
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/auth",
+      hits: 5,
+      graphql: undefined,
+      body: undefined,
+      query: undefined,
+      auth: [
+        { type: "http", scheme: "Bearer" },
+        { type: "http", scheme: "Basic" },
+        { type: "apiKey", in: "header", name: "x-api-key" },
+      ],
     },
   ]);
 });

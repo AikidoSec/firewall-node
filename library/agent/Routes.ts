@@ -3,6 +3,7 @@ import { getApiInfo } from "./api-discovery/getApiInfo";
 import { type DataSchema } from "./api-discovery/getDataSchema";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
+import { APIAuthType } from "./api-discovery/getApiAuthType";
 
 export class Routes {
   private routes: Map<
@@ -17,6 +18,7 @@ export class Routes {
         schema: DataSchema;
       };
       query?: DataSchema;
+      auth?: APIAuthType[];
     }
   > = new Map();
 
@@ -35,10 +37,16 @@ export class Routes {
       // Only sample first 20 hits of a route during one heartbeat window
       if (existing.hits <= 20) {
         // Update api schemas if necessary
-        const { body, query } =
-          updateApiInfo(context, existing.body, existing.query) || {};
+        const { body, query, auth } =
+          updateApiInfo(
+            context,
+            existing.body,
+            existing.query,
+            existing.auth
+          ) || {};
         existing.body = body;
         existing.query = query;
+        existing.auth = auth;
       }
 
       existing.hits++;
@@ -46,7 +54,7 @@ export class Routes {
     }
 
     // Get info about body and query schema
-    const { body, query } = getApiInfo(context) || {};
+    const { body, query, auth } = getApiInfo(context) || {};
 
     this.evictLeastUsedRouteIfNecessary();
     this.routes.set(key, {
@@ -55,6 +63,7 @@ export class Routes {
       hits: 1,
       body,
       query,
+      auth,
     });
   }
 
@@ -124,6 +133,7 @@ export class Routes {
         graphql: route.graphql,
         body: route.body,
         query: route.query,
+        auth: route.auth,
       };
     });
   }

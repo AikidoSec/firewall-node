@@ -686,6 +686,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           graphql: undefined,
           body: undefined,
           query: undefined,
+          auth: undefined,
         },
         {
           method: "GET",
@@ -694,6 +695,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           graphql: undefined,
           body: undefined,
           query: undefined,
+          auth: undefined,
         },
         {
           method: "GET",
@@ -702,6 +704,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           graphql: undefined,
           body: undefined,
           query: undefined,
+          auth: undefined,
         },
         {
           method: "POST",

@@ -1,5 +1,6 @@
 import { isFeatureEnabled } from "../../helpers/featureFlags";
 import { Context } from "../Context";
+import { APIAuthType, getApiAuthType } from "./getApiAuthType";
 import { BodyDataType, getBodyDataType } from "./getBodyDataType";
 import { DataSchema, getDataSchema } from "./getDataSchema";
 
@@ -16,6 +17,7 @@ export function getApiInfo(context: Context):
   | {
       body?: APIBodyInfo;
       query?: DataSchema;
+      auth?: APIAuthType[];
     }
   | undefined {
   // Check if feature flag COLLECT_API_SCHEMA is enabled
@@ -44,6 +46,7 @@ export function getApiInfo(context: Context):
     return {
       body: bodyInfo,
       query: queryInfo,
+      auth: getApiAuthType(context),
     };
   } catch {
     return undefined;

@@ -1,11 +1,11 @@
 import * as t from "tap";
 import { getApiAuthType as get } from "./getApiAuthType";
-import { Context } from "../Context";
+import type { Context } from "../Context";
 
 function getContext(
   headers: Record<string, string> = {},
   cookies: Record<string, string> = {}
-) {
+): Context {
   return {
     method: "GET",
     route: "/test",
@@ -58,4 +58,6 @@ t.test("no auth", async (t) => {
   t.same(get(getContext()), undefined);
   t.same(get(getContext({})), undefined);
   t.same(get(getContext({ authorization: "" })), undefined);
+  // @ts-ignore Testing invalid input
+  t.same(get({}), undefined);
 });
