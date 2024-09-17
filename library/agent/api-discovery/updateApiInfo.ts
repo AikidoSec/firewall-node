@@ -1,8 +1,6 @@
 import type { Context } from "../Context";
 import type { Route } from "../Routes";
-import { APIAuthType } from "./getApiAuthType";
-import { APIBodyInfo, getApiInfo } from "./getApiInfo";
-import { DataSchema } from "./getDataSchema";
+import { getApiInfo } from "./getApiInfo";
 import { mergeApiAuthTypes } from "./mergeApiAuthTypes";
 import { mergeDataSchemas } from "./mergeDataSchemas";
 
@@ -16,14 +14,16 @@ export function updateApiInfo(context: Context, existingRoute: Route): void {
     auth: newAuth,
   } = getApiInfo(context) || {};
 
+  const existingSpec = existingRoute.apispec;
+
   // Merge body schemas if both exists, otherwise set the new body schema if it exists
-  if (existingRoute.body && newBody) {
-    existingRoute.body = {
+  if (existingSpec.body && newBody) {
+    existingSpec.body = {
       type: newBody.type,
-      schema: mergeDataSchemas(existingRoute.body?.schema, newBody.schema),
+      schema: mergeDataSchemas(existingSpec.body?.schema, newBody.schema),
     };
   } else if (newBody) {
-    existingRoute.body = newBody;
+    existingSpec.body = newBody;
   }
 
   if (
@@ -31,12 +31,17 @@ export function updateApiInfo(context: Context, existingRoute: Route): void {
     typeof newQuery === "object" &&
     Object.keys(newQuery).length > 0
   ) {
-    if (existingRoute.query && newQuery) {
-      existingRoute.query = mergeDataSchemas(existingRoute.query, newQuery);
+    if (existingSpec.query && newQuery) {
+      existingSpec.query = mergeDataSchemas(existingSpec.query, newQuery);
     } else {
-      existingRoute.query = newQuery;
+      existingSpec.query = newQuery;
     }
   }
 
-  existingRoute.auth = mergeApiAuthTypes(existingRoute.auth, newAuth);
+  existingSpec.auth = mergeApiAuthTypes(existingSpec.auth, newAuth);
+
+  // Normalize empty apispec so we do not get something like { auth: undefined }
+  if (!existingSpec.body && !existingSpec.query && !existingSpec.auth) {
+    existingRoute.apispec = {};
+  }
 }

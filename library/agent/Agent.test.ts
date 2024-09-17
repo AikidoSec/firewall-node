@@ -684,47 +684,45 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           path: "/posts/:id",
           hits: 2,
           graphql: undefined,
-          body: undefined,
-          query: undefined,
-          auth: undefined,
+          apispec: {},
         },
         {
           method: "GET",
           path: "/posts/:id",
           hits: 1,
           graphql: undefined,
-          body: undefined,
-          query: undefined,
-          auth: undefined,
+          apispec: {},
         },
         {
           method: "GET",
           path: "/",
           hits: 1,
           graphql: undefined,
-          body: undefined,
-          query: undefined,
-          auth: undefined,
+          apispec: {},
         },
         {
           method: "POST",
           path: "/publish",
           hits: 1,
           graphql: undefined,
-          body: {
-            type: "json",
-            schema: {
-              type: "object",
-              properties: {
-                a: { type: "number" },
-                b: {
-                  type: "array",
-                  items: {
-                    type: "string",
+          apispec: {
+            body: {
+              type: "json",
+              schema: {
+                type: "object",
+                properties: {
+                  a: { type: "number" },
+                  b: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
                   },
                 },
               },
             },
+            query: undefined,
+            auth: undefined,
           },
         },
       ],

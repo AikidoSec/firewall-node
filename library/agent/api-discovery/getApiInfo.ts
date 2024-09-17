@@ -4,6 +4,12 @@ import { APIAuthType, getApiAuthType } from "./getApiAuthType";
 import { BodyDataType, getBodyDataType } from "./getBodyDataType";
 import { DataSchema, getDataSchema } from "./getDataSchema";
 
+export type APISpec = {
+  body?: APIBodyInfo;
+  query?: DataSchema;
+  auth?: APIAuthType[];
+};
+
 export type APIBodyInfo = {
   type: BodyDataType;
   schema: DataSchema;
@@ -13,13 +19,7 @@ export type APIBodyInfo = {
  * Get body data type and schema from context.
  * Returns undefined if the body is not an object or if the body type could not be determined.
  */
-export function getApiInfo(context: Context):
-  | {
-      body?: APIBodyInfo;
-      query?: DataSchema;
-      auth?: APIAuthType[];
-    }
-  | undefined {
+export function getApiInfo(context: Context): APISpec | undefined {
   // Check if feature flag COLLECT_API_SCHEMA is enabled
   if (!isFeatureEnabled("COLLECT_API_SCHEMA")) {
     return undefined;
@@ -43,10 +43,16 @@ export function getApiInfo(context: Context):
       queryInfo = getDataSchema(context.query);
     }
 
+    const authInfo = getApiAuthType(context);
+
+    if (!bodyInfo && !queryInfo && !authInfo) {
+      return undefined;
+    }
+
     return {
       body: bodyInfo,
       query: queryInfo,
-      auth: getApiAuthType(context),
+      auth: authInfo,
     };
   } catch {
     return undefined;

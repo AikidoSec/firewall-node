@@ -1,21 +1,13 @@
-import type { BodyDataType } from "./api-discovery/getBodyDataType";
-import { getApiInfo } from "./api-discovery/getApiInfo";
-import { type DataSchema } from "./api-discovery/getDataSchema";
+import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
-import { APIAuthType } from "./api-discovery/getApiAuthType";
 
 export type Route = {
   method: string;
   path: string;
   hits: number;
   graphql?: { type: "query" | "mutation"; name: string };
-  body?: {
-    type: BodyDataType;
-    schema: DataSchema;
-  };
-  query?: DataSchema;
-  auth?: APIAuthType[];
+  apispec: APISpec;
 };
 
 export class Routes {
@@ -44,16 +36,14 @@ export class Routes {
     }
 
     // Get info about body and query schema
-    const { body, query, auth } = getApiInfo(context) || {};
+    const apispec = getApiInfo(context) || {};
 
     this.evictLeastUsedRouteIfNecessary();
     this.routes.set(key, {
       method,
       path,
       hits: 1,
-      body,
-      query,
-      auth,
+      apispec,
     });
   }
 
@@ -91,7 +81,13 @@ export class Routes {
     }
 
     this.evictLeastUsedRouteIfNecessary();
-    this.routes.set(key, { method, path, hits: 1, graphql: { type, name } });
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      graphql: { type, name },
+      apispec: {},
+    });
   }
 
   private evictLeastUsedRoute() {
@@ -121,9 +117,7 @@ export class Routes {
         path: route.path,
         hits: route.hits,
         graphql: route.graphql,
-        body: route.body,
-        query: route.query,
-        auth: route.auth,
+        apispec: route.apispec,
       };
     });
   }
