@@ -110,3 +110,154 @@ t.test("it prefers non-null type", async (t) => {
     }
   );
 });
+
+t.test("empty array", async (t) => {
+  t.same(mergeDataSchemas(getDataSchema([]), getDataSchema([])), {
+    type: "array",
+    items: undefined,
+  });
+});
+
+t.test("it merges types", async (t) => {
+  t.same(mergeDataSchemas(getDataSchema("str"), getDataSchema(15)), {
+    type: ["string", "number"],
+  });
+
+  // Can not merge object with primitive type
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "abc",
+      }),
+      getDataSchema(15)
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "abc",
+      }),
+      getDataSchema({
+        test: true,
+      })
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: ["string", "boolean"],
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "abc",
+      }),
+      mergeDataSchemas(
+        getDataSchema({
+          test: "abc",
+        }),
+        getDataSchema({
+          test: true,
+        })
+      )
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: ["string", "boolean"],
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      mergeDataSchemas(
+        getDataSchema({
+          test: true,
+        }),
+        getDataSchema({
+          test: "test",
+        })
+      ),
+      getDataSchema({
+        test: "abc",
+      })
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: ["boolean", "string"],
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "abc",
+      }),
+      mergeDataSchemas(
+        getDataSchema({
+          test: 123,
+        }),
+        getDataSchema({
+          test: true,
+        })
+      )
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: ["string", "number", "boolean"],
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      mergeDataSchemas(
+        getDataSchema({
+          test: "test",
+        }),
+        getDataSchema({
+          test: true,
+        })
+      ),
+      mergeDataSchemas(
+        getDataSchema({
+          test: 123,
+        }),
+        getDataSchema({
+          test: true,
+        })
+      )
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: ["string", "boolean", "number"],
+        },
+      },
+    }
+  );
+});
