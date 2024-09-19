@@ -27,7 +27,11 @@ export function getApiInfo(context: Context): APISpec | undefined {
 
   try {
     let bodyInfo: APIBodyInfo | undefined;
-    if (context.body && typeof context.body === "object") {
+    if (
+      context.body &&
+      typeof context.body === "object" &&
+      Object.keys(context.body).length > 0
+    ) {
       bodyInfo = {
         type: getBodyDataType(context.headers),
         schema: getDataSchema(context.body),

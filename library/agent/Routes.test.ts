@@ -548,3 +548,17 @@ t.test("it merges auth schema", async (t) => {
     },
   ]);
 });
+
+t.test("it ignores empty body objects", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute(getContext("GET", "/empty", {}, {}, {}, {}));
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/empty",
+      hits: 1,
+      graphql: undefined,
+      apispec: {},
+    },
+  ]);
+});
