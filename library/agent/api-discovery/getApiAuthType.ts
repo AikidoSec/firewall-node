@@ -36,6 +36,7 @@ const commonAuthCookieNames = [
   "auth_token",
   "access_token",
   "refresh_token",
+  "ghost-admin-api-session",
   ...commonApiKeyHeaderNames,
 ];
 
