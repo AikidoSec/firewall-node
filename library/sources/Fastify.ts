@@ -82,14 +82,27 @@ export class Fastify implements Wrapper {
       "options",
       "patch",
       "all",
+      "propfind",
+      "proppatch",
+      "mkcol",
+      "copy",
+      "move",
+      "lock",
+      "unlock",
+      "trace",
+      "search",
     ];
 
     hooks
       .addPackage("fastify")
-      .withVersion("^4.0.0")
+      .withVersion("^4.0.0 || ^5.0.0")
       .onRequire((exports, pkgInfo) => {
         const onNewInstance = (instance: any) => {
           for (const func of requestFunctions) {
+            // Check if the function exists
+            if (typeof instance[func] !== "function") {
+              continue;
+            }
             wrapExport(instance, func, pkgInfo, {
               modifyArgs: this.wrapRequestArgs,
             });
