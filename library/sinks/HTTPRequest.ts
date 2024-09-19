@@ -12,6 +12,7 @@ import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPriva
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { isIP } from "net";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -20,12 +21,11 @@ export class HTTPRequest implements Wrapper {
     port: number | undefined,
     module: "http" | "https"
   ): InterceptorResult {
-    // Let the agent know that we are connecting to this hostname
-    // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(url.hostname, port);
     const context = getContext();
 
     if (!context) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(url.hostname, port);
       return undefined;
     }
 
@@ -51,6 +51,12 @@ export class HTTPRequest implements Wrapper {
         metadata: {},
         payload: foundSSRFRedirect.payload,
       };
+    }
+
+    if (isIP(url.hostname)) {
+      // Add to list of hostnames that the application is connecting to
+      // Don't add domain names to the list yet, as they might be resolved to a private IP
+      agent.onConnectHostname(url.hostname, port);
     }
 
     return undefined;

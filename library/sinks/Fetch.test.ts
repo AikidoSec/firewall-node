@@ -83,6 +83,7 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 80 },
+      { hostname: "www.aikido.dev", port: undefined },
     ]);
     agent.getHostnames().clear();
 
@@ -90,6 +91,7 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "aikido.dev", port: 443 },
+      { hostname: "www.aikido.dev", port: undefined },
     ]);
     agent.getHostnames().clear();
 

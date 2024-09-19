@@ -83,10 +83,24 @@ function wrapDNSLookupCallback(
 
     const context = getContext();
 
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const requestContext = RequestContextStorage.getStore();
+
+    let port: number | undefined;
+
+    if (urlArg) {
+      port = getPortFromURL(urlArg);
+    } else if (requestContext) {
+      port = requestContext.port;
+    }
+
     if (context) {
       const matches = agent.getConfig().getEndpoints(context);
 
       if (matches.find((endpoint) => endpoint.forceProtectionOff)) {
+        // Add to list of hostnames that the application is connecting to
+        agent.onConnectHostname(hostname, port);
+
         // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
         // Just call the original callback to allow the DNS lookup
         return callback(err, addresses, family);
@@ -109,25 +123,20 @@ function wrapDNSLookupCallback(
     }
 
     if (!context) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(hostname, port);
+
       // If there's no context, we can't check if the hostname is in the context
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
 
-    // This is set if this resolve is part of an outgoing request that we are inspecting
-    const requestContext = RequestContextStorage.getStore();
-
-    let port: number | undefined;
-
-    if (urlArg) {
-      port = getPortFromURL(urlArg);
-    } else if (requestContext) {
-      port = requestContext.port;
-    }
-
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(hostname, port);
+
       // If the hostname doesn't resolve to a private IP address, it's not an SSRF attack
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
@@ -166,6 +175,9 @@ function wrapDNSLookupCallback(
     }
 
     if (!found) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(hostname, port);
+
       // If we can't find the hostname in the context, it's not an SSRF attack
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);

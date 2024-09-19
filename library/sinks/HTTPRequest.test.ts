@@ -49,24 +49,26 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it works", (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
-  agent.start([new HTTPRequest()]);
+const agent = new Agent(
+  true,
+  new LoggerNoop(),
+  new ReportingAPIForTesting(),
+  new Token("123"),
+  undefined
+);
+agent.start([new HTTPRequest()]);
 
-  t.same(agent.getHostnames().asArray(), []);
+t.same(agent.getHostnames().asArray(), []);
 
-  const http = require("http");
-  const https = require("https");
+const http = require("http");
+const https = require("https");
 
-  runWithContext(context, () => {
+t.test("it discovers hostnames", async (t) => {
+  await runWithContext(context, async () => {
     const aikido = http.request("http://aikido.dev");
     aikido.end();
+    // Wait for the request to finish
+    await new Promise((resolve) => aikido.on("finish", resolve));
   });
 
   t.same(agent.getHostnames().asArray(), [
@@ -74,9 +76,11 @@ t.test("it works", (t) => {
   ]);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
+  await runWithContext(context, async () => {
     const aikido = https.request("https://aikido.dev");
     aikido.end();
+    // Wait for the request to finish
+    await new Promise((resolve) => aikido.on("finish", resolve));
   });
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
@@ -132,7 +136,9 @@ t.test("it works", (t) => {
   t.throws(() => https.request("invalid url"));
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
+});
 
+t.test("it blocks SSRF", (t) => {
   runWithContext(
     { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
     () => {

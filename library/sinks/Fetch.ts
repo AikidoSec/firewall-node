@@ -9,6 +9,7 @@ import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
+import { isIP } from "net";
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -18,21 +19,32 @@ export class Fetch implements Wrapper {
     hostname: string,
     port: number | undefined
   ): InterceptorResult {
-    // Let the agent know that we are connecting to this hostname
-    // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
     const context = getContext();
 
     if (!context) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(hostname, port);
       return undefined;
     }
 
-    return checkContextForSSRF({
+    const foundAttack = checkContextForSSRF({
       hostname: hostname,
       operation: "fetch",
       context: context,
       port: port,
     });
+
+    if (foundAttack) {
+      return foundAttack;
+    }
+
+    if (isIP(hostname)) {
+      // Add to list of hostnames that the application is connecting to
+      // Don't add domain names to the list yet, as they might be resolved to a private IP
+      agent.onConnectHostname(hostname, port);
+    }
+
+    return undefined;
   }
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {

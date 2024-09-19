@@ -14,6 +14,7 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { isIP } from "net";
 
 const methods = [
   "request",
@@ -33,21 +34,32 @@ export class Undici implements Wrapper {
     port: number | undefined,
     method: string
   ): InterceptorResult {
-    // Let the agent know that we are connecting to this hostname
-    // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
     const context = getContext();
 
     if (!context) {
+      // Add to list of hostnames that the application is connecting to
+      agent.onConnectHostname(hostname, port);
       return undefined;
     }
 
-    return checkContextForSSRF({
+    const foundAttack = checkContextForSSRF({
       hostname: hostname,
       operation: `undici.${method}`,
       context,
       port,
     });
+
+    if (foundAttack) {
+      return foundAttack;
+    }
+
+    if (isIP(hostname)) {
+      // Add to list of hostnames that the application is connecting to
+      // Don't add domain names to the list yet, as they might be resolved to a private IP
+      agent.onConnectHostname(hostname, port);
+    }
+
+    return undefined;
   }
 
   // eslint-disable-next-line max-lines-per-function
