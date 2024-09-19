@@ -10,6 +10,7 @@ import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import * as dns from "dns";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { http2Request } from "../helpers/http2Request";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -50,69 +51,6 @@ wrap(dns, "lookup", function lookup(original) {
     original.apply(this, arguments);
   };
 });
-
-let _client;
-
-function http2Request(
-  url: URL | string,
-  method: string,
-  headers: Record<string, string>,
-  connectOptions?: Record<string, unknown>,
-  reuseClient?: boolean,
-  body?: string
-) {
-  const { connect } = require("http2");
-  return new Promise<{ headers: IncomingHttpHeaders; body: string }>(
-    (resolve, reject) => {
-      if (!reuseClient || !_client) {
-        if (connectOptions) {
-          _client = connect(url, connectOptions);
-        } else {
-          _client = connect(url);
-        }
-      }
-      if (typeof url === "string") {
-        url = new URL(url);
-      }
-      _client.on("error", (err) => {
-        reject(err);
-      });
-
-      const path = url.pathname + url.search ? url.search : "";
-
-      const req = _client.request({
-        ":path": path || "/",
-        ":method": method,
-        "content-length": body ? Buffer.byteLength(body) : 0,
-        ...headers,
-      });
-
-      let respHeaders: IncomingHttpHeaders;
-      let resData = "";
-
-      req.on("error", (err) => {
-        reject(err);
-      });
-
-      req.on("response", (headers, flags) => {
-        respHeaders = headers;
-      });
-
-      req.on("data", (chunk) => {
-        resData += chunk;
-      });
-
-      req.on("end", () => {
-        _client!.close();
-        resolve({ headers: respHeaders, body: resData });
-      });
-      if (body) {
-        return req.end(body);
-      }
-      req.end();
-    }
-  );
-}
 
 t.test("it works", async (t) => {
   const agent = new Agent(

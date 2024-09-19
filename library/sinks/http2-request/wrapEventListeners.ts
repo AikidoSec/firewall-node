@@ -1,11 +1,16 @@
 import type { ClientHttp2Stream } from "http2";
 import { wrapDefaultOrNamed } from "../../agent/hooks/wrapDefaultOrNamed";
 import { wrapResponseHandler } from "./wrapResponseHandler";
+import { Context } from "../../agent/Context";
 
 /**
  * Wrap event listeners of a http2 stream to check for redirects on response and headers events (SSRF redirect protection)
  */
-export function wrapEventListeners(stream: ClientHttp2Stream, url: URL) {
+export function wrapEventListeners(
+  stream: ClientHttp2Stream,
+  url: URL,
+  context: Context
+) {
   const methods = [
     "on",
     "addListener",
@@ -23,10 +28,8 @@ export function wrapEventListeners(stream: ClientHttp2Stream, url: URL) {
         if (args.length === 2 && typeof args[1] === "function") {
           // Only wrap response and headers events
           if (args[0] === "response" || args[0] === "headers") {
-            const requestArgs = [args[0], stream];
-
             const responseHandler = args[1];
-            args[1] = wrapResponseHandler(responseHandler, url);
+            args[1] = wrapResponseHandler(responseHandler, url, context);
 
             return original.apply(this, args);
           }
