@@ -9,6 +9,8 @@ import { Fastify } from "./Fastify";
 import { HTTPServer } from "./HTTPServer";
 import { FileSystem } from "../sinks/FileSystem";
 import type { FastifyInstance } from "fastify";
+import { getContext } from "../agent/Context";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const agent = new Agent(
   true,
@@ -57,8 +59,6 @@ const agent = new Agent(
 );
 agent.start([new Fastify(), new HTTPServer(), new FileSystem()]);
 setInstance(agent);
-
-import { getContext } from "../agent/Context";
 
 function getApp(
   importType: "default" | "fastify" | "defaultNamed" = "default",
@@ -146,7 +146,14 @@ function getApp(
   return app;
 }
 
-t.test("it adds context from request for all", async (t) => {
+const opts = {
+  skip:
+    getMajorNodeVersion() < 18
+      ? "Fastify does not support Node.js < 18"
+      : false,
+};
+
+t.test("it adds context from request for all", opts, async (t) => {
   const app = getApp();
 
   const response = await app.inject({
@@ -181,43 +188,48 @@ t.test("it adds context from request for all", async (t) => {
   });
 });
 
-t.test("it adds context from request by using default import", async (t) => {
-  const app = getApp("default");
+t.test(
+  "it adds context from request by using default import",
+  opts,
+  async (t) => {
+    const app = getApp("default");
 
-  const response = await app.inject({
-    method: "GET",
-    url: "/?title[$ne]=null",
-    headers: {
-      accept: "application/json",
-      cookie: "session=123",
-    },
-  });
+    const response = await app.inject({
+      method: "GET",
+      url: "/?title[$ne]=null",
+      headers: {
+        accept: "application/json",
+        cookie: "session=123",
+      },
+    });
 
-  t.same(response.statusCode, 200);
+    t.same(response.statusCode, 200);
 
-  const json = await response.json();
-  t.same(json, {
-    url: "/?title[$ne]=null",
-    remoteAddress: "127.0.0.1",
-    method: "GET",
-    query: { "title[$ne]": "null" },
-    headers: {
-      accept: "application/json",
-      cookie: "session=123",
-      "user-agent": "lightMyRequest",
-      host: "localhost:80",
-    },
-    routeParams: {},
-    source: "fastify",
-    route: "/",
-    cookies: {
-      session: "123",
-    },
-  });
-});
+    const json = await response.json();
+    t.same(json, {
+      url: "/?title[$ne]=null",
+      remoteAddress: "127.0.0.1",
+      method: "GET",
+      query: { "title[$ne]": "null" },
+      headers: {
+        accept: "application/json",
+        cookie: "session=123",
+        "user-agent": "lightMyRequest",
+        host: "localhost:80",
+      },
+      routeParams: {},
+      source: "fastify",
+      route: "/",
+      cookies: {
+        session: "123",
+      },
+    });
+  }
+);
 
 t.test(
   "it adds context from request by using .default named import",
+  opts,
   async (t) => {
     const app = getApp("defaultNamed");
 
@@ -254,7 +266,7 @@ t.test(
   }
 );
 
-t.test("it adds context from request for all", async (t) => {
+t.test("it adds context from request for all", opts, async (t) => {
   const app = getApp();
 
   const response = await app.inject({
@@ -289,7 +301,7 @@ t.test("it adds context from request for all", async (t) => {
   });
 });
 
-t.test("it adds body to context", async (t) => {
+t.test("it adds body to context", opts, async (t) => {
   const app = getApp();
 
   const response = await app.inject({
@@ -328,7 +340,7 @@ t.test("it adds body to context", async (t) => {
   });
 });
 
-t.test("it blocks request in on-request hook", async (t) => {
+t.test("it blocks request in on-request hook", opts, async (t) => {
   const app = getApp();
 
   const response = await app.inject({
@@ -348,7 +360,7 @@ t.test("it blocks request in on-request hook", async (t) => {
   );
 });
 
-t.test("it rate limits requests by ip address", async (t) => {
+t.test("it rate limits requests by ip address", opts, async (t) => {
   const app = getApp();
 
   const response = await app.inject({
@@ -400,7 +412,7 @@ t.test(
   }
 );
 
-t.test("does ignore invalid route usage", async (t) => {
+t.test("does ignore invalid route usage", opts, async (t) => {
   const app = getApp();
 
   try {
@@ -420,7 +432,7 @@ t.test("does ignore invalid route usage", async (t) => {
   }
 });
 
-t.test("It works with route params", async (t) => {
+t.test("It works with route params", opts, async (t) => {
   const app = getApp();
 
   app.get("/hello/:test", (request, reply) => {
@@ -460,6 +472,7 @@ t.test("It works with route params", async (t) => {
 
 t.test(
   "it rate limits requests by ip address in app withouth hooks",
+  opts,
   async (t) => {
     const app = getApp("default", true);
 
@@ -486,7 +499,7 @@ t.test(
   }
 );
 
-t.test("it works with addHttpMethod", async (t) => {
+t.test("it works with addHttpMethod", opts, async (t) => {
   const app = getApp();
 
   const response = (await app.inject({
