@@ -135,6 +135,14 @@ function getApp(
     reply.code(200).send("ok");
   });
 
+  // @ts-expect-error not typed yet after release
+  app.addHttpMethod("MKCOL");
+
+  app.mkcol("/testurl", async (request, reply) => {
+    const context = getContext();
+    reply.code(200).header("Content-Type", "application/json").send(context);
+  });
+
   return app;
 }
 
@@ -477,3 +485,33 @@ t.test(
     t.same(response3.statusCode, 429);
   }
 );
+
+t.test("it works with addHttpMethod", async (t) => {
+  const app = getApp();
+
+  const response = (await app.inject({
+    // @ts-expect-error not typed yet correctly after v5 release
+    method: "MKCOL",
+    url: "/testurl",
+  })) as any;
+
+  t.same(response.statusCode, 200);
+
+  t.same(response.statusCode, 200);
+
+  const json = await response.json();
+  t.same(json, {
+    url: "/testurl",
+    remoteAddress: "127.0.0.1",
+    method: "MKCOL",
+    query: {},
+    headers: {
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
+    },
+    routeParams: {},
+    source: "fastify",
+    route: "/testurl",
+    cookies: {},
+  });
+});

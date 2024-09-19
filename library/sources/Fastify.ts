@@ -6,6 +6,7 @@ import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapHookHandler } from "./fastify/wrapHookHandler";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Fastify implements Wrapper {
   private wrapRequestArgs(args: unknown[], agent: Agent) {
@@ -72,6 +73,36 @@ export class Fastify implements Wrapper {
     return args;
   }
 
+  /**
+   * Wrap a new route method that was added by using `addHttpMethod`
+   */
+  private wrapNewRouteMethod(
+    args: unknown[],
+    appInstance: any,
+    agent: Agent,
+    pkgInfo: WrapPackageInfo
+  ) {
+    if (!args.length || typeof args[0] !== "string") {
+      return appInstance;
+    }
+
+    if (!appInstance || typeof appInstance !== "object") {
+      return appInstance;
+    }
+
+    const method = args[0].toLowerCase();
+    if (typeof appInstance[method] !== "function") {
+      return appInstance;
+    }
+
+    // Wrap the new route method
+    wrapExport(appInstance, method, pkgInfo, {
+      modifyArgs: this.wrapRequestArgs,
+    });
+
+    return appInstance;
+  }
+
   wrap(hooks: Hooks) {
     const requestFunctions = [
       "get",
@@ -82,15 +113,6 @@ export class Fastify implements Wrapper {
       "options",
       "patch",
       "all",
-      "propfind",
-      "proppatch",
-      "mkcol",
-      "copy",
-      "move",
-      "lock",
-      "unlock",
-      "trace",
-      "search",
     ];
 
     hooks
@@ -113,6 +135,14 @@ export class Fastify implements Wrapper {
           wrapExport(instance, "addHook", pkgInfo, {
             modifyArgs: this.wrapAddHookArgs,
           });
+
+          // Added in Fastify 5
+          if (typeof instance.addHttpMethod === "function") {
+            wrapExport(instance, "addHttpMethod", pkgInfo, {
+              modifyReturnValue: (args, returnValue, agent) =>
+                this.wrapNewRouteMethod(args, returnValue, agent, pkgInfo),
+            });
+          }
         };
 
         // Wrap export with the name "fastify"
