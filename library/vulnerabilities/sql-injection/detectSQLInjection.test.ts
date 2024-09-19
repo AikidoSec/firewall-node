@@ -361,6 +361,17 @@ t.test("It does not match VIEW keyword", async () => {
   isNotSqlInjection(query2, "view");
 });
 
+t.test("it does not flag ASC or DESC keywords", async () => {
+  isNotSqlInjection(
+    "select `recommendations`.*, (select count(*) from `recommendation_click_events` where `recommendation_click_events`.`recommendation_id` = recommendations.id) as `count__clicks`, (select count(*) from `recommendation_subscribe_events` where `recommendation_subscribe_events`.`recommendation_id` = recommendations.id) as `count__subscribers` from `recommendations` order by created_at desc limit ?",
+    "created_at desc"
+  );
+  isNotSqlInjection(
+    "select `recommendations`.*, (select count(*) from `recommendation_click_events` where `recommendation_click_events`.`recommendation_id` = recommendations.id) as `count__clicks`, (select count(*) from `recommendation_subscribe_events` where `recommendation_subscribe_events`.`recommendation_id` = recommendations.id) as `count__subscribers` from `recommendations` order by created_at asc limit ?",
+    "created_at asc"
+  );
+});
+
 t.test("It does not match GROUP keyword", async () => {
   const query = `
       SELECT groups.id AS group_id, group_settings.user_id, group_settings.settings

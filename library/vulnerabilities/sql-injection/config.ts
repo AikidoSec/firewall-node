@@ -37,8 +37,6 @@ export const SQL_KEYWORDS = [
   "GROUP",
   "BY",
   "HAVING",
-  "DESC",
-  "ASC",
   "OFFSET",
   "FETCH",
   "LEFT",
