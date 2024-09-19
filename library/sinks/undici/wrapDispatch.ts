@@ -26,7 +26,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   return function wrap(opts, handler) {
     const context = getContext();
 
-    if (!context || !opts || !opts.origin || !handler) {
+    if (!opts || !opts.origin || !handler) {
       return orig.apply(
         // @ts-expect-error We don't know the type of this
         this,
@@ -53,16 +53,18 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    blockRedirectToPrivateIP(url, context, agent);
-
     const port = getPortFromURL(url);
 
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(
-      handler.onHeaders,
-      { port, url },
-      context
-    );
+    if (context) {
+      blockRedirectToPrivateIP(url, context, agent);
+
+      // Wrap onHeaders to check for redirects
+      handler.onHeaders = wrapOnHeaders(
+        handler.onHeaders,
+        { port, url },
+        context
+      );
+    }
 
     return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
