@@ -2,6 +2,7 @@ import {
   HTTPAuthScheme,
   isHTTPAuthScheme,
 } from "../../helpers/isHTTPAuthScheme";
+import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
 import { Context } from "../Context";
 
 // https://swagger.io/docs/specification/authentication/
@@ -83,8 +84,15 @@ function getAuthorizationHeaderType(
     const [type, value] = authHeader.split(" ");
 
     if (typeof type === "string" && typeof value === "string") {
-      if (isHTTPAuthScheme(type)) {
-        return { type: "http", scheme: type.toLowerCase() as HTTPAuthScheme };
+      const lowerType = type.toLowerCase();
+      if (isHTTPAuthScheme(lowerType)) {
+        if (lowerType === "bearer") {
+          const isJWT = tryDecodeAsJWT(value).jwt;
+          if (isJWT) {
+            return { type: "http", scheme: lowerType, bearerFormat: "JWT" };
+          }
+        }
+        return { type: "http", scheme: lowerType };
       }
     }
   }

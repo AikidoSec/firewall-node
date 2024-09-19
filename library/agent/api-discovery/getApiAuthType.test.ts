@@ -60,3 +60,40 @@ t.test("no auth", async (t) => {
   t.same(get(getContext({ authorization: "" })), undefined);
   t.same(get({}), undefined);
 });
+
+t.test("multiple auth types", async (t) => {
+  t.same(
+    get(
+      getContext(
+        {
+          authorization: "Basic base64",
+          "x-api-key": "token",
+        },
+        {
+          session: "test",
+        }
+      )
+    ),
+    [
+      { type: "http", scheme: "basic" },
+      { type: "apiKey", in: "header", name: "x-api-key" },
+      {
+        type: "apiKey",
+        in: "cookie",
+        name: "session",
+      },
+    ]
+  );
+});
+
+t.test("detect bearer format", async (t) => {
+  t.same(
+    get(
+      getContext({
+        authorization:
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      })
+    ),
+    [{ type: "http", scheme: "bearer", bearerFormat: "JWT" }]
+  );
+});
