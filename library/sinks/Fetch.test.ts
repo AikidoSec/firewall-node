@@ -87,11 +87,13 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://aikido.dev"));
+    // If we open a connection to the same hostname while the previous one is still open, it will reuse the same connection
+    // In this case the dns.lookup call will not be called again and the hostname will not be added to the list
+    // But because the connection gets closed, the hostname will be added to the list for requests in a new heartbeat interval
+    await fetch(new URL("https://www.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443 },
-      { hostname: "www.aikido.dev", port: undefined },
+      { hostname: "www.aikido.dev", port: 443 },
     ]);
     agent.getHostnames().clear();
 
