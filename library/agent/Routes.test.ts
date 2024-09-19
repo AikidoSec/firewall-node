@@ -562,3 +562,38 @@ t.test("it ignores empty body objects", async (t) => {
     },
   ]);
 });
+
+t.test("it ignores body of graphql queries", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute({
+    ...getContext(
+      "POST",
+      "/graphql",
+      {
+        "content-type": "application/json",
+        "x-api-key": "123",
+      },
+      {
+        query: "query { user { name } }",
+      },
+      {},
+      {}
+    ),
+    ...{
+      graphql: ["name"],
+    },
+  });
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      graphql: undefined,
+      apispec: {
+        body: undefined,
+        query: undefined,
+        auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
+      },
+    },
+  ]);
+});

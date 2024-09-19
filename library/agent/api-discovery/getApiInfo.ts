@@ -30,7 +30,8 @@ export function getApiInfo(context: Context): APISpec | undefined {
     if (
       context.body &&
       typeof context.body === "object" &&
-      Object.keys(context.body).length > 0
+      Object.keys(context.body).length > 0 &&
+      !context.graphql
     ) {
       bodyInfo = {
         type: getBodyDataType(context.headers),
