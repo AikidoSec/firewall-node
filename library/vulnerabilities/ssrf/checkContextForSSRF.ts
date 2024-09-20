@@ -30,6 +30,18 @@ export function checkContextForSSRF({
     for (const [str, path] of userInput.entries()) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found && containsPrivateIPAddress(hostname)) {
+        if (
+          source === "headers" &&
+          path === "headers.host" &&
+          hostname === "localhost"
+        ) {
+          // Application might do a request to itself when the hostname is localhost
+          // Let's allow this (only for the headers.host source)
+          // The port is checked in findHostnameInUserInput
+          // Cause the application might connect to different ports on localhost (e.g. a database or another service)
+          continue;
+        }
+
         return {
           operation: operation,
           kind: "ssrf",
