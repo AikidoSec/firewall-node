@@ -88,5 +88,10 @@ t.test("it works", async () => {
 
     t.same(result, expected);
     t.same(getContext()?.xml, [expected]);
+
+    // Adds additional xml to the context xml array
+    parser2.parse(xmlString2);
+
+    t.same(getContext()?.xml, [expected, expected]);
   });
 });

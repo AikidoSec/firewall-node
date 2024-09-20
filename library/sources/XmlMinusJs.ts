@@ -1,8 +1,9 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, updateContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { addXmlToContext } from "./xml/addXmlToContext";
 import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
@@ -31,11 +32,7 @@ export class XmlMinusJs implements Wrapper {
 
     // Replace the body in the context with the parsed result
     if (parsed && isPlainObject(parsed)) {
-      if (Array.isArray(context.xml)) {
-        updateContext(context, "xml", context.xml.concat(parsed));
-      } else {
-        updateContext(context, "xml", [parsed]);
-      }
+      addXmlToContext(parsed, context);
     }
   }
 

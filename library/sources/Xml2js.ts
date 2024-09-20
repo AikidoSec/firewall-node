@@ -1,8 +1,9 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, updateContext, runWithContext } from "../agent/Context";
+import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { addXmlToContext } from "./xml/addXmlToContext";
 import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
@@ -37,11 +38,7 @@ export class Xml2js implements Wrapper {
     const originalCallback = args[1] as Function;
     args[1] = function wrapCallback(err: Error, result: unknown) {
       if (result && isPlainObject(result)) {
-        if (Array.isArray(context.xml)) {
-          updateContext(context, "xml", context.xml.concat(result));
-        } else {
-          updateContext(context, "xml", [result]);
-        }
+        addXmlToContext(result, context);
       }
 
       runWithContext(context, () => originalCallback(err, result));
