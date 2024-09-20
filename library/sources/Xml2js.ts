@@ -3,6 +3,7 @@ import { getContext, updateContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
  * Wrapper for xml2js package.
@@ -27,8 +28,8 @@ export class Xml2js implements Wrapper {
 
     const xmlString = args[0] as string;
 
-    if (typeof context.body !== "string" || context.body !== xmlString) {
-      // The XML string is not in the body, so currently we don't check it
+    // Check if the XML string is in the request context
+    if (!isXmlInContext(xmlString, context)) {
       return args;
     }
 
@@ -36,7 +37,11 @@ export class Xml2js implements Wrapper {
     const originalCallback = args[1] as Function;
     args[1] = function wrapCallback(err: Error, result: unknown) {
       if (result && isPlainObject(result)) {
-        updateContext(context, "xml", result);
+        if (Array.isArray(context.xml)) {
+          updateContext(context, "xml", context.xml.concat(result));
+        } else {
+          updateContext(context, "xml", [result]);
+        }
       }
 
       runWithContext(context, () => originalCallback(err, result));

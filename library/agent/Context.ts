@@ -22,7 +22,7 @@ export type Context = {
   source: string;
   route: string | undefined;
   graphql?: string[];
-  xml?: unknown;
+  xml?: unknown[];
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
   /**

@@ -3,6 +3,7 @@ import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
  * Wrapper for xml-js package.
@@ -21,9 +22,8 @@ export class XmlMinusJs implements Wrapper {
 
     const xmlString = args[0] as string;
 
-    if (typeof context.body !== "string" || context.body !== xmlString) {
-      // We only want to set the parsed XML result as context.xml
-      // When xml2js(req.body) or xml2json(req.body) is called
+    // Check if the XML string is in the request context
+    if (!isXmlInContext(xmlString, context)) {
       return args;
     }
 
@@ -31,7 +31,11 @@ export class XmlMinusJs implements Wrapper {
 
     // Replace the body in the context with the parsed result
     if (parsed && isPlainObject(parsed)) {
-      updateContext(context, "xml", parsed);
+      if (Array.isArray(context.xml)) {
+        updateContext(context, "xml", context.xml.concat(parsed));
+      } else {
+        updateContext(context, "xml", [parsed]);
+      }
     }
   }
 

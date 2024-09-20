@@ -28,29 +28,43 @@ t.test("it works", async () => {
     t.same(getContext()?.xml, undefined);
   });
 
-  const context: Context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000",
-    query: {},
-    headers: {},
-    body: xmlString,
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/posts/:id",
+  const getTestContext = (): Context => {
+    return {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {},
+      headers: {},
+      body: xmlString,
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    };
   };
 
-  await runWithContext(context, async () => {
+  await runWithContext(getTestContext(), async () => {
     const result = await parseStringPromise(xmlString);
     t.same(result, { root: "Hello xml2js!" });
-    t.same(getContext()?.xml, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
   });
 
-  runWithContext(context, () => {
+  const sharedContext = getTestContext();
+
+  runWithContext(sharedContext, () => {
     parseString(xmlString, (err, result) => {
       t.same(result, { root: "Hello xml2js!" });
-      t.same(getContext()?.xml, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
+    });
+  });
+
+  runWithContext(sharedContext, () => {
+    parseString(xmlString, (err, result) => {
+      t.same(result, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [
+        { root: "Hello xml2js!" },
+        { root: "Hello xml2js!" },
+      ]);
     });
   });
 });
