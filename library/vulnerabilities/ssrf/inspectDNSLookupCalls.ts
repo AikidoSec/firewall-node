@@ -5,6 +5,7 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
@@ -179,9 +180,7 @@ function wrapDNSLookupCallback(
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
       path: found.pathToPayload,
-      metadata: {
-        hostname: hostname,
-      },
+      metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
     });
