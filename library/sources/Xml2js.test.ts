@@ -58,6 +58,7 @@ t.test("it works", async () => {
     });
   });
 
+  // Adds addition xml to the context xml array
   runWithContext(sharedContext, () => {
     parseString(xmlString, (err, result) => {
       t.same(result, { root: "Hello xml2js!" });
@@ -65,6 +66,14 @@ t.test("it works", async () => {
         { root: "Hello xml2js!" },
         { root: "Hello xml2js!" },
       ]);
+    });
+  });
+
+  // Ignore xml not in the context
+  runWithContext(getTestContext(), () => {
+    parseString("<test><ele>ABC</ele></test>", (err, result) => {
+      t.same(result, { test: { ele: ["ABC"] } });
+      t.same(getContext()?.xml, undefined);
     });
   });
 });

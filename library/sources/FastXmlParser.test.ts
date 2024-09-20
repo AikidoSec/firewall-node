@@ -61,6 +61,13 @@ t.test("it works", async () => {
     route: "/",
   };
 
+  // Ignores if xml string not in the context
+  runWithContext(contextWithQuery, () => {
+    const result = parser.parse(xmlString);
+    t.same(result, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, undefined);
+  });
+
   runWithContext(contextWithQuery, () => {
     const parser2 = new XMLParser({
       ignoreAttributes: false,
