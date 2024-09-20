@@ -102,6 +102,7 @@ export class HTTPRequest implements Wrapper {
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
+    const stackTraceCallingLocation = new Error();
 
     if (!optionObj) {
       const newOpts = {
@@ -110,7 +111,8 @@ export class HTTPRequest implements Wrapper {
           agent,
           module,
           `${module}.request`,
-          url
+          url,
+          stackTraceCallingLocation
         ),
       };
 
@@ -129,7 +131,8 @@ export class HTTPRequest implements Wrapper {
         agent,
         module,
         `${module}.request`,
-        url
+        url,
+        stackTraceCallingLocation
       ) as RequestOptions["lookup"];
     } else {
       optionObj.lookup = inspectDNSLookupCalls(
@@ -137,7 +140,8 @@ export class HTTPRequest implements Wrapper {
         agent,
         module,
         `${module}.request`,
-        url
+        url,
+        stackTraceCallingLocation
       ) as RequestOptions["lookup"];
     }
 
