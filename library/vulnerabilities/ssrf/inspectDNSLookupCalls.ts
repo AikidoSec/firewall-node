@@ -47,8 +47,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            stackTraceCallingLocation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ]
       : [
@@ -59,8 +59,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            stackTraceCallingLocation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ];
 
