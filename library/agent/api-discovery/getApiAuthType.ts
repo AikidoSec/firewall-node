@@ -18,7 +18,7 @@ export type APIAuthType = {
 };
 
 // Incoming request headers are lowercase in Node.js
-const commonApiKeyHeaderNames = ["x-api-key", "api-key", "apikey", "token"];
+const commonApiKeyHeaderNames = ["api-key", "apikey", "token"];
 
 const commonAuthCookieNames = [
   "auth",
