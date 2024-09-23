@@ -27,13 +27,12 @@ const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
   // Required because resolve will build absolute paths from relative paths
-  if (!isAbsolute(filePath)) {
+  if (!isAbsolute(filePath) || !isAbsolute(userInput)) {
     return false;
   }
 
   let origResolve = resolve;
   if (isWrapped(resolve)) {
-    // @ts-expect-error Not type safe
     origResolve = resolve.__original;
   }
 

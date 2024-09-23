@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
+import { join, resolve } from "path";
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);
@@ -89,6 +90,7 @@ t.test("another bypass", async () => {
     detectPathTraversal("/./././root/test.txt", "/./././root/test.txt"),
     true
   );
+  t.same(detectPathTraversal("/./././root/test.txt", "/./././root"), true);
 });
 
 t.test("no path traversal", async () => {

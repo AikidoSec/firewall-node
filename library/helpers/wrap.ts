@@ -1,3 +1,7 @@
+type WrappedFunction<T> = T & {
+  __original: T;
+};
+
 export function wrap(
   nodule: any,
   name: string,
@@ -49,14 +53,14 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
 }
 
 /**
- * Checks if a function is a wrapped function.
+ * Check if a function is wrapped
  */
-export function isWrapped(fn: any) {
+export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
   return (
-    typeof fn === "function" &&
+    fn instanceof Function &&
     "__wrapped" in fn &&
     fn.__wrapped === true &&
     "__original" in fn &&
-    typeof fn.__original === "function"
+    fn.__original instanceof Function
   );
 }
