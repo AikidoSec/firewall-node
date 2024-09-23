@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: cd server && docker build -t server . && docker run -d -p 5874:3000
+      - run: cd server && docker build -t server . && docker run -d -p 5874:3000 server
       - run: make install
       - run: make build
       - run: make end2end
