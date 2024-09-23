@@ -1,5 +1,7 @@
 const t = require("tap");
 const { spawn } = require("child_process");
+const { readFile } = require("fs/promises");
+const { createServer } = require("http");
 const { resolve } = require("path");
 const timeout = require("../timeout");
 
@@ -11,12 +13,35 @@ const pathToApp = resolve(
 
 const testServerUrl = "http://localhost:5874";
 const safeImage = "https://nodejs.org/static/images/favicons/favicon.png";
-const unsafeImage = "http://local.aikido.io/favicon.ico";
+const unsafeImage = "http://local.aikido.io:5875/favicon.png";
 
 t.setTimeout(60000);
 
-let token;
+let server;
+t.before(async () => {
+  const contents = await readFile(resolve(__dirname, "./fixtures/favicon.png"));
 
+  return new Promise((resolve) => {
+    server = createServer((req, res) => {
+      if (req.url === "/favicon.png") {
+        res.writeHead(200, { "Content-Type": "image/png" });
+        res.write(contents);
+        res.end();
+      } else {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end();
+      }
+    });
+
+    server.listen(5875, () => {
+      resolve();
+    });
+
+    server.unref();
+  });
+});
+
+let token;
 t.beforeEach(async () => {
   const response = await fetch(`${testServerUrl}/api/runtime/apps`, {
     method: "POST",
@@ -154,4 +179,8 @@ t.test("it does not block in dry mode", (t) => {
     .finally(() => {
       server.kill();
     });
+});
+
+t.after(async () => {
+  server.close();
 });
