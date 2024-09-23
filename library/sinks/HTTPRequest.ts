@@ -127,6 +127,7 @@ export class HTTPRequest implements Wrapper {
 
     let nativeLookup: NonNullable<RequestOptions["lookup"]> = lookup;
     if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
+      // If the user has passed a custom lookup function, we'll use that instead
       nativeLookup = optionObj.lookup;
     }
 
