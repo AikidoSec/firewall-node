@@ -44,7 +44,7 @@ jobs:
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
       - name: Build and run server
         run: |
-          cd server && docker build -t server . && docker run -d -p 5874:3000 server
+          cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
       - run: make install
       - run: make build
       - run: make end2end
