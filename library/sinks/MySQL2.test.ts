@@ -78,7 +78,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,7 +90,7 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
       );
     }
 

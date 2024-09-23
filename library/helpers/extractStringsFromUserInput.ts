@@ -31,6 +31,11 @@ export function extractStringsFromUserInput(
         pathToPayload.concat([{ type: "array", index: i }])
       ).forEach((value, key) => results.set(key, value));
     }
+    // Add array as string to results
+    // This prevents bypassing the firewall by HTTP Parameter Pollution
+    // Example: ?param=value1&param=value2 will be treated as array by express
+    // If its used inside a string, it will be converted to a comma separated string
+    results.set(obj.join(), buildPathToPayload(pathToPayload));
   }
 
   if (typeof obj == "string") {
@@ -40,7 +45,13 @@ export function extractStringsFromUserInput(
       extractStringsFromUserInput(
         jwt.object,
         pathToPayload.concat([{ type: "jwt" }])
-      ).forEach((value, key) => results.set(key, value));
+      ).forEach((value, key) => {
+        // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
+        if (key === "iss" || value.endsWith("<jwt>.iss")) {
+          return;
+        }
+        results.set(key, value);
+      });
     }
   }
 

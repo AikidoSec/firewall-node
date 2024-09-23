@@ -2,8 +2,8 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
@@ -12,7 +12,7 @@ export class HTTPServer implements Wrapper {
     // This is tricky, see replaceRequestBody(...)
     // e.g. Hono uses web requests and web streams
     // (uses Readable.toWeb(req) to convert to a web stream)
-    const parseBody = isPackageInstalled("next");
+    const parseBody = isPackageInstalled("next") || isPackageInstalled("micro");
 
     // Without options
     // http(s).createServer(listener)
@@ -40,35 +40,56 @@ export class HTTPServer implements Wrapper {
     ) {
       return args;
     }
-    if (args[0] !== "request") {
-      return args;
+
+    if (args[0] === "request") {
+      return this.wrapRequestListener(args, module, agent);
     }
-    return this.wrapRequestListener(args, module, agent);
+
+    if (module === "http2" && args[0] === "stream") {
+      return [args[0], createStreamListener(args[1], module, agent)];
+    }
+
+    return args;
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addBuiltinModule("http")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "http", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "http", agent);
-      });
+    ["http", "https", "http2"].forEach((module) => {
+      const subjects = hooks
+        .addBuiltinModule(module)
+        .addSubject((exports) => exports);
 
-    hooks
-      .addBuiltinModule("https")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "https", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "https", agent);
-      });
+      // Server classes are not exported in the http2 module
+      if (module !== "http2") {
+        subjects.modifyArguments("Server", (args, subject, agent) => {
+          return this.wrapRequestListener(args, module, agent);
+        });
+      }
+
+      subjects
+        .modifyArguments("createServer", (args, subject, agent) => {
+          return this.wrapRequestListener(args, module, agent);
+        })
+        .inspectNewInstance("createServer")
+        .addSubject((exports) => exports)
+        .modifyArguments("on", (args, subject, agent) => {
+          return this.wrapOn(args, module, agent);
+        });
+
+      if (module === "http2") {
+        subjects.modifyArguments(
+          "createSecureServer",
+          (args, subject, agent) => {
+            return this.wrapRequestListener(args, module, agent);
+          }
+        );
+
+        subjects
+          .inspectNewInstance("createSecureServer")
+          .addSubject((exports) => exports)
+          .modifyArguments("on", (args, subject, agent) => {
+            return this.wrapOn(args, module, agent);
+          });
+      }
+    });
   }
 }

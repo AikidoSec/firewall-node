@@ -38,6 +38,8 @@ import { SQLite3 } from "../sinks/SQLite3";
 import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
+import { NodeSQLite } from "../sinks/NodeSqlite";
+import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 
 function isDebugging() {
   return (
@@ -135,6 +137,8 @@ function getWrappers() {
     new XmlMinusJs(),
     new Shelljs(),
     new Hapi(),
+    new NodeSQLite(),
+    new BetterSQLite3(),
   ];
 }
 

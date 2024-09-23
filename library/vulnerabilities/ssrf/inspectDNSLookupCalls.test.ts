@@ -6,6 +6,7 @@ import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
+import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -59,7 +60,7 @@ t.test("it resolves private IPv6 without context", (t) => {
 
   wrappedLookup("localhost", (err, address) => {
     t.same(err, null);
-    t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
+    t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
     t.end();
   });
 });
@@ -84,7 +85,7 @@ t.test("it blocks lookup in blocking mode", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(address, undefined);
       t.match(api.getEvents(), [
@@ -92,6 +93,10 @@ t.test("it blocks lookup in blocking mode", (t) => {
           type: "detected_attack",
           attack: {
             kind: "ssrf",
+            metadata: {
+              hostname: "localhost",
+              port: undefined,
+            },
           },
         },
       ]);
@@ -148,10 +153,7 @@ t.test(
     runWithContext({ ...context, body: undefined }, () => {
       wrappedLookup("localhost", (err, address) => {
         t.same(err, null);
-        t.same(
-          address,
-          process.version.startsWith("v16") ? "127.0.0.1" : "::1"
-        );
+        t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
         t.same(api.getEvents(), []);
         t.end();
       });
@@ -201,10 +203,7 @@ t.test(
       runWithContext(context, () => {
         wrappedLookup("localhost", (err, address) => {
           t.same(err, null);
-          t.same(
-            address,
-            process.version.startsWith("v16") ? "127.0.0.1" : "::1"
-          );
+          t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
           t.same(api.getEvents(), []);
           resolve();
         });
@@ -232,7 +231,7 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
       t.same(err instanceof Error, true);
       t.same(
         err.message,
-        "Aikido firewall has blocked a server-side request forgery: operation(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
       );
       t.same(addresses, undefined);
       t.end();
@@ -258,7 +257,7 @@ t.test("it does not block in dry mode", (t) => {
   runWithContext(context, () => {
     wrappedLookup("localhost", (err, address) => {
       t.same(err, null);
-      t.same(address, process.version.startsWith("v16") ? "127.0.0.1" : "::1");
+      t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
       t.match(api.getEvents(), [
         {
           type: "detected_attack",
@@ -355,7 +354,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
         t.same(err instanceof Error, true);
         t.same(
           err.message,
-          "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+          "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
         );
         t.same(addresses, undefined);
         resolve();
@@ -367,7 +366,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
           t.same(err instanceof Error, true);
           t.same(
             err.message,
-            "Aikido firewall has blocked a server-side request forgery: operation(...) originating from unknown source"
+            "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
           );
           t.same(addresses, undefined);
           resolve();

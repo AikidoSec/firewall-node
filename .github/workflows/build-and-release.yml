@@ -3,14 +3,24 @@ on:
   release:
     types: [created]
 jobs:
+  run-unit-tests:
+    uses: ./.github/workflows/unit-test.yml
+  run-end-to-end-tests:
+    uses: ./.github/workflows/end-to-end-tests.yml
+  run-benchmarks:
+    uses: ./.github/workflows/benchmark.yml
   build:
+    needs:
+      - run-unit-tests
+      - run-end-to-end-tests
+      - run-benchmarks
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version: "18.x"
@@ -22,6 +32,7 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
       - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
       - run: make build
+      - run: make lint
       - run: cd build && npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

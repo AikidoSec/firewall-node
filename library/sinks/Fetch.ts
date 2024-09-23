@@ -8,6 +8,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapDispatch } from "./undici/wrapDispatch";
 
 export class Fetch implements Wrapper {
   private patchedGlobalDispatcher = false;
@@ -30,6 +31,7 @@ export class Fetch implements Wrapper {
       hostname: hostname,
       operation: "fetch",
       context: context,
+      port: port,
     });
   }
 
@@ -37,6 +39,24 @@ export class Fetch implements Wrapper {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url)
+          );
+          if (attack) {
+            return attack;
+          }
+        }
+      }
+
+      // Fetch accepts any object with a stringifier. User input may be an array if the user provides an array
+      // query parameter (e.g., ?example[0]=https://example.com/) in frameworks like Express. Since an Array has
+      // a default stringifier, this is exploitable in a default setup.
+      // The following condition ensures that we see the same value as what's passed down to the sink.
+      if (Array.isArray(args[0])) {
+        const url = tryParseURL(args[0].toString());
         if (url) {
           const attack = this.inspectHostname(
             agent,
@@ -94,6 +114,13 @@ export class Fetch implements Wrapper {
           lookup: inspectDNSLookupCalls(lookup, agent, "fetch", "fetch"),
         },
       });
+
+      // @ts-expect-error Type is not defined
+      globalThis[undiciGlobalDispatcherSymbol].dispatch = wrapDispatch(
+        // @ts-expect-error Type is not defined
+        globalThis[undiciGlobalDispatcherSymbol].dispatch,
+        agent
+      );
     } catch (error) {
       agent.log(
         `Failed to patch global dispatcher for fetch, we can't provide protection!`

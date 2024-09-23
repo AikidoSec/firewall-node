@@ -4,11 +4,16 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
+import {
+  getMajorNodeVersion,
+  getMinorNodeVersion,
+} from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapDispatch } from "./undici/wrapDispatch";
+import { isOptionsObject } from "./http-request/isOptionsObject";
 
 const methods = [
   "request",
@@ -41,6 +46,7 @@ export class Undici implements Wrapper {
       hostname: hostname,
       operation: `undici.${method}`,
       context,
+      port,
     });
   }
 
@@ -53,6 +59,25 @@ export class Undici implements Wrapper {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url),
+            method
+          );
+          if (attack) {
+            return attack;
+          }
+        }
+      }
+
+      // Fetch accepts any object with a stringifier. User input may be an array if the user provides an array
+      // query parameter (e.g., ?example[0]=https://example.com/) in frameworks like Express. Since an Array has
+      // a default stringifier, this is exploitable in a default setup.
+      // The following condition ensures that we see the same value as what's passed down to the sink.
+      if (Array.isArray(args[0])) {
+        const url = tryParseURL(args[0].toString());
         if (url) {
           const attack = this.inspectHostname(
             agent,
@@ -79,7 +104,7 @@ export class Undici implements Wrapper {
       }
 
       if (
-        isPlainObject(args[0]) &&
+        isOptionsObject(args[0]) &&
         typeof args[0].hostname === "string" &&
         args[0].hostname.length > 0
       ) {
@@ -114,23 +139,36 @@ export class Undici implements Wrapper {
   private patchGlobalDispatcher(agent: Agent) {
     const undici = require("undici");
 
+    const dispatcher = new undici.Agent({
+      connect: {
+        lookup: inspectDNSLookupCalls(
+          lookup,
+          agent,
+          "undici",
+          // We don't know the method here, so we just use "undici.[method]"
+          "undici.[method]"
+        ),
+      },
+    });
+
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
-    undici.setGlobalDispatcher(
-      new undici.Agent({
-        connect: {
-          lookup: inspectDNSLookupCalls(
-            lookup,
-            agent,
-            "undici",
-            // We don't know the method here, so we just use "undici.[method]"
-            "undici.[method]"
-          ),
-        },
-      })
-    );
+    undici.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
+    const supported =
+      getMajorNodeVersion() >= 17 ||
+      (getMajorNodeVersion() === 16 && getMinorNodeVersion() >= 8);
+
+    if (!supported) {
+      // Undici requires Node.js 16.8+
+      // Packages aren't scoped in npm workspaces, we'll try to require undici:
+      // ReferenceError: ReadableStream is not defined
+      return;
+    }
+
     const undici = hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")

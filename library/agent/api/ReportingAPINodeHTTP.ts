@@ -18,11 +18,15 @@ export class ReportingAPINodeHTTP implements ReportingAPI {
       return { success: false, error: "invalid_token" };
     }
 
-    try {
-      return JSON.parse(data);
-    } catch {
-      return { success: false, error: "unknown_error" };
+    if (statusCode === 200) {
+      try {
+        return JSON.parse(data);
+      } catch {
+        // Fall through
+      }
     }
+
+    return { success: false, error: "unknown_error" };
   }
 
   async report(

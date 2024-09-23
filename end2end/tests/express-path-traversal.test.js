@@ -10,7 +10,7 @@ const pathToApp = resolve(
 );
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4000"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -54,7 +54,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(pathTraversal.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido firewall has blocked a path traversal attack/);
+      t.match(stderr, /Zen has blocked a path traversal attack/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -65,7 +65,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4001"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -105,7 +105,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(pathTraversal.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido firewall has blocked a path traversal attack/);
+      t.notMatch(stderr, /Zen has blocked a path traversal attack/);
     })
     .catch((error) => {
       t.fail(error.message);

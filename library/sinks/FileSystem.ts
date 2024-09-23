@@ -61,7 +61,11 @@ export class FileSystem implements Wrapper {
     }
 
     for (const path of args.slice(0, amountOfPathArgs)) {
-      if (typeof path === "string") {
+      if (
+        typeof path === "string" ||
+        path instanceof Buffer ||
+        path instanceof URL
+      ) {
         const result = checkContextForPathTraversal({
           filename: path,
           operation: `fs.${name}`,

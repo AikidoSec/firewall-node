@@ -1,6 +1,7 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
@@ -12,6 +13,7 @@ import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
+import { Context } from "./Context";
 
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
@@ -43,7 +45,7 @@ t.test("it sends started event", async (t) => {
         version: "0.0.0",
         ipAddress: ip(),
         packages: {
-          mongodb: "6.3.0",
+          mongodb: "6.8.0",
         },
         preventedPrototypePollution: false,
         nodeEnv: "",
@@ -52,6 +54,9 @@ t.test("it sends started event", async (t) => {
         os: {
           name: platform(),
           version: release(),
+        },
+        platform: {
+          version: getSemverNodeVersion(),
         },
       },
     },
@@ -96,7 +101,7 @@ t.test("it starts in non-blocking mode", async () => {
     "Starting agent...",
     "Dry mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
-    "mongodb@6.3.0 is supported!",
+    "mongodb@6.8.0 is supported!",
   ]);
 });
 
@@ -244,6 +249,118 @@ t.test("it checks if user agent is a string", async () => {
     },
   ]);
 });
+
+t.test(
+  "it sends heartbeat when config says we didn't receive any stats",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      receivedAnyStats: false,
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // Increment total requests
+    agent.getInspectionStatistics().onRequest();
+
+    // After 5 seconds, nothing should happen
+    clock.tick(1000 * 5);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After a minute, we'll see that the dashboard didn't receive any stats yet
+    // And then send a heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+      {
+        type: "heartbeat",
+      },
+    ]);
+
+    // We already reported initial stats, so we won't send another heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+      {
+        type: "heartbeat",
+      },
+    ]);
+
+    clock.uninstall();
+  }
+);
+
+t.test(
+  "it does not heartbeat when config says we didn't receive any stats and stats is empty",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      receivedAnyStats: false,
+    });
+    const token = new Token("123");
+    const agent = new Agent(true, logger, api, token, undefined);
+    agent.start([]);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After 5 seconds, nothing should happen
+    clock.tick(1000 * 5);
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    // After a minute, we'll see that the dashboard didn't receive any stats yet
+    // But the stats is still empty, so we won't send a heartbeat
+    clock.tick(60 * 1000);
+    await clock.nextAsync();
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+      },
+    ]);
+
+    clock.uninstall();
+  }
+);
 
 t.test("it sends heartbeat when reached max timings", async () => {
   const clock = FakeTimers.install();
@@ -499,6 +616,26 @@ t.test("when payload is object", async () => {
   );
 });
 
+function getRouteContext(
+  method: string,
+  route: string,
+  headers: Record<string, string> = {},
+  body: any = undefined
+): Context {
+  return {
+    method,
+    route,
+    headers,
+    body,
+    remoteAddress: "",
+    url: `http://localhost${route}`,
+    routeParams: {},
+    query: {},
+    cookies: {},
+    source: "test",
+  };
+}
+
 t.test("it sends hostnames and routes along with heartbeat", async () => {
   const clock = FakeTimers.install();
 
@@ -511,10 +648,18 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   agent.onConnectHostname("aikido.dev", 443);
   agent.onConnectHostname("aikido.dev", 80);
   agent.onConnectHostname("google.com", 443);
-  agent.onRouteExecute("POST", "/posts/:id");
-  agent.onRouteExecute("POST", "/posts/:id");
-  agent.onRouteExecute("GET", "/posts/:id");
-  agent.onRouteExecute("GET", "/");
+  agent.onRouteExecute(getRouteContext("POST", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("POST", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("GET", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("GET", "/"));
+  agent.onRouteExecute(
+    getRouteContext(
+      "POST",
+      "/publish",
+      { "content-type": "application/json" },
+      { a: 1, b: ["c", "d"] }
+    )
+  );
 
   api.clear();
 
@@ -533,7 +678,54 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           port: 443,
         },
       ],
-      routes: [],
+      routes: [
+        {
+          method: "POST",
+          path: "/posts/:id",
+          hits: 2,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "GET",
+          path: "/posts/:id",
+          hits: 1,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "GET",
+          path: "/",
+          hits: 1,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "POST",
+          path: "/publish",
+          hits: 1,
+          graphql: undefined,
+          apispec: {
+            body: {
+              type: "json",
+              schema: {
+                type: "object",
+                properties: {
+                  a: { type: "number" },
+                  b: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                },
+              },
+            },
+            query: undefined,
+            auth: undefined,
+          },
+        },
+      ],
     },
   ]);
 

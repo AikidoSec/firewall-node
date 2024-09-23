@@ -15,6 +15,7 @@ function generateStartedEvent(): Event {
       hostname: "hostname",
       packages: {},
       ipAddress: "ipAddress",
+      library: "firewall-node",
       preventedPrototypePollution: false,
       nodeEnv: "",
       os: {
@@ -155,6 +156,26 @@ t.test("it parses JSON", async () => {
 t.test("it deals with malformed JSON", async () => {
   const stop = await createTestEndpoint({ port: 3005, throwError: true });
   const api = new ReportingAPINodeHTTP(new URL("http://localhost:3005"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: false,
+    error: "unknown_error",
+  });
+  await stop();
+});
+
+t.test("it deals with 400", async () => {
+  const stop = await createTestEndpoint({ statusCode: 400, port: 3006 });
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3006"));
+  t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
+    success: false,
+    error: "unknown_error",
+  });
+  await stop();
+});
+
+t.test("it deals with 500", async () => {
+  const stop = await createTestEndpoint({ statusCode: 500, port: 3007 });
+  const api = new ReportingAPINodeHTTP(new URL("http://localhost:3007"));
   t.same(await api.report(new Token("123"), generateStartedEvent(), 1000), {
     success: false,
     error: "unknown_error",

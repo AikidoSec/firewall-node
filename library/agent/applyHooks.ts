@@ -4,9 +4,10 @@ import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { satisfiesVersion } from "../helpers/satisfiesVersion";
+import { escapeHTML } from "../helpers/escapeHTML";
 import { Agent } from "./Agent";
 import { attackKindHumanName } from "./Attack";
-import { getContext } from "./Context";
+import { bindContext, getContext, updateContext } from "./Context";
 import { BuiltinModule } from "./hooks/BuiltinModule";
 import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
@@ -19,6 +20,7 @@ import { Package } from "./hooks/Package";
 import { WrappableFile } from "./hooks/WrappableFile";
 import { WrappableSubject } from "./hooks/WrappableSubject";
 import { MethodResultInterceptor } from "./hooks/MethodResultInterceptor";
+import { isPackageInstalled } from "../helpers/isPackageInstalled";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -108,14 +110,18 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
-    const exports = require(join(pkg.getName(), file.getRelativePath()));
+    try {
+      const exports = require(join(pkg.getName(), file.getRelativePath()));
 
-    file
-      .getSubjects()
-      .forEach(
-        (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
-        agent
-      );
+      file
+        .getSubjects()
+        .forEach(
+          (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
+          agent
+        );
+    } catch (error) {
+      agent.onFailedToWrapFile(pkg.getName(), file.getRelativePath());
+    }
   });
 }
 
@@ -124,21 +130,32 @@ function wrapBuiltInModule(
   subjects: WrappableSubject[],
   agent: Agent
 ) {
-  const exports = require(module.getName());
+  if (!isPackageInstalled(module.getName())) {
+    return;
+  }
+  try {
+    const exports = require(module.getName());
 
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, module.getName(), agent),
-    agent
-  );
+    subjects.forEach(
+      (selector) => wrapSubject(exports, selector, module.getName(), agent),
+      agent
+    );
+  } catch (error) {
+    agent.onFailedToWrapPackage(module.getName());
+  }
 }
 
 function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
-  const exports = require(pkg.getName());
+  try {
+    const exports = require(pkg.getName());
 
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
-    agent
-  );
+    subjects.forEach(
+      (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
+      agent
+    );
+  } catch (error) {
+    agent.onFailedToWrapPackage(pkg.getName());
+  }
 }
 
 /**
@@ -159,15 +176,20 @@ function wrapWithoutArgumentModification(
         const args = Array.from(arguments);
         const context = getContext();
 
-        if (context) {
-          const match = agent.getConfig().getEndpoint(context);
+        for (let i = 0; i < args.length; i++) {
+          if (typeof args[i] === "function") {
+            args[i] = bindContext(args[i]);
+          }
+        }
 
-          if (match && match.endpoint.forceProtectionOff) {
+        if (context) {
+          const matches = agent.getConfig().getEndpoints(context);
+
+          if (matches.find((match) => match.forceProtectionOff)) {
             return original.apply(
               // @ts-expect-error We don't now the type of this
               this,
-              // eslint-disable-next-line prefer-rest-params
-              arguments
+              args
             );
           }
         }
@@ -203,7 +225,7 @@ function wrapWithoutArgumentModification(
 
         if (result && context && !isAllowedIP) {
           // Flag request as having an attack detected
-          context.attackDetected = true;
+          updateContext(context, "attackDetected", true);
 
           agent.onDetectedAttack({
             module: module,
@@ -220,7 +242,7 @@ function wrapWithoutArgumentModification(
 
           if (agent.shouldBlock()) {
             throw new Error(
-              `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
+              `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
             );
           }
         }
@@ -228,8 +250,7 @@ function wrapWithoutArgumentModification(
         return original.apply(
           // @ts-expect-error We don't now the type of this
           this,
-          // eslint-disable-next-line prefer-rest-params
-          arguments
+          args
         );
       };
     });

@@ -20,7 +20,10 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "thisdomainpointstointernalip2.com"
+    ) {
       return original.apply(this, [
         "localhost",
         ...Array.from(arguments).slice(1),
@@ -62,8 +65,8 @@ t.test("it works", (t) => {
   const https = require("https");
 
   runWithContext(context, () => {
-    const google = http.request("http://aikido.dev");
-    google.end();
+    const aikido = http.request("http://aikido.dev");
+    aikido.end();
   });
 
   t.same(agent.getHostnames().asArray(), [
@@ -72,16 +75,16 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(context, () => {
-    const google = https.request("https://aikido.dev");
-    google.end();
+    const aikido = https.request("https://aikido.dev");
+    aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
   agent.getHostnames().clear();
 
-  const google = https.request(new URL("https://aikido.dev"));
-  google.end();
+  const aikido = https.request(new URL("https://aikido.dev"));
+  aikido.end();
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 443 },
   ]);
@@ -138,12 +141,32 @@ t.test("it works", (t) => {
         .on("error", (error) => {
           t.match(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
 
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        })
+        .on("finish", () => {
+          t.fail("should not finish");
+        })
+        .end();
+    }
+  );
+
+  runWithContext(
+    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
+    () => {
+      https
+        .request("https://thisdomainpointstointernalip2.com", (res) => {
+          t.fail("should not respond");
+        })
+        .on("error", (error) => {
+          t.match(
+            error.message,
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+          );
         })
         .on("finish", () => {
           t.fail("should not finish");
@@ -158,13 +181,13 @@ t.test("it works", (t) => {
     google.end();
 
     // With options object
-    const google2 = http.request("http://google.com", {});
+    const google2 = http.get("http://google.com", {});
     google2.end();
   });
 
   runWithContext(context, () => {
     // Safe request
-    const google = https.request("https://google.com");
+    const google = https.request("https://www.google.com");
     google.end();
 
     // With string URL
@@ -174,7 +197,7 @@ t.test("it works", (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -185,7 +208,7 @@ t.test("it works", (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -201,12 +224,71 @@ t.test("it works", (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    // Using .get
+    const error4 = t.throws(() =>
+      https.get("https://localhost:4000/api/internal")
+    );
+    if (error4 instanceof Error) {
+      t.same(
+        error4.message,
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    // ECONNREFUSED means that the request is not blocked
+    http.request("http://localhost:9876").on("error", (e) => {
+      t.same(e.code, "ECONNREFUSED");
+    });
+
+    https.request("https://localhost:9876").on("error", (e) => {
+      t.same(e.code, "ECONNREFUSED");
+    });
+
+    https
+      .request("https://localhost/api/internal", { port: 9876 })
+      .on("error", (e) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
+
+    https
+      .request("https://localhost/api/internal", { defaultPort: 9876 })
+      .on("error", (e) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
+
+    // With options object at index 1
+    const error5 = t.throws(() =>
+      https.request("", {
+        protocol: "https:",
+        hostname: "localhost",
+        port: 4000,
+        path: "/api/internal",
+      })
+    );
+    if (error5 instanceof Error) {
+      t.same(
+        error5.message,
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    const oldUrl = require("url");
+    const error6 = t.throws(() =>
+      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
+    );
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
   });
 
   setTimeout(() => {
     t.end();
-  }, 1000);
+  }, 3000);
 });

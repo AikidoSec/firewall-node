@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
 
@@ -20,7 +20,7 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it inspects query method calls and blocks if needed", async () => {
+t.test("it inspects query method calls and blocks if needed", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -78,7 +78,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,7 +90,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -123,6 +123,22 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         return client.query("-- This is a comment");
       }
     );
+
+    // Check if context is available in the callback
+    runWithContext(context, () => {
+      client.query("SELECT petname FROM cats;", (error, result) => {
+        t.match(getContext(), context);
+
+        try {
+          client.query("-- should be blocked", () => {});
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Zen has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+          );
+        }
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

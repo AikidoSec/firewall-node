@@ -1,11 +1,78 @@
+import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
+import { updateApiInfo } from "./api-discovery/updateApiInfo";
+import type { Context } from "./Context";
+
+export type Route = {
+  method: string;
+  path: string;
+  hits: number;
+  graphql?: { type: "query" | "mutation"; name: string };
+  apispec: APISpec;
+};
+
 export class Routes {
-  private routes: Map<string, { method: string; path: string; hits: number }> =
-    new Map();
+  private routes: Map<string, Route> = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
-  addRoute(method: string, path: string) {
-    const key = `${method}:${path}`;
+  addRoute(context: Context) {
+    const { method, route: path } = context;
+    if (!method || !path) {
+      return;
+    }
+
+    const key = this.getKey(method, path);
+    const existing = this.routes.get(key);
+
+    if (existing) {
+      // Only sample first 20 hits of a route during one heartbeat window
+      if (existing.hits <= 20) {
+        // Update api schemas if necessary
+        updateApiInfo(context, existing);
+      }
+
+      existing.hits++;
+      return;
+    }
+
+    // Get info about body and query schema
+    const apispec = getApiInfo(context) || {};
+
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      apispec,
+    });
+  }
+
+  private evictLeastUsedRouteIfNecessary() {
+    if (this.routes.size >= this.maxEntries) {
+      this.evictLeastUsedRoute();
+    }
+  }
+
+  private getKey(method: string, path: string) {
+    return `${method}:${path}`;
+  }
+
+  private getGraphQLKey(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    return `${method}:${path}:${type}:${name}`;
+  }
+
+  addGraphQLField(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    const key = this.getGraphQLKey(method, path, type, name);
     const existing = this.routes.get(key);
 
     if (existing) {
@@ -13,11 +80,14 @@ export class Routes {
       return;
     }
 
-    if (this.routes.size >= this.maxEntries) {
-      this.evictLeastUsedRoute();
-    }
-
-    this.routes.set(key, { method, path, hits: 1 });
+    this.evictLeastUsedRouteIfNecessary();
+    this.routes.set(key, {
+      method,
+      path,
+      hits: 1,
+      graphql: { type, name },
+      apispec: {},
+    });
   }
 
   private evictLeastUsedRoute() {
@@ -46,6 +116,8 @@ export class Routes {
         method: route.method,
         path: route.path,
         hits: route.hits,
+        graphql: route.graphql,
+        apispec: route.apispec,
       };
     });
   }

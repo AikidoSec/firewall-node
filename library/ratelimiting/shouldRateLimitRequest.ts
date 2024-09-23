@@ -1,6 +1,7 @@
 import { Agent } from "../agent/Agent";
-import { Context } from "../agent/Context";
+import { Context, updateContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { getRateLimitedEndpoint } from "./getRateLimitedEndpoint";
 
 type Result =
   | {
@@ -16,16 +17,13 @@ type Result =
     };
 
 // eslint-disable-next-line max-lines-per-function
-export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
-  const match = agent.getConfig().getEndpoint(context);
+export function shouldRateLimitRequest(
+  context: Readonly<Context>,
+  agent: Agent
+): Result {
+  const endpoint = getRateLimitedEndpoint(context, agent.getConfig());
 
-  if (!match) {
-    return { block: false };
-  }
-
-  const { endpoint, route } = match;
-
-  if (!endpoint.rateLimiting || !endpoint.rateLimiting.enabled) {
+  if (!endpoint) {
     return { block: false };
   }
 
@@ -54,14 +52,14 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${route}:ip:${context.remoteAddress}`,
+        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
         windowSizeInMS,
         maxRequests
       );
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.consumedRateLimitForIP = true;
+    updateContext(context, "consumedRateLimitForIP", true);
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
@@ -72,14 +70,14 @@ export function shouldRateLimitRequest(context: Context, agent: Agent): Result {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${route}:user:${context.user.id}`,
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
         windowSizeInMS,
         maxRequests
       );
 
     // This function is executed for every middleware and route handler
     // We want to count the request only once
-    context.consumedRateLimitForUser = true;
+    updateContext(context, "consumedRateLimitForUser", true);
 
     if (!allowed) {
       return { block: true, trigger: "user" };
