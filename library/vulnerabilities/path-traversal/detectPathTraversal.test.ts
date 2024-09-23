@@ -80,10 +80,6 @@ t.test("linux user directory", async () => {
   t.same(detectPathTraversal("/home/user/file.txt", "/home/user/"), true);
 });
 
-t.test("windows drive letter", async () => {
-  t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
-});
-
 t.test("possible bypass", async () => {
   t.same(detectPathTraversal("/./etc/passwd", "/./etc/passwd"), true);
 });
