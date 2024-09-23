@@ -125,25 +125,19 @@ export class HTTPRequest implements Wrapper {
       return args.concat(newOpts);
     }
 
-    if (optionObj.lookup) {
-      optionObj.lookup = inspectDNSLookupCalls(
-        optionObj.lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url,
-        stackTraceCallingLocation
-      ) as RequestOptions["lookup"];
-    } else {
-      optionObj.lookup = inspectDNSLookupCalls(
-        lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url,
-        stackTraceCallingLocation
-      ) as RequestOptions["lookup"];
+    let nativeLookup: Function = lookup;
+    if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
+      nativeLookup = optionObj.lookup;
     }
+
+    optionObj.lookup = inspectDNSLookupCalls(
+      nativeLookup,
+      agent,
+      module,
+      `${module}.request`,
+      url,
+      stackTraceCallingLocation
+    ) as RequestOptions["lookup"];
 
     return args;
   }
