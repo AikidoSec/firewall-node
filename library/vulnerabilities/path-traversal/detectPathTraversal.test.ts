@@ -122,3 +122,11 @@ t.test("does not absolute path inside another folder", async () => {
 t.test("disable checkPathStart", async () => {
   t.same(detectPathTraversal("/etc/passwd", "/etc/passwd", false), false);
 });
+
+t.test(
+  "windows drive letter",
+  { skip: process.platform !== "win32" ? "Windows only" : false },
+  async () => {
+    t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+  }
+);
