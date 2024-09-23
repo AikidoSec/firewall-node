@@ -137,7 +137,7 @@ export class HTTPRequest implements Wrapper {
       `${module}.request`,
       url,
       stackTraceCallingLocation
-    );
+    ) as NonNullable<RequestOptions["lookup"]>;
 
     return args;
   }
