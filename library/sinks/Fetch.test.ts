@@ -52,7 +52,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -255,16 +256,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const error = await t.rejects(() =>
-          fetch(
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
-          )
+          fetch(`${redirecTestUrl2}/ssrf-test-absolute-domain`)
         );
         if (error instanceof Error) {
           t.same(
@@ -331,14 +329,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const response = await fetch(
-          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           {
             redirect: "manual",
           }

@@ -20,9 +20,25 @@ const context: Context = {
   source: "express",
   route: "/posts/:id",
 };
+let server;
+const port = 3000;
 
-const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+t.before(async () => {
+  const { createServer } = require("http");
+
+  server = createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Hello World\n");
+  });
+
+  server.unref();
+
+  return new Promise((resolve) => {
+    server.listen(port, resolve);
+  });
+});
+
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   const agent = new Agent(
