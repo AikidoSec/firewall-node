@@ -31,6 +31,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
   }
 
   let origResolve = resolve;
+  // @ts-expect-error __wrapped is not typed
   if (resolve.__wrapped) {
     // @ts-expect-error Not type safe
     origResolve = resolve.__original;
