@@ -1,4 +1,5 @@
 import { isAbsolute, resolve } from "path";
+import { isWrapped } from "../../helpers/wrap";
 
 const linuxRootFolders = [
   "/bin/",
@@ -31,8 +32,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
   }
 
   let origResolve = resolve;
-  // @ts-expect-error __wrapped is not typed
-  if (resolve.__wrapped) {
+  if (isWrapped(resolve)) {
     // @ts-expect-error Not type safe
     origResolve = resolve.__original;
   }

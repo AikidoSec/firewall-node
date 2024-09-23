@@ -37,12 +37,21 @@ export function detectPathTraversal(
   }
 
   if (containsUnsafePathParts(filePath) && containsUnsafePathParts(userInput)) {
+    console.log("relative");
+    console.log("filePath", filePath);
+    console.log("userInput", userInput);
     return true;
   }
 
   if (checkPathStart) {
     // Check for absolute path traversal
-    return startsWithUnsafePath(filePath, userInput);
+    const res = startsWithUnsafePath(filePath, userInput);
+    if (res) {
+      console.log("absolute");
+      console.log("filePath", filePath);
+      console.log("userInput", userInput);
+    }
+    return res;
   }
 
   return false;

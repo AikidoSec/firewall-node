@@ -47,3 +47,16 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
     value: value,
   });
 }
+
+/**
+ * Checks if a function is a wrapped function.
+ */
+export function isWrapped(fn: any) {
+  return (
+    typeof fn === "function" &&
+    "__wrapped" in fn &&
+    fn.__wrapped === true &&
+    "__original" in fn &&
+    typeof fn.__original === "function"
+  );
+}
