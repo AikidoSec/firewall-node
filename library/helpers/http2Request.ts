@@ -30,7 +30,7 @@ export function http2Request(
         reject(err);
       });
 
-      const path = url.pathname + url.search ? url.search : "";
+      const path = url.pathname + (url.search ? url.search : "");
 
       const req = _client.request({
         ":path": path || "/",
