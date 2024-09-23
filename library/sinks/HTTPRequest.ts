@@ -125,7 +125,7 @@ export class HTTPRequest implements Wrapper {
       return args.concat(newOpts);
     }
 
-    let nativeLookup: Function = lookup;
+    let nativeLookup: NonNullable<RequestOptions["lookup"]> = lookup;
     if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
       nativeLookup = optionObj.lookup;
     }
@@ -137,7 +137,7 @@ export class HTTPRequest implements Wrapper {
       `${module}.request`,
       url,
       stackTraceCallingLocation
-    ) as RequestOptions["lookup"];
+    );
 
     return args;
   }
