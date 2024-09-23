@@ -9,6 +9,8 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { exec } = require("child_process");
+const { extname } = require("path");
+const fetchImage = require("./fetchImage");
 
 require("@aikidosec/firewall/nopp");
 
@@ -143,6 +145,28 @@ async function main(port) {
 
       res.attachment("image.jpg");
       res.send(Buffer.from(buffer));
+    })
+  );
+
+  app.get(
+    "/images/:url",
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to SSRF
+      const url = req.params.url;
+
+      if (!url) {
+        return res.status(400).send("url parameter is required");
+      }
+
+      const extension = extname(url) || ".jpg";
+      const { statusCode, body } = await fetchImage(url);
+
+      if (statusCode !== 200) {
+        return res.status(statusCode).send("Failed to fetch image");
+      }
+
+      res.attachment(`image${extension}`);
+      res.send(body);
     })
   );
 
