@@ -61,11 +61,13 @@ t.test("it blocks in blocking mode", (t) => {
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.log(data.toString());
     stderr += data.toString();
   });
 
@@ -142,11 +144,13 @@ t.test("it does not block in dry mode", (t) => {
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.log(data.toString());
     stderr += data.toString();
   });
 

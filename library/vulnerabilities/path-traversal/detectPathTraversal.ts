@@ -21,6 +21,9 @@ export function detectPathTraversal(
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
+      console.log("url");
+      console.log("filePath", filePath);
+      console.log("userInput", userInput);
       return true;
     }
   }
