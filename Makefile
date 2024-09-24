@@ -1,6 +1,6 @@
 .PHONY: containers
 containers:
-	cd sample-apps && docker-compose up -d --remove-orphans
+	npm run containers
 
 .PHONY: express-mongodb
 express-mongodb:
@@ -64,14 +64,7 @@ nestjs-sentry:
 
 .PHONY: install
 install:
-	mkdir -p build
-	node scripts/copyPackageJSON.js
-	touch build/index.js
-	cd build && npm link
-	npm install
-	cd library && npm install
-	cd end2end && npm install
-	node scripts/install.js
+	npm run install
 
 .PHONY: build
 build:
