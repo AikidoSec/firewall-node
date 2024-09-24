@@ -23,6 +23,18 @@ export function findHostnameInContext(
     for (const [str, path] of userInput.entries()) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
+        if (
+          path === ".host" &&
+          source === "headers" &&
+          typeof port === "number" &&
+          str === `localhost:${port}`
+        ) {
+          // Application might do a request to itself when the hostname is localhost
+          // Let's allow this (only for the headers.host source)
+          // We still want to block if the port is different
+          continue;
+        }
+
         return {
           source: source,
           pathToPayload: path,
