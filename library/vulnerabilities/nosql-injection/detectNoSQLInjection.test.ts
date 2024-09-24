@@ -771,3 +771,20 @@ t.test("detects injection", async () => {
     }
   );
 });
+
+t.test("it does not detect", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          password: "test",
+        },
+      }),
+      { username: "admin", password: "test" }
+    ),
+    {
+      injection: false,
+    }
+  );
+});
