@@ -6,6 +6,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
 function createContext({
@@ -78,54 +79,68 @@ t.before(async () => {
   });
 });
 
-t.test("it does not block request to localhost with same port", async (t) => {
-  const { request } = require("undici");
+t.test(
+  "it does not block request to localhost with same port",
+  {
+    skip:
+      getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
+  },
+  async (t) => {
+    const { request } = require("undici");
 
-  await runWithContext(
-    createContext({
-      url: serverUrl,
-      hostHeader: hostHeader,
-      body: {},
-    }),
-    async () => {
-      // Server doing a request to itself
-      const response = await request(`${serverUrl}/favicon.ico`);
-      // The server should respond with a 200
-      t.same(response.statusCode, 200);
-    }
-  );
-});
-
-t.test("it blocks requests to other ports", async (t) => {
-  const { request } = require("undici");
-
-  const error = await t.rejects(async () => {
     await runWithContext(
       createContext({
-        url: `http://localhost:${port + 1}`,
-        hostHeader: `localhost:${port + 1}`,
-        body: {
-          url: `${serverUrl}/favicon.ico`,
-        },
+        url: serverUrl,
+        hostHeader: hostHeader,
+        body: {},
       }),
       async () => {
-        // Server doing a request to localhost but with a different port
-        // This should be blocked
-        await request(`${serverUrl}/favicon.ico`);
-        // This should not be called
-        t.fail();
+        // Server doing a request to itself
+        const response = await request(`${serverUrl}/favicon.ico`);
+        // The server should respond with a 200
+        t.same(response.statusCode, 200);
       }
     );
-  });
-
-  t.ok(error instanceof Error);
-  if (error instanceof Error) {
-    t.same(
-      error.message,
-      "Zen has blocked a server-side request forgery: undici.request(...) originating from body.url"
-    );
   }
-});
+);
+
+t.test(
+  "it blocks requests to other ports",
+  {
+    skip:
+      getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
+  },
+  async (t) => {
+    const { request } = require("undici");
+
+    const error = await t.rejects(async () => {
+      await runWithContext(
+        createContext({
+          url: `http://localhost:${port + 1}`,
+          hostHeader: `localhost:${port + 1}`,
+          body: {
+            url: `${serverUrl}/favicon.ico`,
+          },
+        }),
+        async () => {
+          // Server doing a request to localhost but with a different port
+          // This should be blocked
+          await request(`${serverUrl}/favicon.ico`);
+          // This should not be called
+          t.fail();
+        }
+      );
+    });
+
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Zen has blocked a server-side request forgery: undici.request(...) originating from body.url"
+      );
+    }
+  }
+);
 
 t.after(() => {
   server.close();
