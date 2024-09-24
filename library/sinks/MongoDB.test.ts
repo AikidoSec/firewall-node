@@ -185,6 +185,19 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
       );
     }
 
+    const distinctError = await t.rejects(async () => {
+      await runWithContext(unsafeContext, () => {
+        return collection.distinct("title", { title: { $ne: null } });
+      });
+    });
+    t.ok(distinctError instanceof Error);
+    if (distinctError instanceof Error) {
+      t.same(
+        distinctError.message,
+        "Zen has blocked a NoSQL injection: MongoDB.Collection.distinct(...) originating from body.myTitle"
+      );
+    }
+
     // Test if it checks arguments
     await runWithContext(safeContext, async () => {
       await t.rejects(async () => collection.bulkWrite());
