@@ -96,12 +96,12 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/Aikido
 ### Your First Code Contribution
 
 - clone the repository to your local machine
-- run `$ make install` to install dependencies
-- run `$ make build` to build the library
-- run `$ make watch` to watch for changes and rebuild the library
-- run `$ make test` to run tests using tap
-- run `$ make end2end` to run end-to-end tests using tap
-- run `$ make lint` to run ESLint
+- run `$ npm install` to install dependencies
+- run `$ npm run build` to build the library
+- run `$ npm run watch` to watch for changes and rebuild the library
+- run `$ npm run test` to run tests using tap
+- run `$ npm run end2end` to run end-to-end tests using tap
+- run `$ npm run lint` to run ESLint
 
 ## Styleguides
 

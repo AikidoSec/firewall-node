@@ -72,27 +72,23 @@ build:
 
 .PHONY: watch
 watch: build
-	cd library && npm run build:watch
+	npm run watch
 
 .PHONY: test
 test:
-	cd library && npm run test
+	npm run test
 
 .PHONY: test-ci
 test-ci:
-	cd library && npm run test:ci
+	npm run test:ci
 
 .PHONY: lint
 lint:
-	cd library && npm run lint
+	npm run lint
 
 .PHONY: end2end
 end2end:
-	cd end2end && npm run test
+	npm run end2end
 
 benchmark: build
-	cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
-	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
-	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
-	cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
-	cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
+	npm run benchmark

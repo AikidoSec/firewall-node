@@ -45,6 +45,6 @@ jobs:
       - name: Build and run server
         run: |
           cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
-      - run: make install
-      - run: make build
-      - run: make end2end
+      - run: npm install
+      - run: npm run build
+      - run: npm run end2end

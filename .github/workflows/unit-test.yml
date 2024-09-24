@@ -48,8 +48,8 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - run: make install
-      - run: make test-ci
+      - run: npm install
+      - run: npm run test:ci
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
         with:

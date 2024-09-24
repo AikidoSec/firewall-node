@@ -33,8 +33,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install K6
         uses: grafana/setup-k6-action@v1
-      - run: make install
-      - run: make build
+      - run: npm install
+      - run: npm run build
       - name: Run NoSQL Injection Benchmark
         run: cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
       - name: Run SQL Injection Benchmark

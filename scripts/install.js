@@ -1,8 +1,9 @@
-const { readdir, access, mkdir, writeFile, constants } = require("fs/promises");
+const { readdir, mkdir, writeFile } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
+const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 
 const projectRoot = join(__dirname, "..");
 
@@ -44,15 +45,6 @@ async function installDeps(folder) {
   }
 }
 
-async function fileExists(path) {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Prepare the build directory
  */
@@ -90,27 +82,6 @@ async function prepareBuildDir() {
     console.error(error);
     process.exit(1);
   }
-}
-
-/**
- * Check for subdirectories with a package.json file in the given directory
- */
-async function scanForSubDirsWithPackageJson(dir) {
-  const dirPath = join(projectRoot, dir);
-  const files = await readdir(dirPath, { withFileTypes: true });
-
-  const results = [];
-
-  for (const file of files) {
-    if (file.isDirectory()) {
-      const packageJsonPath = join(dirPath, file.name, "package.json");
-      if (await fileExists(packageJsonPath)) {
-        results.push(join(dir, file.name));
-      }
-    }
-  }
-
-  return results;
 }
 
 (async () => {

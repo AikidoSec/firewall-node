@@ -5,7 +5,14 @@
   },
   "scripts": {
     "install": "node scripts/install.js",
-    "containers": "cd sample-apps && docker-compose up -d --remove-orphans",
-    "build": "node scripts/build.js"
+    "containers": "cd sample-apps && docker compose up -d --remove-orphans",
+    "build": "node scripts/build.js",
+    "watch": "cd library && npm run build:watch",
+    "test": "cd library && npm run test",
+    "test:ci": "cd library && npm run test:ci",
+    "lint": "cd library && npm run lint",
+    "end2end": "cd end2end && npm run test",
+    "format": "prettier --write .",
+    "benchmark": "node scripts/benchmark.js"
   }
 }
