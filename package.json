@@ -5,6 +5,7 @@
   },
   "scripts": {
     "install": "node scripts/install.js",
-    "containers": "cd sample-apps && docker-compose up -d --remove-orphans"
+    "containers": "cd sample-apps && docker-compose up -d --remove-orphans",
+    "build": "node scripts/build.js"
   }
 }

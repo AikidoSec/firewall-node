@@ -64,16 +64,11 @@ nestjs-sentry:
 
 .PHONY: install
 install:
-	npm run install
+	npm install
 
 .PHONY: build
 build:
-	mkdir -p build
-	rm -r build
-	cd library && npm run build
-	cp README.md build/README.md
-	cp LICENSE build/LICENSE
-	cp library/package.json build/package.json
+	npm run build
 
 .PHONY: watch
 watch: build

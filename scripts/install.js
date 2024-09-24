@@ -1,11 +1,4 @@
-const {
-  readdir,
-  stat,
-  access,
-  mkdir,
-  writeFile,
-  constants,
-} = require("fs/promises");
+const { readdir, access, mkdir, writeFile, constants } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
@@ -16,7 +9,7 @@ const projectRoot = join(__dirname, "..");
 async function main() {
   await prepareBuildDir();
 
-  const installDirs = [".", "library", "end2end"];
+  const installDirs = ["library", "end2end"];
   const scanForSubDirs = ["sample-apps", "benchmarks"];
 
   for (const dir of scanForSubDirs) {
@@ -25,7 +18,9 @@ async function main() {
   }
 
   // Install dependencies for all directories
-  await Promise.all(installDirs.map(installDeps));
+  for (const dir of installDirs) {
+    await installDeps(dir);
+  }
 
   console.log("Successfully installed all dependencies");
   process.exit(0);
