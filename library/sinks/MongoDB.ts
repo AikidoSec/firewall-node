@@ -22,8 +22,6 @@ const OPERATIONS_WITH_FILTER = [
   "replaceOne",
 ] as const;
 
-const OPERATIONS_WITH_FILTER_SECOND_ARGUMENT = ["distinct"] as const;
-
 const BULK_WRITE_OPERATIONS_WITH_FILTER = [
   "replaceOne",
   "updateOne",
@@ -139,8 +137,7 @@ export class MongoDB implements Wrapper {
   private inspectOperation(
     operation: string,
     args: unknown[],
-    collection: Collection,
-    filterPosition = 0
+    collection: Collection
   ): InterceptorResult {
     const context = getContext();
 
@@ -148,25 +145,40 @@ export class MongoDB implements Wrapper {
       return undefined;
     }
 
-    let filter: unknown;
+    if (args.length > 0 && isPlainObject(args[0])) {
+      const filter = args[0];
 
-    if (filterPosition === 0 && args.length > 0 && isPlainObject(args[0])) {
-      filter = args[0];
-    } else if (
-      filterPosition === 1 &&
-      args.length > 1 &&
-      isPlainObject(args[1])
-    ) {
-      filter = args[1];
-    }
-
-    if (filter) {
       return this.inspectFilter(
         collection.dbName,
         collection.collectionName,
         context,
         filter,
         operation
+      );
+    }
+
+    return undefined;
+  }
+
+  private inspectDistinct(
+    args: unknown[],
+    collection: Collection
+  ): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length > 1 && isPlainObject(args[1])) {
+      const filter = args[1];
+
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        filter,
+        "distinct"
       );
     }
 
@@ -188,11 +200,9 @@ export class MongoDB implements Wrapper {
       );
     });
 
-    OPERATIONS_WITH_FILTER_SECOND_ARGUMENT.forEach((operation) => {
-      collection.inspect(operation, (args, collection) =>
-        this.inspectOperation(operation, args, collection as Collection, 1)
-      );
-    });
+    collection.inspect("distinct", (args, collection) =>
+      this.inspectDistinct(args, collection as Collection)
+    );
 
     collection.inspect("bulkWrite", (args, collection) =>
       this.inspectBulkWrite(args, collection as Collection)
