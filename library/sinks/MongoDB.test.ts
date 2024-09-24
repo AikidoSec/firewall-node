@@ -107,6 +107,13 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
       "Yet Another Title",
     ]);
 
+    // With context
+    await runWithContext(safeContext, async () => {
+      t.same(await collection.distinct("title", { title: { $ne: null } }), [
+        "Yet Another Title",
+      ]);
+    });
+
     await collection.deleteOne({ title: "Yet Another Title" });
 
     t.same(await collection.count({ title: "Yet Another Title" }), 0);
