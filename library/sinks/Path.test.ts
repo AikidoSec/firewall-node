@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Path } from "./Path";
+import { isWindows } from "../helpers/isWindows";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -43,7 +44,11 @@ t.test("it works", async (t) => {
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
     t.same(resolve(__dirname, "./test.txt"), join(__dirname, "./test.txt"));
-    t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
+    if (!isWindows) {
+      t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
+    } else {
+      t.same(join("c:/app", "/etc/data"), resolve("c:/app/etc/data"));
+    }
   }
 
   safeCalls();
