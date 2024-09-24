@@ -31,8 +31,8 @@ export function checkContextForSSRF({
       const found = findHostnameInUserInput(str, hostname, port);
       if (found && containsPrivateIPAddress(hostname)) {
         if (
-          path === ".host" &&
           source === "headers" &&
+          path === ".host" &&
           typeof port === "number" &&
           str === `localhost:${port}`
         ) {

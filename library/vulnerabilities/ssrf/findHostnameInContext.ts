@@ -24,8 +24,8 @@ export function findHostnameInContext(
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
         if (
-          path === ".host" &&
           source === "headers" &&
+          path === ".host" &&
           typeof port === "number" &&
           str === `localhost:${port}`
         ) {
