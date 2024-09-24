@@ -106,6 +106,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     t.same(await collection.distinct("title", { title: { $ne: null } }), [
       "Yet Another Title",
     ]);
+    t.same(await collection.distinct("title"), ["Yet Another Title"]);
 
     // With context
     await runWithContext(safeContext, async () => {
