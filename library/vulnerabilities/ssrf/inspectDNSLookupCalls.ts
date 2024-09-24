@@ -1,8 +1,10 @@
 import { isIP } from "net";
 import { LookupAddress } from "dns";
+import { resolve } from "path";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
@@ -18,7 +20,8 @@ export function inspectDNSLookupCalls(
   agent: Agent,
   module: string,
   operation: string,
-  url?: URL
+  url?: URL,
+  stackTraceCallingLocation?: Error
 ): Function {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
@@ -44,7 +47,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ]
       : [
@@ -55,7 +59,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ];
 
@@ -70,7 +75,8 @@ function wrapDNSLookupCallback(
   module: string,
   agent: Agent,
   operation: string,
-  urlArg?: URL
+  urlArg?: URL,
+  callingLocationStackTrace?: Error
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -172,13 +178,19 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    const libraryRoot = resolve(__dirname, "../..");
+
+    // Used to get the stack trace of the calling location
+    // We don't throw the error, we just use it to get the stack trace
+    const stackTraceError = callingLocationStackTrace || new Error();
+
     agent.onDetectedAttack({
       module: module,
       operation: operation,
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
+      stack: cleanupStackTrace(stackTraceError.stack!, libraryRoot),
       path: found.pathToPayload,
       metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
