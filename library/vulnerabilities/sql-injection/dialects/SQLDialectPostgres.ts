@@ -15,4 +15,8 @@ export class SQLDialectPostgres implements SQLDialect {
       "CLIENT_ENCODING",
     ];
   }
+  getRustLibInteger(): number {
+    // https://github.com/AikidoSec/zen-rustlib/blob/8267b4ebb4f5a77f26f44bdce3af751c93beba24/src/sql_injection/select_dialect_based_on_enum.rs#L30
+    return 9;
+  }
 }
