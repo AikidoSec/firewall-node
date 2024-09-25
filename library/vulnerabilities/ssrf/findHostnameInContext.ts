@@ -7,6 +7,8 @@ type HostnameLocation = {
   source: Source;
   pathToPayload: string;
   payload: string;
+  port: number | undefined;
+  hostname: string;
 };
 
 export function findHostnameInContext(
@@ -39,6 +41,8 @@ export function findHostnameInContext(
           source: source,
           pathToPayload: path,
           payload: str,
+          port: port,
+          hostname: hostname,
         };
       }
     }
