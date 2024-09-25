@@ -85,7 +85,7 @@
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
-    "test:ci": "CI=true node ../scripts/run-tap.js",
+    "test:ci": "node ../scripts/run-tap.js --ci",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",

@@ -3,7 +3,7 @@ on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  benchmark:
     runs-on: ubuntu-latest
     services:
       mongodb:

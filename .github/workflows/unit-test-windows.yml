@@ -1,10 +1,10 @@
-name: Unit tests
+name: Unit tests Windows
 on:
   push: {}
   workflow_call: {}
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  test-windows:
+    runs-on: windows-latest
     services:
       s3:
         image: adobe/s3mock
@@ -35,19 +35,15 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
         ports:
           - "27015:3306"
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x]
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Add local.aikido.io to /etc/hosts
+          node-version: 20.x
+      - name: Add local.aikido.io to hosts file
         run: |
-          sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 local.aikido.io"
       - run: npm install
       - run: npm run test:ci
       - name: "Upload coverage"

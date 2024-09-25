@@ -4,6 +4,11 @@ const version = process.versions.node.split(".");
 const major = parseInt(version[0], 10);
 const minor = parseInt(version[1], 10);
 
+// If script is called with arg --ci, set env CI to true
+if (process.argv.includes("--ci")) {
+  process.env.CI = "true";
+}
+
 let args = "--allow-incomplete-coverage";
 
 if (process.env.CI) {
