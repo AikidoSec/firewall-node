@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
-import { join, resolve } from "path";
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);

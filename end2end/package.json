@@ -6,6 +6,6 @@
     "tap": "^18.7.0"
   },
   "scripts": {
-    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1"
+    "test": "node run.js"
   }
 }

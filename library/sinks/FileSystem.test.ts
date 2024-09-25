@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { FileSystem } from "./FileSystem";
+import { isWindows } from "../helpers/isWindows";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -96,7 +97,11 @@ t.test("it works", async (t) => {
       { encoding: "utf-8" }
     );
     rename("./test.txt", "./test2.txt", (err) => {});
-    rename(new URL("file:///test123.txt"), "test2.txt", (err) => {});
+    if (!isWindows) {
+      rename(new URL("file:///test123.txt"), "test2.txt", (err) => {});
+    } else {
+      rename(new URL("file:///c:/test123.txt"), "test2.txt", (err) => {});
+    }
     rename(Buffer.from("./test123.txt"), "test2.txt", (err) => {});
   };
 
@@ -153,23 +158,59 @@ t.test("it works", async (t) => {
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
-    throws(
-      () => rename(new URL("file:///../test.txt"), "../test2.txt", (err) => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    if (!isWindows) {
+      throws(
+        () =>
+          rename(new URL("file:///../test.txt"), "../test2.txt", (err) => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
 
-    throws(
-      () =>
-        rename(new URL("file:///./../test.txt"), "../test2.txt", (err) => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+      throws(
+        () =>
+          rename(new URL("file:///./../test.txt"), "../test2.txt", (err) => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
 
-    throws(
-      () =>
-        rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+      throws(
+        () =>
+          rename(
+            new URL("file:///../../test.txt"),
+            "../test2.txt",
+            (err) => {}
+          ),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    } else {
+      throws(
+        () =>
+          rename(
+            new URL("file:///C:/../test.txt"),
+            "../test2.txt",
+            (err) => {}
+          ),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
 
+      throws(
+        () =>
+          rename(
+            new URL("file:///C:/./../test.txt"),
+            "../test2.txt",
+            (err) => {}
+          ),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+
+      throws(
+        () =>
+          rename(
+            new URL("file:///C:/../../test.txt"),
+            "../test2.txt",
+            (err) => {}
+          ),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    }
     throws(
       () => rename(Buffer.from("../test.txt"), "../test2.txt", (err) => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
@@ -193,7 +234,15 @@ t.test("it works", async (t) => {
   runWithContext(
     { ...unsafeContext, body: { file: { matches: "../%" } } },
     () => {
-      rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
+      if (!isWindows) {
+        rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
+      } else {
+        rename(
+          new URL("file:/C://../../test.txt"),
+          "../test2.txt",
+          (err) => {}
+        );
+      }
     }
   );
 });
