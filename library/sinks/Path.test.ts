@@ -99,14 +99,21 @@ t.test("it works", async (t) => {
   });
 
   runWithContext(unsafeAbsoluteContext, () => {
-    t.throws(
-      () => join("/etc/", "test.txt"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
-    );
+    if (!isWindows) {
+      t.throws(
+        () => join("/etc/", "test.txt"),
+        "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      );
 
-    t.throws(
-      () => resolve("/etc/some_directory", "test.txt"),
-      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
-    );
+      t.throws(
+        () => resolve("/etc/some_directory", "test.txt"),
+        "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+      );
+    } else {
+      t.throws(
+        () => join("C:/etc/", "test.txt"),
+        "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+      );
+    }
   });
 });

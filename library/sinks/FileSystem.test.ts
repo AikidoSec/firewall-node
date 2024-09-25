@@ -217,18 +217,24 @@ t.test("it works", async (t) => {
     );
   });
 
-  runWithContext(unsafeContextAbsolute, () => {
-    throws(
-      () =>
-        rename(new URL("file:///etc/passwd"), "../test123.txt", (err) => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
-    throws(
-      () =>
-        rename(new URL("file:///../etc/passwd"), "../test123.txt", (err) => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
-  });
+  if (!isWindows) {
+    runWithContext(unsafeContextAbsolute, () => {
+      throws(
+        () =>
+          rename(new URL("file:///etc/passwd"), "../test123.txt", (err) => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+      throws(
+        () =>
+          rename(
+            new URL("file:///../etc/passwd"),
+            "../test123.txt",
+            (err) => {}
+          ),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    });
+  }
 
   // Ignores malformed URLs
   runWithContext(
