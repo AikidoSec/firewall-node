@@ -53,12 +53,10 @@ export class GraphQL implements Wrapper {
       }
     }
 
-    if (userInputs.length > 0) {
-      if (Array.isArray(context.graphql)) {
-        updateContext(context, "graphql", context.graphql.concat(userInputs));
-      } else {
-        updateContext(context, "graphql", userInputs);
-      }
+    if (Array.isArray(context.graphql)) {
+      updateContext(context, "graphql", context.graphql.concat(userInputs));
+    } else {
+      updateContext(context, "graphql", userInputs);
     }
   }
 

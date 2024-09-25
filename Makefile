@@ -107,3 +107,4 @@ benchmark: build
 	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
 	cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
+	cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js

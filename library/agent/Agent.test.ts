@@ -13,6 +13,7 @@ import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
 import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
+import { Context } from "./Context";
 
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
@@ -624,6 +625,26 @@ t.test("when payload is object", async () => {
   );
 });
 
+function getRouteContext(
+  method: string,
+  route: string,
+  headers: Record<string, string> = {},
+  body: any = undefined
+): Context {
+  return {
+    method,
+    route,
+    headers,
+    body,
+    remoteAddress: "",
+    url: `http://localhost${route}`,
+    routeParams: {},
+    query: {},
+    cookies: {},
+    source: "test",
+  };
+}
+
 t.test("it sends hostnames and routes along with heartbeat", async () => {
   const clock = FakeTimers.install();
 
@@ -636,10 +657,18 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   agent.onConnectHostname("aikido.dev", 443);
   agent.onConnectHostname("aikido.dev", 80);
   agent.onConnectHostname("google.com", 443);
-  agent.onRouteExecute("POST", "/posts/:id");
-  agent.onRouteExecute("POST", "/posts/:id");
-  agent.onRouteExecute("GET", "/posts/:id");
-  agent.onRouteExecute("GET", "/");
+  agent.onRouteExecute(getRouteContext("POST", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("POST", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("GET", "/posts/:id"));
+  agent.onRouteExecute(getRouteContext("GET", "/"));
+  agent.onRouteExecute(
+    getRouteContext(
+      "POST",
+      "/publish",
+      { "content-type": "application/json" },
+      { a: 1, b: ["c", "d"] }
+    )
+  );
 
   api.clear();
 
@@ -658,7 +687,54 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
           port: 443,
         },
       ],
-      routes: [],
+      routes: [
+        {
+          method: "POST",
+          path: "/posts/:id",
+          hits: 2,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "GET",
+          path: "/posts/:id",
+          hits: 1,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "GET",
+          path: "/",
+          hits: 1,
+          graphql: undefined,
+          apispec: {},
+        },
+        {
+          method: "POST",
+          path: "/publish",
+          hits: 1,
+          graphql: undefined,
+          apispec: {
+            body: {
+              type: "json",
+              schema: {
+                type: "object",
+                properties: {
+                  a: { type: "number" },
+                  b: {
+                    type: "array",
+                    items: {
+                      type: "string",
+                    },
+                  },
+                },
+              },
+            },
+            query: undefined,
+            auth: undefined,
+          },
+        },
+      ],
     },
   ]);
 

@@ -121,7 +121,7 @@ t.test("it works", async (t) => {
           { encoding: "utf-8" },
           (err) => {}
         ),
-      "Aikido firewall has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
     );
 
     throws(
@@ -131,7 +131,7 @@ t.test("it works", async (t) => {
           "some other file content to test with",
           { encoding: "utf-8" }
         ),
-      "Aikido firewall has blocked a path traversal attack: fs.writeFileSync(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.writeFileSync(...) originating from body.file.matches"
     );
 
     const error = await t.rejects(() =>
@@ -145,7 +145,7 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.match(
         error.message,
-        "Aikido firewall has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
     }
 
@@ -160,40 +160,40 @@ t.test("it works", async (t) => {
     if (error2 instanceof Error) {
       t.match(
         error2.message,
-        "Aikido firewall has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
     }
 
     throws(
       () => rename("../../test.txt", "./test2.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () => rename("./test.txt", "../../test.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () => rename(new URL("file:///../test.txt"), "../test2.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () =>
         rename(new URL("file:///./../test.txt"), "../test2.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () =>
         rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
       () => rename(Buffer.from("../test.txt"), "../test2.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
 
@@ -201,12 +201,12 @@ t.test("it works", async (t) => {
     throws(
       () =>
         rename(new URL("file:///etc/passwd"), "../test123.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
     throws(
       () =>
         rename(new URL("file:///../etc/passwd"), "../test123.txt", (err) => {}),
-      "Aikido firewall has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
 

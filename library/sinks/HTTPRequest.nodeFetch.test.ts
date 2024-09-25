@@ -21,8 +21,7 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   const agent = new Agent(
@@ -64,7 +63,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   if (error instanceof Error) {
     t.match(
       error.message,
-      "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+      "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
 });

@@ -188,7 +188,7 @@ function inspectArgs(
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
+        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
       );
     }
   }

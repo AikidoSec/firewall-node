@@ -1,6 +1,6 @@
 # Next.js
 
-At this moment, Aikido Firewall only supports the standalone output in Next.js. To configure your Next.js app to use standalone output, you need to set the output property in your `next.config.js` file:
+At this moment, Zen only supports the standalone output in Next.js. To configure your Next.js app to use standalone output, you need to set the output property in your `next.config.js` file:
 
 ```js
 const nextConfig = {
@@ -52,7 +52,7 @@ Note: Including `@aikidosec/firewall` in `middleware.js` or `instrumentation.js`
 
 ## Blocking mode
 
-By default, Aikido firewall will run in detection only mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
+By default, Zen will run in detection only mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
 
 You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`:
 
@@ -64,7 +64,7 @@ It's recommended to enable this on your staging environment for a considerable a
 
 ## Debug mode
 
-If you need to debug Aikido firewall, you can run your next app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug Zen, you can run your next app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node -r @aikidosec/firewall .next/standalone/server.js

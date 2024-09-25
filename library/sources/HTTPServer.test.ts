@@ -202,6 +202,7 @@ t.test("it discovers routes", async () => {
             method: "GET",
             hits: 1,
             graphql: undefined,
+            apispec: {},
           }
         );
         server.close();

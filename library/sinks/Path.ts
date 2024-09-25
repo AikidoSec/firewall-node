@@ -19,7 +19,7 @@ export class Path implements Wrapper {
           operation: `path.${operation}`,
           context: context,
           /* Only check the first arg for absolute path traversal.
-             If a insecure absolute path is passed as the second argument,
+             If an insecure absolute path is passed as the second argument,
              it can not be an absolute path because it is not the start of the resulting path. */
           checkPathStart: path === args[0],
         });

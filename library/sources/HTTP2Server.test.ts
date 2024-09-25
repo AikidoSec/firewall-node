@@ -205,6 +205,7 @@ t.test("it discovers routes", async () => {
               method: "GET",
               hits: 1,
               graphql: undefined,
+              apispec: {},
             }
           );
           server.close();
@@ -432,6 +433,7 @@ t.test("it discovers routes using stream event", async () => {
             method: "GET",
             hits: 1,
             graphql: undefined,
+            apispec: {},
           }
         );
         server.close();
@@ -657,7 +659,7 @@ t.test("real injection test", async (t) => {
         "GET",
         {}
       ).then(({ body }) => {
-        t.match(body, /Aikido firewall has blocked a path traversal attack/);
+        t.match(body, /Zen has blocked a path traversal attack/);
         server.close();
         resolve();
       });

@@ -161,6 +161,31 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  private inspectDistinct(
+    args: unknown[],
+    collection: Collection
+  ): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length > 1 && isPlainObject(args[1])) {
+      const filter = args[1];
+
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        filter,
+        "distinct"
+      );
+    }
+
+    return undefined;
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("mongodb")
@@ -179,6 +204,13 @@ export class MongoDB implements Wrapper {
           inspectArgs: (args, agent, collection) =>
             this.inspectBulkWrite(args, collection as Collection),
         });
+    collection.inspect("distinct", (args, collection) =>
+      this.inspectDistinct(args, collection as Collection)
+    );
+
+    collection.inspect("bulkWrite", (args, collection) =>
+      this.inspectBulkWrite(args, collection as Collection)
+    );
 
         wrapExport(collectionProto, "aggregate", pkgInfo, {
           inspectArgs: (args, agent, collection) =>
