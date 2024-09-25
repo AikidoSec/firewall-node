@@ -35,15 +35,11 @@ export class Express implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const express = hooks.addPackage("express").withVersion("^4.0.0 || ^5.0.0");
-
-    const route = express.addSubject((exports) => exports.Route.prototype);
-
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
     hooks
       .addPackage("express")
-      .withVersion("^4.0.0")
+      .withVersion("^4.0.0 || ^5.0.0")
       .onRequire((exports, pkgInfo) => {
         for (const method of expressMethodNames) {
           wrapExport(exports.Route.prototype, method, pkgInfo, {

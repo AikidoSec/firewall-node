@@ -204,17 +204,15 @@ export class MongoDB implements Wrapper {
           inspectArgs: (args, agent, collection) =>
             this.inspectBulkWrite(args, collection as Collection),
         });
-    collection.inspect("distinct", (args, collection) =>
-      this.inspectDistinct(args, collection as Collection)
-    );
-
-    collection.inspect("bulkWrite", (args, collection) =>
-      this.inspectBulkWrite(args, collection as Collection)
-    );
 
         wrapExport(collectionProto, "aggregate", pkgInfo, {
           inspectArgs: (args, agent, collection) =>
             this.inspectAggregate(args, collection as Collection),
+        });
+
+        wrapExport(collectionProto, "distinct", pkgInfo, {
+          inspectArgs: (args, agent, collection) =>
+            this.inspectDistinct(args, collection as Collection),
         });
       });
   }

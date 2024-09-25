@@ -49,8 +49,12 @@ export class ChildProcess implements Wrapper {
           return this.inspectExecFile(args, "execFileSync");
         },
       });
-    })
-      .inspect("fork", (args) => this.inspectFork(args, "fork"));
+      wrapExport(exports, "fork", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectFork(args, "fork");
+        },
+      });
+    });
   }
 
   private inspectFork(args: unknown[], name: string) {
