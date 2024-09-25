@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { BetterSQLite3 } from "./BetterSQLite3";
+import { isWindows } from "../helpers/isWindows";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -117,25 +118,27 @@ t.test("it detects SQL injections", async (t) => {
       }
     });
 
-    await runWithContext(dangerousPathContext, async () => {
-      const error = t.throws(() => db.backup("/tmp/insecure"));
-      t.ok(error instanceof Error);
-      if (error instanceof Error) {
-        t.same(
-          error.message,
-          "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
-        );
+    if (!isWindows) {
+      await runWithContext(dangerousPathContext, async () => {
+        const error = t.throws(() => db.backup("/tmp/insecure"));
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
+          );
+        }
+        await db.backup("/tmp/sqlite-test-secure");
+      });
+
+      await db.backup("/tmp/sqlite-test-secure-2");
+
+      try {
+        await db.backup();
+        t.fail("Expected an error");
+      } catch (error: any) {
+        t.same(error.message, "Expected first argument to be a string");
       }
-      await db.backup("/tmp/sqlite-test-secure");
-    });
-
-    await db.backup("/tmp/sqlite-test-secure-2");
-
-    try {
-      await db.backup();
-      t.fail("Expected an error");
-    } catch (error: any) {
-      t.same(error.message, "Expected first argument to be a string");
     }
   } catch (error: any) {
     t.fail(error);

@@ -3,7 +3,7 @@ on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     services:
       s3:
@@ -48,6 +48,26 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - run: npm install
+      - run: npm run test:ci
+      - name: "Upload coverage"
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          file: ./library/.tap/report/lcov.info
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          slug: AikidoSec/firewall-node
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.x
+      - name: Add local.aikido.io to hosts file
+        run: |
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 local.aikido.io"
       - run: npm install
       - run: npm run test:ci
       - name: "Upload coverage"
