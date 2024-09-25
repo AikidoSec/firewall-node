@@ -5,6 +5,7 @@ import { extractStringsFromUserInputCached } from "../../helpers/extractStringsF
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
+import { isRequestToItself } from "./isRequestToItself";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -31,10 +32,12 @@ export function checkContextForSSRF({
       const found = findHostnameInUserInput(str, hostname, port);
       if (found && containsPrivateIPAddress(hostname)) {
         if (
-          source === "headers" &&
-          path === ".host" &&
-          typeof port === "number" &&
-          str === `localhost:${port}`
+          isRequestToItself({
+            str: str,
+            source: source,
+            port: port,
+            path: path,
+          })
         ) {
           // Application might do a request to itself when the hostname is localhost
           // Let's allow this (only for the headers.host source)

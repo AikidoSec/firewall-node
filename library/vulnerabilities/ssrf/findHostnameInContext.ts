@@ -2,6 +2,7 @@ import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { isRequestToItself } from "./isRequestToItself";
 
 type HostnameLocation = {
   source: Source;
@@ -26,10 +27,12 @@ export function findHostnameInContext(
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
         if (
-          source === "headers" &&
-          path === ".host" &&
-          typeof port === "number" &&
-          str === `localhost:${port}`
+          isRequestToItself({
+            str: str,
+            source: source,
+            port: port,
+            path: path,
+          })
         ) {
           // Application might do a request to itself when the hostname is localhost
           // Let's allow this (only for the headers.host source)
