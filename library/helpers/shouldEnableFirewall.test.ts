@@ -35,3 +35,10 @@ t.test("it works if multiple are set", async () => {
   process.env.AIKIDO_BLOCK = "1";
   t.same(shouldEnableFirewall(), true);
 });
+
+t.test("it works if AIKIDO_DISABLE is set", async () => {
+  process.env.AIKIDO_BLOCK = "1";
+  t.same(shouldEnableFirewall(), true);
+  process.env.AIKIDO_DISABLE = "1";
+  t.same(shouldEnableFirewall(), false);
+});

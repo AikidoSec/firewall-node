@@ -1,3 +1,4 @@
+import { envToBool } from "./envToBool";
 import { isAikidoCI } from "./isAikidoCI";
 import { isDebugging } from "./isDebugging";
 import { shouldBlock } from "./shouldBlock";
@@ -10,6 +11,10 @@ import { shouldBlock } from "./shouldBlock";
  * - AIKIDO_DEBUG
  */
 export default function shouldEnableFirewall() {
+  if (envToBool(process.env.AIKIDO_DISABLE)) {
+    return false;
+  }
+
   if (shouldBlock()) {
     return true;
   }
