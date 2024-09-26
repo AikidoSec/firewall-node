@@ -234,6 +234,24 @@ t.test("it works", async (t) => {
         "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
       );
     });
+  } else {
+    runWithContext(
+      {
+        ...unsafeContextAbsolute,
+        body: { file: { matches: "file:///X:/Windows/System32/" } },
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file:///X:/Windows/System32/"),
+              "../test",
+              (err) => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+        );
+      }
+    );
   }
 
   // Ignores malformed URLs
