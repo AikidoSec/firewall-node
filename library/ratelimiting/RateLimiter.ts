@@ -17,7 +17,7 @@ export class RateLimiter {
   }
 
   isAllowed(key: string, windowSizeInMS: number, maxRequests: number): boolean {
-    const currentTime = Date.now();
+    const currentTime = performance.now();
     const requestInfo = this.rateLimitedItems.get(key);
 
     if (!requestInfo) {

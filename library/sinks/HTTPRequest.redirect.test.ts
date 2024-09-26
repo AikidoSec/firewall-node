@@ -22,7 +22,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -58,7 +59,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
           );
         }
       });
@@ -79,7 +80,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
           t.ok(e instanceof Error);
           t.same(
             e.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.test"
+            "Zen has blocked a server-side request forgery: http.request(...) originating from body.test"
           );
         });
       });
@@ -102,7 +103,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
           if (error instanceof Error) {
             t.same(
               error.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
             );
           }
         });
@@ -126,7 +127,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
             t.ok(e instanceof Error);
             t.same(
               e.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+              "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
             );
           });
         });
@@ -141,14 +142,13 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       ...context,
       ...{
         body: {
-          image:
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
     },
     () => {
       const response1 = http.request(
-        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+        `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         (res) => {
           t.same(res.statusCode, 302);
           t.same(res.headers.location, redirectUrl.domain);
@@ -157,7 +157,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
               t.ok(e instanceof Error);
               t.same(
                 e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+                "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
               );
             });
           });
