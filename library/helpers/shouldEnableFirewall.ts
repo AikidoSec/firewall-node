@@ -30,7 +30,7 @@ export default function shouldEnableFirewall() {
   if (!isAikidoCI()) {
     // eslint-disable-next-line no-console
     console.log(
-      "AIKIDO: Firewall is disabled. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG."
+      "AIKIDO: Zen is disabled. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG."
     );
   }
   return false;
