@@ -47,7 +47,7 @@ t.test("it works", async (t) => {
     if (!isWindows) {
       t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
     } else {
-      t.same(join("c:/app", "/etc/data"), resolve("c:/app/etc/data"));
+      t.same(join("x:/app", "/etc/data"), resolve("x:/app/etc/data"));
     }
   }
 
@@ -98,8 +98,8 @@ t.test("it works", async (t) => {
     safeCalls();
   });
 
-  runWithContext(unsafeAbsoluteContext, () => {
-    if (!isWindows) {
+  if (!isWindows) {
+    runWithContext(unsafeAbsoluteContext, () => {
       t.throws(
         () => join("/etc/", "test.txt"),
         "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
@@ -109,11 +109,21 @@ t.test("it works", async (t) => {
         () => resolve("/etc/some_directory", "test.txt"),
         "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
       );
-    } else {
-      t.throws(
-        () => join("C:/etc/", "test.txt"),
-        "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
-      );
-    }
-  });
+    });
+  } else {
+    runWithContext(
+      {
+        ...unsafeAbsoluteContext,
+        ...{
+          body: { file: { matches: "X:/etc/" } },
+        },
+      },
+      () => {
+        t.throws(
+          () => resolve("X:/etc/", "test.txt"),
+          "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+        );
+      }
+    );
+  }
 });

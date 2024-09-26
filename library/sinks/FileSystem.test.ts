@@ -100,7 +100,7 @@ t.test("it works", async (t) => {
     if (!isWindows) {
       rename(new URL("file:///test123.txt"), "test2.txt", (err) => {});
     } else {
-      rename(new URL("file:///c:/test123.txt"), "test2.txt", (err) => {});
+      rename(new URL("file:///x:/test123.txt"), "test2.txt", (err) => {});
     }
     rename(Buffer.from("./test123.txt"), "test2.txt", (err) => {});
   };
@@ -184,7 +184,7 @@ t.test("it works", async (t) => {
       throws(
         () =>
           rename(
-            new URL("file:///C:/../test.txt"),
+            new URL("file:///x:/../test.txt"),
             "../test2.txt",
             (err) => {}
           ),
@@ -194,7 +194,7 @@ t.test("it works", async (t) => {
       throws(
         () =>
           rename(
-            new URL("file:///C:/./../test.txt"),
+            new URL("file:///x:/./../test.txt"),
             "../test2.txt",
             (err) => {}
           ),
@@ -204,7 +204,7 @@ t.test("it works", async (t) => {
       throws(
         () =>
           rename(
-            new URL("file:///C:/../../test.txt"),
+            new URL("file:///X:/../../test.txt"),
             "../test2.txt",
             (err) => {}
           ),
@@ -244,7 +244,7 @@ t.test("it works", async (t) => {
         rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
       } else {
         rename(
-          new URL("file:/C://../../test.txt"),
+          new URL("file:/x://../../test.txt"),
           "../test2.txt",
           (err) => {}
         );
