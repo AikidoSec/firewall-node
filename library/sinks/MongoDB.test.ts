@@ -112,6 +112,18 @@ t.test(
 
       t.same(await collection.count({ title: "Yet Another Title" }), 1);
 
+      t.same(await collection.distinct("title", { title: { $ne: null } }), [
+        "Yet Another Title",
+      ]);
+      t.same(await collection.distinct("title"), ["Yet Another Title"]);
+
+      // With context
+      await runWithContext(safeContext, async () => {
+        t.same(await collection.distinct("title", { title: { $ne: null } }), [
+          "Yet Another Title",
+        ]);
+      });
+
       await collection.deleteOne({ title: "Yet Another Title" });
 
       t.same(await collection.count({ title: "Yet Another Title" }), 0);
@@ -191,6 +203,19 @@ t.test(
         t.same(
           aggregateError.message,
           "Zen has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
+        );
+      }
+
+      const distinctError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.distinct("title", { title: { $ne: null } });
+        });
+      });
+      t.ok(distinctError instanceof Error);
+      if (distinctError instanceof Error) {
+        t.same(
+          distinctError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.distinct(...) originating from body.myTitle"
         );
       }
 

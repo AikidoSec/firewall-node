@@ -2,6 +2,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
@@ -69,11 +70,12 @@ t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
+    const api = new ReportingAPIForTesting();
     const agent = new Agent(
       true,
       new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
+      api,
+      new Token("123"),
       undefined
     );
     agent.start([new Fetch()]);
@@ -121,6 +123,15 @@ t.test(
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
