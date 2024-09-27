@@ -2,6 +2,7 @@
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -29,7 +30,7 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private lastHeartbeat = Date.now();
+  private lastHeartbeat = performance.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
@@ -310,7 +311,7 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = Date.now();
+      const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const hasCompressedStats = this.statistics.hasCompressedStats();
@@ -375,6 +376,9 @@ export class Agent {
         name: platform(),
         version: release(),
       },
+      platform: {
+        version: getSemverNodeVersion(),
+      },
     };
   }
 
@@ -437,12 +441,20 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapPackage(module: string) {
+    this.logger.log(`Failed to wrap package ${module}`);
+  }
+
+  onFailedToWrapFile(module: string, filename: string) {
+    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+  }
+
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
   }
 
-  onRouteExecute(method: string, path: string) {
-    this.routes.addRoute(method, path);
+  onRouteExecute(context: Context) {
+    this.routes.addRoute(context);
   }
 
   onGraphQLExecute(

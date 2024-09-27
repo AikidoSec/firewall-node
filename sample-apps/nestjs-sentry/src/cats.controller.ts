@@ -19,7 +19,6 @@ export class CatsController {
 
   @Post('/cats')
   async postRequest(@Body() body): Promise<string> {
-    console.log(body);
     if (typeof body.name !== 'string') {
       throw new HttpException('Invalid name', 400);
     }

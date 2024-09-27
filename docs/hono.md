@@ -1,13 +1,13 @@
 # Hono
 
-💡 Hono runs on more JavaScript runtimes than just Node.js. Right now, Aikido firewall only supports Node.js.
+💡 Hono runs on more JavaScript runtimes than just Node.js. Right now, Zen only supports Node.js.
 
 At the very beginning of your app.js file, add the following line:
 
 ```js
-require('@aikidosec/firewall'); // <-- Include this before any other code or imports
+require("@aikidosec/firewall"); // <-- Include this before any other code or imports
 
-const { Hono } = require('hono');
+const { Hono } = require("hono");
 
 const app = Hono();
 
@@ -17,12 +17,12 @@ const app = Hono();
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall';
+import "@aikidosec/firewall";
 
 // ...
 ```
 
-That's it! Your app is now protected by Aikido firewall.
+That's it! Your app is now protected by Zen.
 
 If you want to see a full example, check our [hono sample app](../sample-apps/hono-mongodb).
 
@@ -50,6 +50,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido firewall can also protect your application against prototype pollution attacks.
+Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

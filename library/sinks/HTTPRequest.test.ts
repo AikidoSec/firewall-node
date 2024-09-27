@@ -49,16 +49,6 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
-
-const redirectUrl = {
-  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
-  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
-  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
-  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
-};
-
 t.test("it works", (t) => {
   const agent = new Agent(
     true,
@@ -151,7 +141,7 @@ t.test("it works", (t) => {
         .on("error", (error) => {
           t.match(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
 
           // Ensure the lookup is only called once per hostname
@@ -175,7 +165,7 @@ t.test("it works", (t) => {
         .on("error", (error) => {
           t.match(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
         })
         .on("finish", () => {
@@ -207,7 +197,7 @@ t.test("it works", (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -218,7 +208,7 @@ t.test("it works", (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -234,7 +224,7 @@ t.test("it works", (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -245,7 +235,7 @@ t.test("it works", (t) => {
     if (error4 instanceof Error) {
       t.same(
         error4.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -282,7 +272,7 @@ t.test("it works", (t) => {
     if (error5 instanceof Error) {
       t.same(
         error5.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -293,7 +283,7 @@ t.test("it works", (t) => {
     if (error6 instanceof Error) {
       t.same(
         error6.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
   });

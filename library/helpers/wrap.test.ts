@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { wrap } from "./wrap";
+import { isWrapped, wrap } from "./wrap";
 
 class MyClass {
   abc = "abc";
@@ -41,4 +41,17 @@ t.test("it wraps a method", async (t) => {
 
   const myClass = new MyClass();
   t.same(myClass.aMethod(), "wrapped");
+});
+
+t.test("isWrapped returns true for wrapped function", async (t) => {
+  const myClass = new MyClass();
+  t.same(isWrapped(myClass.aMethod), true);
+});
+
+t.test("it returns false for unwrapped function or property", async (t) => {
+  const myClass = new MyClass();
+  t.same(isWrapped(myClass.abc), false);
+
+  const test = () => "test";
+  t.same(isWrapped(test), false);
 });
