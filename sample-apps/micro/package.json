@@ -3,7 +3,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/firewall": "file:../../library",
     "micro": "^10.0.1"
   },
   "scripts": {

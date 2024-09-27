@@ -1,9 +1,13 @@
 {
-  "name": "hono-sqlite3",
+  "name": "hono-sqlite3-esm",
+  "type": "module",
   "dependencies": {
     "@aikidosec/firewall": "file:../../library",
     "@hono/node-server": "^1.11.2",
     "hono": "^4.4.2",
     "sqlite3": "^5.1.7"
+  },
+  "scripts": {
+    "start": "node --import @aikidosec/firewall/esm app.js"
   }
 }

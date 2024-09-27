@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/firewall": "file:../../library",
     "mongodb": "^6.3.0"
   }
 }

@@ -5,7 +5,7 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../build",
+    "@aikidosec/firewall": "file:../../library",
     "@sentry/node": "^7",
     "dotenv": "^16.4.1",
     "express": "^5.0.0",

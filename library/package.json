@@ -26,10 +26,18 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
   "engines": {
     "node": ">=16"
+  },
+  "exports": {
+    ".": "./build/index.js",
+    "./esm": "./build/esm/index.js",
+    "./context": "./build/context/index.js",
+    "./lambda": "./build/lambda/index.js",
+    "./nopp": "./build/nopp/index.js",
+    "./cloud-function": "./build/cloud-function/index.js"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
@@ -92,5 +100,8 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "import-in-the-middle": "^1.11.1"
   }
 }
