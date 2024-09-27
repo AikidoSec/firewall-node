@@ -425,9 +425,8 @@ export class Agent {
         this.startHeartbeats();
         this.startPollingForConfigChanges();
       })
-      .catch((e) => {
+      .catch(() => {
         this.logger.log("Failed to start agent");
-        console.error(e);
       });
   }
 

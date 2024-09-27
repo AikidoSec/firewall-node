@@ -19,6 +19,7 @@ if (isFirewallSupported()) {
   if (isESMSupported()) {
     require("../agent/protect").protect(true);
   } else {
+    // eslint-disable-next-line no-console
     console.error(
       "Error: Aikido Firewall requires Node.js v20.6.0 / v18.19.0 or higher to support ESM."
     );

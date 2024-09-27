@@ -7,8 +7,12 @@ import { Package } from "./Package";
 import { isBuiltinModule } from "./isBuiltinModule";
 import { getInstance } from "../AgentSingleton";
 import { removeNodePrefix } from "../../helpers/removeNodePrefix";
+import { executeInterceptors } from "./executeInterceptors";
+import { getModuleInfoFromPath, ModulePathInfo } from "./getModuleInfoFromPath";
+import { getOrignalRequire } from "./wrapRequire";
+import type { PackageJson } from "type-fest";
+import { satisfiesVersion } from "../../helpers/satisfiesVersion";
 import { RequireInterceptor } from "./RequireInterceptor";
-import { WrapPackageInfo } from "./WrapPackageInfo";
 
 let isImportHookRegistered = false;
 
@@ -81,42 +85,110 @@ function patchBuiltinModule(exports: any, name: string) {
     .map((m) => m.getRequireInterceptors())
     .flat();
 
-  executeInterceptors(interceptors, exports, {
+  executeInterceptors(interceptors, exports, undefined, undefined, {
     name: moduleName,
     type: "builtin",
   });
 }
 
-function patchPackage(exports: any, name: string, baseDir: string | void) {
-  // Todo
+function getRelativeImportedFilePath(packageName: string, importName: string) {
+  if (!importName.startsWith(packageName)) {
+    return importName;
+  }
+  return importName.substring(packageName.length + 1);
 }
 
-/**
- * Executes the provided require interceptor functions
- */
-function executeInterceptors(
-  interceptors: RequireInterceptor[],
-  exports: unknown,
-  wrapPackageInfo: WrapPackageInfo
+function patchPackage(
+  exports: any,
+  importName: string,
+  baseDir: string | void
 ) {
-  // Return early if no interceptors
-  if (!interceptors.length) {
+  // Ignore .json files
+  if (importName.endsWith(".json")) {
     return;
   }
 
-  // Foreach interceptor function
-  for (const interceptor of interceptors) {
-    // If one interceptor fails, we don't want to stop the other interceptors
-    try {
-      const returnVal = interceptor(exports, wrapPackageInfo);
-      // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
-        exports = returnVal;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        getInstance()?.onFailedToWrapModule(wrapPackageInfo.name, error);
-      }
-    }
+  // Required for getting package version
+  if (!baseDir) {
+    throw new Error("Can not patch package without baseDir");
+  }
+
+  // Base dir and importName include the package name
+  // The importName also includes the path to the file inside the imported package
+  // We call getModuleInfoFromPath with the importName to get the package name because packages can have a scope
+  // Do not use pathInfo.base because its wrong, use baseDir instead!
+  const pathInfoForName = getModuleInfoFromPath(`node_modules/${importName}`);
+  if (!pathInfoForName) {
+    // Can happen if the package is not inside a node_modules folder, like the dev build of our library itself
+    return;
+  }
+  const packageName = pathInfoForName.name;
+
+  const pathInfo: ModulePathInfo = {
+    name: packageName,
+    base: baseDir,
+    path: getRelativeImportedFilePath(packageName, importName),
+  };
+
+  // Get all versioned packages for the module name
+  const versionedPackages = packages
+    .filter((pkg) => pkg.getName() === packageName)
+    .map((pkg) => pkg.getVersions())
+    .flat();
+
+  // We don't want to patch this package because we do not have any hooks for it
+  if (!versionedPackages.length) {
+    return;
+  }
+
+  // Get the original require function (if it was wrapped)
+  const requireFunc = getOrignalRequire() || require;
+
+  // Read the package.json of the required package
+  const packageJson = requireFunc(`${baseDir}/package.json`) as PackageJson;
+
+  // Get the version of the installed package
+  const installedPkgVersion = packageJson.version;
+  if (!installedPkgVersion) {
+    throw new Error(
+      `Could not get installed package version for ${packageName} on import`
+    );
+  }
+
+  // Check if the installed package version is supported (get all matching versioned packages)
+  const matchingVersionedPackages = versionedPackages.filter((pkg) =>
+    satisfiesVersion(pkg.getRange(), installedPkgVersion)
+  );
+
+  const agent = getInstance();
+  if (agent) {
+    // Report to the agent that the package was wrapped or not if it's version is not supported
+    agent.onPackageWrapped(packageName, {
+      version: installedPkgVersion,
+      supported: !!matchingVersionedPackages.length,
+    });
+  }
+
+  if (!matchingVersionedPackages.length) {
+    // We don't want to patch this package version
+    return;
+  }
+
+  // Check if the imported file is the main file of the package or another js file inside the package
+  // Todo: Implement this for ESM
+  const isMainFile = false;
+  //const isMainFile = isMainJsFile(pathInfo, id, filename, packageJson);
+
+  let interceptors: RequireInterceptor[] = [];
+
+  if (isMainFile) {
+    interceptors = matchingVersionedPackages
+      .map((pkg) => pkg.getRequireInterceptors())
+      .flat();
+  } else {
+    // If its not the main file, we want to check if the want to patch the required file
+    interceptors = matchingVersionedPackages
+      .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
+      .flat();
   }
 }
