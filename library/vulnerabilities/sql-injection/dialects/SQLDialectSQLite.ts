@@ -9,4 +9,8 @@ export class SQLDialectSQLite implements SQLDialect {
   getKeywords(): string[] {
     return ["VACUUM", "ATTACH", "DETACH"];
   }
+
+  getWASMDialectInt(): number {
+    return 12;
+  }
 }

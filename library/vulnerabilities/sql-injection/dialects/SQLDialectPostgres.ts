@@ -15,4 +15,8 @@ export class SQLDialectPostgres implements SQLDialect {
       "CLIENT_ENCODING",
     ];
   }
+
+  getWASMDialectInt(): number {
+    return 9;
+  }
 }

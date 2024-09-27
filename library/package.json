@@ -91,5 +91,8 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aikidosec/zen-internals": "0.1.2"
   }
 }

@@ -6,4 +6,6 @@ export interface SQLDialect {
   // Use this to add keywords that are specific to the SQL dialect
   // These are matched with surrounding spaces, so if you add "SELECT" it will match "SELECT" but not "SELECTED"
   getKeywords(): string[];
+
+  getWASMDialectInt(): number;
 }

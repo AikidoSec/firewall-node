@@ -21,4 +21,8 @@ export class SQLDialectMySQL implements SQLDialect {
       "CHARSET",
     ];
   }
+
+  getWASMDialectInt(): number {
+    return 8;
+  }
 }
