@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { getHostInfoFromArgs as get } from "./getHostInfoFromArgs";
+import { getHostnameAndPortFromArgs as get } from "./getHostnameAndPortFromArgs";
 import { parse as parseUrl } from "url";
 
 t.test("it works with url string", async (t) => {

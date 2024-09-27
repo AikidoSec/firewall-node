@@ -11,7 +11,7 @@ type HostnameAndPort = {
  * Extract hostname and port from the arguments of a undici request.
  * Used for SSRF detection.
  */
-export function getHostInfoFromArgs(
+export function getHostnameAndPortFromArgs(
   args: unknown[]
 ): HostnameAndPort | undefined {
   let url: URL | undefined;

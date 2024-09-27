@@ -8,13 +8,10 @@ import {
   getMajorNodeVersion,
   getMinorNodeVersion,
 } from "../helpers/getNodeVersion";
-import { getPortFromURL } from "../helpers/getPortFromURL";
-import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
-import { isOptionsObject } from "./http-request/isOptionsObject";
-import { getHostInfoFromArgs } from "./undici/getHostInfoFromArgs";
+import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
 
 const methods = [
   "request",
@@ -57,12 +54,12 @@ export class Undici implements Wrapper {
     agent: Agent,
     method: string
   ): InterceptorResult {
-    const hostInfo = getHostInfoFromArgs(args);
-    if (hostInfo) {
+    const hostnameAndPort = getHostnameAndPortFromArgs(args);
+    if (hostnameAndPort) {
       const attack = this.inspectHostname(
         agent,
-        hostInfo.hostname,
-        hostInfo.port,
+        hostnameAndPort.hostname,
+        hostnameAndPort.port,
         method
       );
       if (attack) {
