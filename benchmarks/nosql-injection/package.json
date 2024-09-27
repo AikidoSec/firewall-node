@@ -5,7 +5,7 @@
   "main": "benchmark.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../library",
+    "@aikidosec/firewall": "file:../../build",
     "mongodb": "^6.3.0",
     "percentile": "^1.6.0"
   }

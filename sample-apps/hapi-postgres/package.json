@@ -5,7 +5,7 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../library",
+    "@aikidosec/firewall": "file:../../build",
     "@hapi/hapi": "^21.3.10",
     "pg": "^8.11.3"
   }

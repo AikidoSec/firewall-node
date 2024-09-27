@@ -26,18 +26,18 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "./build/index.js",
-  "types": "./build/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "engines": {
     "node": ">=16"
   },
   "exports": {
-    ".": "./build/index.js",
-    "./esm": "./build/esm/index.js",
-    "./context": "./build/context/index.js",
-    "./lambda": "./build/lambda/index.js",
-    "./nopp": "./build/nopp/index.js",
-    "./cloud-function": "./build/cloud-function/index.js"
+    ".": "./index.js",
+    "./esm": "./esm/index.js",
+    "./context": "./context/index.js",
+    "./lambda": "./lambda/index.js",
+    "./nopp": "./nopp/index.js",
+    "./cloud-function": "./cloud-function/index.js"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
