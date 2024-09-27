@@ -13,6 +13,8 @@ import { getOrignalRequire } from "./wrapRequire";
 import type { PackageJson } from "type-fest";
 import { satisfiesVersion } from "../../helpers/satisfiesVersion";
 import { RequireInterceptor } from "./RequireInterceptor";
+import { isMainJsFile } from "./isMainJsFile";
+import { join } from "path";
 
 let isImportHookRegistered = false;
 
@@ -174,10 +176,16 @@ function patchPackage(
     return;
   }
 
+  const fullFilePath = join(pathInfo.base, pathInfo.path);
+
   // Check if the imported file is the main file of the package or another js file inside the package
-  // Todo: Implement this for ESM
-  const isMainFile = false;
-  //const isMainFile = isMainJsFile(pathInfo, id, filename, packageJson);
+  const isMainFile = isMainJsFile(
+    pathInfo,
+    undefined,
+    fullFilePath,
+    packageJson,
+    true
+  );
 
   let interceptors: RequireInterceptor[] = [];
 
@@ -191,4 +199,14 @@ function patchPackage(
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
   }
+
+  executeInterceptors(interceptors, exports, undefined, undefined, {
+    name: pathInfo.name,
+    version: installedPkgVersion,
+    type: "external",
+    path: {
+      base: pathInfo.base,
+      relative: pathInfo.path,
+    },
+  });
 }

@@ -9,14 +9,17 @@ import { isPlainObject } from "../../helpers/isPlainObject";
  */
 export function isMainJsFile(
   pathInfo: ModulePathInfo,
-  requireId: string,
+  requireId: string | undefined,
   filename: string,
-  packageJson: PackageJson
+  packageJson: PackageJson,
+  esmImport = false
 ) {
   // If the name of the package is the same as the requireId (the argument passed to require), then it is the main file
   if (pathInfo.name === requireId) {
     return true;
   }
+
+  // Todo package.json could contain filename without default extension .js
 
   // Check package.json main field
   if (
@@ -37,16 +40,10 @@ export function isMainJsFile(
   return doesMainExportMatchFilename(
     packageJson.exports,
     pathInfo.base,
-    filename
+    filename,
+    esmImport
   );
 }
-
-const allowedExportConditions = [
-  "default",
-  "node",
-  "node-addons",
-  "require",
-] as const;
 
 /**
  * This function checks if the main package exported js file is the same as the passed file.
@@ -54,10 +51,18 @@ const allowedExportConditions = [
 function doesMainExportMatchFilename(
   exportsField: PackageJson["exports"],
   base: string,
-  filename: string
+  filename: string,
+  esmImport: boolean
 ) {
   if (!exportsField) {
     return false;
+  }
+
+  const allowedExportConditions = ["default", "node", "node-addons"];
+  if (!esmImport) {
+    allowedExportConditions.push("require");
+  } else {
+    allowedExportConditions.push("import");
   }
 
   if (typeof exportsField === "string") {
@@ -74,6 +79,7 @@ function doesMainExportMatchFilename(
     }
   } else if (isPlainObject(exportsField)) {
     for (const [key, value] of Object.entries(exportsField)) {
+      // Todo check specification for index.mjs if esm
       if ([".", "./", "./index.js"].includes(key)) {
         if (typeof value === "string" && resolve(base, value) === filename) {
           return true;
