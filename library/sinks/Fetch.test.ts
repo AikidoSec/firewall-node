@@ -2,6 +2,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
@@ -52,7 +53,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -68,11 +70,12 @@ t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
+    const api = new ReportingAPIForTesting();
     const agent = new Agent(
       true,
       new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
+      api,
+      new Token("123"),
       undefined
     );
     agent.start([new Fetch()]);
@@ -124,6 +127,15 @@ t.test(
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
@@ -295,16 +307,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const error = await t.rejects(() =>
-          fetch(
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
-          )
+          fetch(`${redirecTestUrl2}/ssrf-test-absolute-domain`)
         );
         if (error instanceof Error) {
           t.same(
@@ -371,14 +380,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const response = await fetch(
-          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           {
             redirect: "manual",
           }

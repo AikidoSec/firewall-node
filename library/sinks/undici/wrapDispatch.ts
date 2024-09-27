@@ -1,4 +1,5 @@
 import type { Dispatcher } from "undici";
+import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
@@ -91,7 +92,10 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
       path: found.pathToPayload,
-      metadata: {},
+      metadata: getMetadataForSSRFAttack({
+        hostname: found.hostname,
+        port: found.port,
+      }),
       request: context,
       payload: found.payload,
     });

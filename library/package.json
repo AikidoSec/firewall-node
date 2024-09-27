@@ -53,6 +53,7 @@
     "aws-sdk": "^2.1595.0",
     "axios": "^1.7.3",
     "better-sqlite3": "^11.2.0",
+    "bson-objectid": "^2.0.4",
     "cookie-parser": "^1.4.6",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",

@@ -93,6 +93,10 @@ t.test("it blocks lookup in blocking mode", (t) => {
           type: "detected_attack",
           attack: {
             kind: "ssrf",
+            metadata: {
+              hostname: "localhost",
+              port: undefined,
+            },
           },
         },
       ]);

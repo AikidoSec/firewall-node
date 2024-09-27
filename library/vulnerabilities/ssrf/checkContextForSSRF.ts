@@ -4,6 +4,7 @@ import { SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -40,22 +41,4 @@ export function checkContextForSSRF({
       }
     }
   }
-}
-
-function getMetadataForSSRFAttack({
-  hostname,
-  port,
-}: {
-  hostname: string;
-  port: number | undefined;
-}): Record<string, string> {
-  const metadata: Record<string, string> = {
-    hostname: hostname,
-  };
-
-  if (port) {
-    metadata.port = port.toString();
-  }
-
-  return metadata;
 }
