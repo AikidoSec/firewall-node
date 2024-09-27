@@ -5,11 +5,7 @@ import {
   wrapRequire,
 } from "./hooks/wrapRequire";
 import { wrapExport } from "./hooks/wrapExport";
-import {
-  setImportBuiltinModulesToPatch,
-  setImportPackagesToPatch,
-  wrapImport,
-} from "./hooks/wrapImport";
+import { wrapImport } from "./hooks/wrapImport";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -19,15 +15,14 @@ import {
  * Globals are wrapped directly.
  */
 export function applyHooks(hooks: Hooks, isESM: boolean) {
+  // If not esm, wrap require
   if (!isESM) {
     // Todo check if we need to wrap require too in ESM mode under certain conditions
     setPackagesToPatch(hooks.getPackages());
     setBuiltinModulesToPatch(hooks.getBuiltInModules());
     wrapRequire();
   } else {
-    setImportPackagesToPatch(hooks.getPackages());
-    setImportBuiltinModulesToPatch(hooks.getBuiltInModules());
-    wrapImport();
+    wrapImport(hooks.getPackages(), hooks.getBuiltInModules());
   }
 
   hooks.getGlobals().forEach((g) => {

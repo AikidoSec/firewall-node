@@ -5,6 +5,6 @@
   "main": "benchmark.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/firewall": "file:../../library"
+    "@aikidosec/firewall": "file:../../build"
   }
 }
