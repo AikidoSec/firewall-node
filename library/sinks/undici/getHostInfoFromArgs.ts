@@ -2,18 +2,19 @@ import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isOptionsObject } from "../http-request/isOptionsObject";
 
+type HostnameAndPort = {
+  hostname: string;
+  port: number | undefined;
+};
+
 /**
  * Extract hostname and port from the arguments of a undici request.
  * Used for SSRF detection.
  */
-export function getHostInfoFromArgs(args: unknown[]):
-  | {
-      hostname: string;
-      port: number | undefined;
-    }
-  | undefined {
+export function getHostInfoFromArgs(
+  args: unknown[]
+): HostnameAndPort | undefined {
   let url: URL | undefined;
-
   if (args.length > 0) {
     // URL provided as a string
     if (typeof args[0] === "string" && args[0].length > 0) {
@@ -45,18 +46,14 @@ export function getHostInfoFromArgs(args: unknown[]):
       return parseOptionsObject(args[0]);
     }
   }
+
   return undefined;
 }
 
 /**
  * Parse a undici request options object to extract hostname and port.
  */
-function parseOptionsObject(obj: any):
-  | {
-      hostname: string;
-      port: number | undefined;
-    }
-  | undefined {
+function parseOptionsObject(obj: any): HostnameAndPort | undefined {
   // Origin is preferred over hostname
   // See https://github.com/nodejs/undici/blob/c926a43ac5952b8b5a6c7d15529b56599bc1b762/lib/core/util.js#L177
   if (obj.origin != null && typeof obj.origin === "string") {
@@ -67,6 +64,7 @@ function parseOptionsObject(obj: any):
         port: getPortFromURL(url),
       };
     }
+
     // Undici should throw an error if the origin is not a valid URL
     return undefined;
   }
@@ -83,10 +81,12 @@ function parseOptionsObject(obj: any):
   ) {
     port = parseInt(obj.port, 10);
   }
+
   // hostname is required by undici and host is not supported
   if (typeof obj.hostname !== "string" || obj.hostname.length === 0) {
     return undefined;
   }
+
   return {
     hostname: obj.hostname,
     port,
