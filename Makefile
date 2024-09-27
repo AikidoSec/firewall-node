@@ -72,6 +72,7 @@ install:
 
 .PHONY: build
 build:
+	rm -r library/build
 	cd library && npm run build
 
 .PHONY: watch

@@ -6,7 +6,7 @@ const moduleList = mod.builtinModules;
 /**
  * Returns true if the module is a builtin module, otherwise false.
  */
-export function isBuiltinModule(moduleName: string) {
+export function isBuiltinModule(moduleName: string): boolean {
   // Added in Node.js v18.6.0, v16.17.0
   if (typeof mod.isBuiltin === "function") {
     return mod.isBuiltin(moduleName);

@@ -5,10 +5,10 @@ const fs = require("fs");
 const { join } = require("path");
 const {
   detectSQLInjection,
-} = require("../../build/vulnerabilities/sql-injection/detectSQLInjection");
+} = require("../../library/build/vulnerabilities/sql-injection/detectSQLInjection");
 const {
   SQLDialectMySQL,
-} = require("../../build/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
+} = require("../../library/build/vulnerabilities/sql-injection/dialects/SQLDialectMySQL");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 

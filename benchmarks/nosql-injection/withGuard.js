@@ -1,9 +1,9 @@
-require("../../build");
+require("../../library/build");
 
 const measure = require("./measure");
 const getUser = require("./getUser");
 const getClient = require("./getClient");
-const { runWithContext } = require("../../build/agent/Context");
+const { runWithContext } = require("../../library/build/agent/Context");
 
 async function main() {
   const client = await getClient();

@@ -1,8 +1,10 @@
 /**
  * Runs benchmarks for the api discovery (api schema collection)
  */
-const { Routes } = require("../../build/agent/Routes");
-const { isFeatureEnabled } = require("../../build/helpers/featureFlags");
+const { Routes } = require("../../library/build/agent/Routes");
+const {
+  isFeatureEnabled,
+} = require("../../library/build/helpers/featureFlags");
 const reqBodies = require("./reqBodies");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement

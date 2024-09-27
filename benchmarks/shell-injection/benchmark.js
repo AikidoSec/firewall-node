@@ -3,7 +3,7 @@
  */
 const {
   detectShellInjection,
-} = require("../../build/vulnerabilities/shell-injection/detectShellInjection");
+} = require("../../library/build/vulnerabilities/shell-injection/detectShellInjection");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 

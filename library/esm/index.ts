@@ -1,17 +1,26 @@
-import { Hook, createAddHookMessageChannel } from "import-in-the-middle";
-import { register } from "module";
-import { pathToFileURL } from "url";
+import isFirewallSupported from "../helpers/isFirewallSupported";
+import {
+  getMajorNodeVersion,
+  getMinorNodeVersion,
+} from "../helpers/getNodeVersion";
 
-// Todo init agent?
+// Was added in v20.6.0 and v18.19.0
+function isESMSupported() {
+  const nodeMajor = getMajorNodeVersion();
+  const nodeMinor = getMinorNodeVersion();
+  return (
+    nodeMajor >= 22 ||
+    (nodeMajor === 20 && nodeMinor >= 6) ||
+    (nodeMajor === 18 && nodeMinor >= 19)
+  );
+}
 
-const { registerOptions, waitForAllMessagesAcknowledged } =
-  createAddHookMessageChannel();
-
-register(
-  "import-in-the-middle/hook.mjs",
-  pathToFileURL(__filename),
-  // @ts-ignore test
-  registerOptions
-);
-
-// Todo
+if (isFirewallSupported()) {
+  if (isESMSupported()) {
+    require("../agent/protect").protect(true);
+  } else {
+    console.error(
+      "Error: Aikido Firewall requires Node.js v20.6.0 / v18.19.0 or higher to support ESM."
+    );
+  }
+}
