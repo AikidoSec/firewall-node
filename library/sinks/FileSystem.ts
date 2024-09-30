@@ -12,17 +12,14 @@ type FileSystemFunction = {
 };
 
 const functions: Record<string, FileSystemFunction> = {
-  access: { pathsArgs: 1, sync: true, promise: true },
   appendFile: { pathsArgs: 1, sync: true, promise: true },
   chmod: { pathsArgs: 1, sync: true, promise: true },
   chown: { pathsArgs: 1, sync: true, promise: true },
   createReadStream: { pathsArgs: 1, sync: false, promise: false },
   createWriteStream: { pathsArgs: 1, sync: false, promise: false },
-  exists: { pathsArgs: 1, sync: true, promise: false },
   lchmod: { pathsArgs: 1, sync: true, promise: true },
   lchown: { pathsArgs: 1, sync: true, promise: true },
   lutimes: { pathsArgs: 1, sync: true, promise: true },
-  lstat: { pathsArgs: 1, sync: true, promise: true },
   mkdir: { pathsArgs: 1, sync: true, promise: true },
   open: { pathsArgs: 1, sync: true, promise: true },
   openAsBlob: { pathsArgs: 1, sync: false, promise: false },
@@ -36,8 +33,6 @@ const functions: Record<string, FileSystemFunction> = {
   rmdir: { pathsArgs: 1, sync: true, promise: true },
   rm: { pathsArgs: 1, sync: true, promise: true },
   symlink: { pathsArgs: 2, sync: true, promise: true },
-  stat: { pathsArgs: 1, sync: true, promise: true },
-  statfs: { pathsArgs: 1, sync: true, promise: true },
   truncate: { pathsArgs: 1, sync: true, promise: true },
   utimes: { pathsArgs: 1, sync: true, promise: true },
   writeFile: { pathsArgs: 1, sync: true, promise: true },

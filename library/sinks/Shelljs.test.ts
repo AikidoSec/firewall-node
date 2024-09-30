@@ -150,28 +150,35 @@ t.test("it detects async shell injections", async () => {
 t.test("it prevents path injections using ls", async () => {
   const shelljs = require("shelljs");
 
-  // The exception is catched by shelljs and can not directly be caught by the test
-  runWithContext(dangerousPathContext, () => {
-    const result = shelljs.ls("/etc/ssh");
-    t.same(result.code, 2);
-    t.ok(getContext()?.attackDetected);
+  const error = await t.rejects(async () => {
+    runWithContext(dangerousPathContext, () => {
+      return shelljs.ls("/etc/ssh");
+    });
   });
+
+  t.same(
+    error.message,
+    "Zen has blocked a path traversal attack: fs.readdirSync(...) originating from body.myTitle"
+  );
 });
 
 t.test("it prevents path injections using cat", async () => {
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
-    runWithContext(dangerousPathContext, () => {
-      return shelljs.cat("/etc/ssh/*");
-    });
+    runWithContext(
+      { ...dangerousPathContext, body: { myTitle: "../package.json" } },
+      () => {
+        return shelljs.cat("../package.json");
+      }
+    );
   });
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Zen has blocked a path traversal attack: fs.existsSync(...) originating from body.myTitle"
+      "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from body.myTitle"
     );
   }
 });
