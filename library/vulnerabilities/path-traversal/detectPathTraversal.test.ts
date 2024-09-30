@@ -130,3 +130,13 @@ t.test(
     t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
   }
 );
+
+t.test(
+  "does not detect if user input path contains no filename or subfolder",
+  async () => {
+    t.same(detectPathTraversal("/etc/app/", "/etc/"), false);
+    t.same(detectPathTraversal("/etc/app/", "/etc"), false);
+    t.same(detectPathTraversal("/etc/", "/etc/"), false);
+    t.same(detectPathTraversal("/etc", "/etc"), false);
+  }
+);

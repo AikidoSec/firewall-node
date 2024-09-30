@@ -43,6 +43,15 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
       normalizedPath.startsWith(dangerousStart) &&
       normalizedPath.startsWith(normalizedUserInput)
     ) {
+      // If the user input is the same as the dangerous start, we don't want to flag it to prevent false positives
+      // e.g. if user input is /etc/ and the path is /etc/passwd, we don't want to flag it, as long as the
+      // user input does not contain a subdirectory or filename
+      if (
+        userInput === dangerousStart ||
+        userInput === dangerousStart.slice(0, -1)
+      ) {
+        return false;
+      }
       return true;
     }
   }

@@ -24,7 +24,7 @@ const unsafeContext: Context = {
 
 const unsafeAbsoluteContext: Context = {
   ...unsafeContext,
-  body: { file: { matches: "/etc/" } },
+  body: { file: { matches: "/etc/nginx" } },
 };
 
 t.test("it works", async (t) => {
@@ -95,12 +95,12 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeAbsoluteContext, () => {
     t.throws(
-      () => join("/etc/", "test.txt"),
+      () => join("/etc/nginx", "test.txt"),
       "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
     );
 
     t.throws(
-      () => resolve("/etc/some_directory", "test.txt"),
+      () => resolve("/etc/nginx", "test.txt"),
       "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
   });
