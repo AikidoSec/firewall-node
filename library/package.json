@@ -99,7 +99,8 @@
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
-    "lint-tsc": "tsc --noEmit"
+    "lint-tsc": "tsc --noEmit",
+    "test:esm": "npx tap --tsconfig ./tsconfig.esm-test.json '!(*node_modules)/**/*.test.mjs'"
   },
   "dependencies": {
     "import-in-the-middle": "^1.11.1"

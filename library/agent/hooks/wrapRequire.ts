@@ -12,7 +12,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { getInstance } from "../AgentSingleton";
 import { executeInterceptors } from "./executeInterceptors";
 
-const originalRequire = mod.prototype.require;
+let originalRequire: typeof mod.prototype.require | undefined;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -36,6 +36,8 @@ export function wrapRequire() {
   }
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
+  // Save the original require function
+  originalRequire = mod.prototype.require;
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
