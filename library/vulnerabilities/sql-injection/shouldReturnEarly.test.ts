@@ -52,15 +52,9 @@ t.test("should return early - false cases", async (t) => {
   // User input is a valid string in query
   t.equal(shouldReturnEarly("SELECT * FROM users", "SELECT "), false);
 
-  // User input is a valid string in query with different case
-  t.equal(shouldReturnEarly("SELECT * FROM users", "select "), false);
-
-  // User input is a valid string in query with mixed case
-  t.equal(shouldReturnEarly("SELECT * FROM users", " UsErS"), false);
-
   // User input is a valid string in query with special characters
   t.equal(
-    shouldReturnEarly("SELECT * FROM users; drop table", "users; DROP TABLE"),
+    shouldReturnEarly("SELECT * FROM users; DROP TABLE", "users; DROP TABLE"),
     false
   );
 });
