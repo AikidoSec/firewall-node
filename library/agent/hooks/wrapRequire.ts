@@ -261,5 +261,5 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
  * Returns the unwrapped require function.
  */
 export function getOrignalRequire() {
-  return originalRequire;
+  return originalRequire || mod.prototype.require;
 }
