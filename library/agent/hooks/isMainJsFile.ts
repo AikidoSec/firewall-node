@@ -19,19 +19,26 @@ export function isMainJsFile(
     return true;
   }
 
-  // Todo package.json could contain filename without default extension .js
-
   // Check package.json main field
-  if (
-    typeof packageJson.main === "string" &&
-    resolve(pathInfo.base, packageJson.main) === filename
-  ) {
-    return true;
+  if (typeof packageJson.main === "string") {
+    let main = packageJson.main;
+    if (
+      !packageJson.main.endsWith(".js") &&
+      !packageJson.main.endsWith(".mjs")
+    ) {
+      main += esmImport ? ".mjs" : ".js";
+    }
+
+    if (resolve(pathInfo.base, main) === filename) {
+      return true;
+    }
   }
 
-  // Defaults to index.js if main field is not set
+  // Defaults to index if main field is not set
   if (packageJson.main === undefined) {
-    if (resolve(pathInfo.base, "index.js") === filename) {
+    if (
+      resolve(pathInfo.base, `index.${esmImport ? "mjs" : "js"}`) === filename
+    ) {
       return true;
     }
   }
@@ -79,8 +86,7 @@ function doesMainExportMatchFilename(
     }
   } else if (isPlainObject(exportsField)) {
     for (const [key, value] of Object.entries(exportsField)) {
-      // Todo check specification for index.mjs if esm
-      if ([".", "./", "./index.js"].includes(key)) {
+      if ([".", "./", "./index.js", "./index.mjs"].includes(key)) {
         if (typeof value === "string" && resolve(base, value) === filename) {
           return true;
         }

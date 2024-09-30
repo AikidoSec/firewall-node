@@ -138,6 +138,22 @@ t.test("package.json exports: is main file", async (t) => {
       {
         name: "aikido-module",
         base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.js",
+      },
+      "abc",
+      "/home/user/proj/node_modules/aikido-module/index.js",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{ main: "./index" },
+      }
+    )
+  );
+  t.ok(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
         path: "./test/index.cjs",
       },
       "abc",
@@ -349,6 +365,179 @@ t.test("package.json exports: is not main file", async (t) => {
           },
         },
       }
+    )
+  );
+});
+
+t.test("Works with esm import", async (t) => {
+  t.ok(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.mjs",
+          exports: {
+            ".": {
+              browser: "./index.cjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      },
+      true
+    )
+  );
+  t.ok(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.js",
+          exports: {
+            "./": {
+              browser: "./index.cjs",
+              import: "./index.mjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      },
+      true
+    )
+  );
+  t.ok(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.js",
+          exports: {
+            "./index.mjs": {
+              import: "./index.mjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      },
+      true
+    )
+  );
+  t.ok(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        main: undefined,
+      },
+      true
+    )
+  );
+  t.notOk(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.js",
+          exports: {
+            ".": {
+              browser: "./index.cjs",
+              import: "./index.mjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      },
+      false
+    )
+  );
+  t.notOk(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.js",
+          exports: {
+            ".": {
+              browser: "./index.cjs",
+              import: "./index.mjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      }
+    )
+  );
+  t.notOk(
+    isMainJsFile(
+      {
+        name: "aikido-module",
+        base: "/home/user/proj/node_modules/aikido-module",
+        path: "index.mjs",
+      },
+      undefined,
+      "/home/user/proj/node_modules/aikido-module/index.mjs",
+      // @ts-expect-error Merge
+      {
+        ...basePackageJson,
+        ...{
+          main: "index.js",
+          exports: {
+            "./tester": {
+              browser: "./index.cjs",
+              import: "./index.mjs",
+            },
+            "./test": "./test/abc.cjs",
+          },
+        },
+      },
+      true
     )
   );
 });
