@@ -90,6 +90,7 @@ function patchBuiltinModule(exports: any, name: string) {
   executeInterceptors(interceptors, exports, undefined, undefined, {
     name: moduleName,
     type: "builtin",
+    isESMImport: true,
   });
 }
 
@@ -204,6 +205,7 @@ function patchPackage(
     name: pathInfo.name,
     version: installedPkgVersion,
     type: "external",
+    isESMImport: true,
     path: {
       base: pathInfo.base,
       relative: pathInfo.path,

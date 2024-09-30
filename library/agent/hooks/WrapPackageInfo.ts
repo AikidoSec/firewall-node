@@ -14,6 +14,10 @@ export type WrapPackageInfo = {
   /**
    * Only set if the module is not a builtin module.
    */
+  /**
+   * True if the module is imported via import statement or dynamic import from a esm file.
+   */
+  isESMImport?: boolean;
   path?: {
     base: string;
     /**

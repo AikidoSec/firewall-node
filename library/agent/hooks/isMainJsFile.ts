@@ -21,16 +21,14 @@ export function isMainJsFile(
 
   // Check package.json main field
   if (typeof packageJson.main === "string") {
-    let main = packageJson.main;
-    if (
-      !packageJson.main.endsWith(".js") &&
-      !packageJson.main.endsWith(".mjs")
-    ) {
-      main += esmImport ? ".mjs" : ".js";
+    if (resolve(pathInfo.base, packageJson.main) === filename) {
+      return true;
     }
 
-    if (resolve(pathInfo.base, main) === filename) {
-      return true;
+    if (!packageJson.main.endsWith(".js")) {
+      if (resolve(pathInfo.base, `${packageJson.main}.js`) === filename) {
+        return true;
+      }
     }
   }
 
