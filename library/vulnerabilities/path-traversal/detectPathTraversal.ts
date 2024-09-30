@@ -1,6 +1,7 @@
+import { normalize } from "path";
+import { isWindows } from "../../helpers/isWindows";
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
 import { startsWithUnsafePath } from "./unsafePathStart";
-import { fileURLToPath } from "url";
 
 export function detectPathTraversal(
   filePath: string,
@@ -18,10 +19,12 @@ export function detectPathTraversal(
   // The normal check for relative path traversal will fail in this case, because transformed path does not contain ../.
   // For absolute path traversal, we dont need to check the transformed path, because it will always start with /.
   // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
-  if (isUrl && containsUnsafePathParts(userInput)) {
-    const filePathFromUrl = parseAsFileUrl(userInput);
-    if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
-      return true;
+  if (isUrl) {
+    if (containsUnsafePathParts(userInput) || userInput.startsWith("file:")) {
+      const filePathFromUrl = parseAsFileUrl(userInput);
+      if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
+        return true;
+      }
     }
   }
 
@@ -58,14 +61,23 @@ export function detectPathTraversal(
  */
 function parseAsFileUrl(path: string) {
   let url = path;
-  if (!url.startsWith("file:")) {
-    if (!url.startsWith("/")) {
-      url = `/${url}`;
-    }
-    url = `file://${url}`;
+
+  // Remove leading file:
+  if (url.startsWith("file:")) {
+    url = url.slice(5);
   }
+
+  if (!url.startsWith("/")) {
+    url = "/" + url;
+  }
+
   try {
-    return fileURLToPath(url);
+    const normalizePath = normalize(url);
+    if (isWindows) {
+      // Replace backslashes with forward slashes
+      return normalizePath.replace(/\\/g, "/");
+    }
+    return normalizePath;
   } catch (e) {
     //
   }

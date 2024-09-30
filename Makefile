@@ -1,6 +1,6 @@
 .PHONY: containers
 containers:
-	cd sample-apps && docker-compose up -d --remove-orphans
+	npm run containers
 
 .PHONY: express-mongodb
 express-mongodb:
@@ -64,47 +64,31 @@ nestjs-sentry:
 
 .PHONY: install
 install:
-	mkdir -p build
-	node scripts/copyPackageJSON.js
-	touch build/index.js
-	cd build && npm link
 	npm install
-	cd library && npm install
-	cd end2end && npm install
-	node scripts/install.js
 
 .PHONY: build
 build:
-	mkdir -p build
-	rm -r build
-	cd library && npm run build
-	cp README.md build/README.md
-	cp LICENSE build/LICENSE
-	cp library/package.json build/package.json
+	npm run build
 
 .PHONY: watch
 watch: build
-	cd library && npm run build:watch
+	npm run watch
 
 .PHONY: test
 test:
-	cd library && npm run test
+	npm run test
 
 .PHONY: test-ci
 test-ci:
-	cd library && npm run test:ci
+	npm run test:ci
 
 .PHONY: lint
 lint:
-	cd library && npm run lint
+	npm run lint
 
 .PHONY: end2end
 end2end:
-	cd end2end && npm run test
+	npm run end2end
 
 benchmark: build
-	cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
-	cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
-	cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
-	cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
-	cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
+	npm run benchmark

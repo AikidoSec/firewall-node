@@ -5,6 +5,7 @@ import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { SQLite3 } from "./SQLite3";
 import { promisify } from "util";
+import { isWindows } from "../helpers/isWindows";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -102,16 +103,18 @@ t.test("it detects SQL injections", async () => {
       return all("SELECT 1");
     });
 
-    const error3 = await t.rejects(async () => {
-      await runWithContext(dangerousPathContext, () => {
-        return backup("/tmp/insecure");
+    if (!isWindows) {
+      const error3 = await t.rejects(async () => {
+        await runWithContext(dangerousPathContext, () => {
+          return backup("/tmp/insecure");
+        });
       });
-    });
-    if (error3 instanceof Error) {
-      t.same(
-        error3.message,
-        "Zen has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
-      );
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Zen has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
+        );
+      }
     }
   } catch (error: any) {
     t.fail(error);

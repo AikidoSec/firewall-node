@@ -22,7 +22,6 @@ const linuxRootFolders = [
   "/usr/",
   "/var/",
 ];
-const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
 
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
@@ -38,13 +37,28 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
 
   const normalizedPath = origResolve(filePath).toLowerCase();
   const normalizedUserInput = origResolve(userInput).toLowerCase();
-  for (const dangerousStart of dangerousPathStarts) {
-    if (
-      normalizedPath.startsWith(dangerousStart) &&
-      normalizedPath.startsWith(normalizedUserInput)
-    ) {
-      return true;
-    }
+
+  return isDangerous(normalizedPath, normalizedUserInput);
+}
+
+function isDangerous(normalizedPath: string, normalizedUserInput: string) {
+  // Check if normalizedPath starts with normalizedUserInput
+  if (!normalizedPath.startsWith(normalizedUserInput)) {
+    return false;
   }
+
+  const foundLinuxRoot = linuxRootFolders.find((folder) =>
+    normalizedPath.startsWith(folder)
+  );
+
+  if (foundLinuxRoot) {
+    return true;
+  }
+
+  // Check for windows drive letter
+  if (/^[a-z]:(\\|\/)/i.test(normalizedPath)) {
+    return true;
+  }
+
   return false;
 }

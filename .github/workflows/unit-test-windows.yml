@@ -1,0 +1,25 @@
+name: Unit tests Windows
+on:
+  push: {}
+  workflow_call: {}
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - name: Add local.aikido.io to hosts file
+        run: |
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 local.aikido.io"
+      - run: npm install
+      - run: npm run test:ci
+      - name: "Upload coverage"
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          file: ./library/.tap/report/lcov.info
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          slug: AikidoSec/firewall-node

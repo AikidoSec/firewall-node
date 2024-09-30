@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
-import { join, resolve } from "path";
+import { resolve } from "path";
+import { join as posixJoin } from "path/posix";
 import { cleanupStackTrace } from "../helpers/cleanupStackTrace";
 import { wrap } from "../helpers/wrap";
 import { getPackageVersion } from "../helpers/getPackageVersion";
@@ -111,7 +112,7 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
 function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
   files.forEach((file) => {
     try {
-      const exports = require(join(pkg.getName(), file.getRelativePath()));
+      const exports = require(posixJoin(pkg.getName(), file.getRelativePath()));
 
       file
         .getSubjects()

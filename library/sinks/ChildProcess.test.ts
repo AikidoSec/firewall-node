@@ -5,6 +5,8 @@ import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
 import { execFile, execFileSync, fork } from "child_process";
+import { join } from "path";
+import { isWindows } from "../helpers/isWindows";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -72,19 +74,30 @@ t.test("it works", async (t) => {
   });
 
   const runSafeCommands = () => {
-    exec("ls", (err, stdout, stderr) => {}).unref();
-    execSync("ls", (err, stdout, stderr) => {});
+    if (!isWindows) {
+      exec("ls", (err, stdout, stderr) => {}).unref();
+      execSync("ls", (err, stdout, stderr) => {});
 
-    spawn("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
-    spawnSync("ls", ["-la"], {}, (err, stdout, stderr) => {});
+      spawn("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
+      spawnSync("ls", ["-la"], {}, (err, stdout, stderr) => {});
 
-    spawn("ls", ["-la"], { shell: false }, (err, stdout, stderr) => {}).unref();
-    spawnSync("ls", ["-la"], { shell: false }, (err, stdout, stderr) => {});
+      spawn(
+        "ls",
+        ["-la"],
+        { shell: false },
+        (err, stdout, stderr) => {}
+      ).unref();
+      spawnSync("ls", ["-la"], { shell: false }, (err, stdout, stderr) => {});
 
-    execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
-    execFileSync("ls", ["-la"], {});
+      execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
+      execFileSync("ls", ["-la"], {});
+    } else {
+      // Is Windows
+      exec("dir", (err, stdout, stderr) => {}).unref();
+      execSync("dir", (err, stdout, stderr) => {});
+    }
 
-    fork("./fixtures/helloWorld.js").unref();
+    fork(join(__dirname, "./fixtures/helloWorld.js")).unref();
   };
 
   runSafeCommands();

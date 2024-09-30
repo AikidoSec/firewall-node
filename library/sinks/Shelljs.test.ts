@@ -6,6 +6,7 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
+import { isWindows } from "../helpers/isWindows";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -187,9 +188,15 @@ t.test("it prevents path injections using ls", async () => {
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
-    runWithContext(dangerousPathContext, () => {
-      return shelljs.ls("/etc/ssh");
-    });
+    runWithContext(
+      {
+        ...dangerousPathContext,
+        body: { myTitle: "../../" },
+      },
+      () => {
+        return shelljs.ls("../../");
+      }
+    );
   });
 
   t.same(

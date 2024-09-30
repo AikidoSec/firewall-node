@@ -1,79 +1,86 @@
-const { readdir, stat, access, constants } = require("fs/promises");
+const { readdir, mkdir, writeFile } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
+const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
+
+const projectRoot = join(__dirname, "..");
 
 async function main() {
-  const sampleAppsDir = join(__dirname, "../sample-apps");
-  const sampleApps = await readdir(sampleAppsDir);
+  await prepareBuildDir();
 
-  await Promise.all(
-    sampleApps.map(async (file) => {
-      const stats = await stat(join(sampleAppsDir, file));
+  const installDirs = ["library", "end2end"];
+  const scanForSubDirs = ["sample-apps", "benchmarks"];
 
-      if (
-        !stats.isFile() &&
-        (await fileExists(join(sampleAppsDir, file, "package.json")))
-      ) {
-        await installSampleAppDeps(file);
-      }
-    })
-  );
+  for (const dir of scanForSubDirs) {
+    const subDirs = await scanForSubDirsWithPackageJson(dir);
+    installDirs.push(...subDirs);
+  }
 
-  const benchmarksDir = join(__dirname, "../benchmarks");
-  const benchmarks = await readdir(benchmarksDir);
+  // Install dependencies for all directories
+  for (const dir of installDirs) {
+    await installDeps(dir);
+  }
 
-  await Promise.all(
-    benchmarks.map(async (file) => {
-      const stats = await stat(join(benchmarksDir, file));
-
-      if (
-        !stats.isFile() &&
-        (await fileExists(join(benchmarksDir, file, "package.json")))
-      ) {
-        await installBenchmarkDeps(file);
-      }
-    })
-  );
+  console.log("Successfully installed all dependencies");
+  process.exit(0);
 }
 
-async function installSampleAppDeps(sampleApp) {
-  console.log(`Installing dependencies for ${sampleApp}`);
+/**
+ * Install dependencies for a given folder
+ */
+async function installDeps(folder) {
+  console.log(`Installing dependencies for ${folder}`);
 
   try {
     await execAsync(`npm install`, {
-      cwd: join(__dirname, "../sample-apps", sampleApp),
+      cwd: join(projectRoot, folder),
     });
-    console.log(`Dependencies installed for ${sampleApp}`);
+    console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
-    console.error(`Failed to install dependencies for ${sampleApp}`);
+    console.error(`Failed to install dependencies for ${folder}`);
     console.error(error);
     process.exit(1);
   }
 }
 
-async function installBenchmarkDeps(benchmark) {
-  console.log(`Installing dependencies for ${benchmark}`);
-
+/**
+ * Prepare the build directory
+ */
+async function prepareBuildDir() {
   try {
-    await execAsync(`npm install`, {
-      cwd: join(__dirname, "../benchmarks", benchmark),
+    const pkg = require(join(__dirname, "../library/package.json"));
+
+    // We're going to remove the devDependencies from the package.json
+    // Otherwise they will show up in every lock file
+    // whenever we add a new dev dependency to the library
+    delete pkg.devDependencies;
+
+    // If the build folder doesn't exist, create it
+    const buildDirPath = join(__dirname, "../build");
+    if (!(await fileExists(buildDirPath))) {
+      await mkdir(buildDirPath);
+    }
+
+    await writeFile(
+      join(buildDirPath, "package.json"),
+      JSON.stringify(pkg, null, 2)
+    );
+
+    // Create empty index.js file if it doesn't exist
+    if (!(await fileExists(join(buildDirPath, "index.js")))) {
+      await writeFile(join(buildDirPath, "index.js"), "");
+    }
+
+    // Link the library build folder
+    await execAsync(`npm link`, {
+      cwd: buildDirPath,
     });
-    console.log(`Dependencies installed for ${benchmark}`);
   } catch (error) {
-    console.error(`Failed to install dependencies for ${benchmark}`);
+    console.error(`Failed to prepare build directory`);
     console.error(error);
     process.exit(1);
-  }
-}
-
-async function fileExists(path) {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
   }
 }
 

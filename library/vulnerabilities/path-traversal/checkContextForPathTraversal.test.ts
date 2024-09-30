@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { checkContextForPathTraversal } from "./checkContextForPathTraversal";
+import { isWindows } from "../../helpers/isWindows";
 
 const unsafeContext = {
   filename: "../file/test.txt",
@@ -81,22 +82,41 @@ t.test("it does not flag safe operation", async () => {
 });
 
 t.test("it detects path traversal with URL", async () => {
-  t.same(
-    checkContextForPathTraversal({
-      ...unsafeContext,
-      filename: new URL("file:///../file/test.txt"),
-    }),
-    {
-      operation: "operation",
-      kind: "path_traversal",
-      source: "routeParams",
-      pathToPayload: ".path",
-      metadata: {
-        filename: "/file/test.txt",
-      },
-      payload: "../file",
-    }
-  );
+  if (!isWindows) {
+    t.same(
+      checkContextForPathTraversal({
+        ...unsafeContext,
+        filename: new URL("file:///../file/test.txt"),
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "routeParams",
+        pathToPayload: ".path",
+        metadata: {
+          filename: "/file/test.txt",
+        },
+        payload: "../file",
+      }
+    );
+  } else {
+    t.same(
+      checkContextForPathTraversal({
+        ...unsafeContext,
+        filename: new URL("file:///C:/../file/test.txt"),
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "routeParams",
+        pathToPayload: ".path",
+        metadata: {
+          filename: "/C:/file/test.txt",
+        },
+        payload: "../file",
+      }
+    );
+  }
 });
 
 t.test("it detects path traversal with Buffer", async () => {

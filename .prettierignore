@@ -1,0 +1,5 @@
+# Ignore generated files
+.tap
+.next
+build
+dist

@@ -6,6 +6,7 @@ import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
 import { LoggerForTesting } from "./logger/LoggerForTesting";
+import { isWindows } from "../helpers/isWindows";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -123,58 +124,67 @@ function removeStackTraceErrorMessage(error: string) {
   return msg;
 }
 
-t.test("it adds try/catch around the wrapped method", async (t) => {
-  const hooks = new Hooks();
-  const connection = hooks
-    .addPackage("mysql2")
-    .withVersion("^3.0.0")
-    .addSubject((exports) => exports.Connection.prototype);
-  connection.inspect("query", () => {
-    throw new Error("THIS SHOULD BE CATCHED");
-  });
-  connection.modifyArguments("execute", () => {
-    throw new Error("THIS SHOULD BE CATCHED");
-  });
-  connection.inspectResult("execute", () => {
-    throw new Error("THIS SHOULD BE CATCHED");
-  });
+t.test(
+  "it adds try/catch around the wrapped method",
+  {
+    skip:
+      isWindows && process.env.CI
+        ? "CI on Windows does not support containers"
+        : false,
+  },
+  async (t) => {
+    const hooks = new Hooks();
+    const connection = hooks
+      .addPackage("mysql2")
+      .withVersion("^3.0.0")
+      .addSubject((exports) => exports.Connection.prototype);
+    connection.inspect("query", () => {
+      throw new Error("THIS SHOULD BE CATCHED");
+    });
+    connection.modifyArguments("execute", () => {
+      throw new Error("THIS SHOULD BE CATCHED");
+    });
+    connection.inspectResult("execute", () => {
+      throw new Error("THIS SHOULD BE CATCHED");
+    });
 
-  const { agent, logger } = createAgent();
-  t.same(applyHooks(hooks, agent), {
-    mysql2: {
-      version: "3.11.0",
-      supported: true,
-    },
-  });
+    const { agent, logger } = createAgent();
+    t.same(applyHooks(hooks, agent), {
+      mysql2: {
+        version: "3.11.0",
+        supported: true,
+      },
+    });
 
-  const mysql = require("mysql2/promise");
-  const actualConnection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "mypassword",
-    database: "catsdb",
-    port: 27015,
-    multipleStatements: true,
-  });
+    const mysql = require("mysql2/promise");
+    const actualConnection = await mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "mypassword",
+      database: "catsdb",
+      port: 27015,
+      multipleStatements: true,
+    });
 
-  const [queryRows] = await runWithContext(context, () =>
-    actualConnection.query("SELECT 1 as number")
-  );
-  t.same(queryRows, [{ number: 1 }]);
+    const [queryRows] = await runWithContext(context, () =>
+      actualConnection.query("SELECT 1 as number")
+    );
+    t.same(queryRows, [{ number: 1 }]);
 
-  const [executeRows] = await runWithContext(context, () =>
-    actualConnection.execute("SELECT 1 as number")
-  );
-  t.same(executeRows, [{ number: 1 }]);
+    const [executeRows] = await runWithContext(context, () =>
+      actualConnection.execute("SELECT 1 as number")
+    );
+    t.same(executeRows, [{ number: 1 }]);
 
-  t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
-    'Internal error in module "mysql2" in method "query"',
-    'Internal error in module "mysql2" in method "execute"',
-    'Internal error in module "mysql2" in method "execute"',
-  ]);
+    t.same(logger.getMessages().map(removeStackTraceErrorMessage), [
+      'Internal error in module "mysql2" in method "query"',
+      'Internal error in module "mysql2" in method "execute"',
+      'Internal error in module "mysql2" in method "execute"',
+    ]);
 
-  await actualConnection.end();
-});
+    await actualConnection.end();
+  }
+);
 
 t.test("it hooks into dns module", async (t) => {
   const seenDomains: string[] = [];

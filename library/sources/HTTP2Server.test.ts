@@ -12,6 +12,7 @@ import * as pkg from "../helpers/isPackageInstalled";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
+import { isWindows } from "../helpers/isWindows";
 
 const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
@@ -651,10 +652,12 @@ t.test("real injection test", async (t) => {
     }
   });
 
+  const path = isWindows ? "C:\\Windows\\win.ini" : "/etc/passwd";
+
   await new Promise<void>((resolve) => {
     server.listen(3431, () => {
       http2Request(
-        new URL("http://localhost:3431?path=/etc/passwd"),
+        new URL(`http://localhost:3431?path=${path}`),
         "GET",
         {}
       ).then(({ body }) => {

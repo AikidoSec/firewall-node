@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
-import { join, resolve } from "path";
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);
@@ -127,6 +126,6 @@ t.test(
   "windows drive letter",
   { skip: process.platform !== "win32" ? "Windows only" : false },
   async () => {
-    t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+    t.same(detectPathTraversal("X:\\file.txt", "X:\\"), true);
   }
 );
