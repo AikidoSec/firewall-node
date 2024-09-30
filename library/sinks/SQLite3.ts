@@ -76,7 +76,12 @@ export class SQLite3 implements Wrapper {
       .addPackage("sqlite3")
       .withVersion("^5.0.0")
       .onRequire((exports, pkgInfo) => {
-        const db = exports.Database.prototype;
+        let db: any;
+        if (pkgInfo.isESMImport) {
+          db = exports.default.Database.prototype;
+        } else {
+          db = exports.Database.prototype;
+        }
 
         for (const func of sqlFunctions) {
           wrapExport(db, func, pkgInfo, {
