@@ -12,7 +12,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { getInstance } from "../AgentSingleton";
 import { executeInterceptors } from "./executeInterceptors";
 
-let originalRequire: typeof mod.prototype.require | undefined;
+let originalRequire: typeof mod.prototype.require;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
