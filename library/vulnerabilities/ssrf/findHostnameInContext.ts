@@ -2,6 +2,7 @@ import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { isRequestToItself } from "./isRequestToItself";
 
 type HostnameLocation = {
   source: Source;
@@ -25,6 +26,20 @@ export function findHostnameInContext(
     for (const [str, path] of userInput.entries()) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
+        if (
+          isRequestToItself({
+            str: str,
+            source: source,
+            port: port,
+            path: path,
+          })
+        ) {
+          // Application might do a request to itself when the hostname is localhost
+          // Let's allow this (only for the headers.host source)
+          // We still want to block if the port is different
+          continue;
+        }
+
         return {
           source: source,
           pathToPayload: path,
