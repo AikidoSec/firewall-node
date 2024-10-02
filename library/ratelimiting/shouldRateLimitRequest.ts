@@ -43,7 +43,26 @@ export function shouldRateLimitRequest(
 
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
+  if (context.user && !context.consumedRateLimitForUser) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
+        windowSizeInMS,
+        maxRequests
+      );
+
+    // This function is executed for every middleware and route handler
+    // We want to count the request only once
+    updateContext(context, "consumedRateLimitForUser", true);
+
+    if (!allowed) {
+      return { block: true, trigger: "user" };
+    }
+  }
+
   if (
+    !context.user &&
     context.remoteAddress &&
     !context.consumedRateLimitForIP &&
     !isFromLocalhostInProduction &&
@@ -63,24 +82,6 @@ export function shouldRateLimitRequest(
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
-    }
-  }
-
-  if (context.user && !context.consumedRateLimitForUser) {
-    const allowed = agent
-      .getRateLimiter()
-      .isAllowed(
-        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
-        windowSizeInMS,
-        maxRequests
-      );
-
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForUser", true);
-
-    if (!allowed) {
-      return { block: true, trigger: "user" };
     }
   }
 

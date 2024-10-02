@@ -340,3 +340,92 @@ t.test("it rate limits with wildcard", async () => {
     }
   );
 });
+
+t.test("it rate limits by user also if ip is set", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: true,
+    trigger: "user",
+  });
+});
+
+t.test("it rate limits by user with different ips", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
+    block: true,
+    trigger: "user",
+  });
+});
+
+t.test(
+  "it does not rate limit requests from same ip but different users",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 3,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
+      block: false,
+    });
+  }
+);
