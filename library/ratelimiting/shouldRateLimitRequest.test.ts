@@ -429,3 +429,37 @@ t.test(
     });
   }
 );
+
+t.test(
+  "it does not rate limit requests from allowed ip with user",
+  async (t) => {
+    const agent = await createAgent(
+      [
+        {
+          method: "POST",
+          route: "/login",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 3,
+            windowSizeInMS: 1000,
+          },
+        },
+      ],
+      ["1.2.3.4"]
+    );
+
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+  }
+);
