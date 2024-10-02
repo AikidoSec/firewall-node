@@ -34,6 +34,7 @@ export function wrapRequire() {
       `Could not find the _resolveFilename function in node:module using Node.js version ${process.version}`
     );
   }
+
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
   // Save the original require function
@@ -261,5 +262,5 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
  * Returns the unwrapped require function.
  */
 export function getOrignalRequire() {
-  return originalRequire || mod.prototype.require;
+  return originalRequire || mod.prototype?.require;
 }
