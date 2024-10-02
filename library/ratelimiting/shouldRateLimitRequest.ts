@@ -41,9 +41,18 @@ export function shouldRateLimitRequest(
     context.remoteAddress &&
     agent.getConfig().isAllowedIP(context.remoteAddress);
 
+  if (isFromLocalhostInProduction || isAllowedIP) {
+    return { block: false };
+  }
+
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
-  if (context.user && !context.consumedRateLimitForUser) {
+  if (context.user) {
+    // Do not consume rate limit for user a second time
+    if (context.consumedRateLimitForUser) {
+      return { block: false };
+    }
+
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -59,15 +68,12 @@ export function shouldRateLimitRequest(
     if (!allowed) {
       return { block: true, trigger: "user" };
     }
+
+    // Do not check IP rate limit if user is set
+    return { block: false };
   }
 
-  if (
-    !context.user &&
-    context.remoteAddress &&
-    !context.consumedRateLimitForIP &&
-    !isFromLocalhostInProduction &&
-    !isAllowedIP
-  ) {
+  if (context.remoteAddress && !context.consumedRateLimitForIP) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
