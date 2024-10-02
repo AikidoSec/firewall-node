@@ -463,3 +463,36 @@ t.test(
     });
   }
 );
+
+t.test(
+  "it does not consume rate limit for user a second time (same request)",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 3,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    const ctx = createContext("1.2.3.4", "123");
+
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+  }
+);
