@@ -14,10 +14,13 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
-    Aikido.setUser({
-      id: "id",
-      name: "Name",
-    });
+    const userId = c.req.header("x-user-id");
+
+    if (userId) {
+      Aikido.setUser({
+        id: userId,
+      });
+    }
 
     await next();
   });
