@@ -81,8 +81,7 @@ build:
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
-	mkdir -p build/node_modules
-	ln -s $(realpath library/node_modules/@aikidosec) build/node_modules/@aikidosec
+	cp library/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm build/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm
 
 .PHONY: watch
 watch: build
