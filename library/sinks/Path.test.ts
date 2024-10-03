@@ -104,4 +104,22 @@ t.test("it works", async (t) => {
       "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
     );
   });
+
+  const { join: joinWin } = require("path/win32");
+
+  runWithContext(unsafeAbsoluteContext, () => {
+    t.throws(
+      () => joinWin("/etc/some_directory", "test.txt"),
+      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+    );
+  });
+
+  const { normalize: normalizePosix } = require("path/posix");
+
+  runWithContext(unsafeContext, () => {
+    t.throws(
+      () => normalizePosix(__dirname, "../test.txt"),
+      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    );
+  });
 });
