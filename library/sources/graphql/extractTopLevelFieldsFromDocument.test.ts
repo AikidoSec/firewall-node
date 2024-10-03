@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { parse, FieldNode } from "graphql";
 import {
   extractTopLevelFieldsFromDocument,

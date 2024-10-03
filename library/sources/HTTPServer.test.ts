@@ -14,7 +14,7 @@ wrap(pkg, "isPackageInstalled", function wrap() {
   };
 });
 
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { extractStringsFromUserInputCached } from "../helpers/extractStringsFromUserInputCached";
 import {
   type Context,

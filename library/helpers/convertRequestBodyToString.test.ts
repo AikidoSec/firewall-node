@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { convertRequestBodyToString } from "./convertRequestBodyToString";
 
 t.test("it converts object body to JSON string", async (t) => {

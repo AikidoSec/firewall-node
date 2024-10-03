@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import * as t from "tap";
+import t from "tap";
 import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS } from "./config";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";

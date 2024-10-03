@@ -1,5 +1,5 @@
 /* eslint-disable prefer-rest-params */
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";

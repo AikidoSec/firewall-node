@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isSafelyEncapsulated } from "./isSafelyEncapsulated";
 
 t.test("safe between single quotes", async (t) => {

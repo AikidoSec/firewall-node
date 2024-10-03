@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isIMDSIPAddress } from "./imds";
 
 t.test("it returns true for IMDS IP addresses", async (t) => {

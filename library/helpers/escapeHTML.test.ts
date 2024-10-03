@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { escapeHTML } from "./escapeHTML";
 
 t.test('should escape "&" character', async (t) => {

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { checkContextForShellInjection } from "./checkContextForShellInjection";
 
 t.test("it detects shell injection", async () => {

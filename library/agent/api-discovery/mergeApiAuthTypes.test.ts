@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { mergeApiAuthTypes as merge } from "./mergeApiAuthTypes";
 
 t.test("it works", async (t) => {

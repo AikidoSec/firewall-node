@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import * as t from "tap";
+import t from "tap";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
 t.test("empty object returns empty array", async () => {

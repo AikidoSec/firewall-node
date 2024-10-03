@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Context } from "../agent/Context";
 import { buildRouteFromURL } from "./buildRouteFromURL";
 import { matchEndpoints } from "./matchEndpoints";

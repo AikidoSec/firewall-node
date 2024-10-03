@@ -1,5 +1,5 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
-import * as t from "tap";
+import t from "tap";
 import { Users } from "./Users";
 
 t.test("it works", async () => {

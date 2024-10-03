@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 
 const PackageJson = require("../package.json");
 

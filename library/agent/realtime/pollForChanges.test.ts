@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import * as fetch from "../../helpers/fetch";
 import { wrap } from "../../helpers/wrap";
 import { Token } from "../api/Token";

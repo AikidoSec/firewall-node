@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { satisfiesVersion } from "./satisfiesVersion";
 
 t.test("it returns false if empty strings", async () => {

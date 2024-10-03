@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 

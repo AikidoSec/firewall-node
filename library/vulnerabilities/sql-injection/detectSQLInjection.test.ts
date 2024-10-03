@@ -1,5 +1,5 @@
 import { basename, join } from "path";
-import * as t from "tap";
+import t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { SQL_DANGEROUS_IN_STRING, SQL_KEYWORDS } from "./config";
