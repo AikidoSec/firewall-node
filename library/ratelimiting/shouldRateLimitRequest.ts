@@ -62,6 +62,10 @@ export function shouldRateLimitRequest(
       );
 
     if (context.remoteAddress && context.consumedRateLimitForIP) {
+      // We are preferring user rate limit over IP rate limit
+      // If the user is set in a middleware, we already consumed the IP rate limit for this request (http server)
+      // Thats why we need to decrement the IP rate limit here, if the user is set and the IP rate limit was consumed
+      // If we wouldn't do this, a user would always be blocked by the IP rate limit also if the user rate limit is not reached
       agent
         .getRateLimiter()
         .decrement(
