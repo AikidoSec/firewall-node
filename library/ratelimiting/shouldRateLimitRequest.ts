@@ -61,6 +61,14 @@ export function shouldRateLimitRequest(
         maxRequests
       );
 
+    if (context.remoteAddress && context.consumedRateLimitForIP) {
+      agent
+        .getRateLimiter()
+        .decrement(
+          `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`
+        );
+    }
+
     // This function is executed for every middleware and route handler
     // We want to count the request only once
     updateContext(context, "consumedRateLimitForUser", true);

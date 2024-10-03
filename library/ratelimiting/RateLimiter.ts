@@ -42,4 +42,16 @@ export class RateLimiter {
     // Deny the request if the maxRequests is reached within windowSizeInMS
     return false;
   }
+
+  decrement(key: string) {
+    const requestInfo = this.rateLimitedItems.get(key);
+
+    if (requestInfo) {
+      requestInfo.count -= 1;
+
+      if (requestInfo.count <= 0) {
+        this.rateLimitedItems.delete(key);
+      }
+    }
+  }
 }
