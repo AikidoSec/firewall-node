@@ -36,11 +36,18 @@ export class Path implements Wrapper {
   wrap(hooks: Hooks): void {
     const functions = ["join", "resolve", "normalize"];
 
+    // Todo after merging main: check path/posix and path/win32
     hooks.addBuiltinModule("path").onRequire((exports, pkgInfo) => {
-      for (const func of functions) {
-        wrapExport(exports, func, pkgInfo, {
-          inspectArgs: (args) => this.inspectPath(args, func),
-        });
+      const wrapParts = pkgInfo.isESMImport
+        ? [exports, exports.default]
+        : [exports.posix, exports.win32];
+
+      for (const toWrap of wrapParts) {
+        for (const func of functions) {
+          wrapExport(toWrap, func, pkgInfo, {
+            inspectArgs: (args) => this.inspectPath(args, func),
+          });
+        }
       }
     });
   }

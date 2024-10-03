@@ -5,7 +5,8 @@ type WrappedFunction<T> = T & {
 export function wrap(
   module: any,
   name: string,
-  wrapper: (original: Function) => Function
+  wrapper: (original: Function) => Function,
+  isESMImport = false
 ) {
   if (!module[name]) {
     throw new Error(`no original function ${name} to wrap`);
@@ -20,7 +21,11 @@ export function wrap(
   const original = module[name];
   const wrapped = createWrappedFunction(original, wrapper);
 
-  defineProperty(module, name, wrapped);
+  if (!isESMImport) {
+    defineProperty(module, name, wrapped);
+  } else {
+    module[name] = wrapped;
+  }
 
   return wrapped;
 }

@@ -7,10 +7,11 @@ import { createWrappedFunction, wrap } from "../../helpers/wrap";
 export function wrapDefaultOrNamed(
   module: any,
   name: string | undefined,
-  wrapper: (original: Function) => Function
+  wrapper: (original: Function) => Function,
+  isESMImport = false
 ) {
   if (typeof name === "undefined") {
     return createWrappedFunction(module, wrapper);
   }
-  return wrap(module, name, wrapper);
+  return wrap(module, name, wrapper, isESMImport);
 }
