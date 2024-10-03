@@ -93,6 +93,6 @@
     "lint-tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@aikidosec/zen-internals": "0.1.2"
+    "@aikidosec/zen-internals": "0.1.14"
   }
 }

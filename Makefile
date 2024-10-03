@@ -81,7 +81,8 @@ build:
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
-	ln -s ../library/node_modules build/node_modules
+	mkdir -p build/node_modules
+	ln -s $(realpath library/node_modules/@aikidosec) build/node_modules/@aikidosec
 
 .PHONY: watch
 watch: build
