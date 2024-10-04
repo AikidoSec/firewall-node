@@ -195,7 +195,7 @@ function patchPackage(
       .map((pkg) => pkg.getRequireInterceptors())
       .flat();
   } else {
-    // If its not the main file, we want to check if the want to patch the required file
+    // If its not the main file, we check if we want to patch the required file
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();

@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { BetterSQLite3 } from "./BetterSQLite3";
+import { isCJS } from "../helpers/isCJS";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -54,11 +55,14 @@ t.test("it detects SQL injections", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda"
+    "lambda",
+    !isCJS()
   );
   agent.start([new BetterSQLite3()]);
 
-  const betterSqlite3 = require("better-sqlite3");
+  const betterSqlite3 = isCJS()
+    ? require("better-sqlite3")
+    : (await import("better-sqlite3")).default;
   const db = new betterSqlite3(":memory:");
 
   try {

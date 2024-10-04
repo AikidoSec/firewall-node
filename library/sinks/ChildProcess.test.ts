@@ -4,7 +4,8 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { ChildProcess } from "./ChildProcess";
-import { execFile, execFileSync, fork } from "child_process";
+import { execFile, execFileSync } from "child_process";
+import { isCJS } from "../helpers/isCJS";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -36,12 +37,15 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda"
+    "lambda",
+    !isCJS()
   );
 
   agent.start([new ChildProcess()]);
 
-  const { exec, execSync, spawn, spawnSync, fork } = require("child_process");
+  const { exec, execSync, spawn, spawnSync, fork } = isCJS()
+    ? require("child_process")
+    : await import("child_process");
 
   const runCommandsWithInvalidArgs = () => {
     throws(

@@ -8,35 +8,39 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
+import { isCJS } from "../helpers/isCJS";
 
 const calls: Record<string, number> = {};
-wrap(dns, "lookup", function lookup(original) {
-  return function lookup() {
-    const hostname = arguments[0];
 
-    if (!calls[hostname]) {
-      calls[hostname] = 0;
-    }
+if (isCJS()) {
+  wrap(dns, "lookup", function lookup(original) {
+    return function lookup() {
+      const hostname = arguments[0];
 
-    calls[hostname]++;
+      if (!calls[hostname]) {
+        calls[hostname] = 0;
+      }
 
-    if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
-    }
+      calls[hostname]++;
 
-    if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
-    }
+      if (hostname === "thisdomainpointstointernalip.com") {
+        return original.apply(this, [
+          "localhost",
+          ...Array.from(arguments).slice(1),
+        ]);
+      }
 
-    original.apply(this, arguments);
-  };
-});
+      if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
+        return original.apply(this, [
+          "localhost",
+          ...Array.from(arguments).slice(1),
+        ]);
+      }
+
+      original.apply(this, arguments);
+    };
+  });
+}
 
 const context: Context = {
   remoteAddress: "::1",
@@ -76,7 +80,8 @@ t.test(
       new LoggerNoop(),
       api,
       new Token("123"),
-      undefined
+      undefined,
+      !isCJS()
     );
     agent.start([new Fetch()]);
 
@@ -154,47 +159,50 @@ t.test(
       }
     });
 
-    await runWithContext(
-      {
-        ...context,
-        ...{
-          body: {
-            image2: [
-              "http://example",
-              "prefix.thisdomainpointstointernalip.com",
-            ],
-            image: "http://thisdomainpointstointernalip.com/path",
+    // Because we need to wrap dns here in the test
+    if (isCJS()) {
+      await runWithContext(
+        {
+          ...context,
+          ...{
+            body: {
+              image2: [
+                "http://example",
+                "prefix.thisdomainpointstointernalip.com",
+              ],
+              image: "http://thisdomainpointstointernalip.com/path",
+            },
           },
         },
-      },
-      async () => {
-        const error = await t.rejects(() =>
-          fetch("http://thisdomainpointstointernalip.com")
-        );
-        if (error instanceof Error) {
-          t.same(
-            // @ts-expect-error Type is not defined
-            error.cause.message,
-            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+        async () => {
+          const error = await t.rejects(() =>
+            fetch("http://thisdomainpointstointernalip.com")
           );
-        }
+          if (error instanceof Error) {
+            t.same(
+              // @ts-expect-error Type is not defined
+              error.cause.message,
+              "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+            );
+          }
 
-        const error2 = await t.rejects(() =>
-          fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
-        );
-        if (error2 instanceof Error) {
-          t.same(
-            // @ts-expect-error Type is not defined
-            error2.cause.message,
-            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image2"
+          const error2 = await t.rejects(() =>
+            fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
           );
-        }
+          if (error2 instanceof Error) {
+            t.same(
+              // @ts-expect-error Type is not defined
+              error2.cause.message,
+              "Zen has blocked a server-side request forgery: fetch(...) originating from body.image2"
+            );
+          }
 
-        // Ensure the lookup is only called once per hostname
-        // Otherwise, it could be vulnerable to TOCTOU
-        t.same(calls["thisdomainpointstointernalip.com"], 1);
-      }
-    );
+          // Ensure the lookup is only called once per hostname
+          // Otherwise, it could be vulnerable to TOCTOU
+          t.same(calls["thisdomainpointstointernalip.com"], 1);
+        }
+      );
+    }
 
     await runWithContext(
       {

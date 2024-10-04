@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
+import { isCJS } from "../helpers/isCJS";
 
 // Suppress upgrade to SDK v3 notice
 require("aws-sdk/lib/maintenance_mode_message").suppress = true;
@@ -32,12 +33,13 @@ t.test("it works", async (t) => {
     logger,
     new ReportingAPIForTesting(),
     undefined,
-    undefined
+    undefined,
+    !isCJS()
   );
 
   agent.start([new AwsSDKVersion2()]);
 
-  const AWS = require("aws-sdk");
+  const AWS = isCJS() ? require("aws-sdk") : (await import("aws-sdk")).default;
 
   const s3 = new AWS.S3({
     region: "us-east-1",

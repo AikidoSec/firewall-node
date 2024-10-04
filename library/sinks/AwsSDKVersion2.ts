@@ -73,7 +73,9 @@ export class AwsSDKVersion2 implements Wrapper {
       .addPackage("aws-sdk")
       .withVersion("^2.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapNewInstance(exports, "S3", pkgInfo, (instance) => {
+        const base = pkgInfo.isESMImport ? exports.default : exports;
+
+        wrapNewInstance(base, "S3", pkgInfo, (instance) => {
           for (const operation of operationsWithKey) {
             wrapExport(instance, operation, pkgInfo, {
               inspectArgs: (args) => this.inspectS3Operation(args, operation),
