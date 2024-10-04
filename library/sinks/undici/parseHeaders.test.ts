@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { parseHeaders } from "./parseHeaders";
 
 t.test("it works", async (t) => {

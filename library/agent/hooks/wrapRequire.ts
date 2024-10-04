@@ -9,10 +9,10 @@ import { removeNodePrefix } from "../../helpers/removeNodePrefix";
 import { RequireInterceptor } from "./RequireInterceptor";
 import type { PackageJson } from "type-fest";
 import { isMainJsFile } from "./isMainJsFile";
-import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
+import { executeInterceptors } from "./executeInterceptors";
 
-const originalRequire = mod.prototype.require;
+let originalRequire: typeof mod.prototype.require;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -34,8 +34,11 @@ export function wrapRequire() {
       `Could not find the _resolveFilename function in node:module using Node.js version ${process.version}`
     );
   }
+
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
+  // Save the original require function
+  originalRequire = mod.prototype.require;
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
@@ -232,7 +235,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
       .map((pkg) => pkg.getRequireInterceptors())
       .flat();
   } else {
-    // If its not the main file, we want to check if the want to patch the required file
+    // If its not the main file, we check if we want to patch the required file
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
@@ -256,48 +259,8 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
 }
 
 /**
- * Executes the provided require interceptor functions and sets the cache.
- */
-function executeInterceptors(
-  interceptors: RequireInterceptor[],
-  exports: unknown,
-  cache: Map<string, unknown>,
-  cacheKey: string,
-  wrapPackageInfo: WrapPackageInfo
-) {
-  // Cache because we need to prevent this called again if module is imported inside interceptors
-  cache.set(cacheKey, exports);
-
-  // Return early if no interceptors
-  if (!interceptors.length) {
-    return exports;
-  }
-
-  // Foreach interceptor function
-  for (const interceptor of interceptors) {
-    // If one interceptor fails, we don't want to stop the other interceptors
-    try {
-      const returnVal = interceptor(exports, wrapPackageInfo);
-      // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
-        exports = returnVal;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        getInstance()?.onFailedToWrapModule(wrapPackageInfo.name, error);
-      }
-    }
-  }
-
-  // Finally cache the result
-  cache.set(cacheKey, exports);
-
-  return exports;
-}
-
-/**
  * Returns the unwrapped require function.
  */
 export function getOrignalRequire() {
-  return originalRequire;
+  return originalRequire || mod.prototype?.require;
 }

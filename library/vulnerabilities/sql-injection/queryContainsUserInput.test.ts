@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { queryContainsUserInput } from "./queryContainsUserInput";
 
 t.test("it checks if query contains user input", async () => {

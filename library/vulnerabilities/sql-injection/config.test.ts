@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import {
   SQL_DANGEROUS_IN_STRING,
   SQL_ESCAPE_SEQUENCES,

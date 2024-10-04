@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isPackageInstalled } from "./isPackageInstalled";
 
 t.test("it returns true if the package is installed", async (t) => {

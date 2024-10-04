@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {

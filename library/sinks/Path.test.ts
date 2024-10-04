@@ -1,9 +1,10 @@
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Path } from "./Path";
+import { isCJS } from "../helpers/isCJS";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -33,12 +34,13 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    undefined
+    undefined,
+    !isCJS()
   );
 
   agent.start([new Path()]);
 
-  const { join, resolve } = require("path");
+  const { join, resolve } = isCJS() ? require("path") : await import("path");
 
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");

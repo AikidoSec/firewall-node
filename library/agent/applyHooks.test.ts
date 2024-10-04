@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { Token } from "./api/Token";

@@ -81,6 +81,7 @@ build:
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
+	cd build && ln -s ../library/node_modules node_modules
 
 .PHONY: watch
 watch: build

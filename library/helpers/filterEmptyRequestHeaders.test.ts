@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { filterEmptyRequestHeaders } from "./filterEmptyRequestHeaders";
 
 t.test("it filters empty headers", async (t) => {

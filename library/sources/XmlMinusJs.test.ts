@@ -1,5 +1,5 @@
 import { join } from "path";
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";

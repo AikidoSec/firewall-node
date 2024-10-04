@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getPackageVersion } from "./getPackageVersion";
 
 t.test("it resolves the version of a package", async (t) => {

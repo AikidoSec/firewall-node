@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import type { Context } from "../agent/Context";
 import { ServiceConfig } from "../agent/ServiceConfig";
 import { getRateLimitedEndpoint } from "./getRateLimitedEndpoint";

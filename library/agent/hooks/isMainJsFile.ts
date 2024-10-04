@@ -9,9 +9,10 @@ import { isPlainObject } from "../../helpers/isPlainObject";
  */
 export function isMainJsFile(
   pathInfo: ModulePathInfo,
-  requireId: string,
+  requireId: string | undefined,
   filename: string,
-  packageJson: PackageJson
+  packageJson: PackageJson,
+  esmImport = false
 ) {
   // If the name of the package is the same as the requireId (the argument passed to require), then it is the main file
   if (pathInfo.name === requireId) {
@@ -19,16 +20,23 @@ export function isMainJsFile(
   }
 
   // Check package.json main field
-  if (
-    typeof packageJson.main === "string" &&
-    resolve(pathInfo.base, packageJson.main) === filename
-  ) {
-    return true;
+  if (typeof packageJson.main === "string") {
+    if (resolve(pathInfo.base, packageJson.main) === filename) {
+      return true;
+    }
+
+    if (!packageJson.main.endsWith(".js")) {
+      if (resolve(pathInfo.base, `${packageJson.main}.js`) === filename) {
+        return true;
+      }
+    }
   }
 
-  // Defaults to index.js if main field is not set
+  // Defaults to index if main field is not set
   if (packageJson.main === undefined) {
-    if (resolve(pathInfo.base, "index.js") === filename) {
+    if (
+      resolve(pathInfo.base, `index.${esmImport ? "mjs" : "js"}`) === filename
+    ) {
       return true;
     }
   }
@@ -37,16 +45,10 @@ export function isMainJsFile(
   return doesMainExportMatchFilename(
     packageJson.exports,
     pathInfo.base,
-    filename
+    filename,
+    esmImport
   );
 }
-
-const allowedExportConditions = [
-  "default",
-  "node",
-  "node-addons",
-  "require",
-] as const;
 
 /**
  * This function checks if the main package exported js file is the same as the passed file.
@@ -54,10 +56,18 @@ const allowedExportConditions = [
 function doesMainExportMatchFilename(
   exportsField: PackageJson["exports"],
   base: string,
-  filename: string
+  filename: string,
+  esmImport: boolean
 ) {
   if (!exportsField) {
     return false;
+  }
+
+  const allowedExportConditions = ["default", "node", "node-addons"];
+  if (!esmImport) {
+    allowedExportConditions.push("require");
+  } else {
+    allowedExportConditions.push("import");
   }
 
   if (typeof exportsField === "string") {
@@ -74,7 +84,7 @@ function doesMainExportMatchFilename(
     }
   } else if (isPlainObject(exportsField)) {
     for (const [key, value] of Object.entries(exportsField)) {
-      if ([".", "./", "./index.js"].includes(key)) {
+      if ([".", "./", "./index.js", "./index.mjs"].includes(key)) {
         if (typeof value === "string" && resolve(base, value) === filename) {
           return true;
         }

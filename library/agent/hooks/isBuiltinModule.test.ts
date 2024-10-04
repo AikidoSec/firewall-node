@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { isBuiltinModule } from "./isBuiltinModule";
 
 t.test("it works", async (t) => {

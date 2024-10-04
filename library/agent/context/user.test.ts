@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Agent } from "../Agent";
 import { setInstance } from "../AgentSingleton";
 import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";

@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getRedirectOrigin } from "./getRedirectOrigin";
 
 t.test("it gets the origin URL of a redirect", async (t) => {

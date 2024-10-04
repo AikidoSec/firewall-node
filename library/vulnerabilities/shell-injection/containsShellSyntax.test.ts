@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { containsShellSyntax } from "./containsShellSyntax";
 
 t.test("it detects shell syntax", async (t) => {

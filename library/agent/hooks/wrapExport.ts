@@ -113,7 +113,8 @@ export function wrapExport(
 
           return returnVal;
         };
-      }
+      },
+      pkgInfo.isESMImport
     );
   } catch (error) {
     agent.onFailedToWrapMethod(pkgInfo.name, methodName);

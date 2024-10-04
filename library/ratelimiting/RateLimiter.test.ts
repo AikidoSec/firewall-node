@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { RateLimiter } from "./RateLimiter";
 

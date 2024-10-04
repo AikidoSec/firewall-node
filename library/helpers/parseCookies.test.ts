@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { parse } from "./parseCookies";
 
 t.test("should parse cookie string to object", async () => {

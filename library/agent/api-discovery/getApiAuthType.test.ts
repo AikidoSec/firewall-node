@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getApiAuthType as get } from "./getApiAuthType";
 import type { Context } from "../Context";
 

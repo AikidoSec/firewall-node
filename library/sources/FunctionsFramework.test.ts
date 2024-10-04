@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import * as express from "express";
 import * as request from "supertest";
 import { Agent } from "../agent/Agent";

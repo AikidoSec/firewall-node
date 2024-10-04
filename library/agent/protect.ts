@@ -93,7 +93,13 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: string | undefined }) {
+function getAgent({
+  serverless,
+  isESM,
+}: {
+  serverless: string | undefined;
+  isESM?: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -105,7 +111,8 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    isESM
   );
 
   setInstance(agent);
@@ -142,9 +149,10 @@ function getWrappers() {
   ];
 }
 
-export function protect() {
+export function protect(isESM = false) {
   const agent = getAgent({
     serverless: undefined,
+    isESM,
   });
 
   agent.start(getWrappers());

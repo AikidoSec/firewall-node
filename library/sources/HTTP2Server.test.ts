@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { Token } from "../agent/api/Token";
 import { connect, IncomingHttpHeaders } from "http2";
 import { Agent } from "../agent/Agent";

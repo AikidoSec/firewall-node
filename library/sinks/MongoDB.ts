@@ -191,29 +191,39 @@ export class MongoDB implements Wrapper {
       .addPackage("mongodb")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
-        const collectionProto = exports.Collection.prototype;
+        const toWrap = pkgInfo.isESMImport
+          ? [exports, exports.default]
+          : [exports];
 
-        OPERATIONS_WITH_FILTER.forEach((operation) => {
-          wrapExport(collectionProto, operation, pkgInfo, {
-            inspectArgs: (args, agent, collection) =>
-              this.inspectOperation(operation, args, collection as Collection),
+        for (const exportObj of toWrap) {
+          const collectionProto = exportObj.Collection.prototype;
+
+          OPERATIONS_WITH_FILTER.forEach((operation) => {
+            wrapExport(collectionProto, operation, pkgInfo, {
+              inspectArgs: (args, agent, collection) =>
+                this.inspectOperation(
+                  operation,
+                  args,
+                  collection as Collection
+                ),
+            });
           });
-        });
 
-        wrapExport(collectionProto, "bulkWrite", pkgInfo, {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectBulkWrite(args, collection as Collection),
-        });
+          wrapExport(collectionProto, "bulkWrite", pkgInfo, {
+            inspectArgs: (args, agent, collection) =>
+              this.inspectBulkWrite(args, collection as Collection),
+          });
 
-        wrapExport(collectionProto, "aggregate", pkgInfo, {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectAggregate(args, collection as Collection),
-        });
+          wrapExport(collectionProto, "aggregate", pkgInfo, {
+            inspectArgs: (args, agent, collection) =>
+              this.inspectAggregate(args, collection as Collection),
+          });
 
-        wrapExport(collectionProto, "distinct", pkgInfo, {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectDistinct(args, collection as Collection),
-        });
+          wrapExport(collectionProto, "distinct", pkgInfo, {
+            inspectArgs: (args, agent, collection) =>
+              this.inspectDistinct(args, collection as Collection),
+          });
+        }
       });
   }
 }

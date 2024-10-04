@@ -5,7 +5,8 @@ type WrappedFunction<T> = T & {
 export function wrap(
   module: any,
   name: string,
-  wrapper: (original: Function) => Function
+  wrapper: (original: Function) => Function,
+  isESMImport = false
 ) {
   if (!module[name]) {
     throw new Error(`no original function ${name} to wrap`);
@@ -20,7 +21,11 @@ export function wrap(
   const original = module[name];
   const wrapped = createWrappedFunction(original, wrapper);
 
-  defineProperty(module, name, wrapped);
+  if (!isESMImport) {
+    defineProperty(module, name, wrapped);
+  } else {
+    module[name] = wrapped;
+  }
 
   return wrapped;
 }
@@ -51,8 +56,13 @@ export function createWrappedFunction(
 // Sets a property on an object, preserving its enumerability.
 // This function assumes that the property is already writable.
 function defineProperty(obj: unknown, name: string, value: unknown) {
-  // @ts-expect-error We don't know the type of obj
-  const enumerable = !!obj[name] && obj.propertyIsEnumerable(name);
+  const enumerable =
+    // @ts-expect-error We don't know the type of obj
+    !!obj[name] &&
+    // @ts-expect-error We don't know the type of obj
+    typeof obj.propertyIsEnumerable === "function" &&
+    // @ts-expect-error We don't know the type of obj
+    obj.propertyIsEnumerable(name);
   Object.defineProperty(obj, name, {
     configurable: true,
     enumerable: enumerable,

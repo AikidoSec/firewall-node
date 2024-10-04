@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { getDataSchema } from "./getDataSchema";
 
 t.test("it works", async (t) => {

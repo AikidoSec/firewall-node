@@ -1,4 +1,4 @@
-import * as t from "tap";
+import t from "tap";
 import { wrapExport } from "./wrapExport";
 import { Agent } from "../Agent";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
