@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
+import { isCJS } from "../helpers/isCJS";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -41,11 +42,14 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda"
+    "lambda",
+    !isCJS()
   );
   agent.start([new MongoDB()]);
 
-  const { MongoClient } = require("mongodb");
+  const { MongoClient } = isCJS()
+    ? require("mongodb")
+    : await import("mongodb");
   const client = new MongoClient("mongodb://root:password@127.0.0.1:27017");
   await client.connect();
 

@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { FileSystem } from "./FileSystem";
+import { isCJS } from "../helpers/isCJS";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -52,7 +53,8 @@ t.test("it works", async (t) => {
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     undefined,
-    "lambda"
+    "lambda",
+    !isCJS()
   );
 
   agent.start([new FileSystem()]);
@@ -64,8 +66,10 @@ t.test("it works", async (t) => {
     realpath,
     promises: fsDotPromise,
     realpathSync,
-  } = require("fs");
-  const { writeFile: writeFilePromise } = require("fs/promises");
+  } = isCJS() ? require("fs") : await import("fs");
+  const { writeFile: writeFilePromise } = isCJS()
+    ? require("fs/promises")
+    : await import("fs/promises");
 
   t.ok(typeof realpath.native === "function");
   t.ok(typeof realpathSync.native === "function");

@@ -8,31 +8,35 @@ import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
+import { isCJS } from "../helpers/isCJS";
 
 const calls: Record<string, number> = {};
-wrap(dns, "lookup", function lookup(original) {
-  return function lookup() {
-    const hostname = arguments[0];
 
-    if (!calls[hostname]) {
-      calls[hostname] = 0;
-    }
+if (isCJS()) {
+  wrap(dns, "lookup", function lookup(original) {
+    return function lookup() {
+      const hostname = arguments[0];
 
-    calls[hostname]++;
+      if (!calls[hostname]) {
+        calls[hostname] = 0;
+      }
 
-    if (
-      hostname === "thisdomainpointstointernalip.com" ||
-      hostname === "thisdomainpointstointernalip2.com"
-    ) {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
-    }
+      calls[hostname]++;
 
-    original.apply(this, arguments);
-  };
-});
+      if (
+        hostname === "thisdomainpointstointernalip.com" ||
+        hostname === "thisdomainpointstointernalip2.com"
+      ) {
+        return original.apply(this, [
+          "localhost",
+          ...Array.from(arguments).slice(1),
+        ]);
+      }
+
+      original.apply(this, arguments);
+    };
+  });
+}
 
 const context: Context = {
   remoteAddress: "::1",
@@ -49,21 +53,30 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it works", (t) => {
-  const agent = new Agent(
+let http: typeof import("http");
+let https: typeof import("https");
+let agent: Agent;
+
+// Separate test for the setup is required because the setup is async
+// The second test can not be async because we can not defer the t.end() call in the end
+t.test("setup", async (t) => {
+  agent = new Agent(
     true,
     new LoggerNoop(),
     new ReportingAPIForTesting(),
     new Token("123"),
-    undefined
+    undefined,
+    !isCJS()
   );
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const http = require("http");
-  const https = require("https");
+  http = isCJS() ? require("http") : (await import("http")).default;
+  https = isCJS() ? require("https") : (await import("https")).default;
+});
 
+t.test("it works", (t) => {
   runWithContext(context, () => {
     const aikido = http.request("http://aikido.dev");
     aikido.end();
@@ -133,47 +146,55 @@ t.test("it works", (t) => {
   t.same(agent.getHostnames().asArray(), []);
   agent.getHostnames().clear();
 
-  runWithContext(
-    { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
-    () => {
-      https
-        .request("https://thisdomainpointstointernalip.com")
-        .on("error", (error) => {
-          t.match(
-            error.message,
-            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-          );
+  if (isCJS()) {
+    runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "thisdomainpointstointernalip.com" } },
+      },
+      () => {
+        https
+          .request("https://thisdomainpointstointernalip.com")
+          .on("error", (error) => {
+            t.match(
+              error.message,
+              "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+            );
 
-          // Ensure the lookup is only called once per hostname
-          // Otherwise, it could be vulnerable to TOCTOU
-          t.same(calls["thisdomainpointstointernalip.com"], 1);
-        })
-        .on("finish", () => {
-          t.fail("should not finish");
-        })
-        .end();
-    }
-  );
+            // Ensure the lookup is only called once per hostname
+            // Otherwise, it could be vulnerable to TOCTOU
+            t.same(calls["thisdomainpointstointernalip.com"], 1);
+          })
+          .on("finish", () => {
+            t.fail("should not finish");
+          })
+          .end();
+      }
+    );
 
-  runWithContext(
-    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
-    () => {
-      https
-        .request("https://thisdomainpointstointernalip2.com", (res) => {
-          t.fail("should not respond");
-        })
-        .on("error", (error) => {
-          t.match(
-            error.message,
-            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-          );
-        })
-        .on("finish", () => {
-          t.fail("should not finish");
-        })
-        .end();
-    }
-  );
+    runWithContext(
+      {
+        ...context,
+        ...{ body: { image: "thisdomainpointstointernalip2.com" } },
+      },
+      () => {
+        https
+          .request("https://thisdomainpointstointernalip2.com", (res) => {
+            t.fail("should not respond");
+          })
+          .on("error", (error) => {
+            t.match(
+              error.message,
+              "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+            );
+          })
+          .on("finish", () => {
+            t.fail("should not finish");
+          })
+          .end();
+      }
+    );
+  }
 
   runWithContext(context, () => {
     // With lookup function specified

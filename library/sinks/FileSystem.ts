@@ -85,48 +85,60 @@ export class FileSystem implements Wrapper {
   wrap(hooks: Hooks) {
     // Wrap fs
     hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
-      Object.keys(functions).forEach((name) => {
-        const { pathsArgs, sync, promise } = functions[name];
+      const toWrap = pkgInfo.isESMImport
+        ? [exports, exports.default]
+        : [exports];
 
-        wrapExport(exports, name, pkgInfo, {
-          inspectArgs: (args) => {
-            return this.inspectPath(args, name, pathsArgs);
-          },
-        });
+      for (const exportObj of toWrap) {
+        Object.keys(functions).forEach((name) => {
+          const { pathsArgs, sync, promise } = functions[name];
 
-        if (sync) {
-          wrapExport(exports, `${name}Sync`, pkgInfo, {
+          wrapExport(exportObj, name, pkgInfo, {
             inspectArgs: (args) => {
-              return this.inspectPath(args, `${name}Sync`, pathsArgs);
+              return this.inspectPath(args, name, pathsArgs);
             },
           });
-        }
-      });
 
-      // Wrap realpath.native
-      wrapExport(exports.realpath, "native", pkgInfo, {
-        inspectArgs: (args) => {
-          return this.inspectPath(args, "realpath.native", 1);
-        },
-      });
-      wrapExport(exports.realpathSync, "native", pkgInfo, {
-        inspectArgs: (args) => {
-          return this.inspectPath(args, "realpathSync.native", 1);
-        },
-      });
+          if (sync) {
+            wrapExport(exportObj, `${name}Sync`, pkgInfo, {
+              inspectArgs: (args) => {
+                return this.inspectPath(args, `${name}Sync`, pathsArgs);
+              },
+            });
+          }
+        });
+
+        // Wrap realpath.native
+        wrapExport(exportObj.realpath, "native", pkgInfo, {
+          inspectArgs: (args) => {
+            return this.inspectPath(args, "realpath.native", 1);
+          },
+        });
+        wrapExport(exportObj.realpathSync, "native", pkgInfo, {
+          inspectArgs: (args) => {
+            return this.inspectPath(args, "realpathSync.native", 1);
+          },
+        });
+      }
     });
 
     // Wrap fs/promises
     hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
-      Object.keys(functions).forEach((name) => {
-        const { pathsArgs, sync, promise } = functions[name];
+      const toWrap = pkgInfo.isESMImport
+        ? [exports, exports.default]
+        : [exports];
 
-        if (promise) {
-          wrapExport(exports, name, pkgInfo, {
-            inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
-          });
-        }
-      });
+      for (const exportObj of toWrap) {
+        Object.keys(functions).forEach((name) => {
+          const { pathsArgs, promise } = functions[name];
+
+          if (promise) {
+            wrapExport(exportObj, name, pkgInfo, {
+              inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
+            });
+          }
+        });
+      }
     });
   }
 }
