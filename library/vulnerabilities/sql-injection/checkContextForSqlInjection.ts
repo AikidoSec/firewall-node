@@ -1,5 +1,5 @@
 import { Context } from "../../agent/Context";
-import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { detectSQLInjection } from "./detectSQLInjection";

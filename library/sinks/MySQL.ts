@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -48,12 +49,13 @@ export class MySQL implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const mysql = hooks.addPackage("mysql").withVersion("^2.0.0");
-
-    const connection = mysql
-      .addFile("lib/Connection")
-      .addSubject((exports) => exports.prototype);
-
-    connection.inspect("query", (args) => this.inspectQuery(args));
+    hooks
+      .addPackage("mysql")
+      .withVersion("^2.0.0")
+      .onFileRequire("lib/Connection.js", (exports, pkgInfo) => {
+        wrapExport(exports.prototype, "query", pkgInfo, {
+          inspectArgs: (args) => this.inspectQuery(args),
+        });
+      });
   }
 }

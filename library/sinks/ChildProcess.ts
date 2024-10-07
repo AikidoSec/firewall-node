@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
@@ -17,19 +18,43 @@ const PATH_PREFIXES = [
 
 export class ChildProcess implements Wrapper {
   wrap(hooks: Hooks) {
-    const childProcess = hooks.addBuiltinModule("child_process");
-
-    childProcess
-      .addSubject((exports) => exports)
-      .inspect("exec", (args) => this.inspectExec(args, "exec"))
-      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
-      .inspect("spawn", (args) => this.inspectSpawn(args, "spawn"))
-      .inspect("spawnSync", (args) => this.inspectSpawn(args, "spawnSync"))
-      .inspect("execFile", (args) => this.inspectExecFile(args, "execFile"))
-      .inspect("execFileSync", (args) =>
-        this.inspectExecFile(args, "execFileSync")
-      )
-      .inspect("fork", (args) => this.inspectFork(args, "fork"));
+    hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
+      wrapExport(exports, "exec", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "exec");
+        },
+      });
+      wrapExport(exports, "execSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "execSync");
+        },
+      });
+      wrapExport(exports, "spawn", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawn");
+        },
+      });
+      wrapExport(exports, "spawnSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawnSync");
+        },
+      });
+      wrapExport(exports, "execFile", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFile");
+        },
+      });
+      wrapExport(exports, "execFileSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFileSync");
+        },
+      });
+      wrapExport(exports, "fork", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectFork(args, "fork");
+        },
+      });
+    });
   }
 
   private inspectFork(args: unknown[], name: string) {

@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
@@ -40,12 +41,25 @@ export class Shelljs implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const shelljs = hooks.addPackage("shelljs").withVersion("^0.8.0 || ^0.7.0");
-    const exports = shelljs.addSubject((exports) => exports);
-
-    // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
-    exports.inspect("exec", (args) => {
-      return this.inspectExec("exec", args);
-    });
+    hooks
+      .addPackage("shelljs")
+      .withVersion("^0.8.0 || ^0.7.0")
+      // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
+      .onFileRequire("src/common.js", (exports, pkgInfo) => {
+        wrapExport(exports, "register", pkgInfo, {
+          modifyArgs: (args) => {
+            if (
+              args.length > 0 &&
+              args[0] === "exec" &&
+              typeof args[1] === "function"
+            ) {
+              args[1] = wrapExport(args[1], undefined, pkgInfo, {
+                inspectArgs: (args) => this.inspectExec("exec", args),
+              });
+            }
+            return args;
+          },
+        });
+      });
   }
 }

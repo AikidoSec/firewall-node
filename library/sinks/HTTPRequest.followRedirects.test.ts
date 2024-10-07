@@ -112,7 +112,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         t.ok(e instanceof Error);
         t.same(
           e.message,
-          "Redirected request failed: Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+          "Redirected request failed: Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
         );
       });
       response.end();

@@ -1,9 +1,8 @@
-import { WrappableSubject } from "./WrappableSubject";
-import { WrappableFile } from "./WrappableFile";
+import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
-  private subjects: WrappableSubject[] = [];
-  private files: WrappableFile[] = [];
+  private requireInterceptors: RequireInterceptor[] = [];
+  private requireFileInterceptors = new Map<string, RequireInterceptor>();
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -15,25 +14,57 @@ export class VersionedPackage {
     return this.range;
   }
 
-  addFile(relativePath: string): WrappableFile {
-    const file = new WrappableFile(relativePath);
-    this.files.push(file);
-
-    return file;
+  onRequire(interceptor: RequireInterceptor) {
+    if (typeof interceptor !== "function") {
+      throw new Error("Interceptor must be a function");
+    }
+    this.requireInterceptors.push(interceptor);
+    // Allow chaining
+    return this;
   }
 
-  addSubject(selector: (exports: any) => unknown): WrappableSubject {
-    const fn = new WrappableSubject(selector);
-    this.subjects.push(fn);
+  onFileRequire(relativePath: string, interceptor: RequireInterceptor) {
+    if (typeof relativePath !== "string") {
+      throw new Error("Relative path must be a string");
+    }
+    if (typeof interceptor !== "function") {
+      throw new Error("Interceptor must be a function");
+    }
 
-    return fn;
+    if (relativePath.length === 0) {
+      throw new Error("Relative path must not be empty");
+    }
+
+    if (this.requireFileInterceptors.has(relativePath)) {
+      throw new Error(`Interceptor for ${relativePath} already exists`);
+    }
+
+    if (relativePath.startsWith("/")) {
+      throw new Error(
+        "Absolute paths are not allowed for require file interceptors"
+      );
+    }
+
+    if (relativePath.includes("..")) {
+      throw new Error(
+        "Relative paths with '..' are not allowed for require file interceptors"
+      );
+    }
+
+    if (relativePath.startsWith("./")) {
+      relativePath = relativePath.slice(2);
+    }
+
+    this.requireFileInterceptors.set(relativePath, interceptor);
+    // Allow chaining
+    return this;
   }
 
-  getSubjects() {
-    return this.subjects;
+  getRequireInterceptors() {
+    return this.requireInterceptors;
   }
 
-  getFiles() {
-    return this.files;
+  getRequireFileInterceptor(relativePath: string) {
+    return this.requireFileInterceptors.get(relativePath);
   }
 }

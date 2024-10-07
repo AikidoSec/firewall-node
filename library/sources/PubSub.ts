@@ -1,29 +1,30 @@
 import { runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import type { Message } from "@google-cloud/pubsub";
 
 export class PubSub implements Wrapper {
   wrap(hooks: Hooks) {
-    const pubSub = hooks
+    hooks
       .addPackage("@google-cloud/pubsub")
-      .withVersion("^4.0.0");
+      .withVersion("^4.0.0")
+      .onFileRequire("build/src/subscription.js", (exports, pkgInfo) => {
+        wrapExport(exports.Subscription.prototype, "on", pkgInfo, {
+          modifyArgs: (args) => {
+            if (
+              args.length > 0 &&
+              typeof args[0] === "string" &&
+              args[0] === "message" &&
+              typeof args[1] === "function"
+            ) {
+              const originalCallback = args[1];
+              args[1] = handleMessage(originalCallback);
+            }
 
-    pubSub
-      .addFile("build/src/subscription.js")
-      .addSubject((exports) => exports.Subscription.prototype)
-      .modifyArguments("on", (args) => {
-        if (
-          args.length > 0 &&
-          typeof args[0] === "string" &&
-          args[0] === "message" &&
-          typeof args[1] === "function"
-        ) {
-          const originalCallback = args[1];
-          args[1] = handleMessage(originalCallback);
-        }
-
-        return args;
+            return args;
+          },
+        });
       });
   }
 }

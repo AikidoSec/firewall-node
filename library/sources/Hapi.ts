@@ -9,6 +9,9 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapRequestHandler } from "./hapi/wrapRequestHandler";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class Hapi implements Wrapper {
   private wrapRouteHandler(args: unknown[], agent: Agent) {
@@ -79,25 +82,29 @@ export class Hapi implements Wrapper {
     return args;
   }
 
+  private wrapServer(server: unknown, pkgInfo: WrapPackageInfo) {
+    wrapExport(server, "route", pkgInfo, {
+      modifyArgs: (args, agent) => this.wrapRouteHandler(args, agent),
+    });
+    wrapExport(server, "ext", pkgInfo, {
+      modifyArgs: (args, agent) => this.wrapExtensionFunction(args, agent),
+    });
+    wrapExport(server, "decorate", pkgInfo, {
+      modifyArgs: (args, agent) => this.wrapDecorateFunction(args, agent),
+    });
+  }
+
   wrap(hooks: Hooks) {
-    const hapi = hooks.addPackage("@hapi/hapi").withVersion("^21.0.0");
-    const exports = hapi.addSubject((exports) => exports);
-
-    const subjects = [
-      exports.inspectNewInstance("server").addSubject((exports) => exports),
-      exports.inspectNewInstance("Server").addSubject((exports) => exports),
-    ];
-
-    for (const subject of subjects) {
-      subject.modifyArguments("route", (args, subject, agent) => {
-        return this.wrapRouteHandler(args, agent);
+    const hapi = hooks
+      .addPackage("@hapi/hapi")
+      .withVersion("^21.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapNewInstance(exports, "Server", pkgInfo, (server) => {
+          this.wrapServer(server, pkgInfo);
+        });
+        wrapNewInstance(exports, "server", pkgInfo, (server) => {
+          this.wrapServer(server, pkgInfo);
+        });
       });
-      subject.modifyArguments("ext", (args, subject, agent) => {
-        return this.wrapExtensionFunction(args, agent);
-      });
-      subject.modifyArguments("decorate", (args, subject, agent) => {
-        return this.wrapDecorateFunction(args, agent);
-      });
-    }
   }
 }

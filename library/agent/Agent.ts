@@ -23,6 +23,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { getInstance, setInstance } from "./AgentSingleton";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -408,22 +409,13 @@ export class Agent {
       }
     }
 
-    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
-
-    for (const pkg in this.wrappedPackages) {
-      const details = this.wrappedPackages[pkg];
-
-      /* c8 ignore next 3 */
-      if (!details.version) {
-        continue;
-      }
-
-      if (details.supported) {
-        this.logger.log(`${pkg}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${pkg}@${details.version} is not supported!`);
-      }
+    // Register this instance as the singleton instance if no instance is already registered
+    // This can happen in tests where not the main export is used
+    if (!getInstance()) {
+      setInstance(this);
     }
+
+    wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
@@ -437,8 +429,28 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
+  onFailedToWrapMethod(module: string, name: string | undefined) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
+
+  onFailedToWrapModule(module: string, error: Error) {
+    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+  }
+
+  onPackageWrapped(name: string, details: WrappedPackage) {
+    if (this.wrappedPackages[name]) {
+      // Already reported as wrapped
+      return;
+    }
+    this.wrappedPackages[name] = details;
+
+    if (details.version) {
+      if (details.supported) {
+        this.logger.log(`${name}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${name}@${details.version} is not supported!`);
+      }
+    }
   }
 
   onFailedToWrapPackage(module: string) {
