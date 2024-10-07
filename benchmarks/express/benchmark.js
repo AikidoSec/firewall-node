@@ -4,7 +4,7 @@ const { promisify } = require("util");
 const exec = promisify(require("child_process").exec);
 
 // Accepted percentage of performance decrease
-const AcceptedDecrease = 35; // %
+const AcceptedDecrease = 30; // %
 
 function generateWrkCommandForUrl(url) {
   // Define the command with awk included
