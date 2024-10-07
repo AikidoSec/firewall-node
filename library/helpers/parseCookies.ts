@@ -91,7 +91,7 @@ export function parse(str: string) {
 
 function startIndex(str: string, index: number, max: number): number {
   do {
-    var code = str.charCodeAt(index);
+    const code = str.charCodeAt(index);
     if (code !== 0x20 /*   */ && code !== 0x09 /* \t */) return index;
   } while (++index < max);
   return max;
@@ -99,7 +99,7 @@ function startIndex(str: string, index: number, max: number): number {
 
 function endIndex(str: string, index: number, min: number): number {
   while (index > min) {
-    var code = str.charCodeAt(--index);
+    const code = str.charCodeAt(--index);
     if (code !== 0x20 /*   */ && code !== 0x09 /* \t */) return index + 1;
   }
   return min;
