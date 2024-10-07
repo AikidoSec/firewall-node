@@ -102,6 +102,7 @@ export class HTTPRequest implements Wrapper {
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
+    const stackTraceCallingLocation = new Error();
 
     if (!optionObj) {
       const newOpts = {
@@ -110,7 +111,8 @@ export class HTTPRequest implements Wrapper {
           agent,
           module,
           `${module}.request`,
-          url
+          url,
+          stackTraceCallingLocation
         ),
       };
 
@@ -123,23 +125,20 @@ export class HTTPRequest implements Wrapper {
       return args.concat(newOpts);
     }
 
-    if (optionObj.lookup) {
-      optionObj.lookup = inspectDNSLookupCalls(
-        optionObj.lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
-    } else {
-      optionObj.lookup = inspectDNSLookupCalls(
-        lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
+    let nativeLookup: NonNullable<RequestOptions["lookup"]> = lookup;
+    if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
+      // If the user has passed a custom lookup function, we'll use that instead
+      nativeLookup = optionObj.lookup;
     }
+
+    optionObj.lookup = inspectDNSLookupCalls(
+      nativeLookup,
+      agent,
+      module,
+      `${module}.request`,
+      url,
+      stackTraceCallingLocation
+    ) as NonNullable<RequestOptions["lookup"]>;
 
     return args;
   }

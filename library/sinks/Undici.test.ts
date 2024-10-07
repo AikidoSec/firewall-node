@@ -62,13 +62,8 @@ t.test(
   },
   async (t) => {
     const logger = new LoggerForTesting();
-    const agent = new Agent(
-      true,
-      logger,
-      new ReportingAPIForTesting(),
-      new Token("123"),
-      undefined
-    );
+    const api = new ReportingAPIForTesting();
+    const agent = new Agent(true, logger, api, new Token("123"), undefined);
 
     agent.start([new Undici()]);
 
@@ -139,6 +134,20 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
+    await request(require("url").parse("https://aikido.dev"));
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      origin: "https://aikido.dev",
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
     await t.rejects(() => request("invalid url"));
     await t.rejects(() => request({ hostname: "" }));
 
@@ -160,6 +169,16 @@ t.test(
           "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
+
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
+
       const error2 = await t.rejects(() =>
         request(new URL("http://localhost:4000/api/internal"))
       );
