@@ -21,7 +21,7 @@ jobs:
           "POSTGRES_DB": "main_db"
         ports:
           - "27016:5432"
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [18.x]
