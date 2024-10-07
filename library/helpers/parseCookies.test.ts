@@ -48,3 +48,7 @@ t.test("should ignore duplicate cookies", async () => {
     bar: "bar",
   });
 });
+
+t.test("empty string should return empty object", async () => {
+  t.same(parse(""), {});
+});
