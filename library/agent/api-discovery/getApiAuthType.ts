@@ -91,7 +91,7 @@ function findApiKeys(context: Context): APIAuthType[] {
   const headerNames = Object.keys(context.headers);
   for (const header of commonApiKeyHeaderNames) {
     const matches = headerNames.filter((name) =>
-      name.toLowerCase().includes(header.toLowerCase())
+      name.toLowerCase().includes(header)
     );
 
     matches.forEach((match) => {
