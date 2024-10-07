@@ -1,3 +1,9 @@
+INTERNALS_VERSION = v0.1.24
+INTERNALS_URL = https://github.com/AikidoSec/zen-internals/releases/download/$(INTERNALS_VERSION)
+TARBALL = zen_internals.tgz
+CHECKSUM_FILE = zen_internals.tgz.sha256sum
+INTERNALS_DIR = library/vulnerabilities/sql-injection/internals
+
 .PHONY: containers
 containers:
 	cd sample-apps && docker-compose up -d --remove-orphans
@@ -74,14 +80,25 @@ install:
 	node scripts/install.js
 
 .PHONY: build
-build:
+build: $(INTERNALS_DIR)/zen_internals.js
 	mkdir -p build
 	rm -r build
 	cd library && npm run build
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
-	cp library/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm build/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm
+	mkdir -p build/vulnerabilities/sql-injection/internals
+	cp $(INTERNALS_DIR)/zen_internals_bg.wasm build/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm
+
+$(INTERNALS_DIR)/zen_internals.js: Makefile
+	curl -L $(INTERNALS_URL)/$(TARBALL) -o $(INTERNALS_DIR)/$(TARBALL)
+	curl -L $(INTERNALS_URL)/$(CHECKSUM_FILE) -o $(INTERNALS_DIR)/$(CHECKSUM_FILE)
+	cd $(INTERNALS_DIR) && sha256sum -c $(CHECKSUM_FILE)
+	tar -xzf $(INTERNALS_DIR)/$(TARBALL) -C $(INTERNALS_DIR)
+	touch $@
+	rm $(INTERNALS_DIR)/zen_internals.d.ts
+	rm $(INTERNALS_DIR)/$(TARBALL)
+	rm $(INTERNALS_DIR)/$(CHECKSUM_FILE)
 
 .PHONY: watch
 watch: build
