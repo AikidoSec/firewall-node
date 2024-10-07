@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
@@ -36,12 +37,16 @@ export class Path implements Wrapper {
   wrap(hooks: Hooks): void {
     const functions = ["join", "resolve", "normalize"];
 
-    hooks.addBuiltinModule("path").onRequire((exports, pkgInfo) => {
+    const onRequire = (exports: any, pkgInfo: WrapPackageInfo) => {
       for (const func of functions) {
         wrapExport(exports, func, pkgInfo, {
           inspectArgs: (args) => this.inspectPath(args, func),
         });
       }
-    });
+    };
+
+    hooks.addBuiltinModule("path").onRequire(onRequire);
+    hooks.addBuiltinModule("path/posix").onRequire(onRequire);
+    hooks.addBuiltinModule("path/win32").onRequire(onRequire);
   }
 }
