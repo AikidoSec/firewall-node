@@ -33,6 +33,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install K6
         uses: grafana/setup-k6-action@v1
+      - name: Install wrk
+        run: |
+          sudo apt-get install build-essential libssl-dev git -y
+          git clone https://github.com/wg/wrk.git wrk
+          cd wrk
+          sudo make
+          sudo cp wrk /usr/local/bin
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
@@ -45,3 +52,5 @@ jobs:
         run: cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
       - name: Run API Discovery Benchmark
         run: cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
+      - name: Run Express Benchmark
+        run: cd benchmarks/express && node --preserve-symlinks benchmark.js
