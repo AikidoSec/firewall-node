@@ -2,7 +2,7 @@ INTERNALS_VERSION = v0.1.24
 INTERNALS_URL = https://github.com/AikidoSec/zen-internals/releases/download/$(INTERNALS_VERSION)
 TARBALL = zen_internals.tgz
 CHECKSUM_FILE = zen_internals.tgz.sha256sum
-INTERNALS_DIR = library/vulnerabilities/sql-injection/internals
+INTERNALS_DIR = library/internals
 
 .PHONY: containers
 containers:
@@ -87,8 +87,8 @@ build: $(INTERNALS_DIR)/zen_internals.js
 	cp README.md build/README.md
 	cp LICENSE build/LICENSE
 	cp library/package.json build/package.json
-	mkdir -p build/vulnerabilities/sql-injection/internals
-	cp $(INTERNALS_DIR)/zen_internals_bg.wasm build/vulnerabilities/sql-injection/internals/zen_internals_bg.wasm
+	mkdir -p build/internals
+	cp $(INTERNALS_DIR)/zen_internals_bg.wasm build/internals/zen_internals_bg.wasm
 
 $(INTERNALS_DIR)/zen_internals.js: Makefile
 	curl -L $(INTERNALS_URL)/$(TARBALL) -o $(INTERNALS_DIR)/$(TARBALL)
