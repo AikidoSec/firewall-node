@@ -11,26 +11,26 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
     return matches;
   }
 
-  const possible = endpoints
-    .filter((endpoint) => {
-      if (endpoint.method === "*") {
-        return true;
-      }
+  const possible = endpoints.filter((endpoint) => {
+    if (endpoint.method === "*") {
+      return true;
+    }
 
-      return endpoint.method === context.method;
-    })
-    // Sort so that exact method matches come first before wildcard matches
-    .sort((a, b) => {
-      if (a.method === b.method) {
-        return 0;
-      }
+    return endpoint.method === context.method;
+  });
 
-      if (a.method === "*") {
-        return 1;
-      }
+  // Sort so that exact method matches come first before wildcard matches
+  possible.sort((a, b) => {
+    if (a.method === b.method) {
+      return 0;
+    }
 
-      return -1;
-    });
+    if (a.method === "*") {
+      return 1;
+    }
+
+    return -1;
+  });
 
   const exact = possible.find((endpoint) => endpoint.route === context.route);
   if (exact) {
