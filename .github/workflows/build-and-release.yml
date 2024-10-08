@@ -40,9 +40,10 @@ jobs:
       - name: Publish to NPM
         run: |
           if [ "${{ github.event.release.prerelease }}" = "true" ]; then
-            echo "Publishing beta version"
+            echo "Publishing beta version ${{ steps.get_version.outputs.tag }} to NPM"
             cd build && npm publish --provenance --access public --tag beta
           else
+            echo "Publishing version ${{ steps.get_version.outputs.tag }} to NPM"
             cd build && npm publish --provenance --access public
           fi
         env:
