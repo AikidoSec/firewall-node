@@ -2,10 +2,8 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
 type FileSystemFunction = {
@@ -80,10 +78,7 @@ export class FileSystem implements Wrapper {
     };
 
     // Added in v19.8.0
-    if (
-      getMajorNodeVersion() > 19 ||
-      (getMajorNodeVersion() === 19 && getMinorNodeVersion() >= 8)
-    ) {
+    if (isVersionGreaterOrEqual("19.8.0", getSemverNodeVersion())) {
       functions.openAsBlob = { pathsArgs: 1, sync: false, promise: false };
     }
 
