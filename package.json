@@ -2,5 +2,8 @@
   "name": "firewall-node",
   "devDependencies": {
     "prettier": "^3.2.4"
+  },
+  "scripts": {
+    "format": "prettier --write ."
   }
 }

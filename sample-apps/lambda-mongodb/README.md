@@ -4,5 +4,5 @@ WARNING: This application contains security issues and should not be used in pro
 
 In the root directory run:
 
-* `make lambda-mongodb-safe`
-* `make lambda-mongodb-nosql-injection`
+- `make lambda-mongodb-safe`
+- `make lambda-mongodb-nosql-injection`
