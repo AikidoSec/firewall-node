@@ -120,7 +120,7 @@ t.test("user input is longer than query", async () => {
 });
 
 t.test("It flags multiline queries correctly", async () => {
-  isSqlInjection(
+  isNotSqlInjection(
     `
       SELECT * FROM \`users\`\`
       WHERE id = 123
