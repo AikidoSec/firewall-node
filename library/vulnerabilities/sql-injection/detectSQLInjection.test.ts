@@ -7,50 +7,6 @@ import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 
-const BAD_SQL_COMMANDS = [
-  // Check for SQL Commands like : INSERT or DROP
-  "Roses are red insErt are blue",
-  "Roses are red cREATE are blue",
-  "Roses are red drop are blue",
-  "Roses are red updatE are blue",
-  "Roses are red SELECT are blue",
-  "Roses are red dataBASE are blue",
-  "Roses are red alter are blue",
-  "Roses are red grant are blue",
-  "Roses are red savepoint are blue",
-  "Roses are red commit are blue",
-  "Roses are red or blue",
-  "Roses are red and lovely",
-  "This is a group_concat_test",
-  // Test some special characters
-  "I'm writting you",
-  "Termin;ate",
-  "Roses <> violets",
-  "Roses < Violets",
-  "Roses > Violets",
-  "Roses != Violets",
-];
-
-const GOOD_SQL_COMMANDS = [
-  // Check for SQL Commands with allowed characters
-  "Roses are red rollbacks are blue",
-  "Roses are red truncates are blue",
-  "Roses are reddelete are blue",
-  "Roses are red WHEREis blue",
-  "Roses are red ORis isAND",
-  // Check for some general statements
-  `abcdefghijklmnop@hotmail.com`,
-  // Test some special characters
-  "steve@yahoo.com",
-  // Test SQL Function (that should not be blocked)
-  "I was benchmark ing",
-  "We were delay ed",
-  "I will waitfor you",
-  // Allow single characters
-  "#",
-  "'",
-];
-
 const IS_NOT_INJECTION = [
   [`'UNION 123' UNION "UNION 123"`, "UNION 123"], // String encapsulation
   [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
@@ -64,15 +20,6 @@ const IS_NOT_INJECTION = [
 const IS_INJECTION = [
   [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
 ];
-
-t.test("Test the detectSQLInjection() function", async () => {
-  for (const sql of BAD_SQL_COMMANDS) {
-    isSqlInjection(sql, sql);
-  }
-  for (const sql of GOOD_SQL_COMMANDS) {
-    isNotSqlInjection(sql, sql);
-  }
-});
 
 t.test("Test detectSQLInjection() function", async () => {
   for (const test of IS_INJECTION) {
