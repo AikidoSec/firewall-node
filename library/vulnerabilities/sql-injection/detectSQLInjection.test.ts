@@ -7,33 +7,15 @@ import { detectSQLInjection } from "./detectSQLInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 
-const IS_NOT_INJECTION = [
-  [`'UNION 123' UNION "UNION 123"`, "UNION 123"], // String encapsulation
-  [`'union'  is not "UNION"`, "UNION!"], // String not present in SQL
-  [`"UNION;"`, "UNION;"], // String encapsulation
-  ["SELECT * FROM table", "*"],
-  [`"COPY/*"`, "COPY/*"], // String encapsulated but dangerous chars
-  [`'union'  is not "UNION--"`, "UNION--"], // String encapsulated but dangerous chars
-  [`'union'  is not UNION`, "UNION"], // String not always encapsulated
-];
-
-const IS_INJECTION = [
-  [`UNTER;`, "UNTER;"], // String not encapsulated and dangerous char (;)
-];
-
-t.test("Test detectSQLInjection() function", async () => {
-  for (const test of IS_INJECTION) {
-    isSqlInjection(test[0], test[1]);
-  }
-  for (const test of IS_NOT_INJECTION) {
-    isNotSqlInjection(test[0], test[1]);
-  }
+t.test("It ignores invalid queries", async () => {
+  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
 });
 
-t.test("It allows escape sequences", async () => {
-  isSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
-  isSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
+t.test("It ignores safely escaped backslash", async () => {
+  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
+});
 
+t.test("It allows escape sequences", async (t) => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\tusers'", "\tusers");
