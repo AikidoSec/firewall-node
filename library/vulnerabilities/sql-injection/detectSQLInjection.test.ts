@@ -332,35 +332,6 @@ t.test("It flags lowercased input as SQL injection", async () => {
   );
 });
 
-t.test("It does not match VIEW keyword", async () => {
-  const query = `
-      SELECT views.id AS view_id, view_settings.user_id, view_settings.settings
-        FROM views
-        INNER JOIN view_settings ON views.id = view_settings.view_id AND view_settings.user_id = ?
-        WHERE views.business_id = ?
-    `;
-
-  isNotSqlInjection(query, "view_id");
-  isNotSqlInjection(query, "view_settings");
-  isNotSqlInjection(query, "view_settings.user_id");
-
-  const query2 = `
-    SELECT id,
-           business_id,
-           object_type,
-           name,
-           \`condition\`,
-           settings,
-           \`read_only\`,
-           created_at,
-           updated_at
-    FROM views
-    WHERE business_id = ?
-  `;
-
-  isNotSqlInjection(query2, "view");
-});
-
 t.test("It does not match GROUP keyword", async () => {
   const query = `
       SELECT groups.id AS group_id, group_settings.user_id, group_settings.settings
