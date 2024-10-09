@@ -214,24 +214,24 @@ t.test("It does not flag key keyword as SQL injection", async () => {
 });
 
 t.test("It flags function calls as SQL injections", async () => {
-  isSqlInjection("foobar()", "foobar()");
-  isSqlInjection("foobar(1234567)", "foobar(1234567)");
-  isSqlInjection("foobar       ()", "foobar       ()");
-  isSqlInjection(".foobar()", ".foobar()");
-  isSqlInjection("20+foobar()", "20+foobar()");
-  isSqlInjection("20-foobar(", "20-foobar(");
-  isSqlInjection("20<foobar()", "20<foobar()");
-  isSqlInjection("20*foobar  ()", "20*foobar  ()");
-  isSqlInjection("!foobar()", "!foobar()");
-  isSqlInjection("=foobar()", "=foobar()");
-  isSqlInjection("1foobar()", "1foobar()");
-  isSqlInjection("1foo_bar()", "1foo_bar()");
-  isSqlInjection("1foo-bar()", "1foo-bar()");
-  isSqlInjection("#foobar()", "#foobar()");
+  isSqlInjection("SELECT foobar()", "foobar()");
+  isSqlInjection("SELECT foobar(1234567)", "foobar(1234567)");
+  isSqlInjection("SELECT foobar       ()", "foobar       ()");
+  isSqlInjection("SELECT .foobar()", ".foobar()");
+  isSqlInjection("SELECT 20+foobar()", "20+foobar()");
+  isSqlInjection("SELECT 20-foobar(", "20-foobar(");
+  isSqlInjection("SELECT 20<foobar()", "20<foobar()");
+  isSqlInjection("SELECT 20*foobar  ()", "20*foobar  ()");
+  isSqlInjection("SELECT !foobar()", "!foobar()");
+  isSqlInjection("SELECT =foobar()", "=foobar()");
+  isSqlInjection("SELECT 1foobar()", "1foobar()");
+  isSqlInjection("SELECT 1foo_bar()", "1foo_bar()");
+  isSqlInjection("SELECT 1foo-bar()", "1foo-bar()");
+  isSqlInjection("SELECT #foobar()", "#foobar()");
 
-  isNotSqlInjection("foobar)", "foobar)");
-  isNotSqlInjection("foobar      )", "foobar      )");
-  isNotSqlInjection("€foobar()", "€foobar()");
+  isNotSqlInjection("SELECT 'foobar)'", "foobar)");
+  isNotSqlInjection("SELECT 'foobar      )'", "foobar      )");
+  isNotSqlInjection("SELECT '€foobar()'", "€foobar()");
 });
 
 t.test("It flags lowercased input as SQL injection", async () => {
