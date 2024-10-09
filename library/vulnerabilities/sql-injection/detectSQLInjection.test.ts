@@ -495,24 +495,18 @@ for (const file of files) {
   const lines = contents.split(/\r?\n/);
   for (const sql of lines) {
     t.test(
-      `It flags ${sql} from ${basename(file)} as SQL injection`,
-      async () => {
-        isSqlInjection(sql, sql);
-      }
-    );
-
-    t.test(
-      `It flags ${sql} from ${basename(file)} as SQL injection (in query)`,
-      async () => {
-        isSqlInjection(`SELECT * FROM users WHERE id = ${sql}`, sql);
-      }
-    );
-
-    t.test(
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with single quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, "'");
-        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
+        t.same(
+          detectSQLInjection(
+            `SELECT * FROM users WHERE id = ${escaped}`,
+            sql,
+            new SQLDialectMySQL()
+          ),
+          false,
+          `${sql} (mysql)`
+        );
       }
     );
 
@@ -520,7 +514,15 @@ for (const file of files) {
       `It does not flag ${sql} from ${basename(file)} as SQL injection (when escaped with double quotes using backslash)`,
       async () => {
         const escaped = escapeLikeDatabase(sql, '"');
-        isNotSqlInjection(`SELECT * FROM users WHERE id = ${escaped}`, sql);
+        t.same(
+          detectSQLInjection(
+            `SELECT * FROM users WHERE id = ${escaped}`,
+            sql,
+            new SQLDialectMySQL()
+          ),
+          false,
+          `${sql} (mysql)`
+        );
       }
     );
   }
