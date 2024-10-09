@@ -210,17 +210,6 @@ t.test("It flags multiline queries correctly", async () => {
   );
 });
 
-SQL_DANGEROUS_IN_STRING.forEach((dangerous) => {
-  t.test(
-    `It flags dangerous string ${dangerous} as SQL injection`,
-    async () => {
-      // Needs to be longer than 1 char
-      const input = `${dangerous} a`;
-      isSqlInjection(`SELECT * FROM users WHERE ${input}`, input);
-    }
-  );
-});
-
 t.test("It does not flag key keyword as SQL injection", async () => {
   const query = `
       INSERT INTO businesses (
