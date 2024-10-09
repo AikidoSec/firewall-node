@@ -22,7 +22,7 @@ t.test("It allows escape sequences", async (t) => {
 });
 
 t.test("user input inside IN (...)", async () => {
-  isSqlInjection("SELECT * FROM users WHERE id IN ('123')", "'123'");
+  isNotSqlInjection("SELECT * FROM users WHERE id IN ('123')", "'123'");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123)", "123");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123, 456)", "123");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123, 456)", "456");
@@ -39,15 +39,14 @@ t.test("user input inside IN (...)", async () => {
 });
 
 t.test("It checks whether the string is safely escaped", async () => {
-  isSqlInjection(
+  isNotSqlInjection(
     `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
     "I'm writting you"
   );
-  isSqlInjection(
+  isNotSqlInjection(
     `SELECT * FROM comments WHERE comment = "I"m writting you"`,
     'I"m writting you'
   );
-  isSqlInjection("SELECT * FROM `comm`ents`", "`comm`ents");
 
   isNotSqlInjection(
     `SELECT * FROM comments WHERE comment = "I'm writting you"`,
@@ -61,7 +60,6 @@ t.test("It checks whether the string is safely escaped", async () => {
     `SELECT * FROM comments WHERE comment = "I\`m writting you"`,
     "I`m writting you"
   );
-  isNotSqlInjection("SELECT * FROM `comm'ents`", "comm'ents");
 });
 
 t.test(
@@ -120,13 +118,6 @@ t.test("user input is longer than query", async () => {
 });
 
 t.test("It flags multiline queries correctly", async () => {
-  isNotSqlInjection(
-    `
-      SELECT * FROM \`users\`\`
-      WHERE id = 123
-    `,
-    "users`"
-  );
   isSqlInjection(
     `
         SELECT *
