@@ -49,6 +49,7 @@ jobs:
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
       - run: make install
+      - run: make build
       - run: make test-ci
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
