@@ -37,6 +37,21 @@ services:
       - "27015:3306"
     volumes:
       - mysql:/var/lib/mysql
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    ports:
+      - "8123:8123"  # HTTP interface
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    environment:
+      - CLICKHOUSE_DB=main_db
+      - CLICKHOUSE_USER=root
+      - CLICKHOUSE_PASSWORD=password
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
 
 volumes:
   mongodb:
@@ -44,4 +59,6 @@ volumes:
   postgres:
     driver: local
   mysql:
+    driver: local
+  clickhouse:
     driver: local
