@@ -56,7 +56,6 @@ export class VersionedPackage {
     }
 
     this.requireFileInterceptors.set(relativePath, interceptor);
-    // Allow chaining
     return this;
   }
 
