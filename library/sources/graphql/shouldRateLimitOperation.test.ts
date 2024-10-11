@@ -6,18 +6,14 @@ import { Token } from "../../agent/api/Token";
 import { Context } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { shouldRateLimitOperation } from "./shouldRateLimitOperation";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 type Args = Pick<ExecutionArgs, "document" | "operationName">;
 
 t.test("it does not rate limit if endpoint not found", async () => {
-  const token = new Token("123");
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    token,
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
 
   const args: Args = {
     document: parse(`
@@ -50,11 +46,9 @@ t.test("it does not rate limit if endpoint not found", async () => {
 });
 
 t.test("it rate limits query", async () => {
-  const token = new Token("123");
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       endpoints: [
         {
@@ -77,9 +71,7 @@ t.test("it rate limits query", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
     }),
-    token,
-    undefined
-  );
+  });
 
   agent.start([]);
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -119,11 +111,9 @@ t.test("it rate limits query", async () => {
 });
 
 t.test("it rate limits mutation", async () => {
-  const token = new Token("123");
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       endpoints: [
         {
@@ -146,9 +136,7 @@ t.test("it rate limits mutation", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
     }),
-    token,
-    undefined
-  );
+  });
 
   agent.start([]);
   await new Promise((resolve) => setTimeout(resolve, 0));

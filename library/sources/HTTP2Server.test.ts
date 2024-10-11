@@ -1,16 +1,15 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { connect, IncomingHttpHeaders } from "http2";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
@@ -56,13 +55,10 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  undefined
-);
+});
 agent.start([new HTTPServer(), new FileSystem()]);
 
 const { readFileSync } = require("fs");

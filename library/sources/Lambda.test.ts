@@ -1,13 +1,11 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import type { Context } from "aws-lambda";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext, updateContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const gatewayEvent: APIGatewayProxyEvent = {
   resource: "/dev/{proxy+}",
@@ -193,11 +191,14 @@ t.test("it passes through unknown types of events", async () => {
 t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 
-  const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("123"), "lambda");
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api: testing,
+  });
   agent.start([]);
-  setInstance(agent);
 
   const handler = createLambdaWrapper(async (event, context) => {
     return getContext();
@@ -309,11 +310,13 @@ t.test(
   async () => {
     const clock = FakeTimers.install();
 
-    const logger = new LoggerNoop();
     const testing = new ReportingAPIForTesting();
-    const agent = new Agent(false, logger, testing, undefined, "lambda");
+    const agent = createTestAgent({
+      block: false,
+      serverless: "lambda",
+      api: testing,
+    });
     agent.start([]);
-    setInstance(agent);
 
     const handler = createLambdaWrapper(async (event, context) => {
       return getContext();
@@ -341,11 +344,14 @@ t.test(
 t.test("if handler throws it still sends heartbeat", async () => {
   const clock = FakeTimers.install();
 
-  const logger = new LoggerNoop();
   const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api: testing,
+  });
   agent.start([]);
-  setInstance(agent);
 
   testing.clear();
 
@@ -419,11 +425,12 @@ t.test("no cookie header", async () => {
 });
 
 t.test("it counts attacks", async () => {
-  const logger = new LoggerNoop();
-  const testing = new ReportingAPIForTesting();
-  const agent = new Agent(false, logger, testing, new Token("token"), "lambda");
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+  });
   agent.start([]);
-  setInstance(agent);
 
   const handler = createLambdaWrapper(async (event, context) => {
     const ctx = getContext();

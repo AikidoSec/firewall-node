@@ -6,6 +6,7 @@ import { Token } from "../api/Token";
 import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
 import { setInstance } from "../AgentSingleton";
 import { bindContext } from "../Context";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 t.test("Agent is not initialized", async (t) => {
   try {
@@ -24,14 +25,11 @@ t.test("Agent is not initialized", async (t) => {
 });
 
 const logger = new LoggerForTesting();
-const agent = new Agent(
-  true,
+
+const agent = createTestAgent({
   logger,
-  new ReportingAPIForTesting(),
-  new Token("123"),
-  undefined
-);
-setInstance(agent);
+  token: new Token("123"),
+});
 
 t.test("Inspect args", async (t) => {
   t.plan(2);
