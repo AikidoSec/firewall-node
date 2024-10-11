@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -36,13 +34,9 @@ const safeContext: Context = {
 };
 
 t.test("it inspects method calls and blocks if needed", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent({
+    serverless: "lambda",
+  });
   agent.start([new MongoDB()]);
 
   const { MongoClient } = require("mongodb");

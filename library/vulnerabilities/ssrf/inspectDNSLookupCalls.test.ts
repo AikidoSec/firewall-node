@@ -1,12 +1,12 @@
 import { LookupAddress, lookup } from "dns";
 import * as t from "tap";
-import { Agent } from "../../agent/Agent";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -24,10 +24,9 @@ const context: Context = {
 };
 
 t.test("it resolves private IPv4 without context", (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -45,10 +44,9 @@ t.test("it resolves private IPv4 without context", (t) => {
 });
 
 t.test("it resolves private IPv6 without context", (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -66,10 +64,11 @@ t.test("it resolves private IPv6 without context", (t) => {
 });
 
 t.test("it blocks lookup in blocking mode", (t) => {
-  const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
   agent.start([]);
   api.clear();
 
@@ -106,10 +105,11 @@ t.test("it blocks lookup in blocking mode", (t) => {
 });
 
 t.test("it allows resolved public IP", (t) => {
-  const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
   agent.start([]);
   api.clear();
 
@@ -136,10 +136,11 @@ t.test("it allows resolved public IP", (t) => {
 t.test(
   "it does not block resolved private IP if not found in user input",
   (t) => {
-    const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting();
-    const token = new Token("123");
-    const agent = new Agent(true, logger, api, token, undefined);
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
     agent.start([]);
     api.clear();
 
@@ -164,7 +165,6 @@ t.test(
 t.test(
   "it does not block resolved private IP if endpoint protection is turned off",
   async (t) => {
-    const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting({
       success: true,
       heartbeatIntervalInMS: 10 * 60 * 1000,
@@ -184,8 +184,10 @@ t.test(
       allowedIPAddresses: [],
       configUpdatedAt: 0,
     });
-    const token = new Token("123");
-    const agent = new Agent(true, logger, api, token, undefined);
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
     agent.start([]);
 
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -213,10 +215,9 @@ t.test(
 );
 
 t.test("it blocks lookup in blocking mode with all option", (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -240,10 +241,12 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(false, logger, api, token, undefined);
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("123"),
+    api,
+  });
   agent.start([]);
   api.clear();
 
@@ -272,10 +275,9 @@ t.test("it does not block in dry mode", (t) => {
 });
 
 t.test("it ignores invalid args", (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -294,10 +296,9 @@ t.test("it ignores invalid args", (t) => {
 });
 
 t.test("it ignores if lookup returns error", (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -335,10 +336,9 @@ const imdsMockLookup = (
 };
 
 t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -399,8 +399,10 @@ t.test(
       allowedIPAddresses: [],
       configUpdatedAt: 0,
     });
-    const token = new Token("123");
-    const agent = new Agent(true, logger, api, token, undefined);
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
     agent.start([]);
 
     // Wait for the agent to start
@@ -424,10 +426,9 @@ t.test(
 );
 
 t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
@@ -466,10 +467,9 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
 });
 
 t.test("it ignores when the argument is an IP address", async (t) => {
-  const logger = new LoggerNoop();
-  const api = new ReportingAPIForTesting();
-  const token = new Token("123");
-  const agent = new Agent(true, logger, api, token, undefined);
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(

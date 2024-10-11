@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Path } from "./Path";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -28,13 +26,7 @@ const unsafeAbsoluteContext: Context = {
 };
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new Path()]);
 

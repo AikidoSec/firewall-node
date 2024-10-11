@@ -1,11 +1,9 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { runWithContext, type Context } from "../agent/Context";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -50,13 +48,7 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  undefined,
-  undefined
-);
+const agent = createTestAgent();
 agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
 
 t.test("it detects shell injections", async () => {

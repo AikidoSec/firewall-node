@@ -1,16 +1,13 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { GraphQL } from "./GraphQL";
 import { Token } from "../agent/api/Token";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 t.test("it works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    api: new ReportingAPIForTesting({
       success: true,
       endpoints: [
         {
@@ -33,9 +30,8 @@ t.test("it works", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
     }),
-    new Token("123"),
-    undefined
-  );
+    token: new Token("123"),
+  });
 
   agent.start([new GraphQL()]);
 
