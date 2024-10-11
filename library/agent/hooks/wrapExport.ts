@@ -86,7 +86,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName || "",
+                method: methodName || "default export",
                 module: pkgInfo.name,
               });
             }
@@ -105,7 +105,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName || "",
+                method: methodName || "default export",
                 module: pkgInfo.name,
               });
             }
@@ -116,7 +116,7 @@ export function wrapExport(
       }
     );
   } catch (error) {
-    agent.onFailedToWrapMethod(pkgInfo.name, methodName);
+    agent.onFailedToWrapMethod(pkgInfo.name, methodName || "default export");
   }
 }
 

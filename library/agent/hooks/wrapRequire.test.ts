@@ -244,24 +244,6 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
   t.same(
     (
       t.throws(() =>
-        // @ts-expect-error Test with invalid arguments
-        new Package("test").withVersion("^1.0.0").onFileRequire()
-      ) as Error
-    ).message,
-    "Relative path must be a string"
-  );
-  t.same(
-    (
-      t.throws(() =>
-        // @ts-expect-error Test with invalid arguments
-        new Package("test").withVersion("^1.0.0").onFileRequire("")
-      ) as Error
-    ).message,
-    "Interceptor must be a function"
-  );
-  t.same(
-    (
-      t.throws(() =>
         new Package("test").withVersion("^1.0.0").onFileRequire("", () => {})
       ) as Error
     ).message,

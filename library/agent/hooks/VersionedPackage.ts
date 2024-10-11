@@ -24,13 +24,6 @@ export class VersionedPackage {
   }
 
   onFileRequire(relativePath: string, interceptor: RequireInterceptor) {
-    if (typeof relativePath !== "string") {
-      throw new Error("Relative path must be a string");
-    }
-    if (typeof interceptor !== "function") {
-      throw new Error("Interceptor must be a function");
-    }
-
     if (relativePath.length === 0) {
       throw new Error("Relative path must not be empty");
     }
