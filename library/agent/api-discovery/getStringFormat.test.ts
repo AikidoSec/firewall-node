@@ -1,6 +1,14 @@
 import t from "tap";
 import { getStringFormat } from "./getStringFormat";
 
+t.test("it is not a known format", async (t) => {
+  t.same(getStringFormat(""), undefined);
+  t.same(getStringFormat("abc"), undefined);
+  t.same(getStringFormat("2021-11-25T"), undefined);
+  t.same(getStringFormat("2021-11-25T00:00:00"), undefined);
+  t.same(getStringFormat("test".repeat(64)), undefined);
+});
+
 t.test("it is a date string", async (t) => {
   t.same(getStringFormat("2021-01-01"), "date");
   t.same(getStringFormat("2021-12-31"), "date");
@@ -12,4 +20,9 @@ t.test("it is a date time string", async (t) => {
   t.same(getStringFormat("1990-12-31T23:59:60Z"), "date-time");
   t.same(getStringFormat("1990-12-31T15:59:60-08:00"), "date-time");
   t.same(getStringFormat("1937-01-01T12:00:27.87+00:20"), "date-time");
+});
+
+t.test("it is a UUID string", async (t) => {
+  t.same(getStringFormat("550e8400-e29b-41d4-a716-446655440000"), "uuid");
+  t.same(getStringFormat("00000000-0000-0000-0000-000000000000"), "uuid");
 });

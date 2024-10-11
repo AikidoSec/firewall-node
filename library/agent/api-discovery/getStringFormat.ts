@@ -1,5 +1,6 @@
 import isDateString from "./helpers/isDateString";
 import isDateTimeString from "./helpers/isDateTimeString";
+import isUUIDString from "./helpers/isUUIDString";
 
 /**
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
@@ -24,23 +25,39 @@ const indicationChars = new Set<string>(["-", ":", "@"]);
  * Get the format of a string
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
  */
-export function getStringFormat(str: string) {
+export function getStringFormat(str: string): StringFormat | undefined {
+  // Skip if too short
   if (str.length < 4) {
     return undefined;
   }
 
-  // Todo if larger than x return early?
+  // Skip if too long (performance optimization)
+  if (str.length > 255) {
+    return undefined;
+  }
 
   const foundIndicationChars = checkForIndicationChars(str);
 
   if (foundIndicationChars.has("-")) {
-    if (foundIndicationChars.has(":") && isDateTimeString(str)) {
-      return "date-time";
-    }
-    if (isDateString(str)) {
-      return "date";
+    if (foundIndicationChars.has(":")) {
+      // Check if it is a date-time, e.g. 2021-01-01T00:00:00Z
+      if (isDateTimeString(str)) {
+        return "date-time";
+      }
+    } else {
+      // Check if it is a date, e.g. 2021-01-01
+      if (isDateString(str)) {
+        return "date";
+      }
+
+      // Check if it is a UUID
+      if (isUUIDString(str)) {
+        return "uuid";
+      }
     }
   }
+
+  return undefined;
 }
 
 /**
