@@ -5,6 +5,7 @@ import { setUser } from "../agent/context/user";
 import { Hapi } from "./Hapi";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const agent = createTestAgent({
   api: new ReportingAPIForTesting({
@@ -33,7 +34,6 @@ agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
 import * as hapi from "@hapi/hapi";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
-import { createTestAgent } from "../helpers/createTestAgent";
 
 function getServer(onRequestExt = true) {
   const server = hapi.server({
