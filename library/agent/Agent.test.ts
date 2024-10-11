@@ -57,6 +57,7 @@ t.test("it sends started event", async (t) => {
         },
         platform: {
           version: getSemverNodeVersion(),
+          arch: process.arch,
         },
       },
     },

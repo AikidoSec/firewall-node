@@ -379,6 +379,7 @@ export class Agent {
       },
       platform: {
         version: getSemverNodeVersion(),
+        arch: process.arch,
       },
     };
   }
