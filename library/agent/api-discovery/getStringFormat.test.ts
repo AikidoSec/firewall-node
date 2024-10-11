@@ -26,3 +26,13 @@ t.test("it is a UUID string", async (t) => {
   t.same(getStringFormat("550e8400-e29b-41d4-a716-446655440000"), "uuid");
   t.same(getStringFormat("00000000-0000-0000-0000-000000000000"), "uuid");
 });
+
+t.test("it is an IPv4 string", async (t) => {
+  t.same(getStringFormat("127.0.0.1"), "ipv4");
+  t.same(getStringFormat("1.2.3.4"), "ipv4");
+});
+
+t.test("it is an IPv6 string", async (t) => {
+  t.same(getStringFormat("2001:0db8:85a3:0000:0000:8a2e:0370:7334"), "ipv6");
+  t.same(getStringFormat("2001:db8:0:0:0:8a2e:370:7334"), "ipv6");
+});

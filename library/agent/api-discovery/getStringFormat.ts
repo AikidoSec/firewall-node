@@ -1,3 +1,4 @@
+import { isIPv4, isIPv6 } from "net";
 import isDateString from "./helpers/isDateString";
 import isDateTimeString from "./helpers/isDateTimeString";
 import isUUIDString from "./helpers/isUUIDString";
@@ -19,7 +20,7 @@ export type StringFormat =
   | "ipv6";
 
 // Used for improved performance
-const indicationChars = new Set<string>(["-", ":", "@"]);
+const indicationChars = new Set<string>(["-", ":", "@", "."]);
 
 /**
  * Get the format of a string
@@ -55,6 +56,16 @@ export function getStringFormat(str: string): StringFormat | undefined {
         return "uuid";
       }
     }
+  }
+
+  // Check if it is an IPv4
+  if (foundIndicationChars.has(".") && isIPv4(str)) {
+    return "ipv4";
+  }
+
+  // Check if it is an IPv6
+  if (foundIndicationChars.has(":") && isIPv6(str)) {
+    return "ipv6";
   }
 
   return undefined;
