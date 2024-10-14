@@ -41,3 +41,9 @@ t.test("it is an email string", async (t) => {
   t.same(getStringFormat("hello@example.com"), "email");
   t.same(getStringFormat("ö@ö.de"), "email");
 });
+
+t.test("it is a URI string", async (t) => {
+  t.same(getStringFormat("http://example.com"), "uri");
+  t.same(getStringFormat("https://example.com"), "uri");
+  t.same(getStringFormat("ftp://example.com"), "uri");
+});

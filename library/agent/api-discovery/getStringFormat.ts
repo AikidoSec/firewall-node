@@ -3,6 +3,7 @@ import isDateString from "./helpers/isDateString";
 import isDateTimeString from "./helpers/isDateTimeString";
 import isUUIDString from "./helpers/isUUIDString";
 import isEmailString from "./helpers/isEmail";
+import isUriString from "./helpers/isUri";
 
 /**
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
@@ -13,12 +14,11 @@ type StringFormat =
   | "email"
   | "uuid"
   | "uri"
-  | "hostname"
   | "ipv4"
   | "ipv6";
 
 // Used for improved performance
-const indicationChars = new Set<string>(["-", ":", "@", "."]);
+const indicationChars = new Set<string>(["-", ":", "@", ".", "://"]);
 
 /**
  * Get the format of a string
@@ -56,8 +56,14 @@ export function getStringFormat(str: string): StringFormat | undefined {
     }
   }
 
+  // Check if it is an email
   if (foundIndicationChars.has("@") && isEmailString(str)) {
     return "email";
+  }
+
+  // Check if it is a URI
+  if (foundIndicationChars.has("://") && isUriString(str)) {
+    return "uri";
   }
 
   // Check if it is an IPv4
