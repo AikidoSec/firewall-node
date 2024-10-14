@@ -92,7 +92,6 @@ export class FileSystem implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    // Wrap fs
     hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
       const functions = this.getFunctions();
 
@@ -127,7 +126,6 @@ export class FileSystem implements Wrapper {
       });
     });
 
-    // Wrap fs/promises
     hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
       const functions = this.getFunctions();
       Object.keys(functions).forEach((name) => {
