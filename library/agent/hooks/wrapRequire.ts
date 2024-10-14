@@ -21,19 +21,21 @@ let pkgCache = new Map<string, unknown>();
 let builtinCache = new Map<string, unknown>();
 
 /**
- * Wraps the require function to intercept the require calls.
+ * Wraps the require function to intercept require calls.
  * This function makes sure that the require function is only wrapped once.
  */
 export function wrapRequire() {
   if (isRequireWrapped) {
     return;
   }
+
   // @ts-expect-error Not included in the Node.js types
   if (typeof mod._resolveFilename !== "function") {
     throw new Error(
       `Could not find the _resolveFilename function in node:module using Node.js version ${process.version}`
     );
   }
+
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
 
@@ -93,9 +95,9 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
   const id = args[0] as string;
 
   try {
-    // Check if its a builtin module
+    // Check if it's a builtin module
     // They are easier to patch (no file patching)
-    // Seperate handling for builtin modules improves the performance
+    // Separate handling for builtin modules improves the performance
     if (isBuiltinModule(id)) {
       // Call function for patching builtin modules with the same context (this)
       return patchBuiltinModule.call(this, id, originalExports);
@@ -107,6 +109,7 @@ function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
     if (error instanceof Error) {
       getInstance()?.onFailedToWrapModule(id, error);
     }
+
     return originalExports;
   }
 }
@@ -177,6 +180,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     // Can happen if the package is not inside a node_modules folder, like the dev build of our library itself
     return originalExports;
   }
+
   const moduleName = pathInfo.name;
 
   // Get all versioned packages for the module name
@@ -232,7 +236,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
       .map((pkg) => pkg.getRequireInterceptors())
       .flat();
   } else {
-    // If its not the main file, we want to check if the want to patch the required file
+    // If it's not the main file, we want to check if the want to patch the required file
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();

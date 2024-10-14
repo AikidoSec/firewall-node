@@ -18,8 +18,9 @@ export class VersionedPackage {
     if (typeof interceptor !== "function") {
       throw new Error("Interceptor must be a function");
     }
+
     this.requireInterceptors.push(interceptor);
-    // Allow chaining
+
     return this;
   }
 
@@ -49,6 +50,7 @@ export class VersionedPackage {
     }
 
     this.requireFileInterceptors.set(relativePath, interceptor);
+
     return this;
   }
 
