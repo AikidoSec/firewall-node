@@ -10,7 +10,7 @@ import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDi
 export class MariaDB implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
 
-  private inspectQuery(args: unknown[]): InterceptorResult {
+  private inspectQuery(args: unknown[], operation: string): InterceptorResult {
     const context = getContext();
 
     if (!context) {
@@ -23,7 +23,7 @@ export class MariaDB implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: "MariaDB.query",
+        operation: `mariadb.${operation}`,
         dialect: this.dialect,
       });
     }
@@ -39,7 +39,7 @@ export class MariaDB implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: "MariaDB.query",
+        operation: `mariadb.${operation}`,
         dialect: this.dialect,
       });
     }
@@ -50,14 +50,24 @@ export class MariaDB implements Wrapper {
   wrap(hooks: Hooks) {
     const mariadb = hooks.addPackage("mariadb").withVersion("^3.0.0");
 
-    const connection = mariadb
-      .addFile("lib/connection")
-      .addSubject((exports) => exports.prototype);
+    const connections = [
+      mariadb
+        .addFile("lib/connection")
+        .addSubject((exports) => exports.prototype),
+      mariadb
+        .addFile("lib/connection-callback")
+        .addSubject((exports) => exports.prototype),
+    ];
 
-    connection
-      .inspect("query", (args) => this.inspectQuery(args))
-      .inspect("queryStream", (args) => this.inspectQuery(args))
-      .inspect("execute", (args) => this.inspectQuery(args))
-      .inspect("prepare", (args) => this.inspectQuery(args));
+    for (const connection of connections) {
+      connection
+        .inspect("query", (args) => this.inspectQuery(args, "query"))
+        .inspect("queryStream", (args) => this.inspectQuery(args, "query"))
+        .inspect("execute", (args) => this.inspectQuery(args, "execute"))
+        .inspect("prepare", (args) => this.inspectQuery(args, "prepare"))
+        .inspect("prepareExecute", (args) => this.inspectQuery(args, "execute"))
+        .inspect("executePromise", (args) => this.inspectQuery(args, "execute"))
+        .inspect("batch", (args) => this.inspectQuery(args, "batch"));
+    }
   }
 }
