@@ -409,22 +409,7 @@ export class Agent {
       }
     }
 
-    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
-
-    for (const pkg in this.wrappedPackages) {
-      const details = this.wrappedPackages[pkg];
-
-      /* c8 ignore next 3 */
-      if (!details.version) {
-        continue;
-      }
-
-      if (details.supported) {
-        this.logger.log(`${pkg}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${pkg}@${details.version} is not supported!`);
-      }
-    }
+    wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
@@ -440,6 +425,26 @@ export class Agent {
 
   onFailedToWrapMethod(module: string, name: string) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  }
+
+  onFailedToWrapModule(module: string, error: Error) {
+    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+  }
+
+  onPackageWrapped(name: string, details: WrappedPackage) {
+    if (this.wrappedPackages[name]) {
+      // Already reported as wrapped
+      return;
+    }
+    this.wrappedPackages[name] = details;
+
+    if (details.version) {
+      if (details.supported) {
+        this.logger.log(`${name}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${name}@${details.version} is not supported!`);
+      }
+    }
   }
 
   onFailedToWrapPackage(module: string) {

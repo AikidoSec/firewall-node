@@ -1,7 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -9,6 +8,7 @@ import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -63,7 +63,11 @@ t.test(
   async (t) => {
     const logger = new LoggerForTesting();
     const api = new ReportingAPIForTesting();
-    const agent = new Agent(true, logger, api, new Token("123"), undefined);
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+    });
 
     agent.start([new Undici()]);
 

@@ -1,20 +1,12 @@
 import { join } from "path";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { XmlMinusJs } from "./XmlMinusJs";
 import { readFile } from "fs/promises";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 t.test("xml2js works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new XmlMinusJs()]);
 
@@ -53,13 +45,7 @@ t.test("xml2js works", async () => {
 });
 
 t.test("xml2json works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new XmlMinusJs()]);
 
@@ -94,14 +80,7 @@ t.test("xml2json works", async () => {
 });
 
 t.test("Ignore if xml is not in the body", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-
+  const agent = createTestAgent();
   agent.start([new XmlMinusJs()]);
 
   const xmljs = require("xml-js");

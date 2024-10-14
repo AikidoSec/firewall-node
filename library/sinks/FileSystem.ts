@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
@@ -91,42 +92,51 @@ export class FileSystem implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const fs = hooks.addBuiltinModule("fs");
-    const callbackStyle = fs.addSubject((exports) => exports);
-    const promiseStyle = hooks
-      .addBuiltinModule("fs/promises")
-      .addSubject((exports) => exports);
+    hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
+      const functions = this.getFunctions();
 
-    const functions = this.getFunctions();
+      Object.keys(functions).forEach((name) => {
+        const { pathsArgs, sync, promise } = functions[name];
 
-    Object.keys(functions).forEach((name) => {
-      const { pathsArgs, sync, promise } = functions[name];
-      callbackStyle.inspect(name, (args) => {
-        return this.inspectPath(args, name, pathsArgs);
+        wrapExport(exports, name, pkgInfo, {
+          inspectArgs: (args) => {
+            return this.inspectPath(args, name, pathsArgs);
+          },
+        });
+
+        if (sync) {
+          wrapExport(exports, `${name}Sync`, pkgInfo, {
+            inspectArgs: (args) => {
+              return this.inspectPath(args, `${name}Sync`, pathsArgs);
+            },
+          });
+        }
       });
 
-      if (sync) {
-        callbackStyle.inspect(`${name}Sync`, (args) => {
-          return this.inspectPath(args, `${name}Sync`, pathsArgs);
-        });
-      }
-
-      if (promise) {
-        promiseStyle.inspect(name, (args) => {
-          return this.inspectPath(args, name, pathsArgs);
-        });
-      }
+      // Wrap realpath.native
+      wrapExport(exports.realpath, "native", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectPath(args, "realpath.native", 1);
+        },
+      });
+      wrapExport(exports.realpathSync, "native", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectPath(args, "realpathSync.native", 1);
+        },
+      });
     });
 
-    fs.addSubject((exports) => exports.realpath).inspect("native", (args) => {
-      return this.inspectPath(args, "realpath.native", 1);
-    });
+    hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
+      const functions = this.getFunctions();
+      Object.keys(functions).forEach((name) => {
+        const { pathsArgs, sync, promise } = functions[name];
 
-    fs.addSubject((exports) => exports.realpathSync).inspect(
-      "native",
-      (args) => {
-        return this.inspectPath(args, "realpathSync.native", 1);
-      }
-    );
+        if (promise) {
+          wrapExport(exports, name, pkgInfo, {
+            inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
+          });
+        }
+      });
+    });
   }
 }
