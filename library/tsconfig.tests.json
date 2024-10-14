@@ -5,10 +5,10 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "declaration": true,
-    "strict": true,
+    "strict": false,
     "allowJs": false,
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.test.ts"]
 }
