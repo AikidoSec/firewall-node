@@ -1,3 +1,4 @@
+import { getMaxApiDiscoverySamples } from "../../helpers/getMaxApiDiscoverySamples";
 import type { Context } from "../Context";
 import type { Route } from "../Routes";
 import { getApiInfo } from "./getApiInfo";
@@ -6,8 +7,17 @@ import { mergeDataSchemas } from "./mergeDataSchemas";
 
 /**
  * Updates the body, query, and auth info of an existing route with new info from the context.
+ * Only the first 10 hits of a route during one heartbeat window are sampled.
  */
 export function updateApiInfo(context: Context, existingRoute: Route): void {
+  const maxSamples = getMaxApiDiscoverySamples();
+
+  // Only sample first x hits of a route during one heartbeat window
+  // Default is 10
+  if (existingRoute.hits > maxSamples) {
+    return;
+  }
+
   try {
     const {
       body: newBody,

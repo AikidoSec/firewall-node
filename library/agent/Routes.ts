@@ -25,11 +25,7 @@ export class Routes {
     const existing = this.routes.get(key);
 
     if (existing) {
-      // Only sample first 20 hits of a route during one heartbeat window
-      if (existing.hits <= 20) {
-        // Update api schemas if necessary
-        updateApiInfo(context, existing);
-      }
+      updateApiInfo(context, existing);
 
       existing.hits++;
       return;
