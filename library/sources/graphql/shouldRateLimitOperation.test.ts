@@ -1,10 +1,8 @@
 import { parse, ExecutionArgs } from "graphql";
 import * as t from "tap";
-import { Agent } from "../../agent/Agent";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context } from "../../agent/Context";
-import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { shouldRateLimitOperation } from "./shouldRateLimitOperation";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
