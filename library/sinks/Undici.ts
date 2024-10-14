@@ -4,12 +4,14 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
 import { Wrapper } from "../agent/Wrapper";
-import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
-import { tryParseURL } from "../helpers/tryParseURL";
+import {
+  getMajorNodeVersion,
+  getMinorNodeVersion,
+} from "../helpers/getNodeVersion";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapDispatch } from "./undici/wrapDispatch";
+import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
 
 const methods = [
   "request",
@@ -42,6 +44,7 @@ export class Undici implements Wrapper {
       hostname: hostname,
       operation: `undici.${method}`,
       context,
+      port,
     });
   }
 
@@ -51,61 +54,16 @@ export class Undici implements Wrapper {
     agent: Agent,
     method: string
   ): InterceptorResult {
-    if (args.length > 0) {
-      if (typeof args[0] === "string" && args[0].length > 0) {
-        const url = tryParseURL(args[0]);
-        if (url) {
-          const attack = this.inspectHostname(
-            agent,
-            url.hostname,
-            getPortFromURL(url),
-            method
-          );
-          if (attack) {
-            return attack;
-          }
-        }
-      }
-
-      if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        const attack = this.inspectHostname(
-          agent,
-          args[0].hostname,
-          getPortFromURL(args[0]),
-          method
-        );
-        if (attack) {
-          return attack;
-        }
-      }
-
-      if (
-        isPlainObject(args[0]) &&
-        typeof args[0].hostname === "string" &&
-        args[0].hostname.length > 0
-      ) {
-        let port = 80;
-        if (typeof args[0].protocol === "string") {
-          port = args[0].protocol === "https:" ? 443 : 80;
-        }
-        if (typeof args[0].port === "number") {
-          port = args[0].port;
-        } else if (
-          typeof args[0].port === "string" &&
-          Number.isInteger(parseInt(args[0].port, 10))
-        ) {
-          port = parseInt(args[0].port, 10);
-        }
-
-        const attack = this.inspectHostname(
-          agent,
-          args[0].hostname,
-          port,
-          method
-        );
-        if (attack) {
-          return attack;
-        }
+    const hostnameAndPort = getHostnameAndPortFromArgs(args);
+    if (hostnameAndPort) {
+      const attack = this.inspectHostname(
+        agent,
+        hostnameAndPort.hostname,
+        hostnameAndPort.port,
+        method
+      );
+      if (attack) {
+        return attack;
       }
     }
 
@@ -115,25 +73,31 @@ export class Undici implements Wrapper {
   private patchGlobalDispatcher(agent: Agent) {
     const undici = require("undici");
 
+    const dispatcher = new undici.Agent({
+      connect: {
+        lookup: inspectDNSLookupCalls(
+          lookup,
+          agent,
+          "undici",
+          // We don't know the method here, so we just use "undici.[method]"
+          "undici.[method]"
+        ),
+      },
+    });
+
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
-    undici.setGlobalDispatcher(
-      new undici.Agent({
-        connect: {
-          lookup: inspectDNSLookupCalls(
-            lookup,
-            agent,
-            "undici",
-            // We don't know the method here, so we just use "undici.[method]"
-            "undici.[method]"
-          ),
-        },
-      })
-    );
+    undici.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
-    if (getMajorNodeVersion() < 18) {
-      // Undici requires Node.js 18+
+    const supported =
+      getMajorNodeVersion() >= 17 ||
+      (getMajorNodeVersion() === 16 && getMinorNodeVersion() >= 8);
+
+    if (!supported) {
+      // Undici requires Node.js 16.8+
       // Packages aren't scoped in npm workspaces, we'll try to require undici:
       // ReferenceError: ReadableStream is not defined
       return;

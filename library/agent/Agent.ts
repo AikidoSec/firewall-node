@@ -2,6 +2,7 @@
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -21,6 +22,7 @@ import { Source } from "./Source";
 import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
+import { isAikidoCI } from "../helpers/isAikidoCI";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -28,16 +30,16 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private lastHeartbeat = Date.now();
+  private lastHeartbeat = performance.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private timeoutInMS = 5000;
+  private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], []);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -235,7 +237,10 @@ export class Agent {
           response.allowedIPAddresses &&
           Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
-            : []
+            : [],
+          typeof response.receivedAnyStats === "boolean"
+            ? response.receivedAnyStats
+            : true
         );
       }
 
@@ -306,11 +311,15 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = Date.now();
+      const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
+      const hasCompressedStats = this.statistics.hasCompressedStats();
+      const canSendInitialStats =
+        !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
       const shouldReportInitialStats =
-        this.statistics.hasCompressedStats() && !this.reportedInitialStats;
+        !this.reportedInitialStats &&
+        (hasCompressedStats || canSendInitialStats);
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();
@@ -367,6 +376,10 @@ export class Agent {
         name: platform(),
         version: release(),
       },
+      platform: {
+        version: getSemverNodeVersion(),
+        arch: process.arch,
+      },
     };
   }
 
@@ -387,6 +400,13 @@ export class Agent {
       this.logger.log("Found token, reporting enabled!");
     } else {
       this.logger.log("No token provided, disabling reporting.");
+
+      if (!this.block && !isAikidoCI()) {
+        // eslint-disable-next-line no-console
+        console.log(
+          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+        );
+      }
     }
 
     this.wrappedPackages = wrapInstalledPackages(this, wrappers);
@@ -422,12 +442,31 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapPackage(module: string) {
+    this.logger.log(`Failed to wrap package ${module}`);
+  }
+
+  onFailedToWrapFile(module: string, filename: string) {
+    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+  }
+
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
   }
 
-  onRouteExecute(method: string, path: string) {
-    this.routes.addRoute(method, path);
+  onRouteExecute(context: Context) {
+    this.routes.addRoute(context);
+  }
+
+  onGraphQLExecute(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    topLevelFields: string[]
+  ) {
+    topLevelFields.forEach((field) => {
+      this.routes.addGraphQLField(method, path, type, field);
+    });
   }
 
   getRoutes() {

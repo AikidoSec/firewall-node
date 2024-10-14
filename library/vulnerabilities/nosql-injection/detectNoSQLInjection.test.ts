@@ -731,3 +731,60 @@ t.test("it ignores safe pipeline aggregations", async () => {
     }
   );
 });
+
+t.test("detects root injection", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          $where: "test",
+        },
+      }),
+      { username: "admin", $where: "test" }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".",
+      payload: { $where: "test" },
+    }
+  );
+});
+
+t.test("detects injection", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          test: { $ne: "", hello: "world" },
+        },
+      }),
+      { username: "admin", test: { $ne: "", hello: "world" } }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".test",
+      payload: { $ne: "" },
+    }
+  );
+});
+
+t.test("it does not detect", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          password: "test",
+        },
+      }),
+      { username: "admin", password: "test" }
+    ),
+    {
+      injection: false,
+    }
+  );
+});

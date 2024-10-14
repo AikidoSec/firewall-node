@@ -33,6 +33,7 @@ t.test("it can extract query objects", async () => {
       age: ".",
       whaat: ".user_input.[0]",
       dangerous: ".user_input.[1]",
+      "whaat,dangerous": ".user_input",
     })
   );
 });
@@ -138,6 +139,33 @@ t.test("it decodes JWTs", async () => {
   );
 });
 
+t.test("it ignores iss value of jwt", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      /**
+        {
+          "sub": "1234567890",
+          "name": "John Doe",
+          "iat": 1516239022,
+          "iss": "https://example.com"
+        }
+       */
+      token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIn0.QLC0vl-A11a1WcUPD6vQR2PlUvRMsqpegddfQzPajQM",
+    }),
+    fromObj({
+      token: ".",
+      iat: ".token<jwt>",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIn0.QLC0vl-A11a1WcUPD6vQR2PlUvRMsqpegddfQzPajQM":
+        ".token",
+      sub: ".token<jwt>",
+      "1234567890": ".token<jwt>.sub",
+      name: ".token<jwt>",
+      "John Doe": ".token<jwt>.name",
+    })
+  );
+});
+
 function fromObj(obj: Record<string, string>): Map<string, string> {
   return new Map(Object.entries(obj));
 }
@@ -148,6 +176,46 @@ t.test("it also adds the JWT itself as string", async () => {
     fromObj({
       header: ".",
       "/;ping%20localhost;.e30=.": ".header",
+    })
+  );
+});
+
+t.test("it concatenates array values", async () => {
+  t.same(
+    extractStringsFromUserInput({ arr: ["1", "2", "3"] }),
+    fromObj({
+      arr: ".",
+      "1,2,3": ".arr",
+      "1": ".arr.[0]",
+      "2": ".arr.[1]",
+      "3": ".arr.[2]",
+    })
+  );
+
+  t.same(
+    extractStringsFromUserInput({
+      arr: ["1", 2, true, null, undefined, { test: "test" }],
+    }),
+    fromObj({
+      arr: ".",
+      "1": ".arr.[0]",
+      test: ".arr.[5].test",
+      "1,2,true,,,[object Object]": ".arr",
+    })
+  );
+
+  t.same(
+    extractStringsFromUserInput({
+      arr: ["1", 2, true, null, undefined, { test: ["test123", "test345"] }],
+    }),
+    fromObj({
+      arr: ".",
+      "1": ".arr.[0]",
+      test: ".arr.[5]",
+      test123: ".arr.[5].test.[0]",
+      test345: ".arr.[5].test.[1]",
+      "test123,test345": ".arr.[5].test",
+      "1,2,true,,,[object Object]": ".arr",
     })
   );
 });

@@ -1,5 +1,7 @@
 name: Benchmark
-on: push
+on:
+  push: {}
+  workflow_call: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,21 +21,36 @@ jobs:
           "POSTGRES_DB": "main_db"
         ports:
           - "27016:5432"
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [18.x]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install K6
+        uses: grafana/setup-k6-action@v1
+      - name: Install wrk
+        run: |
+          sudo apt-get install build-essential libssl-dev git -y
+          git clone https://github.com/wg/wrk.git wrk
+          cd wrk
+          sudo make
+          sudo cp wrk /usr/local/bin
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
-        run: cd benchmarks/nosql-injection && node benchmark.js
+        run: cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
       - name: Run SQL Injection Benchmark
-        run: cd benchmarks/sql-injection && node benchmark.js
+        run: cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
       - name: Run shell injection Benchmark
-        run: cd benchmarks/shell-injection && node benchmark.js
+        run: cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
+      - name: Run Hono with Postgres Benchmark
+        run: cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
+      - name: Run API Discovery Benchmark
+        run: cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
+      - name: Run Express Benchmark
+        run: cd benchmarks/express && node --preserve-symlinks benchmark.js

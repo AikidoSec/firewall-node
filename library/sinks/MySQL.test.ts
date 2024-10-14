@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL } from "./MySQL";
 import type { Connection } from "mysql";
@@ -105,7 +105,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
@@ -118,7 +118,7 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
@@ -149,6 +149,12 @@ t.test("it detects SQL injections", async () => {
         return connection.query("-- This is a comment");
       }
     );
+
+    runWithContext(context, () => {
+      connection.query("SELECT petname FROM `cats`;", (error, results) => {
+        t.same(getContext(), context);
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

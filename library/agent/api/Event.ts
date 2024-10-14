@@ -16,6 +16,10 @@ export type AgentInfo = {
     name: string;
     version: string;
   };
+  platform: {
+    version: string;
+    arch: string;
+  };
   nodeEnv: string;
   serverless: boolean;
   stack: string[];
@@ -91,7 +95,12 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
-  routes: { path: string; method: string; hits: number }[];
+  routes: {
+    path: string;
+    method: string;
+    hits: number;
+    graphql?: { type: "query" | "mutation"; name: string };
+  }[];
   users: {
     id: string;
     name: string | undefined;

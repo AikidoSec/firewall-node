@@ -18,7 +18,7 @@ export class Path implements Wrapper {
           operation: `path.${operation}`,
           context: context,
           /* Only check the first arg for absolute path traversal.
-             If a insecure absolute path is passed as the second argument,
+             If an insecure absolute path is passed as the second argument,
              it can not be an absolute path because it is not the start of the resulting path. */
           checkPathStart: path === args[0],
         });
@@ -34,7 +34,13 @@ export class Path implements Wrapper {
 
   wrap(hooks: Hooks): void {
     hooks
-      .addBuiltinModule("path")
+      .addBuiltinModule("path/posix")
+      .addSubject((exports) => exports)
+      .inspect("join", (args) => this.inspectPath(args, "join"))
+      .inspect("resolve", (args) => this.inspectPath(args, "resolve"))
+      .inspect("normalize", (args) => this.inspectPath(args, "normalize"));
+    hooks
+      .addBuiltinModule("path/win32")
       .addSubject((exports) => exports)
       .inspect("join", (args) => this.inspectPath(args, "join"))
       .inspect("resolve", (args) => this.inspectPath(args, "resolve"))

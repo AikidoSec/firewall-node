@@ -1,5 +1,7 @@
 name: Unit tests
-on: push
+on:
+  push: {}
+  workflow_call: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,14 +36,18 @@ jobs:
         ports:
           - "27015:3306"
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [16.x, 18.x, 20.x, 22.x]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Add local.aikido.io to /etc/hosts
+        run: |
+          sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
       - run: make install
       - run: make test-ci
       - name: "Upload coverage"

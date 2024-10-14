@@ -1,9 +1,10 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { getContext, runWithContext } from "../../agent/Context";
+import { bindContext, getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
+import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
@@ -46,29 +47,22 @@ function callListenerWithContext(
   const context = contextFromRequest(req, body, module);
 
   return runWithContext(context, () => {
-    res.on("finish", () => {
-      const context = getContext();
+    // This method is called when the response is finished and discovers the routes for display in the dashboard
+    // The bindContext function is used to ensure that the context is available in the callback
+    // If using http2, the context is not available in the callback without this
+    res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
 
-      if (
-        context &&
-        context.route &&
-        context.method &&
-        shouldDiscoverRoute({
-          statusCode: res.statusCode,
-          route: context.route,
-          method: context.method,
-        })
-      ) {
-        agent.onRouteExecute(context.method, context.route);
+    if (!ipAllowedToAccessRoute(context, agent)) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      let message = "Your IP address is not allowed to access this resource.";
+      if (context.remoteAddress) {
+        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
       }
 
-      agent.getInspectionStatistics().onRequest();
-      if (context && context.attackDetected) {
-        agent.getInspectionStatistics().onDetectedAttack({
-          blocked: agent.shouldBlock(),
-        });
-      }
-    });
+      return res.end(message);
+    }
 
     const result = shouldRateLimitRequest(context, agent);
 
@@ -86,4 +80,33 @@ function callListenerWithContext(
 
     return listener(req, res);
   });
+}
+
+function createOnFinishRequestHandler(
+  res: ServerResponse<IncomingMessage>,
+  agent: Agent
+) {
+  return function onFinishRequest() {
+    const context = getContext();
+
+    if (
+      context &&
+      context.route &&
+      context.method &&
+      shouldDiscoverRoute({
+        statusCode: res.statusCode,
+        route: context.route,
+        method: context.method,
+      })
+    ) {
+      agent.onRouteExecute(context);
+    }
+
+    agent.getInspectionStatistics().onRequest();
+    if (context && context.attackDetected) {
+      agent.getInspectionStatistics().onDetectedAttack({
+        blocked: agent.shouldBlock(),
+      });
+    }
+  };
 }

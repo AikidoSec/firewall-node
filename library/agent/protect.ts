@@ -39,21 +39,10 @@ import { SQLite3 } from "../sinks/SQLite3";
 import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
-
-function isDebugging() {
-  return (
-    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
-  );
-}
-
-function shouldBlock() {
-  return (
-    process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1" ||
-    process.env.AIKIDO_BLOCK === "true" ||
-    process.env.AIKIDO_BLOCK === "1"
-  );
-}
+import { NodeSQLite } from "../sinks/NodeSqlite";
+import { BetterSQLite3 } from "../sinks/BetterSQLite3";
+import { isDebugging } from "../helpers/isDebugging";
+import { shouldBlock } from "../helpers/shouldBlock";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -137,6 +126,8 @@ function getWrappers() {
     new Shelljs(),
     new Hapi(),
     new MariaDB(),
+    new NodeSQLite(),
+    new BetterSQLite3(),
   ];
 }
 

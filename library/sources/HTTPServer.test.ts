@@ -3,10 +3,14 @@ import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
+const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap() {
+  return function wrap(name: string) {
     // So that it thinks next is installed
-    return true;
+    if (name === "next") {
+      return true;
+    }
+    return originalIsPackageInstalled(name);
   };
 });
 
@@ -29,11 +33,19 @@ const api = new ReportingAPIForTesting({
       route: "/rate-limited",
       method: "GET",
       forceProtectionOff: false,
+      allowedIPAddresses: [],
       rateLimiting: {
         enabled: true,
         maxRequests: 3,
         windowSizeInMS: 60 * 60 * 1000,
       },
+    },
+    {
+      route: "/ip-allowed",
+      method: "GET",
+      forceProtectionOff: false,
+      allowedIPAddresses: ["8.8.8.8"],
+      rateLimiting: undefined,
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
@@ -47,8 +59,11 @@ const agent = new Agent(
 );
 agent.start([new HTTPServer()]);
 
+t.setTimeout(30 * 1000);
+
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+  delete process.env.NODE_ENV;
 });
 
 t.test("it wraps the createServer function of http module", async () => {
@@ -186,6 +201,8 @@ t.test("it discovers routes", async () => {
             path: "/foo/bar",
             method: "GET",
             hits: 1,
+            graphql: undefined,
+            apispec: {},
           }
         );
         server.close();
@@ -288,9 +305,9 @@ t.test("it uses x-forwarded-for header", async () => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3316, () => {
+    server.listen(3350, () => {
       fetch({
-        url: new URL("http://localhost:3316"),
+        url: new URL("http://localhost:3350"),
         method: "GET",
         headers: {
           "x-forwarded-for": "203.0.113.195",
@@ -514,9 +531,9 @@ t.test("it wraps on request event of http", async () => {
   http.globalAgent = new http.Agent({ keepAlive: false });
 
   await new Promise<void>((resolve) => {
-    server.listen(3314, () => {
+    server.listen(3367, () => {
       fetch({
-        url: new URL("http://localhost:3314"),
+        url: new URL("http://localhost:3367"),
         method: "GET",
         headers: {},
         timeoutInMS: 500,
@@ -525,7 +542,7 @@ t.test("it wraps on request event of http", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3314", connection: "close" },
+          headers: { host: "localhost:3367", connection: "close" },
           query: {},
           route: "/",
           source: "http.createServer",
@@ -563,9 +580,9 @@ t.test("it wraps on request event of https", async () => {
   https.globalAgent = new https.Agent({ keepAlive: false });
 
   await new Promise<void>((resolve) => {
-    server.listen(3315, () => {
+    server.listen(3361, () => {
       fetch({
-        url: new URL("https://localhost:3315"),
+        url: new URL("https://localhost:3361"),
         method: "GET",
         headers: {},
         timeoutInMS: 500,
@@ -574,7 +591,7 @@ t.test("it wraps on request event of https", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3315", connection: "close" },
+          headers: { host: "localhost:3361", connection: "close" },
           query: {},
           route: "/",
           source: "https.createServer",
@@ -583,6 +600,55 @@ t.test("it wraps on request event of https", async () => {
           remoteAddress:
             getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
         });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it checks if IP can access route", async () => {
+  const http = require("http");
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  process.env.NODE_ENV = "production";
+
+  await new Promise<void>((resolve) => {
+    server.listen(3324, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3324/ip-allowed"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "8.8.8.8",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3324/ip-allowed"),
+          method: "GET",
+          headers: {},
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3324/ip-allowed"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "1.2.3.4",
+          },
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2, response3]) => {
+        t.equal(response1.statusCode, 200);
+        t.equal(response2.statusCode, 200);
+        t.equal(response3.statusCode, 403);
+        t.same(
+          response3.body,
+          "Your IP address is not allowed to access this resource. (Your IP: 1.2.3.4)"
+        );
         server.close();
         resolve();
       });
