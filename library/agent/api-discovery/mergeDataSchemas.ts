@@ -45,6 +45,10 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
     result.items = mergeDataSchemas(first.items, second.items);
   }
 
+  if (!first.format && second.format) {
+    result.format = second.format;
+  }
+
   return result;
 }
 

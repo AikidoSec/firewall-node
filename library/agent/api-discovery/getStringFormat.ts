@@ -8,7 +8,7 @@ import isUriString from "./helpers/isUri";
 /**
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
  */
-type StringFormat =
+export type StringFormat =
   | "date"
   | "date-time"
   | "email"
@@ -26,7 +26,7 @@ const indicationChars = new Set<string>(["-", ":", "@", ".", "://"]);
  */
 export function getStringFormat(str: string): StringFormat | undefined {
   // Skip if too short
-  if (str.length < 4) {
+  if (str.length < 5) {
     return undefined;
   }
 

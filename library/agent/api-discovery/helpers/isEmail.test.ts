@@ -7,6 +7,7 @@ t.test("is a valid email", async (t) => {
   t.same(isEmail("info@abcö.de"), true);
   t.same(isEmail("hello+test@aikido.dev"), true);
   t.same(isEmail("ö@example.com"), true);
+  t.same(isEmail('"ö"@ö.de'), true);
 });
 
 t.test("is not a valid email", async (t) => {
@@ -26,4 +27,5 @@ t.test("is not a valid email", async (t) => {
   t.same(isEmail("hello@example.com."), false);
   t.same(isEmail("hello@.example.com"), false);
   t.same(isEmail("hell o@example.com"), false);
+  t.same(isEmail("abcde".repeat(64) + "@example.com"), false);
 });
