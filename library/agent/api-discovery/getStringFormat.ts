@@ -2,6 +2,7 @@ import { isIPv4, isIPv6 } from "net";
 import isDateString from "./helpers/isDateString";
 import isDateTimeString from "./helpers/isDateTimeString";
 import isUUIDString from "./helpers/isUUIDString";
+import isEmailString from "./helpers/isEmail";
 
 /**
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
@@ -9,9 +10,6 @@ import isUUIDString from "./helpers/isUUIDString";
 type StringFormat =
   | "date"
   | "date-time"
-  // | "password"
-  | "byte"
-  // | "binary"
   | "email"
   | "uuid"
   | "uri"
@@ -58,6 +56,10 @@ export function getStringFormat(str: string): StringFormat | undefined {
     }
   }
 
+  if (foundIndicationChars.has("@") && isEmailString(str)) {
+    return "email";
+  }
+
   // Check if it is an IPv4
   if (foundIndicationChars.has(".") && isIPv4(str)) {
     return "ipv4";
@@ -73,14 +75,14 @@ export function getStringFormat(str: string): StringFormat | undefined {
 
 /**
  * Check for indication characters in a string
- * This is used to improve performance and is more efficient than multiple .includes() calls
+ * This is used to improve performance
  */
 function checkForIndicationChars(str: string): Set<string> {
   const foundChars = new Set<string>();
 
-  for (const char of str) {
-    if (indicationChars.has(char)) {
-      foundChars.add(char);
+  for (const iChar of indicationChars) {
+    if (str.includes(iChar)) {
+      foundChars.add(iChar);
     }
   }
 
