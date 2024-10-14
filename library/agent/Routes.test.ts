@@ -597,3 +597,40 @@ t.test("it ignores body of graphql queries", async (t) => {
     },
   ]);
 });
+
+t.test("with string format", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute(
+    getContext(
+      "POST",
+      "/body",
+      { "content-type": "application/json" },
+      { email: "test@example.com" }
+    )
+  );
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/body",
+      hits: 1,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              email: {
+                type: "string",
+                format: "email",
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+    },
+  ]);
+});

@@ -1,3 +1,5 @@
+import { getStringFormat, type StringFormat } from "./getStringFormat";
+
 export type DataSchema = {
   /**
    * Type of this property.
@@ -16,6 +18,10 @@ export type DataSchema = {
    * Data schema for the items of an array.
    */
   items?: DataSchema;
+  /**
+   * Format of the string, if it is a string.
+   */
+  format?: StringFormat;
 };
 
 // Maximum depth to traverse the data structure to get the schema for improved performance
@@ -29,6 +35,12 @@ const maxProperties = 100;
 export function getDataSchema(data: unknown, depth = 0): DataSchema {
   // If the data is not an object (or an array), return the type
   if (typeof data !== "object") {
+    if (typeof data === "string") {
+      const format = getStringFormat(data);
+      if (format) {
+        return { type: "string", format };
+      }
+    }
     return { type: typeof data };
   }
 
