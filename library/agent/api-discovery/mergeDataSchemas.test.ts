@@ -317,7 +317,7 @@ t.test("with string format", async (t) => {
       properties: {
         test: {
           type: "string",
-          format: "uri",
+          format: undefined,
         },
       },
     }

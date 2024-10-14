@@ -45,6 +45,12 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
     result.items = mergeDataSchemas(first.items, second.items);
   }
 
+  if (first.format && second.format && first.format !== second.format) {
+    // If the formats are different, we can not merge them
+    // So we set format to undefined because we are not sure anymore
+    result.format = undefined;
+  }
+
   if (!first.format && second.format) {
     result.format = second.format;
   }
