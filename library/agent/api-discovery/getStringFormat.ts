@@ -6,7 +6,7 @@ import isUUIDString from "./helpers/isUUIDString";
 /**
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
  */
-export type StringFormat =
+type StringFormat =
   | "date"
   | "date-time"
   // | "password"
