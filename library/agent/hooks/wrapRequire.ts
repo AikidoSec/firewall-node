@@ -75,7 +75,7 @@ export function setBuiltinModulesToPatch(
 }
 
 /**
- * Our custom require function that intercepts the require calls.
+ * Our custom require function that intercepts require calls.
  */
 function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
   // Apply the original require function
