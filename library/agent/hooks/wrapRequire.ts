@@ -302,6 +302,6 @@ function executeInterceptors(
 /**
  * Returns the unwrapped require function.
  */
-export function getOrignalRequire() {
+export function getOriginalRequire() {
   return originalRequire;
 }

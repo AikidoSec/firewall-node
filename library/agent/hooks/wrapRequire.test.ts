@@ -3,7 +3,7 @@ import {
   wrapRequire,
   setPackagesToPatch,
   setBuiltinModulesToPatch,
-  getOrignalRequire,
+  getOriginalRequire,
 } from "./wrapRequire";
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
@@ -212,7 +212,7 @@ t.test("Not wrapped using original require", async (t) => {
   t.same(fs._test, "aikido");
 
   // Require original sqlite3
-  const fsOriginal = getOrignalRequire()("fs");
+  const fsOriginal = getOriginalRequire()("fs");
   t.same(fsOriginal, initialFs);
 });
 
