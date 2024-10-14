@@ -84,9 +84,6 @@ t.test("it works", async () => {
     await query("/etc/bashrc");
     await query("/etc/bashrc");
     const result = await query("/etc/bashrc");
-    t.same(
-      result.errors[0].message,
-      "You are rate limited by Aikido firewall."
-    );
+    t.same(result.errors[0].message, "You are rate limited by Zen.");
   });
 });

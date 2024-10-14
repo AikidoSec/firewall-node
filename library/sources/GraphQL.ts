@@ -86,10 +86,10 @@ export class GraphQL implements Wrapper {
 
       return {
         errors: [
-          new GraphQLError("You are rate limited by Aikido firewall.", {
+          new GraphQLError("You are rate limited by Zen.", {
             nodes: [result.field],
             extensions: {
-              code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
+              code: "RATE_LIMITED_BY_ZEN",
               ipAddress: context.remoteAddress,
             },
           }),
