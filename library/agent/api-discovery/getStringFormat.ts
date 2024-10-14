@@ -43,16 +43,16 @@ export function getStringFormat(str: string): StringFormat | undefined {
       if (isDateTimeString(str)) {
         return "date-time";
       }
-    } else {
-      // Check if it is a date, e.g. 2021-01-01
-      if (isDateString(str)) {
-        return "date";
-      }
+    }
 
-      // Check if it is a UUID
-      if (isUUIDString(str)) {
-        return "uuid";
-      }
+    // Check if it is a date, e.g. 2021-01-01
+    if (isDateString(str)) {
+      return "date";
+    }
+
+    // Check if it is a UUID
+    if (isUUIDString(str)) {
+      return "uuid";
     }
   }
 
