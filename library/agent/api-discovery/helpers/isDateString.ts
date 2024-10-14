@@ -3,6 +3,10 @@
  * https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
  */
 export default function isDateString(str: string): boolean {
+  if (str.length !== 10) {
+    return false;
+  }
+
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     return false;
   }

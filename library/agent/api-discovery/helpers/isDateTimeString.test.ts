@@ -18,4 +18,5 @@ t.test("it is not a date time string", async (t) => {
   t.same(isDateTimeString("2021-999-05T00:00:00+00:00"), false);
   t.same(isDateTimeString("2021-02-05T00:90:00+00:00"), false);
   t.same(isDateTimeString("2021-02-05T00:00:00+90:00"), false);
+  t.same(isDateTimeString("2021-02-05T00:00:00+00:000000000"), false);
 });

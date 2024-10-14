@@ -3,6 +3,10 @@
  * https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
  */
 export default function isDateTimeString(str: string): boolean {
+  if (str.length < 20 || str.length > 29) {
+    return false;
+  }
+
   if (
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i.test(
       str
