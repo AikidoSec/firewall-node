@@ -1,10 +1,7 @@
 import * as t from "tap";
 import { wrapExport } from "./wrapExport";
-import { Agent } from "../Agent";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
-import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
-import { setInstance } from "../AgentSingleton";
 import { bindContext } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
