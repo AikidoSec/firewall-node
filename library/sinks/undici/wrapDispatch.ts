@@ -85,6 +85,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
     agent.getConfig().isAllowedIP(context.remoteAddress);
 
   if (isAllowedIP) {
+    // If the IP address is allowed, we don't need to block the request
     return;
   }
 
