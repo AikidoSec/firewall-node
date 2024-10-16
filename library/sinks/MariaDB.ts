@@ -50,15 +50,17 @@ export class MariaDB implements Wrapper {
   }
 
   private wrapConnection(exports: any, pkgInfo: WrapPackageInfo) {
-    const functions = [
-      "query",
-      "queryStream",
-      "execute",
-      "prepare",
-      "prepareExecute",
-      "executePromise",
-      "batch",
-    ];
+    const functions = ["query", "execute", "prepare", "batch"];
+
+    for (const fn of functions) {
+      wrapExport(exports.prototype, fn, pkgInfo, {
+        inspectArgs: (args) => this.inspectQuery(args, fn),
+      });
+    }
+  }
+
+  private wrapPool(exports: any, pkgInfo: WrapPackageInfo) {
+    const functions = ["query", "execute", "batch"];
 
     for (const fn of functions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
@@ -68,14 +70,20 @@ export class MariaDB implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const mariadb = hooks.addPackage("mariadb").withVersion("^3.0.0");
-
-    mariadb.onFileRequire("lib/connection.js", (exports, pkgInfo) => {
-      this.wrapConnection(exports, pkgInfo);
-    });
-
-    mariadb.onFileRequire("lib/connection-callback.js", (exports, pkgInfo) => {
-      this.wrapConnection(exports, pkgInfo);
-    });
+    hooks
+      .addPackage("mariadb")
+      .withVersion("^3.0.0")
+      .onFileRequire("lib/connection-promise.js", (exports, pkgInfo) => {
+        this.wrapConnection(exports, pkgInfo);
+      })
+      .onFileRequire("lib/connection-callback.js", (exports, pkgInfo) => {
+        this.wrapConnection(exports, pkgInfo);
+      })
+      .onFileRequire("lib/pool-promise.js", (exports, pkgInfo) => {
+        this.wrapPool(exports, pkgInfo);
+      })
+      .onFileRequire("lib/pool-callback.js", (exports, pkgInfo) => {
+        this.wrapPool(exports, pkgInfo);
+      });
   }
 }
