@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
+import { isWrapped } from "../helpers/wrap";
 import { Path } from "./Path";
 import { createTestAgent } from "../helpers/createTestAgent";
 
@@ -30,7 +31,8 @@ t.test("it works", async (t) => {
 
   agent.start([new Path()]);
 
-  const { join, resolve } = require("path");
+  // Path required before path/posix and path/win32
+  const { join, resolve, normalize } = require("path");
 
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
@@ -147,4 +149,11 @@ t.test("it works", async (t) => {
       "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
     );
   });
+
+  const checkForDoubleWrapping = [join, resolve, normalize];
+  for (const fn of checkForDoubleWrapping) {
+    if (isWrapped(fn) && isWrapped(fn.__original)) {
+      t.fail(`${fn.name} is double wrapped!`);
+    }
+  }
 });
