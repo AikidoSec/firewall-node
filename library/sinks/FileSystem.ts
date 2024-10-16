@@ -2,6 +2,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
@@ -14,6 +15,8 @@ type FileSystemFunction = {
 };
 
 export class FileSystem implements Wrapper {
+  private patchedPromises = false;
+
   private inspectPath(
     args: unknown[],
     name: string,
@@ -91,12 +94,33 @@ export class FileSystem implements Wrapper {
     return functions;
   }
 
+  wrapPromises(exports: unknown, pkgInfo: WrapPackageInfo) {
+    if (this.patchedPromises) {
+      // `require("fs").promises.readFile` is the same as `require("fs/promises").readFile`
+      // We only need to wrap the promise version once
+      return;
+    }
+
+    const functions = this.getFunctions();
+    Object.keys(functions).forEach((name) => {
+      const { pathsArgs, promise } = functions[name];
+
+      if (promise) {
+        wrapExport(exports, name, pkgInfo, {
+          inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
+        });
+      }
+    });
+
+    this.patchedPromises = true;
+  }
+
   wrap(hooks: Hooks) {
     hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
       const functions = this.getFunctions();
 
       Object.keys(functions).forEach((name) => {
-        const { pathsArgs, sync, promise } = functions[name];
+        const { pathsArgs, sync } = functions[name];
 
         wrapExport(exports, name, pkgInfo, {
           inspectArgs: (args) => {
@@ -119,24 +143,18 @@ export class FileSystem implements Wrapper {
           return this.inspectPath(args, "realpath.native", 1);
         },
       });
+
       wrapExport(exports.realpathSync, "native", pkgInfo, {
         inspectArgs: (args) => {
           return this.inspectPath(args, "realpathSync.native", 1);
         },
       });
+
+      this.wrapPromises(exports.promises, pkgInfo);
     });
 
-    hooks.addBuiltinModule("fs/promises").onRequire((exports, pkgInfo) => {
-      const functions = this.getFunctions();
-      Object.keys(functions).forEach((name) => {
-        const { pathsArgs, sync, promise } = functions[name];
-
-        if (promise) {
-          wrapExport(exports, name, pkgInfo, {
-            inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
-          });
-        }
-      });
-    });
+    hooks
+      .addBuiltinModule("fs/promises")
+      .onRequire((exports, pkgInfo) => this.wrapPromises(exports, pkgInfo));
   }
 }
