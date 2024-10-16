@@ -1,8 +1,6 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { MariaDB } from "./MariaDB";
 
 const dangerousContext: Context = {
@@ -33,13 +31,7 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  undefined,
-  "lambda"
-);
+const agent = createTestAgent();
 agent.start([new MariaDB()]);
 
 t.test("it detects SQL injections", async (t) => {

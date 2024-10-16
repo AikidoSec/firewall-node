@@ -1,6 +1,8 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -47,27 +49,33 @@ export class MariaDB implements Wrapper {
     return undefined;
   }
 
+  private wrapConnection(exports: any, pkgInfo: WrapPackageInfo) {
+    const functions = [
+      "query",
+      "queryStream",
+      "execute",
+      "prepare",
+      "prepareExecute",
+      "executePromise",
+      "batch",
+    ];
+
+    for (const fn of functions) {
+      wrapExport(exports.prototype, fn, pkgInfo, {
+        inspectArgs: (args) => this.inspectQuery(args, fn),
+      });
+    }
+  }
+
   wrap(hooks: Hooks) {
     const mariadb = hooks.addPackage("mariadb").withVersion("^3.0.0");
 
-    const connections = [
-      mariadb
-        .addFile("lib/connection")
-        .addSubject((exports) => exports.prototype),
-      mariadb
-        .addFile("lib/connection-callback")
-        .addSubject((exports) => exports.prototype),
-    ];
+    mariadb.onFileRequire("lib/connection.js", (exports, pkgInfo) => {
+      this.wrapConnection(exports, pkgInfo);
+    });
 
-    for (const connection of connections) {
-      connection
-        .inspect("query", (args) => this.inspectQuery(args, "query"))
-        .inspect("queryStream", (args) => this.inspectQuery(args, "query"))
-        .inspect("execute", (args) => this.inspectQuery(args, "execute"))
-        .inspect("prepare", (args) => this.inspectQuery(args, "prepare"))
-        .inspect("prepareExecute", (args) => this.inspectQuery(args, "execute"))
-        .inspect("executePromise", (args) => this.inspectQuery(args, "execute"))
-        .inspect("batch", (args) => this.inspectQuery(args, "batch"));
-    }
+    mariadb.onFileRequire("lib/connection-callback.js", (exports, pkgInfo) => {
+      this.wrapConnection(exports, pkgInfo);
+    });
   }
 }
