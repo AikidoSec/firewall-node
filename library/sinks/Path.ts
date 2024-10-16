@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
+import { isWindows } from "../helpers/isWindows";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import type * as path from "path";
 
@@ -48,17 +49,13 @@ export class Path implements Wrapper {
     }
   }
 
-  private isWindows() {
-    return process.platform === "win32";
-  }
-
   private wrapMainModule(exports: typeof path, pkgInfo: WrapPackageInfo) {
     // If `path/win32` or `path/posix` was not required before `path`, we should wrap the functions in `path`
     if (!this.patchedWin32 && !this.patchedPosix) {
       this.wrapFunctions(exports, pkgInfo);
     }
 
-    if (this.isWindows()) {
+    if (isWindows()) {
       // `require("path").join` is the same as `require("path/win32").join`
       this.patchedWin32 = true;
     } else {
