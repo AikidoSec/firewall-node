@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL2 } from "./MySQL2";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -34,13 +32,7 @@ const safeContext: Context = {
 };
 
 t.test("it detects SQL injections", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent();
   agent.start([new MySQL2()]);
 
   const mysql = require("mysql2/promise");

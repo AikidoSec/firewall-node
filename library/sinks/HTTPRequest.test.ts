@@ -1,13 +1,11 @@
 /* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -50,13 +48,9 @@ const context: Context = {
 };
 
 t.test("it works", (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);

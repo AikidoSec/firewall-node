@@ -1,19 +1,15 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Before require("express")
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -62,11 +58,11 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  "lambda"
-);
+  token: new Token("123"),
+  serverless: "lambda",
+});
+
 agent.start([new Express(), new FileSystem(), new HTTPServer()]);
-setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";

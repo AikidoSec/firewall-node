@@ -1,13 +1,10 @@
 import * as t from "tap";
-import { Agent } from "../../agent/Agent";
-import { setInstance } from "../../agent/AgentSingleton";
-import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
-import { Token } from "../../agent/api/Token";
 import { LoggerForTesting } from "../../agent/logger/LoggerForTesting";
 import {
   freezeBuiltinsIfPossible,
   preventPrototypePollution,
 } from "./preventPrototypePollution";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 t.test(
   "it does not freeze builtins if incompatible package is found",
@@ -41,15 +38,10 @@ t.test("without agent instance", async () => {
 
 t.test("it lets agent know", async () => {
   const logger = new LoggerForTesting();
-  const agent = new Agent(
-    true,
+  const agent = createTestAgent({
     logger,
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  });
 
-  setInstance(agent);
   preventPrototypePollution();
   t.same(logger.getMessages(), ["Prevented prototype pollution!"]);
 });

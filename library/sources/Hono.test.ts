@@ -1,21 +1,18 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { createTestAgent } from "../helpers/createTestAgent";
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  token: new Token("123"),
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -34,11 +31,8 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  undefined
-);
+});
 agent.start([new HonoInternal(), new HTTPServer()]);
-setInstance(agent);
 
 function getApp() {
   const { Hono } = require("hono");

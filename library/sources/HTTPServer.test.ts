@@ -15,12 +15,11 @@ wrap(pkg, "isPackageInstalled", function wrap() {
 });
 
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { fetch } from "../helpers/fetch";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -50,13 +49,10 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  "lambda"
-);
+});
 agent.start([new HTTPServer()]);
 
 t.setTimeout(30 * 1000);
