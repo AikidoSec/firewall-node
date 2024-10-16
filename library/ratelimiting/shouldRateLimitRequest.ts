@@ -41,14 +41,51 @@ export function shouldRateLimitRequest(
     context.remoteAddress &&
     agent.getConfig().isAllowedIP(context.remoteAddress);
 
+  if (isFromLocalhostInProduction || isAllowedIP) {
+    return { block: false };
+  }
+
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
-  if (
-    context.remoteAddress &&
-    !context.consumedRateLimitForIP &&
-    !isFromLocalhostInProduction &&
-    !isAllowedIP
-  ) {
+  if (context.user) {
+    // Do not consume rate limit for user a second time
+    if (context.consumedRateLimitForUser) {
+      return { block: false };
+    }
+
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
+        windowSizeInMS,
+        maxRequests
+      );
+
+    if (context.remoteAddress && context.consumedRateLimitForIP) {
+      // We are preferring user rate limit over IP rate limit
+      // If the user is set in a middleware, we already consumed the IP rate limit for this request (http server)
+      // Thats why we need to decrement the IP rate limit here, if the user is set and the IP rate limit was consumed
+      // If we wouldn't do this, a user would always be blocked by the IP rate limit also if the user rate limit is not reached
+      agent
+        .getRateLimiter()
+        .decrement(
+          `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`
+        );
+    }
+
+    // This function is executed for every middleware and route handler
+    // We want to count the request only once
+    updateContext(context, "consumedRateLimitForUser", true);
+
+    if (!allowed) {
+      return { block: true, trigger: "user" };
+    }
+
+    // Do not check IP rate limit if user is set
+    return { block: false };
+  }
+
+  if (context.remoteAddress && !context.consumedRateLimitForIP) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -63,24 +100,6 @@ export function shouldRateLimitRequest(
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
-    }
-  }
-
-  if (context.user && !context.consumedRateLimitForUser) {
-    const allowed = agent
-      .getRateLimiter()
-      .isAllowed(
-        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
-        windowSizeInMS,
-        maxRequests
-      );
-
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForUser", true);
-
-    if (!allowed) {
-      return { block: true, trigger: "user" };
     }
   }
 
