@@ -65,6 +65,7 @@
     "follow-redirects": "^1.15.6",
     "graphql": "^16.8.2",
     "hono": "^4.4.2",
+    "mariadb": "^3.3.2",
     "mongodb": "^6.3.0",
     "mysql": "^2.18.1",
     "mysql2": "^3.10.0",

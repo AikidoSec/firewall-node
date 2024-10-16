@@ -37,6 +37,15 @@ services:
       - "27015:3306"
     volumes:
       - mysql:/var/lib/mysql
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: mypassword
+      MARIADB_DATABASE: catsdb
+    ports:
+      - "27018:3306"
+    volumes:
+      - mariadb:/var/lib/mysql
 
 volumes:
   mongodb:
@@ -44,4 +53,6 @@ volumes:
   postgres:
     driver: local
   mysql:
+    driver: local
+  mariadb:
     driver: local
