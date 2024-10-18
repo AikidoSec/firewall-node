@@ -93,6 +93,6 @@
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
-    "lint-tsc": "tsc -p tsconfig.tests.json"
+    "lint-tsc": "tsc"
   }
 }
