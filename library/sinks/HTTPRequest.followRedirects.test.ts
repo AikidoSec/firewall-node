@@ -19,11 +19,11 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-let server;
+let server: import("http").Server;
 const port = 3000;
 
 t.before(async () => {
-  const { createServer } = require("http");
+  const { createServer } = require("http") as typeof import("http");
 
   server = createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "text/plain" });
@@ -32,7 +32,7 @@ t.before(async () => {
 
   server.unref();
 
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     server.listen(port, resolve);
   });
 });
@@ -45,7 +45,8 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   });
   agent.start([new HTTPRequest()]);
 
-  const { http } = require("follow-redirects");
+  const { http } =
+    require("follow-redirects") as typeof import("follow-redirects");
 
   runWithContext(
     {
@@ -54,7 +55,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
     },
     () => {
-      const response = http.request(`${redirectTestUrl}/ssrf-test`, (res) => {
+      const response = http.request(`${redirectTestUrl}/ssrf-test`, () => {
         t.fail("should not respond");
       });
       response.on("error", (e) => {

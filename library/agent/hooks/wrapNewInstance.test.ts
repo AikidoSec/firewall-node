@@ -9,13 +9,20 @@ t.test("Agent is not initialized", async (t) => {
   try {
     wrapNewInstance({}, "test", { name: "test", type: "external" }, () => {});
     t.fail();
-  } catch (e) {
-    t.same(e.message, "Can not wrap new instance if agent is not initialized");
+  } catch (e: unknown) {
+    t.ok(e instanceof Error);
+    if (e instanceof Error) {
+      t.same(
+        e.message,
+        "Can not wrap new instance if agent is not initialized"
+      );
+    }
   }
 });
 
 const logger = new LoggerForTesting();
-const agent = createTestAgent({
+
+createTestAgent({
   logger,
   token: new Token("123"),
 });

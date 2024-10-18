@@ -16,14 +16,17 @@ t.test("Agent is not initialized", async (t) => {
       }
     );
     t.fail();
-  } catch (e) {
-    t.same(e.message, "Can not wrap exports if agent is not initialized");
+  } catch (e: unknown) {
+    t.ok(e instanceof Error);
+    if (e instanceof Error) {
+      t.same(e.message, "Can not wrap exports if agent is not initialized");
+    }
   }
 });
 
 const logger = new LoggerForTesting();
 
-const agent = createTestAgent({
+createTestAgent({
   logger,
   token: new Token("123"),
 });

@@ -22,13 +22,18 @@ wrap(dns, "lookup", function lookup(original) {
       hostname === "thisdomainpointstointernalip.com" ||
       hostname === "thisdomainpointstointernalip2.com"
     ) {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -55,8 +60,8 @@ t.test("it works", (t) => {
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const http = require("http");
-  const https = require("https");
+  const http = require("http") as typeof import("http");
+  const https = require("https") as typeof import("https");
 
   runWithContext(context, () => {
     const aikido = http.request("http://aikido.dev");
@@ -234,23 +239,27 @@ t.test("it works", (t) => {
     }
 
     // ECONNREFUSED means that the request is not blocked
-    http.request("http://localhost:9876").on("error", (e) => {
-      t.same(e.code, "ECONNREFUSED");
-    });
+    http
+      .request("http://localhost:9876")
+      .on("error", (e: NodeJS.ErrnoException) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
 
-    https.request("https://localhost:9876").on("error", (e) => {
-      t.same(e.code, "ECONNREFUSED");
-    });
+    https
+      .request("https://localhost:9876")
+      .on("error", (e: NodeJS.ErrnoException) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
 
     https
       .request("https://localhost/api/internal", { port: 9876 })
-      .on("error", (e) => {
+      .on("error", (e: NodeJS.ErrnoException) => {
         t.same(e.code, "ECONNREFUSED");
       });
 
     https
       .request("https://localhost/api/internal", { defaultPort: 9876 })
-      .on("error", (e) => {
+      .on("error", (e: NodeJS.ErrnoException) => {
         t.same(e.code, "ECONNREFUSED");
       });
 

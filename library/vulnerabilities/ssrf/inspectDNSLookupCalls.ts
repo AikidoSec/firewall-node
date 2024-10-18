@@ -178,6 +178,17 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    const isAllowedIP =
+      context &&
+      context.remoteAddress &&
+      agent.getConfig().isAllowedIP(context.remoteAddress);
+
+    if (isAllowedIP) {
+      // If the IP address is allowed, we don't need to block the request
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
+    }
+
     const libraryRoot = resolve(__dirname, "../..");
 
     // Used to get the stack trace of the calling location
