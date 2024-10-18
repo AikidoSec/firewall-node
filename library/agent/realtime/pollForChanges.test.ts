@@ -45,7 +45,7 @@ t.test("it checks for config updates", async () => {
   let configUpdatedAt = 0;
 
   wrap(fetch, "fetch", function fetch() {
-    return async function fetch(params) {
+    return async function fetch(params: any) {
       calls.push({
         url: params.url.toString(),
         method: params.method,
@@ -207,7 +207,7 @@ t.test("it deals with API throwing errors", async () => {
     };
   });
 
-  const configUpdates = [];
+  const configUpdates: Config[] = [];
 
   const logger = new LoggerForTesting();
   pollForChanges({
