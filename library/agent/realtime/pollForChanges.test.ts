@@ -6,6 +6,7 @@ import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { LoggerNoop } from "../logger/LoggerNoop";
 import { pollForChanges } from "./pollForChanges";
 import * as FakeTimers from "@sinonjs/fake-timers";
+import { Config } from "../Config";
 
 t.test("it does not start interval if no token", async (t) => {
   const logger = new LoggerForTesting();
@@ -74,7 +75,7 @@ t.test("it checks for config updates", async () => {
     };
   });
 
-  const configUpdates = [];
+  const configUpdates: Config[] = [];
 
   pollForChanges({
     onConfigUpdate: (config) => {

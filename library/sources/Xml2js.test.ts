@@ -16,7 +16,8 @@ t.test("it works", async () => {
 
   agent.start([new Xml2js()]);
 
-  const { parseStringPromise, parseString } = require("xml2js");
+  const { parseStringPromise, parseString } =
+    require("xml2js") as typeof import("xml2js");
 
   const xmlString = "<root>Hello xml2js!</root>";
 

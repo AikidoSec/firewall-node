@@ -48,6 +48,7 @@
     "@types/shell-quote": "^1.7.5",
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
+    "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@typescript-eslint/parser": "^8.4.0",
     "aws-sdk": "^2.1595.0",
@@ -90,6 +91,6 @@
     "build:watch": "tsc --watch",
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
-    "lint-tsc": "tsc --noEmit && tsc -p tsconfig.tests.json"
+    "lint-tsc": "tsc -p tsconfig.tests.json"
   }
 }

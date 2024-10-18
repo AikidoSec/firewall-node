@@ -88,7 +88,10 @@ t.test("callback handler throws error", async () => {
   try {
     await handler(gatewayEvent, lambdaContext, () => {});
   } catch (error) {
-    t.same(error.message, "error");
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(error.message, "error");
+    }
   }
 });
 

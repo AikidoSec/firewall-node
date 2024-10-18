@@ -37,11 +37,15 @@ t.test("it resolves private IPv4 without context", (t) => {
     "operation"
   );
 
-  wrappedLookup("localhost", { family: 4 }, (err, address) => {
-    t.same(err, null);
-    t.same(address, "127.0.0.1");
-    t.end();
-  });
+  wrappedLookup(
+    "localhost",
+    { family: 4 },
+    (err: Error | null, address: string) => {
+      t.same(err, null);
+      t.same(address, "127.0.0.1");
+      t.end();
+    }
+  );
 });
 
 t.test("it resolves private IPv6 without context", (t) => {
@@ -58,7 +62,7 @@ t.test("it resolves private IPv6 without context", (t) => {
     "operation"
   );
 
-  wrappedLookup("localhost", (err, address) => {
+  wrappedLookup("localhost", (err: Error | null, address: string) => {
     t.same(err, null);
     t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
     t.end();
@@ -81,12 +85,14 @@ t.test("it blocks lookup in blocking mode", (t) => {
   );
 
   runWithContext(context, () => {
-    wrappedLookup("localhost", (err, address) => {
+    wrappedLookup("localhost", (err: Error | null, address: string) => {
       t.same(err instanceof Error, true);
-      t.same(
-        err.message,
-        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
-      );
+      if (err instanceof Error) {
+        t.same(
+          err.message,
+          "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
+        );
+      }
       t.same(address, undefined);
       t.match(api.getEvents(), [
         {
@@ -123,7 +129,7 @@ t.test("it allows resolved public IP", (t) => {
   runWithContext(
     { ...context, body: { image: "http://www.google.be" } },
     () => {
-      wrappedLookup("www.google.be", (err, address) => {
+      wrappedLookup("www.google.be", (err: Error | null, address: string) => {
         t.same(err, null);
         t.ok(typeof address === "string");
         t.same(api.getEvents(), []);
@@ -151,7 +157,7 @@ t.test(
     );
 
     runWithContext({ ...context, body: undefined }, () => {
-      wrappedLookup("localhost", (err, address) => {
+      wrappedLookup("localhost", (err: Error | null, address: string) => {
         t.same(err, null);
         t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
         t.same(api.getEvents(), []);
@@ -201,7 +207,7 @@ t.test(
 
     await new Promise<void>((resolve) => {
       runWithContext(context, () => {
-        wrappedLookup("localhost", (err, address) => {
+        wrappedLookup("localhost", (err: Error | null, address: string) => {
           t.same(err, null);
           t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
           t.same(api.getEvents(), []);
@@ -227,15 +233,21 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
   );
 
   runWithContext(context, () => {
-    wrappedLookup("localhost", { all: true }, (err, addresses) => {
-      t.same(err instanceof Error, true);
-      t.same(
-        err.message,
-        "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
-      );
-      t.same(addresses, undefined);
-      t.end();
-    });
+    wrappedLookup(
+      "localhost",
+      { all: true },
+      (err: Error | null, address: string) => {
+        t.same(err instanceof Error, true);
+        if (err instanceof Error) {
+          t.same(
+            err.message,
+            "Zen has blocked a server-side request forgery: operation(...) originating from body.image"
+          );
+        }
+        t.same(address, undefined);
+        t.end();
+      }
+    );
   });
 });
 
@@ -255,7 +267,7 @@ t.test("it does not block in dry mode", (t) => {
   );
 
   runWithContext(context, () => {
-    wrappedLookup("localhost", (err, address) => {
+    wrappedLookup("localhost", (err: Error | null, address: string) => {
       t.same(err, null);
       t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
       t.match(api.getEvents(), [
@@ -301,15 +313,17 @@ t.test("it ignores if lookup returns error", (t) => {
   agent.start([]);
 
   const wrappedLookup = inspectDNSLookupCalls(
-    (_, callback) => callback(new Error("lookup failed")),
+    (_: any, callback: Function) => callback(new Error("lookup failed")),
     agent,
     "module",
     "operation"
   );
 
-  wrappedLookup("localhost", (err, address) => {
+  wrappedLookup("localhost", (err: Error | null, address: string) => {
     t.same(err instanceof Error, true);
-    t.same(err.message, "lookup failed");
+    if (err instanceof Error) {
+      t.same(err.message, "lookup failed");
+    }
     t.same(address, undefined);
     t.end();
   });
@@ -350,27 +364,39 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
 
   await Promise.all([
     new Promise<void>((resolve) => {
-      wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
-        t.same(err instanceof Error, true);
-        t.same(
-          err.message,
-          "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
-        );
-        t.same(addresses, undefined);
-        resolve();
-      });
+      wrappedLookup(
+        "imds.test.com",
+        { family: 4 },
+        (err: Error | null, address: string) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
+            );
+          }
+          t.same(address, undefined);
+          resolve();
+        }
+      );
     }),
     new Promise<void>((resolve) => {
       runWithContext(context, () => {
-        wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
-          t.same(err instanceof Error, true);
-          t.same(
-            err.message,
-            "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
-          );
-          t.same(addresses, undefined);
-          resolve();
-        });
+        wrappedLookup(
+          "imds.test.com",
+          { family: 4 },
+          (err: Error | null, address: string) => {
+            t.same(err instanceof Error, true);
+            if (err instanceof Error) {
+              t.same(
+                err.message,
+                "Zen has blocked a server-side request forgery: operation(...) originating from unknown source"
+              );
+            }
+            t.same(address, undefined);
+            resolve();
+          }
+        );
       });
     }),
   ]);
@@ -414,11 +440,15 @@ t.test(
     );
 
     runWithContext(context, () => {
-      wrappedLookup("imds.test.com", { family: 4 }, (err, addresses) => {
-        t.same(err, null);
-        t.same(addresses, "169.254.169.254");
-        t.end();
-      });
+      wrappedLookup(
+        "imds.test.com",
+        { family: 4 },
+        (err: Error | null, address: string) => {
+          t.same(err, null);
+          t.same(address, "169.254.169.254");
+          t.end();
+        }
+      );
     });
   }
 );
@@ -442,9 +472,9 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
       wrappedLookup(
         "metadata.google.internal",
         { family: 4 },
-        (err, addresses) => {
+        (err: Error | null, address: string) => {
           t.same(err, null);
-          t.same(addresses, "169.254.169.254");
+          t.same(address, "169.254.169.254");
           resolve();
         }
       );
@@ -454,9 +484,9 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
         wrappedLookup(
           "metadata.google.internal",
           { family: 4 },
-          (err, addresses) => {
+          (err: Error | null, address: string) => {
             t.same(err, null);
-            t.same(addresses, "169.254.169.254");
+            t.same(address, "169.254.169.254");
             resolve();
           }
         );
@@ -484,11 +514,14 @@ t.test("it ignores when the argument is an IP address", async (t) => {
       runWithContext(
         { ...context, routeParams: { id: "169.254.169.254" } },
         () => {
-          wrappedLookup("169.254.169.254", (err, address) => {
-            t.same(err, null);
-            t.same(address, "169.254.169.254");
-            resolve();
-          });
+          wrappedLookup(
+            "169.254.169.254",
+            (err: Error | null, address: string) => {
+              t.same(err, null);
+              t.same(address, "169.254.169.254");
+              resolve();
+            }
+          );
         }
       );
     }),
@@ -496,11 +529,14 @@ t.test("it ignores when the argument is an IP address", async (t) => {
       runWithContext(
         { ...context, routeParams: { id: "fd00:ec2::254" } },
         () => {
-          wrappedLookup("fd00:ec2::254", (err, address) => {
-            t.same(err, null);
-            t.same(address, "fd00:ec2::254");
-            resolve();
-          });
+          wrappedLookup(
+            "fd00:ec2::254",
+            (err: Error | null, address: string) => {
+              t.same(err, null);
+              t.same(address, "fd00:ec2::254");
+              resolve();
+            }
+          );
         }
       );
     }),
