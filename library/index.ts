@@ -11,8 +11,4 @@ if (supported && shouldEnable) {
   require("./agent/protect").protect();
 }
 
-export default {
-  setUser,
-  shouldBlockRequest,
-  setupExpressIntegration,
-};
+export { setUser, shouldBlockRequest, setupExpressIntegration };

@@ -40,6 +40,8 @@ async function main(port) {
     next();
   });
 
+  Zen.setupExpressIntegration(app);
+
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
   // { title: { '$ne': null } }
