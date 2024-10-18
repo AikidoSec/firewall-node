@@ -22,10 +22,7 @@ export function setupExpressIntegration(app: Express) {
       }
 
       if (result.type === "blocked") {
-        return res
-          .status(403)
-          .type("text")
-          .send("You are blocked by Aikido Zen.");
+        return res.status(403).type("text").send("You are blocked by Zen.");
       }
     }
 

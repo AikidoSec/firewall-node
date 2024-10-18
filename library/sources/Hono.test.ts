@@ -182,7 +182,7 @@ t.test("it blocks user", opts, async (t) => {
   });
 
   const body = await response.text();
-  t.equal(body, "You are blocked by Aikido firewall.");
+  t.equal(body, "You are blocked by Zen.");
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
@@ -213,7 +213,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response3.status, 429);
   t.match(
     await response3.text(),
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+    "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
 });
 

@@ -218,10 +218,7 @@ t.test("it rate limits based on IP address", async (t) => {
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response3.status, 429);
-  t.match(
-    response3.text,
-    "You are rate limited by Aikido Zen. (Your IP: 1.2.3.4)"
-  );
+  t.match(response3.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 });
 
 t.test("it blocks based on user ID", async (t) => {
@@ -229,7 +226,7 @@ t.test("it blocks based on user ID", async (t) => {
     .get("/blocked-user")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 403);
-  t.match(response.text, "You are blocked by Aikido Zen.");
+  t.match(response.text, "You are blocked by Zen.");
 });
 
 t.test("it gets context from decorate handler", async (t) => {

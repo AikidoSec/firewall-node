@@ -22,7 +22,7 @@ export function setupHonoIntegration(app: Hono) {
       }
 
       if (result.type === "blocked") {
-        return c.text("You are blocked by Aikido Zen.", 403);
+        return c.text("You are blocked by Zen.", 403);
       }
     }
 

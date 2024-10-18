@@ -436,7 +436,7 @@ t.test("it blocks user", async () => {
 
   t.same(response.statusCode, 403);
   t.same(response.body, {});
-  t.same(response.text, "You are blocked by Aikido firewall.");
+  t.same(response.text, "You are blocked by Zen.");
 });
 
 t.test("it adds user to context", async () => {
@@ -463,10 +463,7 @@ t.test("it rate limits by IP", async () => {
     .get("/rate-limited")
     .set("x-forwarded-for", "1.2.3.4");
   t.same(res2.statusCode, 429);
-  t.same(
-    res2.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 
   await sleep(2000);
 
