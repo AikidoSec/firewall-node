@@ -50,7 +50,9 @@ function getExpressApp() {
     asyncHandler(
       createCloudFunctionWrapper((req, res) => {
         const context = getContext();
-        updateContext(context, "attackDetected", true);
+        if (context) {
+          updateContext(context, "attackDetected", true);
+        }
         res.send(context);
       })
     )
@@ -172,7 +174,8 @@ t.test("it hooks into functions framework", async () => {
   agent.start([new FunctionsFramework()]);
   setInstance(agent);
 
-  const framework = require("@google-cloud/functions-framework");
+  const framework =
+    require("@google-cloud/functions-framework") as typeof import("@google-cloud/functions-framework");
   framework.http("hello", (req, res) => {
     res.send("Hello, Functions Framework!");
   });

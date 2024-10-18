@@ -257,6 +257,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
         method: "GET",
         route: "/route",
         forceProtectionOff: true,
+        // @ts-expect-error Test
         rateLimiting: undefined,
       },
     ],
