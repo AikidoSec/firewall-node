@@ -37,7 +37,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   });
   agent.start([new HTTPRequest()]);
 
-  const http = require("http");
+  const http = require("http") as typeof import("http");
 
   runWithContext(
     {

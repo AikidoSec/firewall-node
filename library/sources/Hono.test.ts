@@ -35,7 +35,7 @@ const agent = createTestAgent({
 agent.start([new HonoInternal(), new HTTPServer()]);
 
 function getApp() {
-  const { Hono } = require("hono");
+  const { Hono } = require("hono") as typeof import("hono");
   const app = new Hono();
 
   app.all("/", (c) => {
