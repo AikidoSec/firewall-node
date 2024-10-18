@@ -68,6 +68,7 @@ import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
+import AikidoMiddleware from "../middleware";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -81,6 +82,25 @@ function getApp(userMiddleware = true) {
     next();
   });
 
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      if (req.path === "/block-user") {
+        setUser({
+          id: "567",
+        });
+        return next();
+      }
+
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
+    });
+  }
+
+  app.use(AikidoMiddleware.express());
+
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
     next();
@@ -90,16 +110,6 @@ function getApp(userMiddleware = true) {
     require("fs").readdir(req.query.directory).unref();
     next();
   });
-
-  if (userMiddleware) {
-    app.use((req, res, next) => {
-      setUser({
-        id: "123",
-        name: "John Doe",
-      });
-      next();
-    });
-  }
 
   // A middleware that is used as a route
   app.use("/api/*path", (req, res, next) => {
@@ -179,20 +189,11 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
-  app.get(
-    "/block-user",
-    (req, res, next) => {
-      setUser({
-        id: "567",
-      });
-      next();
-    },
-    (req, res) => {
-      res.send({
-        willNotBeSent: true,
-      });
-    }
-  );
+  app.get("/block-user", (req, res) => {
+    res.send({
+      willNotBeSent: true,
+    });
+  });
 
   app.get("/rate-limited", (req, res) => {
     res.send({ hello: "world" });
@@ -435,6 +436,7 @@ t.test("it blocks user", async () => {
 
   t.same(response.statusCode, 403);
   t.same(response.body, {});
+  t.same(response.text, "You are blocked by Aikido firewall.");
 });
 
 t.test("it adds user to context", async () => {

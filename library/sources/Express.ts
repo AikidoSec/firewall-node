@@ -30,7 +30,7 @@ export class Express implements Wrapper {
         return arg;
       }
 
-      return wrapRequestHandler(arg as RequestHandler, agent);
+      return wrapRequestHandler(arg as RequestHandler);
     });
   }
 
