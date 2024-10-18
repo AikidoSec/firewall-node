@@ -1,4 +1,4 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
@@ -14,13 +14,15 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
-    Aikido.setUser({
+    Zen.setUser({
       id: "id",
       name: "Name",
     });
 
     await next();
   });
+
+  Zen.setupHonoIntegration(app);
 
   app.get("/", async (c) => {
     const catNames = await cats.getAll();

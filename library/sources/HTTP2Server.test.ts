@@ -552,45 +552,6 @@ t.test("it wraps the createSecureServer stream event", async () => {
   });
 });
 
-t.test("it rate limits requests using stream event", async () => {
-  const server = createMinimalTestServerWithStream();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3430, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
-    });
-  });
-});
-
 t.test("real injection test", async (t) => {
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {

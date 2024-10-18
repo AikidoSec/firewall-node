@@ -9,6 +9,7 @@ import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { setupHonoIntegration } from "../integrations/hono";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -38,17 +39,19 @@ function getApp() {
   const { Hono } = require("hono");
   const app = new Hono();
 
-  app.all("/", (c) => {
-    return c.json(getContext());
-  });
-
   app.use(async (c, next) => {
     if (c.req.path.startsWith("/user/blocked")) {
       setUser({ id: "567" });
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
     }
-    next();
+    await next();
+  });
+
+  setupHonoIntegration(app);
+
+  app.all("/", (c) => {
+    return c.json(getContext());
   });
 
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
