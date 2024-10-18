@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unused-modules */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 

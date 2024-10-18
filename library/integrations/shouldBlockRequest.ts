@@ -4,7 +4,7 @@ import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
 export function shouldBlockRequest(): {
   block: boolean;
-  type?: "rate-limit" | "blocked";
+  type?: "ratelimited" | "blocked";
   trigger?: "ip" | "user";
   ip?: string;
 } {
@@ -26,7 +26,7 @@ export function shouldBlockRequest(): {
   if (rateLimitResult.block) {
     return {
       block: true,
-      type: "rate-limit",
+      type: "ratelimited",
       trigger: rateLimitResult.trigger,
       ip: context.remoteAddress,
     };

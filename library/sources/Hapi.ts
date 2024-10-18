@@ -4,7 +4,6 @@ import type {
   Lifecycle,
   HandlerDecorationMethod,
 } from "@hapi/hapi";
-import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
@@ -14,7 +13,7 @@ import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class Hapi implements Wrapper {
-  private wrapRouteHandler(args: unknown[], agent: Agent) {
+  private wrapRouteHandler(args: unknown[]) {
     if (
       args.length < 1 ||
       (!isPlainObject(args[0]) && !Array.isArray(args[0]))
@@ -28,10 +27,7 @@ export class Hapi implements Wrapper {
 
     for (const route of routeOptions) {
       if (typeof route.handler === "function") {
-        route.handler = wrapRequestHandler(
-          route.handler as Lifecycle.Method,
-          agent
-        );
+        route.handler = wrapRequestHandler(route.handler as Lifecycle.Method);
       }
 
       if (
@@ -39,8 +35,7 @@ export class Hapi implements Wrapper {
         typeof route.options.handler === "function"
       ) {
         route.options.handler = wrapRequestHandler(
-          route.options.handler as Lifecycle.Method,
-          agent
+          route.options.handler as Lifecycle.Method
         );
       }
     }
@@ -48,18 +43,18 @@ export class Hapi implements Wrapper {
     return args;
   }
 
-  private wrapExtensionFunction(args: unknown[], agent: Agent) {
+  private wrapExtensionFunction(args: unknown[]) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRequestHandler(arg as Lifecycle.Method, agent);
+      return wrapRequestHandler(arg as Lifecycle.Method);
     });
   }
 
-  private wrapDecorateFunction(args: unknown[], agent: Agent) {
+  private wrapDecorateFunction(args: unknown[]) {
     if (
       args.length < 3 ||
       args[0] !== "handler" ||
@@ -74,7 +69,7 @@ export class Hapi implements Wrapper {
       // @ts-expect-error We don't know the type of this
       const handler = decorator.apply(this, arguments);
 
-      return wrapRequestHandler(handler, agent);
+      return wrapRequestHandler(handler);
     }
 
     args[2] = wrappedDecorator;
@@ -84,13 +79,13 @@ export class Hapi implements Wrapper {
 
   private wrapServer(server: unknown, pkgInfo: WrapPackageInfo) {
     wrapExport(server, "route", pkgInfo, {
-      modifyArgs: (args, agent) => this.wrapRouteHandler(args, agent),
+      modifyArgs: (args) => this.wrapRouteHandler(args),
     });
     wrapExport(server, "ext", pkgInfo, {
-      modifyArgs: (args, agent) => this.wrapExtensionFunction(args, agent),
+      modifyArgs: (args) => this.wrapExtensionFunction(args),
     });
     wrapExport(server, "decorate", pkgInfo, {
-      modifyArgs: (args, agent) => this.wrapDecorateFunction(args, agent),
+      modifyArgs: (args) => this.wrapDecorateFunction(args),
     });
   }
 

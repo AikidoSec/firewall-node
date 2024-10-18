@@ -12,7 +12,7 @@ export function setupHonoIntegration(app: Hono) {
     const result = shouldBlockRequest();
 
     if (result.block) {
-      if (result.type === "rate-limit") {
+      if (result.type === "ratelimited") {
         let message = "You are rate limited by Zen.";
         if (result.trigger === "ip" && result.ip) {
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
@@ -22,7 +22,7 @@ export function setupHonoIntegration(app: Hono) {
       }
 
       if (result.type === "blocked") {
-        return c.text("You are blocked by Aikido firewall.", 403);
+        return c.text("You are blocked by Aikido Zen.", 403);
       }
     }
 

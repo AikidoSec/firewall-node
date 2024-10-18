@@ -1,11 +1,9 @@
 import type { Handler, MiddlewareHandler } from "hono";
-import { Agent } from "../../agent/Agent";
 import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapRequestHandler(
-  handler: Handler | MiddlewareHandler,
-  agent: Agent
+  handler: Handler | MiddlewareHandler
 ): MiddlewareHandler {
   return async (c, next) => {
     const context = await contextFromRequest(c);
