@@ -4,6 +4,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Path } from "./Path";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -114,7 +115,9 @@ t.test("it works", async (t) => {
     const error = t.throws(() => join("/etc/", "test.txt"));
     t.same(
       error instanceof Error ? error.message : null,
-      "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
+      getMajorNodeVersion() <= 22
+        ? "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
+        : "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
 
     const error2 = t.throws(() => resolve("/etc/some_directory", "test.txt"));
