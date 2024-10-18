@@ -1,7 +1,6 @@
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
-import { express } from "./express";
 
 export function shouldBlockRequest(): {
   block: boolean;
@@ -35,5 +34,3 @@ export function shouldBlockRequest(): {
 
   return { block: false };
 }
-
-export default { shouldBlockRequest, express };

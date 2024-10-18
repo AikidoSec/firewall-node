@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { setUser } from "../agent/context/user";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
@@ -68,7 +67,8 @@ import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
-import AikidoMiddleware from "../middleware";
+import { setUser } from "../agent/context/user";
+import { setupExpressIntegration } from "../integrations/express";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -99,7 +99,7 @@ function getApp(userMiddleware = true) {
     });
   }
 
-  app.use(AikidoMiddleware.express());
+  setupExpressIntegration(app);
 
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));

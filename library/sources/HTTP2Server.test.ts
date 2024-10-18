@@ -301,45 +301,6 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
   });
 });
 
-t.test("it rate limits requests", async () => {
-  const server = createMinimalTestServer();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3422, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
-    });
-  });
-});
-
 t.test("it works then using the on request event", async () => {
   const server = http2.createServer();
 

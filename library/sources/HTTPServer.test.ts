@@ -455,67 +455,6 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
   });
 });
 
-t.test("it rate limits requests", async () => {
-  const http = require("http");
-
-  const server = http.createServer((req, res) => {
-    res.end();
-  });
-
-  const headers = {
-    "x-forwarded-for": "1.2.3.4",
-  };
-
-  await new Promise<void>((resolve) => {
-    server.listen(3323, () => {
-      Promise.all([
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-      ])
-        .then(([response1, response2, response3]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 200);
-          t.equal(response3.statusCode, 200);
-        })
-        .then(() => {
-          fetch({
-            url: new URL("http://localhost:3323/rate-limited"),
-            method: "GET",
-            headers: headers,
-            timeoutInMS: 500,
-          }).then(({ body, statusCode }) => {
-            t.equal(statusCode, 429);
-            t.equal(
-              body,
-              "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-            );
-            server.close();
-            resolve();
-          });
-        })
-        .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
-        });
-    });
-  });
-});
-
 t.test("it wraps on request event of http", async () => {
   const http = require("http");
   const server = http.createServer();

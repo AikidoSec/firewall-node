@@ -1,9 +1,9 @@
-import type { RequestHandler } from "express";
-import { shouldBlockRequest } from ".";
+import type { Express } from "express";
+import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
 
-export function express(): RequestHandler {
-  return (req, res, next) => {
+export function setupExpressIntegration(app: Express) {
+  app.use((req, res, next) => {
     const result = shouldBlockRequest();
 
     if (result.block) {
@@ -25,5 +25,5 @@ export function express(): RequestHandler {
     }
 
     next();
-  };
+  });
 }
