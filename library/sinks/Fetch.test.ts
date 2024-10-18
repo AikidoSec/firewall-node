@@ -21,20 +21,26 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -144,6 +150,7 @@ t.test(
       }
 
       const error3 = await t.rejects(() =>
+        // @ts-expect-error Test
         fetch(["http://localhost:4000/api/internal"])
       );
       if (error3 instanceof Error) {
@@ -180,6 +187,7 @@ t.test(
         }
 
         const error2 = await t.rejects(() =>
+          // @ts-expect-error Test
           fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
         );
         if (error2 instanceof Error) {

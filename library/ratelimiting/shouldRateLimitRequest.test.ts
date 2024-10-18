@@ -8,8 +8,8 @@ import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 
 function createContext(
-  remoteAddress: string = undefined,
-  userId: string = undefined,
+  remoteAddress: string | undefined = undefined,
+  userId: string | undefined = undefined,
   route: string = "/login",
   method: string = "POST"
 ): Context {
