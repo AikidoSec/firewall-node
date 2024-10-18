@@ -62,9 +62,10 @@ function createContext(): Context {
   };
 }
 
-let server;
+let server: ReturnType<typeof import("http").createServer>;
 t.before(() => {
-  server = require("http").createServer((req, res) => {
+  const http = require("http") as typeof import("http");
+  server = http.createServer((req, res) => {
     res.end("Hello, world!");
   });
   server.unref();
