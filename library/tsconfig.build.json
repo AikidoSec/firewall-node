@@ -1,14 +1,8 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "ES2019",
-    "lib": ["ES2019", "DOM"],
-    "module": "commonjs",
-    "moduleResolution": "node",
     "outDir": "../build",
-    "declaration": true,
-    "strict": true,
-    "allowJs": false,
-    "skipLibCheck": true
+    "noEmit": false
   },
   "include": ["**/*.ts"],
   "exclude": ["**/*.test.ts"]
