@@ -13,7 +13,7 @@ export function setupExpressIntegration(app: Express) {
 
     if (result.block) {
       if (result.type === "rate-limit") {
-        let message = "You are rate limited by Aikido firewall.";
+        let message = "You are rate limited by Zen.";
         if (result.trigger === "ip" && result.ip) {
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
