@@ -80,11 +80,12 @@ export class Fastify implements Wrapper {
     appInstance: any,
     pkgInfo: WrapPackageInfo
   ) {
-    if (!args.length || typeof args[0] !== "string") {
-      return appInstance;
-    }
-
-    if (!appInstance || typeof appInstance !== "object") {
+    if (
+      !args.length ||
+      typeof args[0] !== "string" ||
+      !appInstance ||
+      typeof appInstance !== "object"
+    ) {
       return appInstance;
     }
 
@@ -119,8 +120,9 @@ export class Fastify implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         const onNewInstance = (instance: any) => {
           for (const func of requestFunctions) {
-            // Check if the function exists
+            // Check if the function exists - new functions in Fastify 5
             if (typeof instance[func] !== "function") {
+              /* c8 ignore next 2 */
               continue;
             }
             wrapExport(instance, func, pkgInfo, {

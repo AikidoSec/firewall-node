@@ -107,7 +107,10 @@ function getApp(
     });
 
     app.addHook("onReady", function onReady(done) {
-      // Some code
+      done();
+    });
+
+    app.addHook("onError", (request, reply, error, done) => {
       done();
     });
   }
