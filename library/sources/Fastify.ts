@@ -121,8 +121,8 @@ export class Fastify implements Wrapper {
         const onNewInstance = (instance: any) => {
           for (const func of requestFunctions) {
             // Check if the function exists - new functions in Fastify 5
+            /* c8 ignore next 3 */
             if (typeof instance[func] !== "function") {
-              /* c8 ignore next 2 */
               continue;
             }
             wrapExport(instance, func, pkgInfo, {
