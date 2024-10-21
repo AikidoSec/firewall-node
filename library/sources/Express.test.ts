@@ -212,9 +212,16 @@ function getApp(userMiddleware = true) {
     res.send({ hello: "world" });
   });
 
-  app.use((error, req, res, next) => {
-    res.status(500).send({ error: error.message });
-  });
+  app.use(
+    (
+      error: Error,
+      req: express.Request,
+      res: express.Response,
+      next: Function
+    ) => {
+      res.status(500).send({ error: error.message });
+    }
+  );
 
   return app;
 }

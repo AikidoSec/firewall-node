@@ -33,6 +33,7 @@ t.beforeEach(async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["1.2.3.4"],
@@ -95,6 +96,7 @@ t.test("it allows request if configuration is broken", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           // @ts-expect-error We're testing a broken configuration
@@ -128,6 +130,7 @@ t.test("it allows request if allowed IP addresses is empty", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: [],
@@ -167,6 +170,7 @@ t.test("it checks every matching endpoint", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["3.4.5.6"],
@@ -174,6 +178,7 @@ t.test("it checks every matching endpoint", async () => {
         },
         {
           route: "/posts/*",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["1.2.3.4"],
@@ -208,6 +213,7 @@ t.test(
         endpoints: [
           {
             route: "/posts/:id",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             allowedIPAddresses: [],
@@ -215,6 +221,7 @@ t.test(
           },
           {
             route: "/posts/*",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             // @ts-expect-error We're testing a broken configuration
@@ -223,6 +230,7 @@ t.test(
           },
           {
             route: "/posts/*",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             allowedIPAddresses: ["1.2.3.4"],

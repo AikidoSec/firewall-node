@@ -57,7 +57,8 @@ t.test("it works", async (t) => {
     promises: fsDotPromise,
     realpathSync,
   } = require("fs");
-  const { writeFile: writeFilePromise } = require("fs/promises");
+  const { writeFile: writeFilePromise } =
+    require("fs/promises") as typeof import("fs/promises");
 
   t.ok(typeof realpath.native === "function");
   t.ok(typeof realpathSync.native === "function");
@@ -78,7 +79,7 @@ t.test("it works", async (t) => {
       "./test.txt",
       "some file content to test with",
       { encoding: "utf-8" },
-      (err) => {}
+      () => {}
     );
     writeFileSync("./test.txt", "some other file content to test with", {
       encoding: "utf-8",
@@ -93,9 +94,9 @@ t.test("it works", async (t) => {
       "some other file content to test with",
       { encoding: "utf-8" }
     );
-    rename("./test.txt", "./test2.txt", (err) => {});
-    rename(new URL("file:///test123.txt"), "test2.txt", (err) => {});
-    rename(Buffer.from("./test123.txt"), "test2.txt", (err) => {});
+    rename("./test.txt", "./test2.txt", () => {});
+    rename(new URL("file:///test123.txt"), "test2.txt", () => {});
+    rename(Buffer.from("./test123.txt"), "test2.txt", () => {});
   };
 
   await runSafeCommands();
@@ -111,7 +112,7 @@ t.test("it works", async (t) => {
           "../../test.txt",
           "some file content to test with",
           { encoding: "utf-8" },
-          (err) => {}
+          () => {}
         ),
       "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
     );
@@ -157,47 +158,44 @@ t.test("it works", async (t) => {
     }
 
     throws(
-      () => rename("../../test.txt", "./test2.txt", (err) => {}),
+      () => rename("../../test.txt", "./test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
-      () => rename("./test.txt", "../../test.txt", (err) => {}),
+      () => rename("./test.txt", "../../test.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
-      () => rename(new URL("file:///../test.txt"), "../test2.txt", (err) => {}),
+      () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
-      () =>
-        rename(new URL("file:///./../test.txt"), "../test2.txt", (err) => {}),
+      () => rename(new URL("file:///./../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
-      () =>
-        rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {}),
+      () => rename(new URL("file:///../../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
     throws(
-      () => rename(Buffer.from("../test.txt"), "../test2.txt", (err) => {}),
+      () => rename(Buffer.from("../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
 
   runWithContext(unsafeContextAbsolute, () => {
     throws(
-      () =>
-        rename(new URL("file:///etc/passwd"), "../test123.txt", (err) => {}),
+      () => rename(new URL("file:///etc/passwd"), "../test123.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
     throws(
       () =>
-        rename(new URL("file:///../etc/passwd"), "../test123.txt", (err) => {}),
+        rename(new URL("file:///../etc/passwd"), "../test123.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
   });
@@ -206,7 +204,7 @@ t.test("it works", async (t) => {
   runWithContext(
     { ...unsafeContext, body: { file: { matches: "../%" } } },
     () => {
-      rename(new URL("file:///../../test.txt"), "../test2.txt", (err) => {});
+      rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
     }
   );
 });

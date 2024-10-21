@@ -114,7 +114,7 @@ function http2Request(
   );
 }
 
-const http2 = require("http2");
+const http2 = require("http2") as typeof import("http2");
 
 function createMinimalTestServer() {
   const server = http2.createServer((req, res) => {
@@ -433,7 +433,6 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
     {
       key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
       cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-      secureContext: {},
     },
     (req, res) => {
       res.setHeader("Content-Type", "application/json");
@@ -474,7 +473,6 @@ t.test("it wraps the createSecureServer on request event", async () => {
   const server = http2.createSecureServer({
     key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("request", (req, res) => {
@@ -515,7 +513,6 @@ t.test("it wraps the createSecureServer stream event", async () => {
   const server = http2.createSecureServer({
     key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("stream", (stream, headers) => {
@@ -566,7 +563,7 @@ t.test("real injection test", async (t) => {
       stream.end(file);
     } catch (e) {
       stream.respond({ ":status": 500 });
-      stream.end(e.message);
+      stream.end(e instanceof Error ? e.message : "");
     }
   });
 
