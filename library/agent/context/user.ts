@@ -3,6 +3,8 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
+let loggedWarningSetUserCalledAfterMiddleware = false;
+
 export function setUser(user: unknown) {
   const agent = getInstance();
 
@@ -48,11 +50,15 @@ export function setUser(user: unknown) {
     return;
   }
 
-  if (context.executedMiddleware) {
+  if (
+    !loggedWarningSetUserCalledAfterMiddleware &&
+    context.executedMiddleware
+  ) {
     // eslint-disable-next-line no-console
     console.warn(
       `setUser(...) must be called before the Zen middleware is executed.`
     );
+    loggedWarningSetUserCalledAfterMiddleware = true;
   }
 
   context.user = validatedUser;
