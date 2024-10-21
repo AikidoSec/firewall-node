@@ -1,5 +1,6 @@
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
+import { escapeHTML } from "../helpers/escapeHTML";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
 export function shouldBlockRequest(): {
@@ -28,7 +29,7 @@ export function shouldBlockRequest(): {
       block: true,
       type: "ratelimited",
       trigger: rateLimitResult.trigger,
-      ip: context.remoteAddress,
+      ip: context.remoteAddress ? escapeHTML(context.remoteAddress) : undefined,
     };
   }
 

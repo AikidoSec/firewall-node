@@ -16,10 +16,6 @@ or when using `node`:
 node --require @aikidosec/firewall ./node_modules/.bin/micro
 ```
 
-That's it! Your app is now protected by Zen.
-
-If you want to see a full example, check our [micro sample app](../sample-apps/micro).
-
 ## Blocking mode
 
 By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
@@ -31,6 +27,10 @@ AIKIDO_BLOCKING=true node app.js
 ```
 
 It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
+
+## Rate limiting and user blocking
+
+If you want to add the rate limiting feature to your app, take a look at the generic [rate limiting documentation](./generic-integration.md).
 
 ## Debug mode
 
@@ -47,3 +47,7 @@ This will output debug information to the console (e.g. if the agent failed to s
 Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
+
+That's it! Your app is now protected by Zen.
+
+If you want to see a full example, check our [micro sample app](../sample-apps/micro).
