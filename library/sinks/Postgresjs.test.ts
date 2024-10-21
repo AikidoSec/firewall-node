@@ -69,6 +69,8 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
           "Zen has blocked an SQL injection: sql.unsafe(...) originating from body.myTitle"
         );
       }
+
+      await sql.unsafe("");
     });
   } catch (error: any) {
     t.fail(error);
