@@ -3,7 +3,7 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(u: User) {
+export function setUser(u: { id: string | number; name?: string }) {
   const agent = getInstance();
 
   if (!agent) {

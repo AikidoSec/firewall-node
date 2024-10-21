@@ -82,18 +82,21 @@ t.test("it logs when setUser has invalid input", async () => {
   const logger = new LoggerForTesting();
   createTestAgent({ logger });
 
+  // @ts-expect-error User should be an object
   setUser(1);
   t.same(logger.getMessages(), [
     "setUser(...) expects an object with 'id' and 'name' properties, found number instead.",
   ]);
   logger.clear();
 
+  // @ts-expect-error User is undefined
   setUser(undefined);
   t.same(logger.getMessages(), [
     "setUser(...) expects an object with 'id' and 'name' properties, found undefined instead.",
   ]);
   logger.clear();
 
+  // @ts-expect-error ID should be string or number
   setUser({ id: {} });
   t.same(logger.getMessages(), [
     "setUser(...) expects an object with 'id' property of type string or number, found object instead.",
@@ -106,6 +109,7 @@ t.test("it logs when setUser has invalid input", async () => {
   ]);
   logger.clear();
 
+  // @ts-expect-error ID is missing
   setUser({ name: "name" });
   t.same(logger.getMessages(), [
     "setUser(...) expects an object with 'id' property.",
