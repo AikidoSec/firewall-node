@@ -725,6 +725,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
   t.match(api.getEvents(), [
     {
       type: "heartbeat",
+      middlewareInstalled: false,
       hostnames: [
         {
           hostname: "aikido.dev",
@@ -879,4 +880,34 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   t.same(agent.shouldBlock(), false);
+});
+
+t.test("it sends middleware installed with heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+  });
+  agent.start([]);
+
+  agent.onMiddlewareExecuted();
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      hostnames: [],
+      routes: [],
+      middlewareInstalled: true,
+    },
+  ]);
+
+  clock.uninstall();
 });

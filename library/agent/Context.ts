@@ -29,6 +29,7 @@ export type Context = {
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
+  executedMiddleware?: boolean;
 };
 
 /**

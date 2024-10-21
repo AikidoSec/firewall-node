@@ -1,6 +1,5 @@
 /* eslint-disable prefer-rest-params */
 import type { MiddlewareHandler } from "hono";
-import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./hono/wrapRequestHandler";
@@ -14,14 +13,14 @@ export class Hono implements Wrapper {
   // hono.METHOD(path, middleware, middleware, ..., handler)
   // hono.use(middleware)
   // hono.use(middleware, middleware, ...)
-  private wrapArgs(args: unknown[], agent: Agent) {
+  private wrapArgs(args: unknown[]) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRequestHandler(arg as MiddlewareHandler, agent);
+      return wrapRequestHandler(arg as MiddlewareHandler);
     });
   }
 
@@ -31,12 +30,12 @@ export class Hono implements Wrapper {
       .withVersion("^4.0.0")
       .onFileRequire("dist/hono-base.js", (exports, pkgInfo) => {
         wrapExport(exports.HonoBase.prototype, "addRoute", pkgInfo, {
-          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+          modifyArgs: (args) => this.wrapArgs(args),
         });
       })
       .onFileRequire("dist/cjs/hono-base.js", (exports, pkgInfo) => {
         wrapExport(exports.HonoBase.prototype, "addRoute", pkgInfo, {
-          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+          modifyArgs: (args) => this.wrapArgs(args),
         });
       });
   }

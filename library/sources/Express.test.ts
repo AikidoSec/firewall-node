@@ -1,7 +1,6 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { setUser } from "../agent/context/user";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
@@ -68,6 +67,8 @@ import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
+import { setUser } from "../agent/context/user";
+import { addExpressMiddleware } from "../middleware/express";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -81,6 +82,25 @@ function getApp(userMiddleware = true) {
     next();
   });
 
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      if (req.path === "/block-user") {
+        setUser({
+          id: "567",
+        });
+        return next();
+      }
+
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
+    });
+  }
+
+  addExpressMiddleware(app);
+
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
     next();
@@ -90,16 +110,6 @@ function getApp(userMiddleware = true) {
     require("fs").readdir(req.query.directory).unref();
     next();
   });
-
-  if (userMiddleware) {
-    app.use((req, res, next) => {
-      setUser({
-        id: "123",
-        name: "John Doe",
-      });
-      next();
-    });
-  }
 
   // A middleware that is used as a route
   app.use("/api/*path", (req, res, next) => {
@@ -179,20 +189,11 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
-  app.get(
-    "/block-user",
-    (req, res, next) => {
-      setUser({
-        id: "567",
-      });
-      next();
-    },
-    (req, res) => {
-      res.send({
-        willNotBeSent: true,
-      });
-    }
-  );
+  app.get("/block-user", (req, res) => {
+    res.send({
+      willNotBeSent: true,
+    });
+  });
 
   app.get("/rate-limited", (req, res) => {
     res.send({ hello: "world" });
@@ -442,6 +443,7 @@ t.test("it blocks user", async () => {
 
   t.same(response.statusCode, 403);
   t.same(response.body, {});
+  t.same(response.text, "You are blocked by Zen.");
 });
 
 t.test("it adds user to context", async () => {
@@ -468,10 +470,7 @@ t.test("it rate limits by IP", async () => {
     .get("/rate-limited")
     .set("x-forwarded-for", "1.2.3.4");
   t.same(res2.statusCode, 429);
-  t.same(
-    res2.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 
   await sleep(2000);
 
