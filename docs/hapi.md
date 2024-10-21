@@ -57,7 +57,7 @@ server.ext('onRequest', function (request, h) {
   return h.continue;
 });
 
-// Call this as early as possible, before other onRequest extensions are added
+// Call this as after your auth middleware, before other middleware
 Zen.addHapiMiddleware(app);
 
 server.route(...);

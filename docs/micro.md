@@ -30,7 +30,42 @@ It's recommended to enable this on your staging environment for a considerable a
 
 ## Rate limiting and user blocking
 
-If you want to add the rate limiting feature to your app, take a look at the generic [rate limiting documentation](./generic-middleware.md).
+If you want to add the rate limiting feature to your app, modify your code like this:
+
+```js
+const Zen = require("@aikidosec/firewall");
+
+module.exports = async (req, res) => {
+  // Optional, if you want to use user based rate limiting or block specific users
+  Zen.setUser({
+    id: "123",
+    name: "John Doe", // Optional
+  });
+
+  // Call this as early as possible before your request handling code, e.g. in a middleware, after you know your user
+  const result = Zen.shouldBlockRequest();
+
+  if (result.block) {
+    if (result.type === "ratelimited") {
+      let message = "You are rate limited by Zen.";
+      if (result.trigger === "ip" && result.ip) {
+        // Please note that outputting user input is always a security risk. Make sure to escape it properly.
+        message += ` (Your IP: ${result.ip})`;
+      }
+
+      // Block the request and send a http 429 status code
+      res.statusCode = 429;
+      return res.end(message);
+    }
+
+    if (result.type === "blocked") {
+      // Return a http 403 response
+      res.statusCode = 403;
+      return res.end("You are blocked by Zen.");
+    }
+  }
+};
+```
 
 ## Debug mode
 

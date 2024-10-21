@@ -13,7 +13,14 @@ The following prerequisites are required:
 const Zen = require("@aikidosec/firewall");
 
 function onRequest(...) {
-    // Call this as early as possible before your request handling code, e.g. in a middleware
+
+    // Set the user associated with the request, optional, required for user based rate limiting and blocking of specific users
+    Zen.setUser({
+        id: "123",
+        name: "John Doe", // Optional
+    });
+
+    // Call this as early as possible before your request handling code, e.g. in a middleware, after you know your user
     const result = Zen.shouldBlockRequest();
 
     if (result.block) {

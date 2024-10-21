@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Call this as early as possible, before other middleware
+// Call this as after your auth middleware, before other middleware
 Zen.addExpressMiddleware(app);
 
 app.get(...);
