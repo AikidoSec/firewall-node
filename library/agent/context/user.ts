@@ -14,7 +14,7 @@ export function setUser(u: { id: string | number; name?: string }) {
 
   if (!isPlainObject(user)) {
     agent.log(
-      `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof u} instead.`
+      `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof user} instead.`
     );
     return;
   }
