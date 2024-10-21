@@ -11,6 +11,7 @@ import { FileSystem } from "../sinks/FileSystem";
 import type { FastifyInstance } from "fastify";
 import { getContext } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { addFastifyHook } from "../middleware/fastify";
 
 const agent = new Agent(
   true,
@@ -88,6 +89,8 @@ function getApp(
         setUser({ id: "567", name: "User" });
       }
     });
+
+    addFastifyHook(app);
 
     app.addHook("onRequest", async (request, reply) => {
       if (request.url.startsWith("/on-request-attack")) {
@@ -168,7 +171,7 @@ t.test("it adds context from request for all", opts, async (t) => {
   t.same(response.statusCode, 200);
 
   const json = await response.json();
-  t.same(json, {
+  t.match(json, {
     url: "/?title[$ne]=null",
     remoteAddress: "127.0.0.1",
     method: "GET",
@@ -185,6 +188,7 @@ t.test("it adds context from request for all", opts, async (t) => {
     cookies: {
       session: "123",
     },
+    executedMiddleware: true,
   });
 });
 
@@ -206,7 +210,7 @@ t.test(
     t.same(response.statusCode, 200);
 
     const json = await response.json();
-    t.same(json, {
+    t.match(json, {
       url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
@@ -245,7 +249,7 @@ t.test(
     t.same(response.statusCode, 200);
 
     const json = await response.json();
-    t.same(json, {
+    t.match(json, {
       url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
@@ -281,7 +285,7 @@ t.test("it adds context from request for all", opts, async (t) => {
   t.same(response.statusCode, 200);
 
   const json = await response.json();
-  t.same(json, {
+  t.match(json, {
     url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
@@ -318,7 +322,7 @@ t.test("it adds body to context", opts, async (t) => {
   t.same(response.statusCode, 200);
 
   const json = await response.json();
-  t.same(json, {
+  t.match(json, {
     url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
@@ -345,7 +349,7 @@ t.test("it blocks request in on-request hook", opts, async (t) => {
 
   const response = await app.inject({
     method: "GET",
-    url: "/on-request-attack?directory=/etc/",
+    url: "/on-request-attack?directory=/etc/passwd",
     headers: {
       accept: "application/json",
     },
@@ -354,9 +358,9 @@ t.test("it blocks request in on-request hook", opts, async (t) => {
   t.same(response.statusCode, 500);
 
   const json = response.json();
-  t.match(
+  t.same(
     json.message,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir.* originating from query.directory/
+    "Zen has blocked a path traversal attack: fs.readdir(...) originating from query.directory"
   );
 });
 
@@ -420,7 +424,10 @@ t.test("does ignore invalid route usage", opts, async (t) => {
     app.route();
     t.notOk("should not reach here");
   } catch (error) {
-    t.match(error.code, "FST_ERR_ROUTE_METHOD_INVALID");
+    t.match(
+      (error as NodeJS.ErrnoException).code,
+      "FST_ERR_ROUTE_METHOD_INVALID"
+    );
   }
 
   try {
@@ -428,7 +435,10 @@ t.test("does ignore invalid route usage", opts, async (t) => {
     app.route(null);
     t.notOk("should not reach here");
   } catch (error) {
-    t.match(error.code, "FST_ERR_ROUTE_METHOD_INVALID");
+    t.match(
+      (error as NodeJS.ErrnoException).code,
+      "FST_ERR_ROUTE_METHOD_INVALID"
+    );
   }
 });
 
@@ -451,7 +461,7 @@ t.test("It works with route params", opts, async (t) => {
   t.same(response.statusCode, 200);
 
   const json = await response.json();
-  t.same(json, {
+  t.match(json, {
     url: "/hello/123",
     remoteAddress: "127.0.0.1",
     method: "GET",
@@ -474,7 +484,7 @@ t.test(
   "it rate limits requests by ip address in app withouth hooks",
   opts,
   async (t) => {
-    const app = getApp("default", true);
+    const app = getApp("default", false);
 
     const response = await app.inject({
       method: "GET",
@@ -513,7 +523,7 @@ t.test("it works with addHttpMethod", opts, async (t) => {
   t.same(response.statusCode, 200);
 
   const json = await response.json();
-  t.same(json, {
+  t.match(json, {
     url: "/testurl",
     remoteAddress: "127.0.0.1",
     method: "MKCOL",

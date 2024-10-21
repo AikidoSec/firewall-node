@@ -1,6 +1,5 @@
 // Import Aikido Firewall
-
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 const { createConnection } = require("./db");
 
 const fastify = require("fastify");
@@ -35,6 +34,8 @@ function getHTMLBody(cats) {
   const app = fastify({
     logger: true,
   });
+
+  Zen.addFastifyHook(app);
 
   // Handle GET requests to the root URL
   app.get("/", async (request, reply) => {

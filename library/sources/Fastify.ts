@@ -1,5 +1,4 @@
 import type { RouteOptions, RouteHandlerMethod } from "fastify";
-import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
@@ -9,18 +8,18 @@ import { wrapHookHandler } from "./fastify/wrapHookHandler";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Fastify implements Wrapper {
-  private wrapRequestArgs(args: unknown[], agent: Agent) {
+  private wrapRequestArgs(args: unknown[]) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRequestHandler(arg as RouteHandlerMethod, agent);
+      return wrapRequestHandler(arg as RouteHandlerMethod);
     });
   }
 
-  private wrapAddHookArgs(args: unknown[], agent: Agent) {
+  private wrapAddHookArgs(args: unknown[]) {
     if (args.length < 2 || typeof args[0] !== "string") {
       return args;
     }
@@ -49,11 +48,11 @@ export class Fastify implements Wrapper {
         return arg;
       }
 
-      return wrapHookHandler(arg, agent, hookName);
+      return wrapHookHandler(arg);
     });
   }
 
-  private wrapRouteMethod(args: unknown[], agent: Agent) {
+  private wrapRouteMethod(args: unknown[]) {
     if (args.length < 1) {
       return args;
     }
@@ -68,7 +67,7 @@ export class Fastify implements Wrapper {
       }
 
       // @ts-expect-error types
-      options[key] = wrapRequestHandler(value as RouteHandlerMethod, agent);
+      options[key] = wrapRequestHandler(value as RouteHandlerMethod);
     }
     return args;
   }
@@ -79,7 +78,6 @@ export class Fastify implements Wrapper {
   private wrapNewRouteMethod(
     args: unknown[],
     appInstance: any,
-    agent: Agent,
     pkgInfo: WrapPackageInfo
   ) {
     if (!args.length || typeof args[0] !== "string") {
@@ -140,7 +138,7 @@ export class Fastify implements Wrapper {
           if (typeof instance.addHttpMethod === "function") {
             wrapExport(instance, "addHttpMethod", pkgInfo, {
               modifyReturnValue: (args, returnValue, agent) =>
-                this.wrapNewRouteMethod(args, returnValue, agent, pkgInfo),
+                this.wrapNewRouteMethod(args, returnValue, pkgInfo),
             });
           }
         };
