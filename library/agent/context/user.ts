@@ -3,8 +3,6 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-let loggedWarningSetUserCalledAfterMiddleware = false;
-
 export function setUser(user: unknown) {
   const agent = getInstance();
 
@@ -65,6 +63,8 @@ export function setUser(user: unknown) {
     lastIpAddress: ipAddress,
   });
 }
+
+let loggedWarningSetUserCalledAfterMiddleware = false;
 
 function logWarningSetUserCalledAfterMiddleware() {
   if (loggedWarningSetUserCalledAfterMiddleware) {
