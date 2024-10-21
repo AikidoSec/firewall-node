@@ -49,10 +49,7 @@ export function setUser(user: unknown) {
   }
 
   if (context.executedMiddleware) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `setUser(...) must be called before the Zen middleware is executed.`
-    );
+    logWarningSetUserCalledAfterMiddleware();
   }
 
   context.user = validatedUser;
@@ -64,4 +61,19 @@ export function setUser(user: unknown) {
     name: validatedUser.name,
     lastIpAddress: ipAddress,
   });
+}
+
+let loggedWarningSetUserCalledAfterMiddleware = false;
+
+function logWarningSetUserCalledAfterMiddleware() {
+  if (loggedWarningSetUserCalledAfterMiddleware) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    `setUser(...) must be called before the Zen middleware is executed.`
+  );
+
+  loggedWarningSetUserCalledAfterMiddleware = true;
 }
