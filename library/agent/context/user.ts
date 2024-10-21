@@ -3,16 +3,18 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(user: unknown) {
+export function setUser(u: User) {
   const agent = getInstance();
 
   if (!agent) {
     return;
   }
 
+  const user = u as unknown;
+
   if (!isPlainObject(user)) {
     agent.log(
-      `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof user} instead.`
+      `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof u} instead.`
     );
     return;
   }
