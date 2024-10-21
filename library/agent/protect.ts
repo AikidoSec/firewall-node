@@ -40,22 +40,10 @@ import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
+import { isDebugging } from "../helpers/isDebugging";
+import { shouldBlock } from "../helpers/shouldBlock";
+import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
-
-function isDebugging() {
-  return (
-    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
-  );
-}
-
-function shouldBlock() {
-  return (
-    process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1" ||
-    process.env.AIKIDO_BLOCK === "true" ||
-    process.env.AIKIDO_BLOCK === "1"
-  );
-}
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -140,6 +128,7 @@ function getWrappers() {
     new Hapi(),
     new NodeSQLite(),
     new BetterSQLite3(),
+    new Postgresjs(),
     new Fastify(),
   ];
 }

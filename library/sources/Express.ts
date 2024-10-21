@@ -39,7 +39,7 @@ export class Express implements Wrapper {
 
     hooks
       .addPackage("express")
-      .withVersion("^4.0.0")
+      .withVersion("^4.0.0 || ^5.0.0")
       .onRequire((exports, pkgInfo) => {
         for (const method of expressMethodNames) {
           wrapExport(exports.Route.prototype, method, pkgInfo, {

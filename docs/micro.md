@@ -1,6 +1,6 @@
 # Micro
 
-Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to load the firewall agent before the `http` module is loaded:
+Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to load the Zen agent before the `http` module is loaded:
 
 ```json
 {
@@ -16,7 +16,7 @@ or when using `node`:
 node --require @aikidosec/firewall ./node_modules/.bin/micro
 ```
 
-That's it! Your app is now protected by Aikido firewall.
+That's it! Your app is now protected by Zen.
 
 If you want to see a full example, check our [micro sample app](../sample-apps/micro).
 
@@ -44,6 +44,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido firewall can also protect your application against prototype pollution attacks.
+Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

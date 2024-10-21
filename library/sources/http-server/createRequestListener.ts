@@ -99,7 +99,7 @@ function createOnFinishRequestHandler(
         method: context.method,
       })
     ) {
-      agent.onRouteExecute(context.method, context.route);
+      agent.onRouteExecute(context);
     }
 
     agent.getInspectionStatistics().onRequest();

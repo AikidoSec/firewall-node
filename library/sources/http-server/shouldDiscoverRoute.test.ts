@@ -1,41 +1,29 @@
 import * as t from "tap";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
-t.test(
-  "it does not discover route if not found or method not allowed",
-  async () => {
+t.test("it rejects invalid status codes", async () => {
+  for (let code = 100; code <= 199; code++) {
     t.same(
-      shouldDiscoverRoute({ statusCode: 404, route: "/", method: "GET" }),
-      false
-    );
-    t.same(
-      shouldDiscoverRoute({ statusCode: 405, route: "/", method: "GET" }),
+      shouldDiscoverRoute({ statusCode: code, route: "/", method: "GET" }),
       false
     );
   }
-);
 
-t.test("it discovers route for all other status codes", async () => {
-  t.same(
-    shouldDiscoverRoute({ statusCode: 200, route: "/", method: "GET" }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({ statusCode: 500, route: "/", method: "GET" }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({ statusCode: 400, route: "/", method: "GET" }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({ statusCode: 300, route: "/", method: "GET" }),
-    true
-  );
-  t.same(
-    shouldDiscoverRoute({ statusCode: 201, route: "/", method: "GET" }),
-    true
-  );
+  for (let code = 400; code <= 599; code++) {
+    t.same(
+      shouldDiscoverRoute({ statusCode: code, route: "/", method: "GET" }),
+      false
+    );
+  }
+});
+
+t.test("it accepts valid status codes", async () => {
+  for (let code = 200; code <= 399; code++) {
+    t.same(
+      shouldDiscoverRoute({ statusCode: code, route: "/", method: "GET" }),
+      true
+    );
+  }
 });
 
 t.test("it does not discover route for OPTIONS or HEAD methods", async () => {
@@ -304,25 +292,25 @@ t.test("it ignores files that end with .config", async () => {
   );
 });
 
-t.test("it ignores redirects", async () => {
+t.test("it allows redirects", async () => {
   t.same(
     shouldDiscoverRoute({ statusCode: 301, route: "/", method: "GET" }),
-    false
+    true
   );
   t.same(
     shouldDiscoverRoute({ statusCode: 302, route: "/", method: "GET" }),
-    false
+    true
   );
   t.same(
     shouldDiscoverRoute({ statusCode: 303, route: "/", method: "GET" }),
-    false
+    true
   );
   t.same(
     shouldDiscoverRoute({ statusCode: 307, route: "/", method: "GET" }),
-    false
+    true
   );
   t.same(
     shouldDiscoverRoute({ statusCode: 308, route: "/", method: "GET" }),
-    false
+    true
   );
 });

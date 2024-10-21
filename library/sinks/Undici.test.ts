@@ -1,7 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -9,6 +8,7 @@ import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -22,37 +22,55 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost:4000/api/internal",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
-};
+function createContext(): Context {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      image: "http://localhost:4000/api/internal",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+}
+
+let server: ReturnType<typeof import("http").createServer>;
+t.before(() => {
+  const http = require("http") as typeof import("http");
+  server = http.createServer((req, res) => {
+    res.end("Hello, world!");
+  });
+  server.unref();
+  server.listen(4000);
+});
 
 t.test(
   "it works",
@@ -62,14 +80,21 @@ t.test(
   },
   async (t) => {
     const logger = new LoggerForTesting();
-    const agent = new Agent(
-      true,
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: ["1.2.3.4"],
+      block: true,
+      receivedAnyStats: false,
+    });
+    const agent = createTestAgent({
+      api,
       logger,
-      new ReportingAPIForTesting(),
-      new Token("123"),
-      undefined
-    );
-
+      token: new Token("123"),
+    });
     agent.start([new Undici()]);
 
     const {
@@ -139,10 +164,35 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
+    await request(require("url").parse("https://aikido.dev"));
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      origin: "https://aikido.dev",
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
     await t.rejects(() => request("invalid url"));
     await t.rejects(() => request({ hostname: "" }));
 
-    await runWithContext(context, async () => {
+    await runWithContext(
+      {
+        ...createContext(),
+        remoteAddress: "1.2.3.4",
+      },
+      async () => {
+        // Bypass the block using an allowed IP
+        await request("http://localhost:4000/api/internal");
+      }
+    );
+
+    await runWithContext(createContext(), async () => {
       await request("https://google.com");
 
       const error0 = await t.rejects(() => request("http://localhost:9876"));
@@ -157,16 +207,26 @@ t.test(
       if (error1 instanceof Error) {
         t.same(
           error1.message,
-          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
+
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
+
       const error2 = await t.rejects(() =>
         request(new URL("http://localhost:4000/api/internal"))
       );
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
       const error3 = await t.rejects(() =>
@@ -180,7 +240,7 @@ t.test(
       if (error3 instanceof Error) {
         t.same(
           error3.message,
-          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
 
@@ -190,7 +250,7 @@ t.test(
       if (error4 instanceof Error) {
         t.same(
           error4.message,
-          "Aikido firewall has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
         );
       }
 
@@ -201,19 +261,19 @@ t.test(
       if (error5 instanceof Error) {
         t.same(
           error5.message,
-          "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
         );
       }
     });
 
     await runWithContext(
-      { ...context, routeParams: { param: "http://0" } },
+      { ...createContext(), routeParams: { param: "http://0" } },
       async () => {
         const error = await t.rejects(() => request("http://0"));
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
+            "Zen has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
           );
         }
       }
@@ -221,7 +281,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{
           body: {
             image2: [
@@ -239,7 +299,7 @@ t.test(
         if (error instanceof Error) {
           t.same(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
 
@@ -250,7 +310,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error2.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image2"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image2"
           );
         }
 
@@ -267,3 +327,7 @@ t.test(
     ]);
   }
 );
+
+t.after(() => {
+  server.close();
+});

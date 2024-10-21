@@ -1,18 +1,14 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Hapi } from "./Hapi";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -31,11 +27,9 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  undefined
-);
+  token: new Token("123"),
+});
 agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
-setInstance(agent);
 
 import * as hapi from "@hapi/hapi";
 import * as request from "supertest";

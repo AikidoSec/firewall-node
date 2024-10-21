@@ -1,9 +1,4 @@
 import { extname } from "path";
-import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
-
-const NOT_FOUND = 404;
-const METHOD_NOT_ALLOWED = 405;
-const ERROR_CODES = [NOT_FOUND, METHOD_NOT_ALLOWED];
 
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
 const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp", "config"];
@@ -18,15 +13,13 @@ export function shouldDiscoverRoute({
   route: string;
   method: string;
 }) {
+  const validStatusCode = statusCode >= 200 && statusCode <= 399;
+
+  if (!validStatusCode) {
+    return false;
+  }
+
   if (EXCLUDED_METHODS.includes(method)) {
-    return false;
-  }
-
-  if (ERROR_CODES.includes(statusCode)) {
-    return false;
-  }
-
-  if (isRedirectStatusCode(statusCode)) {
     return false;
   }
 

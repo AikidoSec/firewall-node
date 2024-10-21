@@ -1,5 +1,5 @@
 import { sep } from "path";
-import { getOrignalRequire } from "../agent/hooks/wrapRequire";
+import { getOriginalRequire } from "../agent/hooks/wrapRequire";
 
 /**
  * Get the installed version of a package
@@ -24,7 +24,7 @@ export function getPackageVersion(pkg: string): string | null {
     const index = parts.indexOf(lookup);
     const root = parts.slice(0, index + 1).join(sep);
 
-    return getOrignalRequire()(`${root}/package.json`).version;
+    return getOriginalRequire()(`${root}/package.json`).version;
   } catch (error) {
     return null;
   }

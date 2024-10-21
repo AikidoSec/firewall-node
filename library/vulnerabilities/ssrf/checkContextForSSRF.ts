@@ -4,6 +4,7 @@ import { SOURCES } from "../../agent/Source";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -34,9 +35,7 @@ export function checkContextForSSRF({
           kind: "ssrf",
           source: source,
           pathToPayload: path,
-          metadata: {
-            hostname: hostname,
-          },
+          metadata: getMetadataForSSRFAttack({ hostname, port }),
           payload: str,
         };
       }
