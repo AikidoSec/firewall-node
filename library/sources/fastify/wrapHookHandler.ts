@@ -2,6 +2,10 @@ import { runWithContext } from "../../agent/Context";
 import type { FastifyRequest } from "fastify";
 import { contextFromRequest } from "./contextFromRequest";
 
+/**
+ * Hooks are something like better middleware in Fastify.
+ * This function wraps a Fastify hook handler to ensure that the context is set up correctly.
+ */
 export function wrapHookHandler(origHandler: Function): unknown {
   return function wrap() {
     // Execute the original handler
