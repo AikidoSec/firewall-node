@@ -44,6 +44,8 @@ import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
+import { Koa } from "../sources/Koa";
+import { KoaRouter } from "../sources/KoaRouter";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -130,6 +132,8 @@ function getWrappers() {
     new NodeSQLite(),
     new BetterSQLite3(),
     new Postgresjs(),
+    new Koa(),
+    new KoaRouter(),
   ];
 }
 
