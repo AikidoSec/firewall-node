@@ -1,24 +1,17 @@
 import * as t from "tap";
-import { Agent } from "../Agent";
-import { setInstance } from "../AgentSingleton";
-import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
-import { type Context, getContext, runWithContext } from "../Context";
+import { wrap } from "../../helpers/wrap";
+import {
+  type Context,
+  getContext,
+  runWithContext,
+  updateContext,
+} from "../Context";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
-import { LoggerNoop } from "../logger/LoggerNoop";
 import { setUser } from "./user";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
-t.test("it does not set user if empty id", async (t) => {
-  setInstance(
-    new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    )
-  );
-
-  const context: Context = {
+function createContext(): Context {
+  return {
     remoteAddress: "::1",
     method: "POST",
     url: "http://localhost:4000",
@@ -32,6 +25,14 @@ t.test("it does not set user if empty id", async (t) => {
     source: "express",
     route: "/posts/:id",
   };
+}
+
+t.beforeEach(() => {
+  createTestAgent();
+});
+
+t.test("it does not set user if empty id", async (t) => {
+  const context = createContext();
 
   runWithContext(context, () => {
     setUser({ id: "" });
@@ -40,44 +41,11 @@ t.test("it does not set user if empty id", async (t) => {
 });
 
 t.test("it does not set user if not inside context", async () => {
-  setInstance(
-    new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    )
-  );
-
   setUser({ id: "id" });
 });
 
 t.test("it sets user", async (t) => {
-  setInstance(
-    new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    )
-  );
-
-  const context: Context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000",
-    query: {},
-    headers: {},
-    body: {
-      myTitle: `-- should be blocked`,
-    },
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/posts/:id",
-  };
+  const context = createContext();
 
   runWithContext(context, () => {
     setUser({ id: "id" });
@@ -88,30 +56,7 @@ t.test("it sets user", async (t) => {
 });
 
 t.test("it sets user with number as ID", async (t) => {
-  setInstance(
-    new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    )
-  );
-
-  const context: Context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000",
-    query: {},
-    headers: {},
-    body: {
-      myTitle: `-- should be blocked`,
-    },
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/posts/:id",
-  };
+  const context = createContext();
 
   runWithContext(context, () => {
     setUser({ id: 1 });
@@ -122,30 +67,7 @@ t.test("it sets user with number as ID", async (t) => {
 });
 
 t.test("it sets user with name", async (t) => {
-  setInstance(
-    new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    )
-  );
-
-  const context: Context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000",
-    query: {},
-    headers: {},
-    body: {
-      myTitle: `-- should be blocked`,
-    },
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/posts/:id",
-  };
+  const context = createContext();
 
   runWithContext(context, () => {
     setUser({ id: "id", name: "name" });
@@ -158,9 +80,7 @@ t.test("it sets user with name", async (t) => {
 
 t.test("it logs when setUser has invalid input", async () => {
   const logger = new LoggerForTesting();
-  setInstance(
-    new Agent(true, logger, new ReportingAPIForTesting(), undefined, undefined)
-  );
+  createTestAgent({ logger });
 
   setUser(1);
   t.same(logger.getMessages(), [
@@ -192,3 +112,45 @@ t.test("it logs when setUser has invalid input", async () => {
   ]);
   logger.clear();
 });
+
+t.test(
+  "it does not log warning when setUser is called before middleware",
+  async () => {
+    const logs: string[] = [];
+    wrap(console, "warn", function warn() {
+      return function warn(message: string) {
+        logs.push(message);
+      };
+    });
+
+    const context = createContext();
+    runWithContext(context, () => {
+      setUser({ id: "id" });
+    });
+
+    t.same(logs, []);
+  }
+);
+
+t.test(
+  "it logs warning when setUser is called after middleware (once)",
+  async () => {
+    const logs: string[] = [];
+    wrap(console, "warn", function warn() {
+      return function warn(message: string) {
+        logs.push(message);
+      };
+    });
+
+    const context = createContext();
+    runWithContext(context, () => {
+      updateContext(getContext()!, "executedMiddleware", true);
+      setUser({ id: "id" });
+      setUser({ id: "id" });
+    });
+
+    t.same(logs, [
+      "setUser(...) must be called before the Zen middleware is executed.",
+    ]);
+  }
+);

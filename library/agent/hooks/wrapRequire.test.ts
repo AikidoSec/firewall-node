@@ -3,7 +3,7 @@ import {
   wrapRequire,
   setPackagesToPatch,
   setBuiltinModulesToPatch,
-  getOrignalRequire,
+  getOriginalRequire,
 } from "./wrapRequire";
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
@@ -212,7 +212,7 @@ t.test("Not wrapped using original require", async (t) => {
   t.same(fs._test, "aikido");
 
   // Require original sqlite3
-  const fsOriginal = getOrignalRequire()("fs");
+  const fsOriginal = getOriginalRequire()("fs");
   t.same(fsOriginal, initialFs);
 });
 
@@ -237,24 +237,6 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
       t.throws(() =>
         // @ts-expect-error Test with invalid arguments
         new Package("test").withVersion("^1.0.0").onRequire()
-      ) as Error
-    ).message,
-    "Interceptor must be a function"
-  );
-  t.same(
-    (
-      t.throws(() =>
-        // @ts-expect-error Test with invalid arguments
-        new Package("test").withVersion("^1.0.0").onFileRequire()
-      ) as Error
-    ).message,
-    "Relative path must be a string"
-  );
-  t.same(
-    (
-      t.throws(() =>
-        // @ts-expect-error Test with invalid arguments
-        new Package("test").withVersion("^1.0.0").onFileRequire("")
       ) as Error
     ).message,
     "Interceptor must be a function"

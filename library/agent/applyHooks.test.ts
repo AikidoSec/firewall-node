@@ -1,13 +1,11 @@
 import * as t from "tap";
-import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { Token } from "./api/Token";
 import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
-import { LoggerForTesting } from "./logger/LoggerForTesting";
-import { setInstance } from "./AgentSingleton";
 import { wrapExport } from "./hooks/wrapExport";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -24,14 +22,11 @@ const context: Context = {
 
 const reportingAPI = new ReportingAPIForTesting();
 
-const agent = new Agent(
-  true,
-  new LoggerForTesting(),
-  reportingAPI,
-  new Token("123"),
-  "lambda"
-);
-setInstance(agent);
+const agent = createTestAgent({
+  serverless: "lambda",
+  api: reportingAPI,
+  token: new Token("123"),
+});
 
 t.test(
   "it hooks into globals",

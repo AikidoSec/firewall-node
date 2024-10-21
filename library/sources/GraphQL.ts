@@ -53,12 +53,10 @@ export class GraphQL implements Wrapper {
       }
     }
 
-    if (userInputs.length > 0) {
-      if (Array.isArray(context.graphql)) {
-        updateContext(context, "graphql", context.graphql.concat(userInputs));
-      } else {
-        updateContext(context, "graphql", userInputs);
-      }
+    if (Array.isArray(context.graphql)) {
+      updateContext(context, "graphql", context.graphql.concat(userInputs));
+    } else {
+      updateContext(context, "graphql", userInputs);
     }
   }
 
@@ -88,10 +86,10 @@ export class GraphQL implements Wrapper {
 
       return {
         errors: [
-          new GraphQLError("You are rate limited by Aikido firewall.", {
+          new GraphQLError("You are rate limited by Zen.", {
             nodes: [result.field],
             extensions: {
-              code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
+              code: "RATE_LIMITED_BY_ZEN",
               ipAddress: context.remoteAddress,
             },
           }),

@@ -35,6 +35,6 @@ export function wrapNewInstance(
       }
     );
   } catch (error) {
-    agent.onFailedToWrapMethod(pkgInfo.name, className);
+    agent.onFailedToWrapMethod(pkgInfo.name, className || "default export");
   }
 }

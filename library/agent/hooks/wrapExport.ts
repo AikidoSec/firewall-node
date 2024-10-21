@@ -86,7 +86,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName || "",
+                method: methodName || "default export",
                 module: pkgInfo.name,
               });
             }
@@ -105,7 +105,7 @@ export function wrapExport(
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
-                method: methodName || "",
+                method: methodName || "default export",
                 module: pkgInfo.name,
               });
             }
@@ -116,7 +116,7 @@ export function wrapExport(
       }
     );
   } catch (error) {
-    agent.onFailedToWrapMethod(pkgInfo.name, methodName);
+    agent.onFailedToWrapMethod(pkgInfo.name, methodName || "default export");
   }
 }
 
@@ -188,7 +188,7 @@ function inspectArgs(
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
+        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
       );
     }
   }

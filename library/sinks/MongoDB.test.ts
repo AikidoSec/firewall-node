@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MongoDB } from "./MongoDB";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -36,13 +34,9 @@ const safeContext: Context = {
 };
 
 t.test("it inspects method calls and blocks if needed", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent({
+    serverless: "lambda",
+  });
   agent.start([new MongoDB()]);
 
   const { MongoClient } = require("mongodb");
@@ -103,6 +97,18 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
 
     t.same(await collection.count({ title: "Yet Another Title" }), 1);
 
+    t.same(await collection.distinct("title", { title: { $ne: null } }), [
+      "Yet Another Title",
+    ]);
+    t.same(await collection.distinct("title"), ["Yet Another Title"]);
+
+    // With context
+    await runWithContext(safeContext, async () => {
+      t.same(await collection.distinct("title", { title: { $ne: null } }), [
+        "Yet Another Title",
+      ]);
+    });
+
     await collection.deleteOne({ title: "Yet Another Title" });
 
     t.same(await collection.count({ title: "Yet Another Title" }), 0);
@@ -133,7 +139,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (bulkError instanceof Error) {
       t.same(
         bulkError.message,
-        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
+        "Zen has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
       );
     }
 
@@ -146,7 +152,7 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
       );
     }
 
@@ -181,7 +187,20 @@ t.test("it inspects method calls and blocks if needed", async (t) => {
     if (aggregateError instanceof Error) {
       t.same(
         aggregateError.message,
-        "Aikido firewall has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
+        "Zen has blocked a NoSQL injection: MongoDB.Collection.aggregate(...) originating from body.[0]"
+      );
+    }
+
+    const distinctError = await t.rejects(async () => {
+      await runWithContext(unsafeContext, () => {
+        return collection.distinct("title", { title: { $ne: null } });
+      });
+    });
+    t.ok(distinctError instanceof Error);
+    if (distinctError instanceof Error) {
+      t.same(
+        distinctError.message,
+        "Zen has blocked a NoSQL injection: MongoDB.Collection.distinct(...) originating from body.myTitle"
       );
     }
 

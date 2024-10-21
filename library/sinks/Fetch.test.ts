@@ -1,12 +1,12 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -20,20 +20,26 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -52,7 +58,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -60,19 +67,20 @@ const redirectUrl = {
   domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
   ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
+  ipv6: `${redirectTestUrl}/ssrf-test-ipv6`, // Redirects to http://[::1]/test
+  ipv6Twice: `${redirectTestUrl}/ssrf-test-ipv6-twice`, // Redirects to /ssrf-test-ipv6
 };
 
 t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    );
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
+
     agent.start([new Fetch()]);
 
     t.same(agent.getHostnames().asArray(), []);
@@ -115,9 +123,18 @@ t.test(
       if (error instanceof Error) {
         t.same(
           error.message,
-          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
@@ -125,17 +142,18 @@ t.test(
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
 
       const error3 = await t.rejects(() =>
+        // @ts-expect-error Test
         fetch(["http://localhost:4000/api/internal"])
       );
       if (error3 instanceof Error) {
         t.same(
           error3.message,
-          "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
     });
@@ -161,18 +179,19 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
 
         const error2 = await t.rejects(() =>
+          // @ts-expect-error Test
           fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
         );
         if (error2 instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
             error2.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image2"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image2"
           );
         }
 
@@ -193,7 +212,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -210,7 +229,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -227,7 +246,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -244,7 +263,41 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: redirectUrl.ipv6 } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch(redirectUrl.ipv6));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...context,
+        ...{ body: { image: redirectUrl.ipv6Twice } },
+      },
+      async () => {
+        const error = await t.rejects(() => fetch(redirectUrl.ipv6Twice));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -255,22 +308,19 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const error = await t.rejects(() =>
-          fetch(
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
-          )
+          fetch(`${redirecTestUrl2}/ssrf-test-absolute-domain`)
         );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -294,7 +344,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -320,7 +370,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }
@@ -331,14 +381,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const response = await fetch(
-          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           {
             redirect: "manual",
           }
@@ -351,7 +400,7 @@ t.test(
           t.same(
             // @ts-expect-error Type is not defined
             error.cause.message,
-            "Aikido firewall has blocked a server-side request forgery: fetch(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
         }
       }

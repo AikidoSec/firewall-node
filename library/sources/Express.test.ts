@@ -1,19 +1,14 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Before require("express")
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -62,16 +57,18 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  "lambda"
-);
+  token: new Token("123"),
+  serverless: "lambda",
+});
+
 agent.start([new Express(), new FileSystem(), new HTTPServer()]);
-setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
+import { setUser } from "../agent/context/user";
+import { addExpressMiddleware } from "../middleware/express";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -80,10 +77,29 @@ function getApp(userMiddleware = true) {
   app.set("env", "test");
   app.use(cookieParser());
 
-  app.use("/*", (req, res, next) => {
+  app.use("/.*path", (req, res, next) => {
     res.setHeader("X-Powered-By", "Aikido");
     next();
   });
+
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      if (req.path === "/block-user") {
+        setUser({
+          id: "567",
+        });
+        return next();
+      }
+
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
+    });
+  }
+
+  addExpressMiddleware(app);
 
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
@@ -95,18 +111,8 @@ function getApp(userMiddleware = true) {
     next();
   });
 
-  if (userMiddleware) {
-    app.use((req, res, next) => {
-      setUser({
-        id: "123",
-        name: "John Doe",
-      });
-      next();
-    });
-  }
-
   // A middleware that is used as a route
-  app.use("/api/*", (req, res, next) => {
+  app.use("/api/*path", (req, res, next) => {
     const context = getContext();
 
     res.send(context);
@@ -183,20 +189,11 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
-  app.get(
-    "/block-user",
-    (req, res, next) => {
-      setUser({
-        id: "567",
-      });
-      next();
-    },
-    (req, res) => {
-      res.send({
-        willNotBeSent: true,
-      });
-    }
-  );
+  app.get("/block-user", (req, res) => {
+    res.send({
+      willNotBeSent: true,
+    });
+  });
 
   app.get("/rate-limited", (req, res) => {
     res.send({ hello: "world" });
@@ -206,31 +203,39 @@ function getApp(userMiddleware = true) {
     res.send({ hello: "world" });
   });
 
-  app.get("/white-listed-ip-address", (req, res) => {
+  app.route("/white-listed-ip-address").get((req, res) => {
     res.send({ hello: "world" });
   });
 
-  app.use("/middleware-rate-limited", (req, res, next) => {
+  // @ts-expect-error Not types for express 5 available yet
+  app.router.use("/middleware-rate-limited", (req, res, next) => {
     res.send({ hello: "world" });
   });
 
-  app.use((error, req, res, next) => {
-    res.status(500).send({ error: error.message });
-  });
+  app.use(
+    (
+      error: Error,
+      req: express.Request,
+      res: express.Response,
+      next: Function
+    ) => {
+      res.status(500).send({ error: error.message });
+    }
+  );
 
   return app;
 }
 
 t.test("it adds context from request for GET", async (t) => {
   const response = await request(getApp())
-    .get("/?title[$ne]=null")
+    .get("/?title=test&x=5")
     .set("Cookie", "session=123")
     .set("Accept", "application/json")
     .set("X-Forwarded-For", "1.2.3.4");
 
   t.match(response.body, {
     method: "GET",
-    query: { title: { $ne: "null" } },
+    query: { title: "test", x: "5" },
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",
@@ -248,6 +253,43 @@ t.test("it adds context from request for POST", async (t) => {
     source: "express",
     route: "/",
   });
+});
+
+t.test("it adds body schema to stored routes", async (t) => {
+  agent.getRoutes().clear();
+  const response = await request(getApp())
+    .post("/")
+    .send({ title: "Title", authors: ["Author"], settings: { theme: "Dark" } });
+
+  t.same(response.statusCode, 200);
+  t.same(agent.getRoutes().asArray(), [
+    {
+      method: "POST",
+      path: "/",
+      hits: 1,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              authors: { type: "array", items: { type: "string" } },
+              settings: {
+                type: "object",
+                properties: {
+                  theme: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+    },
+  ]);
 });
 
 t.test("it adds context from request for route", async (t) => {
@@ -298,7 +340,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -380,7 +422,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -392,7 +434,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -401,6 +443,7 @@ t.test("it blocks user", async () => {
 
   t.same(response.statusCode, 403);
   t.same(response.body, {});
+  t.same(response.text, "You are blocked by Zen.");
 });
 
 t.test("it adds user to context", async () => {
@@ -427,10 +470,7 @@ t.test("it rate limits by IP", async () => {
     .get("/rate-limited")
     .set("x-forwarded-for", "1.2.3.4");
   t.same(res2.statusCode, 429);
-  t.same(
-    res2.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 
   await sleep(2000);
 

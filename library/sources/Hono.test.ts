@@ -1,21 +1,19 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { addHonoMiddleware } from "../middleware/hono";
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  token: new Token("123"),
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -34,19 +32,12 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  undefined
-);
+});
 agent.start([new HonoInternal(), new HTTPServer()]);
-setInstance(agent);
 
 function getApp() {
-  const { Hono } = require("hono");
+  const { Hono } = require("hono") as typeof import("hono");
   const app = new Hono();
-
-  app.all("/", (c) => {
-    return c.json(getContext());
-  });
 
   app.use(async (c, next) => {
     if (c.req.path.startsWith("/user/blocked")) {
@@ -54,7 +45,13 @@ function getApp() {
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
     }
-    next();
+    await next();
+  });
+
+  addHonoMiddleware(app);
+
+  app.all("/", (c) => {
+    return c.json(getContext());
   });
 
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
@@ -185,7 +182,7 @@ t.test("it blocks user", opts, async (t) => {
   });
 
   const body = await response.text();
-  t.equal(body, "You are blocked by Aikido firewall.");
+  t.equal(body, "You are blocked by Zen.");
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
@@ -216,7 +213,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response3.status, 429);
   t.match(
     await response3.text(),
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+    "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
 });
 

@@ -23,7 +23,6 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
-import { getInstance, setInstance } from "./AgentSingleton";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -31,7 +30,7 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private lastHeartbeat = Date.now();
+  private lastHeartbeat = performance.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
@@ -47,6 +46,7 @@ export class Agent {
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
   });
+  private middlewareInstalled = false;
 
   constructor(
     private block: boolean,
@@ -283,6 +283,7 @@ export class Agent {
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
+          middlewareInstalled: this.middlewareInstalled,
         },
         timeoutInMS
       );
@@ -312,7 +313,7 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = Date.now();
+      const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const hasCompressedStats = this.statistics.hasCompressedStats();
@@ -379,6 +380,7 @@ export class Agent {
       },
       platform: {
         version: getSemverNodeVersion(),
+        arch: process.arch,
       },
     };
   }
@@ -409,12 +411,6 @@ export class Agent {
       }
     }
 
-    // Register this instance as the singleton instance if no instance is already registered
-    // This can happen in tests where not the main export is used
-    if (!getInstance()) {
-      setInstance(this);
-    }
-
     wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
@@ -429,7 +425,7 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string | undefined) {
+  onFailedToWrapMethod(module: string, name: string) {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
@@ -465,8 +461,8 @@ export class Agent {
     this.hostnames.add(hostname, port);
   }
 
-  onRouteExecute(method: string, path: string) {
-    this.routes.addRoute(method, path);
+  onRouteExecute(context: Context) {
+    this.routes.addRoute(context);
   }
 
   onGraphQLExecute(
@@ -495,5 +491,9 @@ export class Agent {
 
   getRateLimiter() {
     return this.rateLimiter;
+  }
+
+  onMiddlewareExecuted() {
+    this.middlewareInstalled = true;
   }
 }

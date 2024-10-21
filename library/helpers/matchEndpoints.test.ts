@@ -280,3 +280,97 @@ t.test("it prefers specific route over wildcard", async () => {
     ]
   );
 });
+
+t.test("it prefers specific method over wildcard", async () => {
+  t.same(
+    matchEndpoints(
+      {
+        ...context,
+        route: "/api/test",
+        method: "POST",
+        url: "http://localhost:4000/api/test",
+      },
+      [
+        {
+          method: "*",
+          route: "/api/test",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 20,
+            windowSizeInMS: 60000,
+          },
+        },
+        {
+          method: "POST",
+          route: "/api/test",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 100,
+            windowSizeInMS: 60000,
+          },
+        },
+      ]
+    ),
+    [
+      {
+        method: "POST",
+        route: "/api/test",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 100,
+          windowSizeInMS: 60000,
+        },
+      },
+    ]
+  );
+});
+
+t.test("it prefers specific method over wildcard", async () => {
+  t.same(
+    matchEndpoints(
+      {
+        ...context,
+        route: "/api/test",
+        method: "POST",
+        url: "http://localhost:4000/api/test",
+      },
+      [
+        {
+          method: "POST",
+          route: "/api/test",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 100,
+            windowSizeInMS: 60000,
+          },
+        },
+        {
+          method: "*",
+          route: "/api/test",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 20,
+            windowSizeInMS: 60000,
+          },
+        },
+      ]
+    ),
+    [
+      {
+        method: "POST",
+        route: "/api/test",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 100,
+          windowSizeInMS: 60000,
+        },
+      },
+    ]
+  );
+});

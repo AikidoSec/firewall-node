@@ -1,11 +1,9 @@
 import * as t from "tap";
 import { wrapExport } from "./wrapExport";
-import { Agent } from "../Agent";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
-import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
-import { setInstance } from "../AgentSingleton";
 import { bindContext } from "../Context";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 t.test("Agent is not initialized", async (t) => {
   try {
@@ -18,20 +16,20 @@ t.test("Agent is not initialized", async (t) => {
       }
     );
     t.fail();
-  } catch (e) {
-    t.same(e.message, "Can not wrap exports if agent is not initialized");
+  } catch (e: unknown) {
+    t.ok(e instanceof Error);
+    if (e instanceof Error) {
+      t.same(e.message, "Can not wrap exports if agent is not initialized");
+    }
   }
 });
 
 const logger = new LoggerForTesting();
-const agent = new Agent(
-  true,
+
+createTestAgent({
   logger,
-  new ReportingAPIForTesting(),
-  new Token("123"),
-  undefined
-);
-setInstance(agent);
+  token: new Token("123"),
+});
 
 t.test("Inspect args", async (t) => {
   t.plan(2);

@@ -41,10 +41,10 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
 
             if (
               lastFlushStatsAt === undefined ||
-              lastFlushStatsAt + flushEveryMS < Date.now()
+              lastFlushStatsAt + flushEveryMS < performance.now()
             ) {
               await agent.flushStats(1000);
-              lastFlushStatsAt = Date.now();
+              lastFlushStatsAt = performance.now();
             }
           }
         }

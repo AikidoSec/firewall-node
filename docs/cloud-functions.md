@@ -1,6 +1,6 @@
 # Google Cloud Functions
 
-If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Aikido firewall automatically:
+If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Zen automatically:
 
 ```js
 require("@aikidosec/firewall/cloud-function"); // <-- Include this before any other code or imports
@@ -15,7 +15,7 @@ functions.http("handler", async (req, res) => {
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall/cloud-function';
+import "@aikidosec/firewall/cloud-function";
 
 // ...
 ```
@@ -29,7 +29,8 @@ const protect = require("@aikidosec/firewall/cloud-function"); // <-- Include th
 
 const dependency = require("dependency");
 
-exports.handler = protect(async (event, context) => { // <-- Wrap your handler with protect
+exports.handler = protect(async (event, context) => {
+  // <-- Wrap your handler with protect
   // ...
 });
 ```
@@ -37,12 +38,12 @@ exports.handler = protect(async (event, context) => { // <-- Wrap your handler w
 or ESM import style:
 
 ```js
-import protect from '@aikidosec/firewall/cloud-function';
+import protect from "@aikidosec/firewall/cloud-function";
 
 // ...
 ```
 
-That's it! Your cloud function is now protected by Aikido firewall.
+That's it! Your cloud function is now protected by Zen.
 
 If you want to see a full example, check our [cloud functions sample app](../sample-apps/cloud-functions-v1-mongodb).
 
@@ -62,6 +63,6 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Preventing prototype pollution
 
-Aikido firewall can also protect your application against prototype pollution attacks.
+Zen can also protect your application against prototype pollution attacks.
 
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.

@@ -1,16 +1,15 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { connect, IncomingHttpHeaders } from "http2";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { wrap } from "../helpers/wrap";
 import * as pkg from "../helpers/isPackageInstalled";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const originalIsPackageInstalled = pkg.isPackageInstalled;
 wrap(pkg, "isPackageInstalled", function wrap() {
@@ -56,13 +55,10 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  undefined
-);
+});
 agent.start([new HTTPServer(), new FileSystem()]);
 
 const { readFileSync } = require("fs");
@@ -118,7 +114,7 @@ function http2Request(
   );
 }
 
-const http2 = require("http2");
+const http2 = require("http2") as typeof import("http2");
 
 function createMinimalTestServer() {
   const server = http2.createServer((req, res) => {
@@ -205,6 +201,7 @@ t.test("it discovers routes", async () => {
               method: "GET",
               hits: 1,
               graphql: undefined,
+              apispec: {},
             }
           );
           server.close();
@@ -304,45 +301,6 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
   });
 });
 
-t.test("it rate limits requests", async () => {
-  const server = createMinimalTestServer();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3422, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
-    });
-  });
-});
-
 t.test("it works then using the on request event", async () => {
   const server = http2.createServer();
 
@@ -432,6 +390,7 @@ t.test("it discovers routes using stream event", async () => {
             method: "GET",
             hits: 1,
             graphql: undefined,
+            apispec: {},
           }
         );
         server.close();
@@ -474,7 +433,6 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
     {
       key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
       cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-      secureContext: {},
     },
     (req, res) => {
       res.setHeader("Content-Type", "application/json");
@@ -515,7 +473,6 @@ t.test("it wraps the createSecureServer on request event", async () => {
   const server = http2.createSecureServer({
     key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("request", (req, res) => {
@@ -556,7 +513,6 @@ t.test("it wraps the createSecureServer stream event", async () => {
   const server = http2.createSecureServer({
     key: readFileSync(resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("stream", (stream, headers) => {
@@ -593,45 +549,6 @@ t.test("it wraps the createSecureServer stream event", async () => {
   });
 });
 
-t.test("it rate limits requests using stream event", async () => {
-  const server = createMinimalTestServerWithStream();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3430, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
-    });
-  });
-});
-
 t.test("real injection test", async (t) => {
   const server = http2.createServer();
   server.on("stream", (stream, headers) => {
@@ -646,7 +563,7 @@ t.test("real injection test", async (t) => {
       stream.end(file);
     } catch (e) {
       stream.respond({ ":status": 500 });
-      stream.end(e.message);
+      stream.end(e instanceof Error ? e.message : "");
     }
   });
 
@@ -657,7 +574,7 @@ t.test("real injection test", async (t) => {
         "GET",
         {}
       ).then(({ body }) => {
-        t.match(body, /Aikido firewall has blocked a path traversal attack/);
+        t.match(body, /Zen has blocked a path traversal attack/);
         server.close();
         resolve();
       });

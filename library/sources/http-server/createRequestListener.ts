@@ -2,7 +2,6 @@ import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
 import { contextFromRequest } from "./contextFromRequest";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
@@ -64,20 +63,6 @@ function callListenerWithContext(
       return res.end(message);
     }
 
-    const result = shouldRateLimitRequest(context, agent);
-
-    if (result.block) {
-      let message = "You are rate limited by Aikido firewall.";
-      if (result.trigger === "ip") {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-      }
-
-      res.statusCode = 429;
-      res.setHeader("Content-Type", "text/plain");
-
-      return res.end(message);
-    }
-
     return listener(req, res);
   });
 }
@@ -99,7 +84,7 @@ function createOnFinishRequestHandler(
         method: context.method,
       })
     ) {
-      agent.onRouteExecute(context.method, context.route);
+      agent.onRouteExecute(context);
     }
 
     agent.getInspectionStatistics().onRequest();

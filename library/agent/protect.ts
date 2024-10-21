@@ -4,6 +4,7 @@ import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
+import { MariaDB } from "../sinks/MariaDB";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
@@ -40,23 +41,11 @@ import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
+import { isDebugging } from "../helpers/isDebugging";
+import { shouldBlock } from "../helpers/shouldBlock";
+import { Postgresjs } from "../sinks/Postgresjs";
 import { Koa } from "../sources/Koa";
 import { KoaRouter } from "../sources/KoaRouter";
-
-function isDebugging() {
-  return (
-    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
-  );
-}
-
-function shouldBlock() {
-  return (
-    process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1" ||
-    process.env.AIKIDO_BLOCK === "true" ||
-    process.env.AIKIDO_BLOCK === "1"
-  );
-}
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -139,13 +128,16 @@ function getWrappers() {
     new XmlMinusJs(),
     new Shelljs(),
     new Hapi(),
+    new MariaDB(),
     new NodeSQLite(),
     new BetterSQLite3(),
+    new Postgresjs(),
     new Koa(),
     new KoaRouter(),
   ];
 }
 
+// eslint-disable-next-line import/no-unused-modules
 export function protect() {
   const agent = getAgent({
     serverless: undefined,
