@@ -46,6 +46,7 @@ export class Agent {
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
   });
+  private middlewareInstalled = false;
 
   constructor(
     private block: boolean,
@@ -282,6 +283,7 @@ export class Agent {
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
+          middlewareInstalled: this.middlewareInstalled,
         },
         timeoutInMS
       );
@@ -489,5 +491,9 @@ export class Agent {
 
   getRateLimiter() {
     return this.rateLimiter;
+  }
+
+  onMiddlewareExecuted() {
+    this.middlewareInstalled = true;
   }
 }

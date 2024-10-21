@@ -9,6 +9,7 @@ import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { addHonoMiddleware } from "../middleware/hono";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -38,17 +39,19 @@ function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
   const app = new Hono();
 
-  app.all("/", (c) => {
-    return c.json(getContext());
-  });
-
   app.use(async (c, next) => {
     if (c.req.path.startsWith("/user/blocked")) {
       setUser({ id: "567" });
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
     }
-    next();
+    await next();
+  });
+
+  addHonoMiddleware(app);
+
+  app.all("/", (c) => {
+    return c.json(getContext());
   });
 
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
@@ -179,7 +182,7 @@ t.test("it blocks user", opts, async (t) => {
   });
 
   const body = await response.text();
-  t.equal(body, "You are blocked by Aikido firewall.");
+  t.equal(body, "You are blocked by Zen.");
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
@@ -210,7 +213,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response3.status, 429);
   t.match(
     await response3.text(),
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+    "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
 });
 

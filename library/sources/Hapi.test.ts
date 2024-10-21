@@ -6,6 +6,7 @@ import { Hapi } from "./Hapi";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { addHapiMiddleware } from "../middleware/hapi";
 
 const agent = createTestAgent({
   api: new ReportingAPIForTesting({
@@ -121,6 +122,8 @@ function getServer(onRequestExt = true) {
     });
   }
 
+  addHapiMiddleware(server);
+
   return server;
 }
 
@@ -215,10 +218,7 @@ t.test("it rate limits based on IP address", async (t) => {
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response3.status, 429);
-  t.match(
-    response3.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.match(response3.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 });
 
 t.test("it blocks based on user ID", async (t) => {
@@ -226,7 +226,7 @@ t.test("it blocks based on user ID", async (t) => {
     .get("/blocked-user")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 403);
-  t.match(response.text, "You are blocked by Aikido firewall.");
+  t.match(response.text, "You are blocked by Zen.");
 });
 
 t.test("it gets context from decorate handler", async (t) => {
