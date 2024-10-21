@@ -48,6 +48,13 @@ export function setUser(user: unknown) {
     return;
   }
 
+  if (context.executedMiddleware) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `setUser(...) must be called before the Zen middleware is executed.`
+    );
+  }
+
   context.user = validatedUser;
 
   const ipAddress = context.remoteAddress;

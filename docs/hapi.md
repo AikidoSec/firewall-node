@@ -44,7 +44,7 @@ const Zen = require("@aikidosec/firewall");
 
 const server = Hapi.server(...);
 
-// Optional, if you want to use user based rate limiting or blocking
+// Optional, if you want to use user based rate limiting or block specific users
 server.ext('onRequest', function (request, h) {
   // Get the user from your authentication middleware
   // or wherever you store the user
@@ -58,7 +58,6 @@ server.ext('onRequest', function (request, h) {
 });
 
 // Call this as early as possible, before other onRequest extensions are added
-// If you want to use user based rate limiting or blocking, you need to call Zen.setUser(...) in a onRequest function before this
 Zen.addHapiMiddleware(app);
 
 server.route(...);

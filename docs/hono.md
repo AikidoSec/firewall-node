@@ -43,7 +43,7 @@ const Zen = require("@aikidosec/firewall");
 
 const app = Hono();
 
-// Optional, if you want to use user based rate limiting or blocking
+// Optional, if you want to use user based rate limiting or block specific users
 app.use(async (c, next) => {
   // Get the user from your authentication middleware
   // or wherever you store the user

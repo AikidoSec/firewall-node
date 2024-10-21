@@ -1,5 +1,5 @@
 import { getInstance } from "../agent/AgentSingleton";
-import { getContext } from "../agent/Context";
+import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
 export function shouldBlockRequest(): {
@@ -17,6 +17,9 @@ export function shouldBlockRequest(): {
   if (!agent) {
     return { block: false };
   }
+
+  updateContext(context, "executedMiddleware", true);
+  agent.onMiddlewareExecuted();
 
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
     return { block: true, type: "blocked", trigger: "user" };
