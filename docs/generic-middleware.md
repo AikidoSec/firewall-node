@@ -12,7 +12,7 @@ The following prerequisites are required:
 ```js
 const Zen = require("@aikidosec/firewall");
 
-function onRequest(...){
+function onRequest(...) {
     // Call this as early as possible before your request handling code, e.g. in a middleware
     const result = Zen.shouldBlockRequest();
 
