@@ -50,7 +50,6 @@ export function setUser(user: unknown) {
 
   if (context.executedMiddleware) {
     logWarningSetUserCalledAfterMiddleware();
-    return;
   }
 
   context.user = validatedUser;
