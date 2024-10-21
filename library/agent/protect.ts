@@ -43,6 +43,7 @@ import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
+import { Postgresjs } from "../sinks/Postgresjs";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -128,6 +129,7 @@ function getWrappers() {
     new MariaDB(),
     new NodeSQLite(),
     new BetterSQLite3(),
+    new Postgresjs(),
   ];
 }
 

@@ -22,7 +22,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
   const agent = createTestAgent();
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg");
+  const { Client } = require("pg") as typeof import("pg");
   const client = new Client({
     user: "root",
     host: "127.0.0.1",
@@ -88,6 +88,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
+        // @ts-expect-error Test
         return client.query(null);
       });
     });
