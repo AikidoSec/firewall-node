@@ -37,7 +37,7 @@ t.before(() => {
 });
 
 t.test("it detects SQL injections", async (t) => {
-  const mariadb = require("mariadb");
+  const mariadb = require("mariadb") as typeof import("mariadb");
   const pool = mariadb.createPool({
     host: "localhost",
     user: "root",
@@ -126,6 +126,7 @@ t.test("it detects SQL injections", async (t) => {
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(dangerousContext, () => {
+        // @ts-expect-error Testing undefined query
         return connection.query(undefined);
       });
     });
@@ -175,7 +176,7 @@ t.test("it detects SQL injections using callbacks", (t) => {
               petname varchar(255)
           );
         `,
-        (err, meta, rows) => {
+        (err: Error | null, meta: any, rows: unknown[]) => {
           t.same(err, null);
           t.same(rows, []);
           t.match(meta, {
