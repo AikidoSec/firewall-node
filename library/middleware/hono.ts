@@ -1,5 +1,6 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import type { Hono } from "hono";
+import { escapeHTML } from "../helpers/escapeHTML";
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Hono app.
@@ -14,7 +15,7 @@ export function addHonoMiddleware(app: Hono) {
       if (result.type === "ratelimited") {
         let message = "You are rate limited by Zen.";
         if (result.trigger === "ip" && result.ip) {
-          message += ` (Your IP: ${result.ip})`;
+          message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
         return c.text(message, 429);

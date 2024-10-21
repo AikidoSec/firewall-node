@@ -20,6 +20,8 @@ function onRequest(...) {
       if (result.type === "ratelimited") {
         let message = "You are rate limited by Zen.";
         if (result.trigger === "ip" && result.ip) {
+
+          // Please note that outputting user input is always a security risk. Make sure to escape it properly.
           message += ` (Your IP: ${result.ip})`;
         }
 

@@ -1,5 +1,6 @@
 import type { Server } from "@hapi/hapi";
 import { shouldBlockRequest } from "./shouldBlockRequest";
+import { escapeHTML } from "../helpers/escapeHTML";
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Hapi app.
@@ -13,7 +14,7 @@ export function addHapiMiddleware(app: Server) {
       if (result.type === "ratelimited") {
         let message = "You are rate limited by Zen.";
         if (result.trigger === "ip" && result.ip) {
-          message += ` (Your IP: ${result.ip})`;
+          message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
         return h.response(message).code(429).takeover();
