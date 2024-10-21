@@ -1,4 +1,4 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const Cats = require("./Cats");
 const Hapi = require("@hapi/hapi");
@@ -48,6 +48,8 @@ async function init(port) {
     port: port,
     host: "127.0.0.1",
   });
+
+  Zen.setupHapiIntegration(server);
 
   server.route({
     method: "GET",

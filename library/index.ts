@@ -13,10 +13,12 @@ import { setUser } from "./agent/context/user";
 import { setupExpressIntegration } from "./integrations/express";
 import { shouldBlockRequest } from "./integrations/shouldBlockRequest";
 import { setupHonoIntegration } from "./integrations/hono";
+import { setupHapiIntegration } from "./integrations/hapi";
 
 export {
   setUser,
   shouldBlockRequest,
   setupExpressIntegration,
   setupHonoIntegration,
+  setupHapiIntegration,
 };
