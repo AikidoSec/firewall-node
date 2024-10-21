@@ -6,7 +6,7 @@ import { shouldBlockRequest } from "./shouldBlockRequest";
  * Attacks will still be blocked by Zen if you do not call this function.
  * Execute this function as early as possible in your Hapi app, but after the middleware that sets the user.
  */
-export function setupHapiIntegration(app: Server) {
+export function addHapiMiddleware(app: Server) {
   app.ext("onRequest", function onRequest(request, h) {
     const result = shouldBlockRequest();
     if (result.block) {

@@ -43,9 +43,22 @@ const Zen = require("@aikidosec/firewall");
 
 const app = Hono();
 
+// Optional, if you want to use user based rate limiting or blocking
+app.use(async (c, next) => {
+  // Get the user from your authentication middleware
+  // or wherever you store the user
+  Zen.setUser({
+    id: "123",
+    name: "John Doe", // Optional
+  });
+
+  await next();
+});
+
 // Call this as early as possible, before other middleware
-// If you want to use user based rate limiting or blocking, you need to call Zen.setUser(...) in a middleware before this
-Zen.setupHonoIntegration(app);
+Zen.addHonoMiddleware(app);
+
+app.get(...);
 ```
 
 ## Debug mode

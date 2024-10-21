@@ -9,7 +9,7 @@ import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { setupHonoIntegration } from "../integrations/hono";
+import { addHonoMiddleware } from "../middleware/hono";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -48,7 +48,7 @@ function getApp() {
     await next();
   });
 
-  setupHonoIntegration(app);
+  addHonoMiddleware(app);
 
   app.all("/", (c) => {
     return c.json(getContext());

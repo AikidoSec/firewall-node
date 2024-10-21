@@ -40,7 +40,7 @@ async function main(port) {
     next();
   });
 
-  Zen.setupExpressIntegration(app);
+  Zen.addExpressMiddleware(app);
 
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:

@@ -68,7 +68,7 @@ import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
 import { setUser } from "../agent/context/user";
-import { setupExpressIntegration } from "../integrations/express";
+import { addExpressMiddleware } from "../middleware/express";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -99,7 +99,7 @@ function getApp(userMiddleware = true) {
     });
   }
 
-  setupExpressIntegration(app);
+  addExpressMiddleware(app);
 
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));

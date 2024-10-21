@@ -49,7 +49,7 @@ async function init(port) {
     host: "127.0.0.1",
   });
 
-  Zen.setupHapiIntegration(server);
+  Zen.addHapiMiddleware(server);
 
   server.route({
     method: "GET",

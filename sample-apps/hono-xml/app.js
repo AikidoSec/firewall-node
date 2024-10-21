@@ -22,7 +22,7 @@ async function main() {
     await next();
   });
 
-  Zen.setupHonoIntegration(app);
+  Zen.addHonoMiddleware(app);
 
   app.get("/", async (c) => {
     const catNames = await cats.getAll();

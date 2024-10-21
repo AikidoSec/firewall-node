@@ -10,15 +10,15 @@ if (supported && shouldEnable) {
 }
 
 import { setUser } from "./agent/context/user";
-import { setupExpressIntegration } from "./integrations/express";
-import { shouldBlockRequest } from "./integrations/shouldBlockRequest";
-import { setupHonoIntegration } from "./integrations/hono";
-import { setupHapiIntegration } from "./integrations/hapi";
+import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
+import { addExpressMiddleware } from "./middleware/express";
+import { addHonoMiddleware } from "./middleware/hono";
+import { addHapiMiddleware } from "./middleware/hapi";
 
 export {
   setUser,
   shouldBlockRequest,
-  setupExpressIntegration,
-  setupHonoIntegration,
-  setupHapiIntegration,
+  addExpressMiddleware,
+  addHonoMiddleware,
+  addHapiMiddleware,
 };

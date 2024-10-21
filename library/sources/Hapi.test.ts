@@ -6,7 +6,7 @@ import { Hapi } from "./Hapi";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { setupHapiIntegration } from "../integrations/hapi";
+import { addHapiMiddleware } from "../middleware/hapi";
 
 const agent = createTestAgent({
   api: new ReportingAPIForTesting({
@@ -122,7 +122,7 @@ function getServer(onRequestExt = true) {
     });
   }
 
-  setupHapiIntegration(server);
+  addHapiMiddleware(server);
 
   return server;
 }

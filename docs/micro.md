@@ -30,7 +30,7 @@ It's recommended to enable this on your staging environment for a considerable a
 
 ## Rate limiting and user blocking
 
-If you want to add the rate limiting feature to your app, take a look at the generic [rate limiting documentation](./generic-integration.md).
+If you want to add the rate limiting feature to your app, take a look at the generic [rate limiting documentation](./generic-middleware.md).
 
 ## Debug mode
 

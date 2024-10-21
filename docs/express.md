@@ -41,9 +41,22 @@ const Zen = require("@aikidosec/firewall");
 
 const app = express();
 
+// Optional, if you want to use user based rate limiting or blocking
+app.use((req, res, next) => {
+  // Get the user from your authentication middleware
+  // or wherever you store the user
+  Zen.setUser({
+    id: "123",
+    name: "John Doe", // Optional
+  });
+
+  next();
+});
+
 // Call this as early as possible, before other middleware
-// If you want to use user based rate limiting or blocking, you need to call Zen.setUser(...) in a middleware before this
-Zen.setupExpressIntegration(app);
+Zen.addExpressMiddleware(app);
+
+app.get(...);
 ```
 
 ## Debug mode

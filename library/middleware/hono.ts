@@ -6,7 +6,7 @@ import type { Hono } from "hono";
  * Attacks will still be blocked by Zen if you do not call this function.
  * Execute this function as early as possible in your Hono app, but after the middleware that sets the user.
  */
-export function setupHonoIntegration(app: Hono) {
+export function addHonoMiddleware(app: Hono) {
   app.use(async (c, next) => {
     const result = shouldBlockRequest();
 

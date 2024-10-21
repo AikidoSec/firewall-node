@@ -1,6 +1,6 @@
-# Generic integration
+# Generic middleware
 
-This document describes how to add rate limiting and user blocking to your app that uses a framework for which we don't expose a dedicated integration.
+This document describes how to add rate limiting and user blocking to your app that uses a framework for which we don't expose a dedicated middleware.
 
 The following prerequisites are required:
 

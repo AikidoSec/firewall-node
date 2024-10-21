@@ -29,7 +29,7 @@ async function main() {
     await next();
   });
 
-  Zen.setupHonoIntegration(app);
+  Zen.addHonoMiddleware(app);
 
   app.use("/posts/*", async (c, next) => {
     await next();

@@ -6,7 +6,7 @@ import { shouldBlockRequest } from "./shouldBlockRequest";
  * Attacks will still be blocked by Zen if you do not call this function.
  * Execute this function as early as possible in your Express app, but after the middleware that sets the user.
  */
-export function setupExpressIntegration(app: Express) {
+export function addExpressMiddleware(app: Express) {
   app.use((req, res, next) => {
     const result = shouldBlockRequest();
 
