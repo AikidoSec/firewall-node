@@ -43,7 +43,7 @@ const fastify = Fastify();
 
 // Optional, if you want to use user based rate limiting or block specific users
 fastify.addHook('onRequest', (request, reply, done) => {
-  // Get the user from your authentication hook
+  // Get the user from the request
   // or wherever you store the user
   Zen.setUser({
     id: "123",
