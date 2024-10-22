@@ -44,6 +44,7 @@ import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
+import { Fastify } from "../sources/Fastify";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -130,6 +131,7 @@ function getWrappers() {
     new NodeSQLite(),
     new BetterSQLite3(),
     new Postgresjs(),
+    new Fastify(),
   ];
 }
 

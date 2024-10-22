@@ -33,6 +33,7 @@
   },
   "sideEffects": true,
   "devDependencies": {
+    "@fastify/cookie": "^10.0.0",
     "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",
     "@hapi/hapi": "^21.3.10",
@@ -66,6 +67,7 @@
     "express": "^5.0.0",
     "express-async-handler": "^1.2.0",
     "fast-xml-parser": "^4.4.0",
+    "fastify": "^5.0.0",
     "follow-redirects": "^1.15.6",
     "graphql": "^16.8.2",
     "hono": "^4.4.2",

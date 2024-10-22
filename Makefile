@@ -68,6 +68,10 @@ lambda-mongodb-safe:
 nestjs-sentry:
 	cd sample-apps/nestjs-sentry && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true NODE_OPTIONS=--preserve-symlinks npm run start
 
+.PHONY: fastify-mysql2
+fastify-mysql2:
+	cd sample-apps/fastify-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
 .PHONY: install
 install:
 	mkdir -p build
