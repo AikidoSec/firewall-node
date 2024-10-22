@@ -37,6 +37,14 @@ module.exports = {
     camelcase: "error",
     "max-classes-per-file": ["error", 1],
     "no-console": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        selector:
+          "ArrowFunctionExpression > BlockStatement > ExpressionStatement Identifier[name='arguments']",
+        message: "Avoid using 'arguments' in arrow functions.",
+      },
+    ],
   },
   overrides: [
     {

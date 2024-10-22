@@ -1,21 +1,20 @@
-import type { RouteOptions, RouteHandlerMethod } from "fastify";
+import type { RouteOptions } from "fastify";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
-import { wrapRequestHandler } from "./fastify/wrapRequestHandler";
+import { isPlainObject } from "../helpers/isPlainObject";
+import { wrapHandler } from "./fastify/wrapHandler";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import { wrapHookHandler } from "./fastify/wrapHookHandler";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Fastify implements Wrapper {
   private wrapRequestArgs(args: unknown[]) {
     return args.map((arg) => {
-      // Ignore non-function arguments
-      if (typeof arg !== "function") {
-        return arg;
+      if (typeof arg === "function") {
+        return wrapHandler(arg);
       }
 
-      return wrapRequestHandler(arg as RouteHandlerMethod);
+      return arg;
     });
   }
 
@@ -23,7 +22,6 @@ export class Fastify implements Wrapper {
     if (args.length < 2 || typeof args[0] !== "string") {
       return args;
     }
-    const hookName = args[0] as string;
 
     const hooksToWrap = [
       "onRequest",
@@ -38,17 +36,18 @@ export class Fastify implements Wrapper {
       "onRequestAbort",
     ];
 
+    const hookName = args[0] as string;
+
     if (!hooksToWrap.includes(hookName)) {
       return args;
     }
 
     return args.map((arg) => {
-      // Ignore non-function arguments
-      if (typeof arg !== "function") {
-        return arg;
+      if (typeof arg === "function") {
+        return wrapHandler(arg);
       }
 
-      return wrapHookHandler(arg);
+      return arg;
     });
   }
 
@@ -56,19 +55,19 @@ export class Fastify implements Wrapper {
     if (args.length < 1) {
       return args;
     }
+
     const options = args[0] as RouteOptions;
-    if (!options || typeof options !== "object") {
+
+    if (!isPlainObject(options)) {
       return args;
     }
 
     for (const [key, value] of Object.entries(options)) {
-      if (typeof value !== "function") {
-        continue;
+      if (typeof value === "function") {
+        options[key] = wrapHandler(value);
       }
-
-      // @ts-expect-error types
-      options[key] = wrapRequestHandler(value as RouteHandlerMethod);
     }
+
     return args;
   }
 
@@ -102,7 +101,7 @@ export class Fastify implements Wrapper {
     return appInstance;
   }
 
-  wrap(hooks: Hooks) {
+  private wrapFastifyInstance(instance: any, pkgInfo: WrapPackageInfo) {
     const requestFunctions = [
       "get",
       "head",
@@ -114,43 +113,49 @@ export class Fastify implements Wrapper {
       "all",
     ];
 
+    for (const func of requestFunctions) {
+      // Check if the function exists - new functions in Fastify 5
+      if (typeof instance[func] === "function") {
+        wrapExport(instance, func, pkgInfo, {
+          modifyArgs: this.wrapRequestArgs,
+        });
+      }
+    }
+
+    wrapExport(instance, "route", pkgInfo, {
+      modifyArgs: this.wrapRouteMethod,
+    });
+
+    wrapExport(instance, "addHook", pkgInfo, {
+      modifyArgs: this.wrapAddHookArgs,
+    });
+
+    // Added in Fastify 5
+    if (typeof instance.addHttpMethod === "function") {
+      wrapExport(instance, "addHttpMethod", pkgInfo, {
+        modifyReturnValue: (args, returnValue) =>
+          this.wrapNewRouteMethod(args, returnValue, pkgInfo),
+      });
+    }
+  }
+
+  wrap(hooks: Hooks) {
     hooks
       .addPackage("fastify")
       .withVersion("^4.0.0 || ^5.0.0")
       .onRequire((exports, pkgInfo) => {
-        const onNewInstance = (instance: any) => {
-          for (const func of requestFunctions) {
-            // Check if the function exists - new functions in Fastify 5
-            /* c8 ignore next 3 */
-            if (typeof instance[func] !== "function") {
-              continue;
-            }
-            wrapExport(instance, func, pkgInfo, {
-              modifyArgs: this.wrapRequestArgs,
-            });
-          }
-          wrapExport(instance, "route", pkgInfo, {
-            modifyArgs: this.wrapRouteMethod,
-          });
-          wrapExport(instance, "addHook", pkgInfo, {
-            modifyArgs: this.wrapAddHookArgs,
-          });
-
-          // Added in Fastify 5
-          if (typeof instance.addHttpMethod === "function") {
-            wrapExport(instance, "addHttpMethod", pkgInfo, {
-              modifyReturnValue: (args, returnValue, agent) =>
-                this.wrapNewRouteMethod(args, returnValue, pkgInfo),
-            });
-          }
-        };
-
         // Wrap export with the name "fastify"
-        wrapNewInstance(exports, "fastify", pkgInfo, onNewInstance);
+        wrapNewInstance(exports, "fastify", pkgInfo, (exports) =>
+          this.wrapFastifyInstance(exports, pkgInfo)
+        );
         // Wrap export with the name "default"
-        wrapNewInstance(exports, "default", pkgInfo, onNewInstance);
+        wrapNewInstance(exports, "default", pkgInfo, (exports) =>
+          this.wrapFastifyInstance(exports, pkgInfo)
+        );
         // Wrap default export
-        return wrapNewInstance(exports, undefined, pkgInfo, onNewInstance);
+        return wrapNewInstance(exports, undefined, pkgInfo, (exports) =>
+          this.wrapFastifyInstance(exports, pkgInfo)
+        );
       });
   }
 }
