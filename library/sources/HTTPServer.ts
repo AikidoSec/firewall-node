@@ -8,13 +8,17 @@ import { createRequestListener } from "./http-server/createRequestListener";
 import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
+  private isNextJS() {
+    return process.env.NEXT_RUNTIME && process.env.NEXT_RUNTIME.length > 0;
+  }
+
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
     // Parse body only if next is installed
     // We can only read the body stream once
     // This is tricky, see replaceRequestBody(...)
     // e.g. Hono uses web requests and web streams
     // (uses Readable.toWeb(req) to convert to a web stream)
-    const parseBody = isPackageInstalled("next") || isPackageInstalled("micro");
+    const parseBody = this.isNextJS() || isPackageInstalled("micro");
 
     // Without options
     // http(s).createServer(listener)
