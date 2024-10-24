@@ -54,7 +54,7 @@ const { readFileSync } = require("fs");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
-  delete process.env.NEXT_RUNTIME;
+  delete process.env.NEXT_DEPLOYMENT_ID;
 });
 
 let _client: ReturnType<typeof connect> | undefined;
@@ -246,7 +246,7 @@ t.test("it parses cookies", async () => {
 
 t.test("it sets body in context", async () => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = createMinimalTestServer();
 
@@ -271,7 +271,7 @@ t.test("it sets body in context", async () => {
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = createMinimalTestServer();
 

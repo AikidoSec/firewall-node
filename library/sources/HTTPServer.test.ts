@@ -50,7 +50,7 @@ t.setTimeout(30 * 1000);
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
   delete process.env.NODE_ENV;
-  delete process.env.NEXT_RUNTIME;
+  delete process.env.NEXT_DEPLOYMENT_ID;
 });
 
 const http = require("http") as typeof import("http");
@@ -306,7 +306,7 @@ t.test("it uses x-forwarded-for header", async (t) => {
 
 t.test("it sets body in context", async (t) => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -342,7 +342,7 @@ function generateJsonPayload(sizeInMb: number) {
 
 t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     t.fail();
@@ -373,7 +373,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
 
 t.test("body that is not JSON is ignored", async (t) => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -402,7 +402,7 @@ t.test("body that is not JSON is ignored", async (t) => {
 
 t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
   // Enables body parsing
-  process.env.NEXT_RUNTIME = "nodejs";
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     res.end();
