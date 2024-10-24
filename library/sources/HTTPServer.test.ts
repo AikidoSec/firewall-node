@@ -1,6 +1,4 @@
 import { Token } from "../agent/api/Token";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 import * as t from "tap";
