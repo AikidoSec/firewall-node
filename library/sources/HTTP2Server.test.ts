@@ -11,17 +11,6 @@ import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
 
-const originalIsPackageInstalled = pkg.isPackageInstalled;
-wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap(name: string) {
-    // So that it thinks next is installed
-    if (name === "next") {
-      return true;
-    }
-    return originalIsPackageInstalled(name);
-  };
-});
-
 // Allow self-signed certificates
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -65,6 +54,7 @@ const { readFileSync } = require("fs");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+  delete process.env.NEXT_RUNTIME;
 });
 
 let _client: ReturnType<typeof connect> | undefined;
@@ -255,6 +245,9 @@ t.test("it parses cookies", async () => {
 });
 
 t.test("it sets body in context", async () => {
+  // Enables body parsing
+  process.env.NEXT_RUNTIME = "nodejs";
+
   const server = createMinimalTestServer();
 
   await new Promise<void>((resolve) => {
@@ -277,6 +270,9 @@ t.test("it sets body in context", async () => {
 });
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
+  // Enables body parsing
+  process.env.NEXT_RUNTIME = "nodejs";
+
   const server = createMinimalTestServer();
 
   await new Promise<void>((resolve) => {
