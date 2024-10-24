@@ -2,6 +2,7 @@
 import { Agent } from "../agent/Agent";
 import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import type { ExecutionArgs } from "graphql/execution/execute";
 import { isPlainObject } from "../helpers/isPlainObject";
@@ -100,21 +101,31 @@ export class GraphQL implements Wrapper {
     return origReturnVal;
   }
 
-  wrap(hooks: Hooks) {
-    const methods = ["execute", "executeSync"] as const;
+  private wrapExecution(exports: unknown, pkgInfo: WrapPackageInfo) {
+    const methods = ["execute", "executeSync"];
 
+    for (const method of methods) {
+      wrapExport(exports, method, pkgInfo, {
+        modifyReturnValue: (args, returnValue, agent) =>
+          this.handleRateLimiting(args, returnValue, agent),
+        inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
+      });
+    }
+  }
+
+  wrap(hooks: Hooks) {
     hooks
       .addPackage("graphql")
       .withVersion("^16.0.0")
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
-        for (const method of methods) {
-          wrapExport(exports, method, pkgInfo, {
-            modifyReturnValue: (args, returnValue, agent) =>
-              this.handleRateLimiting(args, returnValue, agent),
-            inspectArgs: (args, agent) =>
-              this.inspectGraphQLExecute(args, agent),
-          });
-        }
+        this.wrapExecution(exports, pkgInfo);
+      });
+
+    hooks
+      .addPackage("@graphql-tools/executor")
+      .withVersion("^1.0.0")
+      .onFileRequire("cjs/execution/execute.js", (exports, pkgInfo) => {
+        this.wrapExecution(exports, pkgInfo);
       });
   }
 }
