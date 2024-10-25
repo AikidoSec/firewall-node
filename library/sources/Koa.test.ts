@@ -10,6 +10,7 @@ import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
+import { addKoaMiddleware } from "../middleware/koa";
 
 const agent = new Agent(
   true,
@@ -39,8 +40,9 @@ const agent = new Agent(
 agent.start([new Koa(), new HTTPServer()]);
 setInstance(agent);
 
-const koa = require("koa");
-const { bodyParser } = require("@koa/bodyparser");
+const koa = require("koa") as typeof import("koa");
+const { bodyParser } =
+  require("@koa/bodyparser") as typeof import("@koa/bodyparser");
 
 function getApp() {
   const app = new koa();
@@ -63,6 +65,8 @@ function getApp() {
     await next();
   });
 
+  addKoaMiddleware(app);
+
   app.use(async (ctx, next) => {
     await next();
     if (ctx.path.startsWith("/context")) {
@@ -74,8 +78,11 @@ function getApp() {
   // v1 Generator function middleware
   app.use(function* test(next) {
     yield next;
+    // @ts-expect-error don't have types for this
     if (this.path === "/v1") {
+      // @ts-expect-error don't have types for this
       this.type = "text/plain";
+      // @ts-expect-error don't have types for this
       this.body = "v1";
     }
   });
@@ -152,7 +159,7 @@ t.test("it blocks a user", async (t) => {
   const response = await request(app.callback()).get("/user/blocked");
 
   t.equal(response.status, 403);
-  t.equal(response.text, "You are blocked by Aikido firewall.");
+  t.equal(response.text, "You are blocked by Zen.");
 });
 
 t.test("it rate limits a request", async (t) => {
@@ -162,7 +169,7 @@ t.test("it rate limits a request", async (t) => {
   const response = await request(app.callback()).get("/rate-limited");
 
   t.equal(response.status, 429);
-  t.match(response.text, "You are rate limited by Aikido firewall.");
+  t.match(response.text, "You are rate limited by Zen.");
 });
 
 t.test("test legacy generator function middleware", async (t) => {

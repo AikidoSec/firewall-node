@@ -10,6 +10,7 @@ import { KoaRouter } from "./KoaRouter";
 import { HTTPServer } from "./HTTPServer";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
+import { addKoaMiddleware } from "../middleware/koa";
 
 const agent = new Agent(
   true,
@@ -39,21 +40,22 @@ const agent = new Agent(
 agent.start([new Koa(), new KoaRouter(), new HTTPServer()]);
 setInstance(agent);
 
-const koa = require("koa");
-const { bodyParser } = require("@koa/bodyparser");
+const koa = require("koa") as typeof import("koa");
+const { bodyParser } =
+  require("@koa/bodyparser") as typeof import("@koa/bodyparser");
 
 function getApp(routerImport = 1) {
   const app = new koa();
   app.use(bodyParser());
 
-  let Router = require("@koa/router");
+  let Router = require("@koa/router") as typeof import("@koa/router");
   if (routerImport === 2) {
     Router = require("koa-router");
   }
 
   const router = new Router();
 
-  router.use(async (ctx, next) => {
+  app.use(async (ctx, next) => {
     if (ctx.path === "/user/blocked") {
       setUser({ id: "567" });
     } else if (ctx.path === "/context/user") {
@@ -61,6 +63,8 @@ function getApp(routerImport = 1) {
     }
     await next();
   });
+
+  addKoaMiddleware(app);
 
   router.get("/context/user", async (ctx, next) => {
     await next();
@@ -150,7 +154,7 @@ t.test("it blocks a user", async (t) => {
   const response = await request(app.callback()).get("/user/blocked");
 
   t.equal(response.status, 403);
-  t.equal(response.text, "You are blocked by Aikido firewall.");
+  t.equal(response.text, "You are blocked by Zen.");
 });
 
 t.test("it rate limits a request", async (t) => {
@@ -160,7 +164,7 @@ t.test("it rate limits a request", async (t) => {
   const response = await request(app.callback()).get("/rate-limited");
 
   t.equal(response.status, 429);
-  t.match(response.text, "You are rate limited by Aikido firewall.");
+  t.match(response.text, "You are rate limited by Zen.");
 });
 
 t.test("gets route params using koa router", async (t) => {

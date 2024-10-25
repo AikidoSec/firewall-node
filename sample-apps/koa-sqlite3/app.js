@@ -1,4 +1,4 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const Koa = require("koa");
 const Router = require("@koa/router");
@@ -22,6 +22,8 @@ async function main() {
 
     await next();
   });
+
+  Zen.addKoaMiddleware(app);
 
   const router = new Router();
 

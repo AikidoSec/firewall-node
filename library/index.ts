@@ -6,6 +6,7 @@ import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
+import { addKoaMiddleware } from "./middleware/koa";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -20,4 +21,5 @@ export {
   addExpressMiddleware,
   addHonoMiddleware,
   addHapiMiddleware,
+  addKoaMiddleware,
 };

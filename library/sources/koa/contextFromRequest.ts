@@ -13,8 +13,8 @@ export function contextFromRequest(ctx: KoaContext): Context {
       headers: ctx.request.headers,
       remoteAddress: ctx.request.socket?.remoteAddress,
     }),
-    // @ts-expect-error Only available if a body parser is used
-    body: ctx.request.body ? ctx.request.body : undefined,
+    // Body is not available by default in Koa, only if a body parser is used
+    body: (ctx.request as any).body ? (ctx.request as any).body : undefined,
     url: ctx.request.href,
     headers: ctx.request.headers,
     // Only available if e.g. koa-router is used

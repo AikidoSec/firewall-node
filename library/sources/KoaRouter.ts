@@ -3,21 +3,20 @@ import type { Hooks } from "../agent/hooks/Hooks";
 import type { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
-import type { Agent } from "../agent/Agent";
 import type { Middleware } from "koa";
 import { wrapRouterMiddleware } from "./koa/wrapRouterMiddleware";
 import { METHODS } from "http";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class KoaRouter implements Wrapper {
-  private wrapArgs(args: unknown[], agent: Agent) {
+  private wrapArgs(args: unknown[]) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRouterMiddleware(arg as Middleware, agent);
+      return wrapRouterMiddleware(arg as Middleware);
     });
   }
 
