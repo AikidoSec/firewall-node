@@ -3,7 +3,7 @@ import type { FastifyRequest } from "fastify";
 import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapHandler(handler: Function): Function {
-  return function (...args: unknown[]) {
+  return function wrapped(...args: unknown[]) {
     const request = args.length > 0 ? args[0] : undefined;
 
     if (!isFastifyRequest(request)) {

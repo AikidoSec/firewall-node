@@ -8,6 +8,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { ZenGuard } from './zen.guard';
 import '@aikidosec/firewall/nopp';
+import { UserGuard } from './user.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -15,6 +16,7 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.useGlobalGuards(new UserGuard());
   app.useGlobalGuards(new ZenGuard());
 
   await app.listen({

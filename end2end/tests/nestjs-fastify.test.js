@@ -1,5 +1,5 @@
 const t = require("tap");
-const { spawnSync, spawn, execSync } = require("child_process");
+const { spawnSync, spawn } = require("child_process");
 const { resolve } = require("path");
 const timeout = require("../timeout");
 

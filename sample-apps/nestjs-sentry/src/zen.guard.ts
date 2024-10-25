@@ -11,7 +11,6 @@ import { shouldBlockRequest } from '@aikidosec/firewall';
 export class ZenGuard implements CanActivate {
   canActivate(): boolean | Promise<boolean> | Observable<boolean> {
     const result = shouldBlockRequest();
-    console.log('shouldBlockRequest', result);
 
     if (result.block) {
       if (result.type === 'ratelimited') {
