@@ -4,6 +4,7 @@ import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapHandler(handler: Function): Function {
   return function wrapped() {
+    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     const request = args.length > 0 ? args[0] : undefined;
 
