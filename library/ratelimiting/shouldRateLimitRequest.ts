@@ -21,6 +21,15 @@ export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
 ): Result {
+  // Do not consume rate limit for the same request a second time
+  // (Might happen if the user adds the middleware multiple times)
+  if (context.consumedRateLimit) {
+    return { block: false };
+  }
+
+  // We want to count the request only once
+  updateContext(context, "consumedRateLimit", true);
+
   const endpoint = getRateLimitedEndpoint(context, agent.getConfig());
 
   if (!endpoint) {
@@ -48,11 +57,6 @@ export function shouldRateLimitRequest(
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (context.user) {
-    // Do not consume rate limit for user a second time
-    if (context.consumedRateLimitForUser) {
-      return { block: false };
-    }
-
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -60,10 +64,6 @@ export function shouldRateLimitRequest(
         windowSizeInMS,
         maxRequests
       );
-
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForUser", true);
 
     if (!allowed) {
       return { block: true, trigger: "user" };
@@ -73,7 +73,7 @@ export function shouldRateLimitRequest(
     return { block: false };
   }
 
-  if (context.remoteAddress && !context.consumedRateLimitForIP) {
+  if (context.remoteAddress) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -81,10 +81,6 @@ export function shouldRateLimitRequest(
         windowSizeInMS,
         maxRequests
       );
-
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForIP", true);
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
