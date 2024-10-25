@@ -57,7 +57,8 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-// Call this as early as possible, before other middleware
+// Place this middleware after your authentication middleware
+// As early as possible in the middleware chain
 Zen.addKoaMiddleware(app);
 
 app.get(...);
