@@ -1,6 +1,6 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
-import type Application = require("koa");
+import type * as Application from "koa";
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Express app.

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { contextFromRequest } from "./contextFromRequest";
 import { runWithContext } from "../../agent/Context";
 import type { Middleware, Context as KoaContext } from "koa";
