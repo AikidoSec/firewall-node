@@ -1,30 +1,25 @@
+/* eslint-disable prefer-rest-params */
 import { runWithContext } from "../../agent/Context";
 import type { FastifyRequest } from "fastify";
 import { contextFromRequest } from "./contextFromRequest";
 
 export function wrapHandler(handler: Function): Function {
   return function wrapped() {
-    // eslint-disable-next-line prefer-rest-params
-    const args = Array.from(arguments);
-    const request = args.length > 0 ? args[0] : undefined;
-
-    if (!isFastifyRequest(request)) {
+    if (arguments.length > 0 && !isFastifyRequest(arguments[0])) {
       return handler.apply(
         // @ts-expect-error We don't know the type of this
         this,
-        // eslint-disable-next-line prefer-rest-params
-        args
+        arguments
       );
     }
 
-    const context = contextFromRequest(request as FastifyRequest);
+    const context = contextFromRequest(arguments[0] as FastifyRequest);
 
     return runWithContext(context, () => {
       return handler.apply(
         // @ts-expect-error We don't know the type of this
         this,
-        // eslint-disable-next-line prefer-rest-params
-        args
+        arguments
       );
     });
   };
