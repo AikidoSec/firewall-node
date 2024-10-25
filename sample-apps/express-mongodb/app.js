@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -13,8 +13,6 @@ const { extname } = require("path");
 const fetchImage = require("./fetchImage");
 
 require("@aikidosec/firewall/nopp");
-
-const Aikido = require("@aikidosec/firewall/context");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -38,9 +36,11 @@ async function main(port) {
   });
 
   app.use((req, res, next) => {
-    Aikido.setUser({ id: "123", name: "John Doe" });
+    Zen.setUser({ id: "123", name: "John Doe" });
     next();
   });
+
+  Zen.addExpressMiddleware(app);
 
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:

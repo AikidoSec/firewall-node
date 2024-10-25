@@ -58,5 +58,6 @@ t.test("no auth", async (t) => {
   t.same(get(getContext()), undefined);
   t.same(get(getContext({})), undefined);
   t.same(get(getContext({ authorization: "" })), undefined);
+  // @ts-expect-error Testing edge case
   t.same(get({}), undefined);
 });

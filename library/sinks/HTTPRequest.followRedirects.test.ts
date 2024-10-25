@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,11 +19,11 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-let server;
+let server: import("http").Server;
 const port = 3000;
 
 t.before(async () => {
-  const { createServer } = require("http");
+  const { createServer } = require("http") as typeof import("http");
 
   server = createServer((req, res) => {
     res.writeHead(200, { "Content-Type": "text/plain" });
@@ -34,7 +32,7 @@ t.before(async () => {
 
   server.unref();
 
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     server.listen(port, resolve);
   });
 });
@@ -42,16 +40,13 @@ t.before(async () => {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
-  const { http } = require("follow-redirects");
+  const { http } =
+    require("follow-redirects") as typeof import("follow-redirects");
 
   runWithContext(
     {
@@ -60,7 +55,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
       ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
     },
     () => {
-      const response = http.request(`${redirectTestUrl}/ssrf-test`, (res) => {
+      const response = http.request(`${redirectTestUrl}/ssrf-test`, () => {
         t.fail("should not respond");
       });
       response.on("error", (e) => {
@@ -112,7 +107,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
         t.ok(e instanceof Error);
         t.same(
           e.message,
-          "Redirected request failed: Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+          "Redirected request failed: Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
         );
       });
       response.end();

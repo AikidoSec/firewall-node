@@ -1,15 +1,14 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Endpoint } from "../agent/Config";
 import type { Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 function createContext(
-  remoteAddress: string = undefined,
-  userId: string = undefined,
+  remoteAddress: string | undefined = undefined,
+  userId: string | undefined = undefined,
   route: string = "/login",
   method: string = "POST"
 ): Context {
@@ -32,10 +31,10 @@ async function createAgent(
   endpoints: Endpoint[] = [],
   allowedIpAddresses: string[] = []
 ) {
-  const agent = new Agent(
-    false,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       allowedIPAddresses: allowedIpAddresses,
       success: true,
       heartbeatIntervalInMS: 10 * 60 * 1000,
@@ -43,9 +42,7 @@ async function createAgent(
       configUpdatedAt: 0,
       endpoints: endpoints,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 

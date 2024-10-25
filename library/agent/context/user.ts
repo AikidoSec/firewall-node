@@ -3,12 +3,14 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(user: unknown) {
+export function setUser(u: { id: string | number; name?: string }) {
   const agent = getInstance();
 
   if (!agent) {
     return;
   }
+
+  const user = u as unknown;
 
   if (!isPlainObject(user)) {
     agent.log(
@@ -48,6 +50,10 @@ export function setUser(user: unknown) {
     return;
   }
 
+  if (context.executedMiddleware) {
+    logWarningSetUserCalledAfterMiddleware();
+  }
+
   context.user = validatedUser;
 
   const ipAddress = context.remoteAddress;
@@ -57,4 +63,19 @@ export function setUser(user: unknown) {
     name: validatedUser.name,
     lastIpAddress: ipAddress,
   });
+}
+
+let loggedWarningSetUserCalledAfterMiddleware = false;
+
+function logWarningSetUserCalledAfterMiddleware() {
+  if (loggedWarningSetUserCalledAfterMiddleware) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    `setUser(...) must be called before the Zen middleware is executed.`
+  );
+
+  loggedWarningSetUserCalledAfterMiddleware = true;
 }

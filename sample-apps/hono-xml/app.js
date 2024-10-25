@@ -1,10 +1,9 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { createConnection } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 const { XMLParser } = require("fast-xml-parser");
 
@@ -17,13 +16,15 @@ async function main() {
     const userId = c.req.header("x-user-id");
 
     if (userId) {
-      Aikido.setUser({
+      Zen.setUser({
         id: userId,
       });
     }
 
     await next();
   });
+
+  Zen.addHonoMiddleware(app);
 
   app.get("/", async (c) => {
     const catNames = await cats.getAll();

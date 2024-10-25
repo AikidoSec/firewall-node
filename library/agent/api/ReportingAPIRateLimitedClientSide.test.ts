@@ -13,6 +13,7 @@ function generateAttackEvent(): Event {
       method: undefined,
       ipAddress: undefined,
       userAgent: undefined,
+      // @ts-expect-error Test
       headers: undefined,
       body: undefined,
       source: "express",
@@ -32,6 +33,7 @@ function generateAttackEvent(): Event {
     },
     agent: {
       version: "1.0.0",
+      library: "firewall-node",
       dryMode: false,
       hostname: "hostname",
       packages: {},
@@ -47,6 +49,10 @@ function generateAttackEvent(): Event {
         prototypePollution: {},
       },
       stack: [],
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }
@@ -100,6 +106,11 @@ function generateStartedEvent(): Event {
       },
       stack: [],
       serverless: false,
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }
@@ -162,6 +173,11 @@ function generateHeartbeatEvent(): Event {
         prototypePollution: {},
       },
       stack: [],
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
     hostnames: [],
     routes: [],

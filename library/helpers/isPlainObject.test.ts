@@ -16,6 +16,7 @@ t.test(
   "should return `false` if the object is not created by the `Object` constructor.",
   async (t) => {
     function Foo() {
+      // @ts-expect-error Test
       this.abc = {};
     }
 
@@ -24,6 +25,7 @@ t.test(
     t.notOk(isPlainObject(1));
     t.notOk(isPlainObject(["foo", "bar"]));
     t.notOk(isPlainObject([]));
+    // @ts-expect-error Test
     t.notOk(isPlainObject(new Foo()));
     t.notOk(isPlainObject(null));
   }
@@ -35,6 +37,7 @@ t.test("should return `false` if prototype has been modified", async (t) => {
   // Directly use a built-in type's prototype, for example, Array.prototype
   CustomConstructor.prototype = Array.prototype;
 
+  // @ts-expect-error Test
   const instance = new CustomConstructor();
 
   t.same(isPlainObject(instance), false);
