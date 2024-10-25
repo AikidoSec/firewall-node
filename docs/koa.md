@@ -63,7 +63,7 @@ Zen.addKoaMiddleware(app);
 app.get(...);
 ```
 
-If you are using `@koa/router` or `koa-router`, please make sure to set the user in a `app.use` middleware before the router middleware.
+If you are using `@koa/router` or `koa-router`, please make sure to place the `.use(router.routes())` middleware after the Zen middleware:
 
 ## Debug mode
 
