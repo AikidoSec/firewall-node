@@ -24,8 +24,9 @@ export function wrapRouterMiddleware(origMiddleware: Middleware): Middleware {
       return applyOriginal();
     }
 
-    // Context is already set by Koa wrapper
+    // Context is already set by Koa wrapper, so context should be available
     const context = getContext();
+    /* c8 ignore next 3 */
     if (!context) {
       return applyOriginal();
     }

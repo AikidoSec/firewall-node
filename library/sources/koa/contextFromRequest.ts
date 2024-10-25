@@ -5,8 +5,6 @@ import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse as parseCookies } from "../../helpers/parseCookies";
 
 export function contextFromRequest(ctx: KoaContext): Context {
-  const cookieHeader = ctx.req.headers?.cookie;
-
   return {
     method: ctx.request.method,
     remoteAddress: getIPAddressFromRequest({
@@ -20,7 +18,7 @@ export function contextFromRequest(ctx: KoaContext): Context {
     // Only available if e.g. koa-router is used
     routeParams: ctx.params ? ctx.params : {},
     query: ctx.request.query,
-    cookies: cookieHeader ? parseCookies(cookieHeader) : {},
+    cookies: ctx.req.headers.cookie ? parseCookies(ctx.req.headers.cookie) : {},
     source: "koa",
     route: buildRouteFromURL(ctx.request.href),
     subdomains: ctx.request.subdomains,

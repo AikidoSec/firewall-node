@@ -19,6 +19,7 @@ function getExpressApp() {
   app.get(
     "/",
     asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
         res.sendStatus(200);
       })
@@ -28,6 +29,7 @@ function getExpressApp() {
   app.get(
     "/error",
     asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
         throw new Error("error");
       })
@@ -37,6 +39,7 @@ function getExpressApp() {
   app.get(
     "/context",
     asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
         res.send(getContext());
       })
@@ -46,6 +49,7 @@ function getExpressApp() {
   app.get(
     "/attack-detected",
     asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
         const context = getContext();
         if (context) {
