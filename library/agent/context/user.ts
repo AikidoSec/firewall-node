@@ -3,12 +3,14 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(user: unknown) {
+export function setUser(u: { id: string | number; name?: string }) {
   const agent = getInstance();
 
   if (!agent) {
     return;
   }
+
+  const user = u as unknown;
 
   if (!isPlainObject(user)) {
     agent.log(
