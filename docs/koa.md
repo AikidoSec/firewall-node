@@ -22,7 +22,7 @@ import "@aikidosec/firewall";
 // ...
 ```
 
-Aikido firewall also supports `@koa/router` or `koa-router`.
+Zen also supports `@koa/router` or `koa-router`.
 
 ## Blocking mode
 
