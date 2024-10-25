@@ -116,6 +116,7 @@ t.test("it logs when setUser has invalid input", async () => {
   ]);
   logger.clear();
 
+  // @ts-expect-error Testing invalid input
   setUser(null);
   t.same(logger.getMessages(), [
     "setUser(...) expects an object with 'id' and 'name' properties, found object instead.",
