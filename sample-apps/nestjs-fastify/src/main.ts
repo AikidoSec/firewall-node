@@ -6,12 +6,17 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { ZenGuard } from './zen.guard';
+import '@aikidosec/firewall/nopp';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
+
+  app.useGlobalGuards(new ZenGuard());
+
   await app.listen({
     port: getPort(),
   });
