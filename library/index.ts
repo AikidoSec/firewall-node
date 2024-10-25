@@ -7,6 +7,7 @@ import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
+import { addKoaMiddleware } from "./middleware/koa";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -22,4 +23,5 @@ export {
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
+  addKoaMiddleware,
 };

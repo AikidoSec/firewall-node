@@ -72,6 +72,10 @@ nestjs-sentry:
 fastify-mysql2:
 	cd sample-apps/fastify-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
 
+.PHONY: koa-sqlite3
+koa-sqlite3:
+	cd sample-apps/koa-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
 .PHONY: install
 install:
 	mkdir -p build
