@@ -21,6 +21,16 @@ export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
 ): Result {
+  // Do not consume rate limit for the same request a second time
+  // (Might happen if the user adds the middleware multiple times)
+  if (context.consumedRateLimit) {
+    logWarningIfMiddlewareExecutedTwice();
+    return { block: false };
+  }
+
+  // We want to count the request only once
+  updateContext(context, "consumedRateLimit", true);
+
   const endpoint = getRateLimitedEndpoint(context, agent.getConfig());
 
   if (!endpoint) {
@@ -41,32 +51,13 @@ export function shouldRateLimitRequest(
     context.remoteAddress &&
     agent.getConfig().isAllowedIP(context.remoteAddress);
 
-  const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
-
-  if (
-    context.remoteAddress &&
-    !context.consumedRateLimitForIP &&
-    !isFromLocalhostInProduction &&
-    !isAllowedIP
-  ) {
-    const allowed = agent
-      .getRateLimiter()
-      .isAllowed(
-        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
-        windowSizeInMS,
-        maxRequests
-      );
-
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForIP", true);
-
-    if (!allowed) {
-      return { block: true, trigger: "ip" };
-    }
+  if (isFromLocalhostInProduction || isAllowedIP) {
+    return { block: false };
   }
 
-  if (context.user && !context.consumedRateLimitForUser) {
+  const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
+
+  if (context.user) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
@@ -75,14 +66,40 @@ export function shouldRateLimitRequest(
         maxRequests
       );
 
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForUser", true);
-
     if (!allowed) {
       return { block: true, trigger: "user" };
+    }
+
+    // Do not check IP rate limit if user is set
+    return { block: false };
+  }
+
+  if (context.remoteAddress) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
+        windowSizeInMS,
+        maxRequests
+      );
+
+    if (!allowed) {
+      return { block: true, trigger: "ip" };
     }
   }
 
   return { block: false };
+}
+
+let loggedWarningIfMiddlewareExecutedTwice = false;
+
+function logWarningIfMiddlewareExecutedTwice(): void {
+  if (loggedWarningIfMiddlewareExecutedTwice) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(`Zen.addMiddleware(...) should be called only once.`);
+
+  loggedWarningIfMiddlewareExecutedTwice = true;
 }

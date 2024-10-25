@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
@@ -11,6 +12,11 @@ export function setUser(u: { id: string | number; name?: string }) {
   }
 
   const user = u as unknown;
+
+  if (user === null || user === undefined) {
+    agent.log(`setUser(...) can not be called with null or undefined.`);
+    return;
+  }
 
   if (!isPlainObject(user)) {
     agent.log(
