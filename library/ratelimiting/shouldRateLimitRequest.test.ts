@@ -5,6 +5,7 @@ import { Endpoint } from "../agent/Config";
 import type { Context } from "../agent/Context";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { wrap } from "../helpers/wrap";
 
 function createContext(
   remoteAddress: string | undefined = undefined,
@@ -26,6 +27,13 @@ function createContext(
     user: userId ? { id: userId } : undefined,
   };
 }
+
+const logs: string[] = [];
+wrap(console, "warn", function warn() {
+  return function warn(message: string) {
+    logs.push(message);
+  };
+});
 
 async function createAgent(
   endpoints: Endpoint[] = [],
@@ -477,6 +485,8 @@ t.test(
       },
     ]);
 
+    t.same(logs, []);
+
     const ctx = createContext("1.2.3.4", "123");
 
     t.same(shouldRateLimitRequest(ctx, agent), {
@@ -491,5 +501,7 @@ t.test(
     t.same(shouldRateLimitRequest(ctx, agent), {
       block: false,
     });
+
+    t.same(logs, ["Zen.addMiddleware(...) should be called only once."]);
   }
 );
