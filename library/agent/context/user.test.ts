@@ -92,7 +92,7 @@ t.test("it logs when setUser has invalid input", async () => {
   // @ts-expect-error User is undefined
   setUser(undefined);
   t.same(logger.getMessages(), [
-    "setUser(...) expects an object with 'id' and 'name' properties, found undefined instead.",
+    "setUser(...) can not be called with null or undefined.",
   ]);
   logger.clear();
 
