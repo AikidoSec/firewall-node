@@ -4,7 +4,6 @@ const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { createConnection } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 const { XMLParser } = require("fast-xml-parser");
 
@@ -14,10 +13,13 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
-    Zen.setUser({
-      id: "id",
-      name: "Name",
-    });
+    const userId = c.req.header("x-user-id");
+
+    if (userId) {
+      Zen.setUser({
+        id: userId,
+      });
+    }
 
     await next();
   });
