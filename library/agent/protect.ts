@@ -46,7 +46,6 @@ import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
-import { KoaRouter } from "../sources/KoaRouter";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -135,7 +134,6 @@ function getWrappers() {
     new Postgresjs(),
     new Fastify(),
     new Koa(),
-    new KoaRouter(),
   ];
 }
 
