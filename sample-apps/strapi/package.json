@@ -7,7 +7,7 @@
     "build": "strapi build",
     "deploy": "strapi deploy",
     "develop": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi develop",
-    "start": "strapi start",
+    "start": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi start",
     "strapi": "strapi"
   },
   "dependencies": {
