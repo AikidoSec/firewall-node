@@ -26,7 +26,7 @@ t.test("it does not return 405 for register admin", (t) => {
       AIKIDO_BLOCK: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
     },
-    cwd: join(pathToApp),
+    cwd: pathToApp,
   });
 
   server.on("close", () => {
