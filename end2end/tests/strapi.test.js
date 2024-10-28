@@ -6,9 +6,11 @@ const timeout = require("../timeout");
 const pathToApp = resolve(__dirname, "../../sample-apps/strapi");
 
 t.before(() => {
-  const { stdout, status } = spawnSync(`npm`, ["run", "build"], {
+  const { stdout, stderr, status } = spawnSync(`npm`, ["run", "build"], {
     cwd: pathToApp,
   });
+
+  console.log(stdout.toString(), stderr.toString());
 
   if (status !== 0) {
     throw new Error(`Failed to build: ${stdout.toString()}`);
@@ -40,11 +42,13 @@ t.test("it does not return 405 for register admin", (t) => {
   let stdout = "";
   server.stdout.on("data", (data) => {
     stdout += data.toString();
+    console.log(data.toString());
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
+    console.log(data.toString());
   });
 
   // Wait for the server to start
