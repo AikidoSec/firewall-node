@@ -43,7 +43,8 @@ const agent = createTestAgent({
 });
 agent.start([new HTTPServer()]);
 
-t.setTimeout(30 * 1000);
+// Typing issues
+(t as any).setTimeout(30 * 1000);
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;

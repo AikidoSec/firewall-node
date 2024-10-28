@@ -16,7 +16,7 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -80,7 +80,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in non-blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",

@@ -8,7 +8,7 @@ export function cleanupStackTrace(stack: string, libraryRoot: string): string {
       .map(createLineMapper(libraryRoot))
       .join("\n")
       .trim();
-  } catch (error) {
+  } catch {
     // Safer to return the original stack trace in case of an error
     // than to crash the application
     return stack;
@@ -71,7 +71,6 @@ function createLineMapper(libraryRoot: string) {
     if (line.trimStart().startsWith("at ")) {
       const parts = line.trimStart().split(" ");
       if (parts.length === 4) {
-        const lastPart = parts[parts.length - 1];
         // Cleanup our own stack traces
         // Examples
         // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall

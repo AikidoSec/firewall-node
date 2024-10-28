@@ -23,7 +23,7 @@ export function tryDecodeAsJWT(
       jwt: true,
       object: JSON.parse(Buffer.from(parts[1], "base64").toString("utf8")),
     };
-  } catch (e) {
+  } catch {
     return {
       jwt: false,
     };

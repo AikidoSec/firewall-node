@@ -42,7 +42,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Hono](docs/hono.md) 4.x
 * ✅ [hapi](docs/hapi.md) 21.x
 * ✅ [micro](docs/micro.md) 10.x
-* ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
+* ✅ [Next.js](docs/next.md) 12.x, 13.x, 14.x and 15.x
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 2.x
 

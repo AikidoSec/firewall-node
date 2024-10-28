@@ -194,7 +194,7 @@ t.test("it passes through unknown types of events", async () => {
   t.same(result, undefined);
 });
 
-t.test("it sends heartbeat after first and every 10 minutes", async () => {
+t.test("it sends heartbeat after first and every 10 minutes", async (t) => {
   const clock = FakeTimers.install();
 
   const testing = new ReportingAPIForTesting();
@@ -314,7 +314,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
 
 t.test(
   "it keeps working if token is not set (no reset happening)",
-  async () => {
+  async (t) => {
     const clock = FakeTimers.install();
 
     const testing = new ReportingAPIForTesting();
@@ -348,7 +348,7 @@ t.test(
   }
 );
 
-t.test("if handler throws it still sends heartbeat", async () => {
+t.test("if handler throws it still sends heartbeat", async (t) => {
   const clock = FakeTimers.install();
 
   const testing = new ReportingAPIForTesting();
@@ -379,7 +379,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
   clock.uninstall();
 });
 
-t.test("undefined values", async () => {
+t.test("undefined values", async (t) => {
   const handler = createLambdaWrapper(async (event, context) => {
     return getContext();
   });
@@ -412,7 +412,7 @@ t.test("undefined values", async () => {
   });
 });
 
-t.test("no cookie header", async () => {
+t.test("no cookie header", async (t) => {
   const handler = createLambdaWrapper(async (event, context) => {
     return getContext();
   });

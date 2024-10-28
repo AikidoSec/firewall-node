@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type {
   ServerRoute,
   Lifecycle,
@@ -90,7 +89,7 @@ export class Hapi implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const hapi = hooks
+    hooks
       .addPackage("@hapi/hapi")
       .withVersion("^21.0.0")
       .onRequire((exports, pkgInfo) => {

@@ -43,7 +43,7 @@ t.beforeEach(async () => {
 });
 
 t.test("it rate limits requests", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const server = spawn(`node`, [pathToApp, "4002"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -103,7 +103,7 @@ t.test("it rate limits requests", (t) => {
 });
 
 t.test("user rate limiting works", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
+  const server = spawn(`node`, [pathToApp, "4003"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",

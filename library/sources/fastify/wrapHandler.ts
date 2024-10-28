@@ -10,7 +10,6 @@ export function wrapHandler(handler: Function): Function {
       return handler.apply(
         // @ts-expect-error We don't know the type of this
         this,
-        // eslint-disable-next-line prefer-rest-params
         args
       );
     }
@@ -21,7 +20,6 @@ export function wrapHandler(handler: Function): Function {
       return handler.apply(
         // @ts-expect-error We don't know the type of this
         this,
-        // eslint-disable-next-line prefer-rest-params
         args
       );
     });

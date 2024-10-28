@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type { MiddlewareHandler } from "hono";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";

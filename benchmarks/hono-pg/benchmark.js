@@ -16,7 +16,7 @@ async function startServer(firewallEnabled) {
     };
   }
 
-  const server = spawn("node", ["--preserve-symlinks", "server.js", "4000"], {
+  const server = spawn("node", ["server.js", "4000"], {
     env,
     cwd: join(__dirname, "app"),
   });

@@ -20,11 +20,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
     this.result = result;
   }
 
-  async report(
-    token: Token,
-    event: Event,
-    timeoutInMS: number
-  ): Promise<ReportingAPIResponse> {
+  async report(token: Token, event: Event): Promise<ReportingAPIResponse> {
     this.events.push(event);
 
     return this.result;

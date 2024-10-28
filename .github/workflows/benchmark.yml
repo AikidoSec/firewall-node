@@ -43,14 +43,14 @@ jobs:
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
-        run: cd benchmarks/nosql-injection && AIKIDO_CI=true node --preserve-symlinks benchmark.js
+        run: cd benchmarks/nosql-injection && AIKIDO_CI=true node benchmark.js
       - name: Run SQL Injection Benchmark
-        run: cd benchmarks/sql-injection && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/sql-injection && node benchmark.js
       - name: Run shell injection Benchmark
-        run: cd benchmarks/shell-injection && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/shell-injection && node benchmark.js
       - name: Run Hono with Postgres Benchmark
-        run: cd benchmarks/hono-pg && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/hono-pg && node benchmark.js
       - name: Run API Discovery Benchmark
-        run: cd benchmarks/api-discovery && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/api-discovery && node benchmark.js
       - name: Run Express Benchmark
-        run: cd benchmarks/express && node --preserve-symlinks benchmark.js
+        run: cd benchmarks/express && node benchmark.js

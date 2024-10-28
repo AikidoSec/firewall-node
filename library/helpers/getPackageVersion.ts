@@ -25,7 +25,7 @@ export function getPackageVersion(pkg: string): string | null {
     const root = parts.slice(0, index + 1).join(sep);
 
     return getOriginalRequire()(`${root}/package.json`).version;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

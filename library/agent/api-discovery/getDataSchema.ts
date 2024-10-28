@@ -58,7 +58,7 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
         break;
       }
       propertiesCount++;
-      if (data.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
         schema.properties![key] = getDataSchema(
           (data as { [index: string]: unknown })[key],
           depth + 1

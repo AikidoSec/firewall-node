@@ -57,7 +57,6 @@ export class HTTPRequest implements Wrapper {
     return undefined;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspectHttpRequest(
     args: unknown[],
     agent: Agent,

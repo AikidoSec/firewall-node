@@ -111,7 +111,7 @@ export class Routes {
   }
 
   asArray() {
-    return Array.from(this.routes.entries()).map(([key, route]) => {
+    return Array.from(this.routes.entries()).map(([, route]) => {
       return {
         method: route.method,
         path: route.path,

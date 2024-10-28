@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
 import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -83,6 +82,7 @@ export class GraphQL implements Wrapper {
     );
 
     if (result.block) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- Fixed in open PR
       const { GraphQLError } = require("graphql");
 
       return {

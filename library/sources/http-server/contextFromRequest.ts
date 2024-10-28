@@ -22,7 +22,7 @@ export function contextFromRequest(
   if (body) {
     try {
       parsedBody = JSON.parse(body);
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }

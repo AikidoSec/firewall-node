@@ -47,7 +47,7 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects SQL injections", async () => {
+t.test("it detects SQL injections", async (t) => {
   const agent = createTestAgent({
     serverless: "lambda",
   });

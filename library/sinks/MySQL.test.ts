@@ -43,7 +43,7 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects SQL injections", async () => {
+t.test("it detects SQL injections", async (t) => {
   const agent = createTestAgent();
   agent.start([new MySQL()]);
 
@@ -87,6 +87,13 @@ t.test("it detects SQL injections", async () => {
       }),
       []
     );
+
+    // Check that context is available in the callback
+    await runWithContext(context, async () => {
+      connection.query("SELECT petname FROM `cats`;", (error, results) => {
+        t.same(getContext(), context);
+      });
+    });
 
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {
@@ -142,12 +149,6 @@ t.test("it detects SQL injections", async () => {
         return connection.query("-- This is a comment");
       }
     );
-
-    runWithContext(context, () => {
-      connection.query("SELECT petname FROM `cats`;", (error, results) => {
-        t.same(getContext(), context);
-      });
-    });
   } catch (error: any) {
     t.fail(error);
   } finally {

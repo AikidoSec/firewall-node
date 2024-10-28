@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unused-modules */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
@@ -13,6 +12,7 @@ const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
 
 if (supported && shouldEnable) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("./agent/protect").protect();
 }
 

@@ -139,7 +139,6 @@ function getWrappers() {
   ];
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export function protect() {
   const agent = getAgent({
     serverless: undefined,

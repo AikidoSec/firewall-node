@@ -5,7 +5,6 @@ import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 type UserString = string;
 type PathToUserString = string;
 
-// eslint-disable-next-line max-lines-per-function
 export function extractStringsFromUserInput(
   obj: unknown,
   pathToPayload: PathPart[] = []

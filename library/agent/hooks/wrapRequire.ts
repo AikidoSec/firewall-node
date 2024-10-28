@@ -41,14 +41,12 @@ export function wrapRequire() {
 
   // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
-    // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
   if (typeof process.getBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
-      // eslint-disable-next-line prefer-rest-params
       return patchedRequire.call(this, arguments);
     };
   }
