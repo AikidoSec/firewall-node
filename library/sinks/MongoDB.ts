@@ -187,13 +187,6 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
-  async wrapAsSoonAsDefined(exports: any, pkgInfo: WrapPackageInfo) {
-    while (!exports.Collection) {
-      await new Promise((resolve) => process.nextTick(resolve));
-    }
-    this.wrapCollection(exports, pkgInfo);
-  }
-
   wrapCollection(exports: any, pkgInfo: WrapPackageInfo) {
     const collectionProto = exports.Collection.prototype;
 
@@ -226,10 +219,14 @@ export class MongoDB implements Wrapper {
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         if (!exports.Collection) {
-          this.wrapAsSoonAsDefined(exports, pkgInfo);
-        } else {
-          this.wrapCollection(exports, pkgInfo);
+          // Make sure Collection is defined
+          try {
+            new exports.MongoClient({});
+          } catch (e) {
+            //
+          }
         }
+        this.wrapCollection(exports, pkgInfo);
       });
   }
 }
