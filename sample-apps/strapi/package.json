@@ -6,7 +6,7 @@
   "scripts": {
     "build": "strapi build",
     "deploy": "strapi deploy",
-    "develop": "NODE_OPTIONS='-r @aikidosec/firewall --preserve-symlinks' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi develop",
+    "develop": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi develop",
     "start": "strapi start",
     "strapi": "strapi"
   },

@@ -24,7 +24,7 @@ t.test("it does not return 405 for register admin", (t) => {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCK: "true",
-      NODE_OPTIONS: "-r @aikidosec/firewall --preserve-symlinks",
+      NODE_OPTIONS: "-r @aikidosec/firewall",
     },
     cwd: join(pathToApp),
   });
