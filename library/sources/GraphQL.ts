@@ -12,6 +12,9 @@ import { shouldRateLimitOperation } from "./graphql/shouldRateLimitOperation";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class GraphQL implements Wrapper {
+  private GraphQLError: typeof import("graphql").GraphQLError | undefined;
+  private visitFn: typeof import("graphql").visit | undefined;
+
   private inspectGraphQLExecute(args: unknown[], agent: Agent): void {
     if (!Array.isArray(args) || typeof args[0] !== "object") {
       return;
@@ -41,7 +44,15 @@ export class GraphQL implements Wrapper {
       }
     }
 
-    const userInputs = extractInputsFromDocument(executeArgs.document);
+    // Should not happen
+    if (!this.visitFn) {
+      return;
+    }
+
+    const userInputs = extractInputsFromDocument(
+      executeArgs.document,
+      this.visitFn
+    );
 
     if (
       executeArgs.variableValues &&
@@ -82,12 +93,15 @@ export class GraphQL implements Wrapper {
       args[0] as unknown as ExecutionArgs
     );
 
-    if (result.block) {
-      const { GraphQLError } = require("graphql");
+    // Should not happen
+    if (!this.GraphQLError) {
+      throw new Error("You are rate limited by Zen.");
+    }
 
+    if (result.block) {
       return {
         errors: [
-          new GraphQLError("You are rate limited by Zen.", {
+          new this.GraphQLError("You are rate limited by Zen.", {
             nodes: [result.field],
             extensions: {
               code: "RATE_LIMITED_BY_ZEN",
@@ -119,6 +133,10 @@ export class GraphQL implements Wrapper {
       .withVersion("^16.0.0")
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
+      })
+      .onRequire((exports, pkgInfo) => {
+        this.GraphQLError = exports.GraphQLError;
+        this.visitFn = exports.visit;
       });
 
     hooks
