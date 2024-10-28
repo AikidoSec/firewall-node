@@ -7,6 +7,7 @@ Sentry.init({
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ZenGuard } from './zen.guard';
 
 function getPort() {
   const port = parseInt(process.env.PORT, 10) || 4000;
@@ -21,6 +22,8 @@ function getPort() {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalGuards(new ZenGuard());
   await app.listen(getPort());
 }
 
