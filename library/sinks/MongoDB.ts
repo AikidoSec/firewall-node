@@ -8,6 +8,7 @@ import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { getInstance } from "../agent/AgentSingleton";
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -187,6 +188,31 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  /**
+   * If the Collection is not defined, wait for it to be defined, because it's lazy loaded
+   */
+  async wrapAsSoonAsDefined(exports: any, pkgInfo: WrapPackageInfo) {
+    const maxIterations = 10;
+    let iterations = 0;
+    while (!exports.Collection) {
+      // Wait for one tick
+      await new Promise((resolve) => process.nextTick(resolve));
+      iterations++;
+
+      // If the Collection is not defined after 10 iterations return
+      if (iterations >= maxIterations) {
+        const agent = getInstance();
+        if (agent) {
+          agent.log(
+            "MongoDB.Collection is not defined after waiting for 10 iterations. The MongoDB wrapper will not be applied."
+          );
+        }
+        return;
+      }
+    }
+    this.wrapCollection(exports, pkgInfo);
+  }
+
   wrapCollection(exports: any, pkgInfo: WrapPackageInfo) {
     const collectionProto = exports.Collection.prototype;
 
@@ -219,14 +245,10 @@ export class MongoDB implements Wrapper {
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         if (!exports.Collection) {
-          // Make sure Collection is defined
-          try {
-            new exports.MongoClient({});
-          } catch (e) {
-            //
-          }
+          this.wrapAsSoonAsDefined(exports, pkgInfo);
+        } else {
+          this.wrapCollection(exports, pkgInfo);
         }
-        this.wrapCollection(exports, pkgInfo);
       });
   }
 }
