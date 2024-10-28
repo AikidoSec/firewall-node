@@ -44,7 +44,7 @@ export class Users {
   }
 
   asArray() {
-    return Array.from(this.users.entries()).map(([key, user]) => {
+    return Array.from(this.users.entries()).map(([, user]) => {
       return {
         id: user.id,
         name: user.name,

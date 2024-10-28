@@ -9,8 +9,9 @@ export function extractInputsFromDocument(document: DocumentNode): string[] {
   try {
     // Assuming graphql is installed when this function is called
     // Don't use normal import for graphql
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Fixed in open PR
     graphql = require("graphql");
-  } catch (e) {
+  } catch {
     return [];
   }
 

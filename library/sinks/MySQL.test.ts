@@ -88,6 +88,13 @@ t.test("it detects SQL injections", async (t) => {
       []
     );
 
+    // Check that context is available in the callback
+    await runWithContext(context, async () => {
+      connection.query("SELECT petname FROM `cats`;", (error, results) => {
+        t.same(getContext(), context);
+      });
+    });
+
     const error = await t.rejects(async () => {
       await runWithContext(context, () => {
         return connection.query("-- should be blocked");
@@ -142,12 +149,6 @@ t.test("it detects SQL injections", async (t) => {
         return connection.query("-- This is a comment");
       }
     );
-
-    runWithContext(context, () => {
-      connection.query("SELECT petname FROM `cats`;", (error, results) => {
-        t.same(getContext(), context);
-      });
-    });
   } catch (error: any) {
     t.fail(error);
   } finally {

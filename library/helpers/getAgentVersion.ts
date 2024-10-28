@@ -1,6 +1,7 @@
 import { resolve } from "path";
 
 export function getAgentVersion(): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const json = require(resolve(__dirname, "../package.json"));
 
   /* c8 ignore start */

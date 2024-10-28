@@ -5,8 +5,6 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -180,7 +178,7 @@ t.test("it discovers routes", async () => {
   await new Promise<void>((resolve) => {
     server.listen(3417, () => {
       http2Request(new URL("http://localhost:3417/foo/bar"), "GET", {}).then(
-        ({}) => {
+        () => {
           t.same(
             agent
               .getRoutes()
@@ -211,7 +209,7 @@ t.test("it does not discover routes with 404 status code", async () => {
   await new Promise<void>((resolve) => {
     server.listen(3418, () => {
       http2Request(new URL("http://localhost:3418/not-found"), "GET", {}).then(
-        ({}) => {
+        () => {
           t.same(
             agent
               .getRoutes()
@@ -375,7 +373,7 @@ t.test("it discovers routes using stream event", async () => {
         new URL("http://localhost:3425/foo/bar/stream"),
         "GET",
         {}
-      ).then(({}) => {
+      ).then(() => {
         t.same(
           agent
             .getRoutes()
@@ -409,7 +407,7 @@ t.test("it does not discover routes with 404 status code", async () => {
         new URL("http://localhost:3426/not-found-stream"),
         "GET",
         {}
-      ).then(({}) => {
+      ).then(() => {
         t.same(
           agent
             .getRoutes()

@@ -121,7 +121,7 @@ export class Fetch implements Wrapper {
         globalThis[undiciGlobalDispatcherSymbol].dispatch,
         agent
       );
-    } catch (error) {
+    } catch {
       agent.log(
         `Failed to patch global dispatcher for fetch, we can't provide protection!`
       );

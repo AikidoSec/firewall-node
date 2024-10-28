@@ -65,7 +65,7 @@ function pathToString(path: string | Buffer | URL): string | undefined {
       return new TextDecoder("utf-8", {
         fatal: true,
       }).decode(path);
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }

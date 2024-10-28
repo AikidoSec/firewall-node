@@ -51,7 +51,7 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
     if (path) {
       for (const wildcard of wildcards) {
         const regex = new RegExp(
-          `^${wildcard.route.replace(/\*/g, "(.*)")}\/?$`,
+          `^${wildcard.route.replace(/\*/g, "(.*)")}/?$`,
           "i"
         );
 

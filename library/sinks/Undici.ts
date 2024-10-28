@@ -49,7 +49,6 @@ export class Undici implements Wrapper {
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspect(
     args: unknown[],
     agent: Agent,
@@ -72,6 +71,7 @@ export class Undici implements Wrapper {
   }
 
   private patchGlobalDispatcher(agent: Agent) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- Will be fixed in separate PR
     const undici = require("undici");
 
     const dispatcher = new undici.Agent({
@@ -104,7 +104,7 @@ export class Undici implements Wrapper {
       return;
     }
 
-    const undici = hooks
+    hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {

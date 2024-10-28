@@ -17,7 +17,6 @@ export function wrapOnHeaders(
 ): OnHeaders {
   // @ts-expect-error We return undefined if there is no original function, that's fine because the onHeaders function is optional
   return function onHeaders() {
-    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
 
     if (args.length > 1) {
@@ -31,7 +30,7 @@ export function wrapOnHeaders(
 
             onRedirect(destinationUrl, requestContext, context);
           }
-        } catch (e) {
+        } catch {
           // Ignore, log later if we have log levels
         }
       }
@@ -42,7 +41,6 @@ export function wrapOnHeaders(
         // @ts-expect-error We don't know the type of this
         this,
         // @ts-expect-error Arguments are not typed
-        // eslint-disable-next-line prefer-rest-params
         arguments
       );
     }
