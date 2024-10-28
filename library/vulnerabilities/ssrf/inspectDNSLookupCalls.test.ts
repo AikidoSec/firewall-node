@@ -313,7 +313,8 @@ t.test("it ignores if lookup returns error", (t) => {
     "operation"
   );
 
-  wrappedLookup("localhost", {}, (err, address) => {
+  // @ts-expect-error Testing
+  wrappedLookup("localhost", (err, address) => {
     t.same(err instanceof Error, true);
     if (err instanceof Error) {
       t.same(err.message, "lookup failed");
