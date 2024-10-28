@@ -5,6 +5,8 @@ const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/strapi");
 
+t.setTimeout(60 * 1000);
+
 t.before(() => {
   const { stdout, stderr, status } = spawnSync(`npm`, ["run", "build"], {
     cwd: pathToApp,
@@ -53,7 +55,7 @@ t.test("it does not return 405 for register admin", (t) => {
 
   // Wait for the server to start
   timeout(5000)
-    .then((a) => {
+    .then(() => {
       return Promise.all([
         fetch("http://127.0.0.1:1337/admin/register-admin", {
           method: "POST",
