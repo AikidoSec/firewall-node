@@ -66,7 +66,7 @@ t.test("Wrap non existing class", async (t) => {
   );
 
   t.same(logger.getMessages(), [
-    "Failed to wrap method test in module testmod",
+    "Failed to wrap method test in module testmod: no original function test to wrap",
   ]);
 });
 

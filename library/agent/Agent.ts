@@ -23,6 +23,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { escapeLog } from "../helpers/escapeLog";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -155,7 +156,7 @@ export class Agent {
     payload: unknown;
   }) {
     this.logger.info(
-      `Zen has blocked ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${path}" ip="${request.remoteAddress}" blocked=${blocked}`
+      `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${escapeLog(path)}" ip="${escapeLog(request.remoteAddress)}"`
     );
     if (this.token) {
       this.api

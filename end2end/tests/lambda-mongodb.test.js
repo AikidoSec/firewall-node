@@ -18,7 +18,7 @@ t.before(async () => {
 
 t.test("it does not block by default", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx --node-options='--no-deprecation --preserve-symlinks' --loglevel=error serverless@3.38.0 invoke local --function login --path payloads/nosql-injection-request.json",
+    "npx --node-options='--no-deprecation --preserve-symlinks' --loglevel=error serverless@3.38.0 invoke local -e AIKIDO_LOG_LEVEL=error --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
@@ -39,7 +39,7 @@ t.test("it does not block by default", async (t) => {
 
 t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
   const { stdout, stderr } = await execAsync(
-    "npx --node-options='--no-deprecation --preserve-symlinks' --loglevel=error serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true --function login --path payloads/nosql-injection-request.json",
+    "npx --node-options='--no-deprecation --preserve-symlinks' --loglevel=error serverless@3.38.0 invoke local -e AIKIDO_BLOCKING=true -e AIKIDO_LOG_LEVEL=error --function login --path payloads/nosql-injection-request.json",
     {
       cwd: directory,
     }
