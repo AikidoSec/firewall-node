@@ -1,17 +1,26 @@
 /* eslint-disable no-console */
 import { Logger } from "./Logger";
+import { AikidoLogLevel, shouldLog } from "./logLevel";
 
 export class LoggerConsole implements Logger {
   debug(message: string) {
-    console.debug(`Aikido: ${message}`);
+    if (shouldLog(AikidoLogLevel.debug)) {
+      console.debug(`Aikido: ${message}`);
+    }
   }
   info(message: string) {
-    console.info(`Aikido: ${message}`);
+    if (shouldLog(AikidoLogLevel.info)) {
+      console.info(`Aikido: ${message}`);
+    }
   }
   warn(message: string) {
-    console.warn(`Aikido: ${message}`);
+    if (shouldLog(AikidoLogLevel.warn)) {
+      console.warn(`Aikido: ${message}`);
+    }
   }
   error(message: string) {
-    console.error(`Aikido: ${message}`);
+    if (shouldLog(AikidoLogLevel.error)) {
+      console.error(`Aikido: ${message}`);
+    }
   }
 }

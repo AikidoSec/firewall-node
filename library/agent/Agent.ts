@@ -10,7 +10,7 @@ import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
-import { Kind } from "./Attack";
+import { attackKindHumanName, Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -154,6 +154,9 @@ export class Agent {
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    this.logger.info(
+      `Zen has blocked ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${path}" ip="${request.remoteAddress}" blocked=${blocked}`
+    );
     if (this.token) {
       this.api
         .report(
@@ -424,8 +427,10 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
-    this.logger.error(`Failed to wrap method ${name} in module ${module}`);
+  onFailedToWrapMethod(module: string, name: string, error: Error) {
+    this.logger.error(
+      `Failed to wrap method ${name} in module ${module}: ${error.message}`
+    );
   }
 
   onFailedToWrapModule(module: string, error: Error) {
@@ -441,7 +446,7 @@ export class Agent {
 
     if (details.version) {
       if (details.supported) {
-        this.logger.info(`${name}@${details.version} is supported!`);
+        this.logger.debug(`${name}@${details.version} is supported!`);
       } else {
         this.logger.warn(`${name}@${details.version} is not supported!`);
       }
