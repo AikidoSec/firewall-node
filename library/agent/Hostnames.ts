@@ -10,7 +10,9 @@ export class Hostnames {
 
     if (this.map.size >= this.maxEntries) {
       const firstAdded = this.map.keys().next().value;
-      this.map.delete(firstAdded);
+      if (firstAdded) {
+        this.map.delete(firstAdded);
+      }
     }
 
     this.map.set(hostname, port);

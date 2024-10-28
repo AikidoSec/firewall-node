@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "mongodb": "^6.3.0",
-    "@google-cloud/pubsub": "^4.3.3"
+    "@google-cloud/pubsub": "^4.3.3",
+    "mongodb": "6.9"
   }
 }
