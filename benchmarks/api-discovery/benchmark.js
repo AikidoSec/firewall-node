@@ -2,20 +2,12 @@
  * Runs benchmarks for the api discovery (api schema collection)
  */
 const { Routes } = require("../../build/agent/Routes");
-const { isFeatureEnabled } = require("../../build/helpers/featureFlags");
 const reqBodies = require("./reqBodies");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
 const RUN_COUNT = 100;
 
 function main() {
-  // Enable feature flag
-  process.env.AIKIDO_FEATURE_COLLECT_API_SCHEMA = "true";
-  if (!isFeatureEnabled("COLLECT_API_SCHEMA")) {
-    console.error("Feature COLLECT_API_SCHEMA is not enabled!");
-    process.exit(1);
-  }
-
   const avgTime = getAvgBenchmark();
   if (avgTime > MAX_TIME_LIMIT) {
     console.error(
