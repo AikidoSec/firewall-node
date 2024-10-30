@@ -132,7 +132,7 @@ t.test("it works", async (t) => {
 });
 
 t.test("test max depth", async (t) => {
-  const generateTestObjectWithDepth = (depth: number) => {
+  const generateTestObjectWithDepth = (depth: number): object | string => {
     if (depth === 0) {
       return "testValue";
     }

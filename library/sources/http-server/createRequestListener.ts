@@ -2,7 +2,7 @@ import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
+import { isPackageInstalled } from "../../helpers/isPackageInstalled";
 import { contextFromRequest } from "./contextFromRequest";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
@@ -11,10 +11,18 @@ import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 export function createRequestListener(
   listener: Function,
   module: string,
-  agent: Agent,
-  readBody: boolean
+  agent: Agent
 ): RequestListener {
+  const isMicroInstalled = isPackageInstalled("micro");
+
   return async function requestListener(req, res) {
+    // Parse body only if next or micro is installed
+    // We can only read the body stream once
+    // This is tricky, see replaceRequestBody(...)
+    // e.g. Hono uses web requests and web streams
+    // (uses Readable.toWeb(req) to convert to a web stream)
+    const readBody = "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
+
     if (!readBody) {
       return callListenerWithContext(listener, req, res, module, agent, "");
     }
@@ -60,20 +68,6 @@ function callListenerWithContext(
       if (context.remoteAddress) {
         message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
       }
-
-      return res.end(message);
-    }
-
-    const result = shouldRateLimitRequest(context, agent);
-
-    if (result.block) {
-      let message = "You are rate limited by Aikido firewall.";
-      if (result.trigger === "ip") {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-      }
-
-      res.statusCode = 429;
-      res.setHeader("Content-Type", "text/plain");
 
       return res.end(message);
     }

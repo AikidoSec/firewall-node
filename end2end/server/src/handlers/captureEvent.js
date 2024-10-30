@@ -1,4 +1,4 @@
-const { generateConfig } = require("../zen/config");
+const { getAppConfig } = require("../zen/config");
 const { captureEvent: capture } = require("../zen/events");
 
 module.exports = function captureEvent(req, res) {
@@ -14,5 +14,5 @@ module.exports = function captureEvent(req, res) {
     });
   }
 
-  return res.json(generateConfig(req.app));
+  return res.json(getAppConfig(req.app));
 };

@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -61,11 +62,6 @@ export class SQLite3 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const sqlite3 = hooks.addPackage("sqlite3").withVersion("^5.0.0");
-    const database = sqlite3.addSubject((exports) => {
-      return exports.Database.prototype;
-    });
-
     const sqlFunctions = [
       "run",
       "get",
@@ -76,14 +72,25 @@ export class SQLite3 implements Wrapper {
       "map",
     ];
 
-    for (const func of sqlFunctions) {
-      database.inspect(func, (args) => {
-        return this.inspectQuery(`sqlite3.${func}`, args);
-      });
-    }
+    hooks
+      .addPackage("sqlite3")
+      .withVersion("^5.0.0")
+      .onRequire((exports, pkgInfo) => {
+        const db = exports.Database.prototype;
 
-    database.inspect("backup", (args) => {
-      return this.inspectPath(`sqlite3.backup`, args);
-    });
+        for (const func of sqlFunctions) {
+          wrapExport(db, func, pkgInfo, {
+            inspectArgs: (args, agent) => {
+              return this.inspectQuery(`sqlite3.${func}`, args);
+            },
+          });
+        }
+
+        wrapExport(db, "backup", pkgInfo, {
+          inspectArgs: (args, agent) => {
+            return this.inspectPath(`sqlite3.backup`, args);
+          },
+        });
+      });
   }
 }

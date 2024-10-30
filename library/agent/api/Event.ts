@@ -110,6 +110,7 @@ type Heartbeat = {
   }[];
   agent: AgentInfo;
   time: number;
+  middlewareInstalled?: boolean;
 };
 
 export type Event = Started | DetectedAttack | Heartbeat;

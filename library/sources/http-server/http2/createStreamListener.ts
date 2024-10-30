@@ -5,8 +5,6 @@ import {
   getContext,
   runWithContext,
 } from "../../../agent/Context";
-import { escapeHTML } from "../../../helpers/escapeHTML";
-import { shouldRateLimitRequest } from "../../../ratelimiting/shouldRateLimitRequest";
 import { contextFromStream } from "./contextFromStream";
 import { shouldDiscoverRoute } from "../shouldDiscoverRoute";
 import { IncomingHttpHeaders, ServerHttp2Stream } from "http2";
@@ -44,22 +42,6 @@ export function createStreamListener(
           }
         })
       );
-
-      const result = shouldRateLimitRequest(context, agent);
-
-      if (result.block) {
-        let message = "You are rate limited by Aikido firewall.";
-        if (result.trigger === "ip") {
-          message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-        }
-
-        stream.respond({
-          "content-type": "text/plain",
-          ":status": 429,
-        });
-
-        return stream.end(message);
-      }
 
       // Wrap all stream events to prevent context loss
       stream.on = wrapStreamEvent(stream.on);
