@@ -1,3 +1,6 @@
+const pattern =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i;
+
 /**
  * Checks if the string is a date time according to RFC3339
  * https://datatracker.ietf.org/doc/html/rfc3339#section-5.6
@@ -7,11 +10,7 @@ export default function isDateTimeString(str: string): boolean {
     return false;
   }
 
-  if (
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i.test(
-      str
-    )
-  ) {
+  if (!pattern.test(str)) {
     return false;
   }
 
