@@ -601,7 +601,7 @@ t.test("it ignores body of graphql queries", async (t) => {
 t.test("it respects max samples", async (t) => {
   const routes = new Routes(200);
   for (let i = 0; i < 12; i++) {
-    const body = {};
+    const body: Record<string, unknown> = {};
     body[`test${i}`] = i;
     routes.addRoute(
       getContext(
@@ -680,3 +680,27 @@ t.test("it respects max samples", async (t) => {
     },
   ]);
 });
+
+t.test(
+  "it allows setting AIKIDO_MAX_API_DISCOVERY_SAMPLES to zero (does not sample any requests)",
+  async (t) => {
+    process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES = "0";
+    const routes = new Routes(200);
+    for (let i = 0; i < 12; i++) {
+      const body: Record<string, unknown> = {};
+      body[`test${i}`] = i;
+      routes.addRoute(
+        getContext(
+          "POST",
+          "/add",
+          {
+            "content-type": "application/json",
+          },
+          body
+        )
+      );
+    }
+
+    t.same(routes.asArray(), []);
+  }
+);
