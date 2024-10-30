@@ -8,7 +8,7 @@ const queryParameters = require("./queryParameters");
 const cookies = require("./cookies");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
-const RUN_COUNT = 100;
+const RUN_COUNT = 100000;
 
 function main() {
   const avgTime = getAvgBenchmark();
