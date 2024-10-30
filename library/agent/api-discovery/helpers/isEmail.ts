@@ -8,11 +8,15 @@ const tester =
 // https://en.wikipedia.org/wiki/Email_address  The format of an email address is local-part@domain, where the
 // local part may be up to 64 octets long and the domain may have a maximum of 255 octets.[4]
 export default function isEmailString(email: string): boolean {
-  if (!email) return false;
+  if (!email) {
+    return false;
+  }
 
   const emailParts = email.split("@");
 
-  if (emailParts.length !== 2) return false;
+  if (emailParts.length !== 2) {
+    return false;
+  }
 
   const account = emailParts[0];
   const address = emailParts[1];
