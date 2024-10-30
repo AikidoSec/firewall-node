@@ -39,7 +39,12 @@ t.test("it is an IPv6 string", async (t) => {
 
 t.test("it is an email string", async (t) => {
   t.same(getStringFormat("hello@example.com"), "email");
-  t.same(getStringFormat("ö@ö.de"), "email");
+  t.same(getStringFormat("@"), undefined);
+  t.same(getStringFormat("@a"), undefined);
+  t.same(getStringFormat("a@"), undefined);
+
+  // Technically valid but unsupported
+  t.same(getStringFormat("ö@ö.de"), undefined);
 });
 
 t.test("it is a URI string", async (t) => {

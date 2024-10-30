@@ -1,50 +1,39 @@
-/**
- * Based on https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js
- * MIT License - Copyright (c) 2018 Chris O'Hara
- */
+const tester =
+  /^[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
 
-import isFQDNString from "./isFQDN";
+// Thanks to:
+// http://fightingforalostcause.net/misc/2006/compare-email-regex.php
+// http://thedailywtf.com/Articles/Validating_Email_Addresses.aspx
+// http://stackoverflow.com/questions/201323/what-is-the-best-regular-expression-for-validating-email-addresses/201378#201378
+// https://en.wikipedia.org/wiki/Email_address  The format of an email address is local-part@domain, where the
+// local part may be up to 64 octets long and the domain may have a maximum of 255 octets.[4]
+export default function isEmailString(email: string): boolean {
+  if (!email) return false;
 
-const emailUserUtf8Part =
-  /^[a-z\d!#\$%&'\*\+\-\/=\?\^_`{\|}~\u00A1-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+$/i;
-const quotedEmailUserUtf8 =
-  /^([\s\x01-\x08\x0b\x0c\x0e-\x1f\x7f\x21\x23-\x5b\x5d-\x7e\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]|(\\[\x01-\x09\x0b\x0c\x0d-\x7f\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))*$/i;
-const defaultMaxEmailLength = 254;
+  const emailParts = email.split("@");
 
-export default function isEmailString(str: string): boolean {
-  if (str.length > defaultMaxEmailLength) {
+  if (emailParts.length !== 2) return false;
+
+  const account = emailParts[0];
+  const address = emailParts[1];
+
+  if (account.length > 64) {
     return false;
   }
 
-  const parts = str.split("@");
-  if (parts.length < 2) {
+  if (address.length > 255) {
     return false;
   }
 
-  const domain = parts.pop();
-  if (!domain) {
+  const domainParts = address.split(".");
+
+  if (
+    domainParts.some(function (part) {
+      return part.length > 63;
+    })
+  ) {
     return false;
   }
 
-  const user = parts.join("@");
-  if (!user) {
-    return false;
-  }
-
-  if (!isFQDNString(domain)) {
-    return false;
-  }
-
-  if (user[0] === '"' && user[user.length - 1] === '"') {
-    return quotedEmailUserUtf8.test(user.slice(1, user.length - 1));
-  }
-
-  const userParts = user.split(".");
-  for (const part of userParts) {
-    if (!emailUserUtf8Part.test(part)) {
-      return false;
-    }
-  }
-
-  return true;
+  return tester.test(email);
 }
