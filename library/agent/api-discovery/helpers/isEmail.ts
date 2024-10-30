@@ -28,7 +28,7 @@ export default function isEmailString(email: string): boolean {
   const domainParts = address.split(".");
 
   if (
-    domainParts.some((part) => {
+    domainParts.some(function (part) {
       return part.length > 63;
     })
   ) {
