@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import isUri from "./isUri";
 
 t.test("is a valid URI", async (t) => {

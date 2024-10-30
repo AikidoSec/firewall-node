@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import isDateString from "./isDateString";
 
 t.test("it is a date string", async (t) => {

@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import isEmail from "./isEmail";
 
 t.test("is a valid email", async (t) => {

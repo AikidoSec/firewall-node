@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import { getStringFormat } from "./getStringFormat";
 
 t.test("it is not a known format", async (t) => {

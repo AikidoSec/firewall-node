@@ -1,4 +1,4 @@
-import t from "tap";
+import * as t from "tap";
 import isUUIDString from "./isUUIDString";
 
 t.test("it is a uuid", async (t) => {
