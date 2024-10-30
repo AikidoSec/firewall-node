@@ -16,8 +16,7 @@ export type Context = {
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
   attackDetected?: boolean;
-  consumedRateLimitForIP?: boolean;
-  consumedRateLimitForUser?: boolean;
+  consumedRateLimit?: boolean;
   user?: { id: string; name?: string };
   source: string;
   route: string | undefined;
@@ -29,6 +28,7 @@ export type Context = {
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
+  executedMiddleware?: boolean;
 };
 
 /**

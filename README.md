@@ -43,7 +43,9 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [hapi](docs/hapi.md) 21.x
 * ✅ [micro](docs/micro.md) 10.x
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
-* ✅ Fastify (upcoming)
+* ✅ [Fastify](docs/fastify.md) 4.x and 5.x
+* ✅ [Koa](docs/koa.md) 2.x
+* ✅ [NestJS](docs/nestjs.md) 10.x
 
 ### Database drivers
 
@@ -52,9 +54,11 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x
 * ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 * ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
+* ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 
 ### Cloud providers
 
@@ -86,6 +90,11 @@ See list above for supported database drivers.
 ### Shell tools
 
 * ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
+
+### Routers
+
+* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
+
 
 ## Installation
 

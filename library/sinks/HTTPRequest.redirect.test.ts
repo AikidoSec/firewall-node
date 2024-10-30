@@ -1,11 +1,9 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -34,16 +32,12 @@ const redirectUrl = {
 };
 
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
-  const http = require("http");
+  const http = require("http") as typeof import("http");
 
   runWithContext(
     {

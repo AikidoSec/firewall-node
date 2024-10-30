@@ -1,6 +1,7 @@
 import { BuiltinModule } from "./BuiltinModule";
 import { Global } from "./Global";
 import { Package } from "./Package";
+import { InterceptorObject } from "./wrapExport";
 
 export class Hooks {
   private readonly packages: Package[] = [];
@@ -14,11 +15,9 @@ export class Hooks {
     return pkg;
   }
 
-  addGlobal(name: string): Global {
-    const global = new Global(name);
+  addGlobal(name: string, interceptors: InterceptorObject) {
+    const global = new Global(name, interceptors);
     this.globals.push(global);
-
-    return global;
   }
 
   addBuiltinModule(name: string): BuiltinModule {

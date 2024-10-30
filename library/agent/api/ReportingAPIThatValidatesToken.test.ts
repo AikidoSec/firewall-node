@@ -25,6 +25,11 @@ function generateStartedEvent(): Event {
       },
       stack: [],
       serverless: false,
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }

@@ -6,6 +6,7 @@ import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { LoggerNoop } from "../logger/LoggerNoop";
 import { pollForChanges } from "./pollForChanges";
 import * as FakeTimers from "@sinonjs/fake-timers";
+import { Config } from "../Config";
 
 t.test("it does not start interval if no token", async (t) => {
   const logger = new LoggerForTesting();
@@ -44,7 +45,7 @@ t.test("it checks for config updates", async () => {
   let configUpdatedAt = 0;
 
   wrap(fetch, "fetch", function fetch() {
-    return async function fetch(params) {
+    return async function fetch(params: any) {
       calls.push({
         url: params.url.toString(),
         method: params.method,
@@ -74,7 +75,7 @@ t.test("it checks for config updates", async () => {
     };
   });
 
-  const configUpdates = [];
+  const configUpdates: Config[] = [];
 
   pollForChanges({
     onConfigUpdate: (config) => {
@@ -206,7 +207,7 @@ t.test("it deals with API throwing errors", async () => {
     };
   });
 
-  const configUpdates = [];
+  const configUpdates: Config[] = [];
 
   const logger = new LoggerForTesting();
   pollForChanges({
