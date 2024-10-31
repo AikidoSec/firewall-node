@@ -7,6 +7,7 @@ import { mergeDataSchemas } from "./mergeDataSchemas";
 /**
  * Updates the body, query, and auth info of an existing route with new info from the context.
  * Only the first 10 hits of a route during one heartbeat window are sampled.
+ * Unless process.env.MAX_API_DISCOVERY_SAMPLES is set to a different value.
  */
 export function updateApiInfo(
   context: Context,
@@ -14,7 +15,6 @@ export function updateApiInfo(
   maxSamples: number
 ): void {
   // Only sample first x hits of a route during one heartbeat window
-  // Default is 10
   if (existingRoute.hits > maxSamples) {
     return;
   }
