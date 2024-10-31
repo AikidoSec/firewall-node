@@ -24,6 +24,10 @@ function getContext(
   };
 }
 
+t.beforeEach(() => {
+  delete process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES;
+});
+
 t.test("it works", async (t) => {
   const routes = new Routes(3);
   t.same(routes.asArray(), []);
@@ -701,7 +705,15 @@ t.test(
       );
     }
 
-    t.same(routes.asArray(), []);
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/add",
+        hits: 12,
+        graphql: undefined,
+        apispec: {},
+      },
+    ]);
   }
 );
 

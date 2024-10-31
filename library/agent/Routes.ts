@@ -1,3 +1,4 @@
+import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples";
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import type { Context } from "./Context";
@@ -23,16 +24,20 @@ export class Routes {
 
     const key = this.getKey(method, path);
     const existing = this.routes.get(key);
+    const maxSamples = getMaxApiDiscoverySamples();
 
     if (existing) {
-      updateApiInfo(context, existing);
+      updateApiInfo(context, existing, maxSamples);
 
       existing.hits++;
       return;
     }
 
     // Get info about body and query schema
-    const apispec = getApiInfo(context) || {};
+    let apispec: APISpec = {};
+    if (maxSamples > 0) {
+      apispec = getApiInfo(context) || {};
+    }
 
     this.evictLeastUsedRouteIfNecessary();
     this.routes.set(key, {
