@@ -24,6 +24,10 @@ function getContext(
   };
 }
 
+t.beforeEach(() => {
+  delete process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES;
+});
+
 t.test("it works", async (t) => {
   const routes = new Routes(3);
   t.same(routes.asArray(), []);
@@ -597,6 +601,121 @@ t.test("it ignores body of graphql queries", async (t) => {
     },
   ]);
 });
+
+t.test("it respects max samples", async (t) => {
+  const routes = new Routes(200);
+  for (let i = 0; i < 12; i++) {
+    const body: Record<string, unknown> = {};
+    body[`test${i}`] = i;
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/add",
+        {
+          "content-type": "application/json",
+        },
+        body
+      )
+    );
+  }
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/add",
+      hits: 12,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              test0: {
+                type: "number",
+                optional: true,
+              },
+              test1: {
+                type: "number",
+                optional: true,
+              },
+              test2: {
+                type: "number",
+                optional: true,
+              },
+              test3: {
+                type: "number",
+                optional: true,
+              },
+              test4: {
+                type: "number",
+                optional: true,
+              },
+              test5: {
+                type: "number",
+                optional: true,
+              },
+              test6: {
+                type: "number",
+                optional: true,
+              },
+              test7: {
+                type: "number",
+                optional: true,
+              },
+              test8: {
+                type: "number",
+                optional: true,
+              },
+              test9: {
+                type: "number",
+                optional: true,
+              },
+              test10: {
+                type: "number",
+                optional: true,
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+    },
+  ]);
+});
+
+t.test(
+  "it allows setting AIKIDO_MAX_API_DISCOVERY_SAMPLES to zero (does not sample any requests)",
+  async (t) => {
+    process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES = "0";
+    const routes = new Routes(200);
+    for (let i = 0; i < 12; i++) {
+      const body: Record<string, unknown> = {};
+      body[`test${i}`] = i;
+      routes.addRoute(
+        getContext(
+          "POST",
+          "/add",
+          {
+            "content-type": "application/json",
+          },
+          body
+        )
+      );
+    }
+
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/add",
+        hits: 12,
+        graphql: undefined,
+        apispec: {},
+      },
+    ]);
+  }
+);
 
 t.test("with string format", async (t) => {
   const routes = new Routes(200);
