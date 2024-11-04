@@ -1,7 +1,7 @@
 import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples";
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
-import { AIKIDO_DAST_HEADER } from "./AikidoDAST";
+import { isAikidoDASTRequest } from "./AikidoDAST";
 import type { Context } from "./Context";
 
 export type Route = {
@@ -18,7 +18,7 @@ export class Routes {
   constructor(private readonly maxEntries: number = 1000) {}
 
   addRoute(context: Context) {
-    if (context.headers[AIKIDO_DAST_HEADER] === "1") {
+    if (isAikidoDASTRequest(context)) {
       return;
     }
 
