@@ -33,6 +33,7 @@
   },
   "sideEffects": true,
   "devDependencies": {
+    "@clickhouse/client": "^1.7.0",
     "@fastify/cookie": "^10.0.0",
     "@google-cloud/functions-framework": "^3.3.0",
     "@google-cloud/pubsub": "^4.3.3",

@@ -72,7 +72,6 @@ nestjs-sentry:
 nestjs-fastify:
 	cd sample-apps/nestjs-fastify && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true NODE_OPTIONS=--preserve-symlinks npm run start
 
-
 .PHONY: fastify-mysql2
 fastify-mysql2:
 	cd sample-apps/fastify-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
@@ -80,6 +79,10 @@ fastify-mysql2:
 .PHONY: koa-sqlite3
 koa-sqlite3:
 	cd sample-apps/koa-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
+.PHONY: fastify-clickhouse
+fastify-clickhouse:
+	cd sample-apps/fastify-clickhouse && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
 .PHONY: install
 install:
