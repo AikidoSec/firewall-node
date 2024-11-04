@@ -227,7 +227,7 @@ t.test(
     t.same(applyHooks(hooks, agent), {});
 
     await runWithContext(context, async () => {
-      await fetch("https://aikido.dev");
+      await fetch("https://app.aikido.dev");
       t.same(modifyCalled, true);
 
       atob("aGVsbG8gd29ybGQ=");
