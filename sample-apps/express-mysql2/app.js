@@ -92,15 +92,8 @@ async function main(port) {
     })
   );
 
-  return new Promise((resolve, reject) => {
-    try {
-      app.listen(port, () => {
-        console.log(`Listening on port ${port}`);
-        resolve();
-      });
-    } catch (err) {
-      reject(err);
-    }
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
   });
 }
 

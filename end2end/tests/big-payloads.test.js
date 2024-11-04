@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 const { PromisePool } = require("@supercharge/promise-pool");
 
 const pathToApp = resolve(
@@ -11,7 +12,8 @@ const pathToApp = resolve(
 );
 
 t.test("it does not crash if many attacks with big payloads", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -20,7 +22,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -36,7 +38,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
   const amount = 2000;
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() => {
       return PromisePool.withConcurrency(3)
         .for(Array.from({ length: amount }))
@@ -49,7 +51,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
             })),
           };
 
-          return await fetch(`http://localhost:4000/search`, {
+          return await fetch(`http://localhost:${port}/search`, {
             method: "POST",
             signal: AbortSignal.timeout(5000),
             body: JSON.stringify(filter),
@@ -64,7 +66,7 @@ t.test("it does not crash if many attacks with big payloads", (t) => {
       );
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

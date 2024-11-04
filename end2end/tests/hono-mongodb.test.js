@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(
   __dirname,
@@ -12,7 +13,8 @@ const pathToApp = resolve(
 t.setTimeout(60000);
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -21,7 +23,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -35,16 +37,16 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then((a) => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/search", {
+        fetch(`http://127.0.0.1:${port}/search`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: { $ne: null } }),
           headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://127.0.0.1:4000/search", {
+        fetch(`http://127.0.0.1:${port}/search`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: "title" }),
@@ -59,7 +61,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -67,7 +69,8 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -86,16 +89,16 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then((a) => {
       return Promise.all([
-        fetch("http://127.0.0.1:4001/search", {
+        fetch(`http://127.0.0.1:${port}/search`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: { $ne: null } }),
           headers: { "Content-Type": "application/json" },
         }),
-        fetch("http://127.0.0.1:4001/search", {
+        fetch(`http://127.0.0.1:${port}/search`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           body: JSON.stringify({ title: "title" }),
@@ -110,7 +113,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

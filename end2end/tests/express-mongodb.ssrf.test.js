@@ -3,7 +3,8 @@ const { spawn } = require("child_process");
 const { readFile } = require("fs/promises");
 const { createServer } = require("http");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(
   __dirname,
@@ -13,7 +14,8 @@ const pathToApp = resolve(
 
 const testServerUrl = "http://localhost:5874";
 const safeImage = "https://nodejs.org/static/images/favicons/favicon.png";
-const unsafeImage = "http://local.aikido.io:5875/favicon.png";
+const port = getFreePort(t);
+const unsafeImage = `http://local.aikido.io:${port}/favicon.png`;
 
 t.setTimeout(60000);
 
@@ -33,7 +35,7 @@ t.before(async () => {
       }
     });
 
-    server.listen(5875, () => {
+    server.listen(port, () => {
       resolve();
     });
 
@@ -51,7 +53,8 @@ t.beforeEach(async () => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -66,7 +69,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -80,14 +83,17 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch(`http://127.0.0.1:4000/images/${encodeURIComponent(safeImage)}`, {
-          signal: AbortSignal.timeout(5000),
-        }),
         fetch(
-          `http://127.0.0.1:4000/images/${encodeURIComponent(unsafeImage)}`,
+          `http://127.0.0.1:${port}/images/${encodeURIComponent(safeImage)}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
+        fetch(
+          `http://127.0.0.1:${port}/images/${encodeURIComponent(unsafeImage)}`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -121,7 +127,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(attack.attack.stack, /express-async-handler/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -129,7 +135,8 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -153,14 +160,17 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() =>
       Promise.all([
-        fetch(`http://127.0.0.1:4001/images/${encodeURIComponent(safeImage)}`, {
-          signal: AbortSignal.timeout(5000),
-        }),
         fetch(
-          `http://127.0.0.1:4001/images/${encodeURIComponent(unsafeImage)}`,
+          `http://127.0.0.1:${port}/images/${encodeURIComponent(safeImage)}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
+        fetch(
+          `http://127.0.0.1:${port}/images/${encodeURIComponent(unsafeImage)}`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -174,7 +184,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a server-side request forgery/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

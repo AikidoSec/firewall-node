@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawnSync, spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nestjs-fastify");
 
@@ -16,12 +17,13 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
+  const port = getFreePort(t);
   const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCK: "true",
-      PORT: "4000",
+      PORT: port,
     },
     cwd: pathToApp,
   });
@@ -31,7 +33,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -45,10 +47,10 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/cats", {
+        fetch(`http://127.0.0.1:${port}/cats`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -68,7 +70,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -76,12 +78,13 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in non-blocking mode", (t) => {
+  const port = getFreePort(t);
   const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCK: "false",
-      PORT: "4001",
+      PORT: port,
     },
     cwd: pathToApp,
   });
@@ -91,7 +94,7 @@ t.test("it does not block in non-blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -105,10 +108,10 @@ t.test("it does not block in non-blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4001/cats", {
+        fetch(`http://127.0.0.1:${port}/cats`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -125,7 +128,7 @@ t.test("it does not block in non-blocking mode", (t) => {
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

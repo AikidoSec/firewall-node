@@ -1,7 +1,9 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
+const { setTimeout } = require("timers/promises");
 
 const pathToApp = resolve(
   __dirname,
@@ -12,7 +14,8 @@ const pathToApp = resolve(
 t.setTimeout(60000);
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -21,7 +24,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -35,13 +38,13 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/?search[$ne]=null", {
+        fetch(`http://127.0.0.1:${port}/?search[$ne]=null`, {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4000/?search=title", {
+        fetch(`http://127.0.0.1:${port}/?search=title`, {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
@@ -53,7 +56,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -61,7 +64,8 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -80,13 +84,13 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() =>
       Promise.all([
-        fetch("http://127.0.0.1:4001/?search[$ne]=null", {
+        fetch(`http://127.0.0.1:${port}/?search[$ne]=null`, {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4001/?search=title", {
+        fetch(`http://127.0.0.1:${port}/?search=title`, {
           signal: AbortSignal.timeout(5000),
         }),
       ])
@@ -98,7 +102,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -106,6 +110,7 @@ t.test("it does not block in dry mode", (t) => {
 });
 
 t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
+  const port = getFreePort(t);
   const server = spawn(
     `node`,
     [
@@ -113,7 +118,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
-      "4002",
+      port,
     ],
     {
       cwd: resolve(__dirname, "../../sample-apps/express-mongodb"),
@@ -134,7 +139,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -148,15 +153,16 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(6000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4002/?search[$ne]=null", {
+        fetch(`http://127.0.0.1:${port}/?search[$ne]=null`, {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4002/?search=title", {
+        fetch(`http://127.0.0.1:${port}/?search=title`, {
           signal: AbortSignal.timeout(5000),
         }),
+        setTimeout(4000),
       ]);
     })
     .then(([noSQLInjection, normalSearch]) => {
@@ -167,7 +173,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");
@@ -175,6 +181,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
 });
 
 t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
+  const port = getFreePort(t);
   const server = spawn(
     `node`,
     [
@@ -182,7 +189,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
-      "4003",
+      port,
     ],
     {
       cwd: resolve(__dirname, "../../sample-apps/express-mongodb"),
@@ -212,15 +219,16 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(6000)
+  waitOn(port)
     .then(() =>
       Promise.all([
-        fetch("http://127.0.0.1:4003/?search[$ne]=null", {
+        fetch(`http://127.0.0.1:${port}/?search[$ne]=null`, {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4003/?search=title", {
+        fetch(`http://127.0.0.1:${port}/?search=title`, {
           signal: AbortSignal.timeout(5000),
         }),
+        setTimeout(4000),
       ])
     )
     .then(([noSQLInjection, normalSearch]) => {
@@ -231,7 +239,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");
