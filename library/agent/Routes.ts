@@ -11,12 +11,18 @@ export type Route = {
   apispec: APISpec;
 };
 
+const AIKIDO_DAST_HEADER = "aikido-api-test";
+
 export class Routes {
   private routes: Map<string, Route> = new Map();
 
   constructor(private readonly maxEntries: number = 1000) {}
 
   addRoute(context: Context) {
+    if (context.headers[AIKIDO_DAST_HEADER] === "1") {
+      return;
+    }
+
     const { method, route: path } = context;
     if (!method || !path) {
       return;
