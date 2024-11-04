@@ -21,6 +21,10 @@ export function checkContextForSSRF({
   operation: string;
   context: Context;
 }): InterceptorResult {
+  // If the hostname is a private IP address, we don't need to check for SSRF
+  // DNS lookup calls will be inspected somewhere else
+  // This is just to inspect direct invocations of `http.request` and similar
+  // Where the hostname might be a private IP address (or localhost)
   if (!containsPrivateIPAddress(hostname)) {
     return;
   }
