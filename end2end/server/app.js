@@ -1,4 +1,4 @@
-// This is a insecure mock server for testing purposes
+// This is an insecure mock server for testing purposes
 const express = require("express");
 const config = require("./src/handlers/getConfig");
 const captureEvent = require("./src/handlers/captureEvent");

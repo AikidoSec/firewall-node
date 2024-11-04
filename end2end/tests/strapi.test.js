@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawnSync, spawn, execSync } = require("child_process");
 const { resolve, join } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/strapi");
 
@@ -21,12 +22,14 @@ t.before(() => {
 // We initially wrapped the Router class by hooking into the constructor
 // This results in weird behaviour where the router returns 405 for all requests
 t.test("it does not return 405 for register admin", (t) => {
+  const port = getFreePort(t);
   const server = spawn(`node_modules/.bin/strapi`, ["start"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCK: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
+      PORT: port,
     },
     cwd: pathToApp,
   });
@@ -36,7 +39,7 @@ t.test("it does not return 405 for register admin", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -50,10 +53,10 @@ t.test("it does not return 405 for register admin", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:1337/admin/register-admin", {
+        fetch(`http://127.0.0.1:${port}/admin/register-admin`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -67,7 +70,7 @@ t.test("it does not return 405 for register admin", (t) => {
       t.equal(registerAdmin.status, 400);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

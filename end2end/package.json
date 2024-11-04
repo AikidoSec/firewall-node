@@ -3,9 +3,10 @@
   "private": true,
   "dependencies": {
     "@supercharge/promise-pool": "^3.1.1",
-    "tap": "^18.7.0"
+    "tap": "^18.7.0",
+    "wait-on": "^8.0.1"
   },
   "scripts": {
-    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1"
+    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage"
   }
 }

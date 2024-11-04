@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawn, spawnSync } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nestjs-fastify");
 const testServerUrl = "http://localhost:5874";
@@ -53,6 +54,7 @@ t.beforeEach(async () => {
 });
 
 t.test("it rate limits requests", (t) => {
+  const port = getFreePort(t);
   const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
     cwd: pathToApp,
     env: {
@@ -61,7 +63,7 @@ t.test("it rate limits requests", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_URL: testServerUrl,
-      PORT: "4002",
+      PORT: port,
     },
   });
 
@@ -70,7 +72,7 @@ t.test("it rate limits requests", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -84,9 +86,9 @@ t.test("it rate limits requests", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(async () => {
-      const resp1 = await fetch("http://127.0.0.1:4002/cats", {
+      const resp1 = await fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Njuska" }),
         headers: {
@@ -96,7 +98,7 @@ t.test("it rate limits requests", (t) => {
       });
       t.same(resp1.status, 201);
 
-      const resp2 = await fetch("http://127.0.0.1:4002/cats", {
+      const resp2 = await fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Harry" }),
         headers: {
@@ -107,7 +109,7 @@ t.test("it rate limits requests", (t) => {
       t.same(resp2.status, 429);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -115,6 +117,7 @@ t.test("it rate limits requests", (t) => {
 });
 
 t.test("user rate limiting works", (t) => {
+  const port = getFreePort(t);
   const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
     cwd: pathToApp,
     env: {
@@ -123,7 +126,7 @@ t.test("user rate limiting works", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_URL: testServerUrl,
-      PORT: "4003",
+      PORT: port,
     },
   });
 
@@ -132,7 +135,7 @@ t.test("user rate limiting works", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -146,9 +149,9 @@ t.test("user rate limiting works", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(async () => {
-      const resp1 = await fetch("http://127.0.0.1:4003/cats", {
+      const resp1 = await fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Njuska" }),
         headers: {
@@ -159,7 +162,7 @@ t.test("user rate limiting works", (t) => {
       });
       t.same(resp1.status, 201);
 
-      const resp2 = await fetch("http://127.0.0.1:4003/cats", {
+      const resp2 = await fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Harry" }),
         headers: {
@@ -170,7 +173,7 @@ t.test("user rate limiting works", (t) => {
       });
       t.same(resp2.status, 201);
 
-      const resp3 = await fetch("http://127.0.0.1:4003/cats", {
+      const resp3 = await fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Harry" }),
         headers: {
@@ -182,7 +185,7 @@ t.test("user rate limiting works", (t) => {
       t.same(resp3.status, 429);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawnSync, spawn, execSync } = require("child_process");
 const { resolve, join } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 const { cpSync, writeFileSync } = require("fs");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
@@ -37,6 +38,7 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
+  const port = getFreePort(t);
   const server = spawn(
     `node`,
     ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
@@ -45,7 +47,7 @@ t.test("it blocks in blocking mode", (t) => {
         ...process.env,
         AIKIDO_DEBUG: "true",
         AIKIDO_BLOCK: "true",
-        PORT: 4000,
+        PORT: port,
       },
       cwd: join(pathToApp, ".next/standalone"),
     }
@@ -56,7 +58,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -70,14 +72,14 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
-    .then((a) => {
+  waitOn(port)
+    .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
+        fetch(`http://127.0.0.1:${port}/files?path=.%27;env%27`, {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4000/files", {
+        fetch(`http://127.0.0.1:${port}/files`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           headers: {
@@ -85,11 +87,11 @@ t.test("it blocks in blocking mode", (t) => {
           },
           body: JSON.stringify({ path: `.';env'` }),
         }),
-        fetch("http://127.0.0.1:4000/files", {
+        fetch(`http://127.0.0.1:${port}/files`, {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4000/cats", {
+        fetch(`http://127.0.0.1:${port}/cats`, {
           method: "POST",
           body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
           headers: {
@@ -111,7 +113,7 @@ t.test("it blocks in blocking mode", (t) => {
       }
     )
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -119,6 +121,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
+  const port = getFreePort(t);
   const server = spawn(
     `node`,
     ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
@@ -126,7 +129,7 @@ t.test("it does not block in dry mode", (t) => {
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
-        PORT: 4001,
+        PORT: port,
       },
       cwd: join(pathToApp, ".next/standalone"),
     }
@@ -137,7 +140,7 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -151,14 +154,14 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
-    .then((a) => {
+  waitOn(port)
+    .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4001/files?path=.%27;env%27", {
+        fetch(`http://127.0.0.1:${port}/files?path=.%27;env%27`, {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4001/files", {
+        fetch(`http://127.0.0.1:${port}/files`, {
           method: "POST",
           signal: AbortSignal.timeout(5000),
           headers: {
@@ -166,11 +169,11 @@ t.test("it does not block in dry mode", (t) => {
           },
           body: JSON.stringify({ path: `.';env'` }),
         }),
-        fetch("http://127.0.0.1:4001/files", {
+        fetch(`http://127.0.0.1:${port}/files`, {
           method: "GET",
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://127.0.0.1:4001/cats", {
+        fetch(`http://127.0.0.1:${port}/cats`, {
           method: "POST",
           body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
           headers: {
@@ -192,7 +195,7 @@ t.test("it does not block in dry mode", (t) => {
       }
     )
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

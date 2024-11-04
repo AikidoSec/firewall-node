@@ -1,15 +1,17 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const getFreePort = require("../getFreePort");
 const { connect } = require("http2");
+const { setTimeout } = require("timers/promises");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/http2", "index.js");
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -18,7 +20,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -32,13 +34,13 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  setTimeout(2000)
     .then(() => {
       return Promise.all([
         fetch(
-          "https://127.0.0.1:4002?url=https://www.cloudflare.com/favicon.ico"
+          `https://127.0.0.1:${port}?url=https://www.cloudflare.com/favicon.ico`
         ),
-        fetch("https://127.0.0.1:4002?url=http://localhost"),
+        fetch(`https://127.0.0.1:${port}?url=http://localhost`),
       ]);
     })
     .then(([nonSSRF, ssrf]) => {
@@ -48,7 +50,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked a server-side request forgery/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -56,7 +58,8 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -75,13 +78,13 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  setTimeout(2000)
     .then(() =>
       Promise.all([
         fetch(
-          "https://127.0.0.1:4003?url=https://www.cloudflare.com/favicon.ico"
+          `https://127.0.0.1:${port}?url=https://www.cloudflare.com/favicon.ico`
         ),
-        fetch("https://127.0.0.1:4003?url=http://localhost"),
+        fetch(`https://127.0.0.1:${port}?url=http://localhost`),
       ])
     )
     .then(([nonSSRF, ssrf]) => {
@@ -92,7 +95,7 @@ t.test("it does not block in dry mode", (t) => {
       t.match(stderr, /fetch failed/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

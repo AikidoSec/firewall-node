@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(
   __dirname,
@@ -10,7 +11,8 @@ const pathToApp = resolve(
 );
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -19,7 +21,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -33,17 +35,17 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() => {
       return Promise.all([
         fetch(
-          "http://localhost:4000/?content=blablabla&filename=/../TestDoc.txt",
+          `http://localhost:${port}/?content=blablabla&filename=/../TestDoc.txt`,
           {
             signal: AbortSignal.timeout(5000),
           }
         ),
         fetch(
-          "http://localhost:4000/?content=blablabla&filename=/TestDoc.txt",
+          `http://localhost:${port}/?content=blablabla&filename=/TestDoc.txt`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -57,7 +59,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked a path traversal attack/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -65,7 +67,8 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -84,17 +87,17 @@ t.test("it does not block in dry mode", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(() =>
       Promise.all([
         fetch(
-          "http://localhost:4001/?content=blablabla&filename=/../TestDoc.txt",
+          `http://localhost:${port}/?content=blablabla&filename=/../TestDoc.txt`,
           {
             signal: AbortSignal.timeout(5000),
           }
         ),
         fetch(
-          "http://localhost:4001/?content=blablabla&filename=/TestDoc.txt",
+          `http://localhost:${port}/?content=blablabla&filename=/TestDoc.txt`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -108,7 +111,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a path traversal attack/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

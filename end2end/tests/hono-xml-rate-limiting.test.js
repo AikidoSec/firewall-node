@@ -1,7 +1,8 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
-const timeout = require("../timeout");
+const waitOn = require("../waitOn");
+const getFreePort = require("../getFreePort");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/hono-xml", "app.js");
 const testServerUrl = "http://localhost:5874";
@@ -43,7 +44,8 @@ t.beforeEach(async () => {
 });
 
 t.test("it rate limits requests", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -58,7 +60,7 @@ t.test("it rate limits requests", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -72,9 +74,9 @@ t.test("it rate limits requests", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(async () => {
-      const resp1 = await fetch("http://127.0.0.1:4002/add", {
+      const resp1 = await fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: "<cat><name>Njuska</name></cat>",
         headers: {
@@ -84,7 +86,7 @@ t.test("it rate limits requests", (t) => {
       });
       t.same(resp1.status, 200);
 
-      const resp2 = await fetch("http://127.0.0.1:4002/add", {
+      const resp2 = await fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: "<cat><name>Harry</name></cat>",
         headers: {
@@ -95,7 +97,7 @@ t.test("it rate limits requests", (t) => {
       t.same(resp2.status, 429);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -103,7 +105,8 @@ t.test("it rate limits requests", (t) => {
 });
 
 t.test("user rate limiting works", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
+  const port = getFreePort(t);
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, port], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -118,7 +121,7 @@ t.test("user rate limiting works", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -132,9 +135,9 @@ t.test("user rate limiting works", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  waitOn(port)
     .then(async () => {
-      const resp1 = await fetch("http://127.0.0.1:4003/add", {
+      const resp1 = await fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: "<cat><name>Njuska</name></cat>",
         headers: {
@@ -145,7 +148,7 @@ t.test("user rate limiting works", (t) => {
       });
       t.same(resp1.status, 200);
 
-      const resp2 = await fetch("http://127.0.0.1:4003/add", {
+      const resp2 = await fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: "<cat><name>Harry</name></cat>",
         headers: {
@@ -156,7 +159,7 @@ t.test("user rate limiting works", (t) => {
       });
       t.same(resp2.status, 200);
 
-      const resp3 = await fetch("http://127.0.0.1:4003/add", {
+      const resp3 = await fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
         body: "<cat><name>Njuska</name></cat>",
         headers: {
@@ -168,7 +171,7 @@ t.test("user rate limiting works", (t) => {
       t.same(resp3.status, 429);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
