@@ -21,6 +21,10 @@ export function checkContextForSSRF({
   operation: string;
   context: Context;
 }): InterceptorResult {
+  if (!containsPrivateIPAddress(hostname)) {
+    return;
+  }
+
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
     if (!userInput) {
@@ -29,7 +33,7 @@ export function checkContextForSSRF({
 
     for (const [str, path] of userInput.entries()) {
       const found = findHostnameInUserInput(str, hostname, port);
-      if (found && containsPrivateIPAddress(hostname)) {
+      if (found) {
         return {
           operation: operation,
           kind: "ssrf",
