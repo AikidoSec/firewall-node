@@ -85,17 +85,17 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), []);
 
-    await fetch("http://aikido.dev");
+    await fetch("http://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 80 },
+      { hostname: "app.aikido.dev", port: 80 },
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://aikido.dev"));
+    await fetch(new URL("https://app.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443 },
+      { hostname: "app.aikido.dev", port: 443 },
     ]);
     agent.getHostnames().clear();
 
