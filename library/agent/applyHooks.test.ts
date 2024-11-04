@@ -75,7 +75,7 @@ t.test(
     applyHooks(hooks);
 
     await runWithContext(context, async () => {
-      await fetch("https://aikido.dev");
+      await fetch("https://app.aikido.dev");
       t.same(modifyCalled, true);
 
       t.same(inspectCalled, false);
