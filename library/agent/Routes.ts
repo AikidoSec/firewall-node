@@ -1,6 +1,7 @@
 import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples";
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
+import { AIKIDO_DAST_HEADER } from "./AikidoDAST";
 import type { Context } from "./Context";
 
 export type Route = {
@@ -10,8 +11,6 @@ export type Route = {
   graphql?: { type: "query" | "mutation"; name: string };
   apispec: APISpec;
 };
-
-const AIKIDO_DAST_HEADER = "aikido-api-test";
 
 export class Routes {
   private routes: Map<string, Route> = new Map();
