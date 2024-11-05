@@ -4,17 +4,25 @@ import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(u: { id: string | number; name?: string }) {
+export function setUser(
+  u: { id: string | number; name?: string } | undefined | null
+) {
   const agent = getInstance();
 
   if (!agent) {
     return;
   }
 
+  const context = ContextStorage.getStore();
+  if (!context) {
+    logWarningSetUserCalledWithoutContext();
+    return;
+  }
+
   const user = u as unknown;
 
   if (user === null || user === undefined) {
-    agent.log(`setUser(...) can not be called with null or undefined.`);
+    context.user = undefined;
     return;
   }
 
@@ -50,12 +58,6 @@ export function setUser(u: { id: string | number; name?: string }) {
     validatedUser.name = user.name;
   }
 
-  const context = ContextStorage.getStore();
-
-  if (!context) {
-    return;
-  }
-
   if (context.executedMiddleware) {
     logWarningSetUserCalledAfterMiddleware();
   }
@@ -84,4 +86,19 @@ function logWarningSetUserCalledAfterMiddleware() {
   );
 
   loggedWarningSetUserCalledAfterMiddleware = true;
+}
+
+let loggedWarningSetUserCalledWithoutContext = false;
+
+function logWarningSetUserCalledWithoutContext() {
+  if (loggedWarningSetUserCalledWithoutContext) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    `setUser(...) did not find a context. Make sure to call setUser(...) within a handler or middleware of a supported framework.`
+  );
+
+  loggedWarningSetUserCalledWithoutContext = true;
 }
