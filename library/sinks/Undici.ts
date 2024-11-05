@@ -71,10 +71,11 @@ export class Undici implements Wrapper {
     return undefined;
   }
 
-  private patchGlobalDispatcher(agent: Agent) {
-    const undici = require("undici");
-
-    const dispatcher = new undici.Agent({
+  private patchGlobalDispatcher(
+    agent: Agent,
+    undiciModule: typeof import("undici")
+  ) {
+    const dispatcher = new undiciModule.Agent({
       connect: {
         lookup: inspectDNSLookupCalls(
           lookup,
@@ -89,7 +90,7 @@ export class Undici implements Wrapper {
     dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
-    undici.setGlobalDispatcher(dispatcher);
+    undiciModule.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
@@ -104,7 +105,7 @@ export class Undici implements Wrapper {
       return;
     }
 
-    const undici = hooks
+    hooks
       .addPackage("undici")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
@@ -125,7 +126,7 @@ export class Undici implements Wrapper {
             // If global dispatcher is not patched, we'll patch it
             inspectArgs: (args, agent) => {
               if (!this.patchedGlobalDispatcher) {
-                this.patchGlobalDispatcher(agent);
+                this.patchGlobalDispatcher(agent, exports);
                 this.patchedGlobalDispatcher = true;
               }
               return this.inspect(args, agent, method);
