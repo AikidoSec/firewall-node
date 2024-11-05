@@ -753,3 +753,84 @@ t.test("with string format", async (t) => {
     },
   ]);
 });
+
+t.test(
+  "it does not collect routes or samples if request comes from aikido DAST",
+  async (t) => {
+    const routes = new Routes(200);
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "aikido-api-test": "1", "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+
+    t.same(routes.asArray(), []);
+
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "aikido-api-test": "0", "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/body",
+        hits: 1,
+        graphql: undefined,
+        apispec: {
+          body: {
+            type: "json",
+            schema: {
+              type: "object",
+              properties: {
+                test: {
+                  type: "string",
+                },
+              },
+            },
+          },
+          query: undefined,
+          auth: undefined,
+        },
+      },
+    ]);
+
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/body",
+        hits: 2,
+        graphql: undefined,
+        apispec: {
+          body: {
+            type: "json",
+            schema: {
+              type: "object",
+              properties: {
+                test: {
+                  type: "string",
+                },
+              },
+            },
+          },
+          query: undefined,
+          auth: undefined,
+        },
+      },
+    ]);
+  }
+);
