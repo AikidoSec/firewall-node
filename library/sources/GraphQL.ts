@@ -14,6 +14,51 @@ import { wrapExport } from "../agent/hooks/wrapExport";
 export class GraphQL implements Wrapper {
   private graphqlModule: typeof import("graphql") | undefined;
 
+  private discoverGraphQLSchema(
+    method: string,
+    route: string,
+    executeArgs: ExecutionArgs,
+    agent: Agent
+  ) {
+    if (!this.graphqlModule) {
+      return;
+    }
+
+    if (!executeArgs.schema) {
+      return;
+    }
+
+    if (!agent.hasGraphQLSchema(method, route)) {
+      try {
+        const schema = this.graphqlModule.printSchema(executeArgs.schema);
+        agent.onGraphQLSchema(method, route, schema);
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }
+
+  private discoverGraphQLQueryFields(
+    method: string,
+    route: string,
+    executeArgs: ExecutionArgs,
+    agent: Agent
+  ) {
+    const topLevelFields = extractTopLevelFieldsFromDocument(
+      executeArgs.document,
+      executeArgs.operationName ? executeArgs.operationName : undefined
+    );
+
+    if (topLevelFields) {
+      agent.onGraphQLExecute(
+        method,
+        route,
+        topLevelFields.type,
+        topLevelFields.fields.map((field) => field.name.value)
+      );
+    }
+  }
+
   private inspectGraphQLExecute(args: unknown[], agent: Agent): void {
     if (
       !Array.isArray(args) ||
@@ -32,19 +77,18 @@ export class GraphQL implements Wrapper {
     }
 
     if (context.method && context.route) {
-      const topLevelFields = extractTopLevelFieldsFromDocument(
-        executeArgs.document,
-        executeArgs.operationName ? executeArgs.operationName : undefined
+      this.discoverGraphQLSchema(
+        context.method,
+        context.route,
+        executeArgs,
+        agent
       );
-
-      if (topLevelFields) {
-        agent.onGraphQLExecute(
-          context.method,
-          context.route,
-          topLevelFields.type,
-          topLevelFields.fields.map((field) => field.name.value)
-        );
-      }
+      this.discoverGraphQLQueryFields(
+        context.method,
+        context.route,
+        executeArgs,
+        agent
+      );
     }
 
     const userInputs = extractInputsFromDocument(

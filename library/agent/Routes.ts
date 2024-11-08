@@ -13,9 +13,14 @@ export type Route = {
 };
 
 export class Routes {
+  // Routes are only registered at the end of the request, so we need to store the schema in a separate map
+  private graphQLSchemas: Map<string, string> = new Map();
   private routes: Map<string, Route> = new Map();
 
-  constructor(private readonly maxEntries: number = 1000) {}
+  constructor(
+    private readonly maxEntries: number = 1000,
+    private readonly maxGraphQLSchemas = 10
+  ) {}
 
   addRoute(context: Context) {
     if (isAikidoDASTRequest(context)) {
@@ -61,6 +66,22 @@ export class Routes {
 
   private getKey(method: string, path: string) {
     return `${method}:${path}`;
+  }
+
+  hasGraphQLSchema(method: string, path: string): boolean {
+    const key = this.getKey(method, path);
+
+    return this.graphQLSchemas.has(key);
+  }
+
+  setGraphQLSchema(method: string, path: string, schema: string) {
+    if (
+      schema.length > 0 &&
+      this.graphQLSchemas.size < this.maxGraphQLSchemas
+    ) {
+      const key = this.getKey(method, path);
+      this.graphQLSchemas.set(key, schema);
+    }
   }
 
   private getGraphQLKey(
@@ -124,6 +145,7 @@ export class Routes {
         hits: route.hits,
         graphql: route.graphql,
         apispec: route.apispec,
+        graphQLSchema: this.graphQLSchemas.get(key),
       };
     });
   }
