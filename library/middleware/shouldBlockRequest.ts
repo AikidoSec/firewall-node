@@ -25,6 +25,18 @@ export function shouldBlockRequest(): {
     return { block: true, type: "blocked", trigger: "user" };
   }
 
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isIPAddressBlocked(context.remoteAddress)
+  ) {
+    return {
+      block: true,
+      type: "blocked",
+      trigger: "ip",
+      ip: context.remoteAddress,
+    };
+  }
+
   const rateLimitResult = shouldRateLimitRequest(context, agent);
   if (rateLimitResult.block) {
     return {
