@@ -15,6 +15,7 @@ t.test("it returns false if empty version", async () => {
 
 t.test("it returns false if invalid version", async () => {
   t.equal(satisfiesVersion("^1.0.0", "1.0"), false);
+  t.equal(satisfiesVersion("~1.0.0", "1.0"), false);
 });
 
 t.test("it returns false if invalid range", async () => {
@@ -36,12 +37,25 @@ t.test("it matches single range", async () => {
   t.equal(satisfiesVersion("^1.0.0", "0.0.0"), false);
   t.equal(satisfiesVersion("^1.0.0", "2.0.0"), false);
   t.equal(satisfiesVersion("^2.0.0", "1.0.0"), false);
+  t.equal(satisfiesVersion("~2.0.0", "2.0.0"), true);
+  t.equal(satisfiesVersion("~2.0.0", "2.0.1"), true);
+  t.equal(satisfiesVersion("~2.0.0", "2.1.0"), false);
+  t.equal(satisfiesVersion("~2.0.1", "2.0.0"), false);
+  t.equal(satisfiesVersion("~2.0.1", "2.0.1"), true);
+  t.equal(satisfiesVersion("~2.0.1", "2.0.2"), true);
+  t.equal(satisfiesVersion("~2.0.1", "2.1.0"), false);
+  t.equal(satisfiesVersion("~2.1.1", "2.1.0"), false);
+  t.equal(satisfiesVersion("~2.1.1", "2.1.1"), true);
+  t.equal(satisfiesVersion("~2.1.1", "2.1.2"), true);
+  t.equal(satisfiesVersion("~2.1.1", "2.2.0"), false);
 });
 
 t.test("it matches multiple ranges", async () => {
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0", "1.0.0"), true);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0", "2.0.0"), true);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0", "2.0.1"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ~2.0.0", "2.0.1"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ~2.0.0", "2.1.0"), false);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0", "3.0.0"), false);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0", "0.0.0"), false);
 });
@@ -53,4 +67,10 @@ t.test("it matches multiple ranges with OR", async () => {
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ^3.0.0", "3.0.1"), true);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ^3.0.0", "4.0.0"), false);
   t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ^3.0.0", "0.0.0"), false);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "3.0.0"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "3.0.1"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "3.1.0"), false);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "1.0.0"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "2.0.0"), true);
+  t.equal(satisfiesVersion("^1.0.0 || ^2.0.0 || ~3.0.0", "2.1.0"), true);
 });

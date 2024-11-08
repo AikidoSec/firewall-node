@@ -189,7 +189,11 @@ export class MongoDB implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("mongodb")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
+      // 6.10.x lazy loads the Collection class
+      // Mark as unsupported for now, until we find a fix
+      .withVersion(
+        "^4.0.0 || ^5.0.0 || ~6.0.0 || ~6.1.0 || ~6.2.0 || ~6.3.0 || ~6.4.0 || ~6.5.0 || ~6.6.0 || ~6.7.0 || ~6.8.0 || ~6.9.0"
+      )
       .onRequire((exports, pkgInfo) => {
         const collectionProto = exports.Collection.prototype;
 

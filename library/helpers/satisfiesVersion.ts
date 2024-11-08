@@ -31,7 +31,7 @@ export function satisfiesVersion(range: string, version: string) {
   // e.g. ^4.0.0 || ^5.0.0
   // e.g. ^4.0.0 || ^5.0.0 || ^6.0.0
   for (const r of range.split("||").map((r) => r.trim())) {
-    if (!r.startsWith("^")) {
+    if (!r.startsWith("^") && !r.startsWith("~")) {
       continue;
     }
 
@@ -49,7 +49,21 @@ export function satisfiesVersion(range: string, version: string) {
       .split(".")
       .map((p) => parseInt(p, 10));
 
-    if (major === rMajor && minor >= rMinor && patch >= rPatch) {
+    if (
+      r.startsWith("^") &&
+      major === rMajor &&
+      minor >= rMinor &&
+      patch >= rPatch
+    ) {
+      return true;
+    }
+
+    if (
+      r.startsWith("~") &&
+      major === rMajor &&
+      minor === rMinor &&
+      patch >= rPatch
+    ) {
       return true;
     }
   }
