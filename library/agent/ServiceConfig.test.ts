@@ -102,4 +102,5 @@ t.test("ip blocking works", async () => {
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), true);
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), true);
   t.same(config.isIPAddressBlocked("5.6.7.8"), true);
+  t.same(config.isIPAddressBlocked("1.2"), false);
 });
