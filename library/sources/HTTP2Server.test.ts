@@ -386,6 +386,7 @@ t.test("it discovers routes using stream event", async () => {
             hits: 1,
             graphql: undefined,
             apispec: {},
+            graphQLSchema: undefined,
           }
         );
         server.close();
