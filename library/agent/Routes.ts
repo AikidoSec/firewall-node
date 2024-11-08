@@ -145,7 +145,7 @@ export class Routes {
         hits: route.hits,
         graphql: route.graphql,
         apispec: route.apispec,
-        graphlQLSchema: this.graphQLSchemas.get(key),
+        graphQLSchema: this.graphQLSchemas.get(key),
       };
     });
   }

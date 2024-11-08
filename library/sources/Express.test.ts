@@ -288,6 +288,7 @@ t.test("it adds body schema to stored routes", async (t) => {
         query: undefined,
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });

@@ -124,7 +124,7 @@ type Author {
           name: "getBook",
         },
         apispec: {},
-        graphlQLSchema: undefined,
+        graphQLSchema: undefined,
       },
       {
         method: "POST",
@@ -132,7 +132,7 @@ type Author {
         hits: hits,
         graphql: undefined,
         apispec: {},
-        graphlQLSchema: dsl,
+        graphQLSchema: dsl,
       },
     ],
   });
