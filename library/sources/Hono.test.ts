@@ -31,6 +31,7 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    blockedIPAddresses: ["1.3.2.4", "fe80::1234:5678:abcd:ef12/64"],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -257,4 +258,33 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   });
   t.ok(isLocalhostIP(body.remoteAddress));
   server.close();
+});
+
+t.test("ip blocking works", opts, async (t) => {
+  const response = await getApp().request("/", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.3.2.4",
+    },
+  });
+  t.match(response.status, 403);
+  t.match(await response.text(), "You are blocked by Zen.");
+
+  const response2 = await getApp().request("/", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12",
+    },
+  });
+  t.match(response2.status, 403);
+  t.match(await response2.text(), "You are blocked by Zen.");
+
+  const response3 = await getApp().request("/", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "9.8.7.6",
+    },
+  });
+
+  t.match(response3.status, 200);
 });

@@ -242,8 +242,8 @@ export class Agent {
           typeof response.receivedAnyStats === "boolean"
             ? response.receivedAnyStats
             : true,
-          Array.isArray(response.blockedIpAddresses)
-            ? response.blockedIpAddresses
+          Array.isArray(response.blockedIPAddresses)
+            ? response.blockedIPAddresses
             : []
         );
       }

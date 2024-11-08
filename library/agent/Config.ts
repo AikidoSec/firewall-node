@@ -22,5 +22,5 @@ export type Config = {
   allowedIPAddresses: string[];
   block?: boolean;
   receivedAnyStats?: boolean;
-  blockedIpAddresses?: string[];
+  blockedIPAddresses?: string[];
 };
