@@ -61,7 +61,7 @@ const agent = new Agent(
 
 agent.start([new HTTPRequest()]);
 
-const port = 1341;
+const port = 1343;
 const serverUrl = `http://localhost:${port}`;
 const hostHeader = `localhost:${port}`;
 
@@ -138,10 +138,12 @@ t.test("it blocks requests to other ports", (t) => {
         request.end();
       } catch (error) {
         t.ok(error instanceof Error);
-        t.same(
-          error.message,
-          "Zen has blocked a server-side request forgery: http.request(...) originating from body.url"
-        );
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Zen has blocked a server-side request forgery: http.request(...) originating from body.url"
+          );
+        }
       }
     }
   );
