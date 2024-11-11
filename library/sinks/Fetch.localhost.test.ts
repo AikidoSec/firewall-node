@@ -12,10 +12,12 @@ function createContext({
   url,
   hostHeader,
   body,
+  additionalHeaders = {},
 }: {
   url: string;
   hostHeader: string;
   body: unknown;
+  additionalHeaders?: Record<string, string>;
 }): Context {
   return {
     url: url,
@@ -39,6 +41,7 @@ function createContext({
       "sec-fetch-dest": "document",
       "accept-encoding": "gzip, deflate, br, zstd",
       "accept-language": "nl,en;q=0.9,en-US;q=0.8",
+      ...additionalHeaders,
     },
     route: "/",
     query: {},
@@ -87,6 +90,52 @@ t.test(
         url: serverUrl,
         hostHeader: hostHeader,
         body: {},
+      }),
+      async () => {
+        // Server doing a request to itself
+        const response = await fetch(`${serverUrl}/favicon.ico`);
+        // The server should respond with a 200
+        t.same(response.status, 200);
+      }
+    );
+  }
+);
+
+t.test(
+  "it does not block request to localhost with same port using the origin header",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    await runWithContext(
+      createContext({
+        url: serverUrl,
+        hostHeader: "",
+        body: {},
+        additionalHeaders: {
+          origin: serverUrl,
+        },
+      }),
+      async () => {
+        // Server doing a request to itself
+        const response = await fetch(`${serverUrl}/favicon.ico`);
+        // The server should respond with a 200
+        t.same(response.status, 200);
+      }
+    );
+  }
+);
+
+t.test(
+  "it does not block request to localhost with same port using the referer header",
+  { skip: !global.fetch ? "fetch is not available" : false },
+  async (t) => {
+    await runWithContext(
+      createContext({
+        url: serverUrl,
+        hostHeader: "",
+        body: {},
+        additionalHeaders: {
+          referer: serverUrl,
+        },
       }),
       async () => {
         // Server doing a request to itself
