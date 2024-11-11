@@ -45,6 +45,7 @@ const api = new ReportingAPIForTesting({
       method: "GET",
       forceProtectionOff: false,
       allowedIPAddresses: ["8.8.8.8"],
+      // @ts-expect-error Testing
       rateLimiting: undefined,
     },
   ],
@@ -66,8 +67,10 @@ t.beforeEach(() => {
   delete process.env.NODE_ENV;
 });
 
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+
 t.test("it wraps the createServer function of http module", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -104,7 +107,6 @@ t.test("it wraps the createServer function of http module", async () => {
 });
 
 t.test("it wraps the createServer function of https module", async () => {
-  const https = require("https");
   const { readFileSync } = require("fs");
   const path = require("path");
 
@@ -115,7 +117,6 @@ t.test("it wraps the createServer function of https module", async () => {
     {
       key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
       cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
-      secureContext: {},
     },
     (req, res) => {
       res.setHeader("Content-Type", "application/json");
@@ -154,7 +155,6 @@ t.test("it wraps the createServer function of https module", async () => {
 });
 
 t.test("it parses query parameters", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -178,7 +178,6 @@ t.test("it parses query parameters", async () => {
 });
 
 t.test("it discovers routes", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -214,8 +213,7 @@ t.test("it discovers routes", async () => {
 
 t.test(
   "it does not discover route if server response is error code",
-  async () => {
-    const http = require("http");
+  async (t) => {
     const server = http.createServer((req, res) => {
       res.statusCode = 404;
       res.end();
@@ -244,8 +242,7 @@ t.test(
   }
 );
 
-t.test("it parses cookies", async () => {
-  const http = require("http");
+t.test("it parses cookies", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -270,8 +267,7 @@ t.test("it parses cookies", async () => {
   });
 });
 
-t.test("it parses x-forwarded-for header with proxy", async () => {
-  const http = require("http");
+t.test("it parses x-forwarded-for header with proxy", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -297,8 +293,7 @@ t.test("it parses x-forwarded-for header with proxy", async () => {
   });
 });
 
-t.test("it uses x-forwarded-for header", async () => {
-  const http = require("http");
+t.test("it uses x-forwarded-for header", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -323,8 +318,7 @@ t.test("it uses x-forwarded-for header", async () => {
   });
 });
 
-t.test("it sets body in context", async () => {
-  const http = require("http");
+t.test("it sets body in context", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -357,9 +351,7 @@ function generateJsonPayload(sizeInMb: number) {
   return JSON.stringify("a".repeat(sizeInBytes));
 }
 
-t.test("it sends 413 when body is larger than 20 Mb", async () => {
-  const http = require("http");
-
+t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   const server = http.createServer((req, res) => {
     t.fail();
   });
@@ -387,8 +379,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
   });
 });
 
-t.test("body that is not JSON is ignored", async () => {
-  const http = require("http");
+t.test("body that is not JSON is ignored", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -414,9 +405,7 @@ t.test("body that is not JSON is ignored", async () => {
   });
 });
 
-t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
-  const http = require("http");
-
+t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
   const server = http.createServer((req, res) => {
     res.end();
   });
@@ -459,9 +448,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
   });
 });
 
-t.test("it rate limits requests", async () => {
-  const http = require("http");
-
+t.test("it rate limits requests", async (t) => {
   const server = http.createServer((req, res) => {
     res.end();
   });
@@ -521,7 +508,6 @@ t.test("it rate limits requests", async () => {
 });
 
 t.test("it wraps on request event of http", async () => {
-  const http = require("http");
   const server = http.createServer();
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -559,7 +545,6 @@ t.test("it wraps on request event of http", async () => {
 });
 
 t.test("it wraps on request event of https", async () => {
-  const https = require("https");
   const { readFileSync } = require("fs");
   const path = require("path");
 
@@ -569,7 +554,6 @@ t.test("it wraps on request event of https", async () => {
   const server = https.createServer({
     key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("request", (req, res) => {
@@ -607,8 +591,7 @@ t.test("it wraps on request event of https", async () => {
   });
 });
 
-t.test("it checks if IP can access route", async () => {
-  const http = require("http");
+t.test("it checks if IP can access route", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "text/plain");
     res.end("OK");

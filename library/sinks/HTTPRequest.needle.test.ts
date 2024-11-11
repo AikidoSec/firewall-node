@@ -35,7 +35,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const needle = require("needle");
+  const needle = require("needle") as typeof import("needle");
 
   await runWithContext(context, async () => {
     await needle("get", "https://www.aikido.dev");

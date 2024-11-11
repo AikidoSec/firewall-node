@@ -88,7 +88,10 @@ t.test("callback handler throws error", async () => {
   try {
     await handler(gatewayEvent, lambdaContext, () => {});
   } catch (error) {
-    t.same(error.message, "error");
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(error.message, "error");
+    }
   }
 });
 
@@ -100,7 +103,10 @@ t.test("callback handler has internal error", async () => {
   try {
     await handler(gatewayEvent, lambdaContext, () => {});
   } catch (error) {
-    t.same(error.message, "error");
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(error.message, "error");
+    }
   }
 });
 
@@ -427,7 +433,9 @@ t.test("it counts attacks", async () => {
 
   const handler = createLambdaWrapper(async (event, context) => {
     const ctx = getContext();
-    updateContext(ctx, "attackDetected", true);
+    if (ctx) {
+      updateContext(ctx, "attackDetected", true);
+    }
     return ctx;
   });
 

@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, runWithContext, type Context } from "../agent/Context";
+import { runWithContext, type Context } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
@@ -50,7 +50,7 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects shell injections", async () => {
+t.test("it detects shell injections", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -119,7 +119,7 @@ t.test("it does not detect injection without context", async () => {
   }
 });
 
-t.test("it detects async shell injections", async () => {
+t.test("it detects async shell injections", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -174,27 +174,7 @@ t.test("it detects async shell injections", async () => {
   }
 });
 
-t.test("it prevents path injections using ls", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
-  const shelljs = require("shelljs");
-
-  // The exception is catched by shelljs and can not directly be caught by the test
-  runWithContext(dangerousPathContext, () => {
-    const result = shelljs.ls("/etc/ssh");
-    t.same(result.code, 2);
-    t.ok(getContext()?.attackDetected);
-  });
-});
-
-t.test("it prevents path injections using cat", async () => {
+t.test("it prevents path injections using ls", async (t) => {
   const agent = new Agent(
     true,
     new LoggerNoop(),
@@ -208,15 +188,44 @@ t.test("it prevents path injections using cat", async () => {
 
   const error = await t.rejects(async () => {
     runWithContext(dangerousPathContext, () => {
-      return shelljs.cat("/etc/ssh/*");
+      return shelljs.ls("/etc/ssh");
     });
+  });
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.same(
+      error.message,
+      "Zen has blocked a path traversal attack: fs.readdirSync(...) originating from body.myTitle"
+    );
+  }
+});
+
+t.test("it prevents path injections using cat", async (t) => {
+  const agent = new Agent(
+    true,
+    new LoggerNoop(),
+    new ReportingAPIForTesting(),
+    undefined,
+    undefined
+  );
+  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
+
+  const shelljs = require("shelljs");
+
+  const error = await t.rejects(async () => {
+    runWithContext(
+      { ...dangerousPathContext, body: { myTitle: "../package.json" } },
+      () => {
+        return shelljs.cat("../package.json");
+      }
+    );
   });
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Zen has blocked a path traversal attack: fs.existsSync(...) originating from body.myTitle"
+      "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from body.myTitle"
     );
   }
 });
@@ -241,7 +250,7 @@ t.test(
       });
       t.end();
     } catch (error) {
-      t.fail(error);
+      t.fail(error as Error);
     }
   }
 );

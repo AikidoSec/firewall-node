@@ -34,7 +34,13 @@ export class Path implements Wrapper {
 
   wrap(hooks: Hooks): void {
     hooks
-      .addBuiltinModule("path")
+      .addBuiltinModule("path/posix")
+      .addSubject((exports) => exports)
+      .inspect("join", (args) => this.inspectPath(args, "join"))
+      .inspect("resolve", (args) => this.inspectPath(args, "resolve"))
+      .inspect("normalize", (args) => this.inspectPath(args, "normalize"));
+    hooks
+      .addBuiltinModule("path/win32")
       .addSubject((exports) => exports)
       .inspect("join", (args) => this.inspectPath(args, "join"))
       .inspect("resolve", (args) => this.inspectPath(args, "resolve"))

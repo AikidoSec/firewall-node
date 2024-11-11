@@ -20,7 +20,7 @@ It protects your Node.js apps by preventing user input containing dangerous stri
 Zen will autonomously protect your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
-* 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
+* 🛡️ [SQL injection attacks](https://www.aikido.dev/blog/the-state-of-sql-injections)
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)

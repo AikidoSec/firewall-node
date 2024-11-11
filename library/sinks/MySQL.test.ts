@@ -55,8 +55,8 @@ t.test("it detects SQL injections", async () => {
   );
   agent.start([new MySQL()]);
 
-  const mysql = require("mysql");
-  const connection = await mysql.createConnection({
+  const mysql = require("mysql") as typeof import("mysql");
+  const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "mypassword",
@@ -124,6 +124,7 @@ t.test("it detects SQL injections", async () => {
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
+        // @ts-expect-error Test
         return query(undefined, connection);
       });
     });

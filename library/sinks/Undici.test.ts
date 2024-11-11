@@ -22,37 +22,55 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost:4000/api/internal",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
-};
+function createContext(): Context {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      image: "http://localhost:4000/api/internal",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+}
+
+let server: ReturnType<typeof import("http").createServer>;
+t.before(() => {
+  const http = require("http") as typeof import("http");
+  server = http.createServer((req, res) => {
+    res.end("Hello, world!");
+  });
+  server.unref();
+  server.listen(4000);
+});
 
 t.test(
   "it works",
@@ -62,9 +80,17 @@ t.test(
   },
   async (t) => {
     const logger = new LoggerForTesting();
-    const api = new ReportingAPIForTesting();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: ["1.2.3.4"],
+      block: true,
+      receivedAnyStats: false,
+    });
     const agent = new Agent(true, logger, api, new Token("123"), undefined);
-
     agent.start([new Undici()]);
 
     const {
@@ -156,10 +182,35 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
+    await request(require("url").parse("https://aikido.dev"));
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      origin: "https://aikido.dev",
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
     await t.rejects(() => request("invalid url"));
     await t.rejects(() => request({ hostname: "" }));
 
-    await runWithContext(context, async () => {
+    await runWithContext(
+      {
+        ...createContext(),
+        remoteAddress: "1.2.3.4",
+      },
+      async () => {
+        // Bypass the block using an allowed IP
+        await request("http://localhost:4000/api/internal");
+      }
+    );
+
+    await runWithContext(createContext(), async () => {
       await request("https://google.com");
 
       const error0 = await t.rejects(() => request("http://localhost:9876"));
@@ -234,7 +285,7 @@ t.test(
     });
 
     await runWithContext(
-      { ...context, routeParams: { param: "http://0" } },
+      { ...createContext(), routeParams: { param: "http://0" } },
       async () => {
         const error = await t.rejects(() => request("http://0"));
         if (error instanceof Error) {
@@ -248,7 +299,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{
           body: {
             image2: [
@@ -294,3 +345,7 @@ t.test(
     ]);
   }
 );
+
+t.after(() => {
+  server.close();
+});

@@ -18,6 +18,7 @@ export type AgentInfo = {
   };
   platform: {
     version: string;
+    arch: string;
   };
   nodeEnv: string;
   serverless: boolean;

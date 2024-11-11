@@ -41,7 +41,7 @@ agent.start([new HonoInternal(), new HTTPServer()]);
 setInstance(agent);
 
 function getApp() {
-  const { Hono } = require("hono");
+  const { Hono } = require("hono") as typeof import("hono");
   const app = new Hono();
 
   app.all("/", (c) => {
