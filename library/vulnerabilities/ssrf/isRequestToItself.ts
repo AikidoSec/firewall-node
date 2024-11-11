@@ -13,7 +13,7 @@ export function isRequestToItself({
 }): boolean {
   return (
     source === "headers" &&
-    path === ".host" &&
+    (path === ".host" || path === ".origin" || path === ".referer") &&
     typeof port === "number" &&
     str === `localhost:${port}`
   );
