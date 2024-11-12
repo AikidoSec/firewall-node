@@ -186,6 +186,20 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
+    await request(require("url").parse("https://app.aikido.dev"));
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "app.aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
+    await request({
+      origin: "https://app.aikido.dev",
+    });
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "app.aikido.dev", port: "443" },
+    ]);
+    agent.getHostnames().clear();
+
     await t.rejects(() => request("invalid url"));
     await t.rejects(() => request({ hostname: "" }));
 
