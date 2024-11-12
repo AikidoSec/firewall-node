@@ -35,7 +35,7 @@ export function findHostnameInContext(
           })
         ) {
           // Application might do a request to itself when the hostname is localhost
-          // Let's allow this (only for the headers.host source)
+          // Let's allow this for the following headers: Host, Origin, Referrer
           // We still want to block if the port is different
           continue;
         }
