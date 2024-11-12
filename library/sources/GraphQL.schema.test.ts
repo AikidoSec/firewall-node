@@ -1,18 +1,22 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { GraphQL } from "./GraphQL";
 import { Token } from "../agent/api/Token";
 import { createTestAgent } from "../helpers/createTestAgent";
 
-function getTestContext() {
+function getTestContext(): Context {
   return {
     remoteAddress: "::1",
     method: "POST",
     url: "http://localhost:4000/graphql",
     query: {},
-    headers: {},
-    body: {},
+    headers: {
+      "content-type": "application/json",
+    },
+    body: {
+      query: '{ getFile(path: "/etc/bashrc") }',
+    },
     cookies: {},
     routeParams: {},
     source: "express",
@@ -108,6 +112,29 @@ type Author {
     }
   });
 
+  await runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000/server-rendered-page",
+      query: {},
+      headers: {},
+      body: {
+        query: "this is not a graphql query",
+      },
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/server-rendered-page",
+    },
+    async () => {
+      await query({ id: "1" });
+
+      // Route is registered at the end of the request
+      agent.onRouteExecute(getContext()!);
+    }
+  );
+
   await agent.flushStats(1000);
 
   t.same(api.getEvents().length, 1);
@@ -133,6 +160,14 @@ type Author {
         graphql: undefined,
         apispec: {},
         graphQLSchema: dsl,
+      },
+      {
+        method: "POST",
+        path: "/server-rendered-page",
+        hits: 1,
+        graphql: undefined,
+        apispec: {},
+        graphQLSchema: undefined,
       },
     ],
   });

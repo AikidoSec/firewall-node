@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
-import { getContext, updateContext } from "../agent/Context";
+import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
@@ -8,6 +8,7 @@ import type { ExecutionArgs } from "graphql/execution/execute";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
 import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
+import { isGraphQLOverHTTP } from "./graphql/isGraphQLOverHTTP";
 import { shouldRateLimitOperation } from "./graphql/shouldRateLimitOperation";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
@@ -15,8 +16,7 @@ export class GraphQL implements Wrapper {
   private graphqlModule: typeof import("graphql") | undefined;
 
   private discoverGraphQLSchema(
-    method: string,
-    route: string,
+    context: Context,
     executeArgs: ExecutionArgs,
     agent: Agent
   ) {
@@ -28,10 +28,14 @@ export class GraphQL implements Wrapper {
       return;
     }
 
-    if (!agent.hasGraphQLSchema(method, route)) {
+    if (!context.method || !context.route) {
+      return;
+    }
+
+    if (!agent.hasGraphQLSchema(context.method, context.route)) {
       try {
         const schema = this.graphqlModule.printSchema(executeArgs.schema);
-        agent.onGraphQLSchema(method, route, schema);
+        agent.onGraphQLSchema(context.method, context.route, schema);
       } catch (e) {
         // Ignore errors
       }
@@ -39,11 +43,14 @@ export class GraphQL implements Wrapper {
   }
 
   private discoverGraphQLQueryFields(
-    method: string,
-    route: string,
+    context: Context,
     executeArgs: ExecutionArgs,
     agent: Agent
   ) {
+    if (!context.method || !context.route) {
+      return;
+    }
+
     const topLevelFields = extractTopLevelFieldsFromDocument(
       executeArgs.document,
       executeArgs.operationName ? executeArgs.operationName : undefined
@@ -51,8 +58,8 @@ export class GraphQL implements Wrapper {
 
     if (topLevelFields) {
       agent.onGraphQLExecute(
-        method,
-        route,
+        context.method,
+        context.route,
         topLevelFields.type,
         topLevelFields.fields.map((field) => field.name.value)
       );
@@ -76,19 +83,16 @@ export class GraphQL implements Wrapper {
       return;
     }
 
-    if (context.method && context.route) {
-      this.discoverGraphQLSchema(
-        context.method,
-        context.route,
-        executeArgs,
-        agent
-      );
-      this.discoverGraphQLQueryFields(
-        context.method,
-        context.route,
-        executeArgs,
-        agent
-      );
+    if (
+      context &&
+      context.method &&
+      context.route &&
+      isGraphQLOverHTTP(context)
+    ) {
+      // We only want to discover GraphQL over HTTP
+      // We should ignore queries coming from a GraphQL client in SSR mode
+      this.discoverGraphQLSchema(context, executeArgs, agent);
+      this.discoverGraphQLQueryFields(context, executeArgs, agent);
     }
 
     const userInputs = extractInputsFromDocument(
