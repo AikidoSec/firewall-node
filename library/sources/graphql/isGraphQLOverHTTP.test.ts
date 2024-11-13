@@ -190,3 +190,19 @@ t.test("Random request with no relation to GraphQL", async (t) => {
     false
   );
 });
+
+t.test("Context without URL", async () => {
+  t.same(isGraphQLOverHTTP({} as Context), false);
+});
+
+t.test("Context with PUT method", async () => {
+  t.same(
+    isGraphQLOverHTTP(
+      createContext({
+        method: "PUT",
+        body: { query: "{ field }" },
+      })
+    ),
+    false
+  );
+});
