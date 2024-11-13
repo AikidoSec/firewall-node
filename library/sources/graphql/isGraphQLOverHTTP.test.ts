@@ -124,11 +124,11 @@ t.test("GET request with versioned GraphQL endpoint", async (t) => {
     isGraphQLOverHTTP(
       createContext({
         method: "GET",
-        path: "/graphql/v1",
+        path: "/v1/graphql",
         query: { query: "{ field }" },
       })
     ),
-    false
+    true
   );
 });
 
@@ -137,12 +137,12 @@ t.test("POST request with versioned GraphQL endpoint", async (t) => {
     isGraphQLOverHTTP(
       createContext({
         method: "POST",
-        path: "/graphql/v1",
+        path: "/v1/graphql",
         headers: { "content-type": "application/json" },
         body: { query: "{ field }" },
       })
     ),
-    false
+    true
   );
 });
 
