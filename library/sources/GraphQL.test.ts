@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { GraphQL } from "./GraphQL";
 import { Token } from "../agent/api/Token";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -56,12 +56,16 @@ t.test("it works", async () => {
   const schema = buildSchema(`
         type Query {
             getFile(path: String): String
+            anotherQuery: String
         }
     `);
 
   const root = {
     getFile: ({ path }: { path: string }) => {
       return "file content";
+    },
+    anotherQuery: () => {
+      return "another query";
     },
   };
 
@@ -96,5 +100,33 @@ t.test("it works", async () => {
     await query("/etc/bashrc");
     const result = await query("/etc/bashrc");
     t.same(result.errors![0].message, "You are rate limited by Zen.");
+
+    // With operation name
+    t.same(
+      await graphql({
+        schema,
+        source: `
+        query getFile {
+          getFile(path: "/etc/bashrc")
+        }
+
+        query anotherQuery {
+          anotherQuery
+        }
+      `,
+        rootValue: root,
+        variableValues: {},
+        operationName: "anotherQuery",
+      }),
+      {
+        data: { anotherQuery: "another query" },
+      }
+    );
+  });
+
+  // Empty context
+  await runWithContext({} as Context, async () => {
+    const response = await query("/etc/bashrc");
+    t.same(response, { data: { getFile: "file content" } });
   });
 });
