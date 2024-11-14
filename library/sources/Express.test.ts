@@ -105,12 +105,18 @@ function getApp(userMiddleware = true) {
     });
   }
 
-  // A middleware that is used as a route
-  app.use("/api/*path", (req, res, next) => {
+  function apiMiddleware(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const context = getContext();
 
     res.send(context);
-  });
+  }
+
+  // A middleware that is used as a route
+  app.use("/api/*path", apiMiddleware);
 
   app.get("/", (req, res) => {
     const context = getContext();
@@ -522,4 +528,33 @@ t.test("it allows white-listed IP address", async () => {
       .set("x-forwarded-for", "4.3.2.1");
     t.same(res.statusCode, 200);
   }
+});
+
+t.test("it preserves original function name in Layer object", async () => {
+  const app = getApp();
+
+  /**
+   * Ghost uses the name of the original function to look up the site router (a middleware)
+   * Before the fix, the name of the middleware was changed to `<anonymous>` by Zen
+   *
+   * _getSiteRouter(req) {
+   *     let siteRouter = null;
+   *
+   *     req.app._router.stack.every((router) => {
+   *         if (router.name === 'SiteRouter') {
+   *             siteRouter = router;
+   *             return false;
+   *         }
+   *
+   *         return true;
+   *     });
+   *
+   *     return siteRouter;
+   * }
+   */
+  t.same(
+    // @ts-expect-error stack is private
+    app.router.stack.filter((stack) => stack.name === "apiMiddleware").length,
+    1
+  );
 });
