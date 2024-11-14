@@ -540,8 +540,6 @@ t.test("it preserves original function name in Layer object", async () => {
    * _getSiteRouter(req) {
    *     let siteRouter = null;
    *
-   *     console.log(req.app._router.stack);
-   *
    *     req.app._router.stack.every((router) => {
    *         if (router.name === 'SiteRouter') {
    *             siteRouter = router;
