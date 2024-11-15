@@ -36,6 +36,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private requiredPackages: Record<string, string[]> = {};
   private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -268,6 +269,7 @@ export class Agent {
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
+      this.requiredPackages = {};
       const response = await this.api.report(
         this.token,
         {
@@ -365,6 +367,7 @@ export class Agent {
         },
         {}
       ),
+      requiredPackages: this.requiredPackages,
       incompatiblePackages: {
         prototypePollution: this.incompatiblePackages,
       },
@@ -433,11 +436,24 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onPackageRequired(name: string, version: string) {
+    if (!this.requiredPackages[name]) {
+      this.requiredPackages[name] = [];
+    }
+
+    if (this.requiredPackages[name].includes(version)) {
+      return;
+    }
+
+    this.requiredPackages[name].push(version);
+  }
+
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped
       return;
     }
+
     this.wrappedPackages[name] = details;
 
     if (details.version) {
