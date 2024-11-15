@@ -623,6 +623,7 @@ t.test(
     Object.setPrototypeOf(CustomRouter, router);
     expressApp.use(CustomRouter);
 
+    // supertest acts weird with the custom router, so we need to create a server manually
     const server = createServer(expressApp);
     await new Promise<void>((resolve) => {
       server.listen(0, resolve);
