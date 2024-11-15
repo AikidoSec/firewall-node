@@ -124,6 +124,20 @@ function getApp(userMiddleware = true) {
   // A middleware that is used as a route
   app.use("/api/*path", apiMiddleware);
 
+  const newRouter = express.Router();
+  newRouter.get("/nested-router", (req, res) => {
+    res.send(getContext());
+  });
+
+  app.use(newRouter);
+
+  const nestedApp = express();
+  nestedApp.get("/", (req, res) => {
+    res.send(getContext());
+  });
+
+  app.use("/nested-app", nestedApp);
+
   app.get("/", (req, res) => {
     const context = getContext();
 
@@ -554,3 +568,88 @@ t.test("it preserves original function name in Layer object", async () => {
     1
   );
 });
+
+t.test("it supports nested router", async () => {
+  const response = await request(getApp()).get("/nested-router");
+
+  t.match(response.body, {
+    method: "GET",
+    source: "express",
+    route: "/nested-router",
+  });
+});
+
+t.test("it supports nested app", async (t) => {
+  const response = await request(getApp()).get("/nested-app");
+
+  t.match(response.body, {
+    method: "GET",
+    source: "express",
+    route: "/nested-app",
+  });
+});
+
+// Express instrumentation results in routes with no stack, crashing Ghost
+// https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2271
+// https://github.com/open-telemetry/opentelemetry-js-contrib/pull/2294
+t.test(
+  "it keeps handle properties even if router is patched before instrumentation does it",
+  async () => {
+    const { createServer } = require("http") as typeof import("http");
+    const expressApp = express();
+    const router = express.Router();
+
+    let routerLayer: { name: string; handle: { stack: any[] } } | undefined =
+      undefined;
+
+    const CustomRouter: (...p: Parameters<typeof router>) => void = (
+      req,
+      res,
+      next
+    ) => router(req, res, next);
+
+    router.use("/:slug", (req, res, next) => {
+      // On express v4, the router is available as `app._router`
+      // On express v5, the router is available as `app.router`
+      // @ts-expect-error stack is private
+      const stack = req.app.router.stack as any[];
+      routerLayer = stack.find((router) => router.name === "CustomRouter");
+      return res.status(200).send("bar");
+    });
+
+    // The patched router now has express router's own properties in its prototype so
+    // they are not accessible through `Object.keys(...)`
+    // https://github.com/TryGhost/Ghost/blob/fefb9ec395df8695d06442b6ecd3130dae374d94/ghost/core/core/frontend/web/site.js#L192
+    Object.setPrototypeOf(CustomRouter, router);
+    expressApp.use(CustomRouter);
+
+    const server = createServer(expressApp);
+    await new Promise<void>((resolve) => {
+      server.listen(0, resolve);
+    });
+
+    if (!server) {
+      throw new Error("server not found");
+    }
+
+    const address = server.address();
+
+    if (typeof address === "string") {
+      throw new Error("address is a string");
+    }
+
+    const response = await fetch(`http://localhost:${address!.port}/foo`);
+    t.same(await response.text(), "bar");
+    server.close();
+
+    if (!routerLayer) {
+      throw new Error("router layer not found");
+    }
+
+    t.ok(
+      // @ts-expect-error handle is private
+      routerLayer.handle.stack.length === 1,
+      "router layer stack is accessible"
+    );
+  }
+);
