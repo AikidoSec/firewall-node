@@ -52,16 +52,16 @@ async function request({
 
 export async function fetch({
   url,
-  method,
-  headers,
+  method = "GET",
+  headers = {},
   body = "",
-  timeoutInMS,
+  timeoutInMS = 5000,
 }: {
   url: URL;
-  method: string;
-  headers: Record<string, string>;
+  method?: string;
+  headers?: Record<string, string>;
   body?: string;
-  timeoutInMS: number;
+  timeoutInMS?: number;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();
 
