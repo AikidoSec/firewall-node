@@ -5,6 +5,7 @@ import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { fetch } from "../helpers/fetch";
 
 // Before require("express")
 const agent = createTestAgent({
@@ -639,8 +640,10 @@ t.test(
       throw new Error("address is a string");
     }
 
-    const response = await fetch(`http://localhost:${address!.port}/foo`);
-    t.same(await response.text(), "bar");
+    const response = await fetch({
+      url: new URL(`http://localhost:${address!.port}/foo`),
+    });
+    t.same(response.body, "bar");
     server.close();
 
     if (!routerLayer) {
