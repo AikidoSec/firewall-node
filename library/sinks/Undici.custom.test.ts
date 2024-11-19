@@ -75,6 +75,7 @@ t.test(
 
     setGlobalDispatcher(
       new (class CustomDispatcher extends Dispatcher {
+        // @ts-expect-error The types of options and handler are unknown
         dispatch(options, handler) {
           // Custom logic comes here
 
