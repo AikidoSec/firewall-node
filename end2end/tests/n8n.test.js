@@ -48,10 +48,10 @@ t.test("it logs in", (t) => {
         },
         body: JSON.stringify({
           agree: true,
-          email: "hans@aikido.dev",
-          firstName: "Hans",
-          lastName: "Ott",
-          password: "Hans@aikido.dev1!",
+          email: "john.doe@acme.com",
+          firstName: "John",
+          lastName: "Doe",
+          password: "Password1234!",
         }),
         signal: AbortSignal.timeout(5000),
       });
