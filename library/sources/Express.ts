@@ -5,6 +5,7 @@ import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./express/wrapRequestHandler";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class Express implements Wrapper {
   // Wrap all the functions passed to app.METHOD(...)
@@ -29,29 +30,26 @@ export class Express implements Wrapper {
         return arg;
       }
 
-      return wrapRequestHandler(arg as RequestHandler, agent);
+      return wrapRequestHandler(arg as RequestHandler);
     });
   }
 
   wrap(hooks: Hooks) {
-    const express = hooks.addPackage("express").withVersion("^4.0.0");
-
-    const route = express.addSubject((exports) => exports.Route.prototype);
-
     const expressMethodNames = METHODS.map((method) => method.toLowerCase());
 
-    expressMethodNames.forEach((method) => {
-      route.modifyArguments(method, (args, subject, agent) => {
-        return this.wrapArgs(args, agent);
-      });
-    });
+    hooks
+      .addPackage("express")
+      .withVersion("^4.0.0 || ^5.0.0")
+      .onRequire((exports, pkgInfo) => {
+        for (const method of expressMethodNames) {
+          wrapExport(exports.Route.prototype, method, pkgInfo, {
+            modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+          });
+        }
 
-    express
-      .addSubject((exports) => {
-        return exports.application;
-      })
-      .modifyArguments("use", (args, subject, agent) =>
-        this.wrapArgs(args, agent)
-      );
+        wrapExport(exports.application, "use", pkgInfo, {
+          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+        });
+      });
   }
 }

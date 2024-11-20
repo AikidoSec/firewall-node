@@ -1,11 +1,9 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 function createContext(obj = {}): Context {
   return {
@@ -28,18 +26,14 @@ function createContext(obj = {}): Context {
 }
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const needle = require("needle");
+  const needle = require("needle") as typeof import("needle");
 
   await runWithContext(createContext(), async () => {
     await needle("get", "https://www.aikido.dev");
@@ -61,13 +55,13 @@ t.test("it works", async (t) => {
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+      "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
 });
 
 const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+  "http://ssrf-redirects.testssandbox.com";
 
 t.test(
   "it detects SSRF attacks with redirects",
@@ -76,44 +70,39 @@ t.test(
       getMajorNodeVersion() >= 19 ? "This request hangs on Node.js 19+" : false,
   },
   async (t) => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      new Token("123"),
-      undefined
-    );
+    const agent = createTestAgent({
+      token: new Token("123"),
+    });
     agent.start([new HTTPRequest()]);
 
     const needle = require("needle");
 
-    await runWithContext(
-      createContext({ body: { image: `${redirectTestUrl}/ssrf-test-domain` } }),
-      async () => {
-        await new Promise<void>((resolve) => {
-          needle.request(
-            "get",
-            `${redirectTestUrl}/ssrf-test-domain`,
-            {},
-            {
-              /* eslint-disable camelcase */
-              follow_max: 1,
-              open_timeout: 5000,
-              response_timeout: 5000,
-              read_timeout: 5000,
-              /* eslint-enable camelcase */
-            },
-            (error, response) => {
-              t.ok(error instanceof Error);
-              t.match(
-                error?.message,
-                /Aikido firewall has blocked a server-side request forgery/
-              );
-              resolve();
-            }
-          );
-        });
-      }
-    );
-  }
-);
+  await runWithContext(
+    createContext({ body: { image: `${redirectTestUrl}/ssrf-test-domain` } }),
+    async () => {
+      await new Promise<void>((resolve) => {
+        needle.request(
+          "get",
+          `${redirectTestUrl}/ssrf-test-domain`,
+          {},
+          {
+            /* eslint-disable camelcase */
+            follow_max: 1,
+            open_timeout: 5000,
+            response_timeout: 5000,
+            read_timeout: 5000,
+            /* eslint-enable camelcase */
+          },
+          (error, response) => {
+            t.ok(error instanceof Error);
+            t.match(
+              error?.message,
+              /Zen has blocked a server-side request forgery/
+            );
+            resolve();
+          }
+        );
+      });
+    }
+  );
+});

@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { SQLite3 } from "./SQLite3";
 import { promisify } from "util";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -50,13 +48,9 @@ const safeContext: Context = {
 };
 
 t.test("it detects SQL injections", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent({
+    serverless: "lambda",
+  });
   agent.start([new SQLite3()]);
 
   const sqlite3 = require("sqlite3");
@@ -81,7 +75,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: sqlite3.run(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: sqlite3.run(...) originating from body.myTitle"
       );
     }
 
@@ -110,7 +104,7 @@ t.test("it detects SQL injections", async () => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido firewall has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
+        "Zen has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
       );
     }
   } catch (error: any) {

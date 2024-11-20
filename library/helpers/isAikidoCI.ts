@@ -1,3 +1,5 @@
+import { envToBool } from "./envToBool";
+
 export function isAikidoCI(): boolean {
-  return process.env.AIKIDO_CI === "true" || process.env.AIKIDO_CI === "1";
+  return envToBool(process.env.AIKIDO_CI);
 }

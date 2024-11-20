@@ -1,19 +1,15 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Express } from "./Express";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { fetch } from "../helpers/fetch";
 
 // Before require("express")
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -62,16 +58,18 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  "lambda"
-);
+  token: new Token("123"),
+  serverless: "lambda",
+});
+
 agent.start([new Express(), new FileSystem(), new HTTPServer()]);
-setInstance(agent);
 
 import * as express from "express";
 import * as request from "supertest";
 import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
+import { setUser } from "../agent/context/user";
+import { addExpressMiddleware } from "../middleware/express";
 
 function getApp(userMiddleware = true) {
   const app = express();
@@ -80,10 +78,29 @@ function getApp(userMiddleware = true) {
   app.set("env", "test");
   app.use(cookieParser());
 
-  app.use("/*", (req, res, next) => {
+  app.use("/.*path", (req, res, next) => {
     res.setHeader("X-Powered-By", "Aikido");
     next();
   });
+
+  if (userMiddleware) {
+    app.use((req, res, next) => {
+      if (req.path === "/block-user") {
+        setUser({
+          id: "567",
+        });
+        return next();
+      }
+
+      setUser({
+        id: "123",
+        name: "John Doe",
+      });
+      next();
+    });
+  }
+
+  addExpressMiddleware(app);
 
   app.use("/middleware/:otherParamId", (req, res, next) => {
     res.setHeader("X-Context-Middleware", JSON.stringify(getContext()));
@@ -95,22 +112,32 @@ function getApp(userMiddleware = true) {
     next();
   });
 
-  if (userMiddleware) {
-    app.use((req, res, next) => {
-      setUser({
-        id: "123",
-        name: "John Doe",
-      });
-      next();
-    });
-  }
-
-  // A middleware that is used as a route
-  app.use("/api/*", (req, res, next) => {
+  function apiMiddleware(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const context = getContext();
 
     res.send(context);
+  }
+
+  // A middleware that is used as a route
+  app.use("/api/*path", apiMiddleware);
+
+  const newRouter = express.Router();
+  newRouter.get("/nested-router", (req, res) => {
+    res.send(getContext());
   });
+
+  app.use(newRouter);
+
+  const nestedApp = express();
+  nestedApp.get("/", (req, res) => {
+    res.send(getContext());
+  });
+
+  app.use("/nested-app", nestedApp);
 
   app.get("/", (req, res) => {
     const context = getContext();
@@ -183,20 +210,11 @@ function getApp(userMiddleware = true) {
     res.send(getContext());
   });
 
-  app.get(
-    "/block-user",
-    (req, res, next) => {
-      setUser({
-        id: "567",
-      });
-      next();
-    },
-    (req, res) => {
-      res.send({
-        willNotBeSent: true,
-      });
-    }
-  );
+  app.get("/block-user", (req, res) => {
+    res.send({
+      willNotBeSent: true,
+    });
+  });
 
   app.get("/rate-limited", (req, res) => {
     res.send({ hello: "world" });
@@ -206,31 +224,39 @@ function getApp(userMiddleware = true) {
     res.send({ hello: "world" });
   });
 
-  app.get("/white-listed-ip-address", (req, res) => {
+  app.route("/white-listed-ip-address").get((req, res) => {
     res.send({ hello: "world" });
   });
 
-  app.use("/middleware-rate-limited", (req, res, next) => {
+  // @ts-expect-error Not types for express 5 available yet
+  app.router.use("/middleware-rate-limited", (req, res, next) => {
     res.send({ hello: "world" });
   });
 
-  app.use((error, req, res, next) => {
-    res.status(500).send({ error: error.message });
-  });
+  app.use(
+    (
+      error: Error,
+      req: express.Request,
+      res: express.Response,
+      next: Function
+    ) => {
+      res.status(500).send({ error: error.message });
+    }
+  );
 
   return app;
 }
 
 t.test("it adds context from request for GET", async (t) => {
   const response = await request(getApp())
-    .get("/?title[$ne]=null")
+    .get("/?title=test&x=5")
     .set("Cookie", "session=123")
     .set("Accept", "application/json")
     .set("X-Forwarded-For", "1.2.3.4");
 
   t.match(response.body, {
     method: "GET",
-    query: { title: { $ne: "null" } },
+    query: { title: "test", x: "5" },
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
     remoteAddress: "1.2.3.4",
@@ -248,6 +274,44 @@ t.test("it adds context from request for POST", async (t) => {
     source: "express",
     route: "/",
   });
+});
+
+t.test("it adds body schema to stored routes", async (t) => {
+  agent.getRoutes().clear();
+  const response = await request(getApp())
+    .post("/")
+    .send({ title: "Title", authors: ["Author"], settings: { theme: "Dark" } });
+
+  t.same(response.statusCode, 200);
+  t.same(agent.getRoutes().asArray(), [
+    {
+      method: "POST",
+      path: "/",
+      hits: 1,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              authors: { type: "array", items: { type: "string" } },
+              settings: {
+                type: "object",
+                properties: {
+                  theme: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+      graphQLSchema: undefined,
+    },
+  ]);
 });
 
 t.test("it adds context from request for route", async (t) => {
@@ -298,7 +362,7 @@ t.test("it counts attacks detected", async (t) => {
 
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
   t.same(response.statusCode, 500);
   t.match(agent.getInspectionStatistics().getStats(), {
@@ -380,7 +444,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -392,7 +456,7 @@ t.test("detect attack in middleware", async () => {
   t.same(response.statusCode, 500);
   t.match(
     response.text,
-    /Aikido firewall has blocked a path traversal attack: fs.readdir(...)/
+    /Zen has blocked a path traversal attack: fs.readdir(...)/
   );
 });
 
@@ -401,6 +465,7 @@ t.test("it blocks user", async () => {
 
   t.same(response.statusCode, 403);
   t.same(response.body, {});
+  t.same(response.text, "You are blocked by Zen.");
 });
 
 t.test("it adds user to context", async () => {
@@ -427,10 +492,7 @@ t.test("it rate limits by IP", async () => {
     .get("/rate-limited")
     .set("x-forwarded-for", "1.2.3.4");
   t.same(res2.statusCode, 429);
-  t.same(
-    res2.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 
   await sleep(2000);
 
@@ -478,3 +540,120 @@ t.test("it allows white-listed IP address", async () => {
     t.same(res.statusCode, 200);
   }
 });
+
+t.test("it preserves original function name in Layer object", async () => {
+  const app = getApp();
+
+  /**
+   * Ghost uses the name of the original function to look up the site router (a middleware)
+   * Before the fix, the name of the middleware was changed to `<anonymous>` by Zen
+   *
+   * _getSiteRouter(req) {
+   *     let siteRouter = null;
+   *
+   *     req.app._router.stack.every((router) => {
+   *         if (router.name === 'SiteRouter') {
+   *             siteRouter = router;
+   *             return false;
+   *         }
+   *
+   *         return true;
+   *     });
+   *
+   *     return siteRouter;
+   * }
+   */
+  t.same(
+    // @ts-expect-error stack is private
+    app.router.stack.filter((stack) => stack.name === "apiMiddleware").length,
+    1
+  );
+});
+
+t.test("it supports nested router", async () => {
+  const response = await request(getApp()).get("/nested-router");
+
+  t.match(response.body, {
+    method: "GET",
+    source: "express",
+    route: "/nested-router",
+  });
+});
+
+t.test("it supports nested app", async (t) => {
+  const response = await request(getApp()).get("/nested-app");
+
+  t.match(response.body, {
+    method: "GET",
+    source: "express",
+    route: "/nested-app",
+  });
+});
+
+// Express instrumentation results in routes with no stack, crashing Ghost
+// https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2271
+// https://github.com/open-telemetry/opentelemetry-js-contrib/pull/2294
+t.test(
+  "it keeps handle properties even if router is patched before instrumentation does it",
+  async () => {
+    const { createServer } = require("http") as typeof import("http");
+    const expressApp = express();
+    const router = express.Router();
+
+    let routerLayer: { name: string; handle: { stack: any[] } } | undefined =
+      undefined;
+
+    const CustomRouter: (...p: Parameters<typeof router>) => void = (
+      req,
+      res,
+      next
+    ) => router(req, res, next);
+
+    router.use("/:slug", (req, res, next) => {
+      // On express v4, the router is available as `app._router`
+      // On express v5, the router is available as `app.router`
+      // @ts-expect-error stack is private
+      const stack = req.app.router.stack as any[];
+      routerLayer = stack.find((router) => router.name === "CustomRouter");
+      return res.status(200).send("bar");
+    });
+
+    // The patched router now has express router's own properties in its prototype so
+    // they are not accessible through `Object.keys(...)`
+    // https://github.com/TryGhost/Ghost/blob/fefb9ec395df8695d06442b6ecd3130dae374d94/ghost/core/core/frontend/web/site.js#L192
+    Object.setPrototypeOf(CustomRouter, router);
+    expressApp.use(CustomRouter);
+
+    // supertest acts weird with the custom router, so we need to create a server manually
+    const server = createServer(expressApp);
+    await new Promise<void>((resolve) => {
+      server.listen(0, resolve);
+    });
+
+    if (!server) {
+      throw new Error("server not found");
+    }
+
+    const address = server.address();
+
+    if (typeof address === "string") {
+      throw new Error("address is a string");
+    }
+
+    const response = await fetch({
+      url: new URL(`http://localhost:${address!.port}/foo`),
+    });
+    t.same(response.body, "bar");
+    server.close();
+
+    if (!routerLayer) {
+      throw new Error("router layer not found");
+    }
+
+    t.ok(
+      // @ts-expect-error handle is private
+      routerLayer.handle.stack.length === 1,
+      "router layer stack is accessible"
+    );
+  }
+);

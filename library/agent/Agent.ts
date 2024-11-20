@@ -2,6 +2,7 @@
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
@@ -29,7 +30,7 @@ export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
   private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
-  private lastHeartbeat = Date.now();
+  private lastHeartbeat = performance.now();
   private reportedInitialStats = false;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
@@ -45,6 +46,7 @@ export class Agent {
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
   });
+  private middlewareInstalled = false;
 
   constructor(
     private block: boolean,
@@ -281,6 +283,7 @@ export class Agent {
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
+          middlewareInstalled: this.middlewareInstalled,
         },
         timeoutInMS
       );
@@ -310,7 +313,7 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = Date.now();
+      const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
       const hasCompressedStats = this.statistics.hasCompressedStats();
@@ -375,6 +378,10 @@ export class Agent {
         name: platform(),
         version: release(),
       },
+      platform: {
+        version: getSemverNodeVersion(),
+        arch: process.arch,
+      },
     };
   }
 
@@ -404,22 +411,7 @@ export class Agent {
       }
     }
 
-    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
-
-    for (const pkg in this.wrappedPackages) {
-      const details = this.wrappedPackages[pkg];
-
-      /* c8 ignore next 3 */
-      if (!details.version) {
-        continue;
-      }
-
-      if (details.supported) {
-        this.logger.log(`${pkg}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${pkg}@${details.version} is not supported!`);
-      }
-    }
+    wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
@@ -437,12 +429,48 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapModule(module: string, error: Error) {
+    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+  }
+
+  onPackageWrapped(name: string, details: WrappedPackage) {
+    if (this.wrappedPackages[name]) {
+      // Already reported as wrapped
+      return;
+    }
+    this.wrappedPackages[name] = details;
+
+    if (details.version) {
+      if (details.supported) {
+        this.logger.log(`${name}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${name}@${details.version} is not supported!`);
+      }
+    }
+  }
+
+  onFailedToWrapPackage(module: string) {
+    this.logger.log(`Failed to wrap package ${module}`);
+  }
+
+  onFailedToWrapFile(module: string, filename: string) {
+    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+  }
+
   onConnectHostname(hostname: string, port: number | undefined) {
     this.hostnames.add(hostname, port);
   }
 
-  onRouteExecute(method: string, path: string) {
-    this.routes.addRoute(method, path);
+  onRouteExecute(context: Context) {
+    this.routes.addRoute(context);
+  }
+
+  hasGraphQLSchema(method: string, path: string) {
+    return this.routes.hasGraphQLSchema(method, path);
+  }
+
+  onGraphQLSchema(method: string, path: string, schema: string) {
+    this.routes.setGraphQLSchema(method, path, schema);
   }
 
   onGraphQLExecute(
@@ -471,5 +499,9 @@ export class Agent {
 
   getRateLimiter() {
     return this.rateLimiter;
+  }
+
+  onMiddlewareExecuted() {
+    this.middlewareInstalled = true;
   }
 }
