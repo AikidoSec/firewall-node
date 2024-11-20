@@ -19,29 +19,32 @@ export function getRedirectOrigin(
     return undefined;
   }
 
-  // Keep track of visited URLs to avoid infinite loops
-  const visited: Set<string> = new Set();
-  let currentUrl: URL = url;
-  let foundRedirect: boolean;
+  const origin = findOrigin(redirects, url);
 
-  do {
-    foundRedirect = false;
+  // If the origin is the same as the input URL, there's no redirect origin
+  return origin.href === url.href ? undefined : origin;
+}
 
-    // Filter redirects that have not been visited
-    const unvisitedRedirects = redirects.filter(
-      (r) => !visited.has(r.destination.href)
-    );
+function findOrigin(
+  redirects: NonNullable<Context["outgoingRequestRedirects"]>,
+  url: URL,
+  visited: Set<string> = new Set()
+): URL {
+  if (visited.has(url.href)) {
+    // To avoid infinite loops in case of cyclic redirects
+    return url;
+  }
 
-    for (const redirect of unvisitedRedirects) {
-      if (redirect.destination.href === currentUrl.href) {
-        visited.add(redirect.destination.href);
-        currentUrl = redirect.source;
-        foundRedirect = true;
-        break;
-      }
-    }
-  } while (foundRedirect);
+  visited.add(url.href);
 
-  // If the final URL is the same as the starting URL, return undefined (no redirect origin)
-  return currentUrl.href === url.href ? undefined : currentUrl;
+  // Find a redirect where the current URL is the destination
+  const redirect = redirects.find((r) => r.destination.href === url.href);
+
+  if (redirect) {
+    // Recursively find the origin starting from the source URL
+    return findOrigin(redirects, redirect.source, visited);
+  }
+
+  // If no redirect leads to this URL, return the URL itself
+  return url;
 }

@@ -118,6 +118,101 @@ t.test("it does not result in an infinite loop", async (t) => {
   );
 });
 
+t.test(
+  "it avoids infinite loops with unrelated cyclic redirects",
+  async (t) => {
+    t.equal(
+      getRedirectOrigin(
+        [
+          // Unrelated cyclic redirects
+          {
+            source: new URL("https://cycle.com/a"),
+            destination: new URL("https://cycle.com/b"),
+          },
+          {
+            source: new URL("https://cycle.com/b"),
+            destination: new URL("https://cycle.com/c"),
+          },
+          {
+            source: new URL("https://cycle.com/c"),
+            destination: new URL("https://cycle.com/a"),
+          },
+          // Relevant redirects
+          {
+            source: new URL("https://start.com"),
+            destination: new URL("https://middle.com"),
+          },
+          {
+            source: new URL("https://middle.com"),
+            destination: new URL("https://end.com"),
+          },
+        ],
+        new URL("https://end.com")
+      )?.href,
+      new URL("https://start.com").href
+    );
+  }
+);
+
+t.test("it handles multiple requests with overlapping redirects", async (t) => {
+  t.equal(
+    getRedirectOrigin(
+      [
+        // Overlapping redirects
+        {
+          source: new URL("https://site1.com"),
+          destination: new URL("https://site2.com"),
+        },
+        {
+          source: new URL("https://site2.com"),
+          destination: new URL("https://site3.com"),
+        },
+        {
+          source: new URL("https://site3.com"),
+          destination: new URL("https://site1.com"), // Cycle
+        },
+        // Relevant redirects
+        {
+          source: new URL("https://origin.com"),
+          destination: new URL("https://destination.com"),
+        },
+      ],
+      new URL("https://destination.com")
+    )?.href,
+    new URL("https://origin.com").href
+  );
+});
+
+t.test(
+  "it avoids infinite loops when cycles are part of the redirect chain",
+  async (t) => {
+    t.equal(
+      getRedirectOrigin(
+        [
+          {
+            source: new URL("https://start.com"),
+            destination: new URL("https://loop.com/a"),
+          },
+          {
+            source: new URL("https://loop.com/a"),
+            destination: new URL("https://loop.com/b"),
+          },
+          {
+            source: new URL("https://loop.com/b"),
+            destination: new URL("https://loop.com/c"),
+          },
+          {
+            source: new URL("https://loop.com/c"),
+            destination: new URL("https://loop.com/a"), // Cycle here
+          },
+        ],
+        new URL("https://loop.com/b")
+      )?.href,
+      new URL("https://start.com").href
+    );
+  }
+);
+
 t.test("it handles redirects with query parameters", async (t) => {
   t.equal(
     getRedirectOrigin(
