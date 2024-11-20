@@ -9,7 +9,10 @@ export function externals() {
     wrapper.wrap(hooks);
   });
 
-  return ["@aikidosec/firewall"].concat(
+  const packages = ["@aikidosec/firewall"].concat(
     hooks.getPackages().map((pkg) => pkg.getName())
   );
+
+  // Remove duplicates
+  return Array.from(new Set(packages));
 }
