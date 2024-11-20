@@ -1,10 +1,8 @@
 # Installing Zen in a Node.js Application Bundled with esbuild
 
-If you're using esbuild to bundle your Node.js application with `platform: "node"`, you need to ensure that Zen and its dependencies (including any packages that Zen hooks into) are correctly handled.
+If you're using esbuild to bundle your Node.js application with `platform: "node"`, you need to ensure that Zen (including any packages that Zen hooks into) are correctly handled.
 
 Note: Zen only runs on the server side, it does not run in the browser.
-
-When bundling your application with esbuild, you need to ensure that Zen and any packages it hooks into are correctly handled.
 
 To address this, you can use the utility function provided by Zen to automatically exclude the necessary packages from your bundle.
 
