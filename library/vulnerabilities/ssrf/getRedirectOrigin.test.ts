@@ -98,3 +98,22 @@ t.test(
     );
   }
 );
+
+t.test("it does not result in an infinite loop", async (t) => {
+  t.equal(
+    getRedirectOrigin(
+      [
+        {
+          source: new URL("https://example.com"),
+          destination: new URL("https://example.com/2"),
+        },
+        {
+          source: new URL("https://example.com/2"),
+          destination: new URL("https://example.com"),
+        },
+      ],
+      new URL("https://example.com")
+    ),
+    undefined
+  );
+});
