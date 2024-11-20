@@ -32,11 +32,6 @@ export function getRedirectOrigin(
       (r) => !visited.has(r.destination.href)
     );
 
-    // If no unvisited redirects are left, exit the loop
-    if (unvisitedRedirects.length === 0) {
-      break;
-    }
-
     for (const redirect of unvisitedRedirects) {
       if (redirect.destination.href === currentUrl.href) {
         visited.add(redirect.destination.href);
