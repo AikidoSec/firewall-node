@@ -60,8 +60,7 @@ t.test("it works", async (t) => {
   }
 });
 
-const redirectTestUrl =
-  "http://ssrf-redirects.testssandbox.com";
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test(
   "it detects SSRF attacks with redirects",
@@ -75,34 +74,35 @@ t.test(
     });
     agent.start([new HTTPRequest()]);
 
-    const needle = require("needle");
+    const needle = require("needle") as typeof import("needle");
 
-  await runWithContext(
-    createContext({ body: { image: `${redirectTestUrl}/ssrf-test-domain` } }),
-    async () => {
-      await new Promise<void>((resolve) => {
-        needle.request(
-          "get",
-          `${redirectTestUrl}/ssrf-test-domain`,
-          {},
-          {
-            /* eslint-disable camelcase */
-            follow_max: 1,
-            open_timeout: 5000,
-            response_timeout: 5000,
-            read_timeout: 5000,
-            /* eslint-enable camelcase */
-          },
-          (error, response) => {
-            t.ok(error instanceof Error);
-            t.match(
-              error?.message,
-              /Zen has blocked a server-side request forgery/
-            );
-            resolve();
-          }
-        );
-      });
-    }
-  );
-});
+    await runWithContext(
+      createContext({ body: { image: `${redirectTestUrl}/ssrf-test-domain` } }),
+      async () => {
+        await new Promise<void>((resolve) => {
+          needle.request(
+            "get",
+            `${redirectTestUrl}/ssrf-test-domain`,
+            {},
+            {
+              /* eslint-disable camelcase */
+              follow_max: 1,
+              open_timeout: 5000,
+              response_timeout: 5000,
+              read_timeout: 5000,
+              /* eslint-enable camelcase */
+            },
+            (error, response) => {
+              t.ok(error instanceof Error);
+              t.match(
+                error?.message,
+                /Zen has blocked a server-side request forgery/
+              );
+              resolve();
+            }
+          );
+        });
+      }
+    );
+  }
+);

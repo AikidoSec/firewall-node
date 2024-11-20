@@ -5,6 +5,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, getContext, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 
 const source =
@@ -27,16 +28,12 @@ const context: Context = {
 };
 
 t.test("it wraps ", (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
-  const http = require("http");
+  const http = require("http") as typeof import("http");
 
   runWithContext(context, () => {
     const request = http.request(source, (res) => {
@@ -45,7 +42,7 @@ t.test("it wraps ", (t) => {
 
     request.on("response", (res) => {
       t.same(
-        getContext().outgoingRequestRedirects.map((r) => ({
+        getContext()!.outgoingRequestRedirects!.map((r) => ({
           source: r.source.toString(),
           destination: r.destination.toString(),
         })),

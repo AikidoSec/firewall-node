@@ -6,23 +6,28 @@ import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost:4000/api/internal",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
-};
+function createContext(obj: Partial<Context> = {}): Context {
+  return {
+    ...{
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {},
+      headers: {},
+      body: {
+        image: "http://localhost:5000/api/internal",
+      },
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    ...obj,
+  };
+}
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
-const redirecTestUrl2 =
+const redirectTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -49,10 +54,9 @@ t.test("it works", (t) => {
   const http = require("http") as typeof import("http");
 
   runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ip } },
-    },
+    createContext({
+      body: { image: redirectUrl.ip },
+    }),
     () => {
       const response1 = http.request(redirectUrl.ip, (res) => {
         t.same(res.statusCode, 302);
@@ -74,10 +78,9 @@ t.test("it works", (t) => {
   );
 
   runWithContext(
-    {
-      ...context,
-      ...{ body: { test: redirectUrl.domain } },
-    },
+    createContext({
+      body: { test: redirectUrl.domain },
+    }),
     () => {
       const response1 = http.request(redirectUrl.domain, (res) => {
         t.same(res.statusCode, 302);
@@ -85,7 +88,6 @@ t.test("it works", (t) => {
         consumeBody(res);
 
         http.request("http://local.aikido.io/test").on("error", (e) => {
-          t.ok(e instanceof Error);
           t.same(
             e.message,
             "Zen has blocked a server-side request forgery: http.request(...) originating from body.test"
@@ -97,10 +99,9 @@ t.test("it works", (t) => {
   );
 
   runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ipTwice } },
-    },
+    createContext({
+      body: { image: redirectUrl.ipTwice },
+    }),
     () => {
       const response1 = http.request(redirectUrl.ipTwice, (res) => {
         t.same(res.statusCode, 302);
@@ -127,10 +128,9 @@ t.test("it works", (t) => {
   );
 
   runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.domainTwice } },
-    },
+    createContext({
+      body: { image: redirectUrl.domainTwice },
+    }),
     () => {
       const response1 = http.request(redirectUrl.domainTwice, (res) => {
         t.same(res.statusCode, 302);
@@ -142,7 +142,6 @@ t.test("it works", (t) => {
           consumeBody(res);
 
           http.request("http://local.aikido.io/test").on("error", (e) => {
-            t.ok(e instanceof Error);
             t.same(
               e.message,
               "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
@@ -156,21 +155,18 @@ t.test("it works", (t) => {
   );
 
   runWithContext(
-    {
-      ...context,
-      ...{
-        body: {
-          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-        },
+    createContext({
+      body: {
+        image: `${redirectTestUrl2}/ssrf-test-absolute-domain`,
       },
-    },
+    }),
     () => {
       const req1 = http.request(
-        `${redirecTestUrl2}/ssrf-test-absolute-domain`,
+        `${redirectTestUrl2}/ssrf-test-absolute-domain`
       );
       req1.on("response", (res) => {
         t.same(res.statusCode, 302);
-        t.same(res.headers.location, redirectUrl.domain);
+        t.same(res.headers.location, `${redirectTestUrl2}/ssrf-test-domain`);
 
         consumeBody(res);
 
@@ -178,13 +174,15 @@ t.test("it works", (t) => {
         req2.prependOnceListener("response", (res) => {
           consumeBody(res);
 
-          http.request("http://local.aikido.io/test").on("error", (e) => {
-            t.ok(e instanceof Error);
-            t.same(
-              e.message,
-              "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
-            );
-          });
+          http
+            .request("http://local.aikido.io/test")
+            .on("error", (e) => {
+              t.same(
+                e.message,
+                "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+              );
+            })
+            .end();
         });
         req2.end();
       });

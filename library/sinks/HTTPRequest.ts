@@ -229,6 +229,8 @@ export class HTTPRequest implements Wrapper {
             },
             modifyReturnValue: (args, returnValue, agent) => {
               this.wrapEventListeners(args, module, returnValue);
+
+              return returnValue;
             },
           });
         }

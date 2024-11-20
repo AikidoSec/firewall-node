@@ -1,3 +1,4 @@
+import type { IncomingMessage } from "http";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -21,6 +22,14 @@ const context: Context = {
 
 let server: import("http").Server;
 const port = 3000;
+
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {}
+  });
+}
 
 t.before(async () => {
   const { createServer } = require("http") as typeof import("http");
@@ -120,8 +129,7 @@ t.test("it works", (t) => {
     },
     () => {
       const response = http.request(`http://[::]:${port}`, (res) => {
-        // consume body
-        while (res.read()) {}
+        consumeBody(res);
 
         t.same(res.statusCode, 200);
       });
