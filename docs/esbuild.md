@@ -2,6 +2,8 @@
 
 Note: Zen runs only on the server side, it does not run in the browser.
 
+Note: If `bundle` is set to `false` in the esbuild configuration, Zen will work without any additional configuration.
+
 Zen works by intercepting `require()` calls that a Node.js application makes when loading modules. This includes modules that are built-in to Node.js, like the `fs` module for accessing the filesystem, as well as modules installed from the NPM registry, like the `pg` database module.
 
 Bundlers crawl all of the `require()` calls that an application makes to files on disk. It replaces the `require()` calls with custom code and combines all the resulting JavaScript into one "bundled" file. When a built-in module is loaded, such as `require('fs')`, that call can then remain the same in the resulting bundle.
@@ -27,3 +29,5 @@ build({
 ```
 
 This tells esbuild to exclude @aikidosec/firewall and any packages that Zen hooks into from the bundle.
+
+⚠️ Don't forget to copy the node_modules directory to the output directory.
