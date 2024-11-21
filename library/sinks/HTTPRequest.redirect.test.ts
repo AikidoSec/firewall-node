@@ -170,7 +170,7 @@ t.test("it works", (t) => {
 
         consumeBody(res);
 
-        const req2 = http.request(redirectUrl.domain);
+        const req2 = http.request(`${redirectTestUrl2}/ssrf-test-domain`);
         req2.prependOnceListener("response", (res) => {
           consumeBody(res);
 
