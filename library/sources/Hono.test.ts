@@ -2,14 +2,34 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
+import { wrap } from "../helpers/wrap";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
+import * as fetch from "../helpers/fetch";
+
+wrap(fetch, "fetch", function mock(original) {
+  return async function mock() {
+    if (
+      arguments.length > 0 &&
+      arguments[0] &&
+      arguments[0].url.toString().includes("firewall")
+    ) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          blockedIPAddresses: ["1.3.2.4", "fe80::1234:5678:abcd:ef12/64"],
+        }),
+      };
+    }
+
+    return await original.apply(this, arguments);
+  };
+});
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -31,7 +51,7 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
-    blockedIPAddresses: ["1.3.2.4", "fe80::1234:5678:abcd:ef12/64"],
+    blockedIPAddresses: [],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -242,7 +262,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     fetch: getApp().fetch,
     port: 8765,
   });
-  const response = await fetch({
+  const response = await fetch.fetch({
     url: new URL("http://127.0.0.1:8765/?abc=test"),
     method: "GET",
     headers: {},

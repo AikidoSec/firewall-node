@@ -1,8 +1,10 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
+import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
+import { wrap } from "../helpers/wrap";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
@@ -15,6 +17,17 @@ import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+
+wrap(fetch, "fetch", function mock() {
+  return async function mock() {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        blockedIPAddresses: ["1.3.2.4", "fe80::1234:5678:abcd:ef12/64"],
+      }),
+    };
+  };
+});
 
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
@@ -40,7 +53,8 @@ t.test("it sends started event", async (t) => {
   });
   agent.start([new MongoDB()]);
 
-  const mongodb = require("mongodb");
+  // Require mongodb to see if agent logs message
+  require("mongodb");
 
   t.match(api.getEvents(), [
     {

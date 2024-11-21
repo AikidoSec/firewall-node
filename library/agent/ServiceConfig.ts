@@ -6,36 +6,31 @@ import { addIPAddressToBlocklist } from "../helpers/addIPAddressToBlocklist";
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
   private allowedIPAddresses: Map<string, string> = new Map();
-  private readonly nonGraphQLEndpoints: Endpoint[];
-  private readonly graphqlFields: Endpoint[];
+  private nonGraphQLEndpoints: Endpoint[] = [];
+  private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses = new BlockList();
 
   constructor(
     endpoints: Endpoint[],
-    private readonly lastUpdatedAt: number,
+    private lastUpdatedAt: number,
     blockedUserIds: string[],
     allowedIPAddresses: string[],
-    private readonly receivedAnyStats: boolean,
+    private receivedAnyStats: boolean,
     blockedIPAddresses: string[]
   ) {
-    blockedUserIds.forEach((userId) => {
-      this.blockedUserIds.set(userId, userId);
-    });
+    this.setBlockedUserIds(blockedUserIds);
+    this.setAllowedIPAddresses(allowedIPAddresses);
+    this.setEndpoints(endpoints);
+    this.setBlockedIPAddresses(blockedIPAddresses);
+  }
 
-    allowedIPAddresses.forEach((ip) => {
-      this.allowedIPAddresses.set(ip, ip);
-    });
-
+  private setEndpoints(endpoints: Endpoint[]) {
     this.nonGraphQLEndpoints = endpoints.filter(
       (endpoint) => !endpoint.graphql
     );
     this.graphqlFields = endpoints.filter((endpoint) =>
       endpoint.graphql ? true : false
     );
-
-    blockedIPAddresses.forEach((ip) => {
-      addIPAddressToBlocklist(ip, this.blockedIPAddresses);
-    });
   }
 
   getEndpoints(context: LimitedContext) {
@@ -63,8 +58,22 @@ export class ServiceConfig {
     return endpoints.length > 0 ? endpoints[0] : undefined;
   }
 
+  private setAllowedIPAddresses(allowedIPAddresses: string[]) {
+    this.allowedIPAddresses = new Map();
+    allowedIPAddresses.forEach((ip) => {
+      this.allowedIPAddresses.set(ip, ip);
+    });
+  }
+
   isAllowedIP(ip: string) {
     return this.allowedIPAddresses.has(ip);
+  }
+
+  private setBlockedUserIds(blockedUserIds: string[]) {
+    this.blockedUserIds = new Map();
+    blockedUserIds.forEach((userId) => {
+      this.blockedUserIds.set(userId, userId);
+    });
   }
 
   isUserBlocked(userId: string) {
@@ -79,6 +88,31 @@ export class ServiceConfig {
       return this.blockedIPAddresses.check(ip, "ipv6");
     }
     return false;
+  }
+
+  private setBlockedIPAddresses(blockedIPAddresses: string[]) {
+    this.blockedIPAddresses = new BlockList();
+    blockedIPAddresses.forEach((ip) => {
+      addIPAddressToBlocklist(ip, this.blockedIPAddresses);
+    });
+  }
+
+  updateBlockedIPAddresses(blockedIPAddresses: string[]) {
+    this.setBlockedIPAddresses(blockedIPAddresses);
+  }
+
+  updateConfig(
+    endpoints: Endpoint[],
+    lastUpdatedAt: number,
+    blockedUserIds: string[],
+    allowedIPAddresses: string[],
+    hasReceivedAnyStats: boolean
+  ) {
+    this.setEndpoints(endpoints);
+    this.setBlockedUserIds(blockedUserIds);
+    this.setAllowedIPAddresses(allowedIPAddresses);
+    this.lastUpdatedAt = lastUpdatedAt;
+    this.receivedAnyStats = hasReceivedAnyStats;
   }
 
   getLastUpdatedAt() {
