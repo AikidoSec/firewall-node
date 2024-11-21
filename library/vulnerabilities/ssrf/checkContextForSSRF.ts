@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
@@ -5,6 +6,7 @@ import { extractStringsFromUserInputCached } from "../../helpers/extractStringsF
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
+import { isRequestToItself } from "./isRequestToItself";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -38,6 +40,19 @@ export function checkContextForSSRF({
     for (const [str, path] of userInput.entries()) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
+        if (
+          isRequestToItself({
+            str: str,
+            source: source,
+            port: port,
+            path: path,
+          })
+        ) {
+          // Application might do a request to itself when the hostname is localhost
+          // Let's allow this for the following headers: Host, Origin, Referer
+          // We still want to block if the port is different
+          continue;
+        }
         return {
           operation: operation,
           kind: "ssrf",

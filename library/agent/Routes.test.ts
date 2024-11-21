@@ -40,6 +40,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -53,6 +54,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -66,6 +68,7 @@ t.test("it works", async (t) => {
         hits: 2,
         graphql: undefined,
         apispec: {},
+        graphQLSchema: undefined,
       },
       {
         method: "POST",
@@ -73,6 +76,7 @@ t.test("it works", async (t) => {
         hits: 1,
         graphql: undefined,
         apispec: {},
+        graphQLSchema: undefined,
       },
     ],
     "Should add second route"
@@ -86,6 +90,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -93,6 +98,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "PUT",
@@ -100,6 +106,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -111,6 +118,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "PUT",
@@ -118,6 +126,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "DELETE",
@@ -125,6 +134,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -143,6 +153,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -150,6 +161,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -161,6 +173,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -168,6 +181,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -179,6 +193,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -186,6 +201,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -196,6 +212,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -207,6 +224,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -214,6 +232,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -224,6 +243,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -234,6 +254,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -284,6 +305,7 @@ t.test("it adds body schema", async (t) => {
         query: undefined,
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -299,6 +321,7 @@ t.test("it merges body schema", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -344,6 +367,7 @@ t.test("it merges body schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -399,6 +423,7 @@ t.test("it merges body schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -430,6 +455,7 @@ t.test("it adds query schema", async (t) => {
           },
         },
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -445,6 +471,7 @@ t.test("it merges query schema", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
   routes.addRoute(getContext("GET", "/query", {}, undefined, { test: "abc" }));
@@ -473,6 +500,7 @@ t.test("it merges query schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -499,6 +527,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "http", scheme: "bearer" }],
       },
+      graphQLSchema: undefined,
     },
     {
       method: "GET",
@@ -510,6 +539,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "cookie", name: "session" }],
       },
+      graphQLSchema: undefined,
     },
     {
       method: "GET",
@@ -521,6 +551,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -549,6 +580,7 @@ t.test("it merges auth schema", async (t) => {
           { type: "apiKey", in: "header", name: "x-api-key" },
         ],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -563,6 +595,7 @@ t.test("it ignores empty body objects", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -598,6 +631,7 @@ t.test("it ignores body of graphql queries", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -681,6 +715,7 @@ t.test("it respects max samples", async (t) => {
         query: undefined,
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -712,6 +747,7 @@ t.test(
         hits: 12,
         graphql: undefined,
         apispec: {},
+        graphQLSchema: undefined,
       },
     ]);
   }
@@ -750,6 +786,7 @@ t.test("with string format", async (t) => {
         query: undefined,
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -798,6 +835,7 @@ t.test(
           query: undefined,
           auth: undefined,
         },
+        graphQLSchema: undefined,
       },
     ]);
 
@@ -830,6 +868,7 @@ t.test(
           query: undefined,
           auth: undefined,
         },
+        graphQLSchema: undefined,
       },
     ]);
   }

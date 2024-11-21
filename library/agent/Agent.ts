@@ -468,6 +468,14 @@ export class Agent {
     this.routes.addRoute(context);
   }
 
+  hasGraphQLSchema(method: string, path: string) {
+    return this.routes.hasGraphQLSchema(method, path);
+  }
+
+  onGraphQLSchema(method: string, path: string, schema: string) {
+    this.routes.setGraphQLSchema(method, path, schema);
+  }
+
   onGraphQLExecute(
     method: string,
     path: string,

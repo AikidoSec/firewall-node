@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
+    "dd-trace": "^4.49.0",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
