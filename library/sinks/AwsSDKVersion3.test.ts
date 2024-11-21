@@ -1,24 +1,16 @@
 import { CreateBucketCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
 import { fromEnv } from "@aws-sdk/credential-providers";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 
 t.test("it works", async (t) => {
-  const logger = new LoggerForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new HTTPRequest()]);
 
-  const { S3Client } = require("@aws-sdk/client-s3");
+  const { S3Client } =
+    require("@aws-sdk/client-s3") as typeof import("@aws-sdk/client-s3");
 
   process.env.AWS_ACCESS_KEY_ID = "test";
   process.env.AWS_SECRET_ACCESS_KEY = "test";
@@ -34,7 +26,7 @@ t.test("it works", async (t) => {
 
   try {
     await s3.send(new CreateBucketCommand({ Bucket: name }));
-  } catch (err) {
+  } catch (err: any) {
     if (err.Code !== "BucketAlreadyOwnedByYou") {
       throw err;
     }
