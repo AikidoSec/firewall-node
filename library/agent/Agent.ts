@@ -362,9 +362,7 @@ export class Agent {
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedIPAddresses().catch((error) => {
-          this.logger.log(`Failed to update blocked IP addresses: ${error}`);
-        });
+        this.updateBlockedIPAddresses().catch(() => {});
       },
     });
   }
