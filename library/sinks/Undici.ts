@@ -113,9 +113,11 @@ export class Undici implements Wrapper {
         wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
           inspectArgs: (args, agent) => {
             if (this.patchedGlobalDispatcher) {
-              agent.log(
-                `undici.setGlobalDispatcher was called, we can't provide protection!`
-              );
+              agent
+                .getLogger()
+                .warn(
+                  `undici.setGlobalDispatcher was called, we can't protect undici against SSRF attacks!`
+                );
             }
           },
         });

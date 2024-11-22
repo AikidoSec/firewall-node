@@ -10,7 +10,7 @@ import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
-import { Kind } from "./Attack";
+import { attackKindHumanName, Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -23,6 +23,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { escapeLog } from "../helpers/escapeLog";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -82,13 +83,13 @@ export class Agent {
       list.push(`${pkg}@${incompatiblePackages[pkg]}`);
     }
 
-    this.logger.log(
+    this.logger.warn(
       `Unable to prevent prototype pollution, incompatible packages found: ${list.join(" ")}`
     );
   }
 
   onPrototypePollutionPrevented() {
-    this.logger.log("Prevented prototype pollution!");
+    this.logger.debug("Prevented prototype pollution!");
 
     // Will be sent in the next heartbeat
     this.preventedPrototypePollution = true;
@@ -123,7 +124,7 @@ export class Agent {
     module: string;
     method: string;
   }) {
-    this.logger.log(
+    this.logger.error(
       `Internal error in module "${module}" in method "${method}"\n${error.stack}`
     );
   }
@@ -154,6 +155,9 @@ export class Agent {
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    this.logger.info(
+      `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${escapeLog(path)}" ip="${escapeLog(request.remoteAddress)}"`
+    );
     if (this.token) {
       this.api
         .report(
@@ -191,7 +195,7 @@ export class Agent {
           this.timeoutInMS
         )
         .catch(() => {
-          this.logger.log("Failed to report attack");
+          this.logger.error("Failed to report attack");
         });
     }
   }
@@ -201,7 +205,7 @@ export class Agent {
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
     this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.log("Failed to do heartbeat");
+      this.logger.warn("Failed to send heartbeat event");
     });
   }
 
@@ -218,7 +222,7 @@ export class Agent {
       if (typeof response.block === "boolean") {
         if (response.block !== this.block) {
           this.block = response.block;
-          this.logger.log(
+          this.logger.debug(
             `Block mode has been set to ${this.block ? "on" : "off"}`
           );
         }
@@ -258,7 +262,7 @@ export class Agent {
 
   private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
-      this.logger.log("Heartbeat...");
+      this.logger.debug("Heartbeat...");
       const stats = this.statistics.getStats();
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
@@ -296,14 +300,14 @@ export class Agent {
    */
   private startHeartbeats() {
     if (this.serverless) {
-      this.logger.log(
+      this.logger.debug(
         "Running in serverless environment, not starting heartbeats"
       );
       return;
     }
 
     if (!this.token) {
-      this.logger.log("No token provided, not starting heartbeats");
+      this.logger.debug("No token provided, not starting heartbeats");
       return;
     }
 
@@ -392,21 +396,20 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.log("Starting agent...");
+    this.logger.debug("Starting agent...");
 
     if (!this.block) {
-      this.logger.log("Dry mode enabled, no requests will be blocked!");
+      this.logger.debug("Dry mode enabled, no requests will be blocked!");
     }
 
     if (this.token) {
-      this.logger.log("Found token, reporting enabled!");
+      this.logger.debug("Found token, reporting enabled!");
     } else {
-      this.logger.log("No token provided, disabling reporting.");
+      this.logger.debug("No token provided, disabling reporting.");
 
       if (!this.block && !isAikidoCI()) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+        this.logger.warn(
+          "Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
       }
     }
@@ -420,17 +423,19 @@ export class Agent {
         this.startHeartbeats();
         this.startPollingForConfigChanges();
       })
-      .catch(() => {
-        this.logger.log("Failed to start agent");
+      .catch((err) => {
+        this.logger.error(`Failed to start agent: ${err.message}`);
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
-    this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  onFailedToWrapMethod(module: string, name: string, error: Error) {
+    this.logger.error(
+      `Failed to wrap method ${name} in module ${module}: ${error.message}`
+    );
   }
 
   onFailedToWrapModule(module: string, error: Error) {
-    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+    this.logger.error(`Failed to wrap module ${module}: ${error.message}`);
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {
@@ -442,19 +447,19 @@ export class Agent {
 
     if (details.version) {
       if (details.supported) {
-        this.logger.log(`${name}@${details.version} is supported!`);
+        this.logger.debug(`${name}@${details.version} is supported!`);
       } else {
-        this.logger.log(`${name}@${details.version} is not supported!`);
+        this.logger.warn(`${name}@${details.version} is not supported!`);
       }
     }
   }
 
   onFailedToWrapPackage(module: string) {
-    this.logger.log(`Failed to wrap package ${module}`);
+    this.logger.error(`Failed to wrap package ${module}`);
   }
 
   onFailedToWrapFile(module: string, filename: string) {
-    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+    this.logger.error(`Failed to wrap file ${filename} in module ${module}`);
   }
 
   onConnectHostname(hostname: string, port: number | undefined) {
@@ -488,8 +493,8 @@ export class Agent {
     return this.routes;
   }
 
-  log(message: string) {
-    this.logger.log(message);
+  getLogger() {
+    return this.logger;
   }
 
   async flushStats(timeoutInMS: number) {
