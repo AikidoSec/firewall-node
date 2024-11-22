@@ -8,6 +8,7 @@ export async function fetchBlockedIPAddresses(token: Token): Promise<string[]> {
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
     method: "GET",
     headers: {
+      // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
       "Accept-Encoding": "gzip",
       Authorization: token.asString(),
     },
