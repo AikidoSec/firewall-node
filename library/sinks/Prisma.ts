@@ -48,7 +48,10 @@ export class Prisma implements Wrapper {
     }
   }
 
-  private inspectQuery(args: unknown[], operation: string): InterceptorResult {
+  private inspectSQLQuery(
+    args: unknown[],
+    operation: string
+  ): InterceptorResult {
     const context = getContext();
 
     if (!context) {
@@ -81,7 +84,7 @@ export class Prisma implements Wrapper {
             if (typeof instance[method] === "function") {
               wrapExport(instance, method, pkgInfo, {
                 inspectArgs: (args) => {
-                  return this.inspectQuery(args, method);
+                  return this.inspectSQLQuery(args, method);
                 },
               });
             }

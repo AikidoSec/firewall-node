@@ -23,6 +23,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+process.env.DATABASE_URL = "file:./dev.db";
+
 t.test("it inspects query method calls and blocks if needed", async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
@@ -31,7 +33,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
   const { stdout, stderr } = await execAsync(
     "npx prisma migrate reset --force", // Generate prisma client, reset db and apply migrations
     {
-      cwd: path.join(__dirname, "fixtures"),
+      cwd: path.join(__dirname, "fixtures/prisma/sqlite"),
     }
   );
 
@@ -72,4 +74,25 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
       }
     }
   });
+
+  await client.$executeRawUnsafe("DELETE FROM USER WHERE id = 1");
+
+  await runWithContext(context, async () => {
+    try {
+      await client.$executeRawUnsafe(
+        "DELETE FROM USER WHERE id = 1 -- should be blocked"
+      );
+      t.fail("Execution should be blocked");
+    } catch (error) {
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Zen has blocked an SQL injection: prisma.$executeRawUnsafe(...) originating from body.myTitle"
+        );
+      }
+    }
+  });
+
+  await client.$disconnect();
 });
