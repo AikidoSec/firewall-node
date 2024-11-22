@@ -4,7 +4,7 @@ import { Prisma } from "./Prisma";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
-import path = require("path");
+import * as path from "path";
 
 const execAsync = promisify(execCb);
 
@@ -210,6 +210,46 @@ t.test("it works with postgres", async (t) => {
       }
     }
   });
+
+  await client.$disconnect();
+});
+
+t.test("it works with mongodb", async (t) => {
+  const agent = createTestAgent();
+  agent.start([new Prisma()]);
+
+  process.env.DATABASE_URL =
+    "mongodb://root:password@127.0.0.1:27020/prisma?authSource=admin&directConnection=true";
+
+  // Generate prismajs client
+  const { stdout, stderr } = await execAsync(
+    "npx prisma generate", // Generate prisma client, reset db and apply migrations
+    {
+      cwd: path.join(__dirname, "fixtures/prisma/mongodb"),
+    }
+  );
+
+  if (stderr) {
+    t.fail(stderr);
+  }
+
+  // Clear require cache
+  for (const key in require.cache) {
+    delete require.cache[key];
+  }
+
+  const { PrismaClient } = require("@prisma/client");
+
+  const client = new PrismaClient();
+
+  await client.user.create({
+    data: {
+      name: "Alice",
+      email: "alice@example.com",
+    },
+  });
+
+  await client.user.deleteMany();
 
   await client.$disconnect();
 });

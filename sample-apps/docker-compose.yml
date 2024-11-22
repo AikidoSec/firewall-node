@@ -57,6 +57,18 @@ services:
       - "27019:8123"
     volumes:
       - clickhouse:/var/lib/clickhouse
+  mongodb-replica:
+    image: bitnami/mongodb:4.4 # Newer versions do not run on Apple Silicon
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=127.0.0.1
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_USER=root
+      - MONGODB_ROOT_PASSWORD=password
+      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+    ports:
+      - "27020:27017"
+    volumes:
+      - "mongodb-replica:/bitnami/mongodb"
 
 volumes:
   mongodb:
@@ -68,4 +80,6 @@ volumes:
   mariadb:
     driver: local
   clickhouse:
+    driver: local
+  mongodb-replica:
     driver: local
