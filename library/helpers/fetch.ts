@@ -59,36 +59,6 @@ async function request({
   });
 }
 
-async function handleResponse(response: IncomingMessage) {
-  return new Promise<{
-    body: string;
-    statusCode: number;
-  }>((resolve, reject) => {
-    let data = "";
-    let responseStream: Readable = response;
-
-    // Handle gzip-encoded response
-    if (response.headers && response.headers["content-encoding"] === "gzip") {
-      const gunzip = createGunzip();
-      responseStream = response.pipe(gunzip);
-    }
-
-    responseStream.on("data", (chunk) => {
-      data += chunk.toString();
-    });
-
-    responseStream.on("end", () => {
-      // We don't throw errors unless the request times out, is aborted or fails for low level reasons
-      // Error objects are annoying to work with
-      // That's why we use `resolve` instead of `reject`
-      resolve({
-        body: data,
-        statusCode: response.statusCode || 0,
-      });
-    });
-  });
-}
-
 export async function fetch({
   url,
   method = "GET",
