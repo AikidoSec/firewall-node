@@ -292,8 +292,6 @@ export class Agent {
       );
 
       this.updateServiceConfig(response);
-
-      await this.updateBlockedIPAddresses();
     }
   }
 
