@@ -1,3 +1,4 @@
+/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -13,7 +14,7 @@ import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
 
 wrap(fetch, "fetch", function mock(original) {
-  return async function mock() {
+  return async function mock(this: typeof fetch) {
     if (
       arguments.length > 0 &&
       arguments[0] &&
@@ -51,7 +52,6 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
-    blockedIPAddresses: [],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
