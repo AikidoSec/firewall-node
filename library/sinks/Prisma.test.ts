@@ -268,9 +268,28 @@ t.test("it works with mongodb", async (t) => {
     delete require.cache[key];
   }
 
+  let operationCount = 0;
+
   const { PrismaClient } = require("@prisma/client");
 
-  const client = new PrismaClient();
+  const client = new PrismaClient().$extends({
+    query: {
+      $allOperations: ({
+        model,
+        operation,
+        args,
+        query,
+      }: {
+        model?: string;
+        operation: string;
+        args: unknown;
+        query: (args: unknown) => Promise<unknown>;
+      }) => {
+        operationCount++;
+        return query(args);
+      },
+    },
+  });
 
   await client.user.create({
     data: {
@@ -335,6 +354,8 @@ t.test("it works with mongodb", async (t) => {
       }
     }
   });
+
+  t.same(operationCount, 3);
 
   await client.user.deleteMany();
 

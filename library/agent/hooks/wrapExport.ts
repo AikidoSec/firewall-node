@@ -1,14 +1,11 @@
 /* eslint-disable max-lines-per-function */
-import { resolve } from "path";
-import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
-import { escapeHTML } from "../../helpers/escapeHTML";
-import { Agent } from "../Agent";
+import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
-import { attackKindHumanName } from "../Attack";
-import { bindContext, getContext, updateContext } from "../Context";
-import { InterceptorResult } from "./InterceptorResult";
-import { WrapPackageInfo } from "./WrapPackageInfo";
+import { bindContext, getContext } from "../Context";
+import type { InterceptorResult } from "./InterceptorResult";
+import type { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
+import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
 type InspectArgsInterceptor = (
   args: unknown[],
@@ -29,9 +26,6 @@ export type InterceptorObject = {
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
 };
-
-// Used for cleaning up the stack trace
-const libraryRoot = resolve(__dirname, "../..");
 
 /**
  * Wraps a function with the provided interceptors.
@@ -155,50 +149,4 @@ function inspectArgs(
     });
   }
   onInspectionInterceptorResult(context, agent, result, pkgInfo, start);
-}
-
-export function onInspectionInterceptorResult(
-  context: ReturnType<typeof getContext>,
-  agent: Agent,
-  result: InterceptorResult,
-  pkgInfo: WrapPackageInfo,
-  start: number
-) {
-  const end = performance.now();
-  agent.getInspectionStatistics().onInspectedCall({
-    sink: pkgInfo.name,
-    attackDetected: !!result,
-    blocked: agent.shouldBlock(),
-    durationInMs: end - start,
-    withoutContext: !context,
-  });
-
-  const isAllowedIP =
-    context &&
-    context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
-
-  if (result && context && !isAllowedIP) {
-    // Flag request as having an attack detected
-    updateContext(context, "attackDetected", true);
-
-    agent.onDetectedAttack({
-      module: pkgInfo.name,
-      operation: result.operation,
-      kind: result.kind,
-      source: result.source,
-      blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(new Error().stack!, libraryRoot),
-      path: result.pathToPayload,
-      metadata: result.metadata,
-      request: context,
-      payload: result.payload,
-    });
-
-    if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
-      );
-    }
-  }
 }

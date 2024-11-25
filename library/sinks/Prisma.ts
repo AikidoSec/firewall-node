@@ -9,7 +9,7 @@ import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLD
 import type { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { Context, getContext } from "../agent/Context";
-import { onInspectionInterceptorResult } from "../agent/hooks/wrapExport";
+import { onInspectionInterceptorResult } from "../agent/hooks/onInspectionInterceptorResult";
 import { getInstance } from "../agent/AgentSingleton";
 import type { Agent } from "../agent/Agent";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
