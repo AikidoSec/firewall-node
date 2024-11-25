@@ -4,8 +4,6 @@ import { getContext, runWithContext } from "../../agent/Context";
 import { IncomingMessage } from "http";
 import { contextFromConnection } from "./contextFromConnection";
 import { wrapSocketEvent } from "./wrapSocketEvents";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
-import { escapeHTML } from "../../helpers/escapeHTML";
 
 // Wraps the WebSocketServer handleUpgrade callback, thats called when a new connection is established
 export function wrapHandleUpgradeCallback(handler: any, agent: Agent): any {

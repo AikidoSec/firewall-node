@@ -1,6 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { AsyncResource } from "async_hooks";
-import { getContext } from "../../agent/Context";
+import { getContext, updateContext } from "../../agent/Context";
 import type { WebSocket } from "ws";
 import { Agent } from "../../agent/Agent";
 import { parseWsData } from "./parseWSData";
@@ -87,7 +87,7 @@ function wrapSocketEventHandler(
         return; // Do not call the original handler
       }
       if (parsedData.data) {
-        context.ws = parsedData.data;
+        updateContext(context, "ws", parsedData.data);
       }
     }
 

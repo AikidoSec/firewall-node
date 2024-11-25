@@ -85,7 +85,7 @@ t.test("it blocks in blocking mode", (t) => {
     })
     .then(() => {
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido firewall has blocked an SQL injection/);
+      t.match(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -170,7 +170,7 @@ t.test("it does not block in non-blocking mode", (t) => {
     })
     .then(() => {
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
+      t.notMatch(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
