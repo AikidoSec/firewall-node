@@ -42,20 +42,17 @@ export class Hono implements Wrapper {
       .addPackage("hono")
       .withVersion("^4.0.0")
       .onRequire((exports, pkgInfo) => {
-        return {
-          Hono: wrapNewInstance(
-            exports.Hono,
-            undefined,
-            pkgInfo,
-            (instance) => {
-              METHODS.forEach((method) => {
-                wrapExport(instance, method, pkgInfo, {
-                  modifyArgs: this.wrapArgs,
-                });
-              });
-            }
-          ),
-        };
+        const newExports = Object.create(exports);
+
+        wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
+          METHODS.forEach((method) => {
+            wrapExport(instance, method, pkgInfo, {
+              modifyArgs: this.wrapArgs,
+            });
+          });
+        });
+
+        return newExports;
       });
   }
 }
