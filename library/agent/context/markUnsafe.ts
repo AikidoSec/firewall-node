@@ -19,7 +19,6 @@ export function markUnsafe(payload: unknown) {
   try {
     const current = context.markUnsafe || [];
     const a = JSON.stringify(payload);
-    console.log("a", a);
 
     if (
       !current.some((item) => {
