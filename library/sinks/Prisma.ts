@@ -129,20 +129,13 @@ export class Prisma implements Wrapper {
     }
 
     if (filter) {
-      return this.inspectNoSQLFilter(
-        model || "",
-        "",
-        context,
-        filter,
-        operation
-      );
+      return this.inspectNoSQLFilter(model ?? "", context, filter, operation);
     }
 
     return undefined;
   }
 
   private inspectNoSQLFilter(
-    db: string,
     collection: string,
     request: Context,
     filter: unknown,
@@ -157,7 +150,6 @@ export class Prisma implements Wrapper {
         source: result.source,
         pathToPayload: result.pathToPayload,
         metadata: {
-          db: db,
           collection: collection,
           operation: operation,
           filter: JSON.stringify(filter),

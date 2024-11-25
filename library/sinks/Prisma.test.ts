@@ -127,6 +127,19 @@ t.test("it works with sqlite", async (t) => {
         );
       }
     }
+
+    try {
+      await client.$executeRawUnsafe();
+      t.fail("Should not be reached");
+    } catch (error) {
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          /Invalid `prisma\.\$executeRawUnsafe\(\)` invocation/
+        );
+      }
+    }
   });
 
   await client.$disconnect();
