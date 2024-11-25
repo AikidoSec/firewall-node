@@ -27,7 +27,6 @@ export function markUnsafe(payload: unknown) {
     })
   ) {
     current.push(payload);
+    updateContext(context, "markUnsafe", current);
   }
-
-  updateContext(context, "markUnsafe", current);
 }
