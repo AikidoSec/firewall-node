@@ -26,3 +26,19 @@ The output of LLM models should be treated as potentially dangerous, as they can
 You can pass strings, objects, and arrays to `markUnsafe`. Zen will track the marked data across your application and will be able to detect any attacks that may be attempted using the marked data.
 
 ⚠️ Be careful when marking data as unsafe, as it may lead to false positives. If you generate a full SQL query using an LLM and mark it as unsafe, Zen will flag all queries using that SQL as an attack.
+
+BAD:
+
+```js
+Zen.markUnsafe("SELECT * FROM users WHERE id = '1'");
+
+await db.query("SELECT * FROM users WHERE id = '1'");
+```
+
+GOOD:
+
+```js
+Zen.markUnsafe("' OR 1=1 -- ");
+
+await db.query("SELECT * FROM users WHERE id = ' OR 1=1 -- '");
+```
