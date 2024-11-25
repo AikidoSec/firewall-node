@@ -23,6 +23,23 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const noSQLContext: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: {},
+  headers: {},
+  body: {
+    email: {
+      $ne: null,
+    },
+  },
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
 t.test("it works with sqlite", async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
@@ -247,6 +264,63 @@ t.test("it works with mongodb", async (t) => {
       name: "Alice",
       email: "alice@example.com",
     },
+  });
+
+  t.match(await client.user.findMany(), [
+    {
+      email: "alice@example.com",
+      name: "Alice",
+    },
+  ]);
+
+  t.match(
+    await client.user.findRaw({
+      filter: {
+        email: { $ne: null },
+      },
+    }),
+    [
+      {
+        email: "alice@example.com",
+        name: "Alice",
+      },
+    ]
+  );
+
+  await runWithContext(noSQLContext, async () => {
+    try {
+      await client.user.findRaw({
+        filter: {
+          email: { $ne: null },
+        },
+      });
+      t.fail("Execution should be blocked");
+    } catch (error) {
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Zen has blocked a NoSQL injection: prisma.findRaw(...) originating from body.email"
+        );
+      }
+    }
+  });
+
+  await runWithContext(noSQLContext, async () => {
+    try {
+      await client.user.aggregateRaw({
+        pipeline: [{ $match: { email: { $ne: null } } }],
+      });
+      t.fail("Execution should be blocked");
+    } catch (error) {
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Zen has blocked a NoSQL injection: prisma.aggregateRaw(...) originating from body.email"
+        );
+      }
+    }
   });
 
   await client.user.deleteMany();
