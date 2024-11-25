@@ -30,9 +30,9 @@ You can pass strings, objects, and arrays to `markUnsafe`. Zen will track the ma
 BAD:
 
 ```js
-Zen.markUnsafe("SELECT * FROM users WHERE id = '1'");
+Zen.markUnsafe("SELECT * FROM users WHERE id = ' OR 1=1 -- '");
 
-await db.query("SELECT * FROM users WHERE id = '1'");
+await db.query("SELECT * FROM users WHERE id = ' OR 1=1 -- '");
 ```
 
 GOOD:
