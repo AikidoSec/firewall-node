@@ -20,13 +20,16 @@ export function markUnsafe(payload: unknown) {
   const a = JSON.stringify(payload);
 
   if (
-    !current.some((item) => {
+    current.some((item) => {
       // JSON.stringify is used to compare objects
       // without having to copy a deep equality function
       return JSON.stringify(item) === a;
     })
   ) {
-    current.push(payload);
-    updateContext(context, "markUnsafe", current);
+    // We already have this payload in the list
+    return;
   }
+
+  current.push(payload);
+  updateContext(context, "markUnsafe", current);
 }
