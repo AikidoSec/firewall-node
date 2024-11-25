@@ -1,6 +1,5 @@
 import type { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
-import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
@@ -10,47 +9,71 @@ import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLD
 import type { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { getContext } from "../agent/Context";
+import type { PrismaPromise } from "@prisma/client";
+import { onInspectionInterceptorResult } from "../agent/hooks/wrapExport";
+import { getInstance } from "../agent/AgentSingleton";
+import type { Agent } from "../agent/Agent";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+
+type AllOperationsQueryExtension = {
+  model?: string;
+  operation: string;
+  args: any;
+  query: (args: any) => PrismaPromise<any>;
+};
 
 export class Prisma implements Wrapper {
-  private rawSQLMethodsToWrap = ["$queryRawUnsafe", "$executeRawUnsafe"];
+  private rawSQLMethodsToProtect = ["$queryRawUnsafe", "$executeRawUnsafe"];
 
-  private dialect: SQLDialect = new SQLDialectGeneric();
+  // Check if the prisma client is a NoSQL client
+  private isNoSQLClient(clientInstance: any): boolean {
+    if (
+      !clientInstance ||
+      typeof clientInstance !== "object" ||
+      !("_engineConfig" in clientInstance) ||
+      !clientInstance._engineConfig ||
+      typeof clientInstance._engineConfig !== "object" ||
+      !("activeProvider" in clientInstance._engineConfig) ||
+      typeof clientInstance._engineConfig.activeProvider !== "string"
+    ) {
+      return false;
+    }
+
+    return clientInstance._engineConfig.activeProvider === "mongodb";
+  }
 
   // Try to detect the SQL dialect used by the Prisma client, so we can use the correct SQL dialect for the SQL injection detection.
-  private detectSQLDialect(clientInstance: any) {
+  private getClientSQLDialect(clientInstance: any): SQLDialect {
     // https://github.com/prisma/prisma/blob/559988a47e50b4d4655dc45b11ceb9b5c73ef053/packages/generator-helper/src/types.ts#L75
     if (
       !clientInstance ||
       typeof clientInstance !== "object" ||
-      !("_accelerateEngineConfig" in clientInstance) ||
-      !clientInstance._accelerateEngineConfig ||
-      typeof clientInstance._accelerateEngineConfig !== "object" ||
-      !("activeProvider" in clientInstance._accelerateEngineConfig) ||
-      typeof clientInstance._accelerateEngineConfig.activeProvider !== "string"
+      !("_engineConfig" in clientInstance) ||
+      !clientInstance._engineConfig ||
+      typeof clientInstance._engineConfig !== "object" ||
+      !("activeProvider" in clientInstance._engineConfig) ||
+      typeof clientInstance._engineConfig.activeProvider !== "string"
     ) {
-      return;
+      return new SQLDialectGeneric();
     }
 
-    switch (clientInstance._accelerateEngineConfig.activeProvider) {
+    switch (clientInstance._engineConfig.activeProvider) {
       case "mysql":
-        this.dialect = new SQLDialectMySQL();
-        break;
+        return new SQLDialectMySQL();
       case "postgresql":
       case "postgres":
-        this.dialect = new SQLDialectPostgres();
-        break;
+        return new SQLDialectPostgres();
       case "sqlite":
-        this.dialect = new SQLDialectSQLite();
-        break;
+        return new SQLDialectSQLite();
       default:
-        // Already set to generic
-        break;
+        return new SQLDialectGeneric();
     }
   }
 
   private inspectSQLQuery(
     args: unknown[],
-    operation: string
+    operation: string,
+    dialect: SQLDialect
   ): InterceptorResult {
     const context = getContext();
 
@@ -65,11 +88,50 @@ export class Prisma implements Wrapper {
         sql: sql,
         context: context,
         operation: `prisma.${operation}`,
-        dialect: this.dialect,
+        dialect: dialect,
       });
     }
 
     return undefined;
+  }
+
+  private onClientOperation({
+    model,
+    operation,
+    args,
+    query,
+    isNoSQLClient,
+    sqlDialect,
+    agent,
+    pkgInfo,
+  }: AllOperationsQueryExtension & {
+    isNoSQLClient: boolean;
+    sqlDialect?: SQLDialect;
+    agent: Agent;
+    pkgInfo: WrapPackageInfo;
+  }) {
+    let inspectionResult: InterceptorResult | undefined;
+    const start = performance.now();
+
+    if (!isNoSQLClient && this.rawSQLMethodsToProtect.includes(operation)) {
+      inspectionResult = this.inspectSQLQuery(
+        args,
+        operation,
+        sqlDialect || new SQLDialectGeneric()
+      );
+    }
+
+    if (inspectionResult) {
+      onInspectionInterceptorResult(
+        getContext(),
+        agent,
+        inspectionResult,
+        pkgInfo,
+        start
+      );
+    }
+
+    return query(args);
   }
 
   wrap(hooks: Hooks) {
@@ -78,19 +140,37 @@ export class Prisma implements Wrapper {
       .withVersion("^5.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "PrismaClient", pkgInfo, (instance) => {
-          this.detectSQLDialect(instance);
+          const isNoSQLClient = this.isNoSQLClient(instance);
 
-          for (const method of this.rawSQLMethodsToWrap) {
-            if (typeof instance[method] === "function") {
-              wrapExport(instance, method, pkgInfo, {
-                inspectArgs: (args) => {
-                  return this.inspectSQLQuery(args, method);
-                },
-              });
-            }
+          const agent = getInstance();
+          if (!agent) {
+            return;
           }
 
-          // Todo support mongodb methods
+          // https://www.prisma.io/docs/orm/prisma-client/client-extensions/query#modify-all-operations-in-all-models-of-your-schema
+          return instance.$extends({
+            query: {
+              $allOperations: ({
+                model,
+                operation,
+                args,
+                query,
+              }: AllOperationsQueryExtension) => {
+                return this.onClientOperation({
+                  model,
+                  operation,
+                  args,
+                  query,
+                  isNoSQLClient,
+                  sqlDialect: !isNoSQLClient
+                    ? this.getClientSQLDialect(instance)
+                    : undefined,
+                  agent,
+                  pkgInfo,
+                });
+              },
+            },
+          });
         });
       });
   }

@@ -154,7 +154,16 @@ function inspectArgs(
       module: pkgInfo.name,
     });
   }
+  onInspectionInterceptorResult(context, agent, result, pkgInfo, start);
+}
 
+export function onInspectionInterceptorResult(
+  context: ReturnType<typeof getContext>,
+  agent: Agent,
+  result: InterceptorResult,
+  pkgInfo: WrapPackageInfo,
+  start: number
+) {
   const end = performance.now();
   agent.getInspectionStatistics().onInspectedCall({
     sink: pkgInfo.name,
