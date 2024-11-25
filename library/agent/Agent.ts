@@ -218,9 +218,13 @@ export class Agent {
       if (typeof response.block === "boolean") {
         if (response.block !== this.block) {
           this.block = response.block;
-          this.logger.log(
-            `Block mode has been set to ${this.block ? "on" : "off"}`
-          );
+          if (this.block) {
+            this.logger.log("Blocking mode enabled, requests will be blocked!");
+          } else {
+            this.logger.log(
+              "Detection-only mode enabled, no requests will be blocked!"
+            );
+          }
         }
       }
 
@@ -394,8 +398,12 @@ export class Agent {
 
     this.logger.log("Starting agent...");
 
-    if (!this.block) {
-      this.logger.log("Dry mode enabled, no requests will be blocked!");
+    if (this.block) {
+      this.logger.log("Blocking mode enabled, requests will be blocked!");
+    } else {
+      this.logger.log(
+        "Detection-only mode enabled, no requests will be blocked!"
+      );
     }
 
     if (this.token) {
