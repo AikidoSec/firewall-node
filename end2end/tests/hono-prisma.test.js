@@ -36,7 +36,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -70,7 +70,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.match(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -87,7 +87,7 @@ t.test("it does not block in non-blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -121,7 +121,7 @@ t.test("it does not block in non-blocking mode", (t) => {
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
