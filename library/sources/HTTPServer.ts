@@ -1,32 +1,25 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
 import { createUpgradeListener } from "./http-server/createUpgradeListener";
+import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
   private wrapRequestListener(args: unknown[], module: string, agent: Agent) {
-    // Parse body only if next is installed
-    // We can only read the body stream once
-    // This is tricky, see replaceRequestBody(...)
-    // e.g. Hono uses web requests and web streams
-    // (uses Readable.toWeb(req) to convert to a web stream)
-    const parseBody = isPackageInstalled("next");
-
     // Without options
     // http(s).createServer(listener)
     if (args.length > 0 && typeof args[0] === "function") {
-      return [createRequestListener(args[0], module, agent, parseBody)];
+      return [createRequestListener(args[0], module, agent)];
     }
 
     // With options
     // http(s).createServer({ ... }, listener)
     if (args.length > 1 && typeof args[1] === "function") {
-      return [
-        args[0],
-        createRequestListener(args[1], module, agent, parseBody),
-      ];
+      return [args[0], createRequestListener(args[1], module, agent)];
     }
 
     return args;
@@ -40,38 +33,67 @@ export class HTTPServer implements Wrapper {
     ) {
       return args;
     }
+
     if (args[0] === "request") {
       return this.wrapRequestListener(args, module, agent);
     }
     if (args[0] === "upgrade") {
       return [args[0], createUpgradeListener(args[1], module, agent)];
     }
+    if (module === "http2" && args[0] === "stream") {
+      return [args[0], createStreamListener(args[1], module, agent)];
+    }
+
     return args;
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addBuiltinModule("http")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "http", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "http", agent);
-      });
+    ["http", "https", "http2"].forEach((module) => {
+      hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        // Server classes are not exported in the http2 module
+        if (module !== "http2") {
+          wrapExport(exports, "Server", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapRequestListener(args, module, agent);
+            },
+          });
+        }
 
-    hooks
-      .addBuiltinModule("https")
-      .addSubject((exports) => exports)
-      .modifyArguments("createServer", (args, subject, agent) => {
-        return this.wrapRequestListener(args, "https", agent);
-      })
-      .inspectNewInstance("createServer")
-      .addSubject((exports) => exports)
-      .modifyArguments("on", (args, subject, agent) => {
-        return this.wrapOn(args, "https", agent);
+        wrapExport(exports, "createServer", pkgInfo, {
+          modifyArgs: (args, agent) => {
+            return this.wrapRequestListener(args, module, agent);
+          },
+        });
+
+        wrapNewInstance(exports, "createServer", pkgInfo, (instance) => {
+          wrapExport(instance, "on", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapOn(args, module, agent);
+            },
+          });
+        });
+
+        if (module === "http2") {
+          wrapExport(exports, "createSecureServer", pkgInfo, {
+            modifyArgs: (args, agent) => {
+              return this.wrapRequestListener(args, module, agent);
+            },
+          });
+
+          wrapNewInstance(
+            exports,
+            "createSecureServer",
+            pkgInfo,
+            (instance) => {
+              wrapExport(instance, "on", pkgInfo, {
+                modifyArgs: (args, agent) => {
+                  return this.wrapOn(args, module, agent);
+                },
+              });
+            }
+          );
+        }
       });
+    });
   }
 }

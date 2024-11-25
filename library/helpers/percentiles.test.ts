@@ -3,7 +3,7 @@ import { percentiles } from "./percentiles";
 
 function generateArray(
   length: number,
-  fn: (value: number, index: number) => number
+  fn: (value: unknown, index: number) => number
 ) {
   return Array.from({ length: length }).map(fn);
 }
@@ -29,7 +29,7 @@ const stubsSimple = [
   {
     percentile: 75,
     list: shuffleArray(
-      [].concat(generateArraySimple(100), generateArraySimple(30))
+      generateArraySimple(100).concat(generateArraySimple(30))
     ),
     result: 68,
   },

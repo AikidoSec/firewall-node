@@ -1,0 +1,8 @@
+{
+  "name": "http2",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build"
+  }
+}

@@ -21,11 +21,12 @@ function matchFilterPartInUser(
     }
   }
 
-  if (isDeepStrictEqual(userInput, filterPart)) {
-    return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
-  }
-
   if (isPlainObject(userInput)) {
+    const filteredInput = removeKeysThatDontStartWithDollarSign(userInput);
+    if (isDeepStrictEqual(filteredInput, filterPart)) {
+      return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
+    }
+
     for (const key in userInput) {
       const match = matchFilterPartInUser(
         userInput[key],

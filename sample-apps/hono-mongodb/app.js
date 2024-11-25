@@ -3,9 +3,9 @@ require("@aikidosec/firewall");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { MongoClient } = require("mongodb");
-const Aikido = require("@aikidosec/firewall/context");
 const { Post, Posts } = require("./posts");
 const { escape } = require("./escape");
+const Zen = require("@aikidosec/firewall");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -21,13 +21,15 @@ async function main() {
   const app = new Hono();
 
   app.use(async (c, next) => {
-    Aikido.setUser({
+    Zen.setUser({
       id: "id",
       name: "Name",
     });
 
     await next();
   });
+
+  Zen.addHonoMiddleware(app);
 
   app.use("/posts/*", async (c, next) => {
     await next();

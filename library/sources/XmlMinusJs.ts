@@ -1,6 +1,7 @@
 /* eslint-disable prefer-rest-params */
-import { getContext } from "../agent/Context";
+import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 
@@ -31,20 +32,27 @@ export class XmlMinusJs implements Wrapper {
 
     // Replace the body in the context with the parsed result
     if (parsed && isPlainObject(parsed)) {
-      context.xml = parsed;
+      updateContext(context, "xml", parsed);
     }
   }
 
   wrap(hooks: Hooks) {
-    const xmljs = hooks.addPackage("xml-js").withVersion("^1.0.0");
-
-    xmljs
-      .addSubject((exports) => exports)
-      .inspectResult("xml2js", (args, result) => {
-        this.inspectParse(args, result, false);
-      })
-      .inspectResult("xml2json", (args, result) => {
-        this.inspectParse(args, result, true);
+    hooks
+      .addPackage("xml-js")
+      .withVersion("^1.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports, "xml2js", pkgInfo, {
+          modifyReturnValue: (args, result) => {
+            this.inspectParse(args, result, false);
+            return result;
+          },
+        });
+        wrapExport(exports, "xml2json", pkgInfo, {
+          modifyReturnValue: (args, result) => {
+            this.inspectParse(args, result, true);
+            return result;
+          },
+        });
       });
   }
 }

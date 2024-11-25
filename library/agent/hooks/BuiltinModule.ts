@@ -1,7 +1,7 @@
-import { WrappableSubject } from "./WrappableSubject";
+import { RequireInterceptor } from "./RequireInterceptor";
 
 export class BuiltinModule {
-  private subjects: WrappableSubject[] = [];
+  private requireInterceptors: RequireInterceptor[] = [];
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -13,14 +13,11 @@ export class BuiltinModule {
     return this.name;
   }
 
-  addSubject(selector: (exports: any) => unknown): WrappableSubject {
-    const fn = new WrappableSubject(selector);
-    this.subjects.push(fn);
-
-    return fn;
+  onRequire(interceptor: RequireInterceptor) {
+    this.requireInterceptors.push(interceptor);
   }
 
-  getSubjects() {
-    return this.subjects;
+  getRequireInterceptors() {
+    return this.requireInterceptors;
   }
 }

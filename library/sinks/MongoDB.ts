@@ -1,11 +1,12 @@
 /* eslint-disable prefer-rest-params */
 import type { Collection } from "mongodb";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -160,27 +161,59 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
-  wrap(hooks: Hooks) {
-    const mongodb = hooks
-      .addPackage("mongodb")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0");
+  private inspectDistinct(
+    args: unknown[],
+    collection: Collection
+  ): InterceptorResult {
+    const context = getContext();
 
-    const collection = mongodb.addSubject(
-      (exports) => exports.Collection.prototype
-    );
+    if (!context) {
+      return undefined;
+    }
 
-    OPERATIONS_WITH_FILTER.forEach((operation) => {
-      collection.inspect(operation, (args, collection) =>
-        this.inspectOperation(operation, args, collection as Collection)
+    if (args.length > 1 && isPlainObject(args[1])) {
+      const filter = args[1];
+
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        filter,
+        "distinct"
       );
-    });
+    }
 
-    collection.inspect("bulkWrite", (args, collection) =>
-      this.inspectBulkWrite(args, collection as Collection)
-    );
+    return undefined;
+  }
 
-    collection.inspect("aggregate", (args, collection) =>
-      this.inspectAggregate(args, collection as Collection)
-    );
+  wrap(hooks: Hooks) {
+    hooks
+      .addPackage("mongodb")
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
+      .onRequire((exports, pkgInfo) => {
+        const collectionProto = exports.Collection.prototype;
+
+        OPERATIONS_WITH_FILTER.forEach((operation) => {
+          wrapExport(collectionProto, operation, pkgInfo, {
+            inspectArgs: (args, agent, collection) =>
+              this.inspectOperation(operation, args, collection as Collection),
+          });
+        });
+
+        wrapExport(collectionProto, "bulkWrite", pkgInfo, {
+          inspectArgs: (args, agent, collection) =>
+            this.inspectBulkWrite(args, collection as Collection),
+        });
+
+        wrapExport(collectionProto, "aggregate", pkgInfo, {
+          inspectArgs: (args, agent, collection) =>
+            this.inspectAggregate(args, collection as Collection),
+        });
+
+        wrapExport(collectionProto, "distinct", pkgInfo, {
+          inspectArgs: (args, agent, collection) =>
+            this.inspectDistinct(args, collection as Collection),
+        });
+      });
   }
 }

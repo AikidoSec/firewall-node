@@ -6,7 +6,7 @@ const timeout = require("../timeout");
 const pathToApp = resolve(__dirname, "../../sample-apps/hono-xml", "app.js");
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4002"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -88,7 +88,7 @@ t.test("it blocks in blocking mode", (t) => {
         t.equal(sqlInjectionFast2.status, 500);
         t.equal(normalAdd.status, 200);
         t.match(stdout, /Starting agent/);
-        t.match(stderr, /Aikido firewall has blocked an SQL injection/);
+        t.match(stderr, /Zen has blocked an SQL injection/);
       }
     )
     .catch((error) => {
@@ -100,7 +100,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4003"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -178,7 +178,7 @@ t.test("it does not block in dry mode", (t) => {
         t.equal(sqlInjectionFast2.status, 200);
         t.equal(normalAdd.status, 200);
         t.match(stdout, /Starting agent/);
-        t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
+        t.notMatch(stderr, /Zen has blocked an SQL injection/);
       }
     )
     .catch((error) => {

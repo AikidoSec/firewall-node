@@ -12,7 +12,7 @@
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
-    "mongodb": "^6.3.0",
+    "mongodb": "~6.3.0",
     "morgan": "^1.10.0"
   }
 }

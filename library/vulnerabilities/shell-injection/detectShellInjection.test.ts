@@ -398,6 +398,35 @@ t.test("no shell injection with ~", async () => {
   isNotShellInjection("ls ~/path", "path");
 });
 
+t.test("false positive with email address", async () => {
+  isNotShellInjection(
+    "echo token | docker login --username john.doe@acme.com --password-stdin hub.acme.com",
+    "john.doe@acme.com"
+  );
+});
+
+t.test("it flags @ inside shell syntax", async () => {
+  isShellInjection('echo "${array[@]}"', "${array[@]}");
+  isShellInjection("echo $@", "$@");
+});
+
+t.test("it allows comma separated list", async () => {
+  isNotShellInjection(
+    `command -tags php,laravel,drupal,phpmyadmin,symfony -stats `,
+    "php,laravel,drupal,phpmyadmin,symfony"
+  );
+});
+
+t.test("it flags comma in loop", async () => {
+  isShellInjection(
+    `command for (( i=0, j=10; i<j; i++, j-- ))
+do
+    echo "$i $j"
+done`,
+    "for (( i=0, j=10; i<j; i++, j-- ))"
+  );
+});
+
 function isShellInjection(command: string, userInput: string) {
   t.same(
     detectShellInjection(command, userInput),

@@ -7,6 +7,6 @@
     "ws": "^8.18.0"
   },
   "scripts": {
-    "test": "tap tests/*.js --allow-empty-coverage -j 1"
+    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1"
   }
 }

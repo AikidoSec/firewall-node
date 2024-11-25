@@ -1,21 +1,28 @@
-import { isIP } from "net";
+import { isIP, type LookupFunction } from "net";
 import { LookupAddress } from "dns";
+import { resolve } from "path";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
-import { Context, getContext } from "../../agent/Context";
-import { Source, SOURCES } from "../../agent/Source";
-import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
+import { getContext } from "../../agent/Context";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
+import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
-import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
+import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
+import { findHostnameInContext } from "./findHostnameInContext";
+import { getRedirectOrigin } from "./getRedirectOrigin";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
-  operation: string
-): Function {
+  operation: string,
+  url?: URL,
+  stackTraceCallingLocation?: Error
+): LookupFunction {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;
@@ -39,7 +46,9 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            url,
+            stackTraceCallingLocation
           ),
         ]
       : [
@@ -49,7 +58,9 @@ export function inspectDNSLookupCalls(
             hostname,
             module,
             agent,
-            operation
+            operation,
+            url,
+            stackTraceCallingLocation
           ),
         ];
 
@@ -63,7 +74,9 @@ function wrapDNSLookupCallback(
   hostname: string,
   module: string,
   agent: Agent,
-  operation: string
+  operation: string,
+  urlArg?: URL,
+  callingLocationStackTrace?: Error
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -78,9 +91,9 @@ function wrapDNSLookupCallback(
     const context = getContext();
 
     if (context) {
-      const endpoint = agent.getConfig().getEndpoint(context);
+      const matches = agent.getConfig().getEndpoints(context);
 
-      if (endpoint && endpoint.endpoint.forceProtectionOff) {
+      if (matches.find((endpoint) => endpoint.forceProtectionOff)) {
         // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
         // Just call the original callback to allow the DNS lookup
         return callback(err, addresses, family);
@@ -96,7 +109,7 @@ function wrapDNSLookupCallback(
       if (agent.shouldBlock()) {
         return callback(
           new Error(
-            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
           )
         );
       }
@@ -108,6 +121,17 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    // This is set if this resolve is part of an outgoing request that we are inspecting
+    const requestContext = RequestContextStorage.getStore();
+
+    let port: number | undefined;
+
+    if (urlArg) {
+      port = getPortFromURL(urlArg);
+    } else if (requestContext) {
+      port = requestContext.port;
+    }
+
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {
@@ -116,7 +140,37 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const found = findHostnameInContext(hostname, context);
+    let found = findHostnameInContext(hostname, context, port);
+
+    // The hostname is not found in the context, check if it's a redirect
+    if (!found && context.outgoingRequestRedirects) {
+      let url: URL | undefined;
+      // Url arg is passed when wrapping node:http(s), but not for undici / fetch because of the way they are wrapped
+      // For undici / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
+      // not to be confused with the "normal" context used in wide parts of this library
+      if (urlArg) {
+        url = urlArg;
+      } else if (requestContext) {
+        url = new URL(requestContext.url);
+      }
+
+      if (url) {
+        // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
+        const redirectOrigin = getRedirectOrigin(
+          context.outgoingRequestRedirects,
+          url
+        );
+
+        // If the URL is the result of a redirect, get the origin of the redirect chain for reporting the attack source
+        if (redirectOrigin) {
+          found = findHostnameInContext(
+            redirectOrigin.hostname,
+            context,
+            getPortFromURL(redirectOrigin)
+          );
+        }
+      }
+    }
 
     if (!found) {
       // If we can't find the hostname in the context, it's not an SSRF attack
@@ -124,15 +178,32 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    const isAllowedIP =
+      context &&
+      context.remoteAddress &&
+      agent.getConfig().isAllowedIP(context.remoteAddress);
+
+    if (isAllowedIP) {
+      // If the IP address is allowed, we don't need to block the request
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
+    }
+
+    const libraryRoot = resolve(__dirname, "../..");
+
+    // Used to get the stack trace of the calling location
+    // We don't throw the error, we just use it to get the stack trace
+    const stackTraceError = callingLocationStackTrace || new Error();
+
     agent.onDetectedAttack({
       module: module,
       operation: operation,
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
+      stack: cleanupStackTrace(stackTraceError.stack!, libraryRoot),
       path: found.pathToPayload,
-      metadata: {},
+      metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
     });
@@ -140,7 +211,7 @@ function wrapDNSLookupCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${found.pathToPayload}`
+          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
         )
       );
     }
@@ -149,35 +220,6 @@ function wrapDNSLookupCallback(
     // Just call the original callback to allow the DNS lookup
     return callback(err, addresses, family);
   };
-}
-
-type Location = {
-  source: Source;
-  pathToPayload: string;
-  payload: string;
-};
-
-function findHostnameInContext(
-  hostname: string,
-  context: Context
-): Location | undefined {
-  for (const source of SOURCES) {
-    if (context[source]) {
-      const userInput = extractStringsFromUserInput(context[source]);
-      for (const [str, path] of userInput.entries()) {
-        const found = findHostnameInUserInput(str, hostname);
-        if (found) {
-          return {
-            source: source,
-            pathToPayload: path,
-            payload: str,
-          };
-        }
-      }
-    }
-  }
-
-  return undefined;
 }
 
 function getResolvedIPAddresses(addresses: string | LookupAddress[]): string[] {

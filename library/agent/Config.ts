@@ -2,6 +2,11 @@ export type Endpoint = {
   method: string;
   route: string;
   forceProtectionOff: boolean;
+  graphql?: {
+    type: "query" | "mutation";
+    name: string;
+  };
+  allowedIPAddresses?: string[];
   rateLimiting: {
     enabled: boolean;
     maxRequests: number;
@@ -16,4 +21,5 @@ export type Config = {
   blockedUserIds: string[];
   allowedIPAddresses: string[];
   block?: boolean;
+  receivedAnyStats?: boolean;
 };
