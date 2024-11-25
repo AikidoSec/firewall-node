@@ -10,6 +10,8 @@ const execAsync = promisify(execCb);
 const appDir = resolve(__dirname, "../../sample-apps/hono-prisma");
 const pathToApp = join(appDir, "app.js");
 
+process.env.DATABASE_URL = "file:./dev.db";
+
 t.before(async (t) => {
   // Generate prismajs client
   const { stdout, stderr } = await execAsync(

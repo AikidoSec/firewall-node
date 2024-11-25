@@ -1,5 +1,7 @@
 const Zen = require("@aikidosec/firewall");
 
+process.env.DATABASE_URL = "file:./dev.db";
+
 const { PrismaClient } = require("@prisma/client");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
@@ -21,6 +23,8 @@ async function main() {
   const prisma = new PrismaClient();
 
   const app = new Hono();
+
+  Zen.addHonoMiddleware(app);
 
   app.get("/", async (c) => {
     return c.text("Hello, world!");
