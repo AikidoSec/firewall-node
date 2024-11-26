@@ -263,7 +263,8 @@ t.test("it ignores invalid json body", opts, async (t) => {
 });
 
 t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
-  const { serve } = require("@hono/node-server");
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
     fetch: getApp().fetch,
     port: 8765,
@@ -289,16 +290,16 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
 t.test("ip blocking works (real socket)", opts, async (t) => {
   // Start a server with a real socket
   // The blocking is implemented in the HTTPServer source
-  const { serve } = require("@hono/node-server");
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
     fetch: getApp().fetch,
-    port: 8765,
+    port: 8766,
   });
 
   // Test blocked IP (IPv4)
   const response = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8765/"),
-    method: "GET",
+    url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "1.3.2.4", // Blocked IP
     },
@@ -311,8 +312,7 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
 
   // Test blocked IP (IPv6)
   const response2 = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8765/"),
-    method: "GET",
+    url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "fe80::1234:5678:abcd:ef12", // Blocked IP
     },
@@ -325,8 +325,7 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
 
   // Test allowed IP
   const response3 = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8765/"),
-    method: "GET",
+    url: new URL("http://127.0.0.1:8766/"),
     headers: {
       "X-Forwarded-For": "9.8.7.6", // Allowed IP
     },
