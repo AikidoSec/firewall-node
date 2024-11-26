@@ -928,7 +928,7 @@ t.test("it sends middleware installed with heartbeat", async () => {
   clock.uninstall();
 });
 
-t.test("it fetched block IPs", async () => {
+t.test("it fetches blocked IPs", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
   });
