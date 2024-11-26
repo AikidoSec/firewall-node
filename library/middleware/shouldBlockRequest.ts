@@ -2,12 +2,14 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
-export function shouldBlockRequest(): {
+type Result = {
   block: boolean;
   type?: "ratelimited" | "blocked";
   trigger?: "ip" | "user";
   ip?: string;
-} {
+};
+
+export function shouldBlockRequest(): Result {
   const context = getContext();
   if (!context) {
     return { block: false };
@@ -23,18 +25,6 @@ export function shouldBlockRequest(): {
 
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
     return { block: true, type: "blocked", trigger: "user" };
-  }
-
-  if (
-    context.remoteAddress &&
-    agent.getConfig().isIPAddressBlocked(context.remoteAddress)
-  ) {
-    return {
-      block: true,
-      type: "blocked",
-      trigger: "ip",
-      ip: context.remoteAddress,
-    };
   }
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);

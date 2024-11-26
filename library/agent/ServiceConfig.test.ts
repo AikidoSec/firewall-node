@@ -88,19 +88,45 @@ t.test("it checks if IP is allowed", async () => {
 
 t.test("ip blocking works", async () => {
   const config = new ServiceConfig([], 0, [], [], false, [
-    "1.2.3.4",
-    "192.168.2.1/24",
-    "fd00:1234:5678:9abc::1",
-    "fd00:3234:5678:9abc::1/64",
-    "5.6.7.8/32",
+    {
+      source: "geoip",
+      description: "description",
+      ips: [
+        "1.2.3.4",
+        "192.168.2.1/24",
+        "fd00:1234:5678:9abc::1",
+        "fd00:3234:5678:9abc::1/64",
+        "5.6.7.8/32",
+      ],
+    },
   ]);
-  t.same(config.isIPAddressBlocked("1.2.3.4"), true);
-  t.same(config.isIPAddressBlocked("2.3.4.5"), false);
-  t.same(config.isIPAddressBlocked("192.168.2.2"), true);
-  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::1"), true);
-  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::2"), false);
-  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), true);
-  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), true);
-  t.same(config.isIPAddressBlocked("5.6.7.8"), true);
-  t.same(config.isIPAddressBlocked("1.2"), false);
+  t.same(config.isIPAddressBlocked("1.2.3.4"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("2.3.4.5"), { blocked: false });
+  t.same(config.isIPAddressBlocked("192.168.2.2"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::1"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::2"), {
+    blocked: false,
+  });
+  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("5.6.7.8"), {
+    blocked: true,
+    reason: "description",
+  });
+  t.same(config.isIPAddressBlocked("1.2"), { blocked: false });
 });

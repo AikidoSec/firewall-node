@@ -2,13 +2,15 @@ import { BlockList, isIPv4, isIPv6 } from "net";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
 import { addIPAddressToBlocklist } from "../helpers/addIPAddressToBlocklist";
+import { Blocklist as BlocklistType } from "./api/fetchBlockedIPAddresses";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
   private allowedIPAddresses: Map<string, string> = new Map();
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
-  private blockedIPAddresses = new BlockList();
+  private blockedIPAddresses: { blocklist: BlockList; description: string }[] =
+    [];
 
   constructor(
     endpoints: Endpoint[],
@@ -16,7 +18,7 @@ export class ServiceConfig {
     blockedUserIds: string[],
     allowedIPAddresses: string[],
     private receivedAnyStats: boolean,
-    blockedIPAddresses: string[]
+    blockedIPAddresses: BlocklistType[]
   ) {
     this.setBlockedUserIds(blockedUserIds);
     this.setAllowedIPAddresses(allowedIPAddresses);
@@ -80,24 +82,48 @@ export class ServiceConfig {
     return this.blockedUserIds.has(userId);
   }
 
-  isIPAddressBlocked(ip: string) {
+  isIPAddressBlocked(
+    ip: string
+  ): { blocked: true; reason: string } | { blocked: false } {
+    let blocklist: { blocklist: BlockList; description: string } | undefined =
+      undefined;
+
     if (isIPv4(ip)) {
-      return this.blockedIPAddresses.check(ip, "ipv4");
+      blocklist = this.blockedIPAddresses.find((blocklist) =>
+        blocklist.blocklist.check(ip, "ipv4")
+      );
     }
+
     if (isIPv6(ip)) {
-      return this.blockedIPAddresses.check(ip, "ipv6");
+      blocklist = this.blockedIPAddresses.find((blocklist) =>
+        blocklist.blocklist.check(ip, "ipv6")
+      );
     }
-    return false;
+
+    if (blocklist) {
+      return { blocked: true, reason: blocklist.description };
+    }
+
+    return { blocked: false };
   }
 
-  private setBlockedIPAddresses(blockedIPAddresses: string[]) {
-    this.blockedIPAddresses = new BlockList();
-    blockedIPAddresses.forEach((ip) => {
-      addIPAddressToBlocklist(ip, this.blockedIPAddresses);
-    });
+  private setBlockedIPAddresses(blockedIPAddresses: BlocklistType[]) {
+    this.blockedIPAddresses = [];
+
+    for (const source of blockedIPAddresses) {
+      const blocklist = new BlockList();
+      for (const ip of source.ips) {
+        addIPAddressToBlocklist(ip, blocklist);
+      }
+
+      this.blockedIPAddresses.push({
+        blocklist,
+        description: source.description,
+      });
+    }
   }
 
-  updateBlockedIPAddresses(blockedIPAddresses: string[]) {
+  updateBlockedIPAddresses(blockedIPAddresses: BlocklistType[]) {
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
 

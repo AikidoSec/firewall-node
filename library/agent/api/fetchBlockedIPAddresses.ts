@@ -2,7 +2,15 @@ import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
-export async function fetchBlockedIPAddresses(token: Token): Promise<string[]> {
+export type Blocklist = {
+  source: string;
+  description: string;
+  ips: string[];
+};
+
+export async function fetchBlockedIPAddresses(
+  token: Token
+): Promise<Blocklist[]> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -19,7 +27,9 @@ export async function fetchBlockedIPAddresses(token: Token): Promise<string[]> {
     throw new Error(`Failed to fetch blocked IP addresses: ${statusCode}`);
   }
 
-  const result: { blockedIPAddresses: string[] } = JSON.parse(body);
+  const result: {
+    blockedIPAddresses: Blocklist[];
+  } = JSON.parse(body);
 
   return result && result.blockedIPAddresses ? result.blockedIPAddresses : [];
 }

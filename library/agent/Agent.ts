@@ -342,6 +342,11 @@ export class Agent {
       return;
     }
 
+    if (this.serverless) {
+      // Not supported in serverless mode
+      return;
+    }
+
     try {
       const blockedIps = await fetchBlockedIPAddresses(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIps);

@@ -23,7 +23,13 @@ wrap(fetch, "fetch", function mock(original) {
       return {
         statusCode: 200,
         body: JSON.stringify({
-          blockedIPAddresses: ["1.3.2.4", "fe80::1234:5678:abcd:ef12/64"],
+          blockedIPAddresses: [
+            {
+              source: "geoip",
+              description: "geo restrictions",
+              ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+            },
+          ],
         }),
       };
     }
@@ -280,31 +286,53 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   server.close();
 });
 
-t.test("ip blocking works", opts, async (t) => {
-  const response = await getApp().request("/", {
-    method: "GET",
-    headers: {
-      "X-Forwarded-For": "1.3.2.4",
-    },
-  });
-  t.match(response.status, 403);
-  t.match(await response.text(), "You are blocked by Zen.");
-
-  const response2 = await getApp().request("/", {
-    method: "GET",
-    headers: {
-      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12",
-    },
-  });
-  t.match(response2.status, 403);
-  t.match(await response2.text(), "You are blocked by Zen.");
-
-  const response3 = await getApp().request("/", {
-    method: "GET",
-    headers: {
-      "X-Forwarded-For": "9.8.7.6",
-    },
+t.test("ip blocking works (real socket)", opts, async (t) => {
+  // Start a server with a real socket
+  // The blocking is implemented in the HTTPServer source
+  const { serve } = require("@hono/node-server");
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8765,
   });
 
-  t.match(response3.status, 200);
+  // Test blocked IP (IPv4)
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8765/"),
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.3.2.4", // Blocked IP
+    },
+  });
+  t.equal(response.statusCode, 403);
+  t.equal(
+    response.body,
+    "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
+  );
+
+  // Test blocked IP (IPv6)
+  const response2 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8765/"),
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12", // Blocked IP
+    },
+  });
+  t.equal(response2.statusCode, 403);
+  t.equal(
+    response2.body,
+    "Your IP address is blocked due to geo restrictions. (Your IP: fe80::1234:5678:abcd:ef12)"
+  );
+
+  // Test allowed IP
+  const response3 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8765/"),
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "9.8.7.6", // Allowed IP
+    },
+  });
+  t.equal(response3.statusCode, 200);
+
+  // Cleanup server
+  server.close();
 });
