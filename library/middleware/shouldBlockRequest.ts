@@ -2,12 +2,14 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
-export function shouldBlockRequest(): {
+type Result = {
   block: boolean;
   type?: "ratelimited" | "blocked";
   trigger?: "ip" | "user";
   ip?: string;
-} {
+};
+
+export function shouldBlockRequest(): Result {
   const context = getContext();
   if (!context) {
     return { block: false };
