@@ -57,6 +57,11 @@ services:
       - "27019:8123"
     volumes:
       - clickhouse:/var/lib/clickhouse
+  server:
+    build:
+      context: ../end2end/server
+    ports:
+      - "5874:3000"
 
 volumes:
   mongodb:
