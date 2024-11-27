@@ -20,7 +20,7 @@ export async function fetchBlockedIPAddresses(
       "Accept-Encoding": "gzip",
       Authorization: token.asString(),
     },
-    timeoutInMS: 10000,
+    timeoutInMS: 20000,
   });
 
   if (statusCode !== 200) {
