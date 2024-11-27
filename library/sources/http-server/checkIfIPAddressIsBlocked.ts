@@ -4,7 +4,15 @@ import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 
-export function checkIfIPAddressIsBlocked(res: ServerResponse, agent: Agent) {
+/**
+ * Inspects the IP address of the request:
+ * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
+ * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
+ */
+export function checkIfIPAddressIsBlocked(
+  res: ServerResponse,
+  agent: Agent
+): boolean {
   const context = getContext();
 
   if (!context) {
