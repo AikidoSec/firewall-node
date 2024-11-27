@@ -4,28 +4,32 @@ function getIPAddressType(ip: string): "ipv4" | "ipv6" | undefined {
   if (isIPv4(ip)) {
     return "ipv4";
   }
+
   if (isIPv6(ip)) {
     return "ipv6";
   }
+
   return undefined;
 }
 
-export function addIPAddressToBlocklist(
-  ip: string,
+export function addIPAddressOrRangeToBlocklist(
+  ipOrCIDR: string,
   blocklist: BlockList
 ): boolean {
-  const isCIDR = ip.includes("/");
+  const isCIDR = ipOrCIDR.includes("/");
 
   if (!isCIDR) {
-    const type = getIPAddressType(ip);
+    const type = getIPAddressType(ipOrCIDR);
     if (!type) {
       return false;
     }
-    blocklist.addAddress(ip, type);
+
+    blocklist.addAddress(ipOrCIDR, type);
+
     return true;
   }
 
-  const [plainIP, rangeStr] = ip.split("/");
+  const [plainIP, rangeStr] = ipOrCIDR.split("/");
 
   const type = getIPAddressType(plainIP);
   if (!type) {
@@ -47,5 +51,6 @@ export function addIPAddressToBlocklist(
   }
 
   blocklist.addSubnet(plainIP, range, type);
+
   return true;
 }

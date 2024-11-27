@@ -1,7 +1,7 @@
 import { BlockList, isIPv4, isIPv6 } from "net";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
-import { addIPAddressToBlocklist } from "../helpers/addIPAddressToBlocklist";
+import { addIPAddressOrRangeToBlocklist } from "../helpers/addIPAddressOrRangeToBlocklist";
 import { Blocklist as BlocklistType } from "./api/fetchBlockedIPAddresses";
 
 export class ServiceConfig {
@@ -113,7 +113,7 @@ export class ServiceConfig {
     for (const source of blockedIPAddresses) {
       const blocklist = new BlockList();
       for (const ip of source.ips) {
-        addIPAddressToBlocklist(ip, blocklist);
+        addIPAddressOrRangeToBlocklist(ip, blocklist);
       }
 
       this.blockedIPAddresses.push({
