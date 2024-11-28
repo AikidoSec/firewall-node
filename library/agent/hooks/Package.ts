@@ -13,7 +13,11 @@ export class Package {
   private versions: VersionedPackage[] = [];
 
   constructor(private packageName: PackageName) {
-    if (!this.packageName) {
+    this.assertValidPackageName(this.packageName);
+  }
+
+  private assertValidPackageName(name: string) {
+    if (!name) {
       throw new Error("Package name is required");
     }
   }
@@ -23,6 +27,7 @@ export class Package {
   }
 
   setName(name: string) {
+    this.assertValidPackageName(name);
     this.packageName = name;
   }
 
