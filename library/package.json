@@ -70,6 +70,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.1.3",
+    "express": "^5.0.0",
     "express-v4": "npm:express@^4.0.0",
     "express-v5": "npm:express@^5.0.0",
     "express-async-handler": "^1.2.0",

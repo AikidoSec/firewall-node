@@ -1,4 +1,4 @@
-import * as express from "express";
+import * as express from "express-v5";
 import * as asyncHandler from "express-async-handler";
 import * as t from "tap";
 import { ReportingAPINodeHTTP } from "./ReportingAPINodeHTTP";
