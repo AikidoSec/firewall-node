@@ -5,11 +5,10 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
+import { startTestAgent } from "../helpers/startTestAgent";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
-import { createTestAgent } from "../helpers/createTestAgent";
-import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
 
 export function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
@@ -92,13 +91,15 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         block: true,
         receivedAnyStats: false,
       });
-      const agent = createTestAgent({
+      const agent = startTestAgent({
         api,
         logger,
         token: new Token("123"),
+        wrappers: [new Undici()],
+        rewrite: {
+          undici: undiciPkgName,
+        },
       });
-      agent.start([new Undici()]);
-      __internalRewritePackageName("undici", undiciPkgName);
 
       const {
         request,

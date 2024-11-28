@@ -3,9 +3,8 @@ import * as t from "tap";
 import { createServer, Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
-import { createTestAgent } from "../helpers/createTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { startTestAgent } from "../helpers/startTestAgent";
 import { Undici } from "./Undici";
 
 function createContext({
@@ -51,12 +50,11 @@ function createContext({
   };
 }
 
-const agent = createTestAgent({
+startTestAgent({
   token: new Token("123"),
+  wrappers: [new Undici()],
+  rewrite: { undici: "undici-v6" },
 });
-
-agent.start([new Undici()]);
-__internalRewritePackageName("undici", "undici-v6");
 
 const port = 1346;
 const serverUrl = `http://localhost:${port}`;

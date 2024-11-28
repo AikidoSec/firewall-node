@@ -3,11 +3,10 @@ import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
+import { startTestAgent } from "../helpers/startTestAgent";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
-import { createTestAgent } from "../helpers/createTestAgent";
 
 function createContext(): Context {
   return {
@@ -43,11 +42,11 @@ t.test(
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
   async (t) => {
-    const agent = createTestAgent({
+    startTestAgent({
       token: new Token("123"),
+      wrappers: [new Undici()],
+      rewrite: { undici: "undici-v6" },
     });
-    agent.start([new Undici()]);
-    __internalRewritePackageName("undici", "undici-v6");
 
     const { request, Dispatcher, setGlobalDispatcher, getGlobalDispatcher } =
       require("undici-v6") as typeof import("undici-v6");
