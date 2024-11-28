@@ -1,11 +1,9 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { createServer, Server } from "http";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
@@ -58,6 +56,7 @@ const agent = createTestAgent({
 });
 
 agent.start([new Undici()]);
+__internalRewritePackageName("undici", "undici-v6");
 
 const port = 1346;
 const serverUrl = `http://localhost:${port}`;
@@ -83,7 +82,7 @@ t.test(
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
   async (t) => {
-    const { request } = require("undici");
+    const { request } = require("undici-v6") as typeof import("undici-v6");
 
     await runWithContext(
       createContext({
@@ -108,7 +107,7 @@ t.test(
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
   async (t) => {
-    const { request } = require("undici");
+    const { request } = require("undici-v6") as typeof import("undici-v6");
 
     const error = await t.rejects(async () => {
       await runWithContext(

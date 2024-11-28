@@ -305,3 +305,26 @@ function executeInterceptors(
 export function getOriginalRequire() {
   return originalRequire;
 }
+
+export function __internalRewritePackageName(
+  packageName: string,
+  aliasForTesting: string
+) {
+  if (!isRequireWrapped) {
+    throw new Error(
+      "Start the agent before calling __internalRewritePackageName(..)"
+    );
+  }
+
+  if (packages.length === 0) {
+    throw new Error("No packages to patch");
+  }
+
+  const pkg = packages.find((pkg) => pkg.getName() === packageName);
+
+  if (!pkg) {
+    throw new Error(`Could not find package ${packageName}`);
+  }
+
+  pkg.setName(aliasForTesting);
+}

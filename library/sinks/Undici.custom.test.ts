@@ -3,6 +3,7 @@ import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
@@ -46,9 +47,10 @@ t.test(
       token: new Token("123"),
     });
     agent.start([new Undici()]);
+    __internalRewritePackageName("undici", "undici-v6");
 
     const { request, Dispatcher, setGlobalDispatcher, getGlobalDispatcher } =
-      require("undici") as typeof import("undici");
+      require("undici-v6") as typeof import("undici-v6");
 
     // See https://www.npmjs.com/package/@n8n_io/license-sdk
     // They set a custom dispatcher to proxy certain requests

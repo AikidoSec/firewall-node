@@ -1,4 +1,4 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";

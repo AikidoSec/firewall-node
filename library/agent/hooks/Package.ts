@@ -12,7 +12,7 @@ type PackageName = string;
 export class Package {
   private versions: VersionedPackage[] = [];
 
-  constructor(private readonly packageName: PackageName) {
+  constructor(private packageName: PackageName) {
     if (!this.packageName) {
       throw new Error("Package name is required");
     }
@@ -20,6 +20,10 @@ export class Package {
 
   getName() {
     return this.packageName;
+  }
+
+  setName(name: string) {
+    this.packageName = name;
   }
 
   withVersion(range: string): VersionedPackage {
