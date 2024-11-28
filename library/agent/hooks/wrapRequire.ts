@@ -309,12 +309,14 @@ export function getOriginalRequire() {
 // In order to support multiple versions of the same package, we need to rewrite the package name
 // e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
 // but in the tests we want to `require("undici-v6")` instead of `require("undici")`
-export function rewritePackageName(
+export function __internalRewritePackageName(
   packageName: string,
   aliasForTesting: string
 ) {
   if (!isRequireWrapped) {
-    throw new Error("Start the agent before calling rewritePackageName(..)");
+    throw new Error(
+      "Start the agent before calling __internalRewritePackageName(..)"
+    );
   }
 
   if (packages.length === 0) {

@@ -1,6 +1,6 @@
 import type { ReportingAPI } from "../agent/api/ReportingAPI";
 import type { Token } from "../agent/api/Token";
-import { rewritePackageName } from "../agent/hooks/wrapRequire";
+import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
 import type { Logger } from "../agent/logger/Logger";
 import { Wrapper } from "../agent/Wrapper";
 import { createTestAgent } from "./createTestAgent";
@@ -28,7 +28,7 @@ export function startTestAgent(opts: {
   // but in the tests we want to `require("undici-v6")` instead of `require("undici")`
   // The `__internalRewritePackageName` function allows us to do this
   Object.keys(opts.rewrite).forEach((packageName) => {
-    rewritePackageName(packageName, opts.rewrite[packageName]);
+    __internalRewritePackageName(packageName, opts.rewrite[packageName]);
   });
 
   return agent;
