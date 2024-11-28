@@ -5,10 +5,8 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
@@ -72,7 +70,7 @@ export class Undici implements Wrapper {
 
   private patchGlobalDispatcher(
     agent: Agent,
-    undiciModule: typeof import("undici")
+    undiciModule: typeof import("undici-v6")
   ) {
     const dispatcher = new undiciModule.Agent({
       connect: {
@@ -93,20 +91,14 @@ export class Undici implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const supported =
-      getMajorNodeVersion() >= 17 ||
-      (getMajorNodeVersion() === 16 && getMinorNodeVersion() >= 8);
-
-    if (!supported) {
-      // Undici requires Node.js 16.8+
-      // Packages aren't scoped in npm workspaces, we'll try to require undici:
-      // ReferenceError: ReadableStream is not defined
+    if (!isVersionGreaterOrEqual("16.8.0", getSemverNodeVersion())) {
+      // Undici requires Node.js 16.8+ (due to web streams)
       return;
     }
 
     hooks
       .addPackage("undici")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
       .onRequire((exports, pkgInfo) => {
         const agent = getInstance();
 

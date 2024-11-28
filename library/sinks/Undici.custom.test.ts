@@ -3,10 +3,10 @@ import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { startTestAgent } from "../helpers/startTestAgent";
 import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
-import { createTestAgent } from "../helpers/createTestAgent";
 
 function createContext(): Context {
   return {
@@ -42,13 +42,14 @@ t.test(
       getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
   },
   async (t) => {
-    const agent = createTestAgent({
+    startTestAgent({
       token: new Token("123"),
+      wrappers: [new Undici()],
+      rewrite: { undici: "undici-v6" },
     });
-    agent.start([new Undici()]);
 
     const { request, Dispatcher, setGlobalDispatcher, getGlobalDispatcher } =
-      require("undici") as typeof import("undici");
+      require("undici-v6") as typeof import("undici-v6");
 
     // See https://www.npmjs.com/package/@n8n_io/license-sdk
     // They set a custom dispatcher to proxy certain requests
