@@ -105,7 +105,7 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   return agent;
 }
 
-function getWrappers() {
+export function getWrappers() {
   return [
     new Express(),
     new MongoDB(),
