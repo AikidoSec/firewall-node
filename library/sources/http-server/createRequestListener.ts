@@ -51,7 +51,7 @@ function callListenerWithContext(
   agent: Agent,
   body: string
 ) {
-  const context = contextFromRequest(req, body, module);
+  const context = contextFromRequest(req, body, `${module}.createServer`);
 
   return runWithContext(context, () => {
     // This method is called when the response is finished and discovers the routes for display in the dashboard

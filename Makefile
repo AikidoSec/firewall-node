@@ -84,6 +84,11 @@ koa-sqlite3:
 fastify-clickhouse:
 	cd sample-apps/fastify-clickhouse && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+
+.PHONY: ws-postgres
+ws-postgres:
+	cd sample-apps/ws-postgres && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
+
 .PHONY: install
 install:
 	mkdir -p build
