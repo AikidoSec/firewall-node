@@ -345,7 +345,7 @@ t.test(
     logger.clear();
     setGlobalDispatcher(new UndiciAgent({}));
     t.same(logger.getMessages(), [
-      "undici.setGlobalDispatcher was called, we can't provide protection!",
+      "undici.setGlobalDispatcher(..) was called, we can't guarantee protection!",
     ]);
   }
 );
