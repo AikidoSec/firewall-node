@@ -314,9 +314,7 @@ export function rewritePackageName(
   aliasForTesting: string
 ) {
   if (!isRequireWrapped) {
-    throw new Error(
-      "Start the agent before calling __internalRewritePackageName(..)"
-    );
+    throw new Error("Start the agent before calling rewritePackageName(..)");
   }
 
   if (packages.length === 0) {
