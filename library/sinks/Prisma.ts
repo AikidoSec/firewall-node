@@ -206,7 +206,7 @@ export class Prisma implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@prisma/client")
-      .withVersion("^5.0.0")
+      .withVersion("^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "PrismaClient", pkgInfo, (instance) => {
           const isNoSQLClient = this.isNoSQLClient(instance);
