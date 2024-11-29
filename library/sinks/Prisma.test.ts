@@ -5,6 +5,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
 import * as path from "path";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const execAsync = promisify(execCb);
 
@@ -40,7 +41,12 @@ const noSQLContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it works with sqlite", async (t) => {
+const testOpts = {
+  skip:
+    getMajorNodeVersion() < 18 ? "Prisma does not support Node.js < 18" : false,
+};
+
+t.test("it works with sqlite", testOpts, async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
 
@@ -145,7 +151,7 @@ t.test("it works with sqlite", async (t) => {
   await client.$disconnect();
 });
 
-t.test("it works with postgres", async (t) => {
+t.test("it works with postgres", testOpts, async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
 
@@ -244,7 +250,7 @@ t.test("it works with postgres", async (t) => {
   await client.$disconnect();
 });
 
-t.test("it works with mongodb", async (t) => {
+t.test("it works with mongodb", testOpts, async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
 
