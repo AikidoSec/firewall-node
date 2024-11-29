@@ -69,6 +69,11 @@ services:
       - "27020:27017"
     volumes:
       - "mongodb-replica:/bitnami/mongodb"
+  server:
+    build:
+      context: ../end2end/server
+    ports:
+      - "5874:3000"
 
 volumes:
   mongodb:
