@@ -21,7 +21,7 @@ t.test("it serves debug script", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
