@@ -2,21 +2,22 @@
 import type { RequestHandler } from "express";
 import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
+import { createWrappedFunction } from "../../helpers/wrap";
 
 export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
-  const fn = function wrap(this: RequestHandler) {
-    if (arguments.length === 0) {
-      // @ts-expect-error Type of this
-      return handler.apply(this);
-    }
+  const fn = createWrappedFunction(handler, function wrap(handler) {
+    return function wrap(this: RequestHandler) {
+      if (arguments.length === 0) {
+        return handler.apply(this);
+      }
 
-    const context = contextFromRequest(arguments[0]);
+      const context = contextFromRequest(arguments[0]);
 
-    return runWithContext(context, () => {
-      // @ts-expect-error Type of arguments
-      return handler.apply(this, arguments);
-    });
-  };
+      return runWithContext(context, () => {
+        return handler.apply(this, arguments);
+      });
+    };
+  }) as RequestHandler;
 
   // Some libraries/apps have properties on the handler functions that are not copied by our createWrappedFunction function
   // (createWrappedFunction only copies properties when hasOwnProperty is true)
