@@ -47,7 +47,7 @@ t.test("it serves debug script", (t) => {
       t.equal(script.status, 200);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
