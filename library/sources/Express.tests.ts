@@ -137,12 +137,25 @@ export function createExpressTests(expressPackageName: string) {
 
     app.use(newRouter);
 
+    app.use("/", express.static(__dirname + "/fixtures/public/"));
+
     const nestedApp = express();
+    nestedApp.set("trust proxy", true);
     nestedApp.get("/", (req, res) => {
       res.send(getContext());
     });
 
     app.use("/nested-app", nestedApp);
+
+    const nestedNestedApp = express();
+    nestedNestedApp.get("/2", (req, res) => {
+      res.send(getContext());
+    });
+    nestedApp.use(nestedNestedApp);
+
+    nestedApp.get("/foo", (req, res) => {
+      res.send("bar");
+    });
 
     app.get("/", (req, res) => {
       const context = getContext();
@@ -608,6 +621,12 @@ export function createExpressTests(expressPackageName: string) {
     });
   });
 
+  t.test("it supports static files", async (t) => {
+    const response = await request(getApp()).get("/test.txt");
+
+    t.same(response.text, "Testfile");
+  });
+
   t.test("it supports nested app", async (t) => {
     const response = await request(getApp()).get("/nested-app");
 
@@ -615,6 +634,16 @@ export function createExpressTests(expressPackageName: string) {
       method: "GET",
       source: "express",
       route: "/nested-app",
+    });
+
+    const response2 = await request(getApp()).get("/nested-app/foo");
+    t.same(response2.text, "bar");
+
+    const response3 = await request(getApp()).get("/nested-app/2");
+    t.match(response3.body, {
+      method: "GET",
+      source: "express",
+      route: "/nested-app/:number",
     });
   });
 
