@@ -1,4 +1,4 @@
-import { isIP } from "net";
+import { isIP, type LookupFunction } from "net";
 import { LookupAddress } from "dns";
 import { resolve } from "path";
 import { Agent } from "../../agent/Agent";
@@ -22,7 +22,7 @@ export function inspectDNSLookupCalls(
   operation: string,
   url?: URL,
   stackTraceCallingLocation?: Error
-): Function {
+): LookupFunction {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;

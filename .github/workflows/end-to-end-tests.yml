@@ -29,6 +29,22 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
         ports:
           - "27015:3306"
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: mypassword
+          MARIADB_DATABASE: catsdb
+        ports:
+          - "27018:3306"
+      clickhouse:
+        image: clickhouse/clickhouse-server:24
+        env:
+          "CLICKHOUSE_USER": "clickhouse"
+          "CLICKHOUSE_PASSWORD": "clickhouse"
+          "CLICKHOUSE_DB": "main_db"
+          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
+        ports:
+          - "27019:8123"
     timeout-minutes: 10
     strategy:
       matrix:

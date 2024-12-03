@@ -24,6 +24,10 @@ function getContext(
   };
 }
 
+t.beforeEach(() => {
+  delete process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES;
+});
+
 t.test("it works", async (t) => {
   const routes = new Routes(3);
   t.same(routes.asArray(), []);
@@ -36,6 +40,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -49,6 +54,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -62,6 +68,7 @@ t.test("it works", async (t) => {
         hits: 2,
         graphql: undefined,
         apispec: {},
+        graphQLSchema: undefined,
       },
       {
         method: "POST",
@@ -69,6 +76,7 @@ t.test("it works", async (t) => {
         hits: 1,
         graphql: undefined,
         apispec: {},
+        graphQLSchema: undefined,
       },
     ],
     "Should add second route"
@@ -82,6 +90,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -89,6 +98,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "PUT",
@@ -96,6 +106,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -107,6 +118,7 @@ t.test("it works", async (t) => {
       hits: 2,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "PUT",
@@ -114,6 +126,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "DELETE",
@@ -121,6 +134,7 @@ t.test("it works", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -139,6 +153,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -146,6 +161,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -157,6 +173,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -164,6 +181,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -175,6 +193,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -182,6 +201,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -192,6 +212,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -203,6 +224,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -210,6 +232,7 @@ t.test("it adds GraphQL fields", async (t) => {
       hits: 2,
       graphql: { type: "query", name: "user" },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -220,6 +243,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
     {
       method: "POST",
@@ -230,6 +254,7 @@ t.test("it adds GraphQL fields", async (t) => {
         name: "post",
       },
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -280,6 +305,7 @@ t.test("it adds body schema", async (t) => {
         query: undefined,
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -295,6 +321,7 @@ t.test("it merges body schema", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -340,6 +367,7 @@ t.test("it merges body schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 
@@ -395,6 +423,7 @@ t.test("it merges body schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -426,6 +455,7 @@ t.test("it adds query schema", async (t) => {
           },
         },
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -441,6 +471,7 @@ t.test("it merges query schema", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
   routes.addRoute(getContext("GET", "/query", {}, undefined, { test: "abc" }));
@@ -469,6 +500,7 @@ t.test("it merges query schema", async (t) => {
         },
         auth: undefined,
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -495,6 +527,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "http", scheme: "bearer" }],
       },
+      graphQLSchema: undefined,
     },
     {
       method: "GET",
@@ -506,6 +539,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "cookie", name: "session" }],
       },
+      graphQLSchema: undefined,
     },
     {
       method: "GET",
@@ -517,6 +551,7 @@ t.test("it adds auth schema", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -545,6 +580,7 @@ t.test("it merges auth schema", async (t) => {
           { type: "apiKey", in: "header", name: "x-api-key" },
         ],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -559,6 +595,7 @@ t.test("it ignores empty body objects", async (t) => {
       hits: 1,
       graphql: undefined,
       apispec: {},
+      graphQLSchema: undefined,
     },
   ]);
 });
@@ -594,6 +631,245 @@ t.test("it ignores body of graphql queries", async (t) => {
         query: undefined,
         auth: [{ type: "apiKey", in: "header", name: "x-api-key" }],
       },
+      graphQLSchema: undefined,
     },
   ]);
 });
+
+t.test("it respects max samples", async (t) => {
+  const routes = new Routes(200);
+  for (let i = 0; i < 12; i++) {
+    const body: Record<string, unknown> = {};
+    body[`test${i}`] = i;
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/add",
+        {
+          "content-type": "application/json",
+        },
+        body
+      )
+    );
+  }
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/add",
+      hits: 12,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              test0: {
+                type: "number",
+                optional: true,
+              },
+              test1: {
+                type: "number",
+                optional: true,
+              },
+              test2: {
+                type: "number",
+                optional: true,
+              },
+              test3: {
+                type: "number",
+                optional: true,
+              },
+              test4: {
+                type: "number",
+                optional: true,
+              },
+              test5: {
+                type: "number",
+                optional: true,
+              },
+              test6: {
+                type: "number",
+                optional: true,
+              },
+              test7: {
+                type: "number",
+                optional: true,
+              },
+              test8: {
+                type: "number",
+                optional: true,
+              },
+              test9: {
+                type: "number",
+                optional: true,
+              },
+              test10: {
+                type: "number",
+                optional: true,
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+      graphQLSchema: undefined,
+    },
+  ]);
+});
+
+t.test(
+  "it allows setting AIKIDO_MAX_API_DISCOVERY_SAMPLES to zero (does not sample any requests)",
+  async (t) => {
+    process.env.AIKIDO_MAX_API_DISCOVERY_SAMPLES = "0";
+    const routes = new Routes(200);
+    for (let i = 0; i < 12; i++) {
+      const body: Record<string, unknown> = {};
+      body[`test${i}`] = i;
+      routes.addRoute(
+        getContext(
+          "POST",
+          "/add",
+          {
+            "content-type": "application/json",
+          },
+          body
+        )
+      );
+    }
+
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/add",
+        hits: 12,
+        graphql: undefined,
+        apispec: {},
+        graphQLSchema: undefined,
+      },
+    ]);
+  }
+);
+
+t.test("with string format", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute(
+    getContext(
+      "POST",
+      "/body",
+      { "content-type": "application/json" },
+      { email: "test@example.com" }
+    )
+  );
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/body",
+      hits: 1,
+      graphql: undefined,
+      apispec: {
+        body: {
+          type: "json",
+          schema: {
+            type: "object",
+            properties: {
+              email: {
+                type: "string",
+                format: "email",
+              },
+            },
+          },
+        },
+        query: undefined,
+        auth: undefined,
+      },
+      graphQLSchema: undefined,
+    },
+  ]);
+});
+
+t.test(
+  "it does not collect routes or samples if request comes from aikido DAST",
+  async (t) => {
+    const routes = new Routes(200);
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "aikido-api-test": "1", "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+
+    t.same(routes.asArray(), []);
+
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "aikido-api-test": "0", "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/body",
+        hits: 1,
+        graphql: undefined,
+        apispec: {
+          body: {
+            type: "json",
+            schema: {
+              type: "object",
+              properties: {
+                test: {
+                  type: "string",
+                },
+              },
+            },
+          },
+          query: undefined,
+          auth: undefined,
+        },
+        graphQLSchema: undefined,
+      },
+    ]);
+
+    routes.addRoute(
+      getContext(
+        "POST",
+        "/body",
+        { "content-type": "application/json" },
+        { test: "abc" }
+      )
+    );
+    t.same(routes.asArray(), [
+      {
+        method: "POST",
+        path: "/body",
+        hits: 2,
+        graphql: undefined,
+        apispec: {
+          body: {
+            type: "json",
+            schema: {
+              type: "object",
+              properties: {
+                test: {
+                  type: "string",
+                },
+              },
+            },
+          },
+          query: undefined,
+          auth: undefined,
+        },
+        graphQLSchema: undefined,
+      },
+    ]);
+  }
+);

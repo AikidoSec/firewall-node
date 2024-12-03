@@ -2,7 +2,7 @@ import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
@@ -132,22 +132,25 @@ export class Fetch implements Wrapper {
     if (typeof globalThis.fetch === "function") {
       // Fetch is lazy loaded in Node.js
       // By calling fetch() we ensure that the global dispatcher is available
-      // @ts-expect-error Type is not defined
-      globalThis.fetch().catch(() => {});
+      try {
+        // @ts-expect-error Type is not defined
+        globalThis.fetch().catch(() => {});
+      } catch (error) {
+        // Ignore errors
+      }
     }
 
-    hooks
-      .addGlobal("fetch")
+    hooks.addGlobal("fetch", {
       // Whenever a request is made, we'll check the hostname whether it's a private IP
-      .inspect((args, subject, agent) => this.inspectFetch(args, agent))
-      // We're not really modifying the arguments here, but we need to patch the global dispatcher
-      .modifyArguments((args, subject, agent) => {
+      inspectArgs: (args, agent) => this.inspectFetch(args, agent),
+      modifyArgs: (args, agent) => {
         if (!this.patchedGlobalDispatcher) {
           this.patchGlobalDispatcher(agent);
           this.patchedGlobalDispatcher = true;
         }
 
         return args;
-      });
+      },
+    });
   }
 }

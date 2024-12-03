@@ -4,6 +4,7 @@ import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
+import { MariaDB } from "../sinks/MariaDB";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
@@ -42,6 +43,10 @@ import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
+import { Postgresjs } from "../sinks/Postgresjs";
+import { Fastify } from "../sources/Fastify";
+import { Koa } from "../sources/Koa";
+import { ClickHouse } from "../sinks/ClickHouse";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -100,7 +105,7 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   return agent;
 }
 
-function getWrappers() {
+export function getWrappers() {
   return [
     new Express(),
     new MongoDB(),
@@ -124,11 +129,17 @@ function getWrappers() {
     new XmlMinusJs(),
     new Shelljs(),
     new Hapi(),
+    new MariaDB(),
     new NodeSQLite(),
     new BetterSQLite3(),
+    new Postgresjs(),
+    new Fastify(),
+    new Koa(),
+    new ClickHouse(),
   ];
 }
 
+// eslint-disable-next-line import/no-unused-modules
 export function protect() {
   const agent = getAgent({
     serverless: undefined,

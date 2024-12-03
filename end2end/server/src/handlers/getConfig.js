@@ -1,8 +1,8 @@
-const { generateConfig } = require("../zen/config");
+const { getAppConfig } = require("../zen/config");
 module.exports = function getConfig(req, res) {
   if (!req.app) {
     throw new Error("App is missing");
   }
 
-  res.json(generateConfig(req.app));
+  res.json(getAppConfig(req.app));
 };

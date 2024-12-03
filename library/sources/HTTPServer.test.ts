@@ -1,26 +1,12 @@
 import { Token } from "../agent/api/Token";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
-const originalIsPackageInstalled = pkg.isPackageInstalled;
-wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap(name: string) {
-    // So that it thinks next is installed
-    if (name === "next") {
-      return true;
-    }
-    return originalIsPackageInstalled(name);
-  };
-});
-
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { fetch } from "../helpers/fetch";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -51,13 +37,10 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  "lambda"
-);
+});
 agent.start([new HTTPServer()]);
 
 t.setTimeout(30 * 1000);
@@ -65,6 +48,7 @@ t.setTimeout(30 * 1000);
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
   delete process.env.NODE_ENV;
+  delete process.env.NEXT_DEPLOYMENT_ID;
 });
 
 const http = require("http") as typeof import("http");
@@ -202,6 +186,7 @@ t.test("it discovers routes", async () => {
             hits: 1,
             graphql: undefined,
             apispec: {},
+            graphQLSchema: undefined,
           }
         );
         server.close();
@@ -319,6 +304,9 @@ t.test("it uses x-forwarded-for header", async (t) => {
 });
 
 t.test("it sets body in context", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -352,6 +340,9 @@ function generateJsonPayload(sizeInMb: number) {
 }
 
 t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     t.fail();
   });
@@ -380,6 +371,9 @@ t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
 });
 
 t.test("body that is not JSON is ignored", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -406,6 +400,9 @@ t.test("body that is not JSON is ignored", async (t) => {
 });
 
 t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     res.end();
   });
@@ -443,65 +440,6 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
         .finally(() => {
           server.close();
           resolve();
-        });
-    });
-  });
-});
-
-t.test("it rate limits requests", async (t) => {
-  const server = http.createServer((req, res) => {
-    res.end();
-  });
-
-  const headers = {
-    "x-forwarded-for": "1.2.3.4",
-  };
-
-  await new Promise<void>((resolve) => {
-    server.listen(3323, () => {
-      Promise.all([
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-      ])
-        .then(([response1, response2, response3]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 200);
-          t.equal(response3.statusCode, 200);
-        })
-        .then(() => {
-          fetch({
-            url: new URL("http://localhost:3323/rate-limited"),
-            method: "GET",
-            headers: headers,
-            timeoutInMS: 500,
-          }).then(({ body, statusCode }) => {
-            t.equal(statusCode, 429);
-            t.equal(
-              body,
-              "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-            );
-            server.close();
-            resolve();
-          });
-        })
-        .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
         });
     });
   });

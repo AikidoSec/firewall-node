@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,13 +19,10 @@ const context: Context = {
 };
 
 t.test("it detects SQL injections", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent({
+    serverless: "lambda",
+  });
+
   agent.start([new Postgres()]);
 
   const { Pool } = require("pg");

@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { FileSystem } from "./FileSystem";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -47,13 +45,7 @@ function throws(fn: () => void, wanted: string | RegExp) {
 }
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent({ serverless: "lambda" });
 
   agent.start([new FileSystem()]);
 
@@ -62,6 +54,7 @@ t.test("it works", async (t) => {
     writeFileSync,
     rename,
     realpath,
+    promises: fsDotPromise,
     realpathSync,
   } = require("fs");
   const { writeFile: writeFilePromise } =
@@ -92,6 +85,11 @@ t.test("it works", async (t) => {
       encoding: "utf-8",
     });
     await writeFilePromise(
+      "./test.txt",
+      "some other file content to test with",
+      { encoding: "utf-8" }
+    );
+    await fsDotPromise.writeFile(
       "./test.txt",
       "some other file content to test with",
       { encoding: "utf-8" }
@@ -136,10 +134,25 @@ t.test("it works", async (t) => {
         { encoding: "utf-8" }
       )
     );
-
+    t.ok(error instanceof Error);
     if (error instanceof Error) {
       t.match(
         error.message,
+        "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
+      );
+    }
+
+    const error2 = await t.rejects(() =>
+      fsDotPromise.writeFile(
+        "../../test.txt",
+        "some other file content to test with",
+        { encoding: "utf-8" }
+      )
+    );
+    t.ok(error2 instanceof Error);
+    if (error2 instanceof Error) {
+      t.match(
+        error2.message,
         "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
     }

@@ -1,11 +1,9 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -50,16 +48,10 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects shell injections", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
+const agent = createTestAgent();
+agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
 
+t.test("it detects shell injections", async (t) => {
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
@@ -78,15 +70,6 @@ t.test("it detects shell injections", async (t) => {
 });
 
 t.test("it does not detect injection in safe context", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   try {
@@ -100,15 +83,6 @@ t.test("it does not detect injection in safe context", async () => {
 });
 
 t.test("it does not detect injection without context", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   try {
@@ -120,15 +94,6 @@ t.test("it does not detect injection without context", async () => {
 });
 
 t.test("it detects async shell injections", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
@@ -175,15 +140,6 @@ t.test("it detects async shell injections", async (t) => {
 });
 
 t.test("it prevents path injections using ls", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
@@ -201,15 +157,6 @@ t.test("it prevents path injections using ls", async (t) => {
 });
 
 t.test("it prevents path injections using cat", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   const error = await t.rejects(async () => {
@@ -233,15 +180,6 @@ t.test("it prevents path injections using cat", async (t) => {
 t.test(
   "it does not prevent path injections using cat with safe context",
   async () => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    );
-    agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
     const shelljs = require("shelljs");
 
     try {
@@ -256,15 +194,6 @@ t.test(
 );
 
 t.test("invalid arguments are passed to shelljs", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-  agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
-
   const shelljs = require("shelljs");
 
   runWithContext(safeContext, () => {

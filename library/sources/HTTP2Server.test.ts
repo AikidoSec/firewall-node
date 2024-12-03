@@ -1,28 +1,13 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { connect, IncomingHttpHeaders } from "http2";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
-import { readFileSync } from "fs";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
-
-const originalIsPackageInstalled = pkg.isPackageInstalled;
-wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap(name: string) {
-    // So that it thinks next is installed
-    if (name === "next") {
-      return true;
-    }
-    return originalIsPackageInstalled(name);
-  };
-});
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Allow self-signed certificates
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -57,17 +42,17 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  undefined
-);
+});
 agent.start([new HTTPServer(), new FileSystem()]);
+
+const { readFileSync } = require("fs");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+  delete process.env.NEXT_DEPLOYMENT_ID;
 });
 
 let _client: ReturnType<typeof connect> | undefined;
@@ -205,6 +190,7 @@ t.test("it discovers routes", async () => {
               hits: 1,
               graphql: undefined,
               apispec: {},
+              graphQLSchema: undefined,
             }
           );
           server.close();
@@ -258,6 +244,9 @@ t.test("it parses cookies", async () => {
 });
 
 t.test("it sets body in context", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = createMinimalTestServer();
 
   await new Promise<void>((resolve) => {
@@ -280,6 +269,9 @@ t.test("it sets body in context", async () => {
 });
 
 t.test("it sends 413 when body is larger than 20 Mb", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = createMinimalTestServer();
 
   await new Promise<void>((resolve) => {
@@ -300,45 +292,6 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
         server.close();
         resolve();
       });
-    });
-  });
-});
-
-t.test("it rate limits requests", async () => {
-  const server = createMinimalTestServer();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3422, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3422/rate-limited"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
     });
   });
 });
@@ -433,6 +386,7 @@ t.test("it discovers routes using stream event", async () => {
             hits: 1,
             graphql: undefined,
             apispec: {},
+            graphQLSchema: undefined,
           }
         );
         server.close();
@@ -587,45 +541,6 @@ t.test("it wraps the createSecureServer stream event", async () => {
           resolve();
         }
       );
-    });
-  });
-});
-
-t.test("it rate limits requests using stream event", async () => {
-  const server = createMinimalTestServerWithStream();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3430, async () => {
-      const { headers } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers[":status"], 200);
-
-      const { headers: headers2 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers2[":status"], 200);
-
-      const { headers: headers3 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers3[":status"], 200);
-
-      const { headers: headers4 } = await http2Request(
-        new URL("http://localhost:3430/rate-limited-2"),
-        "GET",
-        {}
-      );
-      t.same(headers4[":status"], 429);
-
-      server.close();
-      resolve();
     });
   });
 });

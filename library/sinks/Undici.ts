@@ -1,16 +1,16 @@
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
+import { getInstance } from "../agent/AgentSingleton";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import {
-  getMajorNodeVersion,
-  getMinorNodeVersion,
-} from "../helpers/getNodeVersion";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
 
 const methods = [
@@ -23,8 +23,6 @@ const methods = [
 ];
 
 export class Undici implements Wrapper {
-  private patchedGlobalDispatcher = false;
-
   private inspectHostname(
     agent: Agent,
     hostname: string,
@@ -70,10 +68,11 @@ export class Undici implements Wrapper {
     return undefined;
   }
 
-  private patchGlobalDispatcher(agent: Agent) {
-    const undici = require("undici");
-
-    const dispatcher = new undici.Agent({
+  private patchGlobalDispatcher(
+    agent: Agent,
+    undiciModule: typeof import("undici-v6")
+  ) {
+    const dispatcher = new undiciModule.Agent({
       connect: {
         lookup: inspectDNSLookupCalls(
           lookup,
@@ -88,49 +87,51 @@ export class Undici implements Wrapper {
     dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
-    undici.setGlobalDispatcher(dispatcher);
+    undiciModule.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
-    const supported =
-      getMajorNodeVersion() >= 17 ||
-      (getMajorNodeVersion() === 16 && getMinorNodeVersion() >= 8);
-
-    if (!supported) {
-      // Undici requires Node.js 16.8+
-      // Packages aren't scoped in npm workspaces, we'll try to require undici:
-      // ReferenceError: ReadableStream is not defined
+    if (!isVersionGreaterOrEqual("16.8.0", getSemverNodeVersion())) {
+      // Undici requires Node.js 16.8+ (due to web streams)
       return;
     }
 
-    const undici = hooks
+    hooks
       .addPackage("undici")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
-      .addSubject((exports) => exports);
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
+      .onRequire((exports, pkgInfo) => {
+        const agent = getInstance();
 
-    undici.inspect("setGlobalDispatcher", (args, subject, agent) => {
-      if (this.patchedGlobalDispatcher) {
-        agent.log(
-          `undici.setGlobalDispatcher was called, we can't provide protection!`
-        );
-      }
-    });
+        if (!agent) {
+          // No agent, we can't do anything
+          return;
+        }
 
-    methods.forEach((method) => {
-      undici
-        // Whenever a request is made, we'll check the hostname whether it's a private IP
-        .inspect(method, (args, subject, agent) =>
-          this.inspect(args, agent, method)
-        )
-        // We're not really modifying the arguments here, but we need to patch the global dispatcher
-        .modifyArguments(method, (args, subject, agent) => {
-          if (!this.patchedGlobalDispatcher) {
-            this.patchGlobalDispatcher(agent);
-            this.patchedGlobalDispatcher = true;
-          }
+        // Immediately patch the global dispatcher before returning the module
+        // The global dispatcher might be overwritten by the user
+        // But at least they have a reference to our dispatcher instead of the original one
+        // (In case the user has a custom dispatcher that conditionally calls the original dispatcher)
+        this.patchGlobalDispatcher(agent, exports);
 
-          return args;
+        // Print a warning that we can't provide protection if setGlobalDispatcher is called
+        wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
+          inspectArgs: (args, agent) => {
+            agent.log(
+              `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
+            );
+          },
         });
-    });
+
+        // Wrap all methods that can make requests
+        for (const method of methods) {
+          wrapExport(exports, method, pkgInfo, {
+            // Whenever a request is made, we'll check the hostname whether it's a private IP
+            // If global dispatcher is not patched, we'll patch it
+            inspectArgs: (args, agent) => {
+              return this.inspect(args, agent, method);
+            },
+          });
+        }
+      });
   }
 }

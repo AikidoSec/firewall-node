@@ -1,9 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { isWrapped } from "../helpers/wrap";
 import { Path } from "./Path";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const unsafeContext: Context = {
@@ -29,17 +28,12 @@ const unsafeAbsoluteContext: Context = {
 };
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new Path()]);
 
-  const { join, resolve } = require("path");
+  // Path required before path/posix and path/win32
+  const { join, resolve, normalize } = require("path");
 
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
@@ -156,4 +150,11 @@ t.test("it works", async (t) => {
       "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
     );
   });
+
+  const checkForDoubleWrapping = [join, resolve, normalize];
+  for (const fn of checkForDoubleWrapping) {
+    if (isWrapped(fn) && isWrapped(fn.__original)) {
+      t.fail(`${fn.name} is double wrapped!`);
+    }
+  }
 });

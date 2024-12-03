@@ -1,59 +1,54 @@
+/* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
-import { Agent } from "../../agent/Agent";
-import { getContext, runWithContext } from "../../agent/Context";
-import { escapeHTML } from "../../helpers/escapeHTML";
+import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
+import { createWrappedFunction } from "../../helpers/wrap";
 
-export function wrapRequestHandler(
-  handler: RequestHandler,
-  agent: Agent
-): RequestHandler {
-  const fn: RequestHandler = (req, res, next) => {
-    const context = contextFromRequest(req);
-
-    return runWithContext(context, () => {
-      // Even though we already have the context, we need to get it again
-      // The context from `contextFromRequest` will never return a user
-      // The user will be carried over from the previous context
-      const context = getContext();
-
-      if (!context) {
-        return handler(req, res, next);
+export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
+  const fn = createWrappedFunction(handler, function wrap(handler) {
+    return function wrap(this: RequestHandler) {
+      if (arguments.length === 0) {
+        return handler.apply(this);
       }
 
-      if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-        return res.status(403).send("You are blocked by Aikido firewall.");
-      }
+      const context = contextFromRequest(arguments[0]);
 
-      const result = shouldRateLimitRequest(context, agent);
+      return runWithContext(context, () => {
+        return handler.apply(this, arguments);
+      });
+    };
+  }) as RequestHandler;
 
-      if (result.block) {
-        let message = "You are rate limited by Aikido firewall.";
-        if (result.trigger === "ip") {
-          message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-        }
+  // Some libraries/apps have properties on the handler functions that are not copied by our createWrappedFunction function
+  // (createWrappedFunction only copies properties when hasOwnProperty is true)
+  // Let's set up a proxy to forward the property access to the original handler
+  // e.g. https://github.com/TryGhost/Ghost/blob/fefb9ec395df8695d06442b6ecd3130dae374d94/ghost/core/core/frontend/web/site.js#L192
+  for (const key in handler) {
+    if (handler.hasOwnProperty(key)) {
+      continue;
+    }
 
-        return res.status(429).send(message);
-      }
-
-      return handler(req, res, next);
+    Object.defineProperty(fn, key, {
+      get() {
+        // @ts-expect-error Types unknown
+        return handler[key];
+      },
+      set(value) {
+        // @ts-expect-error Types unknown
+        handler[key] = value;
+      },
     });
-  };
-
-  if (handler.name) {
-    preserveFunctionName(fn, handler.name);
   }
+
+  // For some libraries/apps it's important to preserve the function name
+  // e.g. Ghost looks up a middleware function by name in the router stack
+  preserveLayerName(fn, handler.name);
 
   return fn;
 }
 
 /**
- * Preserve the original function name
- * e.g. Ghost looks up a middleware function by name in the router stack
- *
  * Object.getOwnPropertyDescriptor(function myFunction() {}, "name")
- *
  * {
  *   value: 'myFunction',
  *   writable: false,
@@ -61,7 +56,7 @@ export function wrapRequestHandler(
  *   configurable: true
  * }
  */
-function preserveFunctionName(wrappedFunction: Function, originalName: string) {
+function preserveLayerName(wrappedFunction: Function, originalName: string) {
   try {
     Object.defineProperty(wrappedFunction, "name", {
       value: originalName,

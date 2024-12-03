@@ -1,21 +1,46 @@
+/* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { wrap } from "../helpers/wrap";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-import { fetch } from "../helpers/fetch";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { addHonoMiddleware } from "../middleware/hono";
+import * as fetch from "../helpers/fetch";
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+wrap(fetch, "fetch", function mock(original) {
+  return async function mock(this: typeof fetch) {
+    if (
+      arguments.length > 0 &&
+      arguments[0] &&
+      arguments[0].url.toString().includes("firewall")
+    ) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          blockedIPAddresses: [
+            {
+              source: "geoip",
+              description: "geo restrictions",
+              ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+            },
+          ],
+        }),
+      };
+    }
+
+    return await original.apply(this, arguments);
+  };
+});
+
+const agent = createTestAgent({
+  token: new Token("123"),
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -34,19 +59,12 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  undefined
-);
+});
 agent.start([new HonoInternal(), new HTTPServer()]);
-setInstance(agent);
 
 function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
   const app = new Hono();
-
-  app.all("/", (c) => {
-    return c.json(getContext());
-  });
 
   app.use(async (c, next) => {
     if (c.req.path.startsWith("/user/blocked")) {
@@ -54,7 +72,13 @@ function getApp() {
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
     }
-    next();
+    await next();
+  });
+
+  addHonoMiddleware(app);
+
+  app.all("/", (c) => {
+    return c.json(getContext());
   });
 
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
@@ -185,7 +209,7 @@ t.test("it blocks user", opts, async (t) => {
   });
 
   const body = await response.text();
-  t.equal(body, "You are blocked by Aikido firewall.");
+  t.equal(body, "You are blocked by Zen.");
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
@@ -216,7 +240,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response3.status, 429);
   t.match(
     await response3.text(),
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
+    "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
 });
 
@@ -239,12 +263,13 @@ t.test("it ignores invalid json body", opts, async (t) => {
 });
 
 t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
-  const { serve } = require("@hono/node-server");
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
     fetch: getApp().fetch,
     port: 8765,
   });
-  const response = await fetch({
+  const response = await fetch.fetch({
     url: new URL("http://127.0.0.1:8765/?abc=test"),
     method: "GET",
     headers: {},
@@ -259,5 +284,54 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     route: "/",
   });
   t.ok(isLocalhostIP(body.remoteAddress));
+  server.close();
+});
+
+t.test("ip blocking works (real socket)", opts, async (t) => {
+  // Start a server with a real socket
+  // The blocking is implemented in the HTTPServer source
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8766,
+  });
+
+  // Test blocked IP (IPv4)
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8766/"),
+    headers: {
+      "X-Forwarded-For": "1.3.2.4", // Blocked IP
+    },
+  });
+  t.equal(response.statusCode, 403);
+  t.equal(
+    response.body,
+    "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
+  );
+
+  // Test blocked IP (IPv6)
+  const response2 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8766/"),
+    headers: {
+      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12", // Blocked IP
+    },
+  });
+  t.equal(response2.statusCode, 403);
+  t.equal(
+    response2.body,
+    "Your IP address is blocked due to geo restrictions. (Your IP: fe80::1234:5678:abcd:ef12)"
+  );
+
+  // Test allowed IP
+  const response3 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8766/"),
+    headers: {
+      "X-Forwarded-For": "9.8.7.6", // Allowed IP
+    },
+  });
+  t.equal(response3.statusCode, 200);
+
+  // Cleanup server
   server.close();
 });

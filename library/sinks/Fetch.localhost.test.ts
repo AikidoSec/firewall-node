@@ -6,6 +6,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { Fetch } from "./Fetch";
 
 function createContext({
@@ -54,13 +55,9 @@ function createContext({
   };
 }
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  new Token("123"),
-  undefined
-);
+const agent = createTestAgent({
+  token: new Token("123"),
+});
 
 agent.start([new Fetch()]);
 
