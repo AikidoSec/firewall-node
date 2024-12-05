@@ -221,6 +221,12 @@ export class MongoDB implements Wrapper {
       .addPackage("mongodb")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
+        // From mongodb v6.10.0, the Collection is undefined
+        // It's defined like:
+        // exports.Collection = void 0;
+        // const collection_1 = require("./collection");
+        // Object.defineProperty(exports, "Collection", { enumerable: true, get: function () { return collection_1.Collection; } });
+        // So we need to wait for the next tick to wrap the Collection
         process.nextTick(() => {
           this.wrapCollection(exports, pkgInfo);
         });
