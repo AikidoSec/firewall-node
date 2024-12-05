@@ -1,0 +1,12 @@
+{
+  "name": "hono-prisma",
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.11.2",
+    "@prisma/client": "^5.22.0",
+    "hono": "^4.6.8"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}
