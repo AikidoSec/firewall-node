@@ -111,7 +111,14 @@ $ yarn add --exact @aikidosec/firewall
 
 For framework- and provider- specific instructions, check out our docs:
 
-- [Express.js-based apps](docs/express.md)
+- [Express](docs/express.md)
+- [Fastify](docs/fastify.md)
+- [Hapi](docs/hapi.md)
+- [Koa](docs/koa.md)
+- [Hono](docs/hono.md)
+- [NestJS](docs/nestjs.md)
+- [micro](docs/micro.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
