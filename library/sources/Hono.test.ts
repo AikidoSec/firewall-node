@@ -12,10 +12,6 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
-import {
-  contextStorage as honoContextStorage,
-  getContext as getHonoContext,
-} from "hono/context-storage";
 
 wrap(fetch, "fetch", function mock(original) {
   return async function mock(this: typeof fetch) {
@@ -74,6 +70,9 @@ type Env = {
 
 function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
+  const { contextStorage: honoContextStorage, getContext: getHonoContext } =
+    require("hono/context-storage") as typeof import("hono/context-storage");
+
   const app = new Hono<Env>();
 
   app.use(honoContextStorage());
