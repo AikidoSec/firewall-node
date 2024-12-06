@@ -1,4 +1,4 @@
-type Ports = Map<string, number>;
+type Ports = Map<number, number>;
 
 export class Hostnames {
   private map: Map<string, Ports> = new Map();
@@ -13,16 +13,15 @@ export class Hostnames {
     return key === "__NO_PORT__" ? undefined : parseInt(key, 10);
   }
 
-  add(hostname: string, port: number | undefined) {
-    const portKey = this.portKey(port);
+  add(hostname: string, port: number | undefined = -1) {
     if (!this.map.has(hostname)) {
-      this.map.set(hostname, new Map([[portKey, 1]]));
+      this.map.set(hostname, new Map([[port, 1]]));
     } else {
       const ports = this.map.get(hostname) as Ports;
-      if (ports.has(portKey)) {
-        ports.set(portKey, ports.get(portKey)! + 1);
+      if (!ports.has(port)) {
+        ports.set(port, 1);
       } else {
-        ports.set(portKey, 1);
+        ports.set(port, ports.get(port)! + 1);
       }
     }
 
@@ -55,7 +54,7 @@ export class Hostnames {
       Array.from(ports.entries()).map(([port, hits]) => {
         return {
           hostname,
-          port: this.keyToPort(port),
+          port: port === -1 ? undefined : port,
           hits,
         };
       })
