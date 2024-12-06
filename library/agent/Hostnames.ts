@@ -5,14 +5,6 @@ export class Hostnames {
 
   constructor(private readonly maxEntries: number = 200) {}
 
-  private portKey(port: number | undefined) {
-    return port === undefined ? "__NO_PORT__" : port.toString();
-  }
-
-  private keyToPort(key: string) {
-    return key === "__NO_PORT__" ? undefined : parseInt(key, 10);
-  }
-
   add(hostname: string, port: number | undefined = -1) {
     if (!this.map.has(hostname)) {
       this.map.set(hostname, new Map([[port, 1]]));
