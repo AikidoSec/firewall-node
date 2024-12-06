@@ -36,7 +36,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443 },
+    { hostname: "www.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 

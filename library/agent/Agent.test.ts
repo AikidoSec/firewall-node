@@ -746,10 +746,17 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
         {
           hostname: "aikido.dev",
           port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "aikido.dev",
+          port: 80,
+          hits: 1,
         },
         {
           hostname: "google.com",
           port: 443,
+          hits: 1,
         },
       ],
       routes: [
