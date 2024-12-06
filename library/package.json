@@ -94,7 +94,7 @@
     "mongodb": "~6.9",
     "mongodb-v4": "npm:mongodb@^4.0.0",
     "mongodb-v5": "npm:mongodb@^5.0.0",
-    "mongodb-v6": "npm:mongodb@~6.9",
+    "mongodb-v6": "npm:mongodb@^6.0.0",
     "mysql": "^2.18.1",
     "mysql2": "^3.10.0",
     "needle": "^3.3.1",
