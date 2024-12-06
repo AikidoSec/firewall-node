@@ -110,13 +110,13 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
 
       await request("https://app.aikido.dev");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443 },
+        { hostname: "app.aikido.dev", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await fetch("https://app.aikido.dev");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443 },
+        { hostname: "app.aikido.dev", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -126,7 +126,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443 },
+        { hostname: "app.aikido.dev", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -136,7 +136,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -146,7 +146,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443 },
+        { hostname: "app.aikido.dev", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -156,7 +156,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 80 },
+        { hostname: "app.aikido.dev", port: 80, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -166,19 +166,19 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request(new URL("https://app.aikido.dev"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443 },
+        { hostname: "app.aikido.dev", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request(require("url").parse("https://app.aikido.dev"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -186,13 +186,13 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://app.aikido.dev",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request(require("url").parse("https://app.aikido.dev"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -200,7 +200,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://app.aikido.dev",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443" },
+        { hostname: "app.aikido.dev", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
