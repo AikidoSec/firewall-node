@@ -1,18 +1,10 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { FastXmlParser } from "./FastXmlParser";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 t.test("it works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new FastXmlParser()]);
 

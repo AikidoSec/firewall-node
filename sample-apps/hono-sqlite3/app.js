@@ -1,9 +1,8 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { getDB } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 
 async function main() {
@@ -12,7 +11,7 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
-    Aikido.setUser({
+    Zen.setUser({
       id: "id",
       name: "Name",
     });

@@ -1,20 +1,27 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
-import { escapeHTML } from "../../helpers/escapeHTML";
-import { shouldRateLimitRequest } from "../../ratelimiting/shouldRateLimitRequest";
+import { isPackageInstalled } from "../../helpers/isPackageInstalled";
+import { checkIfIPAddressIsBlocked } from "./checkIfIPAddressIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
-import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
 export function createRequestListener(
   listener: Function,
   module: string,
-  agent: Agent,
-  readBody: boolean
+  agent: Agent
 ): RequestListener {
+  const isMicroInstalled = isPackageInstalled("micro");
+
   return async function requestListener(req, res) {
+    // Parse body only if next or micro is installed
+    // We can only read the body stream once
+    // This is tricky, see replaceRequestBody(...)
+    // e.g. Hono uses web requests and web streams
+    // (uses Readable.toWeb(req) to convert to a web stream)
+    const readBody = "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
+
     if (!readBody) {
       return callListenerWithContext(listener, req, res, module, agent, "");
     }
@@ -39,7 +46,7 @@ export function createRequestListener(
 function callListenerWithContext(
   listener: Function,
   req: IncomingMessage,
-  res: ServerResponse<IncomingMessage>,
+  res: ServerResponse,
   module: string,
   agent: Agent,
   body: string
@@ -52,40 +59,16 @@ function callListenerWithContext(
     // If using http2, the context is not available in the callback without this
     res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
 
-    if (!ipAllowedToAccessRoute(context, agent)) {
-      res.statusCode = 403;
-      res.setHeader("Content-Type", "text/plain");
-
-      let message = "Your IP address is not allowed to access this resource.";
-      if (context.remoteAddress) {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
-      }
-
-      return res.end(message);
-    }
-
-    const result = shouldRateLimitRequest(context, agent);
-
-    if (result.block) {
-      let message = "You are rate limited by Aikido firewall.";
-      if (result.trigger === "ip") {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress!)})`;
-      }
-
-      res.statusCode = 429;
-      res.setHeader("Content-Type", "text/plain");
-
-      return res.end(message);
+    if (checkIfIPAddressIsBlocked(res, agent)) {
+      // The return is necessary to prevent the listener from being called
+      return;
     }
 
     return listener(req, res);
   });
 }
 
-function createOnFinishRequestHandler(
-  res: ServerResponse<IncomingMessage>,
-  agent: Agent
-) {
+function createOnFinishRequestHandler(res: ServerResponse, agent: Agent) {
   return function onFinishRequest() {
     const context = getContext();
 
@@ -99,7 +82,7 @@ function createOnFinishRequestHandler(
         method: context.method,
       })
     ) {
-      agent.onRouteExecute(context.method, context.route);
+      agent.onRouteExecute(context);
     }
 
     agent.getInspectionStatistics().onRequest();

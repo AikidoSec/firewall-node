@@ -13,14 +13,16 @@ export class Hostnames {
     }
 
     if (this.length > this.maxEntries) {
-      const firstAdded: string = this.map.keys().next().value;
-      const ports: Ports = this.map.get(firstAdded) as Ports;
+      const firstAdded = this.map.keys().next().value;
+      if (firstAdded) {
+        const ports: Ports = this.map.get(firstAdded) as Ports;
 
-      if (ports.size > 1) {
-        const firstPort = ports.values().next().value;
-        ports.delete(firstPort);
-      } else {
-        this.map.delete(firstAdded);
+        if (ports.size > 1) {
+          const firstPort = ports.values().next().value;
+          ports.delete(firstPort);
+        } else {
+          this.map.delete(firstAdded);
+        }
       }
     }
   }

@@ -35,9 +35,26 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
         ports:
           - "27015:3306"
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: mypassword
+          MARIADB_DATABASE: catsdb
+        ports:
+          - "27018:3306"
+      clickhouse:
+        image: clickhouse/clickhouse-server:24
+        env:
+          "CLICKHOUSE_USER": "clickhouse"
+          "CLICKHOUSE_PASSWORD": "clickhouse"
+          "CLICKHOUSE_DB": "main_db"
+          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
+        ports:
+          - "27019:8123"
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x]
+        node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -48,6 +65,7 @@ jobs:
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
       - run: make install
+      - run: make build
       - run: make test-ci
       - name: "Upload coverage"
         uses: codecov/codecov-action@v4.0.1
