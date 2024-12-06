@@ -62,11 +62,23 @@ const agent = createTestAgent({
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
 
+type Env = {
+  Variables: {
+    testProp: string;
+  };
+};
+
 function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
-  const app = new Hono();
+  const { contextStorage: honoContextStorage, getContext: getHonoContext } =
+    require("hono/context-storage") as typeof import("hono/context-storage");
+
+  const app = new Hono<Env>();
+
+  app.use(honoContextStorage());
 
   app.use(async (c, next) => {
+    c.set("testProp", "test-value");
     if (c.req.path.startsWith("/user/blocked")) {
       setUser({ id: "567" });
     } else if (c.req.path.startsWith("/user")) {
@@ -87,6 +99,15 @@ function getApp() {
 
   app.get("/rate-limited", (c) => {
     return c.text("OK");
+  });
+
+  // Access async context outside of handler
+  const getTestProp = () => {
+    return getHonoContext<Env>().var.testProp;
+  };
+
+  app.get("/hono-async-context", (c) => {
+    return c.text(getTestProp());
   });
 
   return app;
@@ -334,4 +355,13 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
 
   // Cleanup server
   server.close();
+});
+
+t.test("The hono async context still works", opts, async (t) => {
+  const response = await getApp().request("/hono-async-context", {
+    method: "GET",
+  });
+
+  const body = await response.text();
+  t.equal(body, "test-value");
 });

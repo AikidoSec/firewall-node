@@ -1,5 +1,5 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
-import type { Hono } from "hono";
+import type { Env, Hono, Schema } from "hono";
 import { escapeHTML } from "../helpers/escapeHTML";
 
 /**
@@ -7,7 +7,11 @@ import { escapeHTML } from "../helpers/escapeHTML";
  * Attacks will still be blocked by Zen if you do not call this function.
  * Execute this function as early as possible in your Hono app, but after the middleware that sets the user.
  */
-export function addHonoMiddleware(app: Hono) {
+export function addHonoMiddleware<
+  E extends Env,
+  S extends Schema,
+  BasePath extends string,
+>(app: Hono<E, S, BasePath>) {
   app.use(async (c, next) => {
     const result = shouldBlockRequest();
 
