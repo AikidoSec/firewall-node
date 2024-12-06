@@ -45,3 +45,36 @@ t.test("it works", async () => {
   hostnames.clear();
   t.same(hostnames.asArray(), []);
 });
+
+t.test("it respects max size", async () => {
+  const hostnames = new Hostnames(2);
+  hostnames.add("aikido.dev", 1);
+  hostnames.add("aikido.dev", 2);
+
+  t.same(hostnames.asArray(), [
+    { hostname: "aikido.dev", port: 1 },
+    { hostname: "aikido.dev", port: 2 },
+  ]);
+
+  hostnames.add("aikido.dev", 3);
+  hostnames.add("aikido.dev", 4);
+
+  t.same(hostnames.asArray(), [
+    { hostname: "aikido.dev", port: 3 },
+    { hostname: "aikido.dev", port: 4 },
+  ]);
+
+  hostnames.add("google.com", 1);
+
+  t.same(hostnames.asArray(), [
+    { hostname: "aikido.dev", port: 4 },
+    { hostname: "google.com", port: 1 },
+  ]);
+
+  hostnames.add("google.com", 2);
+
+  t.same(hostnames.asArray(), [
+    { hostname: "google.com", port: 1 },
+    { hostname: "google.com", port: 2 },
+  ]);
+});
