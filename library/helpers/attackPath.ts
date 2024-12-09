@@ -4,6 +4,12 @@ import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 // Default match count to return
 const DEFAULT_MATCH_COUNT = 1;
 
+// Maximum depth to traverse
+const MAX_DEPTH = 30;
+
+// Maximum array length to traverse
+const MAX_ARRAY_LENGTH = 100;
+
 export type PathPart =
   | { type: "jwt" }
   | { type: "object"; key: string }
@@ -40,8 +46,12 @@ export function getPathsToPayload(
 
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
-  const traverse = (value: unknown, path: PathPart[] = []) => {
+  const traverse = (value: unknown, path: PathPart[] = [], depth = 0) => {
     if (matches.length >= matchCount) {
+      return;
+    }
+
+    if (depth > MAX_DEPTH) {
       return;
     }
 
@@ -54,7 +64,7 @@ export function getPathsToPayload(
 
       const jwt = tryDecodeAsJWT(value);
       if (jwt.jwt) {
-        traverse(jwt.object, path.concat({ type: "jwt" }));
+        traverse(jwt.object, path.concat({ type: "jwt" }), depth + 1);
       }
 
       return;
@@ -62,9 +72,12 @@ export function getPathsToPayload(
 
     if (Array.isArray(value)) {
       // Handle arrays
-      value.forEach((item, index) => {
-        traverse(item, path.concat({ type: "array", index }));
-      });
+      for (const [index, item] of value.entries()) {
+        if (index > MAX_ARRAY_LENGTH) {
+          break;
+        }
+        traverse(item, path.concat({ type: "array", index }), depth + 1);
+      }
 
       if (value.join().toLowerCase() === attackPayloadLowercase) {
         matches.push(buildPathToPayload(path));
@@ -76,7 +89,7 @@ export function getPathsToPayload(
     if (isPlainObject(value)) {
       // Handle objects
       for (const key in value) {
-        traverse(value[key], path.concat({ type: "object", key }));
+        traverse(value[key], path.concat({ type: "object", key }), depth + 1);
       }
     }
   };

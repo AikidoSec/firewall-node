@@ -60,3 +60,30 @@ t.test("set max count", async (t) => {
 
   t.same(get("test", testArr, 5), [".[0]", ".[1]", ".[2]", ".[3]", ".[4]"]);
 });
+
+t.test("respects max depth and array length", async (t) => {
+  const generateTestObjectWithDepth = (depth: number): object | string => {
+    if (depth === 0) {
+      return "testValue";
+    }
+
+    const obj = {
+      prop: generateTestObjectWithDepth(depth - 1),
+    };
+
+    return obj;
+  };
+
+  t.same(get("testValue", generateTestObjectWithDepth(100)), []);
+  t.same(get("testValue", generateTestObjectWithDepth(31)), []);
+  t.same(get("testValue", generateTestObjectWithDepth(30)), [
+    ".prop".repeat(30),
+  ]);
+
+  const testArr = Array.from({ length: 101 }, (_, i) => i.toString());
+
+  t.same(get("50", testArr), [".[50]"]);
+  t.same(get("99", testArr), [".[99]"]);
+  t.same(get("100", testArr), [".[100]"]);
+  t.same(get("101", testArr), []);
+});
