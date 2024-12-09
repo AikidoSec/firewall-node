@@ -80,7 +80,7 @@ t.test("respects max depth and array length", async (t) => {
     ".prop".repeat(30),
   ]);
 
-  const testArr = Array.from({ length: 101 }, (_, i) => i.toString());
+  const testArr = Array.from({ length: 150 }, (_, i) => i.toString());
 
   t.same(get("50", testArr), [".[50]"]);
   t.same(get("99", testArr), [".[99]"]);

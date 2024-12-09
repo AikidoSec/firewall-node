@@ -76,7 +76,7 @@ export function getPathsToPayload(
         if (index > MAX_ARRAY_LENGTH) {
           break;
         }
-        traverse(item, path.concat({ type: "array", index }), depth + 1);
+        traverse(item, path.concat({ type: "array", index }), depth);
       }
 
       if (value.join().toLowerCase() === attackPayloadLowercase) {
