@@ -110,7 +110,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathsToPayload.join())}`
+        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
       );
     }
   }

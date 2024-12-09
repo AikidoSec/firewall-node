@@ -188,7 +188,7 @@ function inspectArgs(
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathsToPayload.join())}`
+        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
       );
     }
   }

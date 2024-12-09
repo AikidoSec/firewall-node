@@ -211,7 +211,7 @@ function wrapDNSLookupCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathsToPayload.join())}`
+          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
         )
       );
     }
