@@ -11,7 +11,8 @@ t.test("it gets paths to payload", async (t) => {
     d: [12, "test", "payload"],
   };
 
-  t.same(get("payload", testObj1), [".a.b.c", ".d.[2]"]);
+  t.same(get("payload", testObj1), [".a.b.c"]);
+  t.same(get("payload", testObj1, 2), [".a.b.c", ".d.[2]"]);
   t.same(get("test", testObj1), [".d.[1]"]);
   t.same(get("notfound", testObj1), []);
 
@@ -26,15 +27,11 @@ t.test("it gets paths to payload", async (t) => {
   );
 
   t.same(
-    get("string", [
+    get(
       "string",
-      1,
-      true,
-      null,
-      undefined,
-      { test: "test" },
-      "string",
-    ]),
+      ["string", 1, true, null, undefined, { test: "test" }, "string"],
+      2
+    ),
     [".[0]", ".[6]"]
   );
 
@@ -58,19 +55,8 @@ t.test("it works with jwt", async (t) => {
   t.same(get("notfound", testObj2), []);
 });
 
-t.test("maximum match count of 10", async (t) => {
+t.test("set max count", async (t) => {
   const testArr = Array.from({ length: 20 }, () => "test");
 
-  t.same(get("test", testArr), [
-    ".[0]",
-    ".[1]",
-    ".[2]",
-    ".[3]",
-    ".[4]",
-    ".[5]",
-    ".[6]",
-    ".[7]",
-    ".[8]",
-    ".[9]",
-  ]);
+  t.same(get("test", testArr, 5), [".[0]", ".[1]", ".[2]", ".[3]", ".[4]"]);
 });
