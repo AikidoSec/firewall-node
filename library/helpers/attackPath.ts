@@ -2,7 +2,7 @@ import { isPlainObject } from "./isPlainObject";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 // Maximum match count to return
-const MAX_MATCH_COUNT = 10;
+const MAX_MATCH_COUNT = 1;
 
 export type PathPart =
   | { type: "jwt" }
