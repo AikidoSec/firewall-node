@@ -5,25 +5,32 @@ export function isRequestToItself({
   str,
   source,
   port,
-  path,
+  paths,
 }: {
-  source: Source;
-  path: string;
-  port: number | undefined;
   str: string;
+  source: Source;
+  port: number | undefined;
+  paths: string[];
 }): boolean {
   if (source !== "headers" || typeof port !== "number") {
     return false;
   }
 
-  if (path === ".host") {
-    return str === `localhost:${port}`;
+  let ignoredPaths = 0;
+
+  for (const path of paths) {
+    if (path === ".host" && str === `localhost:${port}`) {
+      ignoredPaths++;
+      continue;
+    }
+
+    if (path === ".origin" || path === ".referer") {
+      const url = tryParseURL(str);
+      if (!!url && url.host === `localhost:${port}`) {
+        ignoredPaths++;
+      }
+    }
   }
 
-  if (path === ".origin" || path === ".referer") {
-    const url = tryParseURL(str);
-    return !!url && url.host === `localhost:${port}`;
-  }
-
-  return false;
+  return ignoredPaths === paths.length;
 }

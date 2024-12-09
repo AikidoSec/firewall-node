@@ -142,7 +142,7 @@ export class Agent {
     source,
     request,
     stack,
-    path,
+    paths,
     metadata,
     payload,
   }: {
@@ -153,7 +153,7 @@ export class Agent {
     source: Source;
     request: Context;
     stack: string;
-    path: string;
+    paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
@@ -168,7 +168,7 @@ export class Agent {
               module: module,
               operation: operation,
               blocked: blocked,
-              path: path,
+              path: paths.join(),
               stack: stack,
               source: source,
               metadata: limitLengthMetadata(metadata, 4096),

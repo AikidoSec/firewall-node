@@ -202,7 +202,7 @@ function wrapDNSLookupCallback(
       source: found.source,
       blocked: agent.shouldBlock(),
       stack: cleanupStackTrace(stackTraceError.stack!, libraryRoot),
-      path: found.pathToPayload,
+      paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
@@ -211,7 +211,7 @@ function wrapDNSLookupCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathsToPayload.join())}`
         )
       );
     }
