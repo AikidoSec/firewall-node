@@ -114,4 +114,13 @@ t.test("it returns false", async (t) => {
     }),
     false
   );
+  t.same(
+    isRequestToItself({
+      source: "headers",
+      paths: [],
+      port: 1234,
+      str: "localhost:1234",
+    }),
+    false
+  );
 });
