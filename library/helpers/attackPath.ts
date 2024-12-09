@@ -1,6 +1,9 @@
 import { isPlainObject } from "./isPlainObject";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
+// Maximum match count to return
+const MAX_MATCH_COUNT = 10;
+
 export type PathPart =
   | { type: "jwt" }
   | { type: "object"; key: string }
@@ -37,6 +40,10 @@ export function getPathsToPayload(
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
   const traverse = (value: unknown, path: PathPart[] = []) => {
+    if (matches.length >= MAX_MATCH_COUNT) {
+      return;
+    }
+
     // Handle strings
     if (typeof value === "string") {
       if (value.toLowerCase() === attackPayloadLowercase) {

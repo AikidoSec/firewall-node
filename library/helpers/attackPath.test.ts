@@ -57,3 +57,20 @@ t.test("it works with jwt", async (t) => {
   t.same(get("1234567890", testObj2), [".a.b.c<jwt>.sub"]);
   t.same(get("notfound", testObj2), []);
 });
+
+t.test("maximum match count of 10", async (t) => {
+  const testArr = Array.from({ length: 20 }, () => "test");
+
+  t.same(get("test", testArr), [
+    ".[0]",
+    ".[1]",
+    ".[2]",
+    ".[3]",
+    ".[4]",
+    ".[5]",
+    ".[6]",
+    ".[7]",
+    ".[8]",
+    ".[9]",
+  ]);
+});
