@@ -26,7 +26,7 @@ export function isRequestToItself({
 
     if (path === ".origin" || path === ".referer") {
       const url = tryParseURL(str);
-      if (!!url && url.host === `localhost:${port}`) {
+      if (url && url.host === `localhost:${port}`) {
         ignoredPaths++;
       }
     }

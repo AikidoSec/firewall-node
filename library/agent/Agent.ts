@@ -168,7 +168,7 @@ export class Agent {
               module: module,
               operation: operation,
               blocked: blocked,
-              path: paths.join(),
+              path: paths.length > 0 ? paths[0] : "",
               stack: stack,
               source: source,
               metadata: limitLengthMetadata(metadata, 4096),
