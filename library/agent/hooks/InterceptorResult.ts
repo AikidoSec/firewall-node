@@ -5,7 +5,7 @@ export type InterceptorResult = {
   operation: string;
   kind: Kind;
   source: Source;
-  pathToPayload: string;
+  pathsToPayload: string[];
   metadata: Record<string, string>;
   payload: unknown;
 } | void;

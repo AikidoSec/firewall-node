@@ -25,7 +25,7 @@ t.test("it detects path traversal from route parameter", async () => {
     operation: "operation",
     kind: "path_traversal",
     source: "routeParams",
-    pathToPayload: ".path",
+    pathsToPayload: [".path"],
     metadata: {
       filename: "../file/test.txt",
     },
@@ -90,7 +90,7 @@ t.test("it detects path traversal with URL", async () => {
       operation: "operation",
       kind: "path_traversal",
       source: "routeParams",
-      pathToPayload: ".path",
+      pathsToPayload: [".path"],
       metadata: {
         filename: "/file/test.txt",
       },
@@ -109,7 +109,7 @@ t.test("it detects path traversal with Buffer", async () => {
       operation: "operation",
       kind: "path_traversal",
       source: "routeParams",
-      pathToPayload: ".path",
+      pathsToPayload: [".path"],
       metadata: {
         filename: "../file/test.txt",
       },

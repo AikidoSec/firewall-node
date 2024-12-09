@@ -110,24 +110,24 @@ t.test("it clears cache when context is mutated", async (t) => {
     t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
     t.same(
       extractStringsFromUserInputCached(getContext()!, "query"),
-      new Map(Object.entries({ abc: ".", def: ".abc" }))
+      new Set(["abc", "def"])
     );
 
     updateContext(getContext()!, "query", {});
     t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
     t.same(
       extractStringsFromUserInputCached(getContext()!, "query"),
-      new Map(Object.entries({}))
+      new Set()
     );
 
     runWithContext({ ...context, body: { a: "z" }, query: { b: "y" } }, () => {
       t.same(
         extractStringsFromUserInputCached(getContext()!, "body"),
-        new Map(Object.entries({ a: ".", z: ".a" }))
+        new Set(["a", "z"])
       );
       t.same(
         extractStringsFromUserInputCached(getContext()!, "query"),
-        new Map(Object.entries({ b: ".", y: ".b" }))
+        new Set(["b", "y"])
       );
     });
   });

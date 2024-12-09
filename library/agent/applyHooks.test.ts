@@ -161,7 +161,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
         return {
           operation: "os.hostname",
           source: "body",
-          pathToPayload: "path",
+          pathsToPayload: ["path"],
           payload: "payload",
           metadata: {},
           kind: "path_traversal",

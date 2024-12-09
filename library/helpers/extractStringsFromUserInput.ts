@@ -1,56 +1,45 @@
-import { buildPathToPayload, PathPart } from "./attackPath";
 import { isPlainObject } from "./isPlainObject";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 type UserString = string;
-type PathToUserString = string;
 
 // eslint-disable-next-line max-lines-per-function
-export function extractStringsFromUserInput(
-  obj: unknown,
-  pathToPayload: PathPart[] = []
-): Map<UserString, PathToUserString> {
-  const results: Map<UserString, PathToUserString> = new Map();
+export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
+  const results: Set<UserString> = new Set();
 
   if (isPlainObject(obj)) {
     for (const key in obj) {
-      results.set(key, buildPathToPayload(pathToPayload));
-      extractStringsFromUserInput(
-        obj[key],
-        pathToPayload.concat([{ type: "object", key: key }])
-      ).forEach((value, key) => {
-        results.set(key, value);
+      results.add(key);
+      extractStringsFromUserInput(obj[key]).forEach((value) => {
+        results.add(value);
       });
     }
   }
 
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      extractStringsFromUserInput(
-        obj[i],
-        pathToPayload.concat([{ type: "array", index: i }])
-      ).forEach((value, key) => results.set(key, value));
+      extractStringsFromUserInput(obj[i]).forEach((value) =>
+        results.add(value)
+      );
     }
     // Add array as string to results
     // This prevents bypassing the firewall by HTTP Parameter Pollution
     // Example: ?param=value1&param=value2 will be treated as array by express
     // If its used inside a string, it will be converted to a comma separated string
-    results.set(obj.join(), buildPathToPayload(pathToPayload));
+    results.add(obj.join());
   }
 
   if (typeof obj == "string") {
-    results.set(obj, buildPathToPayload(pathToPayload));
+    results.add(obj);
+
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
-      extractStringsFromUserInput(
-        jwt.object,
-        pathToPayload.concat([{ type: "jwt" }])
-      ).forEach((value, key) => {
-        // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
-        if (key === "iss" || value.endsWith("<jwt>.iss")) {
-          return;
-        }
-        results.set(key, value);
+      // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
+      if (jwt.object && typeof jwt.object === "object" && "iss" in jwt.object) {
+        jwt.object.iss = undefined;
+      }
+      extractStringsFromUserInput(jwt.object).forEach((value) => {
+        results.add(value);
       });
     }
   }
