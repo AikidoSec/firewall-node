@@ -12,7 +12,7 @@ export function isRequestToItself({
   port: number | undefined;
   paths: string[];
 }): boolean {
-  if (source !== "headers" || typeof port !== "number") {
+  if (source !== "headers" || typeof port !== "number" || paths.length === 0) {
     return false;
   }
 
