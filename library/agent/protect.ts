@@ -48,6 +48,7 @@ import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Eval } from "../sinks/Eval";
+import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -138,6 +139,7 @@ export function getWrappers() {
     new Koa(),
     new ClickHouse(),
     new Eval(),
+    new Function(),
   ];
 }
 
