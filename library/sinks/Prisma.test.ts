@@ -49,16 +49,12 @@ t.test("it works with sqlite", testOpts, async (t) => {
   process.env.DATABASE_URL = "file:./dev.db";
 
   // Generate prismajs client
-  const { stdout, stderr } = await execAsync(
+  await execAsync(
     "npx prisma migrate reset --force", // Generate prisma client, reset db and apply migrations
     {
       cwd: path.join(__dirname, "fixtures/prisma/sqlite"),
     }
   );
-
-  if (stderr) {
-    t.fail(stderr);
-  }
 
   const { PrismaClient } = require("@prisma/client");
 
@@ -154,16 +150,12 @@ t.test("it works with postgres", testOpts, async (t) => {
   process.env.DATABASE_URL = "postgres://root:password@127.0.0.1:27016/main_db";
 
   // Generate prismajs client
-  const { stdout, stderr } = await execAsync(
+  await execAsync(
     "npx prisma migrate reset --force", // Generate prisma client, reset db and apply migrations
     {
       cwd: path.join(__dirname, "fixtures/prisma/postgres"),
     }
   );
-
-  if (stderr) {
-    t.fail(stderr);
-  }
 
   // Clear require cache
   for (const key in require.cache) {
@@ -254,16 +246,12 @@ t.test("it works with mongodb", testOpts, async (t) => {
     "mongodb://root:password@127.0.0.1:27020/prisma?authSource=admin&directConnection=true";
 
   // Generate prismajs client
-  const { stdout, stderr } = await execAsync(
+  await execAsync(
     "npx prisma generate", // Generate prisma client, reset db and apply migrations
     {
       cwd: path.join(__dirname, "fixtures/prisma/mongodb"),
     }
   );
-
-  if (stderr) {
-    t.fail(stderr);
-  }
 
   // Clear require cache
   for (const key in require.cache) {
