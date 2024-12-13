@@ -2,7 +2,16 @@
   "name": "@aikidosec/firewall",
   "version": "0.0.0",
   "description": "Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks",
-  "repository": "https://github.com/AikidoSec/firewall-node",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AikidoSec/firewall-node.git"
+  },
+  "type": "commonjs",
+  "homepage": "https://aikido.dev/zen",
+  "author": "Aikido Security",
+  "bugs": {
+    "url": "https://github.com/AikidoSec/firewall-node/issues"
+  },
   "keywords": [
     "security",
     "nosql",
@@ -86,7 +95,7 @@
     "mongodb": "~6.9",
     "mongodb-v4": "npm:mongodb@^4.0.0",
     "mongodb-v5": "npm:mongodb@^5.0.0",
-    "mongodb-v6": "npm:mongodb@~6.9",
+    "mongodb-v6": "npm:mongodb@^6.0.0",
     "mysql": "^2.18.1",
     "mysql2": "^3.10.0",
     "needle": "^3.3.1",
