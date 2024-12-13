@@ -88,14 +88,17 @@ fastify-clickhouse:
 hono-prisma:
 	cd sample-apps/hono-prisma && AIKIDO_DEBUG=true AIKIDO_BLOCK=true node app.js
 
-.PHONY: install
-install:
+.PHONY: install-lib-only
+install-lib-only:
 	mkdir -p build
 	node scripts/copyPackageJSON.js
 	touch build/index.js
 	cd build && npm link
 	npm install
 	cd library && npm install
+
+.PHONY: install
+install: install-lib-only
 	cd end2end && npm install
 	node scripts/install.js
 
