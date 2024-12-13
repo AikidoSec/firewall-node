@@ -3,10 +3,10 @@
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
     "@hono/node-server": "^1.11.2",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.0.1",
     "hono": "^4.6.8"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
+    "prisma": "^6.0.1"
   }
 }
