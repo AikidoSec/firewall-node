@@ -25,7 +25,7 @@ const safeContext: Context = {
   query: {},
   headers: {},
   body: {
-    cakc: "1+ 1",
+    calc: "1+ 1",
   },
   cookies: {},
   routeParams: {},
@@ -64,5 +64,12 @@ t.test("it detects JS injections using Eval", async (t) => {
         "Zen has blocked a JavaScript injection: eval(...) originating from body.calc"
       );
     }
+  });
+
+  runWithContext(safeContext, () => {
+    t.same(eval("1 + 1"), 2);
+    t.same(eval("const x = 1 + 1; x"), 2);
+    t.same(eval("1 + 1; console.log('hello')"), undefined);
+    t.same(eval("const test = 1 + 1; console.log('hello')"), undefined);
   });
 });
