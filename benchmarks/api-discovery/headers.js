@@ -1,0 +1,51 @@
+module.exports = [
+  {
+    accept: "text/fragment+html",
+    "accept-language": "nl,en;q=0.9,en-US;q=0.8",
+    "if-none-match": 'W/"107a08e1219ed6f9293a4b33529190f7"',
+    priority: "u=1, i",
+    "sec-ch-ua":
+      '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-gpc": "1",
+    "x-requested-with": "XMLHttpRequest",
+  },
+  {
+    accept: "*/*",
+    "accept-language": "nl,en;q=0.9,en-US;q=0.8",
+    "if-none-match": 'W/"10nkg03furb1th6"',
+    "next-router-prefetch": "1",
+    "next-router-state-tree":
+      "%5B%22%22%2C%7B%22children%22%3A%5B%22(dark-theme)%22%2C%7B%22children%22%3A%5B%22(with-footer)%22%2C%7B%22children%22%3A%5B%22(home)%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2C%22%2F%22%2C%22refresh%22%5D%7D%5D%7D%5D%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+    "next-url": "/",
+    priority: "u=1, i",
+    rsc: "1",
+    "sec-ch-ua":
+      '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-gpc": "1",
+    authorization: "Bearer token",
+  },
+  {
+    accept: "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "nl,en;q=0.9,en-US;q=0.8",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "sec-ch-ua":
+      '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "x-requested-with": "XMLHttpRequest",
+    token: "token",
+  },
+];

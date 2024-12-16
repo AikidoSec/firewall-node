@@ -1,0 +1,1 @@
+# Strapi sample app

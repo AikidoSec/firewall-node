@@ -1,4 +1,3 @@
-import { isFeatureEnabled } from "../../helpers/featureFlags";
 import { Context } from "../Context";
 import { APIAuthType, getApiAuthType } from "./getApiAuthType";
 import { BodyDataType, getBodyDataType } from "./getBodyDataType";
@@ -20,13 +19,9 @@ export type APIBodyInfo = {
  * Returns undefined if the body is not an object or if the body type could not be determined.
  */
 export function getApiInfo(context: Context): APISpec | undefined {
-  // Check if feature flag COLLECT_API_SCHEMA is enabled
-  if (!isFeatureEnabled("COLLECT_API_SCHEMA")) {
-    return undefined;
-  }
-
   try {
     let bodyInfo: APIBodyInfo | undefined;
+
     if (
       context.body &&
       typeof context.body === "object" &&

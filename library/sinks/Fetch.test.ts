@@ -1,12 +1,12 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -20,20 +20,26 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -52,7 +58,8 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
 
 const redirectUrl = {
@@ -68,28 +75,27 @@ t.test(
   "it works",
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    );
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api,
+    });
+
     agent.start([new Fetch()]);
 
     t.same(agent.getHostnames().asArray(), []);
 
-    await fetch("http://aikido.dev");
+    await fetch("http://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 80 },
+      { hostname: "app.aikido.dev", port: 80, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://aikido.dev"));
+    await fetch(new URL("https://app.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
@@ -121,6 +127,15 @@ t.test(
         );
       }
 
+      const events = api
+        .getEvents()
+        .filter((e) => e.type === "detected_attack");
+      t.same(events.length, 1);
+      t.same(events[0].attack.metadata, {
+        hostname: "localhost",
+        port: 4000,
+      });
+
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
       );
@@ -132,6 +147,7 @@ t.test(
       }
 
       const error3 = await t.rejects(() =>
+        // @ts-expect-error Test
         fetch(["http://localhost:4000/api/internal"])
       );
       if (error3 instanceof Error) {
@@ -168,6 +184,7 @@ t.test(
         }
 
         const error2 = await t.rejects(() =>
+          // @ts-expect-error Test
           fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
         );
         if (error2 instanceof Error) {
@@ -291,16 +308,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const error = await t.rejects(() =>
-          fetch(
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain"
-          )
+          fetch(`${redirecTestUrl2}/ssrf-test-absolute-domain`)
         );
         if (error instanceof Error) {
           t.same(
@@ -367,14 +381,13 @@ t.test(
         ...context,
         ...{
           body: {
-            image:
-              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           },
         },
       },
       async () => {
         const response = await fetch(
-          "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          `${redirecTestUrl2}/ssrf-test-absolute-domain`,
           {
             redirect: "manual",
           }

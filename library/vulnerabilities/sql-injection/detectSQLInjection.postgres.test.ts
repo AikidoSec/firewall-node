@@ -10,12 +10,35 @@ t.test("It flags postgres type cast operator as SQL injection", async () => {
   isSqlInjection("SELECT abc::date", "abc::date");
 });
 
-t.test("It flags double dollar sign as SQL injection", async () => {
-  isSqlInjection("SELECT $$", "$$");
-  isSqlInjection("SELECT $$text$$", "$$text$$");
-  isSqlInjection("SELECT $tag$text$tag$", "$tag$text$tag$");
+t.test("Test PostgreSQL dollar signs", async (t) => {
+  isNotSQLInjection(
+    "SELECT * FROM users WHERE id = $$' OR 1=1 -- $$",
+    "' OR 1=1 -- "
+  );
+  isNotSQLInjection(
+    "SELECT * FROM users WHERE id = $$1; DROP TABLE users; -- $$",
+    "1; DROP TABLE users; -- "
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = $$1$$ OR 1=1 -- $$",
+    "1$$ OR 1=1 -- "
+  );
+});
 
-  isNotSQLInjection("SELECT '$$text$$'", "$$text$$");
+t.test("Test PostgreSQL named dollar signs", async (t) => {
+  isNotSQLInjection(
+    "SELECT * FROM users WHERE id = $name$' OR 1=1 -- $name$",
+    "' OR 1=1 -- "
+  );
+
+  isNotSQLInjection(
+    "SELECT * FROM users WHERE id = $name$1; DROP TABLE users; -- $name$",
+    "1; DROP TABLE users; -- "
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = $name$1$name$ OR 1=1 -- $name$",
+    "1$name$ OR 1=1 -- "
+  );
 });
 
 t.test("It flags CLIENT_ENCODING as SQL injection", async () => {

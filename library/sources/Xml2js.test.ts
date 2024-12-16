@@ -1,22 +1,14 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Xml2js } from "./Xml2js";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 t.test("it works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
-
+  const agent = createTestAgent();
   agent.start([new Xml2js()]);
 
-  const { parseStringPromise, parseString } = require("xml2js");
+  const { parseStringPromise, parseString } =
+    require("xml2js") as typeof import("xml2js");
 
   const xmlString = "<root>Hello xml2js!</root>";
 

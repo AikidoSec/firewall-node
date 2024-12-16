@@ -1,25 +1,19 @@
 import { join } from "path";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { XmlMinusJs } from "./XmlMinusJs";
 import { readFile } from "fs/promises";
-
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting(),
-  undefined,
-  undefined
-);
-
-agent.start([new XmlMinusJs()]);
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const xmljs = require("xml-js");
 
 t.test("xml2js works", async () => {
+  const agent = createTestAgent();
+
+  agent.start([new XmlMinusJs()]);
+
+  const xmljs = require("xml-js");
+
   const xmlString = (
     await readFile(join(__dirname, "fixtures", "products.xml"), "utf8")
   ).toString();
@@ -53,6 +47,12 @@ t.test("xml2js works", async () => {
 });
 
 t.test("xml2json works", async () => {
+  const agent = createTestAgent();
+
+  agent.start([new XmlMinusJs()]);
+
+  const xmljs = require("xml-js");
+
   const xmlString = "<root>Hello xml-js!</root>";
 
   const result = xmljs.xml2json(xmlString);
@@ -81,7 +81,12 @@ t.test("xml2json works", async () => {
   });
 });
 
-t.test("Ignore if xml is not in the context", async () => {
+t.test("Ignore if xml is not in the body", async () => {
+  const agent = createTestAgent();
+  agent.start([new XmlMinusJs()]);
+
+  const xmljs = require("xml-js");
+
   const xmlString = "<root>Hello xml-js!</root>";
 
   const context = {

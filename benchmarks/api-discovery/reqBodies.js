@@ -10,6 +10,8 @@ module.exports = [
         zip: "10001",
       },
       preferences: ["email_notifications", "sms_alerts"],
+      lastIpAddress: "192.168.1.1",
+      lastLoginDate: "2024-01-01",
     },
   },
   {
@@ -24,6 +26,7 @@ module.exports = [
   },
   {
     feedbackType: "bug_report",
+    reportedAt: "2024-01-01T14:00:00.00+00:20",
     description: "The app crashes on login",
     metadata: {
       appVersion: "1.0.0",
@@ -134,6 +137,7 @@ module.exports = [
   {
     user: {
       id: 1,
+      uuid: "000003e8-2363-21ef-b200-325096b39f47",
       name: "John Doe",
       email: "john.doe@example.com",
       address: {

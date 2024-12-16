@@ -1,4 +1,5 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
+import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
@@ -78,6 +79,16 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
  * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+  const isAllowedIP =
+    context &&
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    // If the IP address is allowed, we don't need to block the request
+    return;
+  }
+
   const found = isRedirectToPrivateIP(url, context);
 
   if (found) {
@@ -89,7 +100,10 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
       path: found.pathToPayload,
-      metadata: {},
+      metadata: getMetadataForSSRFAttack({
+        hostname: found.hostname,
+        port: found.port,
+      }),
       request: context,
       payload: found.payload,
     });

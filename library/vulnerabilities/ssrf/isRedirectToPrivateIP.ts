@@ -29,5 +29,6 @@ export function isRedirectToPrivateIP(url: URL, context: Context) {
       );
     }
   }
+
   return undefined;
 }
