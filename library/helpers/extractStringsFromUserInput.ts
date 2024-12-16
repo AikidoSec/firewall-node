@@ -36,7 +36,7 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
     if (jwt.jwt) {
       // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
       if (jwt.object && typeof jwt.object === "object" && "iss" in jwt.object) {
-        jwt.object.iss = undefined;
+        delete jwt.object.iss;
       }
       extractStringsFromUserInput(jwt.object).forEach((value) => {
         results.add(value);
