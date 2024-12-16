@@ -159,7 +159,7 @@ export class Agent {
     payload: unknown;
   }) {
     this.logger.info(
-      `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${escapeLog(path)}" ip="${escapeLog(request.remoteAddress)}"`
+      `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${escapeLog((paths || []).join())}" ip="${escapeLog(request.remoteAddress)}"`
     );
     if (this.token) {
       this.api
@@ -355,7 +355,7 @@ export class Agent {
       const blockedIps = await fetchBlockedIPAddresses(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIps);
     } catch (error: any) {
-      this.logger.log(
+      this.logger.error(
         `Failed to update blocked IP addresses: ${error.message}`
       );
     }
@@ -370,7 +370,7 @@ export class Agent {
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
         this.updateBlockedIPAddresses().catch((error) => {
-          this.logger.log(
+          this.logger.error(
             `Failed to update blocked IP addresses: ${error.message}`
           );
         });
