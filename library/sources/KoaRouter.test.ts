@@ -6,7 +6,6 @@ import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Koa } from "./Koa";
-import { KoaRouter } from "./KoaRouter";
 import { HTTPServer } from "./HTTPServer";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
@@ -37,7 +36,7 @@ const agent = new Agent(
   new Token("123"),
   undefined
 );
-agent.start([new Koa(), new KoaRouter(), new HTTPServer()]);
+agent.start([new Koa(), new HTTPServer()]);
 setInstance(agent);
 
 const koa = require("koa") as typeof import("koa");

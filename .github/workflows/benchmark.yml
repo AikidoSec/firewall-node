@@ -35,11 +35,8 @@ jobs:
         uses: grafana/setup-k6-action@v1
       - name: Install wrk
         run: |
-          sudo apt-get install build-essential libssl-dev git -y
-          git clone https://github.com/wg/wrk.git wrk
-          cd wrk
-          sudo make
-          sudo cp wrk /usr/local/bin
+          sudo apt-get update
+          sudo apt-get install -y wrk
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark

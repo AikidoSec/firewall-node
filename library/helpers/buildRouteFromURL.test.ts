@@ -157,3 +157,14 @@ t.test("it replaces BSON ObjectIDs", async () => {
     "/posts/:objectId"
   );
 });
+
+t.test("it replaces ULID strings", async () => {
+  t.same(
+    buildRouteFromURL("/posts/01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+    "/posts/:ulid"
+  );
+  t.same(
+    buildRouteFromURL("/posts/01arz3ndektsv4rrffq69g5fav"),
+    "/posts/:ulid"
+  );
+});

@@ -1,4 +1,4 @@
-INTERNALS_VERSION = v0.1.25
+INTERNALS_VERSION = v0.1.32
 INTERNALS_URL = https://github.com/AikidoSec/zen-internals/releases/download/$(INTERNALS_VERSION)
 TARBALL = zen_internals.tgz
 CHECKSUM_FILE = zen_internals.tgz.sha256sum
@@ -68,6 +68,10 @@ lambda-mongodb-safe:
 nestjs-sentry:
 	cd sample-apps/nestjs-sentry && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true NODE_OPTIONS=--preserve-symlinks npm run start
 
+.PHONY: nestjs-fastify
+nestjs-fastify:
+	cd sample-apps/nestjs-fastify && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true NODE_OPTIONS=--preserve-symlinks npm run start
+
 .PHONY: fastify-mysql2
 fastify-mysql2:
 	cd sample-apps/fastify-mysql2 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
@@ -75,6 +79,10 @@ fastify-mysql2:
 .PHONY: koa-sqlite3
 koa-sqlite3:
 	cd sample-apps/koa-sqlite3 && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node --preserve-symlinks app.js
+
+.PHONY: fastify-clickhouse
+fastify-clickhouse:
+	cd sample-apps/fastify-clickhouse && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
 .PHONY: install
 install:

@@ -46,6 +46,22 @@ services:
       - "27018:3306"
     volumes:
       - mariadb:/var/lib/mysql
+  clickhouse:
+    image: clickhouse/clickhouse-server:24
+    environment:
+      - CLICKHOUSE_USER=clickhouse
+      - CLICKHOUSE_PASSWORD=clickhouse
+      - CLICKHOUSE_DB=main_db
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "27019:8123"
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+  server:
+    build:
+      context: ../end2end/server
+    ports:
+      - "5874:3000"
 
 volumes:
   mongodb:
@@ -55,4 +71,6 @@ volumes:
   mysql:
     driver: local
   mariadb:
+    driver: local
+  clickhouse:
     driver: local

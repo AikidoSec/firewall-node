@@ -2,20 +2,15 @@
  * Runs benchmarks for the api discovery (api schema collection)
  */
 const { Routes } = require("../../build/agent/Routes");
-const { isFeatureEnabled } = require("../../build/helpers/featureFlags");
 const reqBodies = require("./reqBodies");
+const headers = require("./headers");
+const queryParameters = require("./queryParameters");
+const cookies = require("./cookies");
 
 const MAX_TIME_LIMIT = 0.05; // milliseconds / statement
-const RUN_COUNT = 100;
+const RUN_COUNT = 100000;
 
 function main() {
-  // Enable feature flag
-  process.env.AIKIDO_FEATURE_COLLECT_API_SCHEMA = "true";
-  if (!isFeatureEnabled("COLLECT_API_SCHEMA")) {
-    console.error("Feature COLLECT_API_SCHEMA is not enabled!");
-    process.exit(1);
-  }
-
   const avgTime = getAvgBenchmark();
   if (avgTime > MAX_TIME_LIMIT) {
     console.error(
@@ -29,29 +24,34 @@ function main() {
 
 main();
 
-function getContext(body) {
+function getContext(body, headers, query, cookies) {
   return {
     method: "POST",
     route: "/test",
     headers: {
+      ...headers,
       "content-type": "application/json",
     },
     body,
     remoteAddress: "",
     url: "http://localhost/test",
     routeParams: {},
-    query: {},
-    cookies: {},
+    query: query,
+    cookies: cookies,
     source: "test",
   };
 }
 
-function runBenchmark(routes, body) {
-  const context = getContext(body);
+function runBenchmark(routes, body, headers, query, cookies) {
+  const context = getContext(body, headers, query, cookies);
   const startTime = performance.now();
   routes.addRoute(context);
   const endTime = performance.now();
   return endTime - startTime;
+}
+
+function nextIndex(index, length) {
+  return index === length - 1 ? 0 : index + 1;
 }
 
 /**
@@ -63,13 +63,21 @@ function getAvgBenchmark() {
   let avgTime = 0;
 
   let bodyIndex = 0;
+  let headersIndex = 0;
+  let queryIndex = 0;
+  let cookieIndex = 0;
   for (let i = 0; i < RUN_COUNT; i++) {
-    avgTime += runBenchmark(routes, reqBodies[bodyIndex]);
-    if (bodyIndex === reqBodies.length - 1) {
-      bodyIndex = 0;
-    } else {
-      bodyIndex++;
-    }
+    avgTime += runBenchmark(
+      routes,
+      reqBodies[bodyIndex],
+      headers[headersIndex],
+      queryParameters[queryIndex],
+      cookies[cookieIndex]
+    );
+    bodyIndex = nextIndex(bodyIndex, reqBodies.length);
+    headersIndex = nextIndex(headersIndex, headers.length);
+    queryIndex = nextIndex(queryIndex, queryParameters.length);
+    cookieIndex = nextIndex(cookieIndex, cookies.length);
   }
 
   avgTime = avgTime / RUN_COUNT;

@@ -75,7 +75,7 @@ t.test(
     applyHooks(hooks);
 
     await runWithContext(context, async () => {
-      await fetch("https://aikido.dev");
+      await fetch("https://app.aikido.dev");
       t.same(modifyCalled, true);
 
       t.same(inspectCalled, false);
@@ -161,7 +161,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
         return {
           operation: "os.hostname",
           source: "body",
-          pathToPayload: "path",
+          pathsToPayload: ["path"],
           payload: "payload",
           metadata: {},
           kind: "path_traversal",

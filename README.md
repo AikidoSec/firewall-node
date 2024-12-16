@@ -20,11 +20,12 @@ It protects your Node.js apps by preventing user input containing dangerous stri
 Zen will autonomously protect your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
-* 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
+* 🛡️ [SQL injection attacks](https://www.aikido.dev/blog/the-state-of-sql-injections)
 * 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ JS injection
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -45,6 +46,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 2.x
+* ✅ [NestJS](docs/nestjs.md) 10.x
 
 ### Database drivers
 
@@ -58,6 +60,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
+* ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 
 ### Cloud providers
 
@@ -109,7 +112,14 @@ $ yarn add --exact @aikidosec/firewall
 
 For framework- and provider- specific instructions, check out our docs:
 
-- [Express.js-based apps](docs/express.md)
+- [Express](docs/express.md)
+- [Fastify](docs/fastify.md)
+- [Hapi](docs/hapi.md)
+- [Koa](docs/koa.md)
+- [Hono](docs/hono.md)
+- [NestJS](docs/nestjs.md)
+- [micro](docs/micro.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
