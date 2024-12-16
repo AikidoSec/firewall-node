@@ -802,7 +802,7 @@ t.test("$where js inject sleep", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".name",
+      pathsToPayload: [".name"],
       payload: { $where: "this.name === 'a' && sleep(2000) && 'b'" },
     }
   );
