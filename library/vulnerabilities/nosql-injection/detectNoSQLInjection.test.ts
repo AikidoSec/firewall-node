@@ -788,3 +788,38 @@ t.test("it does not detect", async () => {
     }
   );
 });
+
+t.test("$where js inject sleep", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { name: "a' && sleep(2000) && 'b" },
+      }),
+      {
+        $where: "this.name === 'a' && sleep(2000) && 'b'",
+      }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".name",
+      payload: { $where: "this.name === 'a' && sleep(2000) && 'b'" },
+    }
+  );
+});
+
+t.test("does not detect if not a string (js injection)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { test: 123 },
+      }),
+      {
+        $where: "this.name === 123",
+      }
+    ),
+    {
+      injection: false,
+    }
+  );
+});
