@@ -23,13 +23,13 @@ export function checkContextForJsInjection({
       continue;
     }
 
-    for (const [str, path] of userInput.entries()) {
+    for (const str of userInput) {
       if (detectJsInjection(js, str)) {
         return {
           operation: operation,
           kind: "js_injection",
           source: source,
-          pathToPayload: path,
+          pathsToPayload: [path],
           metadata: {
             js: js,
           },
