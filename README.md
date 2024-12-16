@@ -25,6 +25,7 @@ Zen will autonomously protect your Node.js applications against:
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ JS injection
 
 Zen operates autonomously on the same server as your Node.js app to:
 
