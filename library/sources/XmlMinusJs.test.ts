@@ -5,15 +5,12 @@ import { XmlMinusJs } from "./XmlMinusJs";
 import { readFile } from "fs/promises";
 import { createTestAgent } from "../helpers/createTestAgent";
 
+const agent = createTestAgent();
+agent.start([new XmlMinusJs()]);
+
 const xmljs = require("xml-js");
 
 t.test("xml2js works", async () => {
-  const agent = createTestAgent();
-
-  agent.start([new XmlMinusJs()]);
-
-  const xmljs = require("xml-js");
-
   const xmlString = (
     await readFile(join(__dirname, "fixtures", "products.xml"), "utf8")
   ).toString();
@@ -47,12 +44,6 @@ t.test("xml2js works", async () => {
 });
 
 t.test("xml2json works", async () => {
-  const agent = createTestAgent();
-
-  agent.start([new XmlMinusJs()]);
-
-  const xmljs = require("xml-js");
-
   const xmlString = "<root>Hello xml-js!</root>";
 
   const result = xmljs.xml2json(xmlString);
@@ -82,11 +73,6 @@ t.test("xml2json works", async () => {
 });
 
 t.test("Ignore if xml is not in the body", async () => {
-  const agent = createTestAgent();
-  agent.start([new XmlMinusJs()]);
-
-  const xmljs = require("xml-js");
-
   const xmlString = "<root>Hello xml-js!</root>";
 
   const context = {
