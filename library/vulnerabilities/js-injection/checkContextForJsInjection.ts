@@ -1,6 +1,7 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
+import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { detectJsInjection } from "./detectJsInjection";
 
@@ -29,7 +30,7 @@ export function checkContextForJsInjection({
           operation: operation,
           kind: "js_injection",
           source: source,
-          pathsToPayload: [path],
+          pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
             js: js,
           },
