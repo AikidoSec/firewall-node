@@ -1,16 +1,20 @@
 import * as t from "tap";
+import { extractStringsFromUserInputCached } from "../helpers/extractStringsFromUserInputCached";
 import {
   type Context,
   getContext,
   runWithContext,
   bindContext,
+  updateContext,
 } from "./Context";
 
 const sampleContext: Context = {
   remoteAddress: "::1",
   method: "POST",
   url: "http://localhost:4000",
-  query: {},
+  query: {
+    abc: "def",
+  },
   headers: {},
   body: undefined,
   cookies: {},
@@ -97,4 +101,34 @@ t.test("Get context does work with bindContext", async (t) => {
   });
 
   emitter.emit("event");
+});
+
+t.test("it clears cache when context is mutated", async (t) => {
+  const context = { ...sampleContext };
+
+  runWithContext(context, () => {
+    t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
+    t.same(
+      extractStringsFromUserInputCached(getContext()!, "query"),
+      new Map(Object.entries({ abc: ".", def: ".abc" }))
+    );
+
+    updateContext(getContext()!, "query", {});
+    t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
+    t.same(
+      extractStringsFromUserInputCached(getContext()!, "query"),
+      new Map(Object.entries({}))
+    );
+
+    runWithContext({ ...context, body: { a: "z" }, query: { b: "y" } }, () => {
+      t.same(
+        extractStringsFromUserInputCached(getContext()!, "body"),
+        new Map(Object.entries({ a: ".", z: ".a" }))
+      );
+      t.same(
+        extractStringsFromUserInputCached(getContext()!, "query"),
+        new Map(Object.entries({ b: ".", y: ".b" }))
+      );
+    });
+  });
 });

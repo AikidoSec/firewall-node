@@ -732,34 +732,56 @@ t.test("it ignores safe pipeline aggregations", async () => {
   );
 });
 
-t.test("$where js inject sleep", async (t) => {
+t.test("detects root injection", async () => {
   t.same(
     detectNoSQLInjection(
       createContext({
-        body: { name: "a' && sleep(2000) && 'b" },
+        body: {
+          username: "admin",
+          $where: "test",
+        },
       }),
-      {
-        $where: "this.name === 'a' && sleep(2000) && 'b'",
-      }
+      { username: "admin", $where: "test" }
     ),
     {
       injection: true,
       source: "body",
-      pathToPayload: ".name",
-      payload: { $where: "this.name === 'a' && sleep(2000) && 'b'" },
+      pathToPayload: ".",
+      payload: { $where: "test" },
     }
   );
 });
 
-t.test("does not detect if not a string (js injection)", async (t) => {
+t.test("detects injection", async () => {
   t.same(
     detectNoSQLInjection(
       createContext({
-        body: { test: 123 },
+        body: {
+          username: "admin",
+          test: { $ne: "", hello: "world" },
+        },
       }),
-      {
-        $where: "this.name === 123",
-      }
+      { username: "admin", test: { $ne: "", hello: "world" } }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathToPayload: ".test",
+      payload: { $ne: "" },
+    }
+  );
+});
+
+t.test("it does not detect", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          password: "test",
+        },
+      }),
+      { username: "admin", password: "test" }
     ),
     {
       injection: false,

@@ -1,8 +1,14 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
+import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
-import { getContext } from "../../agent/Context";
+import { Context, getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { Agent } from "../../agent/Agent";
+import { attackKindHumanName } from "../../agent/Attack";
+import { escapeHTML } from "../../helpers/escapeHTML";
+import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
+import { wrapOnHeaders } from "./wrapOnHeaders";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -15,51 +21,97 @@ type Dispatch = Dispatcher["dispatch"];
  *
  * We can not store the port in the context directly inside our inspect functions, because the order in which the requests are made is not guaranteed.
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
+ *
  */
-export function wrapDispatch(orig: Dispatch): Dispatch {
+export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
   return function wrap(opts, handler) {
     const context = getContext();
 
-    // If there is no context, we don't need to do anything special
-    if (!context) {
+    if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
-        this,
-        [opts, handler]
-      );
-    }
-
-    if (!opts || !opts.origin) {
-      return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
     }
 
     let url: URL | undefined;
-    if (typeof opts.origin === "string") {
-      url = tryParseURL(opts.origin);
+    if (typeof opts.origin === "string" && typeof opts.path === "string") {
+      url = tryParseURL(opts.origin + opts.path);
     } else if (opts.origin instanceof URL) {
-      url = opts.origin;
+      if (typeof opts.path === "string") {
+        url = tryParseURL(opts.origin.href + opts.path);
+      } else {
+        url = opts.origin;
+      }
     }
 
     if (!url) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
     }
 
+    blockRedirectToPrivateIP(url, context, agent);
+
     const port = getPortFromURL(url);
 
-    return RequestContextStorage.run({ port }, () => {
+    // Wrap onHeaders to check for redirects
+    handler.onHeaders = wrapOnHeaders(
+      handler.onHeaders,
+      { port, url },
+      context
+    );
+
+    return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
     });
   };
+}
+
+/**
+ * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
+ */
+function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+  const isAllowedIP =
+    context &&
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    // If the IP address is allowed, we don't need to block the request
+    return;
+  }
+
+  const found = isRedirectToPrivateIP(url, context);
+
+  if (found) {
+    agent.onDetectedAttack({
+      module: "undici",
+      operation: "fetch",
+      kind: "ssrf",
+      source: found.source,
+      blocked: agent.shouldBlock(),
+      stack: new Error().stack!,
+      path: found.pathToPayload,
+      metadata: getMetadataForSSRFAttack({
+        hostname: found.hostname,
+        port: found.port,
+      }),
+      request: context,
+      payload: found.payload,
+    });
+
+    if (agent.shouldBlock()) {
+      throw new Error(
+        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+      );
+    }
+  }
 }

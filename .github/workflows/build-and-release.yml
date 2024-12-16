@@ -7,10 +7,13 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
   run-end-to-end-tests:
     uses: ./.github/workflows/end-to-end-tests.yml
+  run-benchmarks:
+    uses: ./.github/workflows/benchmark.yml
   build:
     needs:
       - run-unit-tests
       - run-end-to-end-tests
+      - run-benchmarks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,13 +26,25 @@ jobs:
           node-version: "18.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
-      - run: make install
+      - name: Install dependencies
+        run: make install
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
-      - run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
-      - run: make build
-      - run: make lint
-      - run: cd build && npm publish --provenance --access public
+        run: echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+      - name: Set the version
+        run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
+      - name: Build the library
+        run: make build
+      - name: Linting
+        run: make lint
+      - name: Publish to NPM
+        run: |
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            echo "Publishing beta version ${{ steps.get_version.outputs.tag }} to NPM"
+            cd build && npm publish --provenance --access public --tag beta
+          else
+            echo "Publishing version ${{ steps.get_version.outputs.tag }} to NPM"
+            cd build && npm publish --provenance --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

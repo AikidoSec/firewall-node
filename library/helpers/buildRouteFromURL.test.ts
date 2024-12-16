@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { buildRouteFromURL } from "./buildRouteFromURL";
+import * as ObjectID from "bson-objectid";
 
 t.test("it returns undefined for invalid URLs", async () => {
   t.same(buildRouteFromURL(""), undefined);
@@ -142,5 +143,28 @@ t.test("it replaces secrets", async () => {
   t.same(
     buildRouteFromURL("/confirm/CnJ4DunhYfv2db6T1FRfciRBHtlNKOYrjoz"),
     "/confirm/:secret"
+  );
+});
+
+t.test("it replaces BSON ObjectIDs", async () => {
+  t.same(
+    // @ts-expect-error It says that the expression isn't callable
+    buildRouteFromURL(`/posts/${ObjectID().toHexString()}`),
+    "/posts/:objectId"
+  );
+  t.same(
+    buildRouteFromURL(`/posts/66ec29159d00113616fc7184`),
+    "/posts/:objectId"
+  );
+});
+
+t.test("it replaces ULID strings", async () => {
+  t.same(
+    buildRouteFromURL("/posts/01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+    "/posts/:ulid"
+  );
+  t.same(
+    buildRouteFromURL("/posts/01arz3ndektsv4rrffq69g5fav"),
+    "/posts/:ulid"
   );
 });

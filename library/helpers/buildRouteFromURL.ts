@@ -4,6 +4,8 @@ import { isIP } from "net";
 
 const UUID =
   /(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
+const OBJECT_ID = /^[0-9a-f]{24}$/i;
+const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 const NUMBER = /^\d+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}$/;
 const EMAIL =
@@ -41,6 +43,14 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (segment.length === 36 && UUID.test(segment)) {
     return ":uuid";
+  }
+
+  if (segment.length === 26 && ULID.test(segment)) {
+    return ":ulid";
+  }
+
+  if (segment.length === 24 && OBJECT_ID.test(segment)) {
+    return ":objectId";
   }
 
   if (startsWithNumber && DATE.test(segment)) {

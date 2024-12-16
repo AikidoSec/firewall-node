@@ -1,23 +1,77 @@
 /* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
-import { getInstance } from "../agent/AgentSingleton";
-import { getContext } from "../agent/Context";
+import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import type { ExecutionArgs } from "graphql/execution/execute";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { extractInputsFromDocument } from "./graphql/extractInputsFromDocument";
 import { extractTopLevelFieldsFromDocument } from "./graphql/extractTopLevelFieldsFromDocument";
-import { wrap } from "../helpers/wrap";
+import { isGraphQLOverHTTP } from "./graphql/isGraphQLOverHTTP";
 import { shouldRateLimitOperation } from "./graphql/shouldRateLimitOperation";
+import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class GraphQL implements Wrapper {
-  private inspectGraphQLExecute(
-    args: unknown[],
-    subject: unknown,
+  private graphqlModule: typeof import("graphql") | undefined;
+
+  private discoverGraphQLSchema(
+    context: Context,
+    executeArgs: ExecutionArgs,
     agent: Agent
-  ): void {
-    if (!Array.isArray(args) || typeof args[0] !== "object") {
+  ) {
+    if (!this.graphqlModule) {
+      return;
+    }
+
+    if (!executeArgs.schema) {
+      return;
+    }
+
+    if (!context.method || !context.route) {
+      return;
+    }
+
+    if (!agent.hasGraphQLSchema(context.method, context.route)) {
+      try {
+        const schema = this.graphqlModule.printSchema(executeArgs.schema);
+        agent.onGraphQLSchema(context.method, context.route, schema);
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  }
+
+  private discoverGraphQLQueryFields(
+    context: Context,
+    executeArgs: ExecutionArgs,
+    agent: Agent
+  ) {
+    if (!context.method || !context.route) {
+      return;
+    }
+
+    const topLevelFields = extractTopLevelFieldsFromDocument(
+      executeArgs.document,
+      executeArgs.operationName ? executeArgs.operationName : undefined
+    );
+
+    if (topLevelFields) {
+      agent.onGraphQLExecute(
+        context.method,
+        context.route,
+        topLevelFields.type,
+        topLevelFields.fields.map((field) => field.name.value)
+      );
+    }
+  }
+
+  private inspectGraphQLExecute(args: unknown[], agent: Agent): void {
+    if (
+      !Array.isArray(args) ||
+      typeof args[0] !== "object" ||
+      !this.graphqlModule
+    ) {
       return;
     }
 
@@ -29,23 +83,22 @@ export class GraphQL implements Wrapper {
       return;
     }
 
-    if (context.method && context.route) {
-      const topLevelFields = extractTopLevelFieldsFromDocument(
-        executeArgs.document,
-        executeArgs.operationName ? executeArgs.operationName : undefined
-      );
-
-      if (topLevelFields) {
-        agent.onGraphQLExecute(
-          context.method,
-          context.route,
-          topLevelFields.type,
-          topLevelFields.fields.map((field) => field.name.value)
-        );
-      }
+    if (
+      context &&
+      context.method &&
+      context.route &&
+      isGraphQLOverHTTP(context)
+    ) {
+      // We only want to discover GraphQL over HTTP
+      // We should ignore queries coming from a GraphQL client in SSR mode
+      this.discoverGraphQLSchema(context, executeArgs, agent);
+      this.discoverGraphQLQueryFields(context, executeArgs, agent);
     }
 
-    const userInputs = extractInputsFromDocument(executeArgs.document);
+    const userInputs = extractInputsFromDocument(
+      executeArgs.document,
+      this.graphqlModule.visit
+    );
 
     if (
       executeArgs.variableValues &&
@@ -58,70 +111,79 @@ export class GraphQL implements Wrapper {
       }
     }
 
-    if (userInputs.length > 0) {
-      if (Array.isArray(context.graphql)) {
-        context.graphql.push(...userInputs);
-      } else {
-        context.graphql = userInputs;
-      }
+    if (Array.isArray(context.graphql)) {
+      updateContext(context, "graphql", context.graphql.concat(userInputs));
+    } else {
+      updateContext(context, "graphql", userInputs);
     }
   }
 
-  private createExecuteWrapper(original: Function) {
-    const { GraphQLError } = require("graphql");
+  private handleRateLimiting(
+    args: unknown[],
+    origReturnVal: unknown,
+    agent: Agent
+  ) {
+    const context = getContext();
 
-    return function wrappedExecute(this: unknown) {
-      const context = getContext();
-      const agent = getInstance();
+    if (!context || !agent || !this.graphqlModule) {
+      return origReturnVal;
+    }
 
-      if (!context || !agent) {
-        return original.apply(this, arguments);
-      }
+    if (!Array.isArray(args) || !isPlainObject(args[0])) {
+      return origReturnVal;
+    }
 
-      const args = Array.from(arguments);
+    const result = shouldRateLimitOperation(
+      agent,
+      context,
+      args[0] as unknown as ExecutionArgs
+    );
 
-      if (!Array.isArray(args) || !isPlainObject(args[0])) {
-        return original.apply(this, arguments);
-      }
+    if (result.block) {
+      return {
+        errors: [
+          new this.graphqlModule.GraphQLError("You are rate limited by Zen.", {
+            nodes: [result.field],
+            extensions: {
+              code: "RATE_LIMITED_BY_ZEN",
+              ipAddress: context.remoteAddress,
+            },
+          }),
+        ],
+      };
+    }
 
-      const result = shouldRateLimitOperation(
-        agent,
-        context,
-        args[0] as unknown as ExecutionArgs
-      );
+    return origReturnVal;
+  }
 
-      if (result.block) {
-        return {
-          errors: [
-            new GraphQLError("You are rate limited by Aikido firewall.", {
-              nodes: [result.field],
-              extensions: {
-                code: "RATE_LIMITED_BY_AIKIDO_FIREWALL",
-                ipAddress: context.remoteAddress,
-              },
-            }),
-          ],
-        };
-      }
+  private wrapExecution(exports: unknown, pkgInfo: WrapPackageInfo) {
+    const methods = ["execute", "executeSync"];
 
-      return original.apply(this, arguments);
-    };
+    for (const method of methods) {
+      wrapExport(exports, method, pkgInfo, {
+        modifyReturnValue: (args, returnValue, agent) =>
+          this.handleRateLimiting(args, returnValue, agent),
+        inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
+      });
+    }
   }
 
   wrap(hooks: Hooks) {
     hooks
       .addPackage("graphql")
       .withVersion("^16.0.0")
-      .addFile("execution/execute.js")
-      .addSubject((exports) => {
-        // We don't have a hook yet to modify the return value of a function
-        // We need to refactor this system to allow for that
-        // For now, we'll wrap the execute function manually
-        wrap(exports, "execute", this.createExecuteWrapper);
-
-        return exports;
+      .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
+        this.wrapExecution(exports, pkgInfo);
       })
-      .inspect("execute", this.inspectGraphQLExecute)
-      .inspect("executeSync", this.inspectGraphQLExecute);
+      .onRequire((exports, pkgInfo) => {
+        this.graphqlModule = exports;
+      });
+
+    hooks
+      .addPackage("@graphql-tools/executor")
+      .withVersion("^1.0.0")
+      .onFileRequire("cjs/execution/execute.js", (exports, pkgInfo) => {
+        this.wrapExecution(exports, pkgInfo);
+      });
   }
 }

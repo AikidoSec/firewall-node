@@ -1,39 +1,48 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Endpoint } from "../agent/Config";
 import type { Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { wrap } from "../helpers/wrap";
 
 function createContext(
-  remoteAddress: string = undefined,
-  userId: string = undefined
+  remoteAddress: string | undefined = undefined,
+  userId: string | undefined = undefined,
+  route: string = "/login",
+  method: string = "POST"
 ): Context {
   return {
     remoteAddress: remoteAddress,
-    method: "POST",
-    url: "http://localhost/login",
+    method: method,
+    url: `http://localhost${route}`,
     query: {},
     headers: {},
     body: undefined,
     cookies: {},
     routeParams: {},
     source: "express",
-    route: "/login",
+    route: route,
     user: userId ? { id: userId } : undefined,
   };
 }
+
+const logs: string[] = [];
+wrap(console, "warn", function warn() {
+  return function warn(message: string) {
+    logs.push(message);
+  };
+});
 
 async function createAgent(
   endpoints: Endpoint[] = [],
   allowedIpAddresses: string[] = []
 ) {
-  const agent = new Agent(
-    false,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       allowedIPAddresses: allowedIpAddresses,
       success: true,
       heartbeatIntervalInMS: 10 * 60 * 1000,
@@ -41,9 +50,7 @@ async function createAgent(
       configUpdatedAt: 0,
       endpoints: endpoints,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 
@@ -232,3 +239,269 @@ t.test("it rate limits by user", async (t) => {
     trigger: "user",
   });
 });
+
+t.test("it rate limits with wildcard", async () => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/api/*",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/logout"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/reset-password"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "ip",
+    }
+  );
+});
+
+t.test("it rate limits with wildcard", async () => {
+  const agent = await createAgent([
+    {
+      method: "*",
+      route: "/api/*",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login", "POST"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/logout", "GET"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/reset-password", "PUT"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/api/login", "GET"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "ip",
+    }
+  );
+});
+
+t.test("it rate limits by user also if ip is set", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: true,
+    trigger: "user",
+  });
+});
+
+t.test("it rate limits by user with different ips", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+    block: false,
+  });
+  t.same(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
+    block: true,
+    trigger: "user",
+  });
+});
+
+t.test(
+  "it does not rate limit requests from same ip but different users",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 3,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
+      block: false,
+    });
+  }
+);
+
+t.test(
+  "it does not rate limit requests from allowed ip with user",
+  async (t) => {
+    const agent = await createAgent(
+      [
+        {
+          method: "POST",
+          route: "/login",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 3,
+            windowSizeInMS: 1000,
+          },
+        },
+      ],
+      ["1.2.3.4"]
+    );
+
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+      block: false,
+    });
+  }
+);
+
+t.test(
+  "it does not consume rate limit for user a second time (same request)",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 3,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    t.same(logs, []);
+
+    const ctx = createContext("1.2.3.4", "123");
+
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+    t.same(shouldRateLimitRequest(ctx, agent), {
+      block: false,
+    });
+
+    t.same(logs, ["Zen.addMiddleware(...) should be called only once."]);
+  }
+);

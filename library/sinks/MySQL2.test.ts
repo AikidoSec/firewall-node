@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { MySQL2 } from "./MySQL2";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -33,14 +31,8 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects SQL injections", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+t.test("it detects SQL injections", async (t) => {
+  const agent = createTestAgent();
   agent.start([new MySQL2()]);
 
   const mysql = require("mysql2/promise");
@@ -78,7 +70,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,7 +82,7 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
       );
     }
 

@@ -1,18 +1,15 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Hapi } from "./Hapi";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPServer } from "./HTTPServer";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { addHapiMiddleware } from "../middleware/hapi";
 
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
-  new ReportingAPIForTesting({
+const agent = createTestAgent({
+  api: new ReportingAPIForTesting({
     success: true,
     endpoints: [
       {
@@ -31,11 +28,9 @@ const agent = new Agent(
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
   }),
-  new Token("123"),
-  undefined
-);
+  token: new Token("123"),
+});
 agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
-setInstance(agent);
 
 import * as hapi from "@hapi/hapi";
 import * as request from "supertest";
@@ -126,6 +121,8 @@ function getServer(onRequestExt = true) {
       return h.continue;
     });
   }
+
+  addHapiMiddleware(server);
 
   return server;
 }
@@ -221,10 +218,7 @@ t.test("it rate limits based on IP address", async (t) => {
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response3.status, 429);
-  t.match(
-    response3.text,
-    "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-  );
+  t.match(response3.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
 });
 
 t.test("it blocks based on user ID", async (t) => {
@@ -232,7 +226,7 @@ t.test("it blocks based on user ID", async (t) => {
     .get("/blocked-user")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 403);
-  t.match(response.text, "You are blocked by Aikido firewall.");
+  t.match(response.text, "You are blocked by Zen.");
 });
 
 t.test("it gets context from decorate handler", async (t) => {

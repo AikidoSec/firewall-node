@@ -27,6 +27,10 @@ function generateStartedEvent(): Event {
       },
       stack: [],
       serverless: false,
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }

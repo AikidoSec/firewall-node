@@ -1,0 +1,11 @@
+{
+  "name": "express-benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "benchmark.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^5.0.0"
+  }
+}
