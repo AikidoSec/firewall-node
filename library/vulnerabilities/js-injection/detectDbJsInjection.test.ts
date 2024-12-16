@@ -210,3 +210,11 @@ t.test("Ignores where with object", async (t) => {
     })
   );
 });
+
+t.test("Ignores invalid js", async (t) => {
+  t.notOk(
+    detectDbJsInjection("abc (xyz 123", {
+      $where: "abc (xyz 123",
+    })
+  );
+});
