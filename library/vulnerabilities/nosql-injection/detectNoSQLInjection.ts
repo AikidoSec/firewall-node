@@ -5,7 +5,7 @@ import { Source, SOURCES } from "../../agent/Source";
 import { buildPathToPayload, PathPart } from "../../helpers/attackPath";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
-import { detectDbJsInjection } from "./detectDbJsInjection";
+import { detectDbJsInjection } from "../js-injection/detectDbJsInjection";
 
 function matchFilterPartInUser(
   userInput: unknown,

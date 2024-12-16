@@ -22,19 +22,20 @@ t.test("detects injection in $where operator", async (t) => {
 
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
-      $where: "this.name === `a` && sleep(2000) && `b'",
+      $where: "this.name === `a` && sleep(2000) && `b`",
     })
   );
 
   t.ok(
     detectDbJsInjection("a' && sleep(2000) && 'b", {
-      $where: "this.name === 'a' && sleep(2000) && 'b'\"",
+      $where: "this.name === 'a' && sleep(2000) && 'b'",
     })
   );
 
   t.ok(
     detectDbJsInjection("a' && sleep(2000) && 'b", {
-      $where: "function() { return this.name === 'a' && sleep(2000) && 'b' }",
+      $where:
+        "function test() { return this.name === 'a' && sleep(2000) && 'b' }",
     })
   );
 });
@@ -90,7 +91,7 @@ t.test("detects injection in $function operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $function: {
-        body: "this.name === `a` && sleep(2000) && `b'",
+        body: "this.name === `a` && sleep(2000) && `b`",
         args: [],
         lang: "js",
       },
@@ -117,7 +118,7 @@ t.test("detects injection in $accumulator operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $accumulator: {
-        init: "this.name === `a` && sleep(2000) && `b'",
+        init: "this.name === `a` && sleep(2000) && `b`",
         lang: "js",
       },
     })
@@ -126,7 +127,7 @@ t.test("detects injection in $accumulator operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $accumulator: {
-        accumulate: "this.name === `a` && sleep(2000) && `b'",
+        accumulate: "this.name === `a` && sleep(2000) && `b`",
         lang: "js",
       },
     })
@@ -135,7 +136,7 @@ t.test("detects injection in $accumulator operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $accumulator: {
-        merge: "this.name === `a` && sleep(2000) && `b'",
+        merge: "this.name === `a` && sleep(2000) && `b`",
         lang: "js",
       },
     })
@@ -144,7 +145,7 @@ t.test("detects injection in $accumulator operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $accumulator: {
-        finalize: "this.name === `a` && sleep(2000) && `b'",
+        finalize: "this.name === `a` && sleep(2000) && `b`",
         lang: "js",
       },
     })
@@ -153,9 +154,9 @@ t.test("detects injection in $accumulator operator", async (t) => {
   t.ok(
     detectDbJsInjection("a` && sleep(2000) && `b", {
       $accumulator: {
-        init: "function() { return true; }",
+        init: "function a() { return true; }",
         finalize:
-          "function() { return this.name === `a` && sleep(2000) && `b' }",
+          "function b() { return this.name === `a` && sleep(2000) && `b`  }",
         lang: "js",
       },
     })
