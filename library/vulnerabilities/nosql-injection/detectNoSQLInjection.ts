@@ -130,7 +130,12 @@ function findFilterPartWithOperators(
 }
 
 type DetectionResult =
-  | { injection: true; source: Source; pathToPayload: string; payload: unknown }
+  | {
+      injection: true;
+      source: Source;
+      pathsToPayload: string[];
+      payload: unknown;
+    }
   | { injection: false };
 
 export function detectNoSQLInjection(
@@ -149,7 +154,7 @@ export function detectNoSQLInjection(
         return {
           injection: true,
           source: source,
-          pathToPayload: result.pathToPayload,
+          pathsToPayload: [result.pathToPayload],
           payload: result.payload,
         };
       }

@@ -54,7 +54,7 @@ export class MongoDB implements Wrapper {
         operation: `MongoDB.Collection.${operation}`,
         kind: "nosql_injection",
         source: result.source,
-        pathToPayload: result.pathToPayload,
+        pathsToPayload: result.pathsToPayload,
         metadata: {
           db: db,
           collection: collection,

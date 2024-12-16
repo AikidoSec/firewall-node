@@ -27,7 +27,7 @@ t.test("it returns correct path", async () => {
       operation: "mysql.query",
       kind: "sql_injection",
       source: "body",
-      pathToPayload: ".id",
+      pathsToPayload: [".id"],
       metadata: {
         sql: "SELECT * FROM users WHERE id = '1' OR 1=1; -- '",
       },
