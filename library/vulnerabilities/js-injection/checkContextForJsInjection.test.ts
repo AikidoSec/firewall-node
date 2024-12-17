@@ -25,7 +25,7 @@ t.test("it returns correct path", async () => {
       operation: "eval",
       kind: "js_injection",
       source: "body",
-      pathToPayload: ".calc",
+      pathsToPayload: [".calc"],
       metadata: {
         js: "const x = 1 + 1; fetch();",
       },
