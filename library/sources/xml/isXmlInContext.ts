@@ -16,7 +16,7 @@ export function isXmlInContext(xml: string, context: Context): boolean {
       continue;
     }
 
-    for (const [str] of userInput.entries()) {
+    for (const str of userInput) {
       if (str === xml) {
         return true;
       }
