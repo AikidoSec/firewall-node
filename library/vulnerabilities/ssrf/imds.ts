@@ -1,15 +1,15 @@
-import { BlockList } from "net";
+import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
 
-const IMDSAddresses = new BlockList();
+const IMDSAddresses = new IPMatcher();
 
 // This IP address is used by AWS EC2 instances to access the instance metadata service (IMDS)
 // We should block any requests to these IP addresses
 // This prevents STORED SSRF attacks that try to access the instance metadata service
-IMDSAddresses.addAddress("169.254.169.254", "ipv4");
-IMDSAddresses.addAddress("fd00:ec2::254", "ipv6");
+IMDSAddresses.add("169.254.169.254");
+IMDSAddresses.add("fd00:ec2::254");
 
 export function isIMDSIPAddress(ip: string): boolean {
-  return IMDSAddresses.check(ip) || IMDSAddresses.check(ip, "ipv6");
+  return IMDSAddresses.has(ip);
 }
 
 // Google cloud uses the same IP addresses for its metadata service
