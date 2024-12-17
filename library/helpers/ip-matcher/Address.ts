@@ -10,9 +10,9 @@ const AFTER = 1;
 export class Address {
   private arr: number[];
 
-  public constructor(address?: string, throwErrors?: boolean) {
+  public constructor(address?: string) {
     if (address) {
-      const net = parse.network(address, throwErrors);
+      const net = parse.network(address);
       if (net) {
         this.arr = net.bytes;
         return;
@@ -59,12 +59,6 @@ export class Address {
 
   public equals(address: Address) {
     return this.compare(address) === EQUALS;
-  }
-
-  public greaterThanOrEqual(address: Address) {
-    const result = this.compare(address);
-    if (result === null) return false;
-    return result >= EQUALS;
   }
 
   public compare(address: Address) {

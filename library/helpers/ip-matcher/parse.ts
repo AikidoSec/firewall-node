@@ -1,7 +1,7 @@
 // Based on https://github.com/demskie/netparser
 // MIT License - Copyright (c) 2019 alex
 
-export function network(s: string, throwErrors?: boolean) {
+export function network(s: string) {
   s = s.trim();
   const parts = s.split("/");
   if (parts.length === 0 || parts.length > 2) return null;

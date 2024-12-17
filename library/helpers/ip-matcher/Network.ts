@@ -55,13 +55,6 @@ export class Network {
     return this;
   }
 
-  public lastAddr() {
-    const addr = this.addr.duplicate().applySubnetMask(this.netbits);
-    const maxCIDR = this.addr.bytes().length * 8;
-    for (let i = this.netbits + 1; i <= maxCIDR; i++) addr.increase(i);
-    return addr;
-  }
-
   public setCIDR(cidr: number) {
     if (!this.addr.isValid()) {
       this.destroy();
@@ -118,38 +111,6 @@ export class Network {
 
     // must be a child subnet
     return true;
-  }
-
-  public intersects(network: Network) {
-    // check that both networks are valid
-    if (!this.isValid() || !network.isValid()) return false;
-
-    // ensure that both IPs are of the same type
-    if (this.addr.bytes().length !== network.addr.bytes().length) return false;
-
-    // handle edge cases
-    if (this.netbits === 0 || network.netbits == 0) return true;
-    const cmp = this.addr.compare(network.addr);
-    if (cmp === EQUALS) return true;
-
-    // ensure that alpha addr contains the baseAddress that comes first
-    let alpha: Network, bravo: Network;
-    if (cmp === BEFORE) {
-      alpha = this.duplicate().next();
-      bravo = network.duplicate().next();
-    } else {
-      alpha = network.duplicate().next();
-      bravo = this.duplicate().next();
-    }
-
-    // if either addresses overflowed than an intersection has occured
-    if (!alpha.isValid() || !bravo.isValid()) return true;
-
-    // if alpha addr is now greater than or equal to bravo addr than we've intersected
-    if (alpha.addr.greaterThanOrEqual(bravo.addr)) return true;
-
-    // otherwise we haven't intersected
-    return false;
   }
 
   public adjacent(network: Network) {
