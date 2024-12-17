@@ -190,5 +190,5 @@ t.test("Different cidr ranges", async (t) => {
   t.same(new IPMatcher(["123.2.0.2/29"]).has("123.2.0.1"), true);
   t.same(new IPMatcher(["123.2.0.2/30"]).has("123.2.0.1"), true);
   t.same(new IPMatcher(["123.2.0.2/31"]).has("123.2.0.1"), false);
-  t.same(new IPMatcher(["123.2.0.2/31"]).has("123.2.0.2"), true);
+  t.same(new IPMatcher(["123.2.0.2/32"]).has("123.2.0.2"), true);
 });

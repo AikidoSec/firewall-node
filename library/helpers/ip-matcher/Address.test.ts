@@ -22,4 +22,8 @@ t.test("it works", async (t) => {
   t.ok(new Address().applySubnetMask(0));
 
   t.same(new Address().increase(0).bytes(), []);
+  t.same(new Address().bytes(), []);
+
+  const a = new Address("3.4.5.6");
+  t.same(a.compare(a), 0);
 });
