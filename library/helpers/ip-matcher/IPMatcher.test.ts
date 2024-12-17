@@ -157,3 +157,38 @@ t.test("strange ips", async (t) => {
   t.same(matcher.has("[::ffff:0.0.0.0]"), true);
   t.same(matcher.has("::ffff:0:0:0:0"), true);
 });
+
+t.test("Different cidr ranges", async (t) => {
+  t.same(new IPMatcher(["123.2.0.2/0"]).has("1.1.1.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/1"]).has("1.1.1.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/2"]).has("1.1.1.1"), false);
+  t.same(new IPMatcher(["123.2.0.2/3"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/4"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/5"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/6"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/7"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/8"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/9"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/10"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/11"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/12"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/13"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/14"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/15"]).has("123.3.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/16"]).has("123.3.0.1"), false);
+  t.same(new IPMatcher(["123.2.0.2/17"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/18"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/19"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/20"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/21"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/22"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/23"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/24"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/25"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/26"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/27"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/29"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/30"]).has("123.2.0.1"), true);
+  t.same(new IPMatcher(["123.2.0.2/31"]).has("123.2.0.1"), false);
+  t.same(new IPMatcher(["123.2.0.2/31"]).has("123.2.0.2"), true);
+});
