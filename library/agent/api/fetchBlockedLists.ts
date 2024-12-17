@@ -8,9 +8,10 @@ export type Blocklist = {
   ips: string[];
 };
 
-export async function fetchBlockedIPAddresses(
-  token: Token
-): Promise<Blocklist[]> {
+export async function fetchBlockedLists(token: Token): Promise<{
+  blockedIPAddresses: Blocklist[];
+  blockedUserAgents: string;
+}> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -24,12 +25,22 @@ export async function fetchBlockedIPAddresses(
   });
 
   if (statusCode !== 200) {
-    throw new Error(`Failed to fetch blocked IP addresses: ${statusCode}`);
+    throw new Error(`Failed to fetch blocked lists: ${statusCode}`);
   }
 
   const result: {
     blockedIPAddresses: Blocklist[];
+    blockedUserAgents: string;
   } = JSON.parse(body);
 
-  return result && result.blockedIPAddresses ? result.blockedIPAddresses : [];
+  return {
+    blockedIPAddresses:
+      result && Array.isArray(result.blockedIPAddresses)
+        ? result.blockedIPAddresses
+        : [],
+    blockedUserAgents:
+      result && typeof result.blockedUserAgents === "string"
+        ? result.blockedUserAgents
+        : "",
+  };
 }
