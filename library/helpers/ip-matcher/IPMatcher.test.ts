@@ -71,6 +71,9 @@ t.test("it works with invalid ranges", async (t) => {
   t.same(matcher.has("192.168.0.1"), true);
   t.same(matcher.has("10.0.0.1"), false);
   t.same(matcher.has("192.168.0.255"), true);
+  t.same(matcher.has(""), false);
+  t.same(matcher.has("1"), false);
+  t.same(matcher.has("192.168.0.1/32"), true);
 });
 
 t.test("it works with empty ranges", async (t) => {
@@ -97,13 +100,14 @@ t.test("it works with ipv6 ranges", async (t) => {
     "2001:db8::c/128",
     "2001:db8::d/128",
     "2001:db8::e/128",
-    "2001:db8::f/128",
+    "[2001:db8::f]",
     "2001:db9::abc",
   ];
   const matcher = new IPMatcher(input);
   t.same(matcher.has("2001:db8::1"), true);
   t.same(matcher.has("2001:db8::0"), false);
   t.same(matcher.has("2001:db8::f"), true);
+  t.same(matcher.has("[2001:db8::f]"), true);
   t.same(matcher.has("2001:db8::10"), false);
   t.same(matcher.has("2002:db8::1"), true);
   t.same(matcher.has("2002:db8::2f:2"), true);
@@ -140,4 +144,17 @@ t.test("add ips later", async (t) => {
   t.same(matcher.has("10.0.0.1"), true);
   t.same(matcher.has("10.0.0.255"), true);
   t.same(matcher.has("192.168.1.1"), false);
+});
+
+t.test("strange ips", async (t) => {
+  const input = ["::ffff:0.0.0.0", "::ffff:0:0:0:0", "::ffff:127.0.0.1"];
+
+  const matcher = new IPMatcher(input);
+
+  t.same(matcher.has("::ffff:0.0.0.0"), true);
+  t.same(matcher.has("::ffff:127.0.0.1"), true);
+  t.same(matcher.has("::ffff:123"), false);
+  t.same(matcher.has("2001:db8::1"), false);
+  t.same(matcher.has("[::ffff:0.0.0.0]"), true);
+  t.same(matcher.has("::ffff:0:0:0:0"), true);
 });

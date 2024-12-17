@@ -29,6 +29,7 @@ const PRIVATE_IPV6_RANGES = [
   "fc00::/7", // Unique local address (ULA)
   "fe80::/10", // Link-local address (LLA)
   "::ffff:127.0.0.1/128", // IPv4-mapped address
+  "::ffff:0:0",
 ];
 
 const privateIp = new IPMatcher();
