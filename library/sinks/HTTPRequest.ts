@@ -148,7 +148,9 @@ export class HTTPRequest implements Wrapper {
   wrapResponseHandler(args: unknown[], module: "http" | "https") {
     // Wrap the response handler if there is one
     // so that we can inspect the response for SSRF attacks (using redirects)
-    // e.g. http.request("http://example.com", (response) => {})
+    // e.g. http.request("http://example.com", (response) => {...})
+    //                                         ^^^^^^^^^^^^^^^^^^^
+    //                                         We want to wrap this callback
     return args.map((arg) => {
       if (typeof arg === "function") {
         return wrapResponseHandler(args, module, arg);
@@ -171,11 +173,13 @@ export class HTTPRequest implements Wrapper {
     // so that we can inspect the response for SSRF attacks (using redirects)
 
     // You can add listeners in multiple ways:
-    // http.request("http://example.com").on("response", (response) => {})
-    // http.request("http://example.com").addListener("response", (response) => {})
-    // http.request("http://example.com").once("response", (response) => {})
-    // http.request("http://example.com").prependListener("response", (response) => {})
-    // http.request("http://example.com").prependOnceListener("response", (response) => {})
+    // http.request("http://example.com").on("response", (response) => {...})
+    //                                                   ^^^^^^^^^^^^^^^^^^^
+    //                                                   We want to wrap this callback
+    // http.request("http://example.com").addListener("response", (response) => {...})
+    // http.request("http://example.com").once("response", (response) => {...})
+    // http.request("http://example.com").prependListener("response", (response) => {...})
+    // http.request("http://example.com").prependOnceListener("response", (response) => {...})
     const methods = [
       "on",
       "addListener",
