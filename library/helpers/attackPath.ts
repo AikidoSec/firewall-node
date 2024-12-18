@@ -37,28 +37,44 @@ export function buildPathToPayload(pathToPayload: PathPart[]): string {
   }, "");
 }
 
+class Matches {
+  private readonly matches: string[] = [];
+
+  constructor(private readonly max: number) {
+    if (max < 1) {
+      throw new Error("Max must be greater than 0");
+    }
+  }
+
+  add(path: PathPart[]) {
+    this.matches.push(buildPathToPayload(path));
+  }
+
+  getMatches() {
+    return this.matches;
+  }
+
+  found() {
+    return this.matches.length >= this.max;
+  }
+}
+
 export function getPathsToPayload(
   attackPayload: string,
   obj: unknown,
   matchCount = DEFAULT_MATCH_COUNT
 ): string[] {
-  const matches: string[] = [];
-
+  const matches = new Matches(matchCount);
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
   const traverse = (value: unknown, path: PathPart[] = [], depth = 0) => {
-    if (matches.length >= matchCount) {
+    if (matches.found() || depth > MAX_DEPTH) {
       return;
     }
 
-    if (depth > MAX_DEPTH) {
-      return;
-    }
-
-    // Handle strings
     if (typeof value === "string") {
       if (value.toLowerCase() === attackPayloadLowercase) {
-        matches.push(buildPathToPayload(path));
+        matches.add(path);
         return;
       }
 
@@ -66,29 +82,33 @@ export function getPathsToPayload(
       if (jwt.jwt) {
         traverse(jwt.object, path.concat({ type: "jwt" }), depth + 1);
       }
-
-      return;
     }
 
     if (Array.isArray(value)) {
-      // Handle arrays
+      if (
+        value.length > 1 &&
+        value.length < MAX_ARRAY_LENGTH &&
+        value.join().toLowerCase() === attackPayloadLowercase
+      ) {
+        matches.add(path);
+        return;
+      }
+
       for (const [index, item] of value.entries()) {
-        if (index > MAX_ARRAY_LENGTH) {
+        if (matches.found() || index > MAX_ARRAY_LENGTH) {
           break;
         }
+
         traverse(item, path.concat({ type: "array", index }), depth);
       }
-
-      if (value.join().toLowerCase() === attackPayloadLowercase) {
-        matches.push(buildPathToPayload(path));
-      }
-
-      return;
     }
 
     if (isPlainObject(value)) {
-      // Handle objects
       for (const key in value) {
+        if (matches.found()) {
+          break;
+        }
+
         traverse(value[key], path.concat({ type: "object", key }), depth + 1);
       }
     }
@@ -96,5 +116,5 @@ export function getPathsToPayload(
 
   traverse(obj);
 
-  return matches;
+  return matches.getMatches();
 }
