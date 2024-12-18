@@ -1,7 +1,6 @@
-import { BlockList, isIPv4, isIPv6 } from "net";
+import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
-import { addIPAddressOrRangeToBlocklist } from "../helpers/addIPAddressOrRangeToBlocklist";
 import { Blocklist as BlocklistType } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
@@ -9,7 +8,7 @@ export class ServiceConfig {
   private allowedIPAddresses: Map<string, string> = new Map();
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
-  private blockedIPAddresses: { blocklist: BlockList; description: string }[] =
+  private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
     [];
   private blockedUserAgentRegex: RegExp | undefined;
 
@@ -86,20 +85,9 @@ export class ServiceConfig {
   isIPAddressBlocked(
     ip: string
   ): { blocked: true; reason: string } | { blocked: false } {
-    let blocklist: { blocklist: BlockList; description: string } | undefined =
-      undefined;
-
-    if (isIPv4(ip)) {
-      blocklist = this.blockedIPAddresses.find((blocklist) =>
-        blocklist.blocklist.check(ip, "ipv4")
-      );
-    }
-
-    if (isIPv6(ip)) {
-      blocklist = this.blockedIPAddresses.find((blocklist) =>
-        blocklist.blocklist.check(ip, "ipv6")
-      );
-    }
+    const blocklist = this.blockedIPAddresses.find((blocklist) =>
+      blocklist.blocklist.has(ip)
+    );
 
     if (blocklist) {
       return { blocked: true, reason: blocklist.description };
@@ -112,13 +100,8 @@ export class ServiceConfig {
     this.blockedIPAddresses = [];
 
     for (const source of blockedIPAddresses) {
-      const blocklist = new BlockList();
-      for (const ip of source.ips) {
-        addIPAddressOrRangeToBlocklist(ip, blocklist);
-      }
-
       this.blockedIPAddresses.push({
-        blocklist,
+        blocklist: new IPMatcher(source.ips),
         description: source.description,
       });
     }
