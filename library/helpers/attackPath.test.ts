@@ -1,6 +1,11 @@
 import * as t from "tap";
 import { getPathsToPayload as get } from "./attackPath";
 
+t.test("it throws error if max matches is less than 1", async (t) => {
+  t.throws(() => get("payload", {}, 0));
+  t.throws(() => get("payload", {}, -1));
+});
+
 t.test("it gets paths to payload", async (t) => {
   const testObj1 = {
     a: {
@@ -90,4 +95,16 @@ t.test("respects max depth and array length", async (t) => {
 
 t.test("first item in array", async (t) => {
   t.same(get("id = 1", ["id = 1"]), [".[0]"]);
+});
+
+t.test("it checks max matches when iterating over object props", async (t) => {
+  const testObj = {
+    a: ["test"],
+    b: ["test"],
+    c: ["test"],
+  };
+
+  t.same(get("test", testObj, 1), [".a.[0]"]);
+  t.same(get("test", testObj, 2), [".a.[0]", ".b.[0]"]);
+  t.same(get("test", testObj, 3), [".a.[0]", ".b.[0]", ".c.[0]"]);
 });
