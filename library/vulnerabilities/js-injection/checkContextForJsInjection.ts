@@ -3,23 +3,20 @@ import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { detectSQLInjection } from "./detectSQLInjection";
-import { SQLDialect } from "./dialects/SQLDialect";
+import { detectJsInjection } from "./detectJsInjection";
 
 /**
  * This function goes over all the different input types in the context and checks
- * if it's a possible SQL Injection, if so the function returns an InterceptorResult
+ * if it's a possible JS Injection, if so the function returns an InterceptorResult
  */
-export function checkContextForSqlInjection({
-  sql,
+export function checkContextForJsInjection({
+  js,
   operation,
   context,
-  dialect,
 }: {
-  sql: string;
+  js: string;
   operation: string;
   context: Context;
-  dialect: SQLDialect;
 }): InterceptorResult {
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
@@ -28,14 +25,14 @@ export function checkContextForSqlInjection({
     }
 
     for (const str of userInput) {
-      if (detectSQLInjection(sql, str, dialect)) {
+      if (detectJsInjection(js, str)) {
         return {
           operation: operation,
-          kind: "sql_injection",
+          kind: "js_injection",
           source: source,
           pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
-            sql: sql,
+            js: js,
           },
           payload: str,
         };

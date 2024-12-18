@@ -214,7 +214,7 @@ t.test("when attack detected", async () => {
     operation: "operation",
     payload: "payload",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -277,7 +277,7 @@ t.test("it checks if user agent is a string", async () => {
     payload: "payload",
     operation: "operation",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -554,7 +554,7 @@ t.test("it logs when failed to report event", async () => {
     },
     operation: "operation",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     payload: "payload",
     metadata: {
       db: "app",
@@ -636,7 +636,7 @@ t.test("when payload is object", async () => {
     operation: "operation",
     payload: { $gt: "" },
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -664,7 +664,7 @@ t.test("when payload is object", async () => {
     operation: "operation",
     payload: "a".repeat(20000),
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },

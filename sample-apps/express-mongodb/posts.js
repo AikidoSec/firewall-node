@@ -16,28 +16,32 @@ class Post {
 class Posts {
   constructor(mongo) {
     this.db = mongo.db("app");
+    this.postsCollection = this.db.collection("posts");
   }
 
   async all(search) {
-    const collection = this.db.collection("posts");
-
     const filter = {};
     if (search) {
       // There's a vulnerability here, which can be abused for demo purposes
       filter.title = search;
     }
 
-    const posts = await collection.find(filter).toArray();
+    const posts = await this.postsCollection.find(filter).toArray();
 
     return posts.map((post) => new Post(post.title, post.createdAt));
   }
 
   async persist(post) {
-    const collection = this.db.collection("posts");
-    await collection.insertOne({
+    await this.postsCollection.insertOne({
       title: post.getTitle(),
       createdAt: post.getCreatedAt(),
     });
+  }
+
+  async where(title) {
+    return await this.postsCollection
+      .find({ $where: `this.title === '${title}'` })
+      .toArray();
   }
 }
 
