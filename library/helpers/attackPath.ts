@@ -37,17 +37,38 @@ export function buildPathToPayload(pathToPayload: PathPart[]): string {
   }, "");
 }
 
+class Matches {
+  private readonly matches: string[] = [];
+
+  constructor(private readonly max: number) {
+    if (max < 1) {
+      throw new Error("Max must be greater than 0");
+    }
+  }
+
+  addMatch(path: PathPart[]) {
+    this.matches.push(buildPathToPayload(path));
+  }
+
+  getMatches() {
+    return this.matches;
+  }
+
+  reachedMax() {
+    return this.matches.length >= this.max;
+  }
+}
+
 export function getPathsToPayload(
   attackPayload: string,
   obj: unknown,
   matchCount = DEFAULT_MATCH_COUNT
 ): string[] {
-  const matches: string[] = [];
-
+  const matches = new Matches(matchCount);
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
   const traverse = (value: unknown, path: PathPart[] = [], depth = 0) => {
-    if (matches.length >= matchCount) {
+    if (matches.reachedMax()) {
       return;
     }
 
@@ -55,10 +76,9 @@ export function getPathsToPayload(
       return;
     }
 
-    // Handle strings
     if (typeof value === "string") {
       if (value.toLowerCase() === attackPayloadLowercase) {
-        matches.push(buildPathToPayload(path));
+        matches.addMatch(path);
         return;
       }
 
@@ -71,30 +91,40 @@ export function getPathsToPayload(
     }
 
     if (Array.isArray(value)) {
-      // Handle arrays
-      for (const [index, item] of value.entries()) {
-        if (index > MAX_ARRAY_LENGTH) {
-          break;
-        }
-        traverse(item, path.concat({ type: "array", index }), depth);
+      if (
+        value.length > 1 &&
+        value.length < MAX_ARRAY_LENGTH &&
+        value.join().toLowerCase() === attackPayloadLowercase
+      ) {
+        matches.addMatch(path);
+        return;
       }
 
-      if (value.join().toLowerCase() === attackPayloadLowercase) {
-        matches.push(buildPathToPayload(path));
+      for (const [index, item] of value.entries()) {
+        if (matches.reachedMax() || index > MAX_ARRAY_LENGTH) {
+          break;
+        }
+
+        traverse(item, path.concat({ type: "array", index }), depth);
       }
 
       return;
     }
 
     if (isPlainObject(value)) {
-      // Handle objects
       for (const key in value) {
+        if (matches.reachedMax()) {
+          break;
+        }
+
         traverse(value[key], path.concat({ type: "object", key }), depth + 1);
       }
+
+      return;
     }
   };
 
   traverse(obj);
 
-  return matches;
+  return matches.getMatches();
 }
