@@ -46,7 +46,7 @@ class Matches {
     }
   }
 
-  addMatch(path: PathPart[]) {
+  add(path: PathPart[]) {
     this.matches.push(buildPathToPayload(path));
   }
 
@@ -54,7 +54,7 @@ class Matches {
     return this.matches;
   }
 
-  reachedMax() {
+  found() {
     return this.matches.length >= this.max;
   }
 }
@@ -68,7 +68,7 @@ export function getPathsToPayload(
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
   const traverse = (value: unknown, path: PathPart[] = [], depth = 0) => {
-    if (matches.reachedMax()) {
+    if (matches.found()) {
       return;
     }
 
@@ -78,7 +78,7 @@ export function getPathsToPayload(
 
     if (typeof value === "string") {
       if (value.toLowerCase() === attackPayloadLowercase) {
-        matches.addMatch(path);
+        matches.add(path);
         return;
       }
 
@@ -96,12 +96,12 @@ export function getPathsToPayload(
         value.length < MAX_ARRAY_LENGTH &&
         value.join().toLowerCase() === attackPayloadLowercase
       ) {
-        matches.addMatch(path);
+        matches.add(path);
         return;
       }
 
       for (const [index, item] of value.entries()) {
-        if (matches.reachedMax() || index > MAX_ARRAY_LENGTH) {
+        if (matches.found() || index > MAX_ARRAY_LENGTH) {
           break;
         }
 
@@ -113,7 +113,7 @@ export function getPathsToPayload(
 
     if (isPlainObject(value)) {
       for (const key in value) {
-        if (matches.reachedMax()) {
+        if (matches.found()) {
           break;
         }
 
