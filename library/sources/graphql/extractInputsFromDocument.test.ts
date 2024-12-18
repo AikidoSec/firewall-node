@@ -11,10 +11,9 @@ import {
   GraphQLInt,
   GraphQLInputObjectType,
   GraphQLID,
+  visit as visitFn,
 } from "graphql";
 import { extractInputsFromDocument } from "./extractInputsFromDocument";
-
-import { visit as visitFn } from "graphql";
 
 const AddressType = new GraphQLObjectType({
   name: "Address",

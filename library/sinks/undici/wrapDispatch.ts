@@ -1,4 +1,4 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
@@ -99,7 +99,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       source: found.source,
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
-      path: found.pathToPayload,
+      paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({
         hostname: found.hostname,
         port: found.port,
@@ -110,7 +110,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
       );
     }
   }
