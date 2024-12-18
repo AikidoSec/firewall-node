@@ -87,3 +87,7 @@ t.test("respects max depth and array length", async (t) => {
   t.same(get("100", testArr), [".[100]"]);
   t.same(get("101", testArr), []);
 });
+
+t.test("first item in array", async (t) => {
+  t.same(get("id = 1", ["id = 1"]), [".[0]"]);
+});
