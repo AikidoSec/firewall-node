@@ -68,11 +68,7 @@ export function getPathsToPayload(
   const attackPayloadLowercase = attackPayload.toLowerCase();
 
   const traverse = (value: unknown, path: PathPart[] = [], depth = 0) => {
-    if (matches.found()) {
-      return;
-    }
-
-    if (depth > MAX_DEPTH) {
+    if (matches.found() || depth > MAX_DEPTH) {
       return;
     }
 
@@ -86,8 +82,6 @@ export function getPathsToPayload(
       if (jwt.jwt) {
         traverse(jwt.object, path.concat({ type: "jwt" }), depth + 1);
       }
-
-      return;
     }
 
     if (Array.isArray(value)) {
@@ -107,8 +101,6 @@ export function getPathsToPayload(
 
         traverse(item, path.concat({ type: "array", index }), depth);
       }
-
-      return;
     }
 
     if (isPlainObject(value)) {
@@ -119,8 +111,6 @@ export function getPathsToPayload(
 
         traverse(value[key], path.concat({ type: "object", key }), depth + 1);
       }
-
-      return;
     }
   };
 
