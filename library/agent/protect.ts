@@ -1,25 +1,9 @@
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import type { Handler } from "aws-lambda";
-import { ChildProcess } from "../sinks/ChildProcess";
-import { Fetch } from "../sinks/Fetch";
-import { FileSystem } from "../sinks/FileSystem";
-import { HTTPRequest } from "../sinks/HTTPRequest";
-import { MariaDB } from "../sinks/MariaDB";
-import { MongoDB } from "../sinks/MongoDB";
-import { MySQL } from "../sinks/MySQL";
-import { MySQL2 } from "../sinks/MySQL2";
-import { Path } from "../sinks/Path";
-import { Postgres } from "../sinks/Postgres";
-import { Undici } from "../sinks/Undici";
-import { Express } from "../sources/Express";
-import {
-  createCloudFunctionWrapper,
-  FunctionsFramework,
-} from "../sources/FunctionsFramework";
-import { Hono } from "../sources/Hono";
-import { HTTPServer } from "../sources/HTTPServer";
+import { isDebugging } from "../helpers/isDebugging";
+import { shouldBlock } from "../helpers/shouldBlock";
+import { createCloudFunctionWrapper } from "../sources/FunctionsFramework";
 import { createLambdaWrapper } from "../sources/Lambda";
-import { PubSub } from "../sources/PubSub";
 import { Agent } from "./Agent";
 import { getInstance, setInstance } from "./AgentSingleton";
 import { ReportingAPI } from "./api/ReportingAPI";
@@ -29,26 +13,10 @@ import { ReportingAPIRateLimitedServerSide } from "./api/ReportingAPIRateLimited
 import { ReportingAPIThatValidatesToken } from "./api/ReportingAPIThatValidatesToken";
 import { Token } from "./api/Token";
 import { getAPIURL } from "./getAPIURL";
+import { getWrappers } from "./getWrappers";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
-import { GraphQL } from "../sources/GraphQL";
-import { Xml2js } from "../sources/Xml2js";
-import { FastXmlParser } from "../sources/FastXmlParser";
-import { SQLite3 } from "../sinks/SQLite3";
-import { XmlMinusJs } from "../sources/XmlMinusJs";
-import { Hapi } from "../sources/Hapi";
-import { Shelljs } from "../sinks/Shelljs";
-import { NodeSQLite } from "../sinks/NodeSqlite";
-import { BetterSQLite3 } from "../sinks/BetterSQLite3";
-import { isDebugging } from "../helpers/isDebugging";
-import { shouldBlock } from "../helpers/shouldBlock";
-import { Postgresjs } from "../sinks/Postgresjs";
-import { Fastify } from "../sources/Fastify";
-import { Koa } from "../sources/Koa";
-import { ClickHouse } from "../sinks/ClickHouse";
-import { Eval } from "../sinks/Eval";
-import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -105,42 +73,6 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   setInstance(agent);
 
   return agent;
-}
-
-export function getWrappers() {
-  return [
-    new Express(),
-    new MongoDB(),
-    new Postgres(),
-    new MySQL(),
-    new MySQL2(),
-    new PubSub(),
-    new FunctionsFramework(),
-    new ChildProcess(),
-    new FileSystem(),
-    new HTTPRequest(),
-    new Fetch(),
-    new Undici(),
-    new Path(),
-    new HTTPServer(),
-    new Hono(),
-    new GraphQL(),
-    new Xml2js(),
-    new FastXmlParser(),
-    new SQLite3(),
-    new XmlMinusJs(),
-    new Shelljs(),
-    new Hapi(),
-    new MariaDB(),
-    new NodeSQLite(),
-    new BetterSQLite3(),
-    new Postgresjs(),
-    new Fastify(),
-    new Koa(),
-    new ClickHouse(),
-    new Eval(),
-    new Function(),
-  ];
 }
 
 // eslint-disable-next-line import/no-unused-modules

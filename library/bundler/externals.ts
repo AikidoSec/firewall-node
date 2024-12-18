@@ -1,5 +1,5 @@
+import { getWrappers } from "../agent/getWrappers";
 import { Hooks } from "../agent/hooks/Hooks";
-import { getWrappers } from "../agent/protect";
 
 export function externals() {
   const wrappers = getWrappers();
