@@ -148,7 +148,7 @@ export class Prisma implements Wrapper {
         operation: `prisma.${operation}`,
         kind: "nosql_injection",
         source: result.source,
-        pathToPayload: result.pathToPayload,
+        pathsToPayload: result.pathsToPayload,
         metadata: {
           collection: collection,
           operation: operation,

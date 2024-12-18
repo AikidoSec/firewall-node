@@ -42,7 +42,7 @@ export function onInspectionInterceptorResult(
       source: result.source,
       blocked: agent.shouldBlock(),
       stack: cleanupStackTrace(new Error().stack!, libraryRoot),
-      path: result.pathToPayload,
+      paths: result.pathsToPayload,
       metadata: result.metadata,
       request: context,
       payload: result.payload,
@@ -50,7 +50,7 @@ export function onInspectionInterceptorResult(
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML(result.pathToPayload)}`
+        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
       );
     }
   }
