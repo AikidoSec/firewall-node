@@ -4,7 +4,7 @@ const version = process.versions.node.split(".");
 const major = parseInt(version[0], 10);
 const minor = parseInt(version[1], 10);
 
-let args = "--allow-incomplete-coverage";
+let args = "--allow-incomplete-coverage --jobs=4";
 
 if (process.env.CI) {
   args += " --coverage-report=lcov";
