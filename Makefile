@@ -84,6 +84,10 @@ koa-sqlite3:
 fastify-clickhouse:
 	cd sample-apps/fastify-clickhouse && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
+.PHONY: hono-prisma
+hono-prisma:
+	cd sample-apps/hono-prisma && AIKIDO_DEBUG=true AIKIDO_BLOCK=true node app.js
+
 .PHONY: install-lib-only
 install-lib-only:
 	mkdir -p build
