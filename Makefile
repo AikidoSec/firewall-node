@@ -84,8 +84,8 @@ koa-sqlite3:
 fastify-clickhouse:
 	cd sample-apps/fastify-clickhouse && AIKIDO_DEBUG=true AIKIDO_BLOCKING=true node app.js
 
-.PHONY: install
-install:
+.PHONY: install-lib-only
+install-lib-only:
 	mkdir -p build
 	node scripts/copyPackageJSON.js
 	touch build/index.js
@@ -93,10 +93,16 @@ install:
 ifdef CI
 	npm ci  # Use npm ci if CI environment variable is set
 	cd library && npm ci
-	cd end2end && npm ci
 else
 	npm install  # Use npm install otherwise
 	cd library && npm install
+endif
+
+.PHONY: install
+install: install-lib-only
+ifdef CI
+	cd end2end && npm ci
+else
 	cd end2end && npm install
 endif
 	node scripts/install.js
