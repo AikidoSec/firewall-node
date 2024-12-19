@@ -90,6 +90,7 @@ t.test("it sends started event", async (t) => {
 
   t.same(logger.getMessages(), [
     "Starting agent...",
+    "Blocking mode enabled, requests will be blocked!",
     "Found token, reporting enabled!",
     "mongodb@6.9.0 is supported!",
   ]);
@@ -127,6 +128,7 @@ t.test("it logs if package is supported or not", async () => {
 
   t.same(logger.getMessages(), [
     "Starting agent...",
+    "Blocking mode enabled, requests will be blocked!",
     "Found token, reporting enabled!",
     "shell-quote@1.8.1 is not supported!",
   ]);
@@ -145,7 +147,7 @@ t.test("it starts in non-blocking mode", async () => {
 
   t.same(logger.getMessages(), [
     "Starting agent...",
-    "Dry mode enabled, no requests will be blocked!",
+    "Detection-only mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
   ]);
 });
@@ -565,6 +567,7 @@ t.test("it logs when failed to report event", async () => {
 
   t.same(logger.getMessages(), [
     "Starting agent...",
+    "Blocking mode enabled, requests will be blocked!",
     "Found token, reporting enabled!",
     "Failed to start agent",
     "Heartbeat...",
@@ -587,6 +590,7 @@ t.test("unable to prevent prototype pollution", async () => {
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
     "Starting agent...",
+    "Blocking mode enabled, requests will be blocked!",
     "Found token, reporting enabled!",
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
