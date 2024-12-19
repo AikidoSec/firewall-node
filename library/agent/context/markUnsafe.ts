@@ -1,8 +1,8 @@
 import { getInstance } from "../AgentSingleton";
-import { updateContext } from "../Context";
+import { Context, updateContext } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function markUnsafe(payload: unknown) {
+export function markUnsafe(...data: unknown[]) {
   const agent = getInstance();
 
   if (!agent) {
@@ -16,6 +16,16 @@ export function markUnsafe(payload: unknown) {
     return;
   }
 
+  if (data.length === 0) {
+    console.warn("markUnsafe(...) was called without any data.");
+  }
+
+  for (const item of data) {
+    addPayloadToContext(context, item);
+  }
+}
+
+function addPayloadToContext(context: Context, payload: unknown) {
   try {
     const current = context.markUnsafe || [];
     const a = JSON.stringify(payload);
@@ -33,7 +43,7 @@ export function markUnsafe(payload: unknown) {
   } catch (e: unknown) {
     if (e instanceof Error) {
       // eslint-disable-next-line no-console
-      console.warn("markUnsafe(...) failed to serialize the payload");
+      console.warn("markUnsafe(...) failed to serialize the data");
     }
   }
 }
@@ -47,7 +57,7 @@ function logWarningMarkUnsafeWithoutContext() {
 
   // eslint-disable-next-line no-console
   console.warn(
-    "markUnsafe(...) was called without a context. The payload will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen."
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen."
   );
 
   loggedWarningMarkUnsafeWithoutContext = true;

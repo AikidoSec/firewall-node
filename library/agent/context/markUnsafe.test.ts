@@ -68,7 +68,7 @@ t.test("it works", async () => {
         sql: 'SELECT * FROM "users" WHERE id = 1',
       },
       payload: "id = 1",
-      pathToPayload: ".",
+      pathsToPayload: [".[0]"],
     });
   });
 
@@ -96,7 +96,7 @@ t.test("it works", async () => {
         sql: 'SELECT * FROM "users" WHERE id = 1',
       },
       payload: "id = 1",
-      pathToPayload: ".[0].somePropertyThatContainsSQL",
+      pathsToPayload: [".[0].somePropertyThatContainsSQL"],
     });
   });
 
@@ -109,7 +109,7 @@ t.test("it works", async () => {
   });
   markUnsafe("id = 1");
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The payload will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
   ]);
 
   // Warning logged only once
@@ -124,7 +124,16 @@ t.test("it works", async () => {
     markUnsafe(obj);
   });
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The payload will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
-    "markUnsafe(...) failed to serialize the payload",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) failed to serialize the data",
+  ]);
+
+  runWithContext(createContext(), () => {
+    markUnsafe();
+  });
+  t.same(logs, [
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) failed to serialize the data",
+    "markUnsafe(...) was called without any data.",
   ]);
 });
