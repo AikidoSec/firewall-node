@@ -47,6 +47,7 @@ import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
+import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
@@ -137,6 +138,7 @@ export function getWrappers() {
     new Fastify(),
     new Koa(),
     new ClickHouse(),
+    new Prisma(),
     new Function(),
   ];
 }

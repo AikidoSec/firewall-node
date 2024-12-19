@@ -61,6 +61,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
+* ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
 
 ### Cloud providers
 
