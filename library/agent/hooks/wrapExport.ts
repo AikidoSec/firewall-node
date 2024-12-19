@@ -1,15 +1,11 @@
 /* eslint-disable max-lines-per-function */
-import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
-import { escapeHTML } from "../../helpers/escapeHTML";
 import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
-import { attackKindHumanName } from "../Attack";
-import { bindContext, getContext, updateContext } from "../Context";
-import { InterceptorResult } from "./InterceptorResult";
-import { WrapPackageInfo } from "./WrapPackageInfo";
+import { bindContext, getContext } from "../Context";
+import type { InterceptorResult } from "./InterceptorResult";
+import type { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
-import { getLibraryRoot } from "../../helpers/getLibraryRoot";
-import { cleanError } from "../../helpers/cleanError";
+import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
 type InspectArgsInterceptor = (
   args: unknown[],
@@ -152,44 +148,5 @@ function inspectArgs(
       module: pkgInfo.name,
     });
   }
-
-  const end = performance.now();
-  agent.getInspectionStatistics().onInspectedCall({
-    sink: pkgInfo.name,
-    attackDetected: !!result,
-    blocked: agent.shouldBlock(),
-    durationInMs: end - start,
-    withoutContext: !context,
-  });
-
-  const isAllowedIP =
-    context &&
-    context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
-
-  if (result && context && !isAllowedIP) {
-    // Flag request as having an attack detected
-    updateContext(context, "attackDetected", true);
-
-    agent.onDetectedAttack({
-      module: pkgInfo.name,
-      operation: result.operation,
-      kind: result.kind,
-      source: result.source,
-      blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
-      paths: result.pathsToPayload,
-      metadata: result.metadata,
-      request: context,
-      payload: result.payload,
-    });
-
-    if (agent.shouldBlock()) {
-      throw cleanError(
-        new Error(
-          `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
-        )
-      );
-    }
-  }
+  onInspectionInterceptorResult(context, agent, result, pkgInfo, start);
 }
