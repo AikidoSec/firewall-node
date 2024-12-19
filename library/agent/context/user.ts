@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { isPlainObject } from "../../helpers/isPlainObject";
+import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
@@ -14,33 +15,43 @@ export function setUser(u: { id: string | number; name?: string }) {
   const user = u as unknown;
 
   if (user === null || user === undefined) {
-    agent.log(`setUser(...) can not be called with null or undefined.`);
+    agent
+      .getLogger()
+      .error(`setUser(...) can not be called with null or undefined.`);
     return;
   }
 
   if (!isPlainObject(user)) {
-    agent.log(
-      `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof user} instead.`
-    );
+    agent
+      .getLogger()
+      .error(
+        `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof user} instead.`
+      );
     return;
   }
 
   if (!("id" in user)) {
-    agent.log(`setUser(...) expects an object with 'id' property.`);
+    agent
+      .getLogger()
+      .error(`setUser(...) expects an object with 'id' property.`);
     return;
   }
 
   if (typeof user.id !== "string" && typeof user.id !== "number") {
-    agent.log(
-      `setUser(...) expects an object with 'id' property of type string or number, found ${typeof user.id} instead.`
-    );
+    agent
+      .getLogger()
+      .error(
+        `setUser(...) expects an object with 'id' property of type string or number, found ${typeof user.id} instead.`
+      );
     return;
   }
 
   if (typeof user.id === "string" && user.id.length === 0) {
-    agent.log(
-      `setUser(...) expects an object with 'id' property non-empty string.`
-    );
+    agent
+      .getLogger()
+      .error(
+        `setUser(...) expects an object with 'id' property non-empty string.`
+      );
     return;
   }
 
@@ -57,7 +68,7 @@ export function setUser(u: { id: string | number; name?: string }) {
   }
 
   if (context.executedMiddleware) {
-    logWarningSetUserCalledAfterMiddleware();
+    logWarningSetUserCalledAfterMiddleware(agent);
   }
 
   context.user = validatedUser;
@@ -73,15 +84,14 @@ export function setUser(u: { id: string | number; name?: string }) {
 
 let loggedWarningSetUserCalledAfterMiddleware = false;
 
-function logWarningSetUserCalledAfterMiddleware() {
+function logWarningSetUserCalledAfterMiddleware(agent: Agent) {
   if (loggedWarningSetUserCalledAfterMiddleware) {
     return;
   }
 
-  // eslint-disable-next-line no-console
-  console.warn(
-    `setUser(...) must be called before the Zen middleware is executed.`
-  );
+  agent
+    .getLogger()
+    .warn(`setUser(...) must be called before the Zen middleware is executed.`);
 
   loggedWarningSetUserCalledAfterMiddleware = true;
 }
