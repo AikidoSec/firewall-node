@@ -20,29 +20,52 @@ t.test("it works", async () => {
     t.same(getContext()?.xml, undefined);
   });
 
-  const context: Context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000",
-    query: {},
-    headers: {},
-    body: xmlString,
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/posts/:id",
+  const getTestContext = (): Context => {
+    return {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {},
+      headers: {},
+      body: xmlString,
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    };
   };
 
-  await runWithContext(context, async () => {
+  await runWithContext(getTestContext(), async () => {
     const result = await parseStringPromise(xmlString);
     t.same(result, { root: "Hello xml2js!" });
-    t.same(getContext()?.xml, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
   });
 
-  runWithContext(context, () => {
+  const sharedContext = getTestContext();
+
+  runWithContext(sharedContext, () => {
     parseString(xmlString, (err, result) => {
       t.same(result, { root: "Hello xml2js!" });
-      t.same(getContext()?.xml, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [{ root: "Hello xml2js!" }]);
+    });
+  });
+
+  // Adds addition xml to the context xml array
+  runWithContext(sharedContext, () => {
+    parseString(xmlString, (err, result) => {
+      t.same(result, { root: "Hello xml2js!" });
+      t.same(getContext()?.xml, [
+        { root: "Hello xml2js!" },
+        { root: "Hello xml2js!" },
+      ]);
+    });
+  });
+
+  // Ignore xml not in the context
+  runWithContext(getTestContext(), () => {
+    parseString("<test><ele>ABC</ele></test>", (err, result) => {
+      t.same(result, { test: { ele: ["ABC"] } });
+      t.same(getContext()?.xml, undefined);
     });
   });
 });
