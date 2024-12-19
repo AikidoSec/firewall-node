@@ -1,7 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
-import { Blocklist as BlocklistType } from "./api/fetchBlockedIPAddresses";
+import { Blocklist as BlocklistType } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -10,6 +10,7 @@ export class ServiceConfig {
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
     [];
+  private blockedUserAgentRegex: RegExp | undefined;
 
   constructor(
     endpoints: Endpoint[],
@@ -108,6 +109,21 @@ export class ServiceConfig {
 
   updateBlockedIPAddresses(blockedIPAddresses: BlocklistType[]) {
     this.setBlockedIPAddresses(blockedIPAddresses);
+  }
+
+  updateBlockedUserAgents(blockedUserAgents: string) {
+    if (!blockedUserAgents) {
+      this.blockedUserAgentRegex = undefined;
+      return;
+    }
+    this.blockedUserAgentRegex = new RegExp(blockedUserAgents, "i");
+  }
+
+  isUserAgentBlocked(ua: string): { blocked: boolean } {
+    if (this.blockedUserAgentRegex) {
+      return { blocked: this.blockedUserAgentRegex.test(ua) };
+    }
+    return { blocked: false };
   }
 
   updateConfig(
