@@ -5,14 +5,14 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/runtime": "file:../../build",
+    "@aikidosec/firewall": "file:../../build",
     "@opentelemetry/api": "^1.8.0",
     "@opentelemetry/auto-instrumentations-node": "^0.44.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
-    "mongodb": "^6.3.0",
+    "mongodb": "~6.3.0",
     "morgan": "^1.10.0"
   }
 }

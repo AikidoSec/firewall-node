@@ -1,54 +1,22 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 
-const functionsWithPath = [
-  "access",
-  "appendFile",
-  "chmod",
-  "chown",
-  "createReadStream",
-  "createWriteStream",
-  "exists",
-  "lchmod",
-  "lchown",
-  "lutimes",
-  "lstat",
-  "mkdir",
-  "open",
-  "openAsBlob",
-  "opendir",
-  "readdir",
-  "readFile",
-  "readlink",
-  "unlink",
-  "realpath",
-  "rename",
-  "rmdir",
-  "rm",
-  "stat",
-  "statfs",
-  "truncate",
-  "utimes",
-  "writeFile",
-  "copyFile",
-  "cp",
-];
-
-const noSync = ["createReadStream", "createWriteStream", "openAsBlob"];
-
-const noPromise = [
-  "createReadStream",
-  "createWriteStream",
-  "exists",
-  "openAsBlob",
-];
-
-const withSecondPathArgument = ["copyFile", "cp", "link", "rename", "symlink"];
+type FileSystemFunction = {
+  pathsArgs: number; // The amount of arguments that are paths
+  sync: boolean; // Whether the function has a synchronous version (e.g. fs.accessSync)
+  promise: boolean; // Whether the function has a promise version (e.g. fs.promises.access)
+};
 
 export class FileSystem implements Wrapper {
+  private patchedPromises = false;
+
   private inspectPath(
     args: unknown[],
     name: string,
@@ -61,7 +29,11 @@ export class FileSystem implements Wrapper {
     }
 
     for (const path of args.slice(0, amountOfPathArgs)) {
-      if (typeof path === "string") {
+      if (
+        typeof path === "string" ||
+        path instanceof Buffer ||
+        path instanceof URL
+      ) {
         const result = checkContextForPathTraversal({
           filename: path,
           operation: `fs.${name}`,
@@ -77,58 +49,112 @@ export class FileSystem implements Wrapper {
     return undefined;
   }
 
-  wrap(hooks: Hooks) {
-    const fs = hooks.addBuiltinModule("fs");
-    const callbackStyle = fs.addSubject((exports) => exports);
+  private getFunctions(): Record<string, FileSystemFunction> {
+    const functions: Record<string, FileSystemFunction> = {
+      appendFile: { pathsArgs: 1, sync: true, promise: true },
+      chmod: { pathsArgs: 1, sync: true, promise: true },
+      chown: { pathsArgs: 1, sync: true, promise: true },
+      createReadStream: { pathsArgs: 1, sync: false, promise: false },
+      createWriteStream: { pathsArgs: 1, sync: false, promise: false },
+      lchown: { pathsArgs: 1, sync: true, promise: true },
+      lutimes: { pathsArgs: 1, sync: true, promise: true },
+      mkdir: { pathsArgs: 1, sync: true, promise: true },
+      open: { pathsArgs: 1, sync: true, promise: true },
+      opendir: { pathsArgs: 1, sync: true, promise: true },
+      readdir: { pathsArgs: 1, sync: true, promise: true },
+      readFile: { pathsArgs: 1, sync: true, promise: true },
+      readlink: { pathsArgs: 1, sync: true, promise: true },
+      unlink: { pathsArgs: 1, sync: true, promise: true },
+      realpath: { pathsArgs: 1, sync: true, promise: true },
+      rename: { pathsArgs: 2, sync: true, promise: true },
+      rmdir: { pathsArgs: 1, sync: true, promise: true },
+      rm: { pathsArgs: 1, sync: true, promise: true },
+      symlink: { pathsArgs: 2, sync: true, promise: true },
+      truncate: { pathsArgs: 1, sync: true, promise: true },
+      utimes: { pathsArgs: 1, sync: true, promise: true },
+      writeFile: { pathsArgs: 1, sync: true, promise: true },
+      copyFile: { pathsArgs: 2, sync: true, promise: true },
+      cp: { pathsArgs: 2, sync: true, promise: true },
+      link: { pathsArgs: 2, sync: true, promise: true },
+      watch: { pathsArgs: 1, sync: false, promise: false },
+      watchFile: { pathsArgs: 1, sync: false, promise: false },
+      mkdtemp: { pathsArgs: 1, sync: true, promise: true },
+    };
 
-    functionsWithPath.forEach((name) => {
-      callbackStyle.inspect(name, (args) => {
-        return this.inspectPath(
-          args,
-          name,
-          withSecondPathArgument.includes(name) ? 2 : 1
-        );
-      });
-    });
+    // Added in v19.8.0
+    if (isVersionGreaterOrEqual("19.8.0", getSemverNodeVersion())) {
+      functions.openAsBlob = { pathsArgs: 1, sync: false, promise: false };
+    }
 
-    functionsWithPath
-      .filter((name) => !noSync.includes(name))
-      .forEach((name) => {
-        const syncName = `${name}Sync`;
-        callbackStyle.inspect(syncName, (args) => {
-          return this.inspectPath(
-            args,
-            syncName,
-            withSecondPathArgument.includes(name) ? 2 : 1
-          );
+    // Only available on macOS
+    if (process.platform === "darwin") {
+      functions.lchmod = { pathsArgs: 1, sync: true, promise: true };
+    }
+
+    return functions;
+  }
+
+  wrapPromises(exports: unknown, pkgInfo: WrapPackageInfo) {
+    if (this.patchedPromises) {
+      // `require("fs").promises.readFile` is the same as `require("fs/promises").readFile`
+      // We only need to wrap the promise version once
+      return;
+    }
+
+    const functions = this.getFunctions();
+    Object.keys(functions).forEach((name) => {
+      const { pathsArgs, promise } = functions[name];
+
+      if (promise) {
+        wrapExport(exports, name, pkgInfo, {
+          inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
         });
-      });
-
-    fs.addSubject((exports) => exports.realpath).inspect("native", (args) => {
-      return this.inspectPath(args, "realpath.native", 1);
-    });
-
-    fs.addSubject((exports) => exports.realpathSync).inspect(
-      "native",
-      (args) => {
-        return this.inspectPath(args, "realpathSync.native", 1);
       }
-    );
+    });
 
-    const promiseStyle = hooks
-      .addBuiltinModule("fs/promises")
-      .addSubject((exports) => exports);
+    this.patchedPromises = true;
+  }
 
-    functionsWithPath
-      .filter((name) => !noPromise.includes(name))
-      .forEach((name) => {
-        promiseStyle.inspect(name, (args) => {
-          return this.inspectPath(
-            args,
-            name,
-            withSecondPathArgument.includes(name) ? 2 : 1
-          );
+  wrap(hooks: Hooks) {
+    hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
+      const functions = this.getFunctions();
+
+      Object.keys(functions).forEach((name) => {
+        const { pathsArgs, sync } = functions[name];
+
+        wrapExport(exports, name, pkgInfo, {
+          inspectArgs: (args) => {
+            return this.inspectPath(args, name, pathsArgs);
+          },
         });
+
+        if (sync) {
+          wrapExport(exports, `${name}Sync`, pkgInfo, {
+            inspectArgs: (args) => {
+              return this.inspectPath(args, `${name}Sync`, pathsArgs);
+            },
+          });
+        }
       });
+
+      // Wrap realpath.native
+      wrapExport(exports.realpath, "native", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectPath(args, "realpath.native", 1);
+        },
+      });
+
+      wrapExport(exports.realpathSync, "native", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectPath(args, "realpathSync.native", 1);
+        },
+      });
+
+      this.wrapPromises(exports.promises, pkgInfo);
+    });
+
+    hooks
+      .addBuiltinModule("fs/promises")
+      .onRequire((exports, pkgInfo) => this.wrapPromises(exports, pkgInfo));
   }
 }

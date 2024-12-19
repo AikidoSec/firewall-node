@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
+import { join, resolve } from "path";
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);
@@ -64,6 +65,68 @@ t.test("it flags ..\\..\\..\\", async () => {
   t.same(detectPathTraversal("..\\..\\..\\test.txt", "..\\..\\..\\"), true);
 });
 
+t.test("it flags ./../", async () => {
+  t.same(detectPathTraversal("./../test.txt", "./../"), true);
+});
+
 t.test("user input is longer than file path", async () => {
   t.same(detectPathTraversal("../file.txt", "../../file.txt"), false);
 });
+
+t.test("absolute linux path", async () => {
+  t.same(detectPathTraversal("/etc/passwd", "/etc/passwd"), true);
+});
+
+t.test("linux user directory", async () => {
+  t.same(detectPathTraversal("/home/user/file.txt", "/home/user/"), true);
+});
+
+t.test("possible bypass", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc/passwd"), true);
+});
+
+t.test("another bypass", async () => {
+  t.same(
+    detectPathTraversal("/./././root/test.txt", "/./././root/test.txt"),
+    true
+  );
+  t.same(detectPathTraversal("/./././root/test.txt", "/./././root"), true);
+});
+
+t.test("no path traversal", async () => {
+  t.same(
+    detectPathTraversal("/appdata/storage/file.txt", "/storage/file.txt"),
+    false
+  );
+});
+
+t.test("does not flag test", async () => {
+  t.same(detectPathTraversal("/app/test.txt", "test"), false);
+});
+
+t.test("does not flag example/test.txt", async () => {
+  t.same(
+    detectPathTraversal("/app/data/example/test.txt", "example/test.txt"),
+    false
+  );
+});
+
+t.test("does not absolute path with different folder", async () => {
+  t.same(detectPathTraversal("/etc/app/config", "/etc/hack/config"), false);
+});
+
+t.test("does not absolute path inside another folder", async () => {
+  t.same(detectPathTraversal("/etc/app/data/etc/config", "/etc/config"), false);
+});
+
+t.test("disable checkPathStart", async () => {
+  t.same(detectPathTraversal("/etc/passwd", "/etc/passwd", false), false);
+});
+
+t.test(
+  "windows drive letter",
+  { skip: process.platform !== "win32" ? "Windows only" : false },
+  async () => {
+    t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+  }
+);

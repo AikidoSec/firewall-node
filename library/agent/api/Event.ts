@@ -5,6 +5,7 @@ export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
+  library: string;
   packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
@@ -14,6 +15,10 @@ export type AgentInfo = {
   os: {
     name: string;
     version: string;
+  };
+  platform: {
+    version: string;
+    arch: string;
   };
   nodeEnv: string;
   serverless: boolean;
@@ -90,7 +95,12 @@ type Heartbeat = {
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
-  routes: { path: string; method: string }[];
+  routes: {
+    path: string;
+    method: string;
+    hits: number;
+    graphql?: { type: "query" | "mutation"; name: string };
+  }[];
   users: {
     id: string;
     name: string | undefined;
@@ -100,6 +110,7 @@ type Heartbeat = {
   }[];
   agent: AgentInfo;
   time: number;
+  middlewareInstalled?: boolean;
 };
 
 export type Event = Started | DetectedAttack | Heartbeat;

@@ -1,7 +1,8 @@
 import { Context } from "../../agent/Context";
-import { InterceptorResult } from "../../agent/hooks/MethodInterceptor";
-import { Source } from "../../agent/Source";
-import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
+import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
+import { SOURCES } from "../../agent/Source";
+import { getPathsToPayload } from "../../helpers/attackPath";
+import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { detectShellInjection } from "./detectShellInjection";
 
 /**
@@ -17,28 +18,25 @@ export function checkContextForShellInjection({
   operation: string;
   context: Context;
 }): InterceptorResult {
-  for (const source of [
-    "body",
-    "query",
-    "headers",
-    "cookies",
-    "routeParams",
-  ] as Source[]) {
-    if (context[source]) {
-      const userInput = extractStringsFromUserInput(context[source]);
-      for (const [str, path] of userInput.entries()) {
-        if (detectShellInjection(command, str)) {
-          return {
-            operation: operation,
-            kind: "shell_injection",
-            source: source,
-            pathToPayload: path,
-            metadata: {
+  for (const source of SOURCES) {
+    const userInput = extractStringsFromUserInputCached(context, source);
+    if (!userInput) {
+      continue;
+    }
+
+    for (const str of userInput) {
+      if (detectShellInjection(command, str)) {
+        return {
+          operation: operation,
+          kind: "shell_injection",
+          source: source,
+          pathsToPayload: getPathsToPayload(str, context[source]),
+          metadata: {
               command: command,
             },
             payload: str,
           };
-        }
+
       }
     }
   }

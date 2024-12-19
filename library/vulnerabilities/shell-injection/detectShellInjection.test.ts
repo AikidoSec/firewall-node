@@ -354,6 +354,79 @@ t.test("it flags colon if used as a command", async () => {
   isShellInjection(": | echo", ": |");
 });
 
+t.test("it detects shell injection", async () => {
+  isShellInjection("/usr/bin/kill", "/usr/bin/kill");
+});
+
+t.test("it detects shell injection with uppercase path", async () => {
+  isShellInjection("/usr/bIn/kill", "/usr/bIn/kill");
+});
+
+t.test("it detects shell injection with uppercase command", async () => {
+  isShellInjection("/bin/CAT", "/bin/CAT");
+});
+
+t.test(
+  "it detects shell injection with uppercase path and command",
+  async () => {
+    isShellInjection("/bIn/LS -la", "/bIn/LS -la");
+  }
+);
+
+t.test(
+  "it detects shell injection with multiple slashes at the beginning",
+  async () => {
+    isShellInjection("//bin/ls", "//bin/ls");
+    isShellInjection("///bin/ls", "///bin/ls");
+  }
+);
+
+t.test("it detects shell injection with ../", async () => {
+  isShellInjection("../bin/ls", "../bin/ls");
+  isShellInjection("../../bin/ls", "../../bin/ls");
+  isShellInjection("/../bin/ls", "/../bin/ls");
+  isShellInjection("/./bin/ls", "/./bin/ls");
+});
+
+t.test("shell injection with ~", async () => {
+  isShellInjection("echo ~", "~");
+  isShellInjection("ls ~/.ssh", "~/.ssh");
+});
+
+t.test("no shell injection with ~", async () => {
+  isNotShellInjection("~", "~");
+  isNotShellInjection("ls ~/path", "path");
+});
+
+t.test("false positive with email address", async () => {
+  isNotShellInjection(
+    "echo token | docker login --username john.doe@acme.com --password-stdin hub.acme.com",
+    "john.doe@acme.com"
+  );
+});
+
+t.test("it flags @ inside shell syntax", async () => {
+  isShellInjection('echo "${array[@]}"', "${array[@]}");
+  isShellInjection("echo $@", "$@");
+});
+
+t.test("it allows comma separated list", async () => {
+  isNotShellInjection(
+    `command -tags php,laravel,drupal,phpmyadmin,symfony -stats `,
+    "php,laravel,drupal,phpmyadmin,symfony"
+  );
+});
+
+t.test("it flags comma in loop", async () => {
+  isShellInjection(
+    `command for (( i=0, j=10; i<j; i++, j-- ))
+do
+    echo "$i $j"
+done`,
+    "for (( i=0, j=10; i<j; i++, j-- ))"
+  );
+});
+
 t.test("it flags ../ as dangerous", async () => {
   isShellInjection("ls ../", "../");
   isShellInjection("ls ../../", "../../");

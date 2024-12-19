@@ -4,6 +4,7 @@ import { ChildProcess } from "../sinks/ChildProcess";
 import { Fetch } from "../sinks/Fetch";
 import { FileSystem } from "../sinks/FileSystem";
 import { HTTPRequest } from "../sinks/HTTPRequest";
+import { MariaDB } from "../sinks/MariaDB";
 import { MongoDB } from "../sinks/MongoDB";
 import { MySQL } from "../sinks/MySQL";
 import { MySQL2 } from "../sinks/MySQL2";
@@ -15,6 +16,7 @@ import {
   createCloudFunctionWrapper,
   FunctionsFramework,
 } from "../sources/FunctionsFramework";
+import { Hono } from "../sources/Hono";
 import { HTTPServer } from "../sources/HTTPServer";
 import { createLambdaWrapper } from "../sources/Lambda";
 import { PubSub } from "../sources/PubSub";
@@ -30,19 +32,23 @@ import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
 import { LoggerNoop } from "./logger/LoggerNoop";
-
-function isDebugging() {
-  return (
-    process.env.AIKIDO_DEBUG === "true" || process.env.AIKIDO_DEBUG === "1"
-  );
-}
-
-function shouldBlock() {
-  return (
-    process.env.AIKIDO_BLOCKING === "true" ||
-    process.env.AIKIDO_BLOCKING === "1"
-  );
-}
+import { GraphQL } from "../sources/GraphQL";
+import { Xml2js } from "../sources/Xml2js";
+import { FastXmlParser } from "../sources/FastXmlParser";
+import { SQLite3 } from "../sinks/SQLite3";
+import { XmlMinusJs } from "../sources/XmlMinusJs";
+import { Hapi } from "../sources/Hapi";
+import { Shelljs } from "../sinks/Shelljs";
+import { NodeSQLite } from "../sinks/NodeSqlite";
+import { BetterSQLite3 } from "../sinks/BetterSQLite3";
+import { isDebugging } from "../helpers/isDebugging";
+import { shouldBlock } from "../helpers/shouldBlock";
+import { Postgresjs } from "../sinks/Postgresjs";
+import { Fastify } from "../sources/Fastify";
+import { Koa } from "../sources/Koa";
+import { ClickHouse } from "../sinks/ClickHouse";
+import { Prisma } from "../sinks/Prisma";
+import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -101,7 +107,7 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   return agent;
 }
 
-function getWrappers() {
+export function getWrappers() {
   return [
     new Express(),
     new MongoDB(),
@@ -117,9 +123,27 @@ function getWrappers() {
     new Undici(),
     new Path(),
     new HTTPServer(),
+    new Hono(),
+    new GraphQL(),
+    new Xml2js(),
+    new FastXmlParser(),
+    new SQLite3(),
+    new XmlMinusJs(),
+    new Shelljs(),
+    new Hapi(),
+    new MariaDB(),
+    new NodeSQLite(),
+    new BetterSQLite3(),
+    new Postgresjs(),
+    new Fastify(),
+    new Koa(),
+    new ClickHouse(),
+    new Prisma(),
+    new Function(),
   ];
 }
 
+// eslint-disable-next-line import/no-unused-modules
 export function protect() {
   const agent = getAgent({
     serverless: undefined,

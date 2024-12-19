@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "n8n": "^1.67.1"
+  }
+}

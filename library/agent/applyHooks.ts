@@ -1,87 +1,22 @@
-/* eslint-disable max-lines-per-function */
-import { join } from "path";
-import { wrap } from "../helpers/wrap";
-import { getPackageVersion } from "../helpers/getPackageVersion";
-import { satisfiesVersion } from "../helpers/satisfiesVersion";
-import { Agent } from "./Agent";
-import { attackKindHumanName } from "./Attack";
-import { getContext } from "./Context";
-import { BuiltinModule } from "./hooks/BuiltinModule";
-import { ConstructorInterceptor } from "./hooks/ConstructorInterceptor";
 import { Hooks } from "./hooks/Hooks";
 import {
-  InterceptorResult,
-  MethodInterceptor,
-} from "./hooks/MethodInterceptor";
-import { ModifyingArgumentsMethodInterceptor } from "./hooks/ModifyingArgumentsInterceptor";
-import { Package } from "./hooks/Package";
-import { WrappableFile } from "./hooks/WrappableFile";
-import { WrappableSubject } from "./hooks/WrappableSubject";
+  setBuiltinModulesToPatch,
+  setPackagesToPatch,
+  wrapRequire,
+} from "./hooks/wrapRequire";
+import { wrapExport } from "./hooks/wrapExport";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
  * the exports of the package. This doesn't do the actual wrapping yet.
  *
- * That's where applyHooks comes in, we take the registered packages and
- * its methods and do the actual wrapping so that we can intercept method calls.
+ * This method wraps the require function and sets up the hooks.
+ * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks, agent: Agent) {
-  const wrapped: Record<string, { version: string; supported: boolean }> = {};
-
-  hooks.getPackages().forEach((pkg) => {
-    const version = getPackageVersion(pkg.getName());
-
-    if (!version) {
-      return;
-    }
-
-    wrapped[pkg.getName()] = {
-      version,
-      supported: false,
-    };
-
-    const versions = pkg
-      .getVersions()
-      .map((versioned) => {
-        if (!satisfiesVersion(versioned.getRange(), version)) {
-          return [];
-        }
-
-        return {
-          subjects: versioned.getSubjects(),
-          files: versioned.getFiles(),
-        };
-      })
-      .flat();
-
-    const files = versions.map((hook) => hook.files).flat();
-    const subjects = versions.map((hook) => hook.subjects).flat();
-
-    if (subjects.length === 0 && files.length === 0) {
-      return;
-    }
-
-    wrapped[pkg.getName()] = {
-      version,
-      supported: true,
-    };
-
-    if (subjects.length > 0) {
-      wrapPackage(pkg, subjects, agent);
-    }
-
-    if (files.length > 0) {
-      wrapFiles(pkg, files, agent);
-    }
-  });
-
-  hooks.getBuiltInModules().forEach((module) => {
-    const subjects = module.getSubjects();
-
-    if (subjects.length > 0) {
-      wrapBuiltInModule(module, subjects, agent);
-    }
-  });
+export function applyHooks(hooks: Hooks) {
+  setPackagesToPatch(hooks.getPackages());
+  setBuiltinModulesToPatch(hooks.getBuiltInModules());
+  wrapRequire();
 
   hooks.getGlobals().forEach((g) => {
     const name = g.getName();
@@ -90,240 +25,14 @@ export function applyHooks(hooks: Hooks, agent: Agent) {
       return;
     }
 
-    const interceptor = g.getMethodInterceptor();
-
-    if (!interceptor) {
-      return;
-    }
-
-    if (interceptor instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(global, interceptor, "global", agent);
-    } else {
-      wrapWithoutArgumentModification(global, interceptor, "global", agent);
-    }
-  });
-
-  return wrapped;
-}
-
-function wrapFiles(pkg: Package, files: WrappableFile[], agent: Agent) {
-  files.forEach((file) => {
-    const exports = require(join(pkg.getName(), file.getRelativePath()));
-
-    file
-      .getSubjects()
-      .forEach(
-        (subject) => wrapSubject(exports, subject, pkg.getName(), agent),
-        agent
-      );
-  });
-}
-
-function wrapBuiltInModule(
-  module: BuiltinModule,
-  subjects: WrappableSubject[],
-  agent: Agent
-) {
-  const exports = require(module.getName());
-
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, module.getName(), agent),
-    agent
-  );
-}
-
-function wrapPackage(pkg: Package, subjects: WrappableSubject[], agent: Agent) {
-  const exports = require(pkg.getName());
-
-  subjects.forEach(
-    (selector) => wrapSubject(exports, selector, pkg.getName(), agent),
-    agent
-  );
-}
-
-/**
- * Wraps a method call with an interceptor that doesn't modify the arguments of the method call.
- */
-function wrapWithoutArgumentModification(
-  subject: unknown,
-  method: MethodInterceptor,
-  module: string,
-  agent: Agent
-) {
-  try {
-    wrap(subject, method.getName(), function wrap(original: Function) {
-      return function wrap() {
-        // eslint-disable-next-line prefer-rest-params
-        const args = Array.from(arguments);
-        const context = getContext();
-
-        if (
-          context &&
-          context.method &&
-          context.route &&
-          !agent
-            .getConfig()
-            .shouldProtectEndpoint(context.method, context.route)
-        ) {
-          return original.apply(
-            // @ts-expect-error We don't now the type of this
-            this,
-            // eslint-disable-next-line prefer-rest-params
-            arguments
-          );
-        }
-
-        const start = performance.now();
-        let result: InterceptorResult = undefined;
-
-        try {
-          // @ts-expect-error We don't now the type of this
-          result = method.getInterceptor()(args, this, agent, context);
-        } catch (error: any) {
-          agent.getInspectionStatistics().interceptorThrewError(module);
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: method.getName(),
-            module: module,
-          });
-        }
-
-        const end = performance.now();
-        agent.getInspectionStatistics().onInspectedCall({
-          sink: module,
-          attackDetected: !!result,
-          blocked: agent.shouldBlock(),
-          durationInMs: end - start,
-          withoutContext: !context,
-        });
-
-        if (result && context) {
-          // Flag request as having an attack detected
-          context.attackDetected = true;
-
-          agent.onDetectedAttack({
-            module: module,
-            operation: result.operation,
-            kind: result.kind,
-            source: result.source,
-            blocked: agent.shouldBlock(),
-            stack: new Error().stack!,
-            path: result.pathToPayload,
-            metadata: result.metadata,
-            request: context,
-            payload: result.payload,
-          });
-
-          if (agent.shouldBlock()) {
-            throw new Error(
-              `Aikido runtime has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${result.pathToPayload}`
-            );
-          }
-        }
-
-        return original.apply(
-          // @ts-expect-error We don't now the type of this
-          this,
-          // eslint-disable-next-line prefer-rest-params
-          arguments
-        );
-      };
-    });
-  } catch (error) {
-    agent.onFailedToWrapMethod(module, method.getName());
-  }
-}
-
-/**
- * Wraps a method call with an interceptor that modifies the arguments of the method call.
- */
-function wrapWithArgumentModification(
-  subject: unknown,
-  method: ModifyingArgumentsMethodInterceptor,
-  module: string,
-  agent: Agent
-) {
-  try {
-    wrap(subject, method.getName(), function wrap(original: Function) {
-      return function wrap() {
-        // eslint-disable-next-line prefer-rest-params
-        const args = Array.from(arguments);
-        let updatedArgs = args;
-
-        try {
-          // @ts-expect-error We don't now the type of this
-          updatedArgs = method.getInterceptor()(args, this, agent);
-        } catch (error: any) {
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: method.getName(),
-            module: module,
-          });
-        }
-
-        return original.apply(
-          // @ts-expect-error We don't now the type of this
-          this,
-          updatedArgs
-        );
-      };
-    });
-  } catch (error) {
-    agent.onFailedToWrapMethod(module, method.getName());
-  }
-}
-
-function wrapNewInstance(
-  subject: unknown,
-  constructor: ConstructorInterceptor,
-  module: string,
-  agent: Agent
-) {
-  const subjects = constructor.getSubjects();
-
-  if (subjects.length === 0) {
-    return;
-  }
-
-  try {
-    wrap(subject, constructor.getName(), function wrap(original: Function) {
-      return function wrap() {
-        // eslint-disable-next-line prefer-rest-params
-        const args = Array.from(arguments);
-
-        // @ts-expect-error It's a constructor
-        const newInstance = new original(...args);
-        subjects.forEach((subject) => {
-          wrapSubject(newInstance, subject, module, agent);
-        });
-
-        return newInstance;
-      };
-    });
-  } catch (error) {
-    agent.onFailedToWrapMethod(module, constructor.getName());
-  }
-}
-
-function wrapSubject(
-  exports: unknown,
-  subject: WrappableSubject,
-  module: string,
-  agent: Agent
-) {
-  const theSubject = subject.getSelector()(exports);
-
-  if (!theSubject) {
-    return;
-  }
-
-  subject.getMethodInterceptors().forEach((method) => {
-    if (method instanceof ModifyingArgumentsMethodInterceptor) {
-      wrapWithArgumentModification(theSubject, method, module, agent);
-    } else if (method instanceof MethodInterceptor) {
-      wrapWithoutArgumentModification(theSubject, method, module, agent);
-    } else {
-      wrapNewInstance(theSubject, method, module, agent);
-    }
+    wrapExport(
+      global,
+      name,
+      {
+        name: name,
+        type: "global",
+      },
+      g.getInterceptors()
+    );
   });
 }

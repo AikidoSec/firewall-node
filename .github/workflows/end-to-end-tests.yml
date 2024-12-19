@@ -1,5 +1,7 @@
 name: End to end tests
-on: push
+on:
+  push: {}
+  workflow_call: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,16 +29,38 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
         ports:
           - "27015:3306"
-    timeout-minutes: 5
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: mypassword
+          MARIADB_DATABASE: catsdb
+        ports:
+          - "27018:3306"
+      clickhouse:
+        image: clickhouse/clickhouse-server:24
+        env:
+          "CLICKHOUSE_USER": "clickhouse"
+          "CLICKHOUSE_PASSWORD": "clickhouse"
+          "CLICKHOUSE_DB": "main_db"
+          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
+        ports:
+          - "27019:8123"
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [18.x]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Add local.aikido.io to /etc/hosts
+        run: |
+          sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - name: Build and run server
+        run: |
+          cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
       - run: make install
       - run: make build
       - run: make end2end

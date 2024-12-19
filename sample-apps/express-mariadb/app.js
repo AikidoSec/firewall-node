@@ -1,12 +1,13 @@
 require("dotenv").config();
-require("@aikidosec/runtime");
+require("@aikidosec/firewall");
 
 const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
+const mariadb = require("mariadb");
 
-require("@aikidosec/runtime/nopp");
+require("@aikidosec/firewall/nopp");
 
 function getHTMLBody(cats) {
   return `
@@ -25,11 +26,12 @@ function getHTMLBody(cats) {
 
 async function createConnection() {
   const pool = new mariadb.createPool({
+    host: "localhost",
     user: "root",
-    host: "127.0.0.1",
-    database: "catsdb",
     password: "mypassword",
-    port: 27015,
+    database: "catsdb",
+    port: 27018,
+    connectionLimit: 5,
     multipleStatements: true,
   });
 
@@ -65,14 +67,26 @@ async function main() {
 
   return new Promise((resolve, reject) => {
     try {
-      app.listen(4000, () => {
-        console.log("Listening on port 4000");
+      const port = getPort();
+      app.listen(port, () => {
+        console.log(`Listening on port ${port}`);
         resolve();
       });
     } catch (err) {
       reject(err);
     }
   });
+}
+
+function getPort() {
+  const port = parseInt(process.argv[2], 10) || 4000;
+
+  if (isNaN(port)) {
+    console.error("Invalid port");
+    process.exit(1);
+  }
+
+  return port;
 }
 
 main();

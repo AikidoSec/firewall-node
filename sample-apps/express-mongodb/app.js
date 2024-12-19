@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/runtime");
+const Zen = require("@aikidosec/firewall");
 
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -9,10 +9,10 @@ const { escape } = require("./escape");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const { exec } = require("child_process");
+const { extname } = require("path");
+const fetchImage = require("./fetchImage");
 
-require("@aikidosec/runtime/nopp");
-
-const Aikido = require("@aikidosec/runtime/context");
+require("@aikidosec/firewall/nopp");
 
 async function getPosts() {
   // Normally you'd use environment variables for this
@@ -36,9 +36,11 @@ async function main(port) {
   });
 
   app.use((req, res, next) => {
-    Aikido.setUser({ id: "123", name: "John Doe" });
+    Zen.setUser({ id: "123", name: "John Doe" });
     next();
   });
+
+  Zen.addExpressMiddleware(app);
 
   // Try http://localhost:4000/?search[$ne]=null
   // Which will result in a query like:
@@ -82,6 +84,13 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/posts/:id",
+    asyncHandler(async (req, res) => {
+      res.send({ post: { id: req.params.id } });
+    })
+  );
+
   app.post(
     "/search",
     express.json(),
@@ -91,6 +100,22 @@ async function main(port) {
       // Do not use this code in production
       // Always validate and sanitize user input!
       res.send(await posts.search(req.body));
+    })
+  );
+
+  app.get(
+    "/where",
+    express.json(),
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to JS injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      // Always validate and sanitize user input!
+      const title = req.query.title;
+      if (!title) {
+        return res.status(400).send("title parameter is required");
+      }
+      res.send(await posts.where(title));
     })
   );
 
@@ -117,6 +142,49 @@ async function main(port) {
       res.send(stdout.split("\n"));
     });
   });
+
+  app.get(
+    "/images",
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to SSRF
+      const url = req.query.url;
+
+      if (!url) {
+        return res.status(400).send("url parameter is required");
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+      });
+
+      const buffer = await (await response.blob()).arrayBuffer();
+
+      res.attachment("image.jpg");
+      res.send(Buffer.from(buffer));
+    })
+  );
+
+  app.get(
+    "/images/:url",
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to SSRF
+      const url = req.params.url;
+
+      if (!url) {
+        return res.status(400).send("url parameter is required");
+      }
+
+      const extension = extname(url) || ".jpg";
+      const { statusCode, body } = await fetchImage(url);
+
+      if (statusCode !== 200) {
+        return res.status(statusCode).send("Failed to fetch image");
+      }
+
+      res.attachment(`image${extension}`);
+      res.send(body);
+    })
+  );
 
   return new Promise((resolve, reject) => {
     try {

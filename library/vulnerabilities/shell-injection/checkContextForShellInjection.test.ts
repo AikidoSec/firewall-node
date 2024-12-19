@@ -18,14 +18,14 @@ t.test("it detects shell injection", async () => {
         },
         routeParams: {},
         source: "express",
-        route: "/posts/:id",
+        route: "/",
       },
     }),
     {
       operation: "child_process.exec",
       kind: "shell_injection",
       source: "body",
-      pathToPayload: ".domain",
+      pathsToPayload: [".domain"],
       metadata: {
         command: "binary --domain www.example`whoami`.com",
       },
@@ -51,14 +51,14 @@ t.test("it detects shell injection from route params", async () => {
           domain: "www.example`whoami`.com",
         },
         source: "express",
-        route: "/posts/:id",
+        route: "/",
       },
     }),
     {
       operation: "child_process.exec",
       kind: "shell_injection",
       source: "routeParams",
-      pathToPayload: ".domain",
+      pathsToPayload: [".domain"],
       metadata: {
         command: "binary --domain www.example`whoami`.com",
       },

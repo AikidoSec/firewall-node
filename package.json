@@ -1,11 +1,6 @@
 {
+  "name": "firewall-node",
   "devDependencies": {
     "prettier": "^3.2.4"
-  },
-  "workspaces": [
-    "sample-apps/*",
-    "benchmarks/*",
-    "end2end",
-    "library"
-  ]
+  }
 }

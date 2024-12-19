@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 // Suppress upgrade to SDK v3 notice
 require("aws-sdk/lib/maintenance_mode_message").suppress = true;
@@ -26,14 +24,7 @@ const unsafeContext: Context = {
 };
 
 t.test("it works", async (t) => {
-  const logger = new LoggerForTesting();
-  const agent = new Agent(
-    true,
-    logger,
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new AwsSDKVersion2()]);
 
@@ -97,7 +88,7 @@ t.test("it works", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: S3.putObject(...) originating from body.file.matches"
       );
     }
 
@@ -106,7 +97,7 @@ t.test("it works", async (t) => {
     if (signedURLError instanceof Error) {
       t.same(
         signedURLError.message,
-        "Aikido runtime has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
+        "Zen has blocked a path traversal attack: S3.getSignedUrl(...) originating from body.file.matches"
       );
     }
   });

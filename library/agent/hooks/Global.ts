@@ -1,53 +1,23 @@
-import { Interceptor, MethodInterceptor } from "./MethodInterceptor";
-import {
-  ModifyingArgumentsInterceptor,
-  ModifyingArgumentsMethodInterceptor,
-} from "./ModifyingArgumentsInterceptor";
+import { InterceptorObject } from "./wrapExport";
 
 export class Global {
-  private method:
-    | MethodInterceptor
-    | ModifyingArgumentsMethodInterceptor
-    | undefined = undefined;
-
-  constructor(private readonly name: string) {
+  constructor(
+    private readonly name: string,
+    private readonly interceptors: InterceptorObject
+  ) {
     if (!this.name) {
       throw new Error("Name is required");
     }
-  }
-
-  /**
-   * Inspect method calls without modifying arguments
-   *
-   * This is the preferred way to use when wrapping methods
-   */
-  inspect(interceptor: Interceptor) {
-    this.method = new MethodInterceptor(this.name, interceptor);
-
-    return this;
-  }
-
-  /**
-   * Inspect methods call and return modified arguments
-   *
-   * e.g. to append our middleware to express routes
-   *
-   * Don't use this unless you have to, it's better to use inspect
-   */
-  modifyArguments(interceptor: ModifyingArgumentsInterceptor) {
-    this.method = new ModifyingArgumentsMethodInterceptor(
-      this.name,
-      interceptor
-    );
-
-    return this;
+    if (!this.interceptors) {
+      throw new Error("Interceptors are required");
+    }
   }
 
   getName() {
     return this.name;
   }
 
-  getMethodInterceptor() {
-    return this.method;
+  getInterceptors() {
+    return this.interceptors;
   }
 }

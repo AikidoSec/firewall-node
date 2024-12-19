@@ -13,6 +13,7 @@ function generateAttackEvent(): Event {
       method: undefined,
       ipAddress: undefined,
       userAgent: undefined,
+      // @ts-expect-error Test
       headers: undefined,
       body: undefined,
       source: "express",
@@ -28,9 +29,11 @@ function generateAttackEvent(): Event {
       metadata: {},
       operation: "operation",
       payload: "payload",
+      user: undefined,
     },
     agent: {
       version: "1.0.0",
+      library: "firewall-node",
       dryMode: false,
       hostname: "hostname",
       packages: {},
@@ -46,6 +49,10 @@ function generateAttackEvent(): Event {
         prototypePollution: {},
       },
       stack: [],
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }
@@ -99,6 +106,11 @@ function generateStartedEvent(): Event {
       },
       stack: [],
       serverless: false,
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }
@@ -137,6 +149,7 @@ function generateHeartbeatEvent(): Event {
       sinks: {},
       requests: {
         total: 0,
+        aborted: 0,
         attacksDetected: {
           blocked: 0,
           total: 0,
@@ -160,6 +173,11 @@ function generateHeartbeatEvent(): Event {
         prototypePollution: {},
       },
       stack: [],
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
     hostnames: [],
     routes: [],
@@ -206,6 +224,7 @@ t.test("it does not blow memory", async () => {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
+      allowedIPAddresses: [],
     });
   }
 

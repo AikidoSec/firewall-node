@@ -1,60 +1,137 @@
+import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
+import { getInstance } from "../agent/AgentSingleton";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
+import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { wrapDispatch } from "./undici/wrapDispatch";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
+
+const methods = [
+  "request",
+  "stream",
+  "pipeline",
+  "connect",
+  "fetch",
+  "upgrade",
+];
 
 export class Undici implements Wrapper {
-  inspect(args: unknown[], agent: Agent) {
-    if (args.length > 0) {
-      if (typeof args[0] === "string" && args[0].length > 0) {
-        try {
-          const url = new URL(args[0]);
-          if (url.hostname.length > 0) {
-            agent.onConnectHostname(url.hostname, getPortFromURL(url));
-          }
-        } catch (e) {
-          // Ignore
-        }
-      }
+  private inspectHostname(
+    agent: Agent,
+    hostname: string,
+    port: number | undefined,
+    method: string
+  ): InterceptorResult {
+    // Let the agent know that we are connecting to this hostname
+    // This is to build a list of all hostnames that the application is connecting to
+    agent.onConnectHostname(hostname, port);
+    const context = getContext();
 
-      if (args[0] instanceof URL && args[0].hostname.length > 0) {
-        agent.onConnectHostname(args[0].hostname, getPortFromURL(args[0]));
-      }
+    if (!context) {
+      return undefined;
+    }
 
-      if (
-        isPlainObject(args[0]) &&
-        typeof args[0].hostname === "string" &&
-        args[0].hostname.length > 0
-      ) {
-        let port = 80;
-        if (typeof args[0].protocol === "string") {
-          port = args[0].protocol === "https:" ? 443 : 80;
-        }
-        if (typeof args[0].port === "number") {
-          port = args[0].port;
-        } else if (
-          typeof args[0].port === "string" &&
-          Number.isInteger(parseInt(args[0].port, 10))
-        ) {
-          port = parseInt(args[0].port, 10);
-        }
+    return checkContextForSSRF({
+      hostname: hostname,
+      operation: `undici.${method}`,
+      context,
+      port,
+    });
+  }
 
-        agent.onConnectHostname(args[0].hostname, port);
+  // eslint-disable-next-line max-lines-per-function
+  private inspect(
+    args: unknown[],
+    agent: Agent,
+    method: string
+  ): InterceptorResult {
+    const hostnameAndPort = getHostnameAndPortFromArgs(args);
+    if (hostnameAndPort) {
+      const attack = this.inspectHostname(
+        agent,
+        hostnameAndPort.hostname,
+        hostnameAndPort.port,
+        method
+      );
+      if (attack) {
+        return attack;
       }
     }
+
+    return undefined;
+  }
+
+  private patchGlobalDispatcher(
+    agent: Agent,
+    undiciModule: typeof import("undici-v6")
+  ) {
+    const dispatcher = new undiciModule.Agent({
+      connect: {
+        lookup: inspectDNSLookupCalls(
+          lookup,
+          agent,
+          "undici",
+          // We don't know the method here, so we just use "undici.[method]"
+          "undici.[method]"
+        ),
+      },
+    });
+
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+
+    // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
+    undiciModule.setGlobalDispatcher(dispatcher);
   }
 
   wrap(hooks: Hooks) {
+    if (!isVersionGreaterOrEqual("16.8.0", getSemverNodeVersion())) {
+      // Undici requires Node.js 16.8+ (due to web streams)
+      return;
+    }
+
     hooks
       .addPackage("undici")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
-      .addSubject((exports) => exports)
-      .inspect("request", (args, subject, agent) => this.inspect(args, agent))
-      .inspect("stream", (args, subject, agent) => this.inspect(args, agent))
-      .inspect("pipeline", (args, subject, agent) => this.inspect(args, agent))
-      .inspect("connect", (args, subject, agent) => this.inspect(args, agent))
-      .inspect("fetch", (args, subject, agent) => this.inspect(args, agent))
-      .inspect("upgrade", (args, subject, agent) => this.inspect(args, agent));
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
+      .onRequire((exports, pkgInfo) => {
+        const agent = getInstance();
+
+        if (!agent) {
+          // No agent, we can't do anything
+          return;
+        }
+
+        // Immediately patch the global dispatcher before returning the module
+        // The global dispatcher might be overwritten by the user
+        // But at least they have a reference to our dispatcher instead of the original one
+        // (In case the user has a custom dispatcher that conditionally calls the original dispatcher)
+        this.patchGlobalDispatcher(agent, exports);
+
+        // Print a warning that we can't provide protection if setGlobalDispatcher is called
+        wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
+          inspectArgs: (args, agent) => {
+            agent.log(
+              `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
+            );
+          },
+        });
+
+        // Wrap all methods that can make requests
+        for (const method of methods) {
+          wrapExport(exports, method, pkgInfo, {
+            // Whenever a request is made, we'll check the hostname whether it's a private IP
+            // If global dispatcher is not patched, we'll patch it
+            inspectArgs: (args, agent) => {
+              return this.inspect(args, agent, method);
+            },
+          });
+        }
+      });
   }
 }

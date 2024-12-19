@@ -12,7 +12,7 @@ const pathToApp = resolve(
 t.setTimeout(60000);
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4000"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -38,19 +38,23 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4000/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4000/?search=title", {
+        fetch("http://127.0.0.1:4000/where?title=Test%27%7C%7C%27a", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch("http://127.0.0.1:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, jsInjection, normalSearch]) => {
       t.equal(noSQLInjection.status, 500);
+      t.equal(jsInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -61,7 +65,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, [pathToApp, "4001"], {
+  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -83,19 +87,23 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4001/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4001/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4001/?search=title", {
+        fetch("http://127.0.0.1:4001/where?title=Test%27%7C%7C%27a", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch("http://127.0.0.1:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
     )
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, jsInjection, normalSearch]) => {
       t.equal(noSQLInjection.status, 200);
+      t.equal(jsInjection.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -109,12 +117,14 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   const server = spawn(
     `node`,
     [
+      "--preserve-symlinks",
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
       "4002",
     ],
     {
+      cwd: resolve(__dirname, "../../sample-apps/express-mongodb"),
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
@@ -146,13 +156,13 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() => {
       return Promise.all([
-        fetch("http://localhost:4002/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4002/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4002/?search=title", {
+        fetch("http://127.0.0.1:4002/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
@@ -162,7 +172,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.match(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -176,12 +186,14 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   const server = spawn(
     `node`,
     [
+      "--preserve-symlinks",
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
       "4003",
     ],
     {
+      cwd: resolve(__dirname, "../../sample-apps/express-mongodb"),
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
@@ -208,13 +220,13 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   });
 
   // Wait for the server to start
-  timeout(2000)
+  timeout(6000)
     .then(() =>
       Promise.all([
-        fetch("http://localhost:4003/?search[$ne]=null", {
+        fetch("http://127.0.0.1:4003/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
-        fetch("http://localhost:4003/?search=title", {
+        fetch("http://127.0.0.1:4003/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
@@ -224,7 +236,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.equal(normalSearch.status, 200);
       t.match(stdout, /mongodb\.find/);
       t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Aikido runtime has blocked a NoSQL injection/);
+      t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);

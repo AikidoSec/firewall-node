@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL } from "./MySQL";
 import type { Connection } from "mysql";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 function query(sql: string, connection: Connection) {
   return new Promise((resolve, reject) => {
@@ -46,17 +44,11 @@ const context: Context = {
 };
 
 t.test("it detects SQL injections", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent();
   agent.start([new MySQL()]);
 
-  const mysql = require("mysql");
-  const connection = await mysql.createConnection({
+  const mysql = require("mysql") as typeof import("mysql");
+  const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "mypassword",
@@ -105,7 +97,7 @@ t.test("it detects SQL injections", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
@@ -118,12 +110,13 @@ t.test("it detects SQL injections", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido runtime has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: MySQL.query(...) originating from body.myTitle"
       );
     }
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
+        // @ts-expect-error Test
         return query(undefined, connection);
       });
     });
@@ -149,6 +142,12 @@ t.test("it detects SQL injections", async () => {
         return connection.query("-- This is a comment");
       }
     );
+
+    runWithContext(context, () => {
+      connection.query("SELECT petname FROM `cats`;", (error, results) => {
+        t.same(getContext(), context);
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {

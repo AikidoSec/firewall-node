@@ -25,6 +25,11 @@ function generateStartedEvent(): Event {
       },
       stack: [],
       serverless: false,
+      library: "firewall-node",
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
     },
   };
 }
@@ -41,6 +46,7 @@ t.test("it ignores valid tokens", async () => {
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
+    allowedIPAddresses: [],
   });
   t.same(api.getEvents(), [event]);
 
@@ -50,6 +56,7 @@ t.test("it ignores valid tokens", async () => {
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
+    allowedIPAddresses: [],
   });
   t.same(api.getEvents(), [event, event]);
 });

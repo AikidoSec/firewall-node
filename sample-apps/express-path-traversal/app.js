@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/runtime");
+require("@aikidosec/firewall");
 
 const Documents = require("./Documents");
 const express = require("express");
@@ -7,7 +7,7 @@ const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const { join } = require("path");
 
-require("@aikidosec/runtime/nopp");
+require("@aikidosec/firewall/nopp");
 
 function getHTMLBody(documents) {
   return `

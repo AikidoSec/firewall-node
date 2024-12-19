@@ -1,9 +1,11 @@
-import type { IncomingMessage } from "http";
 import { isIP } from "net";
 
-export function getIPAddressFromRequest(req: IncomingMessage) {
+export function getIPAddressFromRequest(req: {
+  headers: Record<string, unknown>;
+  remoteAddress: string | undefined;
+}) {
   if (req.headers) {
-    if (typeof req.headers["x-forwarded-for"] === "string") {
+    if (typeof req.headers["x-forwarded-for"] === "string" && trustProxy()) {
       const xForwardedFor = getClientIpFromXForwardedFor(
         req.headers["x-forwarded-for"]
       );
@@ -14,12 +16,8 @@ export function getIPAddressFromRequest(req: IncomingMessage) {
     }
   }
 
-  if (
-    req.socket &&
-    req.socket.remoteAddress &&
-    isIP(req.socket.remoteAddress)
-  ) {
-    return req.socket.remoteAddress;
+  if (req.remoteAddress && isIP(req.remoteAddress)) {
+    return req.remoteAddress;
   }
 
   return undefined;
@@ -47,4 +45,17 @@ function getClientIpFromXForwardedFor(value: string) {
   }
 
   return null;
+}
+
+function trustProxy() {
+  if (!process.env.AIKIDO_TRUST_PROXY) {
+    // Trust proxy by default
+    // Most of the time, the application is behind a reverse proxy
+    return true;
+  }
+
+  return (
+    process.env.AIKIDO_TRUST_PROXY === "1" ||
+    process.env.AIKIDO_TRUST_PROXY === "true"
+  );
 }

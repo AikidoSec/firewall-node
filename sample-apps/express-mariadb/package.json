@@ -5,10 +5,12 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
-    "@aikidosec/runtime": "file:../../build",
+    "@aikidosec/firewall": "file:../../build",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
-    "mariadb": "^3.2.3"
+    "mariadb": "^3.2.3",
+    "express-async-handler": "^1.2.0",
+    "morgan": "^1.10.0"
   }
 }

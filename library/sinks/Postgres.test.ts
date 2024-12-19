@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { Postgres } from "./Postgres";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -20,17 +18,11 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-t.test("it inspects query method calls and blocks if needed", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+t.test("it inspects query method calls and blocks if needed", async (t) => {
+  const agent = createTestAgent();
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg");
+  const { Client } = require("pg") as typeof import("pg");
   const client = new Client({
     user: "root",
     host: "127.0.0.1",
@@ -78,7 +70,7 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido runtime has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,12 +82,13 @@ t.test("it inspects query method calls and blocks if needed", async () => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido runtime has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
+        // @ts-expect-error Test
         return client.query(null);
       });
     });
@@ -123,6 +116,22 @@ t.test("it inspects query method calls and blocks if needed", async () => {
         return client.query("-- This is a comment");
       }
     );
+
+    // Check if context is available in the callback
+    runWithContext(context, () => {
+      client.query("SELECT petname FROM cats;", (error, result) => {
+        t.match(getContext(), context);
+
+        try {
+          client.query("-- should be blocked", () => {});
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Zen has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+          );
+        }
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {
