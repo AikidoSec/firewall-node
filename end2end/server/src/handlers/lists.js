@@ -1,11 +1,15 @@
-const { getBlockedIPAddresses } = require("../zen/config");
+const {
+  getBlockedIPAddresses,
+  getBlockedUserAgents,
+} = require("../zen/config");
 
-module.exports = function ipLists(req, res) {
+module.exports = function lists(req, res) {
   if (!req.app) {
     throw new Error("App is missing");
   }
 
   const blockedIps = getBlockedIPAddresses(req.app);
+  const blockedUserAgents = getBlockedUserAgents(req.app);
 
   res.json({
     success: true,
@@ -20,5 +24,6 @@ module.exports = function ipLists(req, res) {
             },
           ]
         : [],
+    blockedUserAgents: blockedUserAgents,
   });
 };

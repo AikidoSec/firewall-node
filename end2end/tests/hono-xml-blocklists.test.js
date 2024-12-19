@@ -25,13 +25,14 @@ t.beforeEach(async () => {
       },
       body: JSON.stringify({
         blockedIPAddresses: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+        blockedUserAgents: "hacker|attacker",
       }),
     }
   );
   t.same(updateConfigResponse.status, 200);
 });
 
-t.test("it blocks geo restricted IPs", (t) => {
+t.test("it blocks geo restricted IPs and bots", (t) => {
   const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
     env: {
       ...process.env,
@@ -104,6 +105,21 @@ t.test("it blocks geo restricted IPs", (t) => {
       });
       t.same(resp3.status, 200);
       t.same(await resp3.text(), JSON.stringify({ success: true }));
+
+      const resp4 = await fetch("http://127.0.0.1:4002/add", {
+        method: "POST",
+        body: "<cat><name>Harry</name></cat>",
+        headers: {
+          "Content-Type": "application/xml",
+          "User-Agent": "hacker",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp4.status, 403);
+      t.same(
+        await resp4.text(),
+        "You are not allowed to access this resource because you have been identified as a bot."
+      );
     })
     .catch((error) => {
       t.fail(error.message);
