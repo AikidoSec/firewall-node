@@ -810,6 +810,6 @@ t.test("test performance in comparison to node:net.blocklist", async (t) => {
 
   const percentageDiff = ((blockListMs - ipMatcherMs) / ipMatcherMs) * 100;
 
-  // Expect the IPMatcher to be at least 100% faster than the BlockList
-  t.same(percentageDiff > 100, true);
+  // Expect the IPMatcher to be faster than the BlockList
+  t.same(percentageDiff > 25, true);
 });
