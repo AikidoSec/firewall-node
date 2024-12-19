@@ -3,7 +3,7 @@ on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  benchmark:
     runs-on: ubuntu-latest
     services:
       mongodb:
@@ -37,6 +37,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wrk
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
