@@ -1,12 +1,16 @@
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
+type Version = string;
+type PackageName = string;
+
 export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
   library: string;
-  packages: Record<string, string>;
+  packages: Record<PackageName, Version>;
+  requiredPackages: Record<PackageName, Version[]>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
   incompatiblePackages: {

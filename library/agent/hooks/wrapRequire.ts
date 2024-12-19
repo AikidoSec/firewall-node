@@ -189,11 +189,6 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     .map((pkg) => pkg.getVersions())
     .flat();
 
-  // We don't want to patch this package because we do not have any hooks for it
-  if (!versionedPackages.length) {
-    return originalExports;
-  }
-
   // Read the package.json of the required package
   const packageJson = originalRequire(
     `${pathInfo.base}/package.json`
@@ -207,19 +202,24 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     );
   }
 
+  const agent = getInstance();
+  agent?.onPackageRequired(moduleName, installedPkgVersion);
+
+  // We don't want to patch this package because we do not have any hooks for it
+  if (!versionedPackages.length) {
+    return originalExports;
+  }
+
   // Check if the installed package version is supported (get all matching versioned packages)
   const matchingVersionedPackages = versionedPackages.filter((pkg) =>
     satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
-  const agent = getInstance();
-  if (agent) {
-    // Report to the agent that the package was wrapped or not if it's version is not supported
-    agent.onPackageWrapped(moduleName, {
-      version: installedPkgVersion,
-      supported: !!matchingVersionedPackages.length,
-    });
-  }
+  // Report to the agent that the package was wrapped or not if it's version is not supported
+  agent?.onPackageWrapped(moduleName, {
+    version: installedPkgVersion,
+    supported: !!matchingVersionedPackages.length,
+  });
 
   if (!matchingVersionedPackages.length) {
     // We don't want to patch this package version
