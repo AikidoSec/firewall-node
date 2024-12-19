@@ -17,6 +17,7 @@ export function markUnsafe(...data: unknown[]) {
   }
 
   if (data.length === 0) {
+    // eslint-disable-next-line no-console
     console.warn("markUnsafe(...) was called without any data.");
   }
 
