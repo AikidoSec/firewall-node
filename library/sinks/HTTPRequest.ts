@@ -1,19 +1,21 @@
+import { subscribe } from "diagnostics_channel";
 import { lookup } from "dns";
-import { type RequestOptions, ClientRequest } from "http";
+import { type RequestOptions, ClientRequest, IncomingMessage } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
-import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
-import { wrap } from "../helpers/wrap";
+import { onHTTPResponse } from "./http-request/wrapResponseHandler";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -145,70 +147,25 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
-  wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    // Wrap the response handler if there is one
-    // so that we can inspect the response for SSRF attacks (using redirects)
-    // e.g. http.request("http://example.com", (response) => {...})
-    //                                         ^^^^^^^^^^^^^^^^^^^
-    //                                         We want to wrap this callback
-    return args.map((arg) => {
-      if (typeof arg === "function") {
-        return wrapResponseHandler(args, module, arg);
-      }
+  handleResponseFinish({
+    request,
+    response,
+  }: {
+    request: ClientRequest;
+    response: IncomingMessage;
+  }) {
+    const context = getContext();
 
-      return arg;
-    });
-  }
-
-  wrapEventListeners(
-    requestArgs: unknown[],
-    module: "http" | "https",
-    returnVal: unknown
-  ) {
-    if (!(returnVal instanceof ClientRequest)) {
+    if (!context) {
       return;
     }
 
-    // Whenever a response event is added, we'll wrap the handler
-    // so that we can inspect the response for SSRF attacks (using redirects)
-
-    // You can add listeners in multiple ways:
-    // http.request("http://example.com").on("response", (response) => {...})
-    //                                                   ^^^^^^^^^^^^^^^^^^^
-    //                                                   We want to wrap this callback
-    // http.request("http://example.com").addListener("response", (response) => {...})
-    // http.request("http://example.com").once("response", (response) => {...})
-    // http.request("http://example.com").prependListener("response", (response) => {...})
-    // http.request("http://example.com").prependOnceListener("response", (response) => {...})
-    const methods = [
-      "on",
-      "addListener",
-      "once",
-      "prependListener",
-      "prependOnceListener",
-    ];
-
-    for (const method of methods) {
-      wrap(returnVal, method, function createWrappedOn(original) {
-        return function wrappedOn(this: ClientRequest) {
-          // eslint-disable-next-line prefer-rest-params
-          const args = Array.from(arguments);
-
-          if (
-            args.length === 2 &&
-            args[0] === "response" &&
-            typeof args[1] === "function"
-          ) {
-            const responseHandler = args[1];
-            args[1] = wrapResponseHandler(requestArgs, module, responseHandler);
-
-            return original.apply(this, args);
-          }
-
-          // eslint-disable-next-line prefer-rest-params
-          return original.apply(this, arguments);
-        };
-      });
+    try {
+      const source =
+        request.protocol + request.getHeader("host") + request.path;
+      onHTTPResponse(new URL(source), response, context);
+    } catch {
+      // Ignore errors
     }
   }
 
@@ -218,6 +175,14 @@ export class HTTPRequest implements Wrapper {
 
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        if (isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
+          subscribe("http.client.response.finish", (message) =>
+            this.handleResponseFinish(
+              message as { request: ClientRequest; response: IncomingMessage }
+            )
+          );
+        }
+
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
             // Whenever a request is made, we'll check the hostname whether it's a private IP
@@ -226,15 +191,7 @@ export class HTTPRequest implements Wrapper {
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) => {
-              return this.wrapResponseHandler(
-                this.monitorDNSLookups(args, agent, module),
-                module
-              );
-            },
-            modifyReturnValue: (args, returnValue, agent) => {
-              this.wrapEventListeners(args, module, returnValue);
-
-              return returnValue;
+              return this.monitorDNSLookups(args, agent, module);
             },
           });
         }

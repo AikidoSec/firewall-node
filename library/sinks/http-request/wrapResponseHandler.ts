@@ -5,31 +5,9 @@ import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
-import { getUrlFromHTTPRequestArgs } from "./getUrlFromHTTPRequestArgs";
 
-/**
- * We are wrapping the response handler for outgoing HTTP requests to detect redirects.
- * If the response is a redirect, we will add the redirect to the context to be able to detect SSRF attacks with redirects.
- */
-export function wrapResponseHandler(
-  args: unknown[],
-  module: "http" | "https",
-  fn: Function
-) {
-  return function responseHandler(res: IncomingMessage) {
-    const context = getContext();
-    if (context) {
-      onHTTPResponse(args, module, res, context);
-    }
-
-    // eslint-disable-next-line prefer-rest-params
-    fn(...arguments);
-  };
-}
-
-function onHTTPResponse(
-  args: unknown[],
-  module: "http" | "https",
+export function onHTTPResponse(
+  source: URL,
   res: IncomingMessage,
   context: Context
 ) {
@@ -43,11 +21,6 @@ function onHTTPResponse(
 
   const destination = tryParseURL(res.headers.location);
   if (!destination) {
-    return;
-  }
-
-  const source = getUrlFromHTTPRequestArgs(args, module);
-  if (!source) {
     return;
   }
 

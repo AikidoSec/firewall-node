@@ -22,9 +22,7 @@ const context: Context = {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
@@ -32,11 +30,11 @@ t.test("it works", async (t) => {
   const fetch = require("node-fetch");
 
   await runWithContext(context, async () => {
-    await fetch("https://www.aikido.dev");
+    await fetch("https://app.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
