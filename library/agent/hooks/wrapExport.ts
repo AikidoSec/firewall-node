@@ -1,5 +1,4 @@
 /* eslint-disable max-lines-per-function */
-import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { Agent } from "../Agent";
@@ -9,6 +8,8 @@ import { bindContext, getContext, updateContext } from "../Context";
 import { InterceptorResult } from "./InterceptorResult";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
+import { cleanError } from "../../helpers/cleanError";
 
 type InspectArgsInterceptor = (
   args: unknown[],
@@ -29,9 +30,6 @@ export type InterceptorObject = {
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
 };
-
-// Used for cleaning up the stack trace
-const libraryRoot = resolve(__dirname, "../..");
 
 /**
  * Wraps a function with the provided interceptors.
@@ -179,7 +177,7 @@ function inspectArgs(
       kind: result.kind,
       source: result.source,
       blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(new Error().stack!, libraryRoot),
+      stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
       paths: result.pathsToPayload,
       metadata: result.metadata,
       request: context,
@@ -187,8 +185,10 @@ function inspectArgs(
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+        )
       );
     }
   }
