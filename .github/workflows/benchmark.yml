@@ -28,23 +28,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
       - name: Install K6
         uses: grafana/setup-k6-action@v1
       - name: Install wrk
         run: |
           sudo apt-get update
           sudo apt-get install -y wrk
-      - name: Restore cached dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
       - run: make install
       - run: make build
       - name: Run NoSQL Injection Benchmark
