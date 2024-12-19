@@ -3,7 +3,7 @@ on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  benchmark:
     runs-on: ubuntu-latest
     services:
       mongodb:
@@ -28,9 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
       - name: Install K6
         uses: grafana/setup-k6-action@v1
       - name: Install wrk

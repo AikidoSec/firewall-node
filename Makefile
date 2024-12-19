@@ -94,12 +94,21 @@ install-lib-only:
 	node scripts/copyPackageJSON.js
 	touch build/index.js
 	cd build && npm link
-	npm install
+ifdef CI
+	npm ci  # Use npm ci if CI environment variable is set
+	cd library && npm ci
+else
+	npm install  # Use npm install otherwise
 	cd library && npm install
+endif
 
 .PHONY: install
 install: install-lib-only
+ifdef CI
+	cd end2end && npm ci
+else
 	cd end2end && npm install
+endif
 	node scripts/install.js
 
 .PHONY: build
