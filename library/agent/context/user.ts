@@ -21,11 +21,6 @@ export function setUser(
 
   const user = u as unknown;
 
-  if (user === null || user === undefined) {
-    context.user = undefined;
-    return;
-  }
-
   if (!isPlainObject(user)) {
     agent.log(
       `setUser(...) expects an object with 'id' and 'name' properties, found ${typeof user} instead.`

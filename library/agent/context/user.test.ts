@@ -175,25 +175,3 @@ t.test(
     ]);
   }
 );
-
-t.test("setUser(undefined) resets the user", async (t) => {
-  const context = createContext();
-
-  runWithContext(context, () => {
-    setUser({ id: "id" });
-    t.same(getContext()?.user, {
-      id: "id",
-    });
-
-    setUser(undefined);
-    t.same(getContext()?.user, undefined);
-
-    setUser({ id: "id" });
-    t.same(getContext()?.user, {
-      id: "id",
-    });
-
-    setUser(null);
-    t.same(getContext()?.user, undefined);
-  });
-});
