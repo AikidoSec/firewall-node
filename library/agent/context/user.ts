@@ -90,7 +90,7 @@ function logWarningSetUserCalledWithoutContext() {
 
   // eslint-disable-next-line no-console
   console.warn(
-    "setUser(...) was called without a context. The data will not be tracked. Make sure to call setUser(...) within an HTTP request."
+    "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen."
   );
 
   loggedWarningSetUserCalledWithoutContext = true;
