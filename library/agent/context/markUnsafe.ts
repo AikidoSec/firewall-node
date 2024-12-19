@@ -1,3 +1,4 @@
+import { isPlainObject } from "../../helpers/isPlainObject";
 import { getInstance } from "../AgentSingleton";
 import { Context, updateContext } from "../Context";
 import { ContextStorage } from "./ContextStorage";
@@ -22,6 +23,19 @@ export function markUnsafe(...data: unknown[]) {
   }
 
   for (const item of data) {
+    if (
+      !isPlainObject(item) &&
+      !Array.isArray(item) &&
+      typeof item !== "string"
+    ) {
+      const type = item === null ? "null" : typeof item;
+      // eslint-disable-next-line no-console
+      console.warn(
+        `markUnsafe(...) expects an object, array, or string. Received: ${type}`
+      );
+      continue;
+    }
+
     addPayloadToContext(context, item);
   }
 }

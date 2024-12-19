@@ -136,4 +136,19 @@ t.test("it works", async () => {
     "markUnsafe(...) failed to serialize the data",
     "markUnsafe(...) was called without any data.",
   ]);
+
+  runWithContext(createContext(), () => {
+    markUnsafe(1, true, null, undefined, () => {}, Symbol("test"));
+  });
+  t.same(logs, [
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) failed to serialize the data",
+    "markUnsafe(...) was called without any data.",
+    "markUnsafe(...) expects an object, array, or string. Received: number",
+    "markUnsafe(...) expects an object, array, or string. Received: boolean",
+    "markUnsafe(...) expects an object, array, or string. Received: null",
+    "markUnsafe(...) expects an object, array, or string. Received: undefined",
+    "markUnsafe(...) expects an object, array, or string. Received: function",
+    "markUnsafe(...) expects an object, array, or string. Received: symbol",
+  ]);
 });
