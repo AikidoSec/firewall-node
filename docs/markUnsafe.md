@@ -1,6 +1,6 @@
 # Marking Unsafe Input
 
-To flag input as unsafe, you can use the `markUnsafe` function. This is useful when you want to explicitly label data as potentially dangerous, such as output from an LLM being used to generate a file name. Here's an example:
+To flag input as unsafe, you can use the `markUnsafe` function. This is useful when you want to explicitly label data as potentially dangerous, such as output from an LLM being used to generate a file name. Here's are some examples:
 
 ```js
 const Zen = require("@aikidosec/firewall");
@@ -19,6 +19,27 @@ const generatedFilename = completion.choices[0].message.content;
 Zen.markUnsafe(generatedFilename);
 
 await fs.writeFile(`reports/${generatedFilename}`);
+```
+
+The LLM returns JSON data:
+
+```js
+const completion = await openai.chat.completions.create({
+  messages: [
+    { role: "user", content: "Return some JSON data." },
+  ],
+});
+
+const data = JSON.parse(completion.choices[0].message.content);
+
+// Mark the generated JSON as unsafe
+Zen.markUnsafe(data);
+```
+
+You can also pass multiple arguments to `markUnsafe`:
+
+```js
+Zen.markUnsafe(a, b, c);
 ```
 
 The output of LLM models should be treated as potentially dangerous, as they can be manipulated to perform attacks. Similarly, other dynamically generated or user-controlled inputs may also be sources of potential attacks.
