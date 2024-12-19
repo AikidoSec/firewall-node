@@ -42,7 +42,7 @@ t.test("usage outside of context", async (t) => {
   setUser({ id: "id" });
 
   t.same(logs, [
-    "setUser(...) did not find a context. Make sure to call setUser(...) within a handler or middleware of a supported framework.",
+    "setUser(...) was called without a context. The data will not be tracked. Make sure to call setUser(...) within an HTTP request.",
   ]);
 
   // Should not log again
