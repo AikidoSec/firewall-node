@@ -32,11 +32,10 @@ export function checkContextForShellInjection({
           source: source,
           pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
-              command: command,
-            },
-            payload: str,
-          };
-
+            command: command,
+          },
+          payload: str,
+        };
       }
     }
   }
