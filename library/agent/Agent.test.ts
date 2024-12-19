@@ -1,8 +1,10 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
+import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
+import { wrap } from "../helpers/wrap";
 import { MongoDB } from "../sinks/MongoDB";
 import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
@@ -15,6 +17,24 @@ import { LoggerNoop } from "./logger/LoggerNoop";
 import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { setTimeout } from "node:timers/promises";
+
+wrap(fetch, "fetch", function mock() {
+  return async function mock() {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        blockedIPAddresses: [
+          {
+            source: "name",
+            description: "Description",
+            ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+          },
+        ],
+      }),
+    };
+  };
+});
 
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
@@ -40,7 +60,8 @@ t.test("it sends started event", async (t) => {
   });
   agent.start([new MongoDB()]);
 
-  const mongodb = require("mongodb");
+  // Require mongodb to see if agent logs message
+  require("mongodb");
 
   t.match(api.getEvents(), [
     {
@@ -70,7 +91,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "mongodb@6.8.0 is supported!",
+    "mongodb@6.9.0 is supported!",
   ]);
 });
 
@@ -193,7 +214,7 @@ t.test("when attack detected", async () => {
     operation: "operation",
     payload: "payload",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -256,7 +277,7 @@ t.test("it checks if user agent is a string", async () => {
     payload: "payload",
     operation: "operation",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -496,11 +517,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
 });
 
 t.test("it logs when failed to report event", async () => {
-  async function waitForCalls() {
-    // API calls are async, wait for them to finish
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-
   const logger = new LoggerForTesting();
   const api = new ReportingAPIThatThrows();
   const agent = createTestAgent({
@@ -510,12 +526,12 @@ t.test("it logs when failed to report event", async () => {
   });
   agent.start([]);
 
-  await waitForCalls();
+  await setTimeout(0);
 
   // @ts-expect-error Private method
   agent.heartbeat();
 
-  await waitForCalls();
+  await setTimeout(0);
 
   agent.onDetectedAttack({
     module: "mongodb",
@@ -538,14 +554,14 @@ t.test("it logs when failed to report event", async () => {
     },
     operation: "operation",
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     payload: "payload",
     metadata: {
       db: "app",
     },
   });
 
-  await waitForCalls();
+  await setTimeout(0);
 
   t.same(logger.getMessages(), [
     "Starting agent...",
@@ -620,7 +636,7 @@ t.test("when payload is object", async () => {
     operation: "operation",
     payload: { $gt: "" },
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -648,7 +664,7 @@ t.test("when payload is object", async () => {
     operation: "operation",
     payload: "a".repeat(20000),
     stack: "stack",
-    path: ".nested",
+    paths: [".nested"],
     metadata: {
       db: "app",
     },
@@ -730,10 +746,17 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
         {
           hostname: "aikido.dev",
           port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "aikido.dev",
+          port: 80,
+          hits: 1,
         },
         {
           hostname: "google.com",
           port: 443,
+          hits: 1,
         },
       ],
       routes: [
@@ -804,7 +827,7 @@ t.test(
     agent.start([]);
 
     // Wait for the event to be sent
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await setTimeout(0);
 
     t.same(agent.shouldBlock(), true);
   }
@@ -825,7 +848,7 @@ t.test(
     agent.start([]);
 
     // Wait for the event to be sent
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await setTimeout(0);
 
     t.same(agent.shouldBlock(), false);
   }
@@ -852,7 +875,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
   agent.start([]);
 
   // Wait for the event to be sent
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await setTimeout(0);
 
   t.same(agent.shouldBlock(), true);
 });
@@ -877,7 +900,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
   agent.start([]);
 
   // Wait for the event to be sent
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await setTimeout(0);
 
   t.same(agent.shouldBlock(), false);
 });
@@ -910,4 +933,38 @@ t.test("it sends middleware installed with heartbeat", async () => {
   ]);
 
   clock.uninstall();
+});
+
+t.test("it fetches blocked IPs", async () => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
+
+  agent.start([]);
+
+  await setTimeout(0);
+
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
+    blocked: true,
+    reason: "Description",
+  });
+  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
+    blocked: true,
+    reason: "Description",
+  });
+});
+
+t.test("it does not fetch blocked IPs if serverless", async () => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+    serverless: "gcp",
+  });
+
+  agent.start([]);
+
+  await setTimeout(0);
+
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
+    blocked: false,
+  });
 });

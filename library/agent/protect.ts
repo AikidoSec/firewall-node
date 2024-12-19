@@ -46,6 +46,8 @@ import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
+import { ClickHouse } from "../sinks/ClickHouse";
+import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -104,7 +106,7 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   return agent;
 }
 
-function getWrappers() {
+export function getWrappers() {
   return [
     new Express(),
     new MongoDB(),
@@ -134,6 +136,8 @@ function getWrappers() {
     new Postgresjs(),
     new Fastify(),
     new Koa(),
+    new ClickHouse(),
+    new Function(),
   ];
 }
 

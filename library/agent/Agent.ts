@@ -7,6 +7,7 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
+import { fetchBlockedIPAddresses } from "./api/fetchBlockedIPAddresses";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
@@ -39,7 +40,7 @@ export class Agent {
   private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true, []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -111,6 +112,8 @@ export class Agent {
       );
 
       this.updateServiceConfig(result);
+
+      await this.updateBlockedIPAddresses();
     }
   }
 
@@ -139,7 +142,7 @@ export class Agent {
     source,
     request,
     stack,
-    path,
+    paths,
     metadata,
     payload,
   }: {
@@ -150,7 +153,7 @@ export class Agent {
     source: Source;
     request: Context;
     stack: string;
-    path: string;
+    paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
@@ -165,7 +168,7 @@ export class Agent {
               module: module,
               operation: operation,
               blocked: blocked,
-              path: path,
+              path: paths.length > 0 ? paths[0] : "",
               stack: stack,
               source: source,
               metadata: limitLengthMetadata(metadata, 4096),
@@ -225,7 +228,7 @@ export class Agent {
       }
 
       if (response.endpoints) {
-        this.serviceConfig = new ServiceConfig(
+        this.serviceConfig.updateConfig(
           response.endpoints && Array.isArray(response.endpoints)
             ? response.endpoints
             : [],
@@ -236,7 +239,7 @@ export class Agent {
             ? response.blockedUserIds
             : [],
           response.allowedIPAddresses &&
-          Array.isArray(response.allowedIPAddresses)
+            Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
             : [],
           typeof response.receivedAnyStats === "boolean"
@@ -287,6 +290,7 @@ export class Agent {
         },
         timeoutInMS
       );
+
       this.updateServiceConfig(response);
     }
   }
@@ -333,6 +337,26 @@ export class Agent {
     this.interval.unref();
   }
 
+  private async updateBlockedIPAddresses() {
+    if (!this.token) {
+      return;
+    }
+
+    if (this.serverless) {
+      // Not supported in serverless mode
+      return;
+    }
+
+    try {
+      const blockedIps = await fetchBlockedIPAddresses(this.token);
+      this.serviceConfig.updateBlockedIPAddresses(blockedIps);
+    } catch (error: any) {
+      this.logger.log(
+        `Failed to update blocked IP addresses: ${error.message}`
+      );
+    }
+  }
+
   private startPollingForConfigChanges() {
     pollForChanges({
       token: this.token,
@@ -341,6 +365,11 @@ export class Agent {
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
+        this.updateBlockedIPAddresses().catch((error) => {
+          this.logger.log(
+            `Failed to update blocked IP addresses: ${error.message}`
+          );
+        });
       },
     });
   }
@@ -463,6 +492,14 @@ export class Agent {
 
   onRouteExecute(context: Context) {
     this.routes.addRoute(context);
+  }
+
+  hasGraphQLSchema(method: string, path: string) {
+    return this.routes.hasGraphQLSchema(method, path);
+  }
+
+  onGraphQLSchema(method: string, path: string, schema: string) {
+    this.routes.setGraphQLSchema(method, path, schema);
   }
 
   onGraphQLExecute(

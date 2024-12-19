@@ -5,8 +5,6 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
 import { resolve } from "path";
 import { FileSystem } from "../sinks/FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -192,6 +190,7 @@ t.test("it discovers routes", async () => {
               hits: 1,
               graphql: undefined,
               apispec: {},
+              graphQLSchema: undefined,
             }
           );
           server.close();
@@ -387,6 +386,7 @@ t.test("it discovers routes using stream event", async () => {
             hits: 1,
             graphql: undefined,
             apispec: {},
+            graphQLSchema: undefined,
           }
         );
         server.close();

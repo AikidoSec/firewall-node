@@ -1,4 +1,4 @@
-import { isIP } from "net";
+import { isIP, type LookupFunction } from "net";
 import { LookupAddress } from "dns";
 import { resolve } from "path";
 import { Agent } from "../../agent/Agent";
@@ -22,7 +22,7 @@ export function inspectDNSLookupCalls(
   operation: string,
   url?: URL,
   stackTraceCallingLocation?: Error
-): Function {
+): LookupFunction {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;
@@ -202,7 +202,7 @@ function wrapDNSLookupCallback(
       source: found.source,
       blocked: agent.shouldBlock(),
       stack: cleanupStackTrace(stackTraceError.stack!, libraryRoot),
-      path: found.pathToPayload,
+      paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
@@ -211,7 +211,7 @@ function wrapDNSLookupCallback(
     if (agent.shouldBlock()) {
       return callback(
         new Error(
-          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
         )
       );
     }

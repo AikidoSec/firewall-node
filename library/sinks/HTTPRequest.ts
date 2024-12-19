@@ -48,7 +48,7 @@ export class HTTPRequest implements Wrapper {
         operation: `${module}.request`,
         kind: "ssrf",
         source: foundSSRFRedirect.source,
-        pathToPayload: foundSSRFRedirect.pathToPayload,
+        pathsToPayload: foundSSRFRedirect.pathsToPayload,
         metadata: {},
         payload: foundSSRFRedirect.payload,
       };

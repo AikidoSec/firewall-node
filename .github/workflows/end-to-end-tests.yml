@@ -36,6 +36,15 @@ jobs:
           MARIADB_DATABASE: catsdb
         ports:
           - "27018:3306"
+      clickhouse:
+        image: clickhouse/clickhouse-server:24
+        env:
+          "CLICKHOUSE_USER": "clickhouse"
+          "CLICKHOUSE_PASSWORD": "clickhouse"
+          "CLICKHOUSE_DB": "main_db"
+          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
+        ports:
+          - "27019:8123"
     timeout-minutes: 10
     strategy:
       matrix:
