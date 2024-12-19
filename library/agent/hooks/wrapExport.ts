@@ -1,5 +1,5 @@
 /* eslint-disable max-lines-per-function */
-import type { Agent } from "../Agent";
+import { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
