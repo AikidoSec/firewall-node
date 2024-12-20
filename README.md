@@ -21,7 +21,7 @@ Zen will autonomously protect your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
 * 🛡️ [SQL injection attacks](https://www.aikido.dev/blog/the-state-of-sql-injections)
-* 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
+* 🛡️ [Command injection attacks](https://www.aikido.dev/blog/command-injection-in-2024-unpacked)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
@@ -61,6 +61,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
+* ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
 
 ### Cloud providers
 

@@ -37,19 +37,15 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "true",
-        PORT: 4000,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      PORT: 4000,
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
 
   server.on("close", () => {
     t.end();
@@ -119,18 +115,14 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        PORT: 4001,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      PORT: 4001,
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
 
   server.on("close", () => {
     t.end();
