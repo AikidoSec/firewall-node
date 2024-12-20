@@ -1,5 +1,4 @@
 import * as t from "tap";
-import { wrap } from "../../helpers/wrap";
 import {
   type Context,
   getContext,
@@ -126,31 +125,23 @@ t.test("it logs when setUser has invalid input", async () => {
 t.test(
   "it does not log warning when setUser is called before middleware",
   async () => {
-    const logs: string[] = [];
-    wrap(console, "warn", function warn() {
-      return function warn(message: string) {
-        logs.push(message);
-      };
-    });
+    const logger = new LoggerForTesting();
+    createTestAgent({ logger });
 
     const context = createContext();
     runWithContext(context, () => {
       setUser({ id: "id" });
     });
 
-    t.same(logs, []);
+    t.same(logger.getMessages(), []);
   }
 );
 
 t.test(
   "it logs warning when setUser is called after middleware (once)",
   async () => {
-    const logs: string[] = [];
-    wrap(console, "warn", function warn() {
-      return function warn(message: string) {
-        logs.push(message);
-      };
-    });
+    const logger = new LoggerForTesting();
+    createTestAgent({ logger });
 
     const context = createContext();
     runWithContext(context, () => {
@@ -159,7 +150,7 @@ t.test(
       setUser({ id: "id" });
     });
 
-    t.same(logs, [
+    t.same(logger.getMessages(), [
       "setUser(...) must be called before the Zen middleware is executed.",
     ]);
   }
