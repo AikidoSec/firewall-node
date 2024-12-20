@@ -11,12 +11,13 @@ export function setUser(u: { id: string | number; name?: string }) {
     return;
   }
 
-  const user = u as unknown;
-
-  if (user === null || user === undefined) {
-    agent.log(`setUser(...) can not be called with null or undefined.`);
+  const context = ContextStorage.getStore();
+  if (!context) {
+    logWarningSetUserCalledWithoutContext();
     return;
   }
+
+  const user = u as unknown;
 
   if (!isPlainObject(user)) {
     agent.log(
@@ -50,12 +51,6 @@ export function setUser(u: { id: string | number; name?: string }) {
     validatedUser.name = user.name;
   }
 
-  const context = ContextStorage.getStore();
-
-  if (!context) {
-    return;
-  }
-
   if (context.executedMiddleware) {
     logWarningSetUserCalledAfterMiddleware();
   }
@@ -84,4 +79,19 @@ function logWarningSetUserCalledAfterMiddleware() {
   );
 
   loggedWarningSetUserCalledAfterMiddleware = true;
+}
+
+let loggedWarningSetUserCalledWithoutContext = false;
+
+function logWarningSetUserCalledWithoutContext() {
+  if (loggedWarningSetUserCalledWithoutContext) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen."
+  );
+
+  loggedWarningSetUserCalledWithoutContext = true;
 }
