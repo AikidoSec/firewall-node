@@ -51,7 +51,7 @@ t.beforeEach(async () => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const server = spawn(`node`, [pathToApp, "4000"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -129,7 +129,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const server = spawn(`node`, [pathToApp, "4001"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
