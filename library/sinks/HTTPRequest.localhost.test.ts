@@ -1,11 +1,8 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { createServer, IncomingMessage, Server } from "http";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 
@@ -52,6 +49,14 @@ function createContext({
   };
 }
 
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {}
+  });
+}
+
 const agent = createTestAgent({
   token: new Token("123"),
 });
@@ -92,8 +97,8 @@ t.test("it does not block request to localhost with same port", (t) => {
         // The server should respond with a 200
         // Because we'll allow requests to localhost if it's the same port
         t.same(response.statusCode, 200);
-        response.on("data", () => {});
-        response.on("end", () => {});
+
+        consumeBody(response);
       });
       request.end();
     }
@@ -129,8 +134,8 @@ t.test("it blocks requests to other ports", (t) => {
         request.on("response", (response: IncomingMessage) => {
           // This should not be called
           t.fail();
-          response.on("data", () => {});
-          response.on("end", () => {});
+
+          consumeBody(response);
         });
         request.end();
       } catch (error) {
