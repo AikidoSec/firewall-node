@@ -1,5 +1,31 @@
-const forbiddenFileNames = [".env", ".bashrc"];
-const forbiddenDirectories = [".git", ".aws"];
+const forbiddenFileNames = [
+  "\\.env[^/]*",
+  "\\.bashrc",
+  "\\.gitlab-ci.yml",
+  "\\.travis.yml",
+  "[^/]*\\.(?:sql|sqlite|db)",
+  "Dockerfile",
+  "docker-compose(?:[^/]*)?\\.(?:yml|yaml)",
+
+  // Node.js specific
+  "package-lock\\.json",
+  "package\\.json",
+  "npm-shrinkwrap\\.json",
+  "yarn\\.lock",
+  "\\.npmrc",
+];
+const forbiddenDirectories = [
+  "\\.git",
+  "\\.aws",
+  "\\.ssh",
+  "\\.circleci",
+  "\\.github",
+  "\\.docker",
+  "\\.svn",
+  "\\.hg",
+  "\\.idea",
+  "\\.vscode",
+];
 
 const forbiddenFileNamesPattern = `(?:.*/(?:${forbiddenFileNames.join("|")}))`;
 const forbiddenDirectoriesPattern = `(?:.*/(?:${forbiddenDirectories.join("|")})(?:/.*)?)`;

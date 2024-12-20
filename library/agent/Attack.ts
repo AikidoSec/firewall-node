@@ -22,6 +22,6 @@ export function attackKindHumanName(kind: Kind) {
     case "js_injection":
       return "a JavaScript injection";
     case "sensitive_file_access":
-      return "a sensitive file access";
+      return "access to a sensitive file";
   }
 }
