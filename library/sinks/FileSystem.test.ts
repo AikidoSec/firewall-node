@@ -140,6 +140,7 @@ t.test("it works", async (t) => {
         error.message,
         "Zen has blocked a path traversal attack: fs.writeFile(...) originating from body.file.matches"
       );
+      t.same(error.stack!.includes("wrapExport.ts"), false);
     }
 
     const error2 = await t.rejects(() =>

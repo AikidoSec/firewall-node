@@ -6,6 +6,7 @@ import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
 import type { WrapPackageInfo } from "./WrapPackageInfo";
+import { cleanError } from "../../helpers/cleanError";
 
 // Used for cleaning up the stack trace
 const libraryRoot = resolve(__dirname, "../..");
@@ -49,8 +50,10 @@ export function onInspectionInterceptorResult(
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+        )
       );
     }
   }
