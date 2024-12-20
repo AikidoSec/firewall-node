@@ -34,10 +34,13 @@ export function wrapNewInstance(
               return returnVal;
             }
           } catch (error) {
-            agent.onFailedToWrapMethod(
-              pkgInfo.name,
-              className || "default export"
-            );
+            if (error instanceof Error) {
+              agent.onFailedToWrapMethod(
+                pkgInfo.name,
+                className || "default export",
+                error
+              );
+            }
           }
 
           return newInstance;
