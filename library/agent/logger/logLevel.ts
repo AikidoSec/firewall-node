@@ -1,11 +1,13 @@
 import { isDebugging } from "../../helpers/isDebugging";
 
-export enum AikidoLogLevel {
-  debug = 1,
-  info = 2,
-  warn = 3,
-  error = 4,
-}
+export const AikidoLogLevel = {
+  debug: 1,
+  info: 2,
+  warn: 3,
+  error: 4,
+} as const;
+
+type AikidoLogLevel = (typeof AikidoLogLevel)[keyof typeof AikidoLogLevel];
 
 const logLevelKeys = Object.keys(AikidoLogLevel);
 const defaultLogLevel = AikidoLogLevel.info;
