@@ -1,7 +1,7 @@
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
-export type InterceptorResultSource = Source | "route";
+export type InterceptorResultSource = Source | "url";
 
 export type InterceptorResult = {
   operation: string;

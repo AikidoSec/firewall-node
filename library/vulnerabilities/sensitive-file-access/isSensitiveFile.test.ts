@@ -21,12 +21,16 @@ t.test("is a sensitive file", async (t) => {
   t.same(isSensitiveFile("/.idea/"), true);
   t.same(isSensitiveFile("/data/db.sqlite"), true);
   t.same(isSensitiveFile("/data/db.sql"), true);
+  t.same(isSensitiveFile("/data/db.sql.ZiP"), true);
+  t.same(isSensitiveFile("/data/db.sql.tar"), true);
+  t.same(isSensitiveFile("/data/db.sql.tar.gz"), true);
   t.same(isSensitiveFile("/DoCkErFiLe"), true);
   t.same(isSensitiveFile("/docker-compose.yml"), true);
   t.same(isSensitiveFile("/docker-compose.dev.yml"), true);
   t.same(isSensitiveFile("/docker-compose.prod.yaml"), true);
   t.same(isSensitiveFile("/package-lock.json"), true);
   t.same(isSensitiveFile("/static/package.Json"), true);
+  t.same(isSensitiveFile("/app/.config.json"), true);
 });
 
 t.test("is not a sensitive file", async (t) => {
@@ -41,4 +45,6 @@ t.test("is not a sensitive file", async (t) => {
   t.same(isSensitiveFile("/route/abc/123"), false);
   t.same(isSensitiveFile("/data/db.sqla"), false);
   t.same(isSensitiveFile("/data/sql/a"), false);
+  t.same(isSensitiveFile("/data/db.sql.tar.abz"), false);
+  t.same(isSensitiveFile("/app/config.json"), false);
 });

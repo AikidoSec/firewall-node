@@ -3,6 +3,7 @@ import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { pathToString } from "../../helpers/pathToString";
 import { isSensitiveFile } from "./isSensitiveFile";
 import { getMatchingPathEnding } from "./getMatchingPathEnding";
+import { tryParseURLPath } from "../../helpers/tryParseURLPath";
 
 export function checkContextForSensitiveFileAccess({
   filename,
@@ -14,18 +15,16 @@ export function checkContextForSensitiveFileAccess({
   operation: string;
 }): InterceptorResult {
   const filePathString = pathToString(filename);
-  if (!filePathString) {
+  if (!filePathString || !context.url) {
     return;
   }
 
-  if (!context.route) {
-    return;
+  const path = tryParseURLPath(context.url);
+  if (!path) {
+    return undefined;
   }
 
-  const matchingPathEnding = getMatchingPathEnding(
-    context.route,
-    filePathString
-  );
+  const matchingPathEnding = getMatchingPathEnding(path, filePathString);
 
   if (!matchingPathEnding) {
     return;
@@ -35,12 +34,12 @@ export function checkContextForSensitiveFileAccess({
     return {
       operation: operation,
       kind: "sensitive_file_access",
-      source: "route",
+      source: "url",
       pathsToPayload: ["."],
       metadata: {
         filename: filePathString,
       },
-      payload: context.route,
+      payload: path,
     };
   }
 }

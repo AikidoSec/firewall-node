@@ -730,7 +730,7 @@ export function createExpressTests(expressPackageName: string) {
 
     t.same(JSON.parse(response.body.toString()), {
       error:
-        "Zen has blocked access to a sensitive file: fs.open(...) originating from route.",
+        "Zen has blocked access to a sensitive file: fs.open(...) originating from url.",
     });
   });
 }

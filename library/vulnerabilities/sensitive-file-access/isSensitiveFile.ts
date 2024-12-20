@@ -3,7 +3,8 @@ const forbiddenFileNames = [
   "\\.bashrc",
   "\\.gitlab-ci.yml",
   "\\.travis.yml",
-  "[^/]*\\.(?:sql|sqlite|db)",
+  "\\.config(?:\\.json|\\.yml|\\.yaml)",
+  "[^/]*\\.(?:sql|sqlite|db|sql\\.(?:gz|tar|tar\\.gz|tar\\.bz2|tar\\.xz|zip))",
   "Dockerfile",
   "docker-compose(?:[^/]*)?\\.(?:yml|yaml)",
 
@@ -14,6 +15,7 @@ const forbiddenFileNames = [
   "yarn\\.lock",
   "\\.npmrc",
 ];
+
 const forbiddenDirectories = [
   "\\.git",
   "\\.aws",
