@@ -1,10 +1,9 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
-import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
+import { checkIfIPAddressIsBlocked } from "./checkIfIPAddressIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
-import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
@@ -47,7 +46,7 @@ export function createRequestListener(
 function callListenerWithContext(
   listener: Function,
   req: IncomingMessage,
-  res: ServerResponse<IncomingMessage>,
+  res: ServerResponse,
   module: string,
   agent: Agent,
   body: string
@@ -60,26 +59,16 @@ function callListenerWithContext(
     // If using http2, the context is not available in the callback without this
     res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
 
-    if (!ipAllowedToAccessRoute(context, agent)) {
-      res.statusCode = 403;
-      res.setHeader("Content-Type", "text/plain");
-
-      let message = "Your IP address is not allowed to access this resource.";
-      if (context.remoteAddress) {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
-      }
-
-      return res.end(message);
+    if (checkIfIPAddressIsBlocked(res, agent)) {
+      // The return is necessary to prevent the listener from being called
+      return;
     }
 
     return listener(req, res);
   });
 }
 
-function createOnFinishRequestHandler(
-  res: ServerResponse<IncomingMessage>,
-  agent: Agent
-) {
+function createOnFinishRequestHandler(res: ServerResponse, agent: Agent) {
   return function onFinishRequest() {
     const context = getContext();
 

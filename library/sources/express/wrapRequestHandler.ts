@@ -1,8 +1,8 @@
 /* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
 import { runWithContext } from "../../agent/Context";
-import { createWrappedFunction } from "../../helpers/wrap";
 import { contextFromRequest } from "./contextFromRequest";
+import { createWrappedFunction } from "../../helpers/wrap";
 
 export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
   const fn = createWrappedFunction(handler, function wrap(handler) {

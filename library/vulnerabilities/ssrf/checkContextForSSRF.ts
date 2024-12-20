@@ -2,6 +2,7 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
+import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
@@ -37,15 +38,17 @@ export function checkContextForSSRF({
       continue;
     }
 
-    for (const [str, path] of userInput.entries()) {
+    for (const str of userInput) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
+        const paths = getPathsToPayload(str, context[source]);
+
         if (
           isRequestToItself({
             str: str,
             source: source,
             port: port,
-            path: path,
+            paths: paths,
           })
         ) {
           // Application might do a request to itself when the hostname is localhost
@@ -57,7 +60,7 @@ export function checkContextForSSRF({
           operation: operation,
           kind: "ssrf",
           source: source,
-          pathToPayload: path,
+          pathsToPayload: paths,
           metadata: getMetadataForSSRFAttack({ hostname, port }),
           payload: str,
         };
