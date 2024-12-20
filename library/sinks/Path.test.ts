@@ -3,7 +3,6 @@ import { Context, runWithContext } from "../agent/Context";
 import { isWrapped } from "../helpers/wrap";
 import { Path } from "./Path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",

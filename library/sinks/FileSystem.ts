@@ -7,12 +7,23 @@ import { Wrapper } from "../agent/Wrapper";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
+import { checkContextForSensitiveFileAccess } from "../vulnerabilities/sensitive-file-access/checkContextForSensitiveFile";
 
 type FileSystemFunction = {
   pathsArgs: number; // The amount of arguments that are paths
   sync: boolean; // Whether the function has a synchronous version (e.g. fs.accessSync)
   promise: boolean; // Whether the function has a promise version (e.g. fs.promises.access)
 };
+
+const operationsToCheckForSensitiveFileAccess = [
+  "open",
+  "opendir",
+  "readdir",
+  "readFile",
+  "openSync",
+  "readdirSync",
+  "readFileSync",
+];
 
 export class FileSystem implements Wrapper {
   private patchedPromises = false;
@@ -43,6 +54,24 @@ export class FileSystem implements Wrapper {
         if (result) {
           return result;
         }
+      }
+    }
+
+    if (
+      args &&
+      args.length &&
+      amountOfPathArgs === 1 &&
+      typeof args[0] === "string" &&
+      operationsToCheckForSensitiveFileAccess.includes(name)
+    ) {
+      const result = checkContextForSensitiveFileAccess({
+        filename: args[0],
+        operation: `fs.${name}`,
+        context: context,
+      });
+
+      if (result) {
+        return result;
       }
     }
 

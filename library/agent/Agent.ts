@@ -24,6 +24,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { InterceptorResultSource } from "./hooks/InterceptorResult";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -150,7 +151,7 @@ export class Agent {
     operation: string;
     kind: Kind;
     blocked: boolean;
-    source: Source;
+    source: InterceptorResultSource;
     request: Context;
     stack: string;
     paths: string[];

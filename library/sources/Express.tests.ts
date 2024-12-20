@@ -137,7 +137,12 @@ export function createExpressTests(expressPackageName: string) {
 
     app.use(newRouter);
 
-    app.use("/", express.static(__dirname + "/fixtures/public/"));
+    app.use(
+      "/",
+      express.static(__dirname + "/fixtures/public/", {
+        dotfiles: "allow",
+      })
+    );
 
     const nestedApp = express();
     nestedApp.set("trust proxy", true);
@@ -719,4 +724,13 @@ export function createExpressTests(expressPackageName: string) {
       );
     }
   );
+
+  t.test("it prevents access to sensitive files", async (t) => {
+    const response = await request(getApp()).get("/.env.test");
+
+    t.same(JSON.parse(response.body.toString()), {
+      error:
+        "Zen has blocked access to a sensitive file: fs.open(...) originating from url.",
+    });
+  });
 }
