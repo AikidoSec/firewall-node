@@ -88,27 +88,19 @@ fastify-clickhouse:
 hono-prisma:
 	cd sample-apps/hono-prisma && AIKIDO_DEBUG=true AIKIDO_BLOCK=true node app.js
 
+NPM_INSTALL_CMD := $(if $(CI),ci,install)
+
 .PHONY: install-lib-only
 install-lib-only:
 	mkdir -p build
 	node scripts/copyPackageJSON.js
 	touch build/index.js
-	cd build && npm link
-ifdef CI
-	npm ci  # Use npm ci if CI environment variable is set
-	cd library && npm ci
-else
-	npm install  # Use npm install otherwise
-	cd library && npm install
-endif
+	npm $(NPM_INSTALL_CMD)
+	cd library && npm $(NPM_INSTALL_CMD)
 
 .PHONY: install
 install: install-lib-only
-ifdef CI
-	cd end2end && npm ci
-else
-	cd end2end && npm install
-endif
+	cd end2end && npm $(NPM_INSTALL_CMD)
 	node scripts/install.js
 
 .PHONY: build
