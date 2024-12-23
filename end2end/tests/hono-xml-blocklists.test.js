@@ -33,7 +33,7 @@ t.beforeEach(async () => {
 });
 
 t.test("it blocks geo restricted IPs and bots", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const server = spawn(`node`, [pathToApp, "4002"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",

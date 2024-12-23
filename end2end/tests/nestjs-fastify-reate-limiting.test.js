@@ -53,7 +53,7 @@ t.beforeEach(async () => {
 });
 
 t.test("it rate limits requests", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     cwd: pathToApp,
     env: {
       ...process.env,
@@ -115,7 +115,7 @@ t.test("it rate limits requests", (t) => {
 });
 
 t.test("user rate limiting works", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     cwd: pathToApp,
     env: {
       ...process.env,
