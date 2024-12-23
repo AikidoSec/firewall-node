@@ -32,7 +32,7 @@ export class FastXmlParser implements Wrapper {
       return args;
     }
 
-    // Replace the body in the context with the parsed result
+    // Add the parsed XML to the context
     if (result && isPlainObject(result)) {
       addXmlToContext(result, context);
     }
