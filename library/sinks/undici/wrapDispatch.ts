@@ -9,6 +9,9 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { wrapOnHeaders } from "./wrapOnHeaders";
+import { cleanError } from "../../helpers/cleanError";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -98,7 +101,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
+      stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
       paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({
         hostname: found.hostname,
@@ -109,8 +112,10 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+        )
       );
     }
   }
