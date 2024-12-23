@@ -71,7 +71,7 @@ t.test("it works", async () => {
       root: {
         list: {
           person: {
-            age: "35",
+            age: 35,
             "@_name": "John",
           },
         },
@@ -86,4 +86,14 @@ t.test("it works", async () => {
 
     t.same(getContext()?.xml, [expected, expected]);
   });
+
+  // XML is not in the context
+  runWithContext({ ...contextWithQuery, query: {}, xml: undefined }, () => {
+    const res = parser.parse(xmlString);
+    t.same(res, { root: "Hello xml2js!" });
+    t.same(getContext()?.xml, undefined);
+  });
+
+  // Zen ignores non string values
+  t.same(parser.parse(123), {});
 });

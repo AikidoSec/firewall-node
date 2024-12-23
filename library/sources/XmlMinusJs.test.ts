@@ -72,7 +72,7 @@ t.test("xml2json works", async () => {
   });
 });
 
-t.test("Ignore if xml is not in the body", async () => {
+t.test("Ignore if xml is not in the context", async () => {
   const xmlString = "<root>Hello xml-js!</root>";
 
   const context = {
