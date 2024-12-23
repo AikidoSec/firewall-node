@@ -9,7 +9,7 @@ import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
  * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
  */
-export function checkIfIPAddressIsBlocked(
+export function checkIfRequestIsBlocked(
   res: ServerResponse,
   agent: Agent
 ): boolean {
@@ -47,6 +47,22 @@ export function checkIfIPAddressIsBlocked(
     }
 
     res.end(message);
+
+    return true;
+  }
+
+  const isUserAgentBlocked =
+    context.headers && typeof context.headers["user-agent"] === "string"
+      ? agent.getConfig().isUserAgentBlocked(context.headers["user-agent"])
+      : ({ blocked: false } as const);
+
+  if (isUserAgentBlocked.blocked) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
+
+    res.end(
+      "You are not allowed to access this resource because you have been identified as a bot."
+    );
 
     return true;
   }

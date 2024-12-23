@@ -2,7 +2,7 @@ import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
-import { checkIfIPAddressIsBlocked } from "./checkIfIPAddressIsBlocked";
+import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
@@ -59,7 +59,7 @@ function callListenerWithContext(
     // If using http2, the context is not available in the callback without this
     res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
 
-    if (checkIfIPAddressIsBlocked(res, agent)) {
+    if (checkIfRequestIsBlocked(res, agent)) {
       // The return is necessary to prevent the listener from being called
       return;
     }
