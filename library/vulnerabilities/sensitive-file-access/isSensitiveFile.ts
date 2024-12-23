@@ -1,3 +1,4 @@
+// Names of files (last path segment) that should not be accessed by the user
 const forbiddenFileNames = [
   "\\.env[^/]*",
   "\\.bashrc",
@@ -16,6 +17,7 @@ const forbiddenFileNames = [
   "\\.npmrc",
 ];
 
+// Names of directories that should not be accessed by the user (any path segment)
 const forbiddenDirectories = [
   "\\.git",
   "\\.aws",
@@ -38,7 +40,7 @@ const regex = new RegExp(
 );
 
 /**
- * Check if a given url path (absolute) is a sensitive file or directory
+ * Checks if a given url path (absolute) is a sensitive file or directory
  */
 export function isSensitiveFile(path: string): boolean {
   if (path.length <= 1) {

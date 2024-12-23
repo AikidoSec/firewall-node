@@ -5,6 +5,9 @@ import { isSensitiveFile } from "./isSensitiveFile";
 import { getMatchingPathEnding } from "./getMatchingPathEnding";
 import { tryParseURLPath } from "../../helpers/tryParseURLPath";
 
+/**
+ * Check if the current request is trying to access a sensitive file
+ */
 export function checkContextForSensitiveFileAccess({
   filename,
   context,

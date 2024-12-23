@@ -1,5 +1,9 @@
 import { normalize } from "path";
 
+/**
+ * Get all matching path segments from the end of the url path and the file path
+ * While the url could include a route where the file is served, e.g. /static/abc/test.txt, the file path could be /app/data/abc/test.txt
+ */
 export function getMatchingPathEnding(
   urlPath: string,
   filePath: string
