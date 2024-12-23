@@ -1,5 +1,5 @@
 import { Kind } from "../Attack";
-import { Source } from "../Source";
+import { InterceptorResultSource } from "../hooks/InterceptorResult";
 
 export type AgentInfo = {
   dryMode: boolean;
@@ -53,7 +53,7 @@ export type DetectedAttack = {
     operation: string;
     module: string;
     blocked: boolean;
-    source: Source;
+    source: InterceptorResultSource;
     path: string;
     stack: string;
     payload: string;
