@@ -31,6 +31,7 @@ wrap(fetch, "fetch", function mock() {
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
           },
         ],
+        blockedUserAgents: "AI2Bot|Bytespider",
       }),
     };
   };
@@ -936,7 +937,7 @@ t.test("it sends middleware installed with heartbeat", async () => {
   clock.uninstall();
 });
 
-t.test("it fetches blocked IPs", async () => {
+t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
   });
@@ -953,6 +954,28 @@ t.test("it fetches blocked IPs", async () => {
     blocked: true,
     reason: "Description",
   });
+
+  t.same(
+    agent
+      .getConfig()
+      .isUserAgentBlocked(
+        "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
+      ),
+    {
+      blocked: true,
+    }
+  );
+
+  t.same(
+    agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
+    {
+      blocked: true,
+    }
+  );
+
+  t.same(agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible)"), {
+    blocked: false,
+  });
 });
 
 t.test("it does not fetch blocked IPs if serverless", async () => {
@@ -968,4 +991,15 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: false,
   });
+
+  t.same(
+    agent
+      .getConfig()
+      .isUserAgentBlocked(
+        "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
+      ),
+    {
+      blocked: false,
+    }
+  );
 });

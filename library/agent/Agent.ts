@@ -7,7 +7,7 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
-import { fetchBlockedIPAddresses } from "./api/fetchBlockedIPAddresses";
+import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo } from "./api/Event";
 import { Token } from "./api/Token";
@@ -114,7 +114,7 @@ export class Agent {
 
       this.updateServiceConfig(result);
 
-      await this.updateBlockedIPAddresses();
+      await this.updateBlockedLists();
     }
   }
 
@@ -341,7 +341,7 @@ export class Agent {
     this.interval.unref();
   }
 
-  private async updateBlockedIPAddresses() {
+  private async updateBlockedLists() {
     if (!this.token) {
       return;
     }
@@ -352,12 +352,13 @@ export class Agent {
     }
 
     try {
-      const blockedIps = await fetchBlockedIPAddresses(this.token);
-      this.serviceConfig.updateBlockedIPAddresses(blockedIps);
-    } catch (error: any) {
-      this.logger.error(
-        `Failed to update blocked IP addresses: ${error.message}`
+      const { blockedIPAddresses, blockedUserAgents } = await fetchBlockedLists(
+        this.token
       );
+      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
+      this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
+    } catch (error: any) {
+      this.logger.error(`Failed to update blocked lists: ${error.message}`);
     }
   }
 
@@ -369,10 +370,8 @@ export class Agent {
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedIPAddresses().catch((error) => {
-          this.logger.error(
-            `Failed to update blocked IP addresses: ${error.message}`
-          );
+        this.updateBlockedLists().catch((error) => {
+          this.logger.error(`Failed to update blocked lists: ${error.message}`);
         });
       },
     });
