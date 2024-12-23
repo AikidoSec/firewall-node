@@ -38,6 +38,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
       result && Array.isArray(result.blockedIPAddresses)
         ? result.blockedIPAddresses
         : [],
+    // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
     blockedUserAgents:
       result && typeof result.blockedUserAgents === "string"
         ? result.blockedUserAgents
