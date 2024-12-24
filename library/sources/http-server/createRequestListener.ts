@@ -72,7 +72,7 @@ function callListenerWithContext(
 }
 
 // Use symbol to avoid conflicts with other properties
-const countedRequest = Symbol("__zen__");
+const countedRequest = Symbol("__zen_request_counted__");
 
 function createOnFinishRequestHandler(
   req: IncomingMessage,
