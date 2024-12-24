@@ -13,6 +13,12 @@ export function checkIfRequestIsBlocked(
   res: ServerResponse,
   agent: Agent
 ): boolean {
+  if (res.headersSent) {
+    // The headers have already been sent, so we can't block the request
+    // This might happen if the server has multiple listeners
+    return false;
+  }
+
   const context = getContext();
 
   if (!context) {
