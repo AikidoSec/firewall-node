@@ -13,7 +13,7 @@ const logLevelKeys = Object.keys(AikidoLogLevel);
 const defaultLogLevel = AikidoLogLevel.info;
 
 export function getLogLevel(): AikidoLogLevel {
-  // Check for AIKIDO_DEBUG environment variable
+  // Check for AIKIDO_DEBUG environment variable (backwards compat)
   if (isDebugging()) {
     return AikidoLogLevel.debug;
   }
