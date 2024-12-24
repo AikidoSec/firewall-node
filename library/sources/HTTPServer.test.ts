@@ -642,6 +642,10 @@ t.test(
     });
 
     server.on("request", (req, res) => {
+      if (res.headersSent) {
+        return;
+      }
+
       res.setHeader("Content-Type", "text/plain");
       res.end("OK");
     });
