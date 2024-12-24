@@ -71,6 +71,7 @@ function callListenerWithContext(
   });
 }
 
+// Use symbol to avoid conflicts with other properties
 const countedRequest = Symbol("__zen__");
 
 function createOnFinishRequestHandler(
