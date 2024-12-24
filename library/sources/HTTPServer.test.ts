@@ -607,7 +607,7 @@ t.test("it blocks IP address", async (t) => {
     server.listen(3325, () => {
       Promise.all([
         fetch({
-          url: new URL("http://localhost:3325/rate-limited"),
+          url: new URL("http://localhost:3325"),
           method: "GET",
           headers: {
             "x-forwarded-for": "9.9.9.9",
@@ -615,7 +615,7 @@ t.test("it blocks IP address", async (t) => {
           timeoutInMS: 500,
         }),
         fetch({
-          url: new URL("http://localhost:3325/rate-limited"),
+          url: new URL("http://localhost:3325"),
           method: "GET",
           timeoutInMS: 500,
         }),
@@ -649,7 +649,7 @@ t.test(
     await new Promise<void>((resolve) => {
       server.listen(3326, () => {
         fetch({
-          url: new URL("http://localhost:3325/rate-limited"),
+          url: new URL("http://localhost:3326"),
           method: "GET",
           headers: {
             "x-forwarded-for": "9.9.9.9",
