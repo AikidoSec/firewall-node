@@ -194,7 +194,7 @@ export class Agent {
 
     if (this.token) {
       this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack");
+        this.logger.error("Failed to report attack");
       });
     }
   }

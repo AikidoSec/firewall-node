@@ -10,17 +10,17 @@ export const AikidoLogLevel = {
 type AikidoLogLevel = (typeof AikidoLogLevel)[keyof typeof AikidoLogLevel];
 
 const logLevelKeys = Object.keys(AikidoLogLevel);
-const defaultLogLevel = AikidoLogLevel.info;
+const defaultLogLevel = AikidoLogLevel.warn;
 
 export function getLogLevel(): AikidoLogLevel {
-  // Check for AIKIDO_DEBUG environment variable (backwards compat)
-  if (isDebugging()) {
-    return AikidoLogLevel.debug;
-  }
-
   const envValue = process.env.AIKIDO_LOG_LEVEL;
   if (envValue && logLevelKeys.includes(envValue)) {
     return AikidoLogLevel[envValue as keyof typeof AikidoLogLevel];
+  }
+
+  // Check for AIKIDO_DEBUG environment variable (backwards compat)
+  if (isDebugging()) {
+    return AikidoLogLevel.debug;
   }
 
   return defaultLogLevel;

@@ -669,7 +669,6 @@ t.test("it logs when failed to report event", async () => {
     "Failed to start agent: Failed to report event",
     "Heartbeat...",
     "Failed to send heartbeat event",
-    'Zen has blocked a NoSQL injection: kind="nosql_injection" operation="operation(...)" source="body.nested" ip="::1"',
     "Failed to report attack",
   ]);
 });
