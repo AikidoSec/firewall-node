@@ -4,9 +4,16 @@ import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
+import { wrap } from "../../helpers/wrap";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { createTestAgent } from "../../helpers/createTestAgent";
+
+wrap(console, "log", function log() {
+  return function log() {
+    // Don't log during test
+  };
+});
 
 const context: Context = {
   remoteAddress: "::1",
