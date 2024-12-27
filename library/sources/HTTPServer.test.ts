@@ -1,12 +1,14 @@
 import { Token } from "../agent/api/Token";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
+import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
 import { createTestAgent } from "../helpers/createTestAgent";
+import type { Blocklist } from "../agent/api/fetchBlockedLists";
+import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -42,6 +44,24 @@ const agent = createTestAgent({
   api,
 });
 agent.start([new HTTPServer()]);
+
+wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
+  return async function fetchBlockedLists(): Promise<{
+    blockedIPAddresses: Blocklist[];
+    blockedUserAgents: string;
+  }> {
+    return {
+      blockedIPAddresses: [
+        {
+          source: "geoip",
+          ips: ["9.9.9.9"],
+          description: "geo restrictions",
+        },
+      ],
+      blockedUserAgents: "",
+    };
+  };
+});
 
 t.setTimeout(30 * 1000);
 
@@ -576,3 +596,79 @@ t.test("it checks if IP can access route", async (t) => {
     });
   });
 });
+
+t.test("it blocks IP address", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3325, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2]) => {
+        t.equal(response1.statusCode, 403);
+        t.equal(
+          response1.body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+        t.equal(response2.statusCode, 200);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "it blocks IP address when there are multiple request handlers on server",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    server.on("request", (req, res) => {
+      if (res.headersSent) {
+        return;
+      }
+
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3326, () => {
+        fetch({
+          url: new URL("http://localhost:3326"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.equal(statusCode, 403);
+          t.equal(
+            body,
+            "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
