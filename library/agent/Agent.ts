@@ -190,9 +190,7 @@ export class Agent {
       agent: this.getAgentInfo(),
     };
 
-    if (!this.block) {
-      this.attackLogger.log(attack);
-    }
+    this.attackLogger.log(attack);
 
     if (this.token) {
       this.api.report(this.token, attack, this.timeoutInMS).catch(() => {

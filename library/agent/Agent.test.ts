@@ -232,7 +232,9 @@ t.test("when attack detected in blocking mode", async () => {
     },
   });
 
-  t.same(logs, []);
+  t.same(logs, [
+    'Zen has blocked a NoSQL injection: kind="nosql_injection" operation="operation(...)" source="body.nested" ip="::1"',
+  ]);
 
   t.match(api.getEvents(), [
     {
