@@ -37,6 +37,13 @@ wrap(fetch, "fetch", function mock() {
   };
 });
 
+let logs: string[] = [];
+wrap(console, "log", function log() {
+  return function log(...args: string[]) {
+    logs.push(...args);
+  };
+});
+
 t.test("it throws error if serverless is empty string", async () => {
   t.throws(
     () =>
@@ -185,14 +192,18 @@ t.test("it does not start interval in serverless mode", async () => {
   agent.start([]);
 });
 
-t.test("when attack detected", async () => {
+t.test("when attack detected in blocking mode", async () => {
+  logs = []; // Clear console logs
+
   const logger = new LoggerNoop();
   const api = new ReportingAPIForTesting();
   const agent = createTestAgent({
     api,
     logger,
     token: new Token("123"),
+    block: true,
   });
+
   agent.onDetectedAttack({
     module: "mongodb",
     kind: "nosql_injection",
@@ -220,6 +231,79 @@ t.test("when attack detected", async () => {
       db: "app",
     },
   });
+
+  t.same(logs, []);
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack",
+      attack: {
+        module: "mongodb",
+        kind: "nosql_injection",
+        blocked: true,
+        source: "body",
+        path: ".nested",
+        stack: "stack",
+        metadata: {
+          db: "app",
+        },
+      },
+      request: {
+        method: "POST",
+        ipAddress: "::1",
+        userAgent: "agent",
+        url: "http://localhost:4000",
+        headers: {},
+        body: "{}",
+        route: "/posts/:id",
+      },
+    },
+  ]);
+});
+
+t.test("when attack detected in detection only mode", async () => {
+  logs = []; // Clear console logs
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    block: false,
+  });
+
+  agent.onDetectedAttack({
+    module: "mongodb",
+    kind: "nosql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+      route: "/posts/:id",
+      routeParams: {},
+    },
+    operation: "operation",
+    payload: "payload",
+    stack: "stack",
+    paths: [".nested"],
+    metadata: {
+      db: "app",
+    },
+  });
+
+  t.same(logs, [
+    'Zen has blocked a NoSQL injection: kind="nosql_injection" operation="operation(...)" source="body.nested" ip="::1"',
+  ]);
 
   t.match(api.getEvents(), [
     {
