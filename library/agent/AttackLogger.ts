@@ -29,7 +29,8 @@ export class AttackLogger {
 
     const { blocked, kind, operation, source, path } = event.attack;
     const { ipAddress } = event.request;
-    const message = `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${kind}" operation="${operation}(...)" source="${source}${escapeLog(path)}" ip="${escapeLog(ipAddress)}"`;
+
+    const message = `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${escapeLog(kind)}" operation="${escapeLog(operation)}(...)" source="${escapeLog(source)}${escapeLog(path)}" ip="${escapeLog(ipAddress)}"`;
 
     console.log(message);
   }
