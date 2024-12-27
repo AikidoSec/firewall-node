@@ -2,6 +2,7 @@ import { wrap } from "../helpers/wrap";
 import { DetectedAttack } from "./api/Event";
 import { AttackLogger } from "./AttackLogger";
 import * as t from "tap";
+import * as FakeTimers from "@sinonjs/fake-timers";
 
 const logs: string[] = [];
 wrap(console, "log", function log() {
@@ -11,6 +12,8 @@ wrap(console, "log", function log() {
 });
 
 t.test("it stops logging after max logs", async (t) => {
+  const clock = FakeTimers.install();
+
   const max = 10;
   const logger = new AttackLogger(max);
 
@@ -22,13 +25,27 @@ t.test("it stops logging after max logs", async (t) => {
 
   logger.log(generateAttackEvent());
 
-  logs[logs.length - 1].includes(
-    `Zen has detected more than ${max} attacks. No longer logging them.`
-  );
+  t.same(logs.length, max);
+
+  clock.tick(60 * 60 * 1000);
+
+  for (let i = 0; i < max; i++) {
+    logger.log(generateAttackEvent());
+  }
+
+  t.same(logs.length, max * 2);
 
   logger.log(generateAttackEvent());
 
-  t.same(logs.length, max + 1);
+  t.same(logs.length, max * 2);
+
+  clock.tick(30 * 60 * 1000);
+
+  logger.log(generateAttackEvent());
+
+  t.same(logs.length, max * 2);
+
+  clock.uninstall();
 });
 
 function generateAttackEvent(): DetectedAttack {
