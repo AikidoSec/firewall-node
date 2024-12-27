@@ -65,6 +65,7 @@ t.test("it sends started event", async (t) => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([new MongoDB()]);
 
@@ -110,6 +111,7 @@ t.test("it throws error if already started", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([new MongoDB()]);
   t.throws(() => agent.start([new MongoDB()]), "Agent already started!");
@@ -128,6 +130,7 @@ t.test("it logs if package is supported or not", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([new WrapperForTesting()]);
 
@@ -148,6 +151,7 @@ t.test("it starts in non-blocking mode", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
 
@@ -165,6 +169,7 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
     serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
@@ -186,6 +191,7 @@ t.test("it does not start interval in serverless mode", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
     serverless: "lambda",
   });
   // This would otherwise keep the process running
@@ -201,6 +207,7 @@ t.test("when attack detected in blocking mode", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
     block: true,
   });
 
@@ -272,6 +279,7 @@ t.test("when attack detected in detection only mode", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
     block: false,
   });
 
@@ -341,6 +349,7 @@ t.test("it checks if user agent is a string", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.onDetectedAttack({
     module: "mongodb",
@@ -415,6 +424,7 @@ t.test(
       api,
       logger,
       token: new Token("123"),
+      suppressConsoleLog: false,
     });
     agent.start([]);
     t.match(api.getEvents(), [
@@ -483,6 +493,7 @@ t.test(
       api,
       logger,
       token: new Token("123"),
+      suppressConsoleLog: false,
     });
     agent.start([]);
     t.match(api.getEvents(), [
@@ -522,6 +533,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
@@ -610,6 +622,7 @@ t.test("it logs when failed to report event", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
 
@@ -669,6 +682,7 @@ t.test("unable to prevent prototype pollution", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
@@ -700,6 +714,7 @@ t.test("when payload is object", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.onDetectedAttack({
     module: "mongodb",
@@ -802,6 +817,7 @@ t.test("it sends hostnames and routes along with heartbeat", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
 
@@ -909,6 +925,7 @@ t.test(
       api,
       logger,
       token: new Token("123"),
+      suppressConsoleLog: false,
     });
     t.same(agent.shouldBlock(), true);
     agent.start([]);
@@ -930,6 +947,7 @@ t.test(
       api,
       logger,
       token: new Token("123"),
+      suppressConsoleLog: false,
     });
     t.same(agent.shouldBlock(), false);
     agent.start([]);
@@ -954,6 +972,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
   });
   const agent = createTestAgent({
     token: new Token("123"),
+    suppressConsoleLog: false,
     block: false,
     api,
     logger,
@@ -982,6 +1001,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   t.same(agent.shouldBlock(), true);
   agent.start([]);
@@ -1001,6 +1021,7 @@ t.test("it sends middleware installed with heartbeat", async () => {
     api,
     logger,
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
   agent.start([]);
 
@@ -1025,6 +1046,7 @@ t.test("it sends middleware installed with heartbeat", async () => {
 t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
+    suppressConsoleLog: false,
   });
 
   agent.start([]);
@@ -1066,6 +1088,7 @@ t.test("it fetches blocked lists", async () => {
 t.test("it does not fetch blocked IPs if serverless", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
+    suppressConsoleLog: false,
     serverless: "gcp",
   });
 
