@@ -7,6 +7,7 @@ export const SOURCES = [
   "graphql",
   "xml",
   "subdomains",
+  "ws",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];
