@@ -23,6 +23,13 @@ t.test("It ignores postgres dollar signs", async () => {
   isNotSQLInjection("SELECT $tag$text$tag$", "$tag$text$tag$");
 });
 
+t.test("$$ is treated as placeholder", async () => {
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = '1' OR $$ IS NULL -- '",
+    "1' OR $$ IS NULL -- "
+  );
+});
+
 function isSqlInjection(sql: string, input: string) {
   t.same(detectSQLInjection(sql, input, new SQLDialectSQLite()), true, sql);
 }
