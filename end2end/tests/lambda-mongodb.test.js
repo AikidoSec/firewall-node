@@ -24,10 +24,7 @@ t.test("it does not block by default", async (t) => {
     }
   );
 
-  t.same(
-    stderr,
-    "Aikido: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking.\n"
-  );
+  t.same(stderr, "");
   t.same(JSON.parse(stdout.toString().split("\n").slice(2).join("\n")), {
     statusCode: 200,
     headers: {
