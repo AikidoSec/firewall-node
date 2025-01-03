@@ -50,17 +50,33 @@ export class MySQL2 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
-      .addPackage("mysql2")
-      .withVersion("^3.0.0")
-      .onRequire((exports, pkgInfo) => {
-        // Wrap connection.query
-        wrapExport(exports.Connection.prototype, "query", pkgInfo, {
+    const pkg = hooks.addPackage("mysql2");
+    // For all versions of mysql2 newer than 3.0.0
+    pkg.withVersion("^3.0.0").onRequire((exports, pkgInfo) => {
+      console.error("!!! mysql2");
+      // Wrap connection.query
+      wrapExport(exports.Connection.prototype, "query", pkgInfo, {
+        inspectArgs: (args, agent) => this.inspectQuery("mysql2.query", args),
+      });
+
+      // Wrap connection.execute
+      wrapExport(exports.Connection.prototype, "execute", pkgInfo, {
+        inspectArgs: (args, agent) => this.inspectQuery("mysql2.execute", args),
+      });
+    });
+
+    // For all versions of mysql2 newer than 3.11.0
+    // Reason: https://github.com/sidorares/node-mysql2/pull/3081
+    pkg
+      .withVersion("^3.11.0")
+      .onFileRequire("promise.js", (exports, pkgInfo) => {
+        // Wrap PromiseConnection.query
+        wrapExport(exports.PromiseConnection.prototype, "query", pkgInfo, {
           inspectArgs: (args, agent) => this.inspectQuery("mysql2.query", args),
         });
 
-        // Wrap connection.execute
-        wrapExport(exports.Connection.prototype, "execute", pkgInfo, {
+        // Wrap PromiseConnection.execute
+        wrapExport(exports.PromiseConnection.prototype, "execute", pkgInfo, {
           inspectArgs: (args, agent) =>
             this.inspectQuery("mysql2.execute", args),
         });
