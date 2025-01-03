@@ -24,8 +24,11 @@ t.test("it does not block by default", async (t) => {
     }
   );
 
-  t.same(stderr, "");
-  t.same(JSON.parse(stdout.toString()), {
+  t.same(
+    stderr,
+    "Aikido: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking.\n"
+  );
+  t.same(JSON.parse(stdout.toString().split("\n").slice(2).join("\n")), {
     statusCode: 200,
     headers: {
       "Content-Type": "application/json",
@@ -45,7 +48,10 @@ t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
     }
   );
 
-  t.same(stdout, "");
+  t.match(
+    stdout,
+    'Zen has blocked a NoSQL injection: kind="nosql_injection" operation="MongoDB.Collection.findOne(...)" source="body.password" ip="1.2.3.4"'
+  );
   t.match(stderr, /Zen has blocked a NoSQL injection/);
 });
 
