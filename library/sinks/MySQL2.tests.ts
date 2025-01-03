@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
@@ -154,7 +155,6 @@ export function createMySQL2Tests(versionPkgName: string) {
         connection2.query("-- This is a comment");
       });
     } catch (error: any) {
-      console.error(error);
       t.fail(error);
     } finally {
       await connection.end();
