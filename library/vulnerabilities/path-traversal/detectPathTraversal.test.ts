@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
-import { join, resolve } from "path";
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);
@@ -134,9 +133,29 @@ t.test(
 t.test(
   "does not detect if user input path contains no filename or subfolder",
   async () => {
+    t.same(detectPathTraversal("/etc/app/test.txt", "/etc/"), false);
     t.same(detectPathTraversal("/etc/app/", "/etc/"), false);
     t.same(detectPathTraversal("/etc/app/", "/etc"), false);
     t.same(detectPathTraversal("/etc/", "/etc/"), false);
     t.same(detectPathTraversal("/etc", "/etc"), false);
+    t.same(detectPathTraversal("/var/a", "/var/"), false);
+    t.same(detectPathTraversal("/var/a", "/var/b"), false);
+    t.same(detectPathTraversal("/var/a", "/var/b/test.txt"), false);
+  }
+);
+
+t.test(
+  "it does detect if user input path contains a filename or subfolder",
+  async () => {
+    t.same(detectPathTraversal("/etc/app/file.txt", "/etc/app"), true);
+    t.same(detectPathTraversal("/etc/app/file.txt", "/etc/app/file.txt"), true);
+    t.same(detectPathTraversal("/var/backups/file.txt", "/var/backups"), true);
+    t.same(
+      detectPathTraversal("/var/backups/file.txt", "/var/backups/file.txt"),
+      true
+    );
+    t.same(detectPathTraversal("/var/a", "/var/a"), true);
+    t.same(detectPathTraversal("/var/a/b", "/var/a"), true);
+    t.same(detectPathTraversal("/var/a/b/test.txt", "/var/a"), true);
   }
 );
