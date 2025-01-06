@@ -12,8 +12,9 @@ import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupC
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
-import { wrapOnHeaders } from "./undici/wrapOnHeaders";
+import { onHeaders } from "./undici/onHeaders";
 import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
+import { subscribe } from "diagnostics_channel";
 
 const methods = [
   "request",
@@ -92,24 +93,17 @@ export class Undici implements Wrapper {
     undiciModule.setGlobalDispatcher(dispatcher);
   }
 
+  // Wrap the dispatch method of the redirect handler to block http calls to private IPs if it's a redirect
   private patchRedirectHandler(instance: unknown) {
-    if (typeof instance !== "object") {
-      return instance;
-    }
-
+    const agent = getInstance();
     const context = getContext();
-    if (!context) {
+
+    if (!agent || !context) {
       return instance;
     }
 
-    // @ts-expect-error Not typed
-    instance.onHeaders = wrapOnHeaders(
-      // @ts-expect-error Not typed
-      instance.onHeaders,
-      undefined,
-      context,
-      true
-    );
+    // @ts-expect-error No types for this
+    instance.dispatch = wrapDispatch(instance.dispatch, agent, false, context);
 
     return instance;
   }
@@ -129,6 +123,11 @@ export class Undici implements Wrapper {
         if (!agent) {
           // No agent, we can't do anything
           return;
+        }
+
+        // Subscribe to the undici:request:headers diagnostic channel to check for redirects
+        if (isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
+          subscribe("undici:request:headers", onHeaders);
         }
 
         // Immediately patch the global dispatcher before returning the module
@@ -157,6 +156,7 @@ export class Undici implements Wrapper {
           });
         }
       })
+      // Todo only working for undici v6 right now
       .onFileRequire("lib/handler/redirect-handler.js", (exports, pkgInfo) => {
         return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
           return this.patchRedirectHandler(instance);

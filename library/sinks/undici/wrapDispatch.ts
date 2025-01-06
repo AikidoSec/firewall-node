@@ -8,7 +8,6 @@ import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
-import { wrapOnHeaders } from "./wrapOnHeaders";
 import { getUrlFromOptions } from "./getUrlFromOptions";
 
 type Dispatch = Dispatcher["dispatch"];
@@ -31,12 +30,14 @@ export function wrapDispatch(
   contextArg?: Context // Only set if its a nth dispatch after a redirect
 ): Dispatch {
   return function wrap(opts, handler) {
-    let context = getContext();
+    let context: Context | undefined;
 
     // Prefer passed context over the context from the async local storage
     // Context is passed as arg if its a nth dispatch after a redirect
     if (contextArg) {
       context = contextArg;
+    } else {
+      context = getContext();
     }
 
     if (!context || !opts || !opts.origin || !handler) {
@@ -59,19 +60,10 @@ export function wrapDispatch(
 
     blockRedirectToPrivateIP(url, context, agent, isFetch);
 
-    const port = getPortFromURL(url);
-
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(
-      handler.onHeaders,
-      { port, url },
-      context
-    );
-
     // We also pass the incoming context as part of the outgoing request context to prevent context mismatch, if the request is a redirect (argContext is set)
     return runWithUndiciRequestContext(
       {
-        port,
+        port: getPortFromURL(url),
         url,
         isFetch,
         inContext: contextArg,
@@ -129,7 +121,7 @@ function blockRedirectToPrivateIP(
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+        `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
       );
     }
   }

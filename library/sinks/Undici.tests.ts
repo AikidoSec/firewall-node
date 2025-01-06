@@ -10,6 +10,17 @@ import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
+const redirectTestUrl2 =
+  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+
+const redirectUrl = {
+  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
+  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
+  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
+  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
+};
+
 export function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
   wrap(dns, "lookup", function lookup(original) {
@@ -346,6 +357,117 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { image: redirectUrl.ip },
+        },
+        async () => {
+          const error = await t.rejects(
+            async () =>
+              await request(redirectUrl.ip, {
+                maxRedirections: 1,
+              })
+          );
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            );
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { image: redirectUrl.ipTwice },
+        },
+        async () => {
+          const error = await t.rejects(
+            async () =>
+              await request(redirectUrl.ipTwice, {
+                maxRedirections: 2,
+              })
+          );
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Aikido firewall has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            );
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { image: redirectUrl.domain },
+        },
+        async () => {
+          const error = await t.rejects(
+            async () =>
+              await request(redirectUrl.domain, {
+                maxRedirections: 2,
+              })
+          );
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            );
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { image: redirectUrl.domainTwice },
+        },
+        async () => {
+          const error = await t.rejects(
+            async () =>
+              await request(redirectUrl.domainTwice, {
+                maxRedirections: 2,
+              })
+          );
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            );
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: {
+            image:
+              "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+          },
+        },
+        async () => {
+          const error = await t.rejects(
+            async () =>
+              await request(
+                "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
+                {
+                  maxRedirections: 2,
+                }
+              )
+          );
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
+            );
+          }
         }
       );
 
