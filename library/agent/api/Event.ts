@@ -18,6 +18,7 @@ export type AgentInfo = {
   };
   platform: {
     version: string;
+    arch: string;
   };
   nodeEnv: string;
   serverless: boolean;
@@ -109,6 +110,7 @@ type Heartbeat = {
   }[];
   agent: AgentInfo;
   time: number;
+  middlewareInstalled?: boolean;
 };
 
 export type Event = Started | DetectedAttack | Heartbeat;

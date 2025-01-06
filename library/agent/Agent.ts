@@ -7,8 +7,9 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
+import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo } from "./api/Event";
+import { AgentInfo, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
@@ -23,6 +24,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { AttackLogger } from "./AttackLogger";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -39,13 +41,15 @@ export class Agent {
   private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true, []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 100,
   });
+  private middlewareInstalled = false;
+  private attackLogger = new AttackLogger(1000);
 
   constructor(
     private block: boolean,
@@ -110,6 +114,8 @@ export class Agent {
       );
 
       this.updateServiceConfig(result);
+
+      await this.updateBlockedLists();
     }
   }
 
@@ -138,7 +144,7 @@ export class Agent {
     source,
     request,
     stack,
-    path,
+    paths,
     metadata,
     payload,
   }: {
@@ -149,49 +155,47 @@ export class Agent {
     source: Source;
     request: Context;
     stack: string;
-    path: string;
+    paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    const attack: DetectedAttack = {
+      type: "detected_attack",
+      time: Date.now(),
+      attack: {
+        module: module,
+        operation: operation,
+        blocked: blocked,
+        path: paths.length > 0 ? paths[0] : "",
+        stack: stack,
+        source: source,
+        metadata: limitLengthMetadata(metadata, 4096),
+        kind: kind,
+        payload: JSON.stringify(payload).substring(0, 4096),
+        user: request.user,
+      },
+      request: {
+        method: request.method,
+        url: request.url,
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        body: convertRequestBodyToString(request.body),
+        headers: filterEmptyRequestHeaders(request.headers),
+        source: request.source,
+        route: request.route,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    this.attackLogger.log(attack);
+
     if (this.token) {
-      this.api
-        .report(
-          this.token,
-          {
-            type: "detected_attack",
-            time: Date.now(),
-            attack: {
-              module: module,
-              operation: operation,
-              blocked: blocked,
-              path: path,
-              stack: stack,
-              source: source,
-              metadata: limitLengthMetadata(metadata, 4096),
-              kind: kind,
-              payload: JSON.stringify(payload).substring(0, 4096),
-              user: request.user,
-            },
-            request: {
-              method: request.method,
-              url: request.url,
-              ipAddress: request.remoteAddress,
-              userAgent:
-                typeof request.headers["user-agent"] === "string"
-                  ? request.headers["user-agent"]
-                  : undefined,
-              body: convertRequestBodyToString(request.body),
-              headers: filterEmptyRequestHeaders(request.headers),
-              source: request.source,
-              route: request.route,
-            },
-            agent: this.getAgentInfo(),
-          },
-          this.timeoutInMS
-        )
-        .catch(() => {
-          this.logger.log("Failed to report attack");
-        });
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+        this.logger.log("Failed to report attack");
+      });
     }
   }
 
@@ -224,7 +228,7 @@ export class Agent {
       }
 
       if (response.endpoints) {
-        this.serviceConfig = new ServiceConfig(
+        this.serviceConfig.updateConfig(
           response.endpoints && Array.isArray(response.endpoints)
             ? response.endpoints
             : [],
@@ -235,7 +239,7 @@ export class Agent {
             ? response.blockedUserIds
             : [],
           response.allowedIPAddresses &&
-          Array.isArray(response.allowedIPAddresses)
+            Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
             : [],
           typeof response.receivedAnyStats === "boolean"
@@ -282,9 +286,11 @@ export class Agent {
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
+          middlewareInstalled: this.middlewareInstalled,
         },
         timeoutInMS
       );
+
       this.updateServiceConfig(response);
     }
   }
@@ -331,6 +337,27 @@ export class Agent {
     this.interval.unref();
   }
 
+  private async updateBlockedLists() {
+    if (!this.token) {
+      return;
+    }
+
+    if (this.serverless) {
+      // Not supported in serverless mode
+      return;
+    }
+
+    try {
+      const { blockedIPAddresses, blockedUserAgents } = await fetchBlockedLists(
+        this.token
+      );
+      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
+      this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
+    } catch (error: any) {
+      this.logger.log(`Failed to update blocked lists: ${error.message}`);
+    }
+  }
+
   private startPollingForConfigChanges() {
     pollForChanges({
       token: this.token,
@@ -339,6 +366,9 @@ export class Agent {
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
+        this.updateBlockedLists().catch((error) => {
+          this.logger.log(`Failed to update blocked lists: ${error.message}`);
+        });
       },
     });
   }
@@ -378,6 +408,7 @@ export class Agent {
       },
       platform: {
         version: getSemverNodeVersion(),
+        arch: process.arch,
       },
     };
   }
@@ -408,22 +439,7 @@ export class Agent {
       }
     }
 
-    this.wrappedPackages = wrapInstalledPackages(this, wrappers);
-
-    for (const pkg in this.wrappedPackages) {
-      const details = this.wrappedPackages[pkg];
-
-      /* c8 ignore next 3 */
-      if (!details.version) {
-        continue;
-      }
-
-      if (details.supported) {
-        this.logger.log(`${pkg}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${pkg}@${details.version} is not supported!`);
-      }
-    }
+    wrapInstalledPackages(wrappers);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
@@ -441,6 +457,26 @@ export class Agent {
     this.logger.log(`Failed to wrap method ${name} in module ${module}`);
   }
 
+  onFailedToWrapModule(module: string, error: Error) {
+    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+  }
+
+  onPackageWrapped(name: string, details: WrappedPackage) {
+    if (this.wrappedPackages[name]) {
+      // Already reported as wrapped
+      return;
+    }
+    this.wrappedPackages[name] = details;
+
+    if (details.version) {
+      if (details.supported) {
+        this.logger.log(`${name}@${details.version} is supported!`);
+      } else {
+        this.logger.log(`${name}@${details.version} is not supported!`);
+      }
+    }
+  }
+
   onFailedToWrapPackage(module: string) {
     this.logger.log(`Failed to wrap package ${module}`);
   }
@@ -455,6 +491,14 @@ export class Agent {
 
   onRouteExecute(context: Context) {
     this.routes.addRoute(context);
+  }
+
+  hasGraphQLSchema(method: string, path: string) {
+    return this.routes.hasGraphQLSchema(method, path);
+  }
+
+  onGraphQLSchema(method: string, path: string, schema: string) {
+    this.routes.setGraphQLSchema(method, path, schema);
   }
 
   onGraphQLExecute(
@@ -483,5 +527,9 @@ export class Agent {
 
   getRateLimiter() {
     return this.rateLimiter;
+  }
+
+  onMiddlewareExecuted() {
+    this.middlewareInstalled = true;
   }
 }

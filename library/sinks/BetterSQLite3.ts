@@ -1,6 +1,7 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -61,24 +62,27 @@ export class BetterSQLite3 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const subjects = hooks
+    const sqlFunctions = ["prepare", "exec", "pragma"];
+    const fsPathFunctions = ["backup", "loadExtension"];
+
+    hooks
       .addPackage("better-sqlite3")
       .withVersion("^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
-      .addSubject((exports) => exports.prototype);
-
-    const sqlFunctions = ["prepare", "exec", "pragma"];
-
-    for (const func of sqlFunctions) {
-      subjects.inspect(func, (args) => {
-        return this.inspectQuery(`better-sqlite3.${func}`, args);
+      .onRequire((exports, pkgInfo) => {
+        for (const func of sqlFunctions) {
+          wrapExport(exports.prototype, func, pkgInfo, {
+            inspectArgs: (args) => {
+              return this.inspectQuery(`better-sqlite3.${func}`, args);
+            },
+          });
+        }
+        for (const func of fsPathFunctions) {
+          wrapExport(exports.prototype, func, pkgInfo, {
+            inspectArgs: (args) => {
+              return this.inspectPath(`better-sqlite3.${func}`, args);
+            },
+          });
+        }
       });
-    }
-
-    const fsPathFunctions = ["backup", "loadExtension"];
-    for (const func of fsPathFunctions) {
-      subjects.inspect(func, (args) => {
-        return this.inspectPath(`better-sqlite3.${func}`, args);
-      });
-    }
   }
 }

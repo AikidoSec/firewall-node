@@ -261,3 +261,65 @@ t.test("it merges types", async (t) => {
     }
   );
 });
+
+t.test("with string format", async (t) => {
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "test@example.com",
+      }),
+      getDataSchema({
+        test: "",
+      })
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+          format: "email",
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "",
+      }),
+      getDataSchema({
+        test: "127.0.0.1",
+      })
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+          format: "ipv4",
+        },
+      },
+    }
+  );
+
+  t.same(
+    mergeDataSchemas(
+      getDataSchema({
+        test: "http://example.com",
+      }),
+      getDataSchema({
+        test: "2024-10-14",
+      })
+    ),
+    {
+      type: "object",
+      properties: {
+        test: {
+          type: "string",
+          format: undefined,
+        },
+      },
+    }
+  );
+});

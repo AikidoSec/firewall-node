@@ -99,10 +99,40 @@ t.test("it works", async (t) => {
       },
     }
   );
+
+  t.same(
+    getDataSchema({
+      e: "test@example.com",
+      i: "127.0.0.1",
+      u: "http://example.com",
+      d: "2024-10-14",
+    }),
+    {
+      type: "object",
+      properties: {
+        e: {
+          type: "string",
+          format: "email",
+        },
+        i: {
+          type: "string",
+          format: "ipv4",
+        },
+        u: {
+          type: "string",
+          format: "uri",
+        },
+        d: {
+          type: "string",
+          format: "date",
+        },
+      },
+    }
+  );
 });
 
 t.test("test max depth", async (t) => {
-  const generateTestObjectWithDepth = (depth: number) => {
+  const generateTestObjectWithDepth = (depth: number): object | string => {
     if (depth === 0) {
       return "testValue";
     }

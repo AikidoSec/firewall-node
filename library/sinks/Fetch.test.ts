@@ -1,13 +1,12 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -21,20 +20,26 @@ wrap(dns, "lookup", function lookup(original) {
     calls[hostname]++;
 
     if (hostname === "thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
     if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -71,28 +76,26 @@ t.test(
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
     const api = new ReportingAPIForTesting();
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
+    const agent = createTestAgent({
+      token: new Token("123"),
       api,
-      new Token("123"),
-      undefined
-    );
+    });
+
     agent.start([new Fetch()]);
 
     t.same(agent.getHostnames().asArray(), []);
 
-    await fetch("http://aikido.dev");
+    await fetch("http://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 80 },
+      { hostname: "app.aikido.dev", port: 80, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://aikido.dev"));
+    await fetch(new URL("https://app.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
@@ -144,6 +147,7 @@ t.test(
       }
 
       const error3 = await t.rejects(() =>
+        // @ts-expect-error Test
         fetch(["http://localhost:4000/api/internal"])
       );
       if (error3 instanceof Error) {
@@ -180,6 +184,7 @@ t.test(
         }
 
         const error2 = await t.rejects(() =>
+          // @ts-expect-error Test
           fetch(["http://example", "prefix.thisdomainpointstointernalip.com"])
         );
         if (error2 instanceof Error) {

@@ -1,8 +1,11 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, updateContext, runWithContext } from "../agent/Context";
+import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { addXmlToContext } from "./xml/addXmlToContext";
+import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
  * Wrapper for xml2js package.
@@ -27,8 +30,8 @@ export class Xml2js implements Wrapper {
 
     const xmlString = args[0] as string;
 
-    if (typeof context.body !== "string" || context.body !== xmlString) {
-      // The XML string is not in the body, so currently we don't check it
+    // Check if the XML string is in the request context
+    if (!isXmlInContext(xmlString, context)) {
       return args;
     }
 
@@ -36,7 +39,7 @@ export class Xml2js implements Wrapper {
     const originalCallback = args[1] as Function;
     args[1] = function wrapCallback(err: Error, result: unknown) {
       if (result && isPlainObject(result)) {
-        updateContext(context, "xml", result);
+        addXmlToContext(result, context);
       }
 
       runWithContext(context, () => originalCallback(err, result));
@@ -46,13 +49,13 @@ export class Xml2js implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const xml2js = hooks
+    hooks
       .addPackage("xml2js")
-      .withVersion("^0.6.0 || ^0.5.0 || ^0.4.18");
-
-    xml2js
-      .addSubject((exports) => exports.Parser.prototype)
-      // Also wraps parseStringPromise and usage without Parser instance
-      .modifyArguments("parseString", (args) => this.modifyArgs(args));
+      .withVersion("^0.6.0 || ^0.5.0 || ^0.4.18")
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports.Parser.prototype, "parseString", pkgInfo, {
+          modifyArgs: (args) => this.modifyArgs(args),
+        });
+      });
   }
 }

@@ -5,6 +5,7 @@ import { Token } from "../../agent/api/Token";
 import { Context } from "../../agent/Context";
 import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 let agent: Agent;
 const context: Context = {
@@ -21,10 +22,9 @@ const context: Context = {
 };
 
 t.beforeEach(async () => {
-  agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       allowedIPAddresses: [],
       configUpdatedAt: 0,
@@ -33,6 +33,7 @@ t.beforeEach(async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["1.2.3.4"],
@@ -41,9 +42,7 @@ t.beforeEach(async () => {
       ],
       block: true,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 
@@ -86,10 +85,9 @@ t.test("it blocks request if no IP address", async () => {
 });
 
 t.test("it allows request if configuration is broken", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       allowedIPAddresses: [],
       configUpdatedAt: 0,
@@ -98,6 +96,7 @@ t.test("it allows request if configuration is broken", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           // @ts-expect-error We're testing a broken configuration
@@ -107,9 +106,7 @@ t.test("it allows request if configuration is broken", async () => {
       ],
       block: true,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 
@@ -122,10 +119,9 @@ t.test("it allows request if configuration is broken", async () => {
 });
 
 t.test("it allows request if allowed IP addresses is empty", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       allowedIPAddresses: [],
       configUpdatedAt: 0,
@@ -134,6 +130,7 @@ t.test("it allows request if allowed IP addresses is empty", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: [],
@@ -142,9 +139,7 @@ t.test("it allows request if allowed IP addresses is empty", async () => {
       ],
       block: true,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 
@@ -164,10 +159,9 @@ t.test("it blocks request if not allowed IP address", async () => {
 });
 
 t.test("it checks every matching endpoint", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
       success: true,
       allowedIPAddresses: [],
       configUpdatedAt: 0,
@@ -176,6 +170,7 @@ t.test("it checks every matching endpoint", async () => {
       endpoints: [
         {
           route: "/posts/:id",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["3.4.5.6"],
@@ -183,6 +178,7 @@ t.test("it checks every matching endpoint", async () => {
         },
         {
           route: "/posts/*",
+          // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
           allowedIPAddresses: ["1.2.3.4"],
@@ -191,9 +187,7 @@ t.test("it checks every matching endpoint", async () => {
       ],
       block: true,
     }),
-    new Token("123"),
-    undefined
-  );
+  });
 
   agent.start([]);
 
@@ -208,10 +202,9 @@ t.test("it checks every matching endpoint", async () => {
 t.test(
   "if allowed IPs is empty or broken, it ignores the endpoint but does check the other ones",
   async () => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting({
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api: new ReportingAPIForTesting({
         success: true,
         allowedIPAddresses: [],
         configUpdatedAt: 0,
@@ -220,6 +213,7 @@ t.test(
         endpoints: [
           {
             route: "/posts/:id",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             allowedIPAddresses: [],
@@ -227,6 +221,7 @@ t.test(
           },
           {
             route: "/posts/*",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             // @ts-expect-error We're testing a broken configuration
@@ -235,6 +230,7 @@ t.test(
           },
           {
             route: "/posts/*",
+            // @ts-expect-error Test
             rateLimiting: undefined,
             method: "POST",
             allowedIPAddresses: ["1.2.3.4"],
@@ -243,9 +239,7 @@ t.test(
         ],
         block: true,
       }),
-      new Token("123"),
-      undefined
-    );
+    });
 
     agent.start([]);
 

@@ -19,6 +19,19 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
     return endpoint.method === context.method;
   });
 
+  // Sort so that exact method matches come first before wildcard matches
+  possible.sort((a, b) => {
+    if (a.method === b.method) {
+      return 0;
+    }
+
+    if (a.method === "*") {
+      return 1;
+    }
+
+    return -1;
+  });
+
   const exact = possible.find((endpoint) => endpoint.route === context.route);
   if (exact) {
     matches.push(exact);

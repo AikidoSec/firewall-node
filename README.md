@@ -20,11 +20,12 @@ It protects your Node.js apps by preventing user input containing dangerous stri
 Zen will autonomously protect your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
-* 🛡️ [SQL injection attacks]([https://www.aikido.dev/blog/web-application-security-vulnerabilities](https://owasp.org/www-community/attacks/SQL_Injection))
-* 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
+* 🛡️ [SQL injection attacks](https://www.aikido.dev/blog/the-state-of-sql-injections)
+* 🛡️ [Command injection attacks](https://www.aikido.dev/blog/command-injection-in-2024-unpacked)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ JS injection
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -43,7 +44,9 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [hapi](docs/hapi.md) 21.x
 * ✅ [micro](docs/micro.md) 10.x
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
-* ✅ Fastify (upcoming)
+* ✅ [Fastify](docs/fastify.md) 4.x and 5.x
+* ✅ [Koa](docs/koa.md) 2.x
+* ✅ [NestJS](docs/nestjs.md) 10.x
 
 ### Database drivers
 
@@ -52,9 +55,13 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 * ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 * ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
+* ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x
 * ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 * ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
+* ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
+* ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
+* ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
 
 ### Cloud providers
 
@@ -87,6 +94,11 @@ See list above for supported database drivers.
 
 * ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
 
+### Routers
+
+* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
+
+
 ## Installation
 
 We recommend testing Zen locally or on staging before deploying to production.
@@ -101,7 +113,14 @@ $ yarn add --exact @aikidosec/firewall
 
 For framework- and provider- specific instructions, check out our docs:
 
-- [Express.js-based apps](docs/express.md)
+- [Express](docs/express.md)
+- [Fastify](docs/fastify.md)
+- [Hapi](docs/hapi.md)
+- [Koa](docs/koa.md)
+- [Hono](docs/hono.md)
+- [NestJS](docs/nestjs.md)
+- [micro](docs/micro.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)

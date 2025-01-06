@@ -36,6 +36,8 @@ t.test("it matches single range", async () => {
   t.equal(satisfiesVersion("^1.0.0", "0.0.0"), false);
   t.equal(satisfiesVersion("^1.0.0", "2.0.0"), false);
   t.equal(satisfiesVersion("^2.0.0", "1.0.0"), false);
+  t.equal(satisfiesVersion("^1.2.1", "1.3.0"), true);
+  t.equal(satisfiesVersion("^1.2.1", "1.2.0"), false);
 });
 
 t.test("it matches multiple ranges", async () => {

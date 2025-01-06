@@ -1,9 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { isWrapped } from "../helpers/wrap";
 import { Path } from "./Path";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -28,17 +27,12 @@ const unsafeAbsoluteContext: Context = {
 };
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
 
   agent.start([new Path()]);
 
-  const { join, resolve } = require("path");
+  // Path required before path/posix and path/win32
+  const { join, resolve, normalize } = require("path");
 
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
@@ -53,39 +47,56 @@ t.test("it works", async (t) => {
   });
 
   runWithContext(unsafeContext, () => {
-    t.throws(
-      () => join(__dirname, "../test.txt"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    const error = t.throws(() => join(__dirname, "../test.txt"));
+    t.same(
+      error instanceof Error ? error.message : null,
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => resolve(__dirname, "../test.txt"),
-      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+    const error2 = t.throws(() => resolve(__dirname, "../test.txt"));
+    t.same(
+      error2 instanceof Error ? error2.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => join(__dirname, "some_directory", "../test.txt"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    const error3 = t.throws(() =>
+      join(__dirname, "some_directory", "../test.txt")
+    );
+    t.same(
+      error3 instanceof Error ? error3.message : null,
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => resolve(__dirname, "some_directory", "../test.txt"),
-      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+    const error4 = t.throws(() =>
+      resolve(__dirname, "some_directory", "../test.txt")
+    );
+    t.same(
+      error4 instanceof Error ? error4.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => join(__dirname, "some_directory", "../../test.txt"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    const error5 = t.throws(() =>
+      join(__dirname, "some_directory", "../../test.txt")
+    );
+    t.same(
+      error5 instanceof Error ? error5.message : null,
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => resolve(__dirname, "../test.txt", "some_directory"),
-      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+    const error6 = t.throws(() =>
+      resolve(__dirname, "../test.txt", "some_directory")
+    );
+    t.same(
+      error6 instanceof Error ? error6.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => join(__dirname, "../test.txt", "some_directory"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    const error7 = t.throws(() =>
+      join(__dirname, "../test.txt", "some_directory")
+    );
+    t.same(
+      error7 instanceof Error ? error7.message : null,
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
   });
 
@@ -94,14 +105,55 @@ t.test("it works", async (t) => {
   });
 
   runWithContext(unsafeAbsoluteContext, () => {
-    t.throws(
-      () => join("/etc/nginx", "test.txt"),
-      "Zen has blocked a Path traversal: fs.join(...) originating from body.file.matches"
+    const error = t.throws(() => join("/etc/nginx", "test.txt"));
+    t.same(
+      error instanceof Error ? error.message : null,
+      "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
     );
 
-    t.throws(
-      () => resolve("/etc/nginx", "test.txt"),
-      "Zen has blocked a Path traversal: fs.resolve(...) originating from body.file.matches"
+    const error2 = t.throws(() => resolve("/etc/some_directory", "test.txt"));
+    t.same(
+      error2 instanceof Error ? error2.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
   });
+
+  const { join: joinWin } = require("path/win32");
+
+  runWithContext(unsafeAbsoluteContext, () => {
+    const error = t.throws(() => joinWin("/etc/some_directory", "test.txt"));
+    t.same(
+      error instanceof Error ? error.message : null,
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
+    );
+  });
+
+  const { normalize: normalizePosix } = require("path/posix");
+
+  runWithContext(unsafeContext, () => {
+    const error = t.throws(() => normalizePosix(__dirname, "../test.txt"));
+    t.same(
+      error instanceof Error ? error.message : null,
+      "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
+    );
+  });
+
+  const { win32: win32FromPosix } = require("path/posix");
+
+  runWithContext(unsafeContext, () => {
+    const error = t.throws(() =>
+      win32FromPosix.normalize(__dirname, "../test.txt")
+    );
+    t.same(
+      error instanceof Error ? error.message : null,
+      "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
+    );
+  });
+
+  const checkForDoubleWrapping = [join, resolve, normalize];
+  for (const fn of checkForDoubleWrapping) {
+    if (isWrapped(fn) && isWrapped(fn.__original)) {
+      t.fail(`${fn.name} is double wrapped!`);
+    }
+  }
 });

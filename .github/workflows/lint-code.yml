@@ -1,7 +1,7 @@
 name: Lint code
 on: push
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -9,8 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: make install
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - run: make install-lib-only
+      - run: make build
       - run: make lint

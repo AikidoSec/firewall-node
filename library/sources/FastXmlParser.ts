@@ -1,8 +1,12 @@
 /* eslint-disable prefer-rest-params */
-import { getContext, updateContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { addXmlToContext } from "./xml/addXmlToContext";
+import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
  * Wrapper for fast-xml-parser package.
@@ -23,28 +27,30 @@ export class FastXmlParser implements Wrapper {
 
     const xmlString = args[0] as string;
 
-    if (typeof context.body !== "string" || context.body !== xmlString) {
-      // The XML string is not in the body, so currently we don't check it
+    // Check if the XML string is in the request context
+    if (!isXmlInContext(xmlString, context)) {
       return args;
     }
 
-    // Replace the body in the context with the parsed result
+    // Add the parsed XML to the context
     if (result && isPlainObject(result)) {
-      updateContext(context, "xml", result);
+      addXmlToContext(result, context);
     }
   }
 
   wrap(hooks: Hooks) {
-    const fastXmlParser = hooks
+    hooks
       .addPackage("fast-xml-parser")
-      .withVersion("^4.0.0");
-
-    fastXmlParser
-      .addSubject((exports) => exports)
-      .inspectNewInstance("XMLParser")
-      .addSubject((exports) => exports)
-      .inspectResult("parse", (args, result) =>
-        this.inspectParse(args, result)
-      );
+      .withVersion("^4.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapNewInstance(exports, "XMLParser", pkgInfo, (instance) => {
+          wrapExport(instance, "parse", pkgInfo, {
+            modifyReturnValue: (args, returnValue) => {
+              this.inspectParse(args, returnValue);
+              return returnValue;
+            },
+          });
+        });
+      });
   }
 }

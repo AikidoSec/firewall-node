@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -24,25 +22,21 @@ const context: Context = {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const needle = require("needle");
+  const needle = require("needle") as typeof import("needle");
 
   await runWithContext(context, async () => {
     await needle("get", "https://www.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443 },
+    { hostname: "www.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 

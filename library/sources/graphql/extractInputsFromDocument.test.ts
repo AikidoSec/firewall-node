@@ -11,6 +11,7 @@ import {
   GraphQLInt,
   GraphQLInputObjectType,
   GraphQLID,
+  visit as visitFn,
 } from "graphql";
 import { extractInputsFromDocument } from "./extractInputsFromDocument";
 
@@ -129,7 +130,7 @@ t.test("it returns correct user inputs", (t) => {
   }
 
   // Extract user inputs from the document
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.equal(inputs[0], "teststring");
@@ -158,7 +159,7 @@ t.test("it returns correct user inputs for different queries", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.equal(inputs[0], "12345");
@@ -182,7 +183,7 @@ t.test("it returns correct user inputs for mutations", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["John Doe"]);
@@ -206,7 +207,7 @@ t.test("it handles nested inputs and mutations", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 2);
   t.same(inputs, ["123 Main St", "Metropolis"]);
@@ -230,7 +231,7 @@ t.test("it handles list query with argument", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["Wesel"]);
@@ -254,7 +255,7 @@ t.test("it handles list values in mutations", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 4);
   t.same(inputs, ["1", "2", "3", "Software Engineer"]);
@@ -285,7 +286,7 @@ t.test("it handles queries with FragmentDefinition and InlineFragment", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["user123"]);
@@ -313,7 +314,7 @@ t.test("it handles nested query with argument", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.equal(inputs.length, 1);
   t.same(inputs, ["NestedCity"]);
@@ -337,7 +338,7 @@ t.test("it parses default values for string arguments", (t) => {
     return;
   }
 
-  const inputs = extractInputsFromDocument(document);
+  const inputs = extractInputsFromDocument(document, visitFn);
 
   t.same(inputs, ["default"]);
   t.end();
