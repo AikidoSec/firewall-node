@@ -107,27 +107,27 @@ t.test("it clears cache when context is mutated", async (t) => {
   const context = { ...sampleContext };
 
   runWithContext(context, () => {
-    t.same(extractStringsFromUserInputCached(getContext(), "body"), undefined);
+    t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
     t.same(
-      extractStringsFromUserInputCached(getContext(), "query"),
-      new Map(Object.entries({ abc: ".", def: ".abc" }))
+      extractStringsFromUserInputCached(getContext()!, "query"),
+      new Set(["abc", "def"])
     );
 
-    updateContext(getContext(), "query", {});
-    t.same(extractStringsFromUserInputCached(getContext(), "body"), undefined);
+    updateContext(getContext()!, "query", {});
+    t.same(extractStringsFromUserInputCached(getContext()!, "body"), undefined);
     t.same(
-      extractStringsFromUserInputCached(getContext(), "query"),
-      new Map(Object.entries({}))
+      extractStringsFromUserInputCached(getContext()!, "query"),
+      new Set()
     );
 
     runWithContext({ ...context, body: { a: "z" }, query: { b: "y" } }, () => {
       t.same(
-        extractStringsFromUserInputCached(getContext(), "body"),
-        new Map(Object.entries({ a: ".", z: ".a" }))
+        extractStringsFromUserInputCached(getContext()!, "body"),
+        new Set(["a", "z"])
       );
       t.same(
-        extractStringsFromUserInputCached(getContext(), "query"),
-        new Map(Object.entries({ b: ".", y: ".b" }))
+        extractStringsFromUserInputCached(getContext()!, "query"),
+        new Set(["b", "y"])
       );
     });
   });

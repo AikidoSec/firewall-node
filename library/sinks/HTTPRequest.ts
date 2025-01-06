@@ -1,18 +1,21 @@
+import { subscribe } from "diagnostics_channel";
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import { type RequestOptions, ClientRequest, IncomingMessage } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
-import { isPlainObject } from "../helpers/isPlainObject";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
-import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { isOptionsObject } from "./http-request/isOptionsObject";
+import { onHTTPResponse } from "./http-request/onHTTPResponse";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -48,7 +51,7 @@ export class HTTPRequest implements Wrapper {
         operation: `${module}.request`,
         kind: "ssrf",
         source: foundSSRFRedirect.source,
-        pathToPayload: foundSSRFRedirect.pathToPayload,
+        pathsToPayload: foundSSRFRedirect.pathsToPayload,
         metadata: {},
         payload: foundSSRFRedirect.payload,
       };
@@ -99,10 +102,11 @@ export class HTTPRequest implements Wrapper {
     }
 
     const optionObj = args.find((arg): arg is RequestOptions =>
-      isPlainObject(arg)
+      isOptionsObject(arg)
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
+    const stackTraceCallingLocation = new Error();
 
     if (!optionObj) {
       const newOpts = {
@@ -111,7 +115,8 @@ export class HTTPRequest implements Wrapper {
           agent,
           module,
           `${module}.request`,
-          url
+          url,
+          stackTraceCallingLocation
         ),
       };
 
@@ -124,39 +129,44 @@ export class HTTPRequest implements Wrapper {
       return args.concat(newOpts);
     }
 
-    if (optionObj.lookup) {
-      optionObj.lookup = inspectDNSLookupCalls(
-        optionObj.lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
-    } else {
-      optionObj.lookup = inspectDNSLookupCalls(
-        lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
+    let nativeLookup: NonNullable<RequestOptions["lookup"]> = lookup;
+    if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
+      // If the user has passed a custom lookup function, we'll use that instead
+      nativeLookup = optionObj.lookup;
     }
+
+    optionObj.lookup = inspectDNSLookupCalls(
+      nativeLookup,
+      agent,
+      module,
+      `${module}.request`,
+      url,
+      stackTraceCallingLocation
+    ) as NonNullable<RequestOptions["lookup"]>;
 
     return args;
   }
 
-  wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+  handleResponseFinish({
+    request,
+    response,
+  }: {
+    request: ClientRequest;
+    response: IncomingMessage;
+  }) {
+    const context = getContext();
 
-        return arg;
-      });
+    if (!context) {
+      return;
     }
 
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
+    try {
+      const source =
+        request.protocol + request.getHeader("host") + request.path;
+      onHTTPResponse(new URL(source), response, context);
+    } catch {
+      // Ignore errors
+    }
   }
 
   wrap(hooks: Hooks) {
@@ -165,6 +175,14 @@ export class HTTPRequest implements Wrapper {
 
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        if (isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
+          subscribe("http.client.response.finish", (message) =>
+            this.handleResponseFinish(
+              message as { request: ClientRequest; response: IncomingMessage }
+            )
+          );
+        }
+
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
             // Whenever a request is made, we'll check the hostname whether it's a private IP
@@ -173,10 +191,7 @@ export class HTTPRequest implements Wrapper {
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
             modifyArgs: (args, agent) =>
-              this.wrapResponseHandler(
-                this.monitorDNSLookups(args, agent, module),
-                module
-              ),
+              this.monitorDNSLookups(args, agent, module),
           });
         }
       });

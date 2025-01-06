@@ -52,9 +52,32 @@ t.test("it works with options", async (t) => {
   );
 });
 
+t.test("it wraps host and hostname with square brackets", async (t) => {
+  t.same(
+    getURL([{ protocol: "http:", host: "::", port: 80 }], "http")?.href,
+    new URL("http://[::]:80").href
+  );
+  t.same(
+    getURL([{ protocol: "http:", hostname: "::", port: 80 }], "http")?.href,
+    new URL("http://[::]:80").href
+  );
+  t.same(
+    getURL([new URL("http://domain.com"), { hostname: "::" }], "http")?.href,
+    new URL("http://[::]:80").href
+  );
+  t.same(
+    getURL([new URL("http://domain.com"), { host: "::" }], "http")?.href,
+    new URL("http://[::]:80").href
+  );
+  t.same(
+    getURL([new URL("http://[::]")], "http")?.href,
+    new URL("http://[::]:80").href
+  );
+});
+
 t.test("it does not throw on invalid arguments", async (t) => {
   t.same(getURL([], "http"), undefined);
-  // @ts-expect-error Testing invalid arguments
+  // @ts-expect-error Test
   t.same(getURL(["%test%"], undefined), undefined);
   t.same(new Date(), []);
 });
@@ -98,5 +121,39 @@ t.test("Do not get port 0 from request options", async (t) => {
   t.same(
     getURL([{ hostname: "localhost", port: 0 }], "https"),
     new URL("https://localhost")
+  );
+});
+
+t.test("Pass port as string", async (t) => {
+  t.same(
+    getURL(
+      [{ protocol: "https:", hostname: "localhost", port: "4000" }],
+      "https"
+    ),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { port: "4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+});
+
+t.test("Pass host instead of hostname", async (t) => {
+  t.same(
+    getURL([{ protocol: "https:", host: "localhost:4000" }], "https"),
+    new URL("https://localhost:4000")
+  );
+  t.same(
+    getURL(["https://localhost", { host: "test.dev" }], "https"),
+    new URL("https://test.dev")
+  );
+});
+
+t.test("it works with node:url object as first argument", async (t) => {
+  const oldUrl = require("url");
+
+  t.same(
+    getURL([oldUrl.parse("http://localhost:4000")], "http"),
+    new URL("http://localhost:4000")
   );
 });

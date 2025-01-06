@@ -2,7 +2,7 @@
 import type { UndiciRequestContext } from "./RequestContextStorage";
 import { parseHeaders } from "./parseHeaders";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { Context } from "../../agent/Context";
 import { onRedirect } from "./onRedirect";
 import { getUrlFromOptions } from "./getUrlFromOptions";
@@ -63,7 +63,7 @@ export function wrapOnHeaders(
 
     if (typeof orig === "function") {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         // @ts-expect-error Arguments are not typed
         // eslint-disable-next-line prefer-rest-params

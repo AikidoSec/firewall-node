@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { runWithUndiciRequestContext } from "./RequestContextStorage";
+import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { Context, getContext } from "../../agent/Context";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { Agent } from "../../agent/Agent";
@@ -40,7 +41,7 @@ export function wrapDispatch(
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -50,7 +51,7 @@ export function wrapDispatch(
 
     if (!url) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -87,7 +88,7 @@ export function wrapDispatch(
 }
 
 /**
- * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
+ * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(
   url: URL,
@@ -95,6 +96,16 @@ function blockRedirectToPrivateIP(
   agent: Agent,
   isFetch: boolean
 ) {
+  const isAllowedIP =
+    context &&
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    // If the IP address is allowed, we don't need to block the request
+    return;
+  }
+
   const found = isRedirectToPrivateIP(url, context);
 
   const operation = isFetch ? "fetch" : "undici.[method]";
@@ -107,15 +118,18 @@ function blockRedirectToPrivateIP(
       source: found.source,
       blocked: agent.shouldBlock(),
       stack: new Error().stack!,
-      path: found.pathToPayload,
-      metadata: {},
+      paths: found.pathsToPayload,
+      metadata: getMetadataForSSRFAttack({
+        hostname: found.hostname,
+        port: found.port,
+      }),
       request: context,
       payload: found.payload,
     });
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
       );
     }
   }

@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,17 +19,10 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
@@ -39,11 +30,11 @@ t.test("it works", async (t) => {
   const axios = require("axios");
 
   await runWithContext(context, async () => {
-    await axios.request("https://www.aikido.dev");
+    await axios.request("https://app.aikido.dev");
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -64,7 +55,28 @@ t.test("it works", async (t) => {
   if (error instanceof Error) {
     t.match(
       error.message,
-      "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
+      "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+    );
+  }
+
+  const error2 = await t.rejects(
+    runWithContext(
+      {
+        ...context,
+        // Redirects to http://[::1]/test
+        ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
+      },
+      async () => {
+        await axios.request(`${redirectTestUrl}/ssrf-test-ipv6`);
+      }
+    )
+  );
+
+  t.ok(error2 instanceof Error);
+  if (error2 instanceof Error) {
+    t.match(
+      error2.message,
+      "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
     );
   }
 });

@@ -1,3 +1,7 @@
+type WrappedFunction<T> = T & {
+  __original: T;
+};
+
 export function wrap(
   module: any,
   name: string,
@@ -35,9 +39,19 @@ export function createWrappedFunction(
   // .inspect("realpath", (args) => {...})
   // We don't want to lose the original function's properties.
   // Most of the functions we're wrapping don't have any properties, so this is a rare case.
-  for (const prop in original) {
-    if (original.hasOwnProperty(prop)) {
-      defineProperty(wrapped, prop, original[prop as keyof Function]);
+  // Inspired by https://github.com/DataDog/dd-trace-js/blob/master/packages/datadog-shimmer/src/shimmer.js#L8
+
+  Object.setPrototypeOf(wrapped, original);
+
+  const props = Object.getOwnPropertyDescriptors(original);
+  const keys = Reflect.ownKeys(props);
+
+  for (const key of keys) {
+    try {
+      // Define the property on the wrapped function, keeping the original property's attributes.
+      Object.defineProperty(wrapped, key as any, props[key as any]);
+    } catch (e) {
+      //
     }
   }
 
@@ -55,4 +69,17 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
     writable: true,
     value: value,
   });
+}
+
+/**
+ * Check if a function is wrapped
+ */
+export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
+  return (
+    fn instanceof Function &&
+    "__wrapped" in fn &&
+    fn.__wrapped === true &&
+    "__original" in fn &&
+    fn.__original instanceof Function
+  );
 }

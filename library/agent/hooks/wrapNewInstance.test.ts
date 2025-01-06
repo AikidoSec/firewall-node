@@ -1,30 +1,31 @@
 /* eslint-disable max-classes-per-file */
 import * as t from "tap";
 import { wrapNewInstance } from "./wrapNewInstance";
-import { Agent } from "../Agent";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
-import { ReportingAPIForTesting } from "../api/ReportingAPIForTesting";
-import { setInstance } from "../AgentSingleton";
+import { createTestAgent } from "../../helpers/createTestAgent";
 
 t.test("Agent is not initialized", async (t) => {
   try {
     wrapNewInstance({}, "test", { name: "test", type: "external" }, () => {});
     t.fail();
-  } catch (e) {
-    t.same(e.message, "Can not wrap new instance if agent is not initialized");
+  } catch (e: unknown) {
+    t.ok(e instanceof Error);
+    if (e instanceof Error) {
+      t.same(
+        e.message,
+        "Can not wrap new instance if agent is not initialized"
+      );
+    }
   }
 });
 
 const logger = new LoggerForTesting();
-const agent = new Agent(
-  true,
+
+createTestAgent({
   logger,
-  new ReportingAPIForTesting(),
-  new Token("123"),
-  undefined
-);
-setInstance(agent);
+  token: new Token("123"),
+});
 
 t.test("Inspect args", async (t) => {
   const exports = {
@@ -93,4 +94,74 @@ t.test("Can wrap default export", async (t) => {
   t.same(instance.getInput(), "input");
   // @ts-expect-error Test method is added by interceptor
   t.same(instance.testMethod(), "aikido");
+});
+
+t.test("Errors in interceptor are caught", async (t) => {
+  const exports = {
+    test: class Test {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  logger.clear();
+
+  wrapNewInstance(exports, "test", { name: "test", type: "external" }, () => {
+    throw new Error("test error");
+  });
+
+  const instance = new exports.test("input");
+  t.same(instance.getInput(), "input");
+  t.same(logger.getMessages(), ["Failed to wrap method test in module test"]);
+});
+
+t.test("Return value from interceptor is returned", async (t) => {
+  const exports = {
+    test: class Test {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  wrapNewInstance(exports, "test", { name: "test", type: "external" }, () => {
+    return { testMethod: () => "aikido" };
+  });
+
+  const instance = new exports.test("input");
+  t.same(typeof instance.getInput, "undefined");
+  // @ts-expect-error Test method is added by interceptor
+  t.same(instance.testMethod(), "aikido");
+});
+
+t.test("Logs error when wrapping default export", async (t) => {
+  let exports = class Test {
+    constructor(private input: string) {}
+
+    getInput() {
+      return this.input;
+    }
+  };
+
+  logger.clear();
+
+  exports = wrapNewInstance(
+    exports,
+    undefined,
+    { name: "test", type: "external" },
+    () => {
+      throw new Error("test error");
+    }
+  ) as any;
+
+  const instance = new exports("input");
+  t.same(instance.getInput(), "input");
+  t.same(logger.getMessages(), [
+    "Failed to wrap method default export in module test",
+  ]);
 });

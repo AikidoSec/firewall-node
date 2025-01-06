@@ -1,7 +1,8 @@
 /* eslint-disable prefer-rest-params */
-import type { Collection } from "mongodb";
+import type { Collection } from "mongodb-v6";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import type { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
@@ -53,7 +54,7 @@ export class MongoDB implements Wrapper {
         operation: `MongoDB.Collection.${operation}`,
         kind: "nosql_injection",
         source: result.source,
-        pathToPayload: result.pathToPayload,
+        pathsToPayload: result.pathsToPayload,
         metadata: {
           db: db,
           collection: collection,
@@ -161,28 +162,73 @@ export class MongoDB implements Wrapper {
     return undefined;
   }
 
+  private inspectDistinct(
+    args: unknown[],
+    collection: Collection
+  ): InterceptorResult {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length > 1 && isPlainObject(args[1])) {
+      const filter = args[1];
+
+      return this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        filter,
+        "distinct"
+      );
+    }
+
+    return undefined;
+  }
+
+  private wrapCollection(
+    exports: typeof import("mongodb-v6"),
+    pkgInfo: WrapPackageInfo
+  ) {
+    const collectionProto = exports.Collection.prototype;
+
+    OPERATIONS_WITH_FILTER.forEach((operation) => {
+      wrapExport(collectionProto, operation, pkgInfo, {
+        inspectArgs: (args, agent, collection) =>
+          this.inspectOperation(operation, args, collection as Collection),
+      });
+    });
+
+    wrapExport(collectionProto, "bulkWrite", pkgInfo, {
+      inspectArgs: (args, agent, collection) =>
+        this.inspectBulkWrite(args, collection as Collection),
+    });
+
+    wrapExport(collectionProto, "aggregate", pkgInfo, {
+      inspectArgs: (args, agent, collection) =>
+        this.inspectAggregate(args, collection as Collection),
+    });
+
+    wrapExport(collectionProto, "distinct", pkgInfo, {
+      inspectArgs: (args, agent, collection) =>
+        this.inspectDistinct(args, collection as Collection),
+    });
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("mongodb")
       .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
-        const collectionProto = exports.Collection.prototype;
-
-        OPERATIONS_WITH_FILTER.forEach((operation) => {
-          wrapExport(collectionProto, operation, pkgInfo, {
-            inspectArgs: (args, agent, collection) =>
-              this.inspectOperation(operation, args, collection as Collection),
-          });
-        });
-
-        wrapExport(collectionProto, "bulkWrite", pkgInfo, {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectBulkWrite(args, collection as Collection),
-        });
-
-        wrapExport(collectionProto, "aggregate", pkgInfo, {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectAggregate(args, collection as Collection),
+        // From mongodb v6.10.0, the Collection is undefined
+        // It's defined like:
+        // exports.Collection = void 0;
+        // const collection_1 = require("./collection");
+        // Object.defineProperty(exports, "Collection", { enumerable: true, get: function () { return collection_1.Collection; } });
+        // So we need to wait for the next tick to wrap the Collection
+        process.nextTick(() => {
+          this.wrapCollection(exports, pkgInfo);
         });
       });
   }

@@ -1,13 +1,11 @@
 import * as t from "tap";
-import { Agent } from "./Agent";
 import { ReportingAPIForTesting } from "./api/ReportingAPIForTesting";
 import { Token } from "./api/Token";
 import { applyHooks } from "./applyHooks";
 import { Context, runWithContext } from "./Context";
 import { Hooks } from "./hooks/Hooks";
-import { LoggerForTesting } from "./logger/LoggerForTesting";
-import { setInstance } from "./AgentSingleton";
 import { wrapExport } from "./hooks/wrapExport";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -24,14 +22,11 @@ const context: Context = {
 
 const reportingAPI = new ReportingAPIForTesting();
 
-const agent = new Agent(
-  true,
-  new LoggerForTesting(),
-  reportingAPI,
-  new Token("123"),
-  "lambda"
-);
-setInstance(agent);
+const agent = createTestAgent({
+  serverless: "lambda",
+  api: reportingAPI,
+  token: new Token("123"),
+});
 
 t.test(
   "it hooks into globals",
@@ -80,7 +75,7 @@ t.test(
     applyHooks(hooks);
 
     await runWithContext(context, async () => {
-      await fetch("https://aikido.dev");
+      await fetch("https://app.aikido.dev");
       t.same(modifyCalled, true);
 
       t.same(inspectCalled, false);
@@ -166,7 +161,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
         return {
           operation: "os.hostname",
           source: "body",
-          pathToPayload: "path",
+          pathsToPayload: ["path"],
           payload: "payload",
           metadata: {},
           kind: "path_traversal",

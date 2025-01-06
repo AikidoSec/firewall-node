@@ -21,6 +21,16 @@ export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
 ): Result {
+  // Do not consume rate limit for the same request a second time
+  // (Might happen if the user adds the middleware multiple times)
+  if (context.consumedRateLimit) {
+    logWarningIfMiddlewareExecutedTwice();
+    return { block: false };
+  }
+
+  // We want to count the request only once
+  updateContext(context, "consumedRateLimit", true);
+
   const endpoint = getRateLimitedEndpoint(context, agent.getConfig());
 
   if (!endpoint) {
@@ -41,48 +51,55 @@ export function shouldRateLimitRequest(
     context.remoteAddress &&
     agent.getConfig().isAllowedIP(context.remoteAddress);
 
+  if (isFromLocalhostInProduction || isAllowedIP) {
+    return { block: false };
+  }
+
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
-  if (
-    context.remoteAddress &&
-    !context.consumedRateLimitForIP &&
-    !isFromLocalhostInProduction &&
-    !isAllowedIP
-  ) {
+  if (context.user) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${context.route}:ip:${context.remoteAddress}`,
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
         windowSizeInMS,
         maxRequests
       );
 
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForIP", true);
+    if (!allowed) {
+      return { block: true, trigger: "user" };
+    }
+
+    // Do not check IP rate limit if user is set
+    return { block: false };
+  }
+
+  if (context.remoteAddress) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
+        windowSizeInMS,
+        maxRequests
+      );
 
     if (!allowed) {
       return { block: true, trigger: "ip" };
     }
   }
 
-  if (context.user && !context.consumedRateLimitForUser) {
-    const allowed = agent
-      .getRateLimiter()
-      .isAllowed(
-        `${context.method}:${context.route}:user:${context.user.id}`,
-        windowSizeInMS,
-        maxRequests
-      );
+  return { block: false };
+}
 
-    // This function is executed for every middleware and route handler
-    // We want to count the request only once
-    updateContext(context, "consumedRateLimitForUser", true);
+let loggedWarningIfMiddlewareExecutedTwice = false;
 
-    if (!allowed) {
-      return { block: true, trigger: "user" };
-    }
+function logWarningIfMiddlewareExecutedTwice(): void {
+  if (loggedWarningIfMiddlewareExecutedTwice) {
+    return;
   }
 
-  return { block: false };
+  // eslint-disable-next-line no-console
+  console.warn(`Zen.addMiddleware(...) should be called only once.`);
+
+  loggedWarningIfMiddlewareExecutedTwice = true;
 }

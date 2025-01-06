@@ -1,9 +1,11 @@
+/* eslint-disable max-lines-per-function */
 import { isDeepStrictEqual } from "util";
 import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { buildPathToPayload, PathPart } from "../../helpers/attackPath";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
+import { detectDbJsInjection } from "../js-injection/detectDbJsInjection";
 
 function matchFilterPartInUser(
   userInput: unknown,
@@ -11,6 +13,14 @@ function matchFilterPartInUser(
   pathToPayload: PathPart[] = []
 ): { match: false } | { match: true; pathToPayload: string } {
   if (typeof userInput === "string") {
+    // Check for js injection in $where
+    if (detectDbJsInjection(userInput, filterPart)) {
+      return {
+        match: true,
+        pathToPayload: buildPathToPayload(pathToPayload),
+      };
+    }
+
     const jwt = tryDecodeAsJWT(userInput);
     if (jwt.jwt) {
       return matchFilterPartInUser(
@@ -21,11 +31,12 @@ function matchFilterPartInUser(
     }
   }
 
-  if (isDeepStrictEqual(userInput, filterPart)) {
-    return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
-  }
-
   if (isPlainObject(userInput)) {
+    const filteredInput = removeKeysThatDontStartWithDollarSign(userInput);
+    if (isDeepStrictEqual(filteredInput, filterPart)) {
+      return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
+    }
+
     for (const key in userInput) {
       const match = matchFilterPartInUser(
         userInput[key],
@@ -119,7 +130,12 @@ function findFilterPartWithOperators(
 }
 
 type DetectionResult =
-  | { injection: true; source: Source; pathToPayload: string; payload: unknown }
+  | {
+      injection: true;
+      source: Source;
+      pathsToPayload: string[];
+      payload: unknown;
+    }
   | { injection: false };
 
 export function detectNoSQLInjection(
@@ -138,7 +154,7 @@ export function detectNoSQLInjection(
         return {
           injection: true,
           source: source,
-          pathToPayload: result.pathToPayload,
+          pathsToPayload: [result.pathToPayload],
           payload: result.payload,
         };
       }

@@ -1,0 +1,12 @@
+{
+  "name": "fastify-clickhouse",
+  "version": "1.0.0",
+  "description": "A vulnerable fastify app to test out SQL Injection with clickhouse",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "fastify": "^4.28.0",
+    "@clickhouse/client": "^1.7.0"
+  }
+}

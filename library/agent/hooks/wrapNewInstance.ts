@@ -9,15 +9,11 @@ export function wrapNewInstance(
   subject: unknown,
   className: string | undefined,
   pkgInfo: WrapPackageInfo,
-  interceptor: (exports: any) => void
+  interceptor: (exports: any) => void | unknown
 ) {
   const agent = getInstance();
   if (!agent) {
     throw new Error("Can not wrap new instance if agent is not initialized");
-  }
-
-  if (!className) {
-    className = "default";
   }
 
   try {
@@ -32,13 +28,23 @@ export function wrapNewInstance(
           // @ts-expect-error It's a constructor
           const newInstance = new original(...args);
 
-          interceptor(newInstance);
+          try {
+            const returnVal = interceptor(newInstance);
+            if (returnVal) {
+              return returnVal;
+            }
+          } catch (error) {
+            agent.onFailedToWrapMethod(
+              pkgInfo.name,
+              className || "default export"
+            );
+          }
 
           return newInstance;
         };
       }
     );
   } catch (error) {
-    agent.onFailedToWrapMethod(pkgInfo.name, className);
+    agent.onFailedToWrapMethod(pkgInfo.name, className || "default export");
   }
 }

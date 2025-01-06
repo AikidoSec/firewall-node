@@ -1,10 +1,11 @@
 import type { RequestOptions as HTTPSRequestOptions } from "https";
 import type { RequestOptions as HTTPRequestOptions } from "http";
+import { isIPv6 } from "net";
 import { tryParseURL } from "../../helpers/tryParseURL";
-import { isPlainObject } from "../../helpers/isPlainObject";
+import { isOptionsObject } from "./isOptionsObject";
 
 /**
- * Gets the url from the arguments of an node:http(s) outgoing request function call.
+ * Gets the url from the arguments of a node:http(s) outgoing request function call.
  */
 export function getUrlFromHTTPRequestArgs(
   args: unknown[],
@@ -43,11 +44,11 @@ export function getUrlFromHTTPRequestArgs(
  * But thy can also be not provided at all.
  */
 function getRequestOptions(args: unknown[]) {
-  if (isPlainObject(args[0]) && !(args[0] instanceof URL)) {
+  if (isOptionsObject(args[0]) && !(args[0] instanceof URL)) {
     return args[0] as HTTPRequestOptions | HTTPSRequestOptions;
   } else if (
     args.length > 1 &&
-    isPlainObject(args[1]) &&
+    isOptionsObject(args[1]) &&
     !(args[1] instanceof URL)
   ) {
     return args[1] as HTTPRequestOptions | HTTPSRequestOptions;
@@ -68,17 +69,47 @@ function getUrlFromRequestOptions(
   } else if (module) {
     str += `${module}:`;
   }
+
   str += "//";
   if (typeof options.hostname === "string") {
-    str += options.hostname;
+    str += wrapWithSquareBracketsIfNeeded(options.hostname);
+  } else if (typeof options.host === "string") {
+    str += wrapWithSquareBracketsIfNeeded(options.host);
   }
-  if (typeof options.port === "number" && options.port > 0) {
-    str += `:${options.port}`;
+
+  if (options.port) {
+    if (typeof options.port === "number" && options.port > 0) {
+      str += `:${options.port}`;
+    }
+    if (typeof options.port === "string" && options.port.length > 0) {
+      str += `:${options.port}`;
+    }
   }
+
   if (typeof options.path === "string") {
     str += options.path;
   }
+
   return tryParseURL(str);
+}
+
+// Many HTTP clients pass the separate URL parts as properties of the options object, example:
+// http.request({ protocol: 'http:', hostname: 'example.com', port: 80, path: '/path' })
+//
+// When you have an IPv6 address as the hostname, a client might pass it without square brackets:
+// http.request({ hostname: '::', ... })
+//
+// When we reconstruct a URL from these options, we need to wrap the hostname in square brackets if it's an IPv6 address
+// Otherwise the URL will be invalid
+// http://:::80/path
+// should be
+// http://[::]:80/path
+function wrapWithSquareBracketsIfNeeded(hostname: string): string {
+  if (isIPv6(hostname)) {
+    return `[${hostname}]`;
+  }
+
+  return hostname;
 }
 
 /**
@@ -90,16 +121,21 @@ function mergeURLWithRequestOptions(
   url: URL
 ): URL | undefined {
   let urlStr = "";
+
   if (options.protocol) {
     urlStr += options.protocol;
   } else {
     urlStr += url.protocol;
   }
+
   urlStr += "//";
+
   if (options.hostname) {
-    urlStr += options.hostname;
+    urlStr += wrapWithSquareBracketsIfNeeded(options.hostname);
+  } else if (options.host) {
+    urlStr += wrapWithSquareBracketsIfNeeded(options.host);
   } else {
-    urlStr += url.hostname;
+    urlStr += wrapWithSquareBracketsIfNeeded(url.hostname);
   }
 
   if (options.port) {

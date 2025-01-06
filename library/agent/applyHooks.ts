@@ -1,4 +1,3 @@
-import { Agent } from "./Agent";
 import { Hooks } from "./hooks/Hooks";
 import {
   setBuiltinModulesToPatch,

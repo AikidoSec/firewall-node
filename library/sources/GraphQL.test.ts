@@ -1,16 +1,28 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { GraphQL } from "./GraphQL";
 import { Token } from "../agent/api/Token";
+import { createTestAgent } from "../helpers/createTestAgent";
+
+function getTestContext() {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000/graphql",
+    query: {},
+    headers: {},
+    body: { query: '{ getFile(path: "/etc/bashrc") }' },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/graphql",
+  };
+}
 
 t.test("it works", async () => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting({
+  const agent = createTestAgent({
+    api: new ReportingAPIForTesting({
       success: true,
       endpoints: [
         {
@@ -33,17 +45,18 @@ t.test("it works", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
     }),
-    new Token("123"),
-    undefined
-  );
+    token: new Token("123"),
+  });
 
   agent.start([new GraphQL()]);
 
-  const { graphql, buildSchema } = require("graphql");
+  const { graphql, buildSchema } =
+    require("graphql") as typeof import("graphql");
 
   const schema = buildSchema(`
         type Query {
             getFile(path: String): String
+            anotherQuery: String
         }
     `);
 
@@ -51,46 +64,69 @@ t.test("it works", async () => {
     getFile: ({ path }: { path: string }) => {
       return "file content";
     },
+    anotherQuery: () => {
+      return "another query";
+    },
   };
 
-  const query = async (path: string) => {
+  const query = async (path: string, variableValues?: Record<string, any>) => {
     return await graphql({
       schema,
       source: `{ getFile(path: "${path}") }`,
       rootValue: root,
+      variableValues: variableValues,
     });
-  };
-
-  const context = {
-    remoteAddress: "::1",
-    method: "POST",
-    url: "http://localhost:4000/graphql",
-    query: {},
-    headers: {},
-    body: { query: '{ getFile(path: "/etc/bashrc") }' },
-    cookies: {},
-    routeParams: {},
-    source: "express",
-    route: "/graphql",
   };
 
   await query("/etc/bashrc");
 
-  await runWithContext(context, async () => {
+  await runWithContext(getTestContext(), async () => {
     await query("/etc/bashrc");
     t.same(getContext()?.graphql, ["/etc/bashrc"]);
   });
 
+  await runWithContext(getTestContext(), async () => {
+    await query("/etc/bashrc", {
+      test: "user input",
+    });
+    t.same(getContext()?.graphql, ["/etc/bashrc", "user input"]);
+  });
+
   // Rate limiting works
-  await runWithContext(context, async () => {
+  await runWithContext(getTestContext(), async () => {
     const success = await query("/etc/bashrc");
-    t.same(success.data.getFile, "file content");
+    t.same(success.data!.getFile, "file content");
     await query("/etc/bashrc");
     await query("/etc/bashrc");
     const result = await query("/etc/bashrc");
+    t.same(result.errors![0].message, "You are rate limited by Zen.");
+
+    // With operation name
     t.same(
-      result.errors[0].message,
-      "You are rate limited by Aikido firewall."
+      await graphql({
+        schema,
+        source: `
+        query getFile {
+          getFile(path: "/etc/bashrc")
+        }
+
+        query anotherQuery {
+          anotherQuery
+        }
+      `,
+        rootValue: root,
+        variableValues: {},
+        operationName: "anotherQuery",
+      }),
+      {
+        data: { anotherQuery: "another query" },
+      }
     );
+  });
+
+  // Empty context
+  await runWithContext({} as Context, async () => {
+    const response = await query("/etc/bashrc");
+    t.same(response, { data: { getFile: "file content" } });
   });
 });

@@ -1,13 +1,11 @@
 /* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -24,13 +22,18 @@ wrap(dns, "lookup", function lookup(original) {
       hostname === "thisdomainpointstointernalip.com" ||
       hostname === "thisdomainpointstointernalip2.com"
     ) {
-      return original.apply(this, [
-        "localhost",
-        ...Array.from(arguments).slice(1),
-      ]);
+      return original.apply(
+        // @ts-expect-error We don't know the type of `this`
+        this,
+        ["localhost", ...Array.from(arguments).slice(1)]
+      );
     }
 
-    original.apply(this, arguments);
+    original.apply(
+      // @ts-expect-error We don't know the type of `this`
+      this,
+      arguments
+    );
   };
 });
 
@@ -49,30 +52,16 @@ const context: Context = {
   route: "/posts/:id",
 };
 
-const redirectTestUrl =
-  "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
-
-const redirectUrl = {
-  ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
-  domain: `${redirectTestUrl}/ssrf-test-domain`, // Redirects to http://local.aikido.io/test
-  ipTwice: `${redirectTestUrl}/ssrf-test-twice`, // Redirects to /ssrf-test
-  domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
-};
-
 t.test("it works", (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    new Token("123"),
-    undefined
-  );
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
 
-  const http = require("http");
-  const https = require("https");
+  const http = require("http") as typeof import("http");
+  const https = require("https") as typeof import("https");
 
   runWithContext(context, () => {
     const aikido = http.request("http://aikido.dev");
@@ -80,7 +69,7 @@ t.test("it works", (t) => {
   });
 
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 80 },
+    { hostname: "aikido.dev", port: 80, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -89,14 +78,14 @@ t.test("it works", (t) => {
     aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 443 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
   const aikido = https.request(new URL("https://aikido.dev"));
   aikido.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 443 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -107,7 +96,7 @@ t.test("it works", (t) => {
   t.same(withoutPort instanceof http.ClientRequest, true);
   withoutPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 443 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -118,7 +107,7 @@ t.test("it works", (t) => {
   httpWithoutPort.end();
   t.same(httpWithoutPort instanceof http.ClientRequest, true);
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 80 },
+    { hostname: "aikido.dev", port: 80, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -126,7 +115,7 @@ t.test("it works", (t) => {
   t.same(withPort instanceof http.ClientRequest, true);
   withPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: 443 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -134,7 +123,7 @@ t.test("it works", (t) => {
   t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: "443" },
+    { hostname: "aikido.dev", port: "443", hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -151,7 +140,7 @@ t.test("it works", (t) => {
         .on("error", (error) => {
           t.match(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
 
           // Ensure the lookup is only called once per hostname
@@ -175,7 +164,7 @@ t.test("it works", (t) => {
         .on("error", (error) => {
           t.match(
             error.message,
-            "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
           );
         })
         .on("finish", () => {
@@ -207,7 +196,7 @@ t.test("it works", (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -218,7 +207,7 @@ t.test("it works", (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -234,7 +223,7 @@ t.test("it works", (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
@@ -245,28 +234,32 @@ t.test("it works", (t) => {
     if (error4 instanceof Error) {
       t.same(
         error4.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
 
     // ECONNREFUSED means that the request is not blocked
-    http.request("http://localhost:9876").on("error", (e) => {
-      t.same(e.code, "ECONNREFUSED");
-    });
+    http
+      .request("http://localhost:9876")
+      .on("error", (e: NodeJS.ErrnoException) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
 
-    https.request("https://localhost:9876").on("error", (e) => {
-      t.same(e.code, "ECONNREFUSED");
-    });
+    https
+      .request("https://localhost:9876")
+      .on("error", (e: NodeJS.ErrnoException) => {
+        t.same(e.code, "ECONNREFUSED");
+      });
 
     https
       .request("https://localhost/api/internal", { port: 9876 })
-      .on("error", (e) => {
+      .on("error", (e: NodeJS.ErrnoException) => {
         t.same(e.code, "ECONNREFUSED");
       });
 
     https
       .request("https://localhost/api/internal", { defaultPort: 9876 })
-      .on("error", (e) => {
+      .on("error", (e: NodeJS.ErrnoException) => {
         t.same(e.code, "ECONNREFUSED");
       });
 
@@ -282,165 +275,21 @@ t.test("it works", (t) => {
     if (error5 instanceof Error) {
       t.same(
         error5.message,
-        "Aikido firewall has blocked a server-side request forgery: https.request(...) originating from body.image"
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+      );
+    }
+
+    const oldUrl = require("url");
+    const error6 = t.throws(() =>
+      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
+    );
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
       );
     }
   });
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ip } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.ip, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "http://127.0.0.1/test");
-        const error = t.throws(() => http.request("http://127.0.0.1/test"));
-        t.ok(error instanceof Error);
-        if (error instanceof Error) {
-          t.same(
-            error.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-          );
-        }
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { test: redirectUrl.domain } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.domain, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "http://local.aikido.io/test");
-        http.request("http://local.aikido.io/test").on("error", (e) => {
-          t.ok(e instanceof Error);
-          t.same(
-            e.message,
-            "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.test"
-          );
-        });
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.ipTwice } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.ipTwice, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "/ssrf-test");
-        const response2 = http.request(redirectUrl.ip, (res) => {
-          const error = t.throws(() => http.request("http://127.0.0.1/test"));
-          t.ok(error instanceof Error);
-          if (error instanceof Error) {
-            t.same(
-              error.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-            );
-          }
-        });
-        response2.end();
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{ body: { image: redirectUrl.domainTwice } },
-    },
-    () => {
-      const response1 = http.request(redirectUrl.domainTwice, (res) => {
-        t.same(res.statusCode, 302);
-        t.same(res.headers.location, "/ssrf-test-domain");
-        const response2 = http.request(redirectUrl.domain, (res) => {
-          http.request("http://local.aikido.io/test").on("error", (e) => {
-            t.ok(e instanceof Error);
-            t.same(
-              e.message,
-              "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-            );
-          });
-        });
-        response2.end();
-      });
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{
-        body: {
-          image:
-            "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        },
-      },
-    },
-    () => {
-      const response1 = http.request(
-        "http://ec2-13-60-120-68.eu-north-1.compute.amazonaws.com/ssrf-test-absolute-domain",
-        (res) => {
-          t.same(res.statusCode, 302);
-          t.same(res.headers.location, redirectUrl.domain);
-          const response2 = http.request(redirectUrl.domain, (res) => {
-            http.request("http://local.aikido.io/test").on("error", (e) => {
-              t.ok(e instanceof Error);
-              t.same(
-                e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-              );
-            });
-          });
-          response2.end();
-        }
-      );
-      response1.end();
-    }
-  );
-
-  runWithContext(
-    {
-      ...context,
-      ...{
-        body: {
-          image: "http://13.60.120.68/ssrf-test-absolute-domain",
-        },
-      },
-    },
-    () => {
-      const response1 = http.request(
-        "http://13.60.120.68/ssrf-test-absolute-domain",
-        (res) => {
-          t.same(res.statusCode, 302);
-          t.same(res.headers.location, redirectUrl.domain);
-          const response2 = http.request(redirectUrl.domain, (res) => {
-            http.request("http://local.aikido.io/test").on("error", (e) => {
-              t.ok(e instanceof Error);
-              t.same(
-                e.message,
-                "Aikido firewall has blocked a server-side request forgery: http.request(...) originating from body.image"
-              );
-            });
-          });
-          response2.end();
-        }
-      );
-      response1.end();
-    }
-  );
 
   setTimeout(() => {
     t.end();

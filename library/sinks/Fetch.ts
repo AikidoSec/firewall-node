@@ -133,8 +133,12 @@ export class Fetch implements Wrapper {
     if (typeof globalThis.fetch === "function") {
       // Fetch is lazy loaded in Node.js
       // By calling fetch() we ensure that the global dispatcher is available
-      // @ts-expect-error Type is not defined
-      globalThis.fetch().catch(() => {});
+      try {
+        // @ts-expect-error Type is not defined
+        globalThis.fetch().catch(() => {});
+      } catch (error) {
+        // Ignore errors
+      }
     }
 
     hooks.addGlobal("fetch", {
