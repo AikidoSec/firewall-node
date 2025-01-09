@@ -61,17 +61,9 @@ const modules = [
       process.exit(1);
     }
 
-    let flags = [];
-    if (module === "ssrf") {
-      flags.push("--prof");
-    }
-    const withZen = spawnSync(
-      "node",
-      flags.concat(["run.js", module, "true"]),
-      {
-        cwd: __dirname,
-      }
-    );
+    const withZen = spawnSync("node", ["run.js", module, "true"], {
+      cwd: __dirname,
+    });
 
     if (withZen.status !== 0) {
       console.error(withZen.stderr.toString());
