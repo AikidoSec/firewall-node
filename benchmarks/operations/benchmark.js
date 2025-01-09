@@ -3,7 +3,27 @@ const { spawnSync } = require("child_process");
 const modules = [
   {
     module: "sqli",
-    name: "Run SQL query",
+    name: "SQL query",
+  },
+  {
+    module: "ssrf",
+    name: "Outgoing HTTP request",
+  },
+  {
+    module: "path-traversal",
+    name: "File read",
+  },
+  {
+    module: "nosqli",
+    name: "NoSQL query",
+  },
+  {
+    module: "jsinjection",
+    name: "`new Function(...)`",
+  },
+  {
+    module: "shelli",
+    name: "Shell command",
   },
 ];
 
@@ -24,7 +44,13 @@ for (const { module, name } of modules) {
     process.exit(1);
   }
 
-  const timingsWithoutZen = JSON.parse(withoutZen.stdout.toString());
+  let timingsWithoutZen;
+  try {
+    timingsWithoutZen = JSON.parse(withoutZen.stdout.toString());
+  } catch (e) {
+    console.error(withoutZen.stdout.toString());
+    process.exit(1);
+  }
 
   const withZen = spawnSync("node", ["run.js", module, "true"], {
     cwd: __dirname,
@@ -35,7 +61,14 @@ for (const { module, name } of modules) {
     process.exit(1);
   }
 
-  const timingsWithZen = JSON.parse(withZen.stdout.toString());
+  let timingsWithZen;
+  try {
+    timingsWithZen = JSON.parse(withZen.stdout.toString());
+  } catch (e) {
+    console.error(withZen.stdout.toString());
+    process.exit(1);
+  }
+
   const averageWithoutZen =
     timingsWithoutZen.reduce((a, b) => a + b, 0) / timingsWithoutZen.length;
   const averageWithZen =
@@ -49,12 +82,12 @@ for (const { module, name } of modules) {
 
   console.log(`Module: ${name}`);
   console.log(
-    `Average time without Zen: ${formatter.format(averageWithoutZen)} ms`
+    `Average time without Zen: ${formatter.format(averageWithoutZen)}ms`
   );
-  console.log(`Average time with Zen: ${formatter.format(averageWithZen)} ms`);
-  console.log(`Delta: ${formatter.format(delta)} ms`);
+  console.log(`Average time with Zen: ${formatter.format(averageWithZen)}ms`);
+  console.log(`Delta: +${formatter.format(delta)}ms`);
 
-  markdownTable += `| ${name} | ${formatter.format(averageWithoutZen)} ms | ${formatter.format(averageWithZen)} ms | ${formatter.format(delta)} ms |\n`;
+  markdownTable += `| ${name} | ${formatter.format(averageWithoutZen)}ms | ${formatter.format(averageWithZen)}ms | +${formatter.format(delta)}ms |\n`;
 }
 
 console.log();
