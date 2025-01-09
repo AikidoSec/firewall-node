@@ -166,17 +166,22 @@ disclosing the source code of your own applications.
 For more information, please contact Aikido Security at this
 address: support@aikido.dev or create an account at https://app.aikido.dev.
 
-## Performance
+## Benchmarks
 
 We run a benchmark on every commit to ensure Zen has a minimal impact on your application's performance.
 
-The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Zen:
+### Benchmarks for operations
 
-| Without Zen      | With Zen      | Difference in ms |
-|------------------|---------------|------------------|
-| 0.214ms          | 0.222ms       | +0.008ms         |
+| Benchmark           | Avg. time w/o Zen | Avg. time w/ Zen | Delta      |
+|---------------------|-------------------|------------------|------------|
+| SQL query | 0.0084ms | 0.0264ms | +0.018ms |
+| Outgoing HTTP request | 0.2987ms | 1.6801ms | +1.3814ms |
+| File read | 0.0466ms | 0.0757ms | +0.0291ms |
+| NoSQL query | 0.0044ms | 0.0125ms | +0.0081ms |
+| `new Function(...)` | 0.0014ms | 0.0375ms | +0.0361ms |
+| Shell command | 3.1846ms | 3.292ms | +0.1074ms |
 
-(Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
+(Using Node.js 18.x and MongoDB 6.9.x. Results will vary depending on your hardware.)
 
 See [benchmarks](benchmarks) for more information.
 
