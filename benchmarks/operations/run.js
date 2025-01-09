@@ -28,21 +28,21 @@ const mod = require(`./${process.argv[2]}`);
   const timings = [];
   const amount = 1000;
 
-  async function step() {
-    const start = performance.now();
-    await mod.step();
-    const end = performance.now();
-    timings.push(end - start);
+  async function steps() {
+    for (let i = 0; i < amount; i++) {
+      const start = performance.now();
+      await mod.step();
+      const end = performance.now();
+      timings.push(end - start);
+    }
   }
 
-  for (let i = 0; i < amount; i++) {
-    if (enableZen) {
-      await runWithContext(context(), async () => {
-        await step();
-      });
-    } else {
-      await step();
-    }
+  if (enableZen) {
+    await runWithContext(context(), async () => {
+      await steps();
+    });
+  } else {
+    await steps();
   }
 
   if (mod.teardown) {
