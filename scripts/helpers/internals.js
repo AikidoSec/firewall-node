@@ -1,17 +1,23 @@
 const { createWriteStream, createReadStream } = require("fs");
-const { Readable } = require("stream");
-const { finished, pipeline } = require("stream/promises");
+const { pipeline } = require("stream/promises");
 const { extract } = require("tar");
 const { readFile } = require("fs/promises");
 const { createHash } = require("crypto");
+const https = require("follow-redirects").https;
 
-async function downloadFile(url, path) {
-  const stream = createWriteStream(path);
-  const { ok, body } = await fetch(url);
-  if (!ok) {
-    throw new Error(`Failed to download file from ${url}`);
-  }
-  await finished(Readable.fromWeb(body).pipe(stream));
+function downloadFile(url, path) {
+  return new Promise((resolve, reject) => {
+    const stream = createWriteStream(path);
+    https
+      .get(url, (response) => {
+        response.pipe(stream);
+      })
+      .on("error", reject);
+
+    stream.on("finish", () => {
+      stream.close(resolve);
+    });
+  });
 }
 
 async function extractTar(path, dest) {
