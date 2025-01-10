@@ -2,7 +2,7 @@ const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
-const { writeFile } = require("fs/promises");
+const { writeFile, mkdir } = require("fs/promises");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
