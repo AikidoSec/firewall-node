@@ -14,6 +14,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
-      - run: make install-lib-only
-      - run: make build
-      - run: make lint
+      - run: npm run install-lib-only
+      - run: npm run build
+      - run: npm run lint
