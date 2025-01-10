@@ -16,6 +16,7 @@
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
     "format": "prettier --write .",
-    "benchmark": "node scripts/benchmark.js"
+    "benchmark": "node scripts/benchmark.js",
+    "sample-app": "node scripts/run-sample-app.js"
   }
 }
