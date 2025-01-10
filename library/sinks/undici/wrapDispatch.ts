@@ -1,6 +1,9 @@
 /* eslint-disable max-lines-per-function */
 import type { Dispatcher } from "undici-v6";
-import { runWithUndiciRequestContext } from "./RequestContextStorage";
+import {
+  getUndiciRequestContext,
+  runWithUndiciRequestContext,
+} from "./RequestContextStorage";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { Context, getContext } from "../../agent/Context";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
@@ -9,6 +12,7 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromOptions } from "./getUrlFromOptions";
+import { wrapOnHeaders } from "./wrapOnHeaders";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -59,6 +63,8 @@ export function wrapDispatch(
     }
 
     blockRedirectToPrivateIP(url, context, agent, isFetch);
+
+    handler.onHeaders = wrapOnHeaders(handler.onHeaders, context, url);
 
     // We also pass the incoming context as part of the outgoing request context to prevent context mismatch, if the request is a redirect (argContext is set)
     return runWithUndiciRequestContext(

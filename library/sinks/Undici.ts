@@ -1,7 +1,7 @@
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { getContext } from "../agent/Context";
+import { bindContext, getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
@@ -12,9 +12,8 @@ import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupC
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
-import { onHeaders } from "./undici/onHeaders";
 import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
-import { subscribe } from "diagnostics_channel";
+import { wrapOnHeaders } from "./undici/wrapOnHeaders";
 
 const methods = [
   "request",
@@ -103,7 +102,13 @@ export class Undici implements Wrapper {
     }
 
     // @ts-expect-error No types for this
-    instance.dispatch = wrapDispatch(instance.dispatch, agent, false, context);
+    instance.dispatch = bindContext(
+      // @ts-expect-error No types for this
+      wrapDispatch(instance.dispatch, agent, false, context)
+    );
+
+    // @ts-expect-error No types for this
+    instance.onHeaders = wrapOnHeaders(instance.onHeaders, context);
 
     return instance;
   }
@@ -123,11 +128,6 @@ export class Undici implements Wrapper {
         if (!agent) {
           // No agent, we can't do anything
           return;
-        }
-
-        // Subscribe to the undici:request:headers diagnostic channel to check for redirects
-        if (isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
-          subscribe("undici:request:headers", onHeaders);
         }
 
         // Immediately patch the global dispatcher before returning the module
