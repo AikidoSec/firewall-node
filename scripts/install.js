@@ -17,7 +17,8 @@ async function main() {
 
   const libOnly = process.argv.includes("--lib-only");
 
-  const installDirs = libOnly ? ["library"] : ["library", "end2end"];
+  // . is the root directory, npm install is automatically run in the root directory if npm install is used, but not if npm run install-lib-only is executed
+  const installDirs = libOnly ? ["library", "."] : ["library", "end2end"];
   const scanForSubDirs = libOnly ? [] : ["sample-apps", "benchmarks"];
 
   for (const dir of scanForSubDirs) {

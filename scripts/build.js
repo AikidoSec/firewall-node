@@ -3,7 +3,11 @@ const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const { fileExists } = require("./helpers/fs");
-const { downloadFile, verifyFileHash } = require("./helpers/internals");
+const {
+  downloadFile,
+  verifyFileHash,
+  extractTar,
+} = require("./helpers/internals");
 const execAsync = promisify(exec);
 
 // Zen Internals configuration
@@ -21,6 +25,8 @@ async function main() {
     await rm(buildDir, { recursive: true });
   }
 
+  await dlZenInternals();
+
   await execAsync(`npm run build`, {
     cwd: libDir,
   });
@@ -32,8 +38,6 @@ async function main() {
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
-
-  await dlZenInternals();
 
   console.log("Build successful");
   process.exit(0);
@@ -67,9 +71,11 @@ async function dlZenInternals() {
     join(internalsDir, checksumFile)
   );
   await verifyFileHash(join(internalsDir, tarballFile));
+  await extractTar(join(internalsDir, tarballFile), internalsDir);
 
   await rm(join(internalsDir, tarballFile));
   await rm(join(internalsDir, checksumFile));
+  await rm(join(internalsDir, "zen_internals.d.ts"));
 }
 
 (async () => {
