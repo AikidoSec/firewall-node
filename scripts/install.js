@@ -12,6 +12,11 @@ if (process.argv.includes("--ci")) {
   process.env.CI = "true";
 }
 
+if (process.env.AIKIDO_SKIP_INSTALL === "true") {
+  console.log("Skipping dependencies installation");
+  process.exit(0);
+}
+
 async function main() {
   await prepareBuildDir();
 
@@ -43,6 +48,10 @@ async function installDependencies(folder) {
   try {
     await execAsync(cmd, {
       cwd: join(projectRoot, folder),
+      env: {
+        ...process.env,
+        AIKIDO_SKIP_INSTALL: "true",
+      },
     });
     console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
