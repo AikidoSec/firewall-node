@@ -18,6 +18,7 @@ const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/downl
 const rootDir = join(__dirname, "..");
 const buildDir = join(rootDir, "build");
 const libDir = join(rootDir, "library");
+const internalsDir = join(libDir, "internals");
 
 async function main() {
   // Delete build directory if it exists
@@ -38,6 +39,10 @@ async function main() {
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
+  await copyFile(
+    join(internalsDir, "zen_internals_bg.wasm"),
+    join(buildDir, "internals", "zen_internals_bg.wasm")
+  );
 
   console.log("Build successful");
   process.exit(0);
@@ -45,8 +50,6 @@ async function main() {
 
 // Download Zen Internals tarball and verify checksum
 async function dlZenInternals() {
-  const internalsDir = join(libDir, "internals");
-
   const tarballFile = "zen_internals.tgz";
   const checksumFile = "zen_internals.tgz.sha256sum";
 
