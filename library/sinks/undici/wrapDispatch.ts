@@ -1,13 +1,17 @@
+/* eslint-disable max-lines-per-function */
 import type { Dispatcher } from "undici-v6";
+import {
+  getUndiciRequestContext,
+  runWithUndiciRequestContext,
+} from "./RequestContextStorage";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
-import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
-import { tryParseURL } from "../../helpers/tryParseURL";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
+import { getUrlFromOptions } from "./getUrlFromOptions";
 import { wrapOnHeaders } from "./wrapOnHeaders";
 
 type Dispatch = Dispatcher["dispatch"];
@@ -23,9 +27,22 @@ type Dispatch = Dispatcher["dispatch"];
  * So for example if Promise.all is used, the dns request for one request could be made after the fetch request of another request.
  *
  */
-export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
+export function wrapDispatch(
+  orig: Dispatch,
+  agent: Agent,
+  isFetch: boolean,
+  contextArg?: Context // Only set if its a nth dispatch after a redirect
+): Dispatch {
   return function wrap(opts, handler) {
-    const context = getContext();
+    let context: Context | undefined;
+
+    // Prefer passed context over the context from the async local storage
+    // Context is passed as arg if its a nth dispatch after a redirect
+    if (contextArg) {
+      context = contextArg;
+    } else {
+      context = getContext();
+    }
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
@@ -35,16 +52,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    let url: URL | undefined;
-    if (typeof opts.origin === "string" && typeof opts.path === "string") {
-      url = tryParseURL(opts.origin + opts.path);
-    } else if (opts.origin instanceof URL) {
-      if (typeof opts.path === "string") {
-        url = tryParseURL(opts.origin.href + opts.path);
-      } else {
-        url = opts.origin;
-      }
-    }
+    const url = getUrlFromOptions(opts);
 
     if (!url) {
       return orig.apply(
@@ -54,31 +62,38 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
       );
     }
 
-    blockRedirectToPrivateIP(url, context, agent);
+    blockRedirectToPrivateIP(url, context, agent, isFetch);
 
-    const port = getPortFromURL(url);
+    handler.onHeaders = wrapOnHeaders(handler.onHeaders, context, url);
 
-    // Wrap onHeaders to check for redirects
-    handler.onHeaders = wrapOnHeaders(
-      handler.onHeaders,
-      { port, url },
-      context
+    // We also pass the incoming context as part of the outgoing request context to prevent context mismatch, if the request is a redirect (argContext is set)
+    return runWithUndiciRequestContext(
+      {
+        port: getPortFromURL(url),
+        url,
+        isFetch,
+        inContext: contextArg,
+      },
+      () => {
+        return orig.apply(
+          // @ts-expect-error We dont know the type of this
+          this,
+          [opts, handler]
+        );
+      }
     );
-
-    return RequestContextStorage.run({ port, url }, () => {
-      return orig.apply(
-        // @ts-expect-error We don't know the type of this
-        this,
-        [opts, handler]
-      );
-    });
   };
 }
 
 /**
  * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
-function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+function blockRedirectToPrivateIP(
+  url: URL,
+  context: Context,
+  agent: Agent,
+  isFetch: boolean
+) {
   const isAllowedIP =
     context &&
     context.remoteAddress &&
@@ -91,10 +106,12 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
   const found = isRedirectToPrivateIP(url, context);
 
+  const operation = isFetch ? "fetch" : "undici.[method]";
+
   if (found) {
     agent.onDetectedAttack({
       module: "undici",
-      operation: "fetch",
+      operation: operation,
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
@@ -110,7 +127,7 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
 
     if (agent.shouldBlock()) {
       throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+        `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
       );
     }
   }

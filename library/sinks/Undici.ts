@@ -1,7 +1,7 @@
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { getContext } from "../agent/Context";
+import { bindContext, getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
@@ -11,7 +11,9 @@ import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
+import { wrapOnHeaders } from "./undici/wrapOnHeaders";
 
 const methods = [
   "request",
@@ -84,10 +86,31 @@ export class Undici implements Wrapper {
       },
     });
 
-    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent);
+    dispatcher.dispatch = wrapDispatch(dispatcher.dispatch, agent, false);
 
     // We'll set a global dispatcher that will inspect the resolved IP address (and thus preventing TOCTOU attacks)
     undiciModule.setGlobalDispatcher(dispatcher);
+  }
+
+  // Wrap the dispatch method of the redirect handler to block http calls to private IPs if it's a redirect
+  private patchRedirectHandler(instance: unknown) {
+    const agent = getInstance();
+    const context = getContext();
+
+    if (!agent || !context) {
+      return instance;
+    }
+
+    // @ts-expect-error No types for this
+    instance.dispatch = bindContext(
+      // @ts-expect-error No types for this
+      wrapDispatch(instance.dispatch, agent, false, context)
+    );
+
+    // @ts-expect-error No types for this
+    instance.onHeaders = wrapOnHeaders(instance.onHeaders, context);
+
+    return instance;
   }
 
   wrap(hooks: Hooks) {
@@ -132,6 +155,12 @@ export class Undici implements Wrapper {
             },
           });
         }
+      })
+      // Todo only working for undici v6 right now
+      .onFileRequire("lib/handler/redirect-handler.js", (exports, pkgInfo) => {
+        return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
+          return this.patchRedirectHandler(instance);
+        });
       });
   }
 }
