@@ -4,6 +4,13 @@ const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 
+function getInstallCmd() {
+  if (process.env.CI) {
+    return "npm ci";
+  }
+  return "npm install";
+}
+
 async function main() {
   const sampleAppsDir = join(__dirname, "../sample-apps");
   const sampleApps = await readdir(sampleAppsDir);
@@ -42,7 +49,7 @@ async function installSampleAppDeps(sampleApp) {
   console.log(`Installing dependencies for ${sampleApp}`);
 
   try {
-    await execAsync(`npm install`, {
+    await execAsync(getInstallCmd(), {
       cwd: join(__dirname, "../sample-apps", sampleApp),
     });
     console.log(`Dependencies installed for ${sampleApp}`);
@@ -57,7 +64,7 @@ async function installBenchmarkDeps(benchmark) {
   console.log(`Installing dependencies for ${benchmark}`);
 
   try {
-    await execAsync(`npm install`, {
+    await execAsync(getInstallCmd(), {
       cwd: join(__dirname, "../benchmarks", benchmark),
     });
     console.log(`Dependencies installed for ${benchmark}`);

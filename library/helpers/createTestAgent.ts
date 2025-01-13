@@ -5,6 +5,7 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import type { Token } from "../agent/api/Token";
 import type { Logger } from "../agent/logger/Logger";
 import { LoggerNoop } from "../agent/logger/LoggerNoop";
+import { wrap } from "./wrap";
 
 /**
  * Create a test agent for testing purposes
@@ -15,7 +16,14 @@ export function createTestAgent(opts?: {
   api?: ReportingAPI;
   token?: Token;
   serverless?: string;
+  suppressConsoleLog?: boolean;
 }) {
+  if (opts?.suppressConsoleLog ?? true) {
+    wrap(console, "log", function log() {
+      return function log() {};
+    });
+  }
+
   const agent = new Agent(
     opts?.block ?? true,
     opts?.logger ?? new LoggerNoop(),

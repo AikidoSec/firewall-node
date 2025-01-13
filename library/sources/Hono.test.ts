@@ -30,6 +30,7 @@ wrap(fetch, "fetch", function mock(original) {
               ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
             },
           ],
+          blockedUserAgents: "hacker|attacker",
         }),
       };
     }
@@ -308,7 +309,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   server.close();
 });
 
-t.test("ip blocking works (real socket)", opts, async (t) => {
+t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   // Start a server with a real socket
   // The blocking is implemented in the HTTPServer source
   const { serve } =
@@ -352,6 +353,19 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
     },
   });
   t.equal(response3.statusCode, 200);
+
+  // Test blocked user agent
+  const response4 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8766/"),
+    headers: {
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response4.statusCode, 403);
+  t.equal(
+    response4.body,
+    "You are not allowed to access this resource because you have been identified as a bot."
+  );
 
   // Cleanup server
   server.close();

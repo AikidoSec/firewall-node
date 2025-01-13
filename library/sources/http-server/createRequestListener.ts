@@ -2,7 +2,7 @@ import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
-import { checkIfIPAddressIsBlocked } from "./checkIfIPAddressIsBlocked";
+import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
@@ -57,9 +57,12 @@ function callListenerWithContext(
     // This method is called when the response is finished and discovers the routes for display in the dashboard
     // The bindContext function is used to ensure that the context is available in the callback
     // If using http2, the context is not available in the callback without this
-    res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
+    res.on(
+      "finish",
+      bindContext(createOnFinishRequestHandler(req, res, agent))
+    );
 
-    if (checkIfIPAddressIsBlocked(res, agent)) {
+    if (checkIfRequestIsBlocked(res, agent)) {
       // The return is necessary to prevent the listener from being called
       return;
     }
@@ -68,8 +71,24 @@ function callListenerWithContext(
   });
 }
 
-function createOnFinishRequestHandler(res: ServerResponse, agent: Agent) {
+// Use symbol to avoid conflicts with other properties
+const countedRequest = Symbol("__zen_request_counted__");
+
+function createOnFinishRequestHandler(
+  req: IncomingMessage,
+  res: ServerResponse,
+  agent: Agent
+) {
   return function onFinishRequest() {
+    if ((req as any)[countedRequest]) {
+      // The request has already been counted
+      // This might happen if the server has multiple listeners
+      return;
+    }
+
+    // Mark the request as counted
+    (req as any)[countedRequest] = true;
+
     const context = getContext();
 
     if (
