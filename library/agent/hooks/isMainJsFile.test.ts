@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { isMainJsFile } from "./isMainJsFile";
 import type { PackageJson } from "type-fest";
+import { sep } from "path";
 
 const basePackageJson: PackageJson = {
   name: "aikido-module",
@@ -8,16 +9,21 @@ const basePackageJson: PackageJson = {
   main: "./index.js",
 };
 
+const base =
+  process.platform === "win32"
+    ? "C:\\Users\\abc\\proj\\node_modules\\aikido-module"
+    : "/home/user/proj/node_modules/aikido-module";
+
 t.test("package.json main: is main file", async (t) => {
   t.ok(
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./index.js",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.js",
+      `${base}${sep}index.js`,
       basePackageJson
     )
   );
@@ -25,11 +31,11 @@ t.test("package.json main: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.js",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.js",
+      `${base}${sep}index.js`,
       basePackageJson
     )
   );
@@ -39,11 +45,11 @@ t.test("package.json main: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "test.js",
       },
       "aikido-module",
-      "/home/user/proj/node_modules/aikido-module/test.js",
+      `${base}${sep}test.js`,
       basePackageJson
     )
   );
@@ -53,11 +59,11 @@ t.test("package.json main: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.js",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.js",
+      `${base}${sep}index.js`,
       // @ts-expect-error main can not be undefined in types
       {
         ...basePackageJson,
@@ -72,11 +78,11 @@ t.test("package.json main: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "test.js",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/test.js",
+      `${base}${sep}test.js`,
       basePackageJson
     )
   );
@@ -86,11 +92,11 @@ t.test("package.json main: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.js",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/test.js",
+      `${base}${sep}test.js`,
       // @ts-expect-error main can not be undefined in types
       {
         ...basePackageJson,
@@ -105,11 +111,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -121,11 +127,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -137,11 +143,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./test/index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/test/index.cjs",
+      `${base}${sep}test${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -153,11 +159,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./test/index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/test/index.cjs",
+      `${base}${sep}test${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -169,11 +175,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -191,11 +197,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -216,11 +222,11 @@ t.test("package.json exports: is main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -244,11 +250,11 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -260,7 +266,7 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./test/index2.cjs",
       },
       "abc",
@@ -276,7 +282,7 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./test/index.cjs",
       },
       "abc",
@@ -292,7 +298,7 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "./test/index.cjs",
       },
       "abc",
@@ -308,11 +314,11 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,
@@ -330,11 +336,11 @@ t.test("package.json exports: is not main file", async (t) => {
     isMainJsFile(
       {
         name: "aikido-module",
-        base: "/home/user/proj/node_modules/aikido-module",
+        base: base,
         path: "index.cjs",
       },
       "abc",
-      "/home/user/proj/node_modules/aikido-module/index.cjs",
+      `${base}${sep}index.cjs`,
       // @ts-expect-error Merge
       {
         ...basePackageJson,

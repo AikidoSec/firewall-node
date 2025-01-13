@@ -7,6 +7,7 @@ import {
 } from "./wrapRequire";
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
+import { sep } from "path";
 
 t.test("Wrap require does not throw an error", async (t) => {
   wrapRequire();
@@ -26,8 +27,8 @@ t.test("Can wrap external package", async (t) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "sqlite3");
     t.same(pkgInfo.type, "external");
-    t.ok(pkgInfo.path?.base.endsWith("node_modules/sqlite3"));
-    t.same(pkgInfo.path?.relative, "lib/sqlite3.js");
+    t.ok(pkgInfo.path?.base.endsWith(`node_modules${sep}sqlite3`));
+    t.same(pkgInfo.path?.relative, `lib${sep}sqlite3.js`);
   });
   setPackagesToPatch([pkg]);
 
@@ -56,8 +57,8 @@ t.test("Can wrap file of external package", async (t) => {
       exports._test = "aikido";
       t.same(pkgInfo.name, "hono");
       t.same(pkgInfo.type, "external");
-      t.ok(pkgInfo.path?.base.endsWith("node_modules/hono"));
-      t.same(pkgInfo.path?.relative, "dist/cjs/hono-base.js");
+      t.ok(pkgInfo.path?.base.endsWith(`node_modules${sep}hono`));
+      t.same(pkgInfo.path?.relative, `dist${sep}cjs${sep}hono-base.js`);
     });
   setPackagesToPatch([pkg]);
 
