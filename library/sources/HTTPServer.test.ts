@@ -455,7 +455,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
           t.equal(response2.statusCode, 413);
         })
         .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+          t.fail(error);
         })
         .finally(() => {
           server.close();
