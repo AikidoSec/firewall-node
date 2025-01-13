@@ -12,6 +12,7 @@
   },
   "include": ["**/*.ts"],
   "ts-node": {
-    "swc": true
+    "transpileOnly": true,
+    "typeCheck": false
   }
 }
