@@ -15,7 +15,7 @@ type BodyReadResult =
 
 export async function readBodyStream(
   req: IncomingMessage,
-  res: ServerResponse<IncomingMessage>,
+  res: ServerResponse,
   agent: Agent
 ): Promise<BodyReadResult> {
   let body = "";
