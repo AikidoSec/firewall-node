@@ -39,6 +39,7 @@ import { SQLite3 } from "../sinks/SQLite3";
 import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
+import { Ws } from "../sources/Ws";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
@@ -138,6 +139,7 @@ export function getWrappers() {
     new Fastify(),
     new Koa(),
     new ClickHouse(),
+    new Ws(),
     new Prisma(),
     new Function(),
   ];

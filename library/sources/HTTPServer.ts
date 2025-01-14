@@ -3,7 +3,9 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
+import { isPackageInstalled } from "../helpers/isPackageInstalled";
 import { createRequestListener } from "./http-server/createRequestListener";
+import { createUpgradeListener } from "./http-server/createUpgradeListener";
 import { createStreamListener } from "./http-server/http2/createStreamListener";
 
 export class HTTPServer implements Wrapper {
@@ -35,7 +37,9 @@ export class HTTPServer implements Wrapper {
     if (args[0] === "request") {
       return this.wrapRequestListener(args, module, agent);
     }
-
+    if (args[0] === "upgrade") {
+      return [args[0], createUpgradeListener(args[1], module, agent)];
+    }
     if (module === "http2" && args[0] === "stream") {
       return [args[0], createStreamListener(args[1], module, agent)];
     }

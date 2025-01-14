@@ -29,6 +29,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  ws?: unknown; // Additional data related to WebSocket connections, like the last message received
 };
 
 /**
@@ -83,6 +84,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.graphql = context.graphql;
     current.xml = context.xml;
     current.subdomains = context.subdomains;
+    current.ws = context.ws;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
 
     // Clear all the cached user input strings

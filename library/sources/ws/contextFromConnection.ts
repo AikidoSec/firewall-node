@@ -1,29 +1,16 @@
-import type { IncomingMessage } from "http";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
+import type { IncomingMessage } from "http";
 import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 
-export function contextFromRequest(
-  req: IncomingMessage,
-  body: string | undefined,
-  source: string
-): Context {
+export function contextFromConnection(req: IncomingMessage): Context {
   const queryObject: Record<string, string> = {};
   if (req.url) {
     const params = tryParseURLParams(req.url);
     for (const [key, value] of params.entries()) {
       queryObject[key] = value;
-    }
-  }
-
-  let parsedBody: unknown = undefined;
-  if (body) {
-    try {
-      parsedBody = JSON.parse(body);
-    } catch (e) {
-      // Ignore
     }
   }
 
@@ -33,10 +20,10 @@ export function contextFromRequest(
     headers: req.headers,
     route: req.url ? buildRouteFromURL(req.url) : undefined,
     query: queryObject,
-    source,
+    source: `ws.connection`,
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
-    body: parsedBody,
+    body: undefined,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
       remoteAddress: req.socket?.remoteAddress,
