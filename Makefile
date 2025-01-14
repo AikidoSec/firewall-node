@@ -1,4 +1,4 @@
-INTERNALS_VERSION = v0.1.34
+INTERNALS_VERSION = v0.1.35
 INTERNALS_URL = https://github.com/AikidoSec/zen-internals/releases/download/$(INTERNALS_VERSION)
 TARBALL = zen_internals.tgz
 CHECKSUM_FILE = zen_internals.tgz.sha256sum
