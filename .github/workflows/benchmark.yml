@@ -39,8 +39,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wrk
-      - run: make install
-      - run: make build
+      - run: npm install
+      - run: npm run build
       - name: Run NoSQL Injection Benchmark
         run: cd benchmarks/nosql-injection && AIKIDO_CI=true node benchmark.js
       - name: Run SQL Injection Benchmark

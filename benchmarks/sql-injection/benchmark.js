@@ -1,8 +1,6 @@
 /**
  * Runs benchmarks for the detection of SQL Injections
  */
-const fs = require("fs");
-const { join } = require("path");
 const {
   detectSQLInjection,
 } = require("../../build/vulnerabilities/sql-injection/detectSQLInjection");
