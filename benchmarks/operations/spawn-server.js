@@ -6,9 +6,3 @@ const server = createServer((req, res) => {
 });
 
 server.listen(10411);
-
-process.on("SIGTERM", () => {
-  server.close(() => {
-    process.exit(0);
-  });
-});
