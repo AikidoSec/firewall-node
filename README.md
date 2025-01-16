@@ -178,14 +178,15 @@ We run a benchmark on every commit to ensure Zen has a minimal impact on your ap
 
 | Benchmark           | Avg. time w/o Zen | Avg. time w/ Zen | Delta      |
 |---------------------|-------------------|------------------|------------|
-| SQL query | 0.0048ms | 0.0134ms | +0.0085ms |
-| Outgoing HTTP request | 0.2917ms | 1.4792ms | +1.1876ms |
-| File read | 0.0449ms | 0.0619ms | +0.017ms |
-| NoSQL query | 0.0045ms | 0.0132ms | +0.0087ms |
-| `new Function(...)` | 0.0013ms | 0.0104ms | +0.0091ms |
-| Shell command | 3.2339ms | 3.2349ms | +0.001ms |
+| SQL query | 0.0049ms | 0.0149ms | +0.01ms |
+| File read | 0.0463ms | 0.0608ms | +0.0145ms |
+| NoSQL query | 0.0087ms | 0.0134ms | +0.0048ms |
+| `new Function(...)` | 0.0015ms | 0.0116ms | +0.0101ms |
+| Shell command | 3.417ms | 3.4179ms | +0.0009ms |
+| Outgoing HTTP request (`fetch`) | 0.2211ms | 0.2628ms | +0.0417ms |
+| Outgoing HTTP request (`http.request`) | 0.259ms | 0.4014ms | +0.1424ms |
 
-(Using Node.js 18.x and MongoDB 6.9.x. Results will vary depending on your hardware.)
+(Using Node.js 18.x on a MacBook Pro (Apple M3 Pro). Results will vary depending on your hardware.)
 
 See [benchmarks](benchmarks) for more information.
 
