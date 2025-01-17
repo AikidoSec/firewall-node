@@ -25,11 +25,14 @@ const mod = require(`./${process.argv[2]}`);
     process.exit(1);
   }
 
-  const timings = [];
-  const amount = 1000;
+  // Warmup
+  for (let i = 0; i < 2000; i++) {
+    await mod.step();
+  }
 
+  const timings = [];
   async function steps() {
-    for (let i = 0; i < amount; i++) {
+    for (let i = 0; i < 20000; i++) {
       const start = performance.now();
       await mod.step();
       const end = performance.now();

@@ -59,6 +59,7 @@ const modules = [
       console.log(`Running module ${module}`);
       const withoutZen = spawnSync(`node`, ["run.js", module, "false"], {
         cwd: __dirname,
+        maxBuffer: 1024 * 1024 * 1024,
       });
 
       if (withoutZen.status !== 0) {
@@ -74,6 +75,7 @@ const modules = [
 
       const withZen = spawnSync("node", ["run.js", module, "true"], {
         cwd: __dirname,
+        maxBuffer: 1024 * 1024 * 1024,
       });
 
       if (withZen.status !== 0) {
@@ -105,7 +107,10 @@ const modules = [
       console.log(
         `Average time with Zen: ${formatter.format(averageWithZen)}ms`
       );
-      console.log(`Delta: +${formatter.format(delta)}ms`);
+      const deltaFormatted = formatter.format(delta).startsWith("-")
+        ? formatter.format(delta)
+        : `+${formatter.format(delta)}`;
+      console.log(`Delta: ${deltaFormatted}ms`);
 
       markdownTable += `| ${name} | ${formatter.format(averageWithoutZen)}ms | ${formatter.format(averageWithZen)}ms | +${formatter.format(delta)}ms |\n`;
     }

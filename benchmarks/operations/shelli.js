@@ -1,7 +1,15 @@
-const { execSync } = require("child_process");
+const { exec } = require("child_process");
 
 module.exports = {
   step: async function step() {
-    execSync("ls -la");
+    return new Promise((resolve, reject) => {
+      exec("echo", { cwd: __dirname }, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   },
 };
