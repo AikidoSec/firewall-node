@@ -2,7 +2,7 @@ name: Lint code
 on: push
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         node-version: [18.x]
