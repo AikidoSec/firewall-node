@@ -27,11 +27,11 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
 
   try {
     await sql`
-      CREATE TABLE IF NOT EXISTS cats (
+      CREATE TABLE IF NOT EXISTS cats_2 (
         petname varchar(255)
       );
     `;
-    await sql`TRUNCATE cats`;
+    await sql`TRUNCATE cats_2`;
 
     const cats = [
       {
@@ -42,23 +42,23 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
       },
     ];
 
-    await sql`insert into cats ${sql(cats, "petname")}`;
+    await sql`insert into cats_2 ${sql(cats, "petname")}`;
 
     const transactionResult = await sql.begin((sql) => [
-      sql`SELECT * FROM cats`,
+      sql`SELECT * FROM cats_2`,
     ]);
     t.same(transactionResult[0], cats);
 
-    t.same(await sql`select * from ${sql("cats")}`, cats);
-    t.same(await sql.unsafe("SELECT * FROM cats"), cats);
+    t.same(await sql`select * from ${sql("cats_2")}`, cats);
+    t.same(await sql.unsafe("SELECT * FROM cats_2"), cats);
 
     await runWithContext(context, async () => {
-      t.same(await sql`select * from ${sql("cats")}`, cats);
-      t.same(await sql.unsafe("SELECT * FROM cats"), cats);
+      t.same(await sql`select * from ${sql("cats_2")}`, cats);
+      t.same(await sql.unsafe("SELECT * FROM cats_2"), cats);
 
       const error = await t.rejects(async () => {
         await sql.unsafe(
-          `SELECT * FROM cats WHERE petname = test; -- should be blocked`
+          `SELECT * FROM cats_2 WHERE petname = test; -- should be blocked`
         );
       });
 
