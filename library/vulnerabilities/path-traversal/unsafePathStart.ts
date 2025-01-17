@@ -24,8 +24,6 @@ const linuxRootFolders = [
   "/var/",
 ];
 
-const windowsDriveLetterRegex = new RegExp("^[a-z]:(\\|/)", "i");
-
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
   // Required because resolve will build absolute paths from relative paths
@@ -49,7 +47,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
     return startsWithUnsafePathWindows(userInput);
   }
 
-  return startsWithUnsafePathPosix(normalizedPath, normalizedUserInput);
+  return startsWithUnsafePathPosix(normalizedPath, userInput);
 }
 
 export function startsWithUnsafePathPosix(
@@ -63,7 +61,8 @@ export function startsWithUnsafePathPosix(
         // e.g. if user input is /etc/ and the path is /etc/passwd, we don't want to flag it, as long as the
         // user input does not contain a subdirectory or filename
         normalizedPath.startsWith(folder) &&
-        (userInput !== folder || userInput !== folder.slice(0, -1))
+        userInput !== folder &&
+        userInput !== folder.slice(0, -1)
     )
   ) {
     return true;
