@@ -1,3 +1,4 @@
+import { isWindows } from "../../helpers/isWindows";
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
 import { startsWithUnsafePath } from "./unsafePathStart";
 import { fileURLToPath } from "url";
@@ -20,6 +21,8 @@ export function detectPathTraversal(
   // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
+    console.log("filePathFromUrl", filePathFromUrl);
+    console.log("filePath", filePath);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
       return true;
     }
@@ -59,11 +62,12 @@ export function detectPathTraversal(
 function parseAsFileUrl(path: string) {
   let url = path;
   if (!url.startsWith("file:")) {
-    if (!url.startsWith("/")) {
+    if (!isWindows && !url.startsWith("/")) {
       url = `/${url}`;
     }
     url = `file://${url}`;
   }
+
   try {
     return fileURLToPath(url);
   } catch (e) {

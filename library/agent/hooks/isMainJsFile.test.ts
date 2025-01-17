@@ -2,6 +2,7 @@ import * as t from "tap";
 import { isMainJsFile } from "./isMainJsFile";
 import type { PackageJson } from "type-fest";
 import { sep } from "path";
+import { isWindows } from "../../helpers/isWindows";
 
 const basePackageJson: PackageJson = {
   name: "aikido-module",
@@ -9,10 +10,9 @@ const basePackageJson: PackageJson = {
   main: "./index.js",
 };
 
-const base =
-  process.platform === "win32"
-    ? "C:\\Users\\abc\\proj\\node_modules\\aikido-module"
-    : "/home/user/proj/node_modules/aikido-module";
+const base = isWindows
+  ? "C:\\Users\\abc\\proj\\node_modules\\aikido-module"
+  : "/home/user/proj/node_modules/aikido-module";
 
 t.test("package.json main: is main file", async (t) => {
   t.ok(
