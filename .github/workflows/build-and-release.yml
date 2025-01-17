@@ -14,7 +14,7 @@ jobs:
       - run-unit-tests
       - run-end-to-end-tests
       - run-benchmarks
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
