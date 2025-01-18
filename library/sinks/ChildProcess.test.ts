@@ -3,6 +3,8 @@ import { Context, runWithContext } from "../agent/Context";
 import { ChildProcess } from "./ChildProcess";
 import { execFile, execFileSync } from "child_process";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { join } from "path";
+import { isWindows } from "../helpers/isWindows";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -71,19 +73,27 @@ t.test("it works", async (t) => {
   });
 
   const runSafeCommands = () => {
-    exec("ls", (err, stdout, stderr) => {}).unref();
-    execSync("ls");
+    if (!isWindows) {
+      exec("ls", (err, stdout, stderr) => {}).unref();
+      execSync("ls");
 
-    spawn("ls", ["-la"], {}).unref();
-    spawnSync("ls", ["-la"], {});
+      spawn("ls", ["-la"], {}).unref();
+      spawnSync("ls", ["-la"], {});
 
-    spawn("ls", ["-la"], { shell: false }).unref();
-    spawnSync("ls", ["-la"], { shell: false });
+      spawn("ls", ["-la"], { shell: false }).unref();
+      spawnSync("ls", ["-la"], { shell: false });
 
-    execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
-    execFileSync("ls", ["-la"], {});
+      execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
+      execFileSync("ls", ["-la"], {});
+    } else {
+      exec("dir", (err, stdout, stderr) => {}).unref();
+      execSync("dir");
 
-    fork("./fixtures/helloWorld.js").unref();
+      spawn("dir", [], { shell: true }).unref();
+      spawnSync("dir", [], { shell: true });
+    }
+
+    fork(join(__dirname, "fixtures/helloWorld.js")).unref();
   };
 
   runSafeCommands();

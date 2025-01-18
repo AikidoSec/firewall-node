@@ -14,6 +14,7 @@ import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
 const execAsync = promisify(exec);
+import { tmpdir } from "node:os";
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -385,7 +386,7 @@ async function sendUsingCurl({
     .map(([key, value]) => `-H "${key}: ${value}"`)
     .join(" ");
 
-  const tmpDir = await mkdtemp("/tmp/aikido-");
+  const tmpDir = await mkdtemp(join(tmpdir(), "aikido-"));
   const tmpFile = join(tmpDir, "/body.json");
   await writeFile(tmpFile, body, { encoding: "utf-8" });
 
