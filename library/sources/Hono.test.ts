@@ -95,7 +95,14 @@ function getApp() {
   });
 
   app.post("/json", async (c) => {
-    const json = await c.req.json();
+    try {
+      const json = await c.req.json();
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        return c.text("Invalid JSON", 400);
+      }
+      throw e;
+    }
     return c.json(getContext());
   });
 
@@ -483,4 +490,19 @@ t.test("Body parsing in middleware", opts, async (t) => {
     source: "hono",
     route: "/",
   });
+});
+
+t.test("invalid json body", opts, async (t) => {
+  const app = getApp();
+
+  const response = await app.request("/json", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: "invalid",
+  });
+
+  t.same(response.status, 400);
+  t.same(await response.text(), "Invalid JSON");
 });
