@@ -164,6 +164,16 @@ t.test(
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
+
+      const error4 = await t.rejects(() =>
+        fetch(new Request("http://localhost:4000/api/internal"))
+      );
+      if (error4 instanceof Error) {
+        t.same(
+          error4.message,
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
     });
 
     await runWithContext(
