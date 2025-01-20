@@ -379,3 +379,53 @@ t.test("The hono async context still works", opts, async (t) => {
   const body = await response.text();
   t.equal(body, "test-value");
 });
+
+t.test("Proxy request", opts, async (t) => {
+  const { Hono } = require("hono") as typeof import("hono");
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+
+  const app = new Hono();
+
+  app.all("/proxy", async (c) => {
+    // Simply fetch a request from the same server, in real world this would be another server
+    const response = await globalThis.fetch(
+      new Request("http://127.0.0.1:8767/body", {
+        method: c.req.method,
+        headers: c.req.raw.headers,
+        body: c.req.raw.body,
+        // @ts-expect-error wrong types
+        duplex: "half",
+        redirect: "manual",
+      })
+    );
+    // clone the response to return a response with modifiable headers
+    return new Response(response.body, response);
+  });
+
+  app.post("/body", async (c) => {
+    return await c.req.json();
+  });
+
+  const server = serve({
+    fetch: app.fetch,
+    port: 8767,
+  });
+
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8767/proxy"),
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ test: 42 }),
+  });
+  t.equal(response.statusCode, 200);
+  t.equal(
+    response.body,
+    "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
+  );
+
+  // Cleanup server
+  server.close();
+});
