@@ -387,10 +387,9 @@ t.test("Proxy request", opts, async (t) => {
 
   const app = new Hono();
 
-  app.all("/proxy", async (c) => {
-    // Simply fetch a request from the same server, in real world this would be another server
+  app.on(["GET", "POST"], "/proxy", async (c) => {
     const response = await globalThis.fetch(
-      new Request("http://127.0.0.1:8767/body", {
+      new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
         body: c.req.raw.body,
@@ -410,22 +409,32 @@ t.test("Proxy request", opts, async (t) => {
   const server = serve({
     fetch: app.fetch,
     port: 8767,
+    hostname: "127.0.0.1",
+  });
+
+  const app2 = new Hono();
+  app2.all("/*", async (c) => {
+    return c.text(await c.req.text());
+  });
+
+  const server2 = serve({
+    fetch: app2.fetch,
+    port: 8768,
+    hostname: "127.0.0.1",
   });
 
   const response = await fetch.fetch({
     url: new URL("http://127.0.0.1:8767/proxy"),
     method: "POST",
     headers: {
-      "content-type": "application/json",
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ test: 42 }),
+    body: JSON.stringify({ a: 1 }),
   });
   t.equal(response.statusCode, 200);
-  t.equal(
-    response.body,
-    "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
-  );
+  t.equal(response.body, JSON.stringify({ a: 1 }));
 
-  // Cleanup server
+  // Cleanup servers
   server.close();
+  server2.close();
 });
