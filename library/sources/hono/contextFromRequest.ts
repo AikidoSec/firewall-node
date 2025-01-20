@@ -16,7 +16,7 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
       headers: req.header(),
       remoteAddress: getRemoteAddress(c),
     }),
-    body: undefined,
+    body: undefined, // Body is added in wrapRequestBodyParsing
     url: req.url,
     headers: req.header(),
     routeParams: req.param(),
