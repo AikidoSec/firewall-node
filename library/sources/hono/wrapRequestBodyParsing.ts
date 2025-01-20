@@ -12,11 +12,10 @@ type BodyParseFunctions =
   | Context["req"]["json"]
   | Context["req"]["text"];
 
-export function wrapRequestHandler<T extends BodyParseFunctions>(
-  handler: T
-): T {
-  return async function () {
+function wrapRequestHandler<T extends BodyParseFunctions>(handler: T): T {
+  return async function parse() {
     // @ts-expect-error No type for arguments
+    // eslint-disable-next-line prefer-rest-params
     const returnValue = await handler.apply(this, arguments);
 
     if (returnValue) {
