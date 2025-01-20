@@ -1,4 +1,4 @@
-import { isAbsolute, resolve, sep } from "path";
+import { isAbsolute, resolve } from "path";
 import { isWrapped } from "../../helpers/wrap";
 import { isWindows } from "../../helpers/isWindows";
 
