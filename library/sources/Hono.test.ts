@@ -94,6 +94,21 @@ function getApp() {
     return c.json(getContext());
   });
 
+  app.post("/json", async (c) => {
+    const json = await c.req.json();
+    return c.json(getContext());
+  });
+
+  app.post("/text", async (c) => {
+    const text = await c.req.text();
+    return c.json(getContext());
+  });
+
+  app.post("/form", async (c) => {
+    const form = await c.req.parseBody();
+    return c.json(getContext());
+  });
+
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
     return c.json(getContext());
   });
@@ -140,7 +155,7 @@ t.test("it adds context from request for GET", opts, async (t) => {
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/json", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -153,12 +168,12 @@ t.test("it adds JSON body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/",
+    route: "/json",
   });
 });
 
 t.test("it adds form body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/form", {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -171,12 +186,12 @@ t.test("it adds form body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/",
+    route: "/form",
   });
 });
 
 t.test("it adds text body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/text", {
     method: "POST",
     headers: {
       "content-type": "text/plain",
@@ -189,12 +204,12 @@ t.test("it adds text body to context", opts, async (t) => {
     method: "POST",
     body: "test",
     source: "hono",
-    route: "/",
+    route: "/text",
   });
 });
 
 t.test("it adds xml body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/text", {
     method: "POST",
     headers: {
       "content-type": "application/xml",
@@ -207,7 +222,7 @@ t.test("it adds xml body to context", opts, async (t) => {
     method: "POST",
     body: "<test>test</test>",
     source: "hono",
-    route: "/",
+    route: "/text",
   });
 });
 
