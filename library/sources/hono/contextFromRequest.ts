@@ -1,5 +1,5 @@
 import type { Context as HonoContext } from "hono";
-import { Context } from "../../agent/Context";
+import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
@@ -9,6 +9,7 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const { req } = c;
 
   const cookieHeader = req.header("cookie");
+  const existingContext = getContext();
 
   return {
     method: c.req.method,
@@ -16,7 +17,11 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
       headers: req.header(),
       remoteAddress: getRemoteAddress(c),
     }),
-    body: undefined, // Body is added in wrapRequestBodyParsing
+    // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
+    body:
+      existingContext && existingContext.source === "hono"
+        ? existingContext.body
+        : undefined,
     url: req.url,
     headers: req.header(),
     routeParams: req.param(),

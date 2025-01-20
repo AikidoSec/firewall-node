@@ -453,3 +453,34 @@ t.test("Proxy request", opts, async (t) => {
   server.close();
   server2.close();
 });
+
+t.test("Body parsing in middleware", opts, async (t) => {
+  const { Hono } = require("hono") as typeof import("hono");
+
+  const app = new Hono<{ Variables: { body: any } }>();
+
+  app.use(async (c, next) => {
+    c.set("body", await c.req.json());
+    return next();
+  });
+
+  app.post("/", async (c) => {
+    return c.json(getContext());
+  });
+
+  const response = await app.request("/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ x: 42 }),
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    method: "POST",
+    body: { x: 42 },
+    source: "hono",
+    route: "/",
+  });
+});
