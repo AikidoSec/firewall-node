@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
@@ -40,6 +41,8 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
+    agent.getInspectionStatistics().onBlockedRequest({ reason: "ipBlocklist" });
+
     return true;
   }
 
@@ -53,6 +56,10 @@ export function checkIfRequestIsBlocked(
     }
 
     res.end(message);
+
+    agent
+      .getInspectionStatistics()
+      .onBlockedRequest({ reason: "allowedIpsRoute" });
 
     return true;
   }
@@ -69,6 +76,8 @@ export function checkIfRequestIsBlocked(
     res.end(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
+
+    agent.getInspectionStatistics().onBlockedRequest({ reason: "userAgent" });
 
     return true;
   }

@@ -34,7 +34,27 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
-  } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
+    blocked: {
+      total: number;
+      allowedIpsRoute: number;
+      userAgent: number;
+      ipBlocklist: number;
+      userBlocked: number;
+    };
+    rateLimited: number;
+  } = {
+    total: 0,
+    aborted: 0,
+    attacksDetected: { total: 0, blocked: 0 },
+    blocked: {
+      total: 0,
+      allowedIpsRoute: 0,
+      userAgent: 0,
+      ipBlocklist: 0,
+      userBlocked: 0,
+    },
+    rateLimited: 0,
+  };
 
   constructor({
     maxPerfSamplesInMemory,
@@ -67,6 +87,14 @@ export class InspectionStatistics {
       total: 0,
       aborted: 0,
       attacksDetected: { total: 0, blocked: 0 },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     };
     this.startedAt = Date.now();
   }
@@ -81,6 +109,14 @@ export class InspectionStatistics {
         total: number;
         blocked: number;
       };
+      blocked: {
+        total: number;
+        allowedIpsRoute: number;
+        userAgent: number;
+        ipBlocklist: number;
+        userBlocked: number;
+      };
+      rateLimited: number;
     };
   } {
     const sinks: Record<string, SinkStatsWithoutTimings> = {};
@@ -173,6 +209,33 @@ export class InspectionStatistics {
     this.requests.attacksDetected.total += 1;
     if (blocked) {
       this.requests.attacksDetected.blocked += 1;
+    }
+  }
+
+  onRateLimitedRequest() {
+    this.requests.rateLimited += 1;
+  }
+
+  onBlockedRequest({
+    reason,
+  }: {
+    reason: "allowedIpsRoute" | "userAgent" | "ipBlocklist" | "userBlock";
+  }) {
+    this.requests.blocked.total += 1;
+
+    switch (reason) {
+      case "allowedIpsRoute":
+        this.requests.blocked.allowedIpsRoute += 1;
+        break;
+      case "userAgent":
+        this.requests.blocked.userAgent += 1;
+        break;
+      case "ipBlocklist":
+        this.requests.blocked.ipBlocklist += 1;
+        break;
+      case "userBlock":
+        this.requests.blocked.userBlocked += 1;
+        break;
     }
   }
 

@@ -92,6 +92,14 @@ type Heartbeat = {
         total: number;
         blocked: number;
       };
+      blocked: {
+        total: number;
+        allowedIpsRoute: number;
+        userAgent: number;
+        ipBlocklist: number;
+        userBlocked: number;
+      };
+      rateLimited: number;
     };
   };
   hostnames: { hostname: string; port: number | undefined }[];
