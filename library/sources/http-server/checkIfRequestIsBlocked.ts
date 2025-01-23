@@ -25,6 +25,14 @@ export function checkIfRequestIsBlocked(
     return false;
   }
 
+  const isAllowedIP =
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    return false;
+  }
+
   const result = context.remoteAddress
     ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
     : ({ blocked: false } as const);
