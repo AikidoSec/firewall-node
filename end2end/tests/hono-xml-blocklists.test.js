@@ -26,7 +26,6 @@ t.beforeEach(async () => {
   });
   t.same(config.status, 200);
 
-  // Apply rate limiting
   const lists = await fetch(`${testServerUrl}/api/runtime/firewall/lists`, {
     method: "POST",
     headers: {
