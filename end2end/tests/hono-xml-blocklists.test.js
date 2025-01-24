@@ -22,6 +22,19 @@ t.beforeEach(async () => {
     },
     body: JSON.stringify({
       allowedIPAddresses: ["1.3.2.1"],
+      endpoints: [
+        {
+          route: "/route-level",
+          method: "GET",
+          forceProtectionOff: false,
+          allowedIPAddresses: ["1.3.2.2"],
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 1,
+            windowSizeInMS: 60 * 1000,
+          },
+        },
+      ],
     }),
   });
   t.same(config.status, 200);
@@ -244,6 +257,14 @@ t.test("it does not block bypass IP if in blocklist", (t) => {
         signal: AbortSignal.timeout(5000),
       });
       t.same(resp1.status, 200);
+
+      const resp2 = await fetch("http://127.0.0.1:4004/route-level", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.2",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp2.status, 200);
     })
     .catch((error) => {
       t.fail(error);
