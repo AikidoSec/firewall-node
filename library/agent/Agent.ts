@@ -485,7 +485,7 @@ export class Agent {
     this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
   }
 
-  onConnectHostname(hostname: string, port: number | undefined) {
+  onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
   }
 
