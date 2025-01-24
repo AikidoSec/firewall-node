@@ -28,6 +28,7 @@ export default function shouldEnableFirewall() {
   }
 
   if (!isAikidoCI()) {
+    // Not using the logging class because this runs before agent initialization
     // eslint-disable-next-line no-console
     console.warn(
       "AIKIDO: Zen is disabled. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG."
