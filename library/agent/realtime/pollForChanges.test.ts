@@ -226,7 +226,9 @@ t.test("it deals with API throwing errors", async () => {
   await clock.nextAsync();
 
   t.same(configUpdates, []);
-  t.same(logger.getMessages(), ["Failed to check for config updates"]);
+  t.same(logger.getMessages(), [
+    "Failed to check for config updates: Request timed out",
+  ]);
 
   clock.uninstall();
 });

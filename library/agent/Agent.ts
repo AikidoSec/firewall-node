@@ -11,7 +11,7 @@ import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
-import { attackKindHumanName, Kind } from "./Attack";
+import { Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -112,6 +112,17 @@ export class Agent {
         },
         this.timeoutInMS
       );
+      if (!result.success) {
+        if (result.error === "invalid_token") {
+          this.logger.error(
+            "Unable to access the Aikido platform, please check your token."
+          );
+        } else {
+          this.logger.error(
+            `Failed to connect to the Aikido platform: ${result.error}`
+          );
+        }
+      }
 
       this.updateServiceConfig(result);
 
@@ -203,8 +214,10 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.warn("Failed to send heartbeat event");
+    this.sendHeartbeat(timeoutInMS).catch((err) => {
+      this.logger.error(
+        `Failed to send heartbeat event to Aikido platform: ${err.message}`
+      );
     });
   }
 
@@ -221,9 +234,13 @@ export class Agent {
       if (typeof response.block === "boolean") {
         if (response.block !== this.block) {
           this.block = response.block;
-          this.logger.debug(
-            `Block mode has been set to ${this.block ? "on" : "off"}`
-          );
+          if (this.block) {
+            this.logger.info(`Enabled blocking mode, attacks will be blocked!`);
+          } else {
+            this.logger.warn(
+              `Monitoring mode enabled, no attacks will be blocked!`
+            );
+          }
         }
       }
 
@@ -290,6 +307,12 @@ export class Agent {
         },
         timeoutInMS
       );
+
+      if (!response.success && response.error === "invalid_token") {
+        this.logger.error(
+          "Unable to access the Aikido platform, please check your token."
+        );
+      }
 
       this.updateServiceConfig(response);
     }
@@ -420,22 +443,28 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.debug("Starting agent...");
-
-    if (!this.block) {
-      this.logger.debug("Dry mode enabled, no requests will be blocked!");
-    }
+    this.logger.info(`Starting agent v${getAgentVersion()}`);
 
     if (this.token) {
-      this.logger.debug("Found token, reporting enabled!");
-    } else {
-      this.logger.debug("No token provided, disabling reporting.");
+      this.logger.info("Found token, reporting enabled!");
 
-      if (!this.block && !isAikidoCI()) {
+      if (!this.block) {
+        this.logger.warn(
+          "Monitoring mode enabled, no attacks will be blocked!"
+        );
+      }
+    } else {
+      this.logger.info("No token found, reporting disabled!");
+
+      if (!this.block) {
         this.logger.warn(
           "Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
       }
+    }
+
+    if (this.block) {
+      this.logger.info("Enabled blocking mode, attacks will be blocked!");
     }
 
     wrapInstalledPackages(wrappers);
@@ -523,7 +552,11 @@ export class Agent {
 
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
-    await this.sendHeartbeat(timeoutInMS);
+    await this.sendHeartbeat(timeoutInMS).catch((err) => {
+      this.logger.error(
+        `Failed to send heartbeat event to Aikido platform: ${err.message}`
+      );
+    });
   }
 
   getRateLimiter() {
