@@ -105,6 +105,14 @@ t.test(
     t.same(agent.getHostnames().asArray(), []);
     agent.getHostnames().clear();
 
+    await fetch(new Request("https://app.aikido.dev"));
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
+    ]);
+
+    agent.getHostnames().clear();
+
     await runWithContext(context, async () => {
       // Don't await fetch to see how it handles
       // multiple requests at the same time
@@ -153,6 +161,16 @@ t.test(
       if (error3 instanceof Error) {
         t.same(
           error3.message,
+          "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+        );
+      }
+
+      const error4 = await t.rejects(() =>
+        fetch(new Request("http://localhost:4000/api/internal"))
+      );
+      if (error4 instanceof Error) {
+        t.same(
+          error4.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -258,7 +276,9 @@ t.test(
         ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
-        const error = await t.rejects(() => fetch(redirectUrl.domainTwice));
+        const error = await t.rejects(() =>
+          fetch(new Request(redirectUrl.domainTwice))
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined

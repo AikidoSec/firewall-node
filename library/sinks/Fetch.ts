@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
@@ -37,6 +38,7 @@ export class Fetch implements Wrapper {
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
     if (args.length > 0) {
+      // URL string
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
         if (url) {
@@ -69,6 +71,7 @@ export class Fetch implements Wrapper {
         }
       }
 
+      // URL object
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,
@@ -77,6 +80,21 @@ export class Fetch implements Wrapper {
         );
         if (attack) {
           return attack;
+        }
+      }
+
+      // Request object
+      if (args[0] instanceof Request) {
+        const url = tryParseURL(args[0].url);
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url)
+          );
+          if (attack) {
+            return attack;
+          }
         }
       }
     }

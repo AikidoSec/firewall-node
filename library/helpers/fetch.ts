@@ -54,8 +54,7 @@ async function request({
       reject(error);
     });
 
-    req.write(body);
-    req.end();
+    req.end(body);
   });
 }
 
