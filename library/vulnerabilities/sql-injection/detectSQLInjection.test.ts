@@ -3,6 +3,8 @@ import * as t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
 import { detectSQLInjection } from "./detectSQLInjection";
+import { SQLDialectClickHouse } from "./dialects/SQLDialectClickHouse";
+import { SQLDialectGeneric } from "./dialects/SQLDialectGeneric";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 
@@ -96,7 +98,8 @@ t.test("User input is multiline", async () => {
     `SELECT * FROM users WHERE id = 'a'
 OR 1=1#'`,
     `a'
-OR 1=1#`
+OR 1=1#`,
+    [new SQLDialectGeneric(), new SQLDialectMySQL()]
   );
 
   isNotSqlInjection(
@@ -314,28 +317,46 @@ for (const file of files) {
   }
 }
 
-function isSqlInjection(sql: string, input: string) {
-  t.same(
-    detectSQLInjection(sql, input, new SQLDialectMySQL()),
-    true,
-    `${sql} (mysql)`
-  );
-  t.same(
-    detectSQLInjection(sql, input, new SQLDialectPostgres()),
-    true,
-    `${sql} (postgres)`
-  );
+function isSqlInjection(
+  sql: string,
+  input: string,
+  dialects = [
+    new SQLDialectGeneric(),
+    new SQLDialectMySQL(),
+    new SQLDialectPostgres(),
+    new SQLDialectClickHouse(),
+    new SQLDialectClickHouse(),
+  ]
+) {
+  if (dialects.length === 0) {
+    throw new Error("No dialects provided");
+  }
+
+  for (const dialect of dialects) {
+    t.same(
+      detectSQLInjection(sql, input, dialect),
+      true,
+      `${sql} (${dialect.constructor.name})`
+    );
+  }
 }
 
-function isNotSqlInjection(sql: string, input: string) {
-  t.same(
-    detectSQLInjection(sql, input, new SQLDialectMySQL()),
-    false,
-    `${sql} (mysql)`
-  );
-  t.same(
-    detectSQLInjection(sql, input, new SQLDialectPostgres()),
-    false,
-    `${sql} (postgres)`
-  );
+function isNotSqlInjection(
+  sql: string,
+  input: string,
+  dialects = [
+    new SQLDialectGeneric(),
+    new SQLDialectMySQL(),
+    new SQLDialectPostgres(),
+    new SQLDialectClickHouse(),
+    new SQLDialectClickHouse(),
+  ]
+) {
+  for (const dialect of dialects) {
+    t.same(
+      detectSQLInjection(sql, input, dialect),
+      false,
+      `${sql} (${dialect.constructor.name})`
+    );
+  }
 }
