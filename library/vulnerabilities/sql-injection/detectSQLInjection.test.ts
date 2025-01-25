@@ -7,6 +7,7 @@ import { SQLDialectClickHouse } from "./dialects/SQLDialectClickHouse";
 import { SQLDialectGeneric } from "./dialects/SQLDialectGeneric";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
+import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
 t.test("It ignores invalid queries", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
@@ -324,7 +325,7 @@ function isSqlInjection(
     new SQLDialectGeneric(),
     new SQLDialectMySQL(),
     new SQLDialectPostgres(),
-    new SQLDialectClickHouse(),
+    new SQLDialectSQLite(),
     new SQLDialectClickHouse(),
   ]
 ) {
@@ -348,7 +349,7 @@ function isNotSqlInjection(
     new SQLDialectGeneric(),
     new SQLDialectMySQL(),
     new SQLDialectPostgres(),
-    new SQLDialectClickHouse(),
+    new SQLDialectSQLite(),
     new SQLDialectClickHouse(),
   ]
 ) {
