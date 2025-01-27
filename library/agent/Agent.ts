@@ -113,21 +113,24 @@ export class Agent {
         this.timeoutInMS
       );
 
-      if (!result.success) {
-        if (result.error === "invalid_token") {
-          console.error(
-            "Aikido: We were unable to connect to the Aikido platform. Please verify that your token is correct."
-          );
-        } else {
-          console.error(
-            `Aikido: Failed to connect to the Aikido platform: ${result.error}`
-          );
-        }
-      }
-
+      this.checkForReportingAPIError(result);
       this.updateServiceConfig(result);
 
       await this.updateBlockedLists();
+    }
+  }
+
+  checkForReportingAPIError(result: ReportingAPIResponse) {
+    if (!result.success) {
+      if (result.error === "invalid_token") {
+        console.error(
+          "Aikido: We were unable to connect to the Aikido platform. Please verify that your token is correct."
+        );
+      } else {
+        console.error(
+          `Aikido: Failed to connect to the Aikido platform: ${result.error}`
+        );
+      }
     }
   }
 
@@ -205,11 +208,18 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
-        console.error(
-          `Aikido: Failed to report attack event to Aikido platform: ${err.message}`
-        );
-      });
+      this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch((err) => {
+          console.error(
+            `Aikido: Failed to report attack event to Aikido platform: ${err.message}`
+          );
+        })
+        .then((response) => {
+          if (response) {
+            this.checkForReportingAPIError(response);
+          }
+        });
     }
   }
 
@@ -307,12 +317,7 @@ export class Agent {
         timeoutInMS
       );
 
-      if (!response.success && response.error === "invalid_token") {
-        console.error(
-          "Aikido: Unable to access the Aikido platform, please check your token."
-        );
-      }
-
+      this.checkForReportingAPIError(response);
       this.updateServiceConfig(response);
     }
   }

@@ -666,7 +666,6 @@ t.test("it logs when failed to report event", async () => {
   t.same(logger.getMessages(), [
     "Starting agent...",
     "Found token, reporting enabled!",
-    "Failed to start agent",
     "Heartbeat...",
   ]);
 });
