@@ -116,7 +116,7 @@ export class Agent {
       if (!result.success) {
         if (result.error === "invalid_token") {
           console.error(
-            "Aikido: Unable to access the Aikido platform, please check your token."
+            "Aikido: We were unable to connect to the Aikido platform. Please verify that your token is correct."
           );
         } else {
           console.error(
