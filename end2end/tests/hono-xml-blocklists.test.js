@@ -21,7 +21,18 @@ t.beforeEach(async () => {
       Authorization: token,
     },
     body: JSON.stringify({
-      allowedIPAddresses: ["1.3.2.1"],
+      allowedIPAddresses: ["1.3.2.1", "1.3.2.2"],
+      endpoints: [
+        {
+          route: "/admin",
+          method: "GET",
+          forceProtectionOff: false,
+          allowedIPAddresses: ["1.3.2.1"],
+          rateLimiting: {
+            enabled: false,
+          },
+        },
+      ],
     }),
   });
   t.same(config.status, 200);
@@ -244,6 +255,24 @@ t.test("it does not block bypass IP if in blocklist", (t) => {
         signal: AbortSignal.timeout(5000),
       });
       t.same(resp1.status, 200);
+
+      const resp2 = await fetch("http://127.0.0.1:4004/admin", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.1",
+        },
+      });
+      t.same(resp2.status, 200);
+
+      const resp3 = await fetch("http://127.0.0.1:4004/admin", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.2",
+        },
+      });
+      t.same(resp3.status, 403);
+      t.same(
+        await resp3.text(),
+        `Your IP address is not allowed to access this resource. (Your IP: 1.3.2.2)`
+      );
     })
     .catch((error) => {
       t.fail(error);
