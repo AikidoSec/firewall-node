@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function */
+/* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
@@ -113,9 +113,24 @@ export class Agent {
         this.timeoutInMS
       );
 
+      this.checkForReportingAPIError(result);
       this.updateServiceConfig(result);
 
       await this.updateBlockedLists();
+    }
+  }
+
+  checkForReportingAPIError(result: ReportingAPIResponse) {
+    if (!result.success) {
+      if (result.error === "invalid_token") {
+        console.error(
+          "Aikido: We were unable to connect to the Aikido platform. Please verify that your token is correct."
+        );
+      } else {
+        console.error(
+          `Aikido: Failed to connect to the Aikido platform: ${result.error}`
+        );
+      }
     }
   }
 
@@ -193,7 +208,7 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
         this.logger.log("Failed to report attack");
       });
     }
@@ -203,7 +218,7 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
+    this.sendHeartbeat(timeoutInMS).catch((err) => {
       this.logger.log("Failed to do heartbeat");
     });
   }
@@ -354,7 +369,7 @@ export class Agent {
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
     } catch (error: any) {
-      this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
   }
 
@@ -432,7 +447,6 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
 
       if (!this.block && !isAikidoCI()) {
-        // eslint-disable-next-line no-console
         console.log(
           "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
@@ -448,8 +462,8 @@ export class Agent {
         this.startHeartbeats();
         this.startPollingForConfigChanges();
       })
-      .catch(() => {
-        this.logger.log("Failed to start agent");
+      .catch((err) => {
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
       });
   }
 
