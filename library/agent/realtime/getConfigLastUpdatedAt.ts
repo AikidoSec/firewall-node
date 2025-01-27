@@ -11,11 +11,15 @@ export async function getConfigLastUpdatedAt(token: Token): Promise<number> {
     headers: {
       Authorization: token.asString(),
     },
-    timeoutInMS: 500,
+    timeoutInMS: 3000,
   });
 
+  if (statusCode === 403) {
+    throw new Error("Token is invalid");
+  }
+
   if (statusCode !== 200) {
-    throw new Error(`Invalid response (${statusCode}): ${body}`);
+    throw new Error(`Expected status code 200, got ${statusCode}`);
   }
 
   const response: RealtimeResponse = JSON.parse(body);
