@@ -208,14 +208,11 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api
-        .report(this.token, attack, this.timeoutInMS)
-        .then((response) => this.checkForReportingAPIError(response))
-        .catch((err) => {
-          console.error(
-            `Aikido: Failed to report attack event to Aikido platform: ${err.message}`
-          );
-        });
+      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
+        console.error(
+          `Aikido: Failed to report attack event to Aikido platform: ${err.message}`
+        );
+      });
     }
   }
 
@@ -224,9 +221,7 @@ export class Agent {
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
     this.sendHeartbeat(timeoutInMS).catch((err) => {
-      console.error(
-        `Aikido: Failed to send heartbeat event to Aikido platform: ${err.message}`
-      );
+      this.logger.log("Failed to do heartbeat");
     });
   }
 
@@ -313,7 +308,6 @@ export class Agent {
         timeoutInMS
       );
 
-      this.checkForReportingAPIError(response);
       this.updateServiceConfig(response);
     }
   }
