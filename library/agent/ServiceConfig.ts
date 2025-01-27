@@ -1,7 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
-import { Blocklist as BlocklistType } from "./api/fetchBlockedLists";
+import { IPList as IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -11,6 +11,7 @@ export class ServiceConfig {
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
     [];
   private blockedUserAgentRegex: RegExp | undefined;
+  private onlyAllowedIPAddresses: IPMatcher | undefined;
 
   constructor(
     endpoints: Endpoint[],
@@ -18,12 +19,14 @@ export class ServiceConfig {
     blockedUserIds: string[],
     allowedIPAddresses: string[],
     private receivedAnyStats: boolean,
-    blockedIPAddresses: BlocklistType[]
+    blockedIPAddresses: IPList[],
+    onlyAllowedIPAddresses: IPList[]
   ) {
     this.setBlockedUserIds(blockedUserIds);
     this.setAllowedIPAddresses(allowedIPAddresses);
     this.setEndpoints(endpoints);
     this.setBlockedIPAddresses(blockedIPAddresses);
+    this.setOnlyAllowedIPAddresses(onlyAllowedIPAddresses);
   }
 
   private setEndpoints(endpoints: Endpoint[]) {
@@ -96,7 +99,7 @@ export class ServiceConfig {
     return { blocked: false };
   }
 
-  private setBlockedIPAddresses(blockedIPAddresses: BlocklistType[]) {
+  private setBlockedIPAddresses(blockedIPAddresses: IPList[]) {
     this.blockedIPAddresses = [];
 
     for (const source of blockedIPAddresses) {
@@ -107,7 +110,7 @@ export class ServiceConfig {
     }
   }
 
-  updateBlockedIPAddresses(blockedIPAddresses: BlocklistType[]) {
+  updateBlockedIPAddresses(blockedIPAddresses: IPList[]) {
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
 
@@ -124,6 +127,32 @@ export class ServiceConfig {
       return { blocked: this.blockedUserAgentRegex.test(ua) };
     }
     return { blocked: false };
+  }
+
+  private setOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
+    this.onlyAllowedIPAddresses = undefined;
+
+    if (ipAddresses.length === 0) {
+      return;
+    }
+
+    const ips = ipAddresses.map((source) => source.ips).flat();
+
+    this.onlyAllowedIPAddresses = new IPMatcher(ips);
+  }
+
+  updateOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
+    this.setOnlyAllowedIPAddresses(ipAddresses);
+  }
+
+  shouldOnlyAllowSomeIPAddresses() {
+    return this.onlyAllowedIPAddresses !== undefined;
+  }
+
+  isOnlyAllowedIPAddress(ip: string) {
+    return this.onlyAllowedIPAddresses
+      ? this.onlyAllowedIPAddresses.has(ip)
+      : false;
   }
 
   updateConfig(

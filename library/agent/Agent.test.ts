@@ -19,6 +19,8 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 
+let shouldOnlyAllowSomeIPAddresses = false;
+
 wrap(fetch, "fetch", function mock() {
   return async function mock() {
     return {
@@ -32,6 +34,15 @@ wrap(fetch, "fetch", function mock() {
           },
         ],
         blockedUserAgents: "AI2Bot|Bytespider",
+        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
+          ? [
+              {
+                source: "name",
+                description: "Description",
+                ips: ["4.3.2.1"],
+              },
+            ]
+          : [],
       }),
     };
   };
@@ -1099,6 +1110,8 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
     blocked: false,
   });
 
+  t.same(agent.getConfig().shouldOnlyAllowSomeIPAddresses(), false);
+
   t.same(
     agent
       .getConfig()
@@ -1109,4 +1122,29 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
       blocked: false,
     }
   );
+});
+
+t.test("it only allows some IP addresses", async () => {
+  shouldOnlyAllowSomeIPAddresses = true;
+  const agent = createTestAgent({
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+
+  agent.start([]);
+
+  await setTimeout(0);
+
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
+    blocked: true,
+    reason: "Description",
+  });
+  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
+    blocked: true,
+    reason: "Description",
+  });
+
+  t.same(agent.getConfig().shouldOnlyAllowSomeIPAddresses(), true);
+  t.same(agent.getConfig().isOnlyAllowedIPAddress("1.2.3.4"), false);
+  t.same(agent.getConfig().isOnlyAllowedIPAddress("4.3.2.1"), true);
 });
