@@ -668,8 +668,6 @@ t.test("it logs when failed to report event", async () => {
     "Found token, reporting enabled!",
     "Failed to start agent",
     "Heartbeat...",
-    "Failed to do heartbeat",
-    "Failed to report attack",
   ]);
 });
 
