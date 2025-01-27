@@ -470,7 +470,7 @@ export class Agent {
         this.startPollingForConfigChanges();
       })
       .catch((err) => {
-        console.error(`Failed to start agent: ${err.message}`);
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
       });
   }
 
