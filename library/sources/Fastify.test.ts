@@ -429,7 +429,7 @@ t.test("does ignore invalid route usage", opts, async (t) => {
   } catch (error) {
     t.match(
       (error as NodeJS.ErrnoException).code,
-      "FST_ERR_ROUTE_METHOD_INVALID"
+      "FST_ERR_ROUTE_MISSING_HANDLER"
     );
   }
 
@@ -440,7 +440,7 @@ t.test("does ignore invalid route usage", opts, async (t) => {
   } catch (error) {
     t.match(
       (error as NodeJS.ErrnoException).code,
-      "FST_ERR_ROUTE_METHOD_INVALID"
+      "FST_ERR_ROUTE_MISSING_HANDLER"
     );
   }
 });

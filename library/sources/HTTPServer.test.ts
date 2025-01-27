@@ -1,12 +1,19 @@
 import { Token } from "../agent/api/Token";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
+import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
+import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
+import type { Blocklist } from "../agent/api/fetchBlockedLists";
+import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
+import { mkdtemp, writeFile, unlink } from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(exec);
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -42,6 +49,24 @@ const agent = createTestAgent({
   api,
 });
 agent.start([new HTTPServer()]);
+
+wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
+  return async function fetchBlockedLists(): Promise<{
+    blockedIPAddresses: Blocklist[];
+    blockedUserAgents: string;
+  }> {
+    return {
+      blockedIPAddresses: [
+        {
+          source: "geoip",
+          ips: ["9.9.9.9"],
+          description: "geo restrictions",
+        },
+      ],
+      blockedUserAgents: "",
+    };
+  };
+});
 
 t.setTimeout(30 * 1000);
 
@@ -339,17 +364,51 @@ function generateJsonPayload(sizeInMb: number) {
   return JSON.stringify("a".repeat(sizeInBytes));
 }
 
-t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
+// Send request using curl
+// Returns the response message + status code in stdout
+// We need this because http.request throws EPIPE write error when the server closes the connection abruptly
+// We cannot read the status code or the response message when that happens
+async function sendUsingCurl({
+  url,
+  method,
+  headers,
+  body,
+  timeoutInMS,
+}: {
+  url: URL;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  timeoutInMS: number;
+}) {
+  const headersString = Object.entries(headers)
+    .map(([key, value]) => `-H "${key}: ${value}"`)
+    .join(" ");
+
+  const tmpDir = await mkdtemp("/tmp/aikido-");
+  const tmpFile = join(tmpDir, "/body.json");
+  await writeFile(tmpFile, body, { encoding: "utf-8" });
+
+  const { stdout } = await execAsync(
+    `curl -X ${method} ${headersString} -d @${tmpFile} ${url} --max-time ${timeoutInMS / 1000} --write-out "%{http_code}"`
+  );
+  await unlink(tmpFile);
+
+  return stdout;
+}
+
+t.only("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     t.fail();
+    res.end();
   });
 
   await new Promise<void>((resolve) => {
     server.listen(3320, () => {
-      fetch({
+      sendUsingCurl({
         url: new URL("http://localhost:3320"),
         method: "POST",
         headers: {
@@ -357,15 +416,20 @@ t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
         },
         body: generateJsonPayload(21),
         timeoutInMS: 2000,
-      }).then(({ body, statusCode }) => {
-        t.equal(
-          body,
-          "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
-        );
-        t.equal(statusCode, 413);
-        server.close();
-        resolve();
-      });
+      })
+        .then((stdout) => {
+          t.equal(
+            stdout,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
+        })
+        .catch((error) => {
+          t.fail(error);
+        })
+        .finally(() => {
+          server.close();
+          resolve();
+        });
     });
   });
 });
@@ -411,7 +475,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
     server.listen(3322, () => {
       process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
       Promise.all([
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -420,7 +484,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
           body: generateJsonPayload(1),
           timeoutInMS: 2000,
         }),
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -431,11 +495,14 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
         }),
       ])
         .then(([response1, response2]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 413);
+          t.equal(response1, "200");
+          t.same(
+            response2,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
         })
         .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+          t.fail(error);
         })
         .finally(() => {
           server.close();
@@ -576,3 +643,79 @@ t.test("it checks if IP can access route", async (t) => {
     });
   });
 });
+
+t.test("it blocks IP address", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3325, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2]) => {
+        t.equal(response1.statusCode, 403);
+        t.equal(
+          response1.body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+        t.equal(response2.statusCode, 200);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "it blocks IP address when there are multiple request handlers on server",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    server.on("request", (req, res) => {
+      if (res.headersSent) {
+        return;
+      }
+
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3326, () => {
+        fetch({
+          url: new URL("http://localhost:3326"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.equal(statusCode, 403);
+          t.equal(
+            body,
+            "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);

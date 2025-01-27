@@ -3,7 +3,6 @@ import { Context, runWithContext } from "../agent/Context";
 import { isWrapped } from "../helpers/wrap";
 import { Path } from "./Path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -22,9 +21,14 @@ const unsafeContext: Context = {
   route: "/posts/:id",
 };
 
-const unsafeAbsoluteContext: Context = {
+const safeAbsoluteContext: Context = {
   ...unsafeContext,
   body: { file: { matches: "/etc/" } },
+};
+
+const unsafeAbsoluteContext: Context = {
+  ...unsafeContext,
+  body: { file: { matches: "/etc/some_directory" } },
 };
 
 t.test("it works", async (t) => {
@@ -106,17 +110,25 @@ t.test("it works", async (t) => {
   });
 
   runWithContext(unsafeAbsoluteContext, () => {
-    const error = t.throws(() => join("/etc/", "test.txt"));
+    join("/etc/nginx", "test.txt");
+
+    const error = t.throws(() => join("/etc/some_directory", "test.txt"));
     t.same(
       error instanceof Error ? error.message : null,
-      "Zen has blocked a path traversal attack: path.normalize(...) originating from body.file.matches"
+      "Zen has blocked a path traversal attack: path.join(...) originating from body.file.matches"
     );
 
-    const error2 = t.throws(() => resolve("/etc/some_directory", "test.txt"));
+    const error2 = t.throws(() =>
+      resolve("/etc/some_directory", "abc", "test.txt")
+    );
     t.same(
       error2 instanceof Error ? error2.message : null,
       "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
+  });
+
+  runWithContext(safeAbsoluteContext, () => {
+    resolve("/etc/some_directory", "test.txt");
   });
 
   const { join: joinWin } = require("path/win32");

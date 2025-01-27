@@ -28,6 +28,7 @@ t.test(
     // @ts-expect-error Test
     t.notOk(isPlainObject(new Foo()));
     t.notOk(isPlainObject(null));
+    t.notOk(isPlainObject(undefined));
   }
 );
 

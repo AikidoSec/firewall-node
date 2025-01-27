@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function */
+/* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
 import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
@@ -7,8 +7,9 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
+import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo } from "./api/Event";
+import { AgentInfo, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
@@ -23,6 +24,7 @@ import { Users } from "./Users";
 import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
+import { AttackLogger } from "./AttackLogger";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -39,7 +41,7 @@ export class Agent {
   private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true);
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true, []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -47,6 +49,7 @@ export class Agent {
     maxCompressedStatsInMemory: 100,
   });
   private middlewareInstalled = false;
+  private attackLogger = new AttackLogger(1000);
 
   constructor(
     private block: boolean,
@@ -110,7 +113,24 @@ export class Agent {
         this.timeoutInMS
       );
 
+      this.checkForReportingAPIError(result);
       this.updateServiceConfig(result);
+
+      await this.updateBlockedLists();
+    }
+  }
+
+  checkForReportingAPIError(result: ReportingAPIResponse) {
+    if (!result.success) {
+      if (result.error === "invalid_token") {
+        console.error(
+          "Aikido: We were unable to connect to the Aikido platform. Please verify that your token is correct."
+        );
+      } else {
+        console.error(
+          `Aikido: Failed to connect to the Aikido platform: ${result.error}`
+        );
+      }
     }
   }
 
@@ -139,7 +159,7 @@ export class Agent {
     source,
     request,
     stack,
-    path,
+    paths,
     metadata,
     payload,
   }: {
@@ -150,49 +170,47 @@ export class Agent {
     source: Source;
     request: Context;
     stack: string;
-    path: string;
+    paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    const attack: DetectedAttack = {
+      type: "detected_attack",
+      time: Date.now(),
+      attack: {
+        module: module,
+        operation: operation,
+        blocked: blocked,
+        path: paths.length > 0 ? paths[0] : "",
+        stack: stack,
+        source: source,
+        metadata: limitLengthMetadata(metadata, 4096),
+        kind: kind,
+        payload: JSON.stringify(payload).substring(0, 4096),
+        user: request.user,
+      },
+      request: {
+        method: request.method,
+        url: request.url,
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        body: convertRequestBodyToString(request.body),
+        headers: filterEmptyRequestHeaders(request.headers),
+        source: request.source,
+        route: request.route,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    this.attackLogger.log(attack);
+
     if (this.token) {
-      this.api
-        .report(
-          this.token,
-          {
-            type: "detected_attack",
-            time: Date.now(),
-            attack: {
-              module: module,
-              operation: operation,
-              blocked: blocked,
-              path: path,
-              stack: stack,
-              source: source,
-              metadata: limitLengthMetadata(metadata, 4096),
-              kind: kind,
-              payload: JSON.stringify(payload).substring(0, 4096),
-              user: request.user,
-            },
-            request: {
-              method: request.method,
-              url: request.url,
-              ipAddress: request.remoteAddress,
-              userAgent:
-                typeof request.headers["user-agent"] === "string"
-                  ? request.headers["user-agent"]
-                  : undefined,
-              body: convertRequestBodyToString(request.body),
-              headers: filterEmptyRequestHeaders(request.headers),
-              source: request.source,
-              route: request.route,
-            },
-            agent: this.getAgentInfo(),
-          },
-          this.timeoutInMS
-        )
-        .catch(() => {
-          this.logger.log("Failed to report attack");
-        });
+      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
+        this.logger.log("Failed to report attack");
+      });
     }
   }
 
@@ -200,7 +218,7 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
+    this.sendHeartbeat(timeoutInMS).catch((err) => {
       this.logger.log("Failed to do heartbeat");
     });
   }
@@ -231,7 +249,7 @@ export class Agent {
       }
 
       if (response.endpoints) {
-        this.serviceConfig = new ServiceConfig(
+        this.serviceConfig.updateConfig(
           response.endpoints && Array.isArray(response.endpoints)
             ? response.endpoints
             : [],
@@ -242,7 +260,7 @@ export class Agent {
             ? response.blockedUserIds
             : [],
           response.allowedIPAddresses &&
-          Array.isArray(response.allowedIPAddresses)
+            Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
             : [],
           typeof response.receivedAnyStats === "boolean"
@@ -293,6 +311,7 @@ export class Agent {
         },
         timeoutInMS
       );
+
       this.updateServiceConfig(response);
     }
   }
@@ -339,6 +358,27 @@ export class Agent {
     this.interval.unref();
   }
 
+  private async updateBlockedLists() {
+    if (!this.token) {
+      return;
+    }
+
+    if (this.serverless) {
+      // Not supported in serverless mode
+      return;
+    }
+
+    try {
+      const { blockedIPAddresses, blockedUserAgents } = await fetchBlockedLists(
+        this.token
+      );
+      this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
+      this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
+    } catch (error: any) {
+      console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
+    }
+  }
+
   private startPollingForConfigChanges() {
     pollForChanges({
       token: this.token,
@@ -347,6 +387,9 @@ export class Agent {
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
+        this.updateBlockedLists().catch((error) => {
+          this.logger.log(`Failed to update blocked lists: ${error.message}`);
+        });
       },
     });
   }
@@ -414,7 +457,6 @@ export class Agent {
       this.logger.log("No token provided, disabling reporting.");
 
       if (!this.block && !isAikidoCI()) {
-        // eslint-disable-next-line no-console
         console.log(
           "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
         );
@@ -430,8 +472,8 @@ export class Agent {
         this.startHeartbeats();
         this.startPollingForConfigChanges();
       })
-      .catch(() => {
-        this.logger.log("Failed to start agent");
+      .catch((err) => {
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
       });
   }
 
@@ -467,7 +509,7 @@ export class Agent {
     this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
   }
 
-  onConnectHostname(hostname: string, port: number | undefined) {
+  onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
   }
 
