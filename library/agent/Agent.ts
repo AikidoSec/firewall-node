@@ -219,10 +219,12 @@ export class Agent {
         if (response.block !== this.block) {
           this.block = response.block;
           if (this.block) {
-            this.logger.log("Blocking mode enabled, requests will be blocked!");
+            this.logger.log(
+              "Blocking mode enabled through Aikido cloud configuration, attacks will be blocked!"
+            );
           } else {
             this.logger.log(
-              "Detection-only mode enabled, no requests will be blocked!"
+              "Monitoring mode enabled through Aikido cloud configuration, no attacks will be blocked!"
             );
           }
         }
@@ -399,11 +401,11 @@ export class Agent {
     this.logger.log("Starting agent...");
 
     if (this.block) {
-      this.logger.log("Blocking mode enabled, requests will be blocked!");
-    } else {
       this.logger.log(
-        "Detection-only mode enabled, no requests will be blocked!"
+        "Blocking mode enabled through environment variable, attacks will be blocked!"
       );
+    } else {
+      this.logger.log("Monitoring mode enabled, no attacks will be blocked!");
     }
 
     if (this.token) {
