@@ -40,6 +40,14 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
+  const isAllowedIP =
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    return false;
+  }
+
   if (
     context.remoteAddress &&
     agent.getConfig().shouldOnlyAllowSomeIPAddresses() &&
@@ -56,14 +64,6 @@ export function checkIfRequestIsBlocked(
     res.end(message);
 
     return true;
-  }
-
-  const isAllowedIP =
-    context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
-
-  if (isAllowedIP) {
-    return false;
   }
 
   const result = context.remoteAddress
