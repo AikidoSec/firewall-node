@@ -210,15 +210,11 @@ export class Agent {
     if (this.token) {
       this.api
         .report(this.token, attack, this.timeoutInMS)
+        .then((response) => this.checkForReportingAPIError(response))
         .catch((err) => {
           console.error(
             `Aikido: Failed to report attack event to Aikido platform: ${err.message}`
           );
-        })
-        .then((response) => {
-          if (response) {
-            this.checkForReportingAPIError(response);
-          }
         });
     }
   }
