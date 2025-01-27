@@ -14,7 +14,7 @@ export async function getConfigLastUpdatedAt(token: Token): Promise<number> {
     timeoutInMS: 3000,
   });
 
-  if (statusCode === 403) {
+  if (statusCode === 401) {
     throw new Error("Token is invalid");
   }
 
