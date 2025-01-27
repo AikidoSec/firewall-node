@@ -23,12 +23,12 @@ export function pollForChanges({
   lastUpdatedAt: number;
 }) {
   if (!token) {
-    logger.log("No token provided, not polling for config updates");
+    logger.debug("No token provided, not polling for config updates");
     return;
   }
 
   if (serverless) {
-    logger.log(
+    logger.debug(
       "Running in serverless environment, not polling for config updates"
     );
     return;
@@ -41,8 +41,8 @@ export function pollForChanges({
   }
 
   interval = setInterval(() => {
-    check(token, onConfigUpdate).catch(() => {
-      logger.log("Failed to check for config updates");
+    check(token, onConfigUpdate).catch((err) => {
+      logger.error(`Failed to check for config updates: ${err.message}`);
     });
   }, 60 * 1000);
 

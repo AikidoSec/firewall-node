@@ -5,7 +5,7 @@ import { Endpoint } from "../agent/Config";
 import type { Context } from "../agent/Context";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { wrap } from "../helpers/wrap";
+import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 
 function createContext(
   remoteAddress: string | undefined = undefined,
@@ -28,16 +28,10 @@ function createContext(
   };
 }
 
-const logs: string[] = [];
-wrap(console, "warn", function warn() {
-  return function warn(message: string) {
-    logs.push(message);
-  };
-});
-
 async function createAgent(
   endpoints: Endpoint[] = [],
-  allowedIpAddresses: string[] = []
+  allowedIpAddresses: string[] = [],
+  logger?: LoggerForTesting
 ) {
   const agent = createTestAgent({
     block: false,
@@ -50,6 +44,7 @@ async function createAgent(
       configUpdatedAt: 0,
       endpoints: endpoints,
     }),
+    logger,
   });
 
   agent.start([]);
@@ -472,20 +467,29 @@ t.test(
 t.test(
   "it does not consume rate limit for user a second time (same request)",
   async (t) => {
-    const agent = await createAgent([
-      {
-        method: "POST",
-        route: "/login",
-        forceProtectionOff: false,
-        rateLimiting: {
-          enabled: true,
-          maxRequests: 3,
-          windowSizeInMS: 1000,
+    const logger = new LoggerForTesting();
+    const agent = await createAgent(
+      [
+        {
+          method: "POST",
+          route: "/login",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 3,
+            windowSizeInMS: 1000,
+          },
         },
-      },
-    ]);
+      ],
+      [],
+      logger
+    );
 
-    t.same(logs, []);
+    t.notOk(
+      logger
+        .getMessages()
+        .includes("Zen.addMiddleware(...) should be called only once.")
+    );
 
     const ctx = createContext("1.2.3.4", "123");
 
@@ -502,6 +506,10 @@ t.test(
       block: false,
     });
 
-    t.same(logs, ["Zen.addMiddleware(...) should be called only once."]);
+    t.ok(
+      logger
+        .getMessages()
+        .includes("Zen.addMiddleware(...) should be called only once.")
+    );
   }
 );

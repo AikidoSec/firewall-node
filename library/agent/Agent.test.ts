@@ -98,8 +98,9 @@ t.test("it sends started event", async (t) => {
   ]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0",
     "Found token, reporting enabled!",
+    "Enabled blocking mode, attacks will be blocked!",
     "mongodb@6.9.0 is supported!",
   ]);
 });
@@ -137,8 +138,9 @@ t.test("it logs if package is supported or not", async () => {
   agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0",
     "Found token, reporting enabled!",
+    "Enabled blocking mode, attacks will be blocked!",
     "shell-quote@1.8.1 is not supported!",
   ]);
 });
@@ -156,9 +158,9 @@ t.test("it starts in non-blocking mode", async () => {
   agent.start([]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
-    "Dry mode enabled, no requests will be blocked!",
+    "Starting agent v0.0.0",
     "Found token, reporting enabled!",
+    "Monitoring mode enabled, no attacks will be blocked!",
   ]);
 });
 
@@ -664,11 +666,12 @@ t.test("it logs when failed to report event", async () => {
   await setTimeout(0);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0",
     "Found token, reporting enabled!",
-    "Failed to start agent",
+    "Enabled blocking mode, attacks will be blocked!",
+    "Failed to start agent: Failed to report event",
     "Heartbeat...",
-    "Failed to do heartbeat",
+    "Failed to send heartbeat event to Aikido platform: Failed to report event",
     "Failed to report attack",
   ]);
 });
@@ -687,8 +690,9 @@ t.test("unable to prevent prototype pollution", async () => {
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0",
     "Found token, reporting enabled!",
+    "Enabled blocking mode, attacks will be blocked!",
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
 

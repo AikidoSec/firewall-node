@@ -85,13 +85,13 @@ export class Agent {
       list.push(`${pkg}@${incompatiblePackages[pkg]}`);
     }
 
-    this.logger.log(
+    this.logger.warn(
       `Unable to prevent prototype pollution, incompatible packages found: ${list.join(" ")}`
     );
   }
 
   onPrototypePollutionPrevented() {
-    this.logger.log("Prevented prototype pollution!");
+    this.logger.debug("Prevented prototype pollution!");
 
     // Will be sent in the next heartbeat
     this.preventedPrototypePollution = true;
@@ -112,6 +112,17 @@ export class Agent {
         },
         this.timeoutInMS
       );
+      if (!result.success) {
+        if (result.error === "invalid_token") {
+          this.logger.error(
+            "Unable to access the Aikido platform, please check your token."
+          );
+        } else {
+          this.logger.error(
+            `Failed to connect to the Aikido platform: ${result.error}`
+          );
+        }
+      }
 
       this.updateServiceConfig(result);
 
@@ -128,7 +139,7 @@ export class Agent {
     module: string;
     method: string;
   }) {
-    this.logger.log(
+    this.logger.error(
       `Internal error in module "${module}" in method "${method}"\n${error.stack}`
     );
   }
@@ -194,7 +205,7 @@ export class Agent {
 
     if (this.token) {
       this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack");
+        this.logger.error("Failed to report attack");
       });
     }
   }
@@ -203,8 +214,10 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.log("Failed to do heartbeat");
+    this.sendHeartbeat(timeoutInMS).catch((err) => {
+      this.logger.error(
+        `Failed to send heartbeat event to Aikido platform: ${err.message}`
+      );
     });
   }
 
@@ -221,9 +234,13 @@ export class Agent {
       if (typeof response.block === "boolean") {
         if (response.block !== this.block) {
           this.block = response.block;
-          this.logger.log(
-            `Block mode has been set to ${this.block ? "on" : "off"}`
-          );
+          if (this.block) {
+            this.logger.info(`Enabled blocking mode, attacks will be blocked!`);
+          } else {
+            this.logger.warn(
+              `Monitoring mode enabled, no attacks will be blocked!`
+            );
+          }
         }
       }
 
@@ -261,7 +278,7 @@ export class Agent {
 
   private async sendHeartbeat(timeoutInMS: number) {
     if (this.token) {
-      this.logger.log("Heartbeat...");
+      this.logger.debug("Heartbeat...");
       const stats = this.statistics.getStats();
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
@@ -291,6 +308,12 @@ export class Agent {
         timeoutInMS
       );
 
+      if (!response.success && response.error === "invalid_token") {
+        this.logger.error(
+          "Unable to access the Aikido platform, please check your token."
+        );
+      }
+
       this.updateServiceConfig(response);
     }
   }
@@ -300,14 +323,14 @@ export class Agent {
    */
   private startHeartbeats() {
     if (this.serverless) {
-      this.logger.log(
+      this.logger.debug(
         "Running in serverless environment, not starting heartbeats"
       );
       return;
     }
 
     if (!this.token) {
-      this.logger.log("No token provided, not starting heartbeats");
+      this.logger.debug("No token provided, not starting heartbeats");
       return;
     }
 
@@ -354,7 +377,7 @@ export class Agent {
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
     } catch (error: any) {
-      this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      this.logger.error(`Failed to update blocked lists: ${error.message}`);
     }
   }
 
@@ -367,7 +390,7 @@ export class Agent {
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
         this.updateBlockedLists().catch((error) => {
-          this.logger.log(`Failed to update blocked lists: ${error.message}`);
+          this.logger.error(`Failed to update blocked lists: ${error.message}`);
         });
       },
     });
@@ -420,23 +443,28 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.log("Starting agent...");
-
-    if (!this.block) {
-      this.logger.log("Dry mode enabled, no requests will be blocked!");
-    }
+    this.logger.info(`Starting agent v${getAgentVersion()}`);
 
     if (this.token) {
-      this.logger.log("Found token, reporting enabled!");
-    } else {
-      this.logger.log("No token provided, disabling reporting.");
+      this.logger.info("Found token, reporting enabled!");
 
-      if (!this.block && !isAikidoCI()) {
-        // eslint-disable-next-line no-console
-        console.log(
-          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+      if (!this.block) {
+        this.logger.warn(
+          "Monitoring mode enabled, no attacks will be blocked!"
         );
       }
+    } else {
+      this.logger.info("No token found, reporting disabled!");
+
+      if (!this.block) {
+        this.logger.warn(
+          "Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+        );
+      }
+    }
+
+    if (this.block) {
+      this.logger.info("Enabled blocking mode, attacks will be blocked!");
     }
 
     wrapInstalledPackages(wrappers);
@@ -448,17 +476,19 @@ export class Agent {
         this.startHeartbeats();
         this.startPollingForConfigChanges();
       })
-      .catch(() => {
-        this.logger.log("Failed to start agent");
+      .catch((err) => {
+        this.logger.error(`Failed to start agent: ${err.message}`);
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
-    this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  onFailedToWrapMethod(module: string, name: string, error: Error) {
+    this.logger.error(
+      `Failed to wrap method ${name} in module ${module}: ${error.message}`
+    );
   }
 
   onFailedToWrapModule(module: string, error: Error) {
-    this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
+    this.logger.error(`Failed to wrap module ${module}: ${error.message}`);
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {
@@ -470,19 +500,19 @@ export class Agent {
 
     if (details.version) {
       if (details.supported) {
-        this.logger.log(`${name}@${details.version} is supported!`);
+        this.logger.debug(`${name}@${details.version} is supported!`);
       } else {
-        this.logger.log(`${name}@${details.version} is not supported!`);
+        this.logger.warn(`${name}@${details.version} is not supported!`);
       }
     }
   }
 
   onFailedToWrapPackage(module: string) {
-    this.logger.log(`Failed to wrap package ${module}`);
+    this.logger.error(`Failed to wrap package ${module}`);
   }
 
   onFailedToWrapFile(module: string, filename: string) {
-    this.logger.log(`Failed to wrap file ${filename} in module ${module}`);
+    this.logger.error(`Failed to wrap file ${filename} in module ${module}`);
   }
 
   onConnectHostname(hostname: string, port: number) {
@@ -516,13 +546,17 @@ export class Agent {
     return this.routes;
   }
 
-  log(message: string) {
-    this.logger.log(message);
+  getLogger() {
+    return this.logger;
   }
 
   async flushStats(timeoutInMS: number) {
     this.statistics.forceCompress();
-    await this.sendHeartbeat(timeoutInMS);
+    await this.sendHeartbeat(timeoutInMS).catch((err) => {
+      this.logger.error(
+        `Failed to send heartbeat event to Aikido platform: ${err.message}`
+      );
+    });
   }
 
   getRateLimiter() {

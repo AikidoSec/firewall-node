@@ -114,16 +114,20 @@ export class Fetch implements Wrapper {
     const dispatcher = globalThis[undiciGlobalDispatcherSymbol];
 
     if (!dispatcher) {
-      agent.log(
-        `global dispatcher not found for fetch, we can't provide protection!`
-      );
+      agent
+        .getLogger()
+        .warn(
+          `Global dispatcher of fetch not found, we can't protect fetch(...) against SSRF attacks!`
+        );
       return;
     }
 
     if (dispatcher.constructor.name !== "Agent") {
-      agent.log(
-        `Expected Agent as global dispatcher for fetch but found ${dispatcher.constructor.name}, we can't provide protection!`
-      );
+      agent
+        .getLogger()
+        .warn(
+          `Expected Agent as global dispatcher for fetch but found ${dispatcher.constructor.name}, we can't protect fetch(...) against SSRF attacks!`
+        );
       return;
     }
 
@@ -142,9 +146,11 @@ export class Fetch implements Wrapper {
         agent
       );
     } catch (error) {
-      agent.log(
-        `Failed to patch global dispatcher for fetch, we can't provide protection!`
-      );
+      agent
+        .getLogger()
+        .error(
+          `Failed to patch global dispatcher for fetch, we can't protect fetch(...) against SSRF attacks!`
+        );
     }
   }
 

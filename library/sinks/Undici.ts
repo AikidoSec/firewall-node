@@ -118,9 +118,11 @@ export class Undici implements Wrapper {
         // Print a warning that we can't provide protection if setGlobalDispatcher is called
         wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
           inspectArgs: (args, agent) => {
-            agent.log(
-              `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
-            );
+            agent
+              .getLogger()
+              .warn(
+                `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
+              );
           },
         });
 

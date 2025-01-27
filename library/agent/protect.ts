@@ -31,7 +31,6 @@ import { Token } from "./api/Token";
 import { getAPIURL } from "./getAPIURL";
 import { Logger } from "./logger/Logger";
 import { LoggerConsole } from "./logger/LoggerConsole";
-import { LoggerNoop } from "./logger/LoggerNoop";
 import { GraphQL } from "../sources/GraphQL";
 import { Xml2js } from "../sources/Xml2js";
 import { FastXmlParser } from "../sources/FastXmlParser";
@@ -41,7 +40,6 @@ import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
 import { NodeSQLite } from "../sinks/NodeSqlite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
-import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
@@ -51,11 +49,7 @@ import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
 
 function getLogger(): Logger {
-  if (isDebugging()) {
-    return new LoggerConsole();
-  }
-
-  return new LoggerNoop();
+  return new LoggerConsole();
 }
 
 function validatesToken(api: ReportingAPI) {
