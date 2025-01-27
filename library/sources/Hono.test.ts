@@ -540,7 +540,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   t.equal(response.statusCode, 403);
   t.equal(
     response.body,
-    "our IP address is not allowed to access this resource. (Your IP: 1.3.2.4)"
+    "Your IP address is not allowed to access this resource. (Your IP: 1.3.2.4)"
   );
 
   server.close();
