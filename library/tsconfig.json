@@ -10,5 +10,9 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "ts-node": {
+    "transpileOnly": true,
+    "typeCheck": false
+  }
 }
