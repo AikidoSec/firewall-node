@@ -11,7 +11,7 @@ t.test("it logs in", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "true",
+      AIKIDO_BLOCKING: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
       N8N_PORT: port.toString(),
     },

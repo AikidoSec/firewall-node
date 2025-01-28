@@ -23,6 +23,15 @@ t.test("works with AIKIDO_BLOCK", async () => {
   t.same(shouldEnableFirewall(), false);
 });
 
+t.test("works with AIKIDO_BLOCKING", async () => {
+  process.env.AIKIDO_BLOCKING = "1";
+  t.same(shouldEnableFirewall(), true);
+  process.env.AIKIDO_BLOCKING = "true";
+  t.same(shouldEnableFirewall(), true);
+  process.env.AIKIDO_BLOCKING = "";
+  t.same(shouldEnableFirewall(), false);
+});
+
 t.test("works with AIKIDO_TOKEN", async () => {
   process.env.AIKIDO_TOKEN = "abc123";
   t.same(shouldEnableFirewall(), true);

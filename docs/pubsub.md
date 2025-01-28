@@ -35,7 +35,7 @@ If you want to see a full example, check our [Pub/Sub sample app](../sample-apps
 
 By default, Zen will run in non-blocking mode. When Zen detects an attack, it will be reported to Aikido and continue executing the call.
 
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`.
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`.
 
 ## Debug mode
 

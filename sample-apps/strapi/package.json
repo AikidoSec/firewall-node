@@ -6,8 +6,8 @@
   "scripts": {
     "build": "strapi build",
     "deploy": "strapi deploy",
-    "develop": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi develop",
-    "start": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCK=true AIKIDO_DEBUG=true strapi start",
+    "develop": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCKING=true AIKIDO_DEBUG=true strapi develop",
+    "start": "NODE_OPTIONS='-r @aikidosec/firewall' AIKIDO_BLOCKING=true AIKIDO_DEBUG=true strapi start",
     "strapi": "strapi"
   },
   "dependencies": {

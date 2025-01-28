@@ -10,7 +10,7 @@ t.test("it serves debug script", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "true",
+      AIKIDO_BLOCKING: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
     },
     cwd: pathToApp,

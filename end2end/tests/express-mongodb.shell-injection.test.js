@@ -11,7 +11,7 @@ const pathToApp = resolve(
 
 t.test("it blocks in blocking mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4000"], {
-    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCK: "true" },
+    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
   server.on("close", () => {

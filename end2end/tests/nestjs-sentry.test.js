@@ -20,7 +20,7 @@ t.test("it blocks in blocking mode", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "true",
+      AIKIDO_BLOCKING: "true",
       PORT: "4000",
     },
     cwd: pathToApp,
@@ -84,7 +84,7 @@ t.test("it does not block in non-blocking mode", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "false",
+      AIKIDO_BLOCKING: "false",
       PORT: "4001",
     },
     cwd: pathToApp,

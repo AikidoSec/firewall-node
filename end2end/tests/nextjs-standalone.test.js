@@ -41,7 +41,7 @@ t.test("it blocks in blocking mode", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "true",
+      AIKIDO_BLOCKING: "true",
       PORT: 4000,
     },
     cwd: join(pathToApp, ".next/standalone"),

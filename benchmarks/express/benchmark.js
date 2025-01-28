@@ -18,7 +18,7 @@ async function run() {
       ...process.env,
       PORT: 5001,
       NODE_OPTIONS: "--require @aikidosec/firewall",
-      AIKIDO_BLOCK: "true",
+      AIKIDO_BLOCKING: "true",
     },
     stdio: "inherit",
   });
