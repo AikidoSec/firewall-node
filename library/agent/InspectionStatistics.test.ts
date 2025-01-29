@@ -39,6 +39,14 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -54,6 +62,14 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -80,6 +96,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -112,6 +136,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -144,6 +176,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -170,6 +210,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -202,6 +250,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -234,6 +290,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -285,6 +349,14 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -332,6 +404,14 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -347,6 +427,14 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -363,6 +451,14 @@ t.test("it keeps track of requests", async () => {
         total: 1,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -379,6 +475,14 @@ t.test("it keeps track of requests", async () => {
         total: 2,
         blocked: 1,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -396,6 +500,14 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -420,6 +532,14 @@ t.test("it force compresses stats", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
 
@@ -462,6 +582,87 @@ t.test("it keeps track of aborted requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 0,
     },
   });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of blocked requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onBlockedRequest({ reason: "ipBlocklist" });
+  stats.onBlockedRequest({ reason: "userAgent" });
+  stats.onBlockedRequest({ reason: "allowedIpsRoute" });
+  stats.onBlockedRequest({ reason: "userBlock" });
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      blocked: {
+        total: 4,
+        allowedIpsRoute: 1,
+        userAgent: 1,
+        ipBlocklist: 1,
+        userBlocked: 1,
+      },
+      rateLimited: 0,
+    },
+  });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of rate limited requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onRateLimitedRequest();
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        allowedIpsRoute: 0,
+        userAgent: 0,
+        ipBlocklist: 0,
+        userBlocked: 0,
+      },
+      rateLimited: 1,
+    },
+  });
+
+  clock.uninstall();
 });
