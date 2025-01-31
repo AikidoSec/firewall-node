@@ -41,7 +41,15 @@ export class Agent {
   private timeoutInMS = 10000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig([], Date.now(), [], [], true, []);
+  private serviceConfig = new ServiceConfig(
+    [],
+    Date.now(),
+    [],
+    [],
+    true,
+    [],
+    []
+  );
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -352,7 +360,7 @@ export class Agent {
     this.interval.unref();
   }
 
-  private async updateBlockedLists() {
+  async updateBlockedLists() {
     if (!this.token) {
       return;
     }
@@ -363,11 +371,11 @@ export class Agent {
     }
 
     try {
-      const { blockedIPAddresses, blockedUserAgents } = await fetchBlockedLists(
-        this.token
-      );
+      const { blockedIPAddresses, blockedUserAgents, allowedIPAddresses } =
+        await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
+      this.serviceConfig.updateOnlyAllowedIPAddresses(allowedIPAddresses);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }

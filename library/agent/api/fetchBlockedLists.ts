@@ -2,14 +2,15 @@ import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
-export type Blocklist = {
+export type IPList = {
   source: string;
   description: string;
   ips: string[];
 };
 
 export async function fetchBlockedLists(token: Token): Promise<{
-  blockedIPAddresses: Blocklist[];
+  blockedIPAddresses: IPList[];
+  allowedIPAddresses: IPList[];
   blockedUserAgents: string;
 }> {
   const baseUrl = getAPIURL();
@@ -34,7 +35,8 @@ export async function fetchBlockedLists(token: Token): Promise<{
   }
 
   const result: {
-    blockedIPAddresses: Blocklist[];
+    blockedIPAddresses: IPList[];
+    allowedIPAddresses: IPList[];
     blockedUserAgents: string;
   } = JSON.parse(body);
 
@@ -42,6 +44,10 @@ export async function fetchBlockedLists(token: Token): Promise<{
     blockedIPAddresses:
       result && Array.isArray(result.blockedIPAddresses)
         ? result.blockedIPAddresses
+        : [],
+    allowedIPAddresses:
+      result && Array.isArray(result.allowedIPAddresses)
+        ? result.allowedIPAddresses
         : [],
     // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
     blockedUserAgents:
