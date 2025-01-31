@@ -1,3 +1,4 @@
+import { isWindows } from "../../helpers/isWindows";
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
 import { startsWithUnsafePath } from "./unsafePathStart";
 import { fileURLToPath } from "url";
@@ -59,11 +60,12 @@ export function detectPathTraversal(
 function parseAsFileUrl(path: string) {
   let url = path;
   if (!url.startsWith("file:")) {
-    if (!url.startsWith("/")) {
+    if (!isWindows && !url.startsWith("/")) {
       url = `/${url}`;
     }
     url = `file://${url}`;
   }
+
   try {
     return fileURLToPath(url);
   } catch (e) {

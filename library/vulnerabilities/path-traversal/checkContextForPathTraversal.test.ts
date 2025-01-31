@@ -1,5 +1,6 @@
 import * as t from "tap";
 import { checkContextForPathTraversal } from "./checkContextForPathTraversal";
+import { isWindows } from "../../helpers/isWindows";
 
 const unsafeContext = {
   filename: "../file/test.txt",
@@ -84,7 +85,9 @@ t.test("it detects path traversal with URL", async () => {
   t.same(
     checkContextForPathTraversal({
       ...unsafeContext,
-      filename: new URL("file:///../file/test.txt"),
+      filename: isWindows
+        ? new URL("file://C:/../file/test.txt")
+        : new URL("file:///../file/test.txt"),
     }),
     {
       operation: "operation",
