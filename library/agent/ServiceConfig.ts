@@ -1,7 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
-import { IPList as IPList } from "./api/fetchBlockedLists";
+import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -145,6 +145,9 @@ export class ServiceConfig {
     this.setOnlyAllowedIPAddresses(ipAddresses);
   }
 
+  /**
+   * Returns true if only some IP addresses are allowed to access the service, e.g. if a geoip country allowlist is set.
+   */
   shouldOnlyAllowSomeIPAddresses() {
     return this.onlyAllowedIPAddresses !== undefined;
   }
