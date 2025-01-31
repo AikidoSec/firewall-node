@@ -174,21 +174,7 @@ address: support@aikido.dev or create an account at https://app.aikido.dev.
 
 We run a benchmark on every commit to ensure Zen has a minimal impact on your application's performance.
 
-### Benchmarks for operations
-
-| Benchmark           | Avg. time w/o Zen | Avg. time w/ Zen | Delta      |
-|---------------------|-------------------|------------------|------------|
-| SQL query | 0.0049ms | 0.0149ms | +0.01ms |
-| File read | 0.0463ms | 0.0608ms | +0.0145ms |
-| NoSQL query | 0.0087ms | 0.0134ms | +0.0048ms |
-| `new Function(...)` | 0.0015ms | 0.0116ms | +0.0101ms |
-| Shell command | 3.417ms | 3.4179ms | +0.0009ms |
-| Outgoing HTTP request (`fetch`) | 0.2211ms | 0.2628ms | +0.0417ms |
-| Outgoing HTTP request (`http.request`) | 0.259ms | 0.4014ms | +0.1424ms |
-
-(Using Node.js 18.x on a MacBook Pro (Apple M3 Pro). Results will vary depending on your hardware.)
-
-See [benchmarks](benchmarks) for more information.
+See [benchmarks](benchmarks)
 
 ## Bug bounty program
 
