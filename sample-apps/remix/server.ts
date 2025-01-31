@@ -1,8 +1,3 @@
-process.env.AIKIDO_DEBUG = "true";
-process.env.AIKIDO_BLOCK = "true";
-process.env.AIKIDO_TOKEN =
-  "AIK_RUNTIME_135_8093_wYYGtGOdwnMSQTL1T6et6LTeGIPep5Qwqfb2USY35e8LLI7f";
-
 const Zen = await import("@aikidosec/firewall");
 
 import { createRequestHandler } from "@remix-run/express";
