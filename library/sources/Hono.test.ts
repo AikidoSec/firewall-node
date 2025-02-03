@@ -542,5 +542,21 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     "Your IP address is not allowed to access this resource. (Your IP: 1.3.2.4)"
   );
 
+  const response2 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8768/"),
+    headers: {
+      "X-Forwarded-For": "4.3.2.1",
+    },
+  });
+  t.equal(response2.statusCode, 200);
+
+  const response3 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8768/"),
+    headers: {
+      "X-Forwarded-For": "127.0.0.1",
+    },
+  });
+  t.equal(response3.statusCode, 200);
+
   server.close();
 });
