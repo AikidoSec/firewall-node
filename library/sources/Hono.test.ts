@@ -12,10 +12,9 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
-import { setTimeout } from "node:timers/promises";
 import { getInstance } from "../agent/AgentSingleton";
 
-let shouldReturnAllowedIPAddresses = false;
+let shouldReturnOnlyAllowedIPAddresses = false;
 wrap(fetch, "fetch", function mock(original) {
   return async function mock(this: typeof fetch) {
     if (
@@ -34,7 +33,7 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           blockedUserAgents: "hacker|attacker",
-          allowedIPAddresses: shouldReturnAllowedIPAddresses
+          onlyAllowedIPAddresses: shouldReturnOnlyAllowedIPAddresses
             ? [
                 {
                   source: "geoip",
@@ -521,7 +520,7 @@ t.test("invalid json body", opts, async (t) => {
 
 t.test("test access only allowed for some IP addresses", opts, async (t) => {
   // Update the allowed IP addresses
-  shouldReturnAllowedIPAddresses = true;
+  shouldReturnOnlyAllowedIPAddresses = true;
   await getInstance()!.updateBlockedLists();
 
   const { serve } =

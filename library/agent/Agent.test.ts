@@ -34,7 +34,7 @@ wrap(fetch, "fetch", function mock() {
           },
         ],
         blockedUserAgents: "AI2Bot|Bytespider",
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
+        onlyAllowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
                 source: "name",

@@ -5,7 +5,7 @@ import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
-  private allowedIPAddresses: Map<string, string> = new Map();
+  private allowedIPAddresses: Set<string> = new Set();
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
@@ -64,10 +64,7 @@ export class ServiceConfig {
   }
 
   private setAllowedIPAddresses(allowedIPAddresses: string[]) {
-    this.allowedIPAddresses = new Map();
-    allowedIPAddresses.forEach((ip) => {
-      this.allowedIPAddresses.set(ip, ip);
-    });
+    this.allowedIPAddresses = new Set(allowedIPAddresses);
   }
 
   isAllowedIP(ip: string) {
