@@ -360,7 +360,7 @@ export class Agent {
     this.interval.unref();
   }
 
-  async updateBlockedLists() {
+  private async updateBlockedLists() {
     if (!this.token) {
       return;
     }

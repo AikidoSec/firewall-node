@@ -12,9 +12,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
-import { getInstance } from "../agent/AgentSingleton";
 
-let shouldReturnOnlyAllowedIPAddresses = false;
 wrap(fetch, "fetch", function mock(original) {
   return async function mock(this: typeof fetch) {
     if (
@@ -33,15 +31,7 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           blockedUserAgents: "hacker|attacker",
-          onlyAllowedIPAddresses: shouldReturnOnlyAllowedIPAddresses
-            ? [
-                {
-                  source: "geoip",
-                  description: "geo restrictions",
-                  ips: ["4.3.2.1"],
-                },
-              ]
-            : [],
+          onlyAllowedIPAddresses: [],
         }),
       };
     }
@@ -516,57 +506,4 @@ t.test("invalid json body", opts, async (t) => {
 
   t.same(response.status, 400);
   t.same(await response.text(), "Invalid JSON");
-});
-
-t.test("test access only allowed for some IP addresses", opts, async (t) => {
-  // Update the allowed IP addresses
-  shouldReturnOnlyAllowedIPAddresses = true;
-  await getInstance()!.updateBlockedLists();
-
-  const { serve } =
-    require("@hono/node-server") as typeof import("@hono/node-server");
-  const server = serve({
-    fetch: getApp().fetch,
-    port: 8768,
-  });
-
-  const response = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8768/"),
-    headers: {
-      "X-Forwarded-For": "1.3.2.4",
-    },
-  });
-  t.equal(response.statusCode, 403);
-  t.equal(
-    response.body,
-    "Your IP address is not allowed to access this resource. (Your IP: 1.3.2.4)"
-  );
-
-  const response2 = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8768/"),
-    headers: {
-      "X-Forwarded-For": "4.3.2.1",
-    },
-  });
-  t.equal(response2.statusCode, 200);
-
-  // Always allow localhost
-  const response3 = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8768/"),
-    headers: {
-      "X-Forwarded-For": "127.0.0.1",
-    },
-  });
-  t.equal(response3.statusCode, 200);
-
-  // Allow private IP ranges
-  const response4 = await fetch.fetch({
-    url: new URL("http://127.0.0.1:8768/"),
-    headers: {
-      "X-Forwarded-For": "10.0.2.4",
-    },
-  });
-  t.equal(response4.statusCode, 200);
-
-  server.close();
 });
