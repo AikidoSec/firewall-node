@@ -550,6 +550,7 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
   });
   t.equal(response2.statusCode, 200);
 
+  // Always allow localhost
   const response3 = await fetch.fetch({
     url: new URL("http://127.0.0.1:8768/"),
     headers: {
@@ -557,6 +558,15 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     },
   });
   t.equal(response3.statusCode, 200);
+
+  // Allow private IP ranges
+  const response4 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8768/"),
+    headers: {
+      "X-Forwarded-For": "10.0.2.4",
+    },
+  });
+  t.equal(response4.statusCode, 200);
 
   server.close();
 });
