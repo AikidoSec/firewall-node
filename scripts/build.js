@@ -11,7 +11,7 @@ const {
 const execAsync = promisify(exec);
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.36";
+const INTERNALS_VERSION = "v0.1.37";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
 // ---
 
