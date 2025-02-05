@@ -5,7 +5,11 @@ export class Hostnames {
 
   constructor(private readonly maxEntries: number = 200) {}
 
-  add(hostname: string, port: number | undefined = -1) {
+  add(hostname: string, port: number) {
+    if (port <= 0) {
+      return;
+    }
+
     if (!this.map.has(hostname)) {
       this.map.set(hostname, new Map([[port, 1]]));
     } else {
@@ -46,7 +50,7 @@ export class Hostnames {
       Array.from(ports.entries()).map(([port, hits]) => {
         return {
           hostname,
-          port: port === -1 ? undefined : port,
+          port,
           hits,
         };
       })

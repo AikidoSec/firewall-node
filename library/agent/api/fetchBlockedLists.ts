@@ -25,6 +25,11 @@ export async function fetchBlockedLists(token: Token): Promise<{
   });
 
   if (statusCode !== 200) {
+    if (statusCode === 401) {
+      throw new Error(
+        `Unable to access the Aikido platform, please check your token.`
+      );
+    }
     throw new Error(`Failed to fetch blocked lists: ${statusCode}`);
   }
 
