@@ -1,7 +1,7 @@
 export function getPortFromURL(url: URL): number | undefined {
   const port = parseInt(url.port, 10);
 
-  if (!isNaN(port)) {
+  if (Number.isInteger(port)) {
     return port;
   }
 
