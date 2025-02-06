@@ -37,6 +37,8 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
+    agent.getInspectionStatistics().onBlockedRequest({ reason: "ipBlocklist" });
+
     return true;
   }
 
@@ -63,6 +65,10 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
+    agent
+      .getInspectionStatistics()
+      .onBlockedRequest({ reason: "allowedIpsRoute" });
+
     return true;
   }
 
@@ -78,6 +84,8 @@ export function checkIfRequestIsBlocked(
     res.end(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
+
+    agent.getInspectionStatistics().onBlockedRequest({ reason: "userAgent" });
 
     return true;
   }
