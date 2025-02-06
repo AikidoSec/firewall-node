@@ -4,6 +4,7 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import { isPrivateIP } from "../../vulnerabilities/ssrf/isPrivateIP";
 
 /**
  * Inspects the IP address of the request:
@@ -46,6 +47,25 @@ export function checkIfRequestIsBlocked(
 
   if (isAllowedIP) {
     return false;
+  }
+
+  if (
+    context.remoteAddress &&
+    agent.getConfig().shouldOnlyAllowSomeIPAddresses() &&
+    !isPrivateIP(context.remoteAddress) &&
+    !agent.getConfig().isOnlyAllowedIPAddress(context.remoteAddress)
+  ) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
+
+    let message = "Your IP address is not allowed to access this resource.";
+    if (context.remoteAddress) {
+      message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
+    }
+
+    res.end(message);
+
+    return true;
   }
 
   const result = context.remoteAddress

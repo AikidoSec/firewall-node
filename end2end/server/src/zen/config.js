@@ -39,6 +39,7 @@ function updateAppConfig(app, newConfig) {
 
 const blockedIPAddresses = [];
 const blockedUserAgents = [];
+const onlyAllowedIPAddresses = [];
 
 function updateBlockedIPAddresses(app, ips) {
   let entry = blockedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
@@ -56,6 +57,34 @@ function updateBlockedIPAddresses(app, ips) {
 
 function getBlockedIPAddresses(app) {
   const entry = blockedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.ipAddresses;
+  }
+
+  return { serviceId: app.serviceId, ipAddresses: [] };
+}
+
+function updateOnlyAllowedIPAddresses(app, ips) {
+  let entry = onlyAllowedIPAddresses.find(
+    (ip) => ip.serviceId === app.serviceId
+  );
+
+  if (entry) {
+    entry.ipAddresses = ips;
+  } else {
+    entry = { serviceId: app.serviceId, ipAddresses: ips };
+    onlyAllowedIPAddresses.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getOnlyAllowedIPAddresses(app) {
+  const entry = onlyAllowedIPAddresses.find(
+    (ip) => ip.serviceId === app.serviceId
+  );
 
   if (entry) {
     return entry.ipAddresses;
@@ -95,4 +124,6 @@ module.exports = {
   getBlockedIPAddresses,
   updateBlockedUserAgents,
   getBlockedUserAgents,
+  getOnlyAllowedIPAddresses,
+  updateOnlyAllowedIPAddresses,
 };
