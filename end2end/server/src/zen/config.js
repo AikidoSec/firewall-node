@@ -32,7 +32,7 @@ function updateAppConfig(app, newConfig) {
   configs[index] = {
     ...configs[index],
     ...newConfig,
-    lastUpdatedAt: Date.now(),
+    configUpdatedAt: Date.now(),
   };
   return true;
 }

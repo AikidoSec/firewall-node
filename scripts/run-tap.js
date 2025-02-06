@@ -6,6 +6,11 @@ const minor = parseInt(version[1], 10);
 
 let args = "--allow-incomplete-coverage --jobs=8";
 
+// If script is called with arg --ci, set env CI to true
+if (process.argv.includes("--ci")) {
+  process.env.CI = "true";
+}
+
 if (process.env.CI) {
   args += " --coverage-report=lcov";
 }

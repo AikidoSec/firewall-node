@@ -1,42 +1,15 @@
 import type { Context as HonoContext } from "hono";
-import { Context } from "../../agent/Context";
+import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
-import { isJsonContentType } from "../../helpers/isJsonContentType";
 import { parse } from "../../helpers/parseCookies";
 import { getRemoteAddress } from "./getRemoteAddress";
 
 export async function contextFromRequest(c: HonoContext): Promise<Context> {
   const { req } = c;
 
-  let body = undefined;
-  const contentType = req.header("content-type");
-  if (contentType) {
-    if (isJsonContentType(contentType)) {
-      try {
-        body = await req.json();
-      } catch {
-        // Ignore
-      }
-    } else if (contentType.startsWith("application/x-www-form-urlencoded")) {
-      try {
-        body = await req.parseBody();
-      } catch {
-        // Ignore
-      }
-    } else if (
-      contentType.includes("text/plain") ||
-      contentType.includes("xml")
-    ) {
-      try {
-        body = await req.text();
-      } catch {
-        // Ignore
-      }
-    }
-  }
-
   const cookieHeader = req.header("cookie");
+  const existingContext = getContext();
 
   return {
     method: c.req.method,
@@ -44,7 +17,11 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
       headers: req.header(),
       remoteAddress: getRemoteAddress(c),
     }),
-    body: body,
+    // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
+    body:
+      existingContext && existingContext.source === "hono"
+        ? existingContext.body
+        : undefined,
     url: req.url,
     headers: req.header(),
     routeParams: req.param(),

@@ -27,16 +27,16 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
       - name: Install dependencies
-        run: make install
+        run: npm run install-lib-only
       - name: Get the version
         id: get_version
         run: echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
       - name: Set the version
         run: cd library && npm --no-git-tag-version version ${{ steps.get_version.outputs.tag }}
       - name: Build the library
-        run: make build
+        run: npm run build
       - name: Linting
-        run: make lint
+        run: npm run lint
       - name: Publish to NPM
         run: |
           if [ "${{ github.event.release.prerelease }}" = "true" ]; then
