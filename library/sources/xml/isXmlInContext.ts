@@ -5,7 +5,11 @@ import { extractStringsFromUserInputCached } from "../../helpers/extractStringsF
 /**
  * Checks if the XML string can be found in the context.
  */
-export function isXmlInContext(xml: string, context: Context): boolean {
+export function isXmlInContext(
+  xml: string,
+  context: Context,
+  useIncludes = false
+): boolean {
   for (const source of SOURCES) {
     if (source === "xml") {
       // Skip parsed XML
@@ -17,7 +21,11 @@ export function isXmlInContext(xml: string, context: Context): boolean {
     }
 
     for (const str of userInput) {
-      if (str === xml) {
+      if (useIncludes) {
+        if (str.includes(xml)) {
+          return true;
+        }
+      } else if (str === xml) {
         return true;
       }
     }

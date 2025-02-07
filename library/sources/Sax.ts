@@ -1,15 +1,15 @@
-/* eslint-disable prefer-rest-params */
-import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapEvents } from "./sax/wrapEvents";
+import { isXmlInContext } from "./xml/isXmlInContext";
 
 /**
  * Wrapper for sax xml parser.
  */
 export class Sax implements Wrapper {
-  private inspectWrite(args: unknown[], subject: unknown, agent: Agent) {
+  private inspectWrite(args: unknown[], subject: unknown) {
     // Ignore if no arguments are passed, parser is closed (null) or the first argument is a empty string or object
     if (!args.length || !args[0]) {
       return;
@@ -38,11 +38,8 @@ export class Sax implements Wrapper {
       return;
     }
 
-    // Check if the xml string is in the body
-    if (
-      typeof context.body !== "string" ||
-      !context.body.includes(xmlPartStr)
-    ) {
+    // Check if the XML string is in the request context (also if it's only part of a larger document)
+    if (!isXmlInContext(xmlPartStr, context, true)) {
       // If write is called a second time with xml that is not in the body, we won't add it to the context.
       // It's safer to store this state in the parser object instead of globally, because there could be multiple parsers at the same time.
       (subject as { [key: string]: any })["_aikido_add_to_context"] = false;
@@ -58,7 +55,12 @@ export class Sax implements Wrapper {
     hooks
       .addPackage("sax")
       .withVersion("^1.0.0")
-      .addSubject((exports) => exports.SAXParser.prototype)
-      .inspect("write", this.inspectWrite);
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports.SAXParser.prototype, "write", pkgInfo, {
+          inspectArgs: (args, agent, subject) => {
+            this.inspectWrite(args, subject);
+          },
+        });
+      });
   }
 }

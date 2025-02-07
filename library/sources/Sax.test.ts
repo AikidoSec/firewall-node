@@ -1,15 +1,13 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import {
   Context,
   getContext,
   runWithContext,
   updateContext,
 } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Sax } from "./Sax";
 import { Readable } from "stream";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -25,17 +23,13 @@ const context: Context = {
 };
 
 t.test("it works", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent({
+    block: true,
+  });
 
   agent.start([new Sax()]);
 
-  const sax = require("sax");
+  const sax = require("sax") as typeof import("sax");
 
   let parser1Text = "";
   const parser1 = sax.parser(true);
@@ -89,7 +83,7 @@ t.test("it works", async (t) => {
   });
 
   // Reset the context
-  updateContext(context, "xml", "existing");
+  updateContext(context, "xml", ["existing"]);
 
   runWithContext(context, () => {
     let text = "";
@@ -101,7 +95,7 @@ t.test("it works", async (t) => {
       t.equal(text, "textnot in body13");
     };
 
-    t.same(getContext()?.xml, "existing");
+    t.same(getContext()?.xml, ["existing"]);
 
     parser.write('<root><child name="test">text</child><child>');
     t.same(getContext()?.xml, ["existing", "text"]);
@@ -125,6 +119,7 @@ t.test("it works", async (t) => {
     };
 
     t.same(getContext()?.xml, undefined);
+    // @ts-expect-error Ignore, testing non-typed input
     parser.write(['<root><child name="test">text</child><child>']).close();
     t.same(getContext()?.xml, ["text"]);
   });
@@ -143,23 +138,20 @@ t.test("it works", async (t) => {
     };
 
     t.same(getContext()?.xml, undefined);
+    // @ts-expect-error Ignore, testing invalid input
     parser.write(true).close();
     t.same(getContext()?.xml, undefined);
   });
 });
 
 t.test("it works with streams", (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent({
+    block: true,
+  });
 
   agent.start([new Sax()]);
 
-  const sax = require("sax");
+  const sax = require("sax") as typeof import("sax");
 
   // Reset the context
   updateContext(context, "xml", undefined);

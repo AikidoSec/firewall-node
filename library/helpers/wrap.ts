@@ -72,9 +72,9 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
 }
 
 /**
- * Check if a function was wrapped by the wrap function
+ * Check if a function is wrapped
  */
-export function isFunctionWrapped(fn: Function): boolean {
+export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
   return (
     fn instanceof Function &&
     "__wrapped" in fn &&

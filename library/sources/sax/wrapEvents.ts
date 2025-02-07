@@ -1,5 +1,6 @@
-import { Context, updateContext } from "../../agent/Context";
-import { wrap, isFunctionWrapped } from "../../helpers/wrap";
+import type { Context } from "../../agent/Context";
+import { wrap, isWrapped } from "../../helpers/wrap";
+import { addXmlToContext } from "../xml/addXmlToContext";
 
 // Events that are emitted by the sax parser and provide any data
 const eventsToWrap = [
@@ -32,10 +33,7 @@ export function wrapEvents(
     const eventFunction = saxParser[eventFunctionName];
 
     // Check if the event function is set by the user and not already wrapped
-    if (
-      typeof eventFunction === "function" &&
-      !isFunctionWrapped(eventFunction)
-    ) {
+    if (typeof eventFunction === "function" && !isWrapped(eventFunction)) {
       // Wrap the event function to get the results
       wrap(saxParser, eventFunctionName, (original) => {
         return function wrappedEventFunction() {
@@ -50,32 +48,13 @@ export function wrapEvents(
             return result;
           }
           // eslint-disable-next-line prefer-rest-params
-          addToContext(Array.from(arguments), context);
+          const args = Array.from(arguments);
+          for (const arg of args) {
+            addXmlToContext(arg, context);
+          }
           return result;
         };
       });
     }
-  }
-}
-
-/**
- * Modify the context with the parsed xml
- */
-function addToContext(args: unknown[], context: Context) {
-  let xmlContext: unknown[] = [];
-  if (context.xml) {
-    if (Array.isArray(context.xml)) {
-      xmlContext = context.xml;
-    } else {
-      xmlContext = [context.xml];
-    }
-  }
-  if (args.length > 0) {
-    if (args.length === 1) {
-      xmlContext.push(args[0]);
-    } else {
-      xmlContext.push(args);
-    }
-    updateContext(context, "xml", xmlContext);
   }
 }
