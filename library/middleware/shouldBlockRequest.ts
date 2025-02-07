@@ -24,17 +24,11 @@ export function shouldBlockRequest(): Result {
   agent.onMiddlewareExecuted();
 
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
-    agent.getInspectionStatistics().onBlockedRequest({
-      reason: "userBlock",
-    });
-
     return { block: true, type: "blocked", trigger: "user" };
   }
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);
   if (rateLimitResult.block) {
-    agent.getInspectionStatistics().onRateLimitedRequest();
-
     return {
       block: true,
       type: "ratelimited",

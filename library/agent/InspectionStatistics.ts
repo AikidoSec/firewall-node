@@ -22,6 +22,16 @@ type SinkStats = {
 
 type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
 
+type RequestBlocked =
+  | {
+      match: "userAgentList";
+      key: string;
+    }
+  | {
+      match: "ipBlocklist";
+      key: string;
+    };
+
 export class InspectionStatistics {
   private startedAt = Date.now();
   private stats: Record<string, SinkStats> = {};
@@ -36,24 +46,18 @@ export class InspectionStatistics {
     };
     blocked: {
       total: number;
-      allowedIpsRoute: number;
-      userAgent: number;
-      ipBlocklist: number;
-      userBlocked: number;
+      userAgentList: Record<string, number>;
+      ipBlocklist: Record<string, number>;
     };
-    rateLimited: number;
   } = {
     total: 0,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
     blocked: {
       total: 0,
-      allowedIpsRoute: 0,
-      userAgent: 0,
-      ipBlocklist: 0,
-      userBlocked: 0,
+      userAgentList: {},
+      ipBlocklist: {},
     },
-    rateLimited: 0,
   };
 
   constructor({
@@ -89,12 +93,9 @@ export class InspectionStatistics {
       attacksDetected: { total: 0, blocked: 0 },
       blocked: {
         total: 0,
-        allowedIpsRoute: 0,
-        userAgent: 0,
-        ipBlocklist: 0,
-        userBlocked: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
-      rateLimited: 0,
     };
     this.startedAt = Date.now();
   }
@@ -111,12 +112,9 @@ export class InspectionStatistics {
       };
       blocked: {
         total: number;
-        allowedIpsRoute: number;
-        userAgent: number;
-        ipBlocklist: number;
-        userBlocked: number;
+        userAgentList: Record<string, number>;
+        ipBlocklist: Record<string, number>;
       };
-      rateLimited: number;
     };
   } {
     const sinks: Record<string, SinkStatsWithoutTimings> = {};
@@ -212,30 +210,24 @@ export class InspectionStatistics {
     }
   }
 
-  onRateLimitedRequest() {
-    this.requests.rateLimited += 1;
-  }
-
-  onBlockedRequest({
-    reason,
-  }: {
-    reason: "allowedIpsRoute" | "userAgent" | "ipBlocklist" | "userBlock";
-  }) {
+  onBlockedRequest({ match, key }: RequestBlocked) {
     this.requests.blocked.total += 1;
 
-    switch (reason) {
-      case "allowedIpsRoute":
-        this.requests.blocked.allowedIpsRoute += 1;
+    switch (match) {
+      case "userAgentList": {
+        if (!this.requests.blocked.userAgentList[key]) {
+          this.requests.blocked.userAgentList[key] = 0;
+        }
+        this.requests.blocked.userAgentList[key] += 1;
         break;
-      case "userAgent":
-        this.requests.blocked.userAgent += 1;
+      }
+      case "ipBlocklist": {
+        if (!this.requests.blocked.ipBlocklist[key]) {
+          this.requests.blocked.ipBlocklist[key] = 0;
+        }
+        this.requests.blocked.ipBlocklist[key] += 1;
         break;
-      case "ipBlocklist":
-        this.requests.blocked.ipBlocklist += 1;
-        break;
-      case "userBlock":
-        this.requests.blocked.userBlocked += 1;
-        break;
+      }
     }
   }
 

@@ -305,12 +305,9 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
           },
           blocked: {
             total: 0,
-            allowedIpsRoute: 0,
-            userAgent: 0,
-            ipBlocklist: 0,
-            userBlocked: 0,
+            userAgentList: {},
+            ipBlocklist: {},
           },
-          rateLimited: 0,
         },
       },
       middlewareInstalled: false,
@@ -470,12 +467,9 @@ t.test("it counts attacks", async () => {
       },
       blocked: {
         total: 0,
-        allowedIpsRoute: 0,
-        userAgent: 0,
-        ipBlocklist: 0,
-        userBlocked: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
-      rateLimited: 0,
     },
   });
 });

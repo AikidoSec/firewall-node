@@ -156,12 +156,9 @@ function generateHeartbeatEvent(): Event {
         },
         blocked: {
           total: 0,
-          allowedIpsRoute: 0,
-          userAgent: 0,
-          ipBlocklist: 0,
-          userBlocked: 0,
+          userAgentList: {},
+          ipBlocklist: {},
         },
-        rateLimited: 0,
       },
     },
     agent: {
