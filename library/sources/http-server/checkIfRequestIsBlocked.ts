@@ -43,7 +43,7 @@ export function checkIfRequestIsBlocked(
 
     agent
       .getInspectionStatistics()
-      .onBlockedRequest({ match: "ipBlocklist", key: "TODO" });
+      .onBlockedRequest({ match: "ipBlocklist", key: result.key });
 
     return true;
   }
@@ -77,7 +77,10 @@ export function checkIfRequestIsBlocked(
 
     agent
       .getInspectionStatistics()
-      .onBlockedRequest({ match: "userAgentList", key: "TODO" });
+      .onBlockedRequest({
+        match: "userAgentList",
+        key: isUserAgentBlocked.key,
+      });
 
     return true;
   }

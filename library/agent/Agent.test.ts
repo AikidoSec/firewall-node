@@ -26,12 +26,22 @@ wrap(fetch, "fetch", function mock() {
       body: JSON.stringify({
         blockedIPAddresses: [
           {
+            key: "some/key",
             source: "name",
             description: "Description",
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
           },
         ],
-        blockedUserAgents: "AI2Bot|Bytespider",
+        blockedUserAgentsV2: [
+          {
+            key: "ai",
+            pattern: "AI2Bot|SomethingElse",
+          },
+          {
+            key: "spider",
+            pattern: "Bytespider",
+          },
+        ],
       }),
     };
   };
@@ -1056,10 +1066,12 @@ t.test("it fetches blocked lists", async () => {
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
     reason: "Description",
+    key: "some/key",
   });
   t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
     blocked: true,
     reason: "Description",
+    key: "some/key",
   });
 
   t.same(
@@ -1069,6 +1081,7 @@ t.test("it fetches blocked lists", async () => {
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
     {
+      key: "ai",
       blocked: true,
     }
   );
@@ -1076,6 +1089,7 @@ t.test("it fetches blocked lists", async () => {
   t.same(
     agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
     {
+      key: "spider",
       blocked: true,
     }
   );

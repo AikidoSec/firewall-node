@@ -576,7 +576,7 @@ t.test("it keeps track of blocked requests", async () => {
         total: 2,
         ipBlocklist: {
           // eslint-disable-next-line camelcase
-          known_threat_actors_public_scanners: 1,
+          "known_threat_actors/public_scanners": 1,
         },
         userAgentList: {
           // eslint-disable-next-line camelcase
