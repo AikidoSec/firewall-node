@@ -22,6 +22,19 @@ const context: Context = {
   route: "/posts/:id",
 };
 
+const contextWithQuery: Context = {
+  remoteAddress: "::1",
+  method: "POST",
+  url: "http://localhost:4000",
+  query: { xml: "<root><abc>123</abc></root>" },
+  headers: {},
+  body: undefined,
+  cookies: {},
+  routeParams: {},
+  source: "express",
+  route: "/posts/:id",
+};
+
 t.test("it works", async (t) => {
   const agent = createTestAgent({
     block: true,
@@ -141,6 +154,18 @@ t.test("it works", async (t) => {
     // @ts-expect-error Ignore, testing invalid input
     parser.write(true).close();
     t.same(getContext()?.xml, undefined);
+  });
+
+  runWithContext(contextWithQuery, () => {
+    let text = "";
+    const parser = sax.parser(true);
+    parser.ontext = function onText(txt) {
+      text += txt;
+    };
+
+    t.same(getContext()?.xml, undefined);
+    parser.write(contextWithQuery.query.xml as string).close();
+    t.same(getContext()?.xml, ["123"]);
   });
 });
 
