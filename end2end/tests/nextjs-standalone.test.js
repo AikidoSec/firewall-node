@@ -37,19 +37,15 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "true",
-        PORT: 4000,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      PORT: 4000,
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
 
   server.on("close", () => {
     t.end();
@@ -106,8 +102,8 @@ t.test("it blocks in blocking mode", (t) => {
         t.equal(noInjection.status, 200);
         t.equal(sqlInjection.status, 500);
         t.match(stdout, /Starting agent/);
-        t.match(stderr, /Aikido firewall has blocked a shell injection/);
-        t.match(stderr, /Aikido firewall has blocked an SQL injection/);
+        t.match(stderr, /Zen has blocked a shell injection/);
+        t.match(stderr, /Zen has blocked an SQL injection/);
       }
     )
     .catch((error) => {
@@ -119,18 +115,14 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["--preserve-symlinks", "-r", "@aikidosec/firewall", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        PORT: 4001,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      PORT: 4001,
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
 
   server.on("close", () => {
     t.end();
@@ -187,8 +179,8 @@ t.test("it does not block in dry mode", (t) => {
         t.equal(noInjection.status, 200);
         t.equal(sqlInjection.status, 200);
         t.match(stdout, /Starting agent/);
-        t.notMatch(stderr, /Aikido firewall has blocked a shell injection/);
-        t.notMatch(stderr, /Aikido firewall has blocked an SQL injection/);
+        t.notMatch(stderr, /Zen has blocked a shell injection/);
+        t.notMatch(stderr, /Zen has blocked an SQL injection/);
       }
     )
     .catch((error) => {

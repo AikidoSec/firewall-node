@@ -1,8 +1,9 @@
+/* eslint-disable max-lines-per-function */
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { tryParseURL } from "../helpers/tryParseURL";
@@ -20,7 +21,9 @@ export class Fetch implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(hostname, port);
+    }
     const context = getContext();
 
     if (!context) {
@@ -37,6 +40,7 @@ export class Fetch implements Wrapper {
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
     if (args.length > 0) {
+      // URL string
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
         if (url) {
@@ -69,6 +73,7 @@ export class Fetch implements Wrapper {
         }
       }
 
+      // URL object
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,
@@ -77,6 +82,21 @@ export class Fetch implements Wrapper {
         );
         if (attack) {
           return attack;
+        }
+      }
+
+      // Request object
+      if (args[0] instanceof Request) {
+        const url = tryParseURL(args[0].url);
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url)
+          );
+          if (attack) {
+            return attack;
+          }
         }
       }
     }
@@ -132,22 +152,25 @@ export class Fetch implements Wrapper {
     if (typeof globalThis.fetch === "function") {
       // Fetch is lazy loaded in Node.js
       // By calling fetch() we ensure that the global dispatcher is available
-      // @ts-expect-error Type is not defined
-      globalThis.fetch().catch(() => {});
+      try {
+        // @ts-expect-error Type is not defined
+        globalThis.fetch().catch(() => {});
+      } catch (error) {
+        // Ignore errors
+      }
     }
 
-    hooks
-      .addGlobal("fetch")
+    hooks.addGlobal("fetch", {
       // Whenever a request is made, we'll check the hostname whether it's a private IP
-      .inspect((args, subject, agent) => this.inspectFetch(args, agent))
-      // We're not really modifying the arguments here, but we need to patch the global dispatcher
-      .modifyArguments((args, subject, agent) => {
+      inspectArgs: (args, agent) => this.inspectFetch(args, agent),
+      modifyArgs: (args, agent) => {
         if (!this.patchedGlobalDispatcher) {
           this.patchGlobalDispatcher(agent);
           this.patchedGlobalDispatcher = true;
         }
 
         return args;
-      });
+      },
+    });
   }
 }

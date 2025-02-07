@@ -1,4 +1,5 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
+import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
 import { tryParseURL } from "../../helpers/tryParseURL";
@@ -8,6 +9,9 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { wrapOnHeaders } from "./wrapOnHeaders";
+import { cleanError } from "../../helpers/cleanError";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -28,7 +32,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     if (!context || !opts || !opts.origin || !handler) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -47,7 +51,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     if (!url) {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -66,7 +70,7 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 
     return RequestContextStorage.run({ port, url }, () => {
       return orig.apply(
-        // @ts-expect-error We dont know the type of this
+        // @ts-expect-error We don't know the type of this
         this,
         [opts, handler]
       );
@@ -75,9 +79,19 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
 }
 
 /**
- * Checks if its a redirect to a private IP that originates from a user input and blocks it if it is.
+ * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
+  const isAllowedIP =
+    context &&
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    // If the IP address is allowed, we don't need to block the request
+    return;
+  }
+
   const found = isRedirectToPrivateIP(url, context);
 
   if (found) {
@@ -87,16 +101,21 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
-      path: found.pathToPayload,
-      metadata: {},
+      stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
+      paths: found.pathsToPayload,
+      metadata: getMetadataForSSRFAttack({
+        hostname: found.hostname,
+        port: found.port,
+      }),
       request: context,
       payload: found.payload,
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+        )
       );
     }
   }

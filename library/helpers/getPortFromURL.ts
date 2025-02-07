@@ -1,4 +1,4 @@
-export function getPortFromURL(url: URL) {
+export function getPortFromURL(url: URL): number | undefined {
   if (url.port && Number.isInteger(parseInt(url.port, 10))) {
     return parseInt(url.port, 10);
   }

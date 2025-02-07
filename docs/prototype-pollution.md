@@ -1,6 +1,6 @@
 # Protect against prototype pollution
 
-Aikido firewall can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
+Zen can also protect your application against [prototype pollution attacks](https://www.aikido.dev/blog/prevent-prototype-pollution).
 
 It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) for some built-in JavaScript objects.
 
@@ -9,9 +9,9 @@ It works by calling [Object.freeze](https://developer.mozilla.org/en-US/docs/Web
 We believe that there are legitimate cases of prototype changes, but they should happen only during the initialization step. Hence, we recommend requiring `@aikidosec/firewall/nopp` after your main imports.
 
 ```js
-const express = require('express');
+const express = require("express");
 
-require('@aikidosec/firewall/nopp'); // <-- Include this after your main imports
+require("@aikidosec/firewall/nopp"); // <-- Include this after your main imports
 
 const app = express();
 
@@ -27,17 +27,17 @@ app.listen(3000, () => {
 or ESM import style:
 
 ```js
-import '@aikidosec/firewall/nopp';
+import "@aikidosec/firewall/nopp";
 ```
 
-in combination with the actual firewall (you can skip this if you only want protection against prototype pollution):
+in combination with the actual firewall import (you can skip this if you only want protection against prototype pollution):
 
 ```js
-import '@aikidosec/firewall'; // <-- Include this before any other code or imports
+import "@aikidosec/firewall"; // <-- Include this before any other code or imports
 
-import express from 'express';
+import express from "express";
 
-import '@aikidosec/firewall/nopp'; // <-- Include this after your main imports
+import "@aikidosec/firewall/nopp"; // <-- Include this after your main imports
 
 // ...
 ```
@@ -52,4 +52,4 @@ You should enable this on your staging environment for a considerable amount of 
 
 Some packages may not work properly when `@aikidosec/firewall/nopp` is required, these are some of the known packages:
 
-* [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)
+- [mongoose](https://www.npmjs.com/package/mongoose) (versions 1.x to 4.x)

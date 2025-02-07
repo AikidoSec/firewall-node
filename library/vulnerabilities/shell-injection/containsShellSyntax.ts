@@ -77,6 +77,19 @@ const commands = [
   "passwd",
   "arch",
   "printenv",
+  "logname",
+  "pstree",
+  "hostnamectl",
+  "set",
+  "lsattr",
+  "killall5",
+  "dmesg",
+  "history",
+  "free",
+  "uptime",
+  "finger",
+  "top",
+  "shopt",
 
   // Colon is a null command
   // it might occur in URLs that are passed as arguments to a binary

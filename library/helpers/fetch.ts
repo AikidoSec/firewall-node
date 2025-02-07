@@ -1,5 +1,7 @@
-import { request as requestHttp } from "http";
+import { IncomingMessage, request as requestHttp } from "http";
 import { request as requestHttps } from "https";
+import { type Readable } from "stream";
+import { createGunzip } from "zlib";
 
 async function request({
   url,
@@ -25,11 +27,18 @@ async function request({
         signal,
       },
       (response) => {
+        let stream: Readable = response;
+        if (response.headers["content-encoding"] === "gzip") {
+          const gunzip = createGunzip();
+          stream = response.pipe(gunzip);
+        }
+
         let data = "";
-        response.on("data", (chunk) => {
+        stream.on("data", (chunk) => {
           data += chunk;
         });
-        response.on("end", () => {
+
+        stream.on("end", () => {
           // We don't throw errors unless the request times out, is aborted or fails for low level reasons
           // Error objects are annoying to work with
           // That's why we use `resolve` instead of `reject`
@@ -45,23 +54,22 @@ async function request({
       reject(error);
     });
 
-    req.write(body);
-    req.end();
+    req.end(body);
   });
 }
 
 export async function fetch({
   url,
-  method,
-  headers,
+  method = "GET",
+  headers = {},
   body = "",
-  timeoutInMS,
+  timeoutInMS = 5000,
 }: {
   url: URL;
-  method: string;
-  headers: Record<string, string>;
+  method?: string;
+  headers?: Record<string, string>;
   body?: string;
-  timeoutInMS: number;
+  timeoutInMS?: number;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();
 

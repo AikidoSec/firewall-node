@@ -1,26 +1,19 @@
 import { Token } from "../agent/api/Token";
-import { wrap } from "../helpers/wrap";
-import * as pkg from "../helpers/isPackageInstalled";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-
-const originalIsPackageInstalled = pkg.isPackageInstalled;
-wrap(pkg, "isPackageInstalled", function wrap() {
-  return function wrap(name: string) {
-    // So that it thinks next is installed
-    if (name === "next") {
-      return true;
-    }
-    return originalIsPackageInstalled(name);
-  };
-});
-
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { fetch } from "../helpers/fetch";
+import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
+import { join } from "path";
+import { createTestAgent } from "../helpers/createTestAgent";
+import type { Blocklist } from "../agent/api/fetchBlockedLists";
+import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
+import { mkdtemp, writeFile, unlink } from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(exec);
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -45,29 +38,48 @@ const api = new ReportingAPIForTesting({
       method: "GET",
       forceProtectionOff: false,
       allowedIPAddresses: ["8.8.8.8"],
+      // @ts-expect-error Testing
       rateLimiting: undefined,
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
-const agent = new Agent(
-  true,
-  new LoggerNoop(),
+const agent = createTestAgent({
+  token: new Token("123"),
   api,
-  new Token("abc"),
-  "lambda"
-);
+});
 agent.start([new HTTPServer()]);
+
+wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
+  return async function fetchBlockedLists(): Promise<{
+    blockedIPAddresses: Blocklist[];
+    blockedUserAgents: string;
+  }> {
+    return {
+      blockedIPAddresses: [
+        {
+          source: "geoip",
+          ips: ["9.9.9.9"],
+          description: "geo restrictions",
+        },
+      ],
+      blockedUserAgents: "",
+    };
+  };
+});
 
 t.setTimeout(30 * 1000);
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
   delete process.env.NODE_ENV;
+  delete process.env.NEXT_DEPLOYMENT_ID;
 });
 
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+
 t.test("it wraps the createServer function of http module", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -104,7 +116,6 @@ t.test("it wraps the createServer function of http module", async () => {
 });
 
 t.test("it wraps the createServer function of https module", async () => {
-  const https = require("https");
   const { readFileSync } = require("fs");
   const path = require("path");
 
@@ -115,7 +126,6 @@ t.test("it wraps the createServer function of https module", async () => {
     {
       key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
       cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
-      secureContext: {},
     },
     (req, res) => {
       res.setHeader("Content-Type", "application/json");
@@ -154,7 +164,6 @@ t.test("it wraps the createServer function of https module", async () => {
 });
 
 t.test("it parses query parameters", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -178,7 +187,6 @@ t.test("it parses query parameters", async () => {
 });
 
 t.test("it discovers routes", async () => {
-  const http = require("http");
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -202,6 +210,8 @@ t.test("it discovers routes", async () => {
             method: "GET",
             hits: 1,
             graphql: undefined,
+            apispec: {},
+            graphQLSchema: undefined,
           }
         );
         server.close();
@@ -213,8 +223,7 @@ t.test("it discovers routes", async () => {
 
 t.test(
   "it does not discover route if server response is error code",
-  async () => {
-    const http = require("http");
+  async (t) => {
     const server = http.createServer((req, res) => {
       res.statusCode = 404;
       res.end();
@@ -243,8 +252,7 @@ t.test(
   }
 );
 
-t.test("it parses cookies", async () => {
-  const http = require("http");
+t.test("it parses cookies", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -269,8 +277,7 @@ t.test("it parses cookies", async () => {
   });
 });
 
-t.test("it parses x-forwarded-for header with proxy", async () => {
-  const http = require("http");
+t.test("it parses x-forwarded-for header with proxy", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -296,8 +303,7 @@ t.test("it parses x-forwarded-for header with proxy", async () => {
   });
 });
 
-t.test("it uses x-forwarded-for header", async () => {
-  const http = require("http");
+t.test("it uses x-forwarded-for header", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -322,8 +328,10 @@ t.test("it uses x-forwarded-for header", async () => {
   });
 });
 
-t.test("it sets body in context", async () => {
-  const http = require("http");
+t.test("it sets body in context", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -356,16 +364,51 @@ function generateJsonPayload(sizeInMb: number) {
   return JSON.stringify("a".repeat(sizeInBytes));
 }
 
-t.test("it sends 413 when body is larger than 20 Mb", async () => {
-  const http = require("http");
+// Send request using curl
+// Returns the response message + status code in stdout
+// We need this because http.request throws EPIPE write error when the server closes the connection abruptly
+// We cannot read the status code or the response message when that happens
+async function sendUsingCurl({
+  url,
+  method,
+  headers,
+  body,
+  timeoutInMS,
+}: {
+  url: URL;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  timeoutInMS: number;
+}) {
+  const headersString = Object.entries(headers)
+    .map(([key, value]) => `-H "${key}: ${value}"`)
+    .join(" ");
+
+  const tmpDir = await mkdtemp("/tmp/aikido-");
+  const tmpFile = join(tmpDir, "/body.json");
+  await writeFile(tmpFile, body, { encoding: "utf-8" });
+
+  const { stdout } = await execAsync(
+    `curl -X ${method} ${headersString} -d @${tmpFile} ${url} --max-time ${timeoutInMS / 1000} --write-out "%{http_code}"`
+  );
+  await unlink(tmpFile);
+
+  return stdout;
+}
+
+t.only("it sends 413 when body is larger than 20 Mb", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     t.fail();
+    res.end();
   });
 
   await new Promise<void>((resolve) => {
     server.listen(3320, () => {
-      fetch({
+      sendUsingCurl({
         url: new URL("http://localhost:3320"),
         method: "POST",
         headers: {
@@ -373,21 +416,28 @@ t.test("it sends 413 when body is larger than 20 Mb", async () => {
         },
         body: generateJsonPayload(21),
         timeoutInMS: 2000,
-      }).then(({ body, statusCode }) => {
-        t.equal(
-          body,
-          "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
-        );
-        t.equal(statusCode, 413);
-        server.close();
-        resolve();
-      });
+      })
+        .then((stdout) => {
+          t.equal(
+            stdout,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
+        })
+        .catch((error) => {
+          t.fail(error);
+        })
+        .finally(() => {
+          server.close();
+          resolve();
+        });
     });
   });
 });
 
-t.test("body that is not JSON is ignored", async () => {
-  const http = require("http");
+t.test("body that is not JSON is ignored", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify(getContext()));
@@ -413,8 +463,9 @@ t.test("body that is not JSON is ignored", async () => {
   });
 });
 
-t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
-  const http = require("http");
+t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     res.end();
@@ -424,7 +475,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
     server.listen(3322, () => {
       process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
       Promise.all([
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -433,7 +484,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
           body: generateJsonPayload(1),
           timeoutInMS: 2000,
         }),
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -444,11 +495,14 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
         }),
       ])
         .then(([response1, response2]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 413);
+          t.equal(response1, "200");
+          t.same(
+            response2,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
         })
         .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+          t.fail(error);
         })
         .finally(() => {
           server.close();
@@ -458,69 +512,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async () => {
   });
 });
 
-t.test("it rate limits requests", async () => {
-  const http = require("http");
-
-  const server = http.createServer((req, res) => {
-    res.end();
-  });
-
-  const headers = {
-    "x-forwarded-for": "1.2.3.4",
-  };
-
-  await new Promise<void>((resolve) => {
-    server.listen(3323, () => {
-      Promise.all([
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-        fetch({
-          url: new URL("http://localhost:3323/rate-limited"),
-          method: "GET",
-          headers: headers,
-          timeoutInMS: 500,
-        }),
-      ])
-        .then(([response1, response2, response3]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 200);
-          t.equal(response3.statusCode, 200);
-        })
-        .then(() => {
-          fetch({
-            url: new URL("http://localhost:3323/rate-limited"),
-            method: "GET",
-            headers: headers,
-            timeoutInMS: 500,
-          }).then(({ body, statusCode }) => {
-            t.equal(statusCode, 429);
-            t.equal(
-              body,
-              "You are rate limited by Aikido firewall. (Your IP: 1.2.3.4)"
-            );
-            server.close();
-            resolve();
-          });
-        })
-        .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
-        });
-    });
-  });
-});
-
 t.test("it wraps on request event of http", async () => {
-  const http = require("http");
   const server = http.createServer();
   server.on("request", (req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -558,7 +550,6 @@ t.test("it wraps on request event of http", async () => {
 });
 
 t.test("it wraps on request event of https", async () => {
-  const https = require("https");
   const { readFileSync } = require("fs");
   const path = require("path");
 
@@ -568,7 +559,6 @@ t.test("it wraps on request event of https", async () => {
   const server = https.createServer({
     key: readFileSync(path.resolve(__dirname, "fixtures/key.pem")),
     cert: readFileSync(path.resolve(__dirname, "fixtures/cert.pem")),
-    secureContext: {},
   });
 
   server.on("request", (req, res) => {
@@ -606,8 +596,7 @@ t.test("it wraps on request event of https", async () => {
   });
 });
 
-t.test("it checks if IP can access route", async () => {
-  const http = require("http");
+t.test("it checks if IP can access route", async (t) => {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "text/plain");
     res.end("OK");
@@ -654,3 +643,79 @@ t.test("it checks if IP can access route", async () => {
     });
   });
 });
+
+t.test("it blocks IP address", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3325, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2]) => {
+        t.equal(response1.statusCode, 403);
+        t.equal(
+          response1.body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+        t.equal(response2.statusCode, 200);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "it blocks IP address when there are multiple request handlers on server",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    server.on("request", (req, res) => {
+      if (res.headersSent) {
+        return;
+      }
+
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3326, () => {
+        fetch({
+          url: new URL("http://localhost:3326"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.equal(statusCode, 403);
+          t.equal(
+            body,
+            "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);

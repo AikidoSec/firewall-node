@@ -112,7 +112,7 @@ export class LRUMap<K, V> {
       const item = this.items.get(key) as Item<K, V>;
 
       // Item has already expired
-      if (this.ttl > 0 && item.expiry <= Date.now()) {
+      if (this.ttl > 0 && item.expiry <= performance.now()) {
         this.delete(key);
         return;
       }
@@ -133,7 +133,7 @@ export class LRUMap<K, V> {
       const item = this.items.get(key) as Item<K, V>;
       item.value = value;
 
-      item.expiry = this.ttl > 0 ? Date.now() + this.ttl : this.ttl;
+      item.expiry = this.ttl > 0 ? performance.now() + this.ttl : this.ttl;
 
       if (this.last !== item) {
         this.bumpLru(item);
@@ -148,7 +148,7 @@ export class LRUMap<K, V> {
     }
 
     const item: Item<K, V> = {
-      expiry: this.ttl > 0 ? Date.now() + this.ttl : this.ttl,
+      expiry: this.ttl > 0 ? performance.now() + this.ttl : this.ttl,
       key: key,
       prev: this.last,
       next: null,

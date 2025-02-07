@@ -1,9 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext, runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Postgres } from "./Postgres";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,16 +19,10 @@ const context: Context = {
 };
 
 t.test("it inspects query method calls and blocks if needed", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    "lambda"
-  );
+  const agent = createTestAgent();
   agent.start([new Postgres()]);
 
-  const { Client } = require("pg");
+  const { Client } = require("pg") as typeof import("pg");
   const client = new Client({
     user: "root",
     host: "127.0.0.1",
@@ -78,7 +70,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
@@ -90,12 +82,13 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Aikido firewall has blocked an SQL injection: pg.query(...) originating from body.myTitle"
+        "Zen has blocked an SQL injection: pg.query(...) originating from body.myTitle"
       );
     }
 
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(context, () => {
+        // @ts-expect-error Test
         return client.query(null);
       });
     });
@@ -134,7 +127,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
         } catch (error: any) {
           t.match(
             error.message,
-            /Aikido firewall has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
+            /Zen has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
           );
         }
       });

@@ -64,6 +64,10 @@ t.test("it flags ..\\..\\..\\", async () => {
   t.same(detectPathTraversal("..\\..\\..\\test.txt", "..\\..\\..\\"), true);
 });
 
+t.test("it flags ./../", async () => {
+  t.same(detectPathTraversal("./../test.txt", "./../"), true);
+});
+
 t.test("user input is longer than file path", async () => {
   t.same(detectPathTraversal("../file.txt", "../../file.txt"), false);
 });
@@ -76,8 +80,16 @@ t.test("linux user directory", async () => {
   t.same(detectPathTraversal("/home/user/file.txt", "/home/user/"), true);
 });
 
-t.test("windows drive letter", async () => {
-  t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+t.test("possible bypass", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc/passwd"), true);
+});
+
+t.test("another bypass", async () => {
+  t.same(
+    detectPathTraversal("/./././root/test.txt", "/./././root/test.txt"),
+    true
+  );
+  t.same(detectPathTraversal("/./././root/test.txt", "/./././root"), true);
 });
 
 t.test("no path traversal", async () => {
@@ -109,3 +121,41 @@ t.test("does not absolute path inside another folder", async () => {
 t.test("disable checkPathStart", async () => {
   t.same(detectPathTraversal("/etc/passwd", "/etc/passwd", false), false);
 });
+
+t.test(
+  "windows drive letter",
+  { skip: process.platform !== "win32" ? "Windows only" : false },
+  async () => {
+    t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
+  }
+);
+
+t.test(
+  "does not detect if user input path contains no filename or subfolder",
+  async () => {
+    t.same(detectPathTraversal("/etc/app/test.txt", "/etc/"), false);
+    t.same(detectPathTraversal("/etc/app/", "/etc/"), false);
+    t.same(detectPathTraversal("/etc/app/", "/etc"), false);
+    t.same(detectPathTraversal("/etc/", "/etc/"), false);
+    t.same(detectPathTraversal("/etc", "/etc"), false);
+    t.same(detectPathTraversal("/var/a", "/var/"), false);
+    t.same(detectPathTraversal("/var/a", "/var/b"), false);
+    t.same(detectPathTraversal("/var/a", "/var/b/test.txt"), false);
+  }
+);
+
+t.test(
+  "it does detect if user input path contains a filename or subfolder",
+  async () => {
+    t.same(detectPathTraversal("/etc/app/file.txt", "/etc/app"), true);
+    t.same(detectPathTraversal("/etc/app/file.txt", "/etc/app/file.txt"), true);
+    t.same(detectPathTraversal("/var/backups/file.txt", "/var/backups"), true);
+    t.same(
+      detectPathTraversal("/var/backups/file.txt", "/var/backups/file.txt"),
+      true
+    );
+    t.same(detectPathTraversal("/var/a", "/var/a"), true);
+    t.same(detectPathTraversal("/var/a/b", "/var/a"), true);
+    t.same(detectPathTraversal("/var/a/b/test.txt", "/var/a"), true);
+  }
+);

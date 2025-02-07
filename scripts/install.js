@@ -1,60 +1,95 @@
-const { readdir, stat } = require("fs/promises");
+const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const { writeFile, mkdir } = require("fs/promises");
 const execAsync = promisify(exec);
 
-async function main() {
-  const sampleApps = await readdir(join(__dirname, "../sample-apps"));
+const projectRoot = join(__dirname, "..");
 
-  await Promise.all(
-    sampleApps.map(async (file) => {
-      const stats = await stat(join(__dirname, "../sample-apps", file));
-
-      if (!stats.isFile()) {
-        await installSampleAppDeps(file);
-      }
-    })
-  );
-
-  const benchmarks = await readdir(join(__dirname, "../benchmarks"));
-
-  await Promise.all(
-    benchmarks.map(async (file) => {
-      const stats = await stat(join(__dirname, "../benchmarks", file));
-
-      if (!stats.isFile()) {
-        await installBenchmarkDeps(file);
-      }
-    })
-  );
+// If script is called with arg --ci, set env CI to true
+if (process.argv.includes("--ci")) {
+  process.env.CI = "true";
 }
 
-async function installSampleAppDeps(sampleApp) {
-  console.log(`Installing dependencies for ${sampleApp}`);
+if (process.env.AIKIDO_SKIP_INSTALL === "true") {
+  console.log("Skipping dependencies installation");
+  process.exit(0);
+}
+
+async function main() {
+  await prepareBuildDir();
+
+  const libOnly = process.argv.includes("--lib-only");
+
+  // . is the root directory, npm install is automatically run in the root directory if npm install is used, but not if npm run install-lib-only is executed
+  const installDirs = libOnly ? ["library", "."] : ["library", "end2end"];
+  const scanForSubDirs = libOnly ? [] : ["sample-apps", "benchmarks"];
+
+  for (const dir of scanForSubDirs) {
+    const subDirs = await scanForSubDirsWithPackageJson(dir);
+    installDirs.push(...subDirs);
+  }
+
+  await Promise.all(installDirs.map(installDependencies));
+
+  console.log("Successfully installed all dependencies");
+  process.exit(0);
+}
+
+/**
+ * Install dependencies for a given folder
+ */
+async function installDependencies(folder) {
+  console.log(`Installing dependencies for ${folder}`);
+
+  const cmd = process.env.CI ? "npm ci" : "npm install";
 
   try {
-    await execAsync(`npm install`, {
-      cwd: join(__dirname, "../sample-apps", sampleApp),
+    await execAsync(cmd, {
+      cwd: join(projectRoot, folder),
+      env: {
+        ...process.env,
+        AIKIDO_SKIP_INSTALL: "true",
+      },
     });
-    console.log(`Dependencies installed for ${sampleApp}`);
+    console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
-    console.error(`Failed to install dependencies for ${sampleApp}`);
+    console.error(`Failed to install dependencies for ${folder}`);
     console.error(error);
     process.exit(1);
   }
 }
 
-async function installBenchmarkDeps(benchmark) {
-  console.log(`Installing dependencies for ${benchmark}`);
-
+/**
+ * Prepare the build directory
+ */
+async function prepareBuildDir() {
   try {
-    await execAsync(`npm install`, {
-      cwd: join(__dirname, "../benchmarks", benchmark),
-    });
-    console.log(`Dependencies installed for ${benchmark}`);
+    const pkg = require(join(__dirname, "../library/package.json"));
+
+    // We're going to remove the devDependencies from the package.json
+    // Otherwise they will show up in every lock file
+    // whenever we add a new dev dependency to the library
+    delete pkg.devDependencies;
+
+    // If the build folder doesn't exist, create it
+    const buildDirPath = join(__dirname, "../build");
+    if (!(await fileExists(buildDirPath))) {
+      await mkdir(buildDirPath);
+    }
+
+    await writeFile(
+      join(buildDirPath, "package.json"),
+      JSON.stringify(pkg, null, 2)
+    );
+
+    // Create empty index.js file if it doesn't exist
+    if (!(await fileExists(join(buildDirPath, "index.js")))) {
+      await writeFile(join(buildDirPath, "index.js"), "");
+    }
   } catch (error) {
-    console.error(`Failed to install dependencies for ${benchmark}`);
+    console.error(`Failed to prepare build directory`);
     console.error(error);
     process.exit(1);
   }

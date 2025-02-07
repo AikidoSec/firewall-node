@@ -7,7 +7,7 @@ const spawn = require("child_process").spawn;
 async function startServer(firewallEnabled) {
   console.log("Spawning server. Firewall enabled:", firewallEnabled);
 
-  let env = { ...process.env };
+  let env = { ...process.env, AIKIDO_CI: "true" };
   if (firewallEnabled) {
     env = {
       ...env,
@@ -16,7 +16,7 @@ async function startServer(firewallEnabled) {
     };
   }
 
-  const server = spawn("node", ["--preserve-symlinks", "server.js", "4000"], {
+  const server = spawn("node", ["server.js", "4000"], {
     env,
     cwd: join(__dirname, "app"),
   });

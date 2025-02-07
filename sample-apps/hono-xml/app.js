@@ -1,10 +1,9 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 
 const xml2js = require("xml2js");
 const { serve } = require("@hono/node-server");
 const { Hono } = require("hono");
 const { createConnection } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 const { XMLParser } = require("fast-xml-parser");
 
@@ -14,13 +13,18 @@ async function main() {
   const cats = new Cats(db);
 
   app.use(async (c, next) => {
-    Aikido.setUser({
-      id: "id",
-      name: "Name",
-    });
+    const userId = c.req.header("x-user-id");
+
+    if (userId) {
+      Zen.setUser({
+        id: userId,
+      });
+    }
 
     await next();
   });
+
+  Zen.addHonoMiddleware(app);
 
   app.get("/", async (c) => {
     const catNames = await cats.getAll();
@@ -94,6 +98,16 @@ async function main() {
     await cats.add(result.cat.$.name);
 
     return c.json({ success: true });
+  });
+
+  app.get("/admin", async (c) => {
+    return c.html(
+      `<html lang="en">
+        <body>
+          <h1>Admin panel</h1>
+        </body>
+      </html>`
+    );
   });
 
   app.post("/add-fast", async (c) => {

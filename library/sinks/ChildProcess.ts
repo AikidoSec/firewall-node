@@ -1,8 +1,10 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
 
 const PATH_PREFIXES = [
@@ -16,18 +18,63 @@ const PATH_PREFIXES = [
 
 export class ChildProcess implements Wrapper {
   wrap(hooks: Hooks) {
-    const childProcess = hooks.addBuiltinModule("child_process");
+    hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
+      wrapExport(exports, "exec", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "exec");
+        },
+      });
+      wrapExport(exports, "execSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "execSync");
+        },
+      });
+      wrapExport(exports, "spawn", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawn");
+        },
+      });
+      wrapExport(exports, "spawnSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawnSync");
+        },
+      });
+      wrapExport(exports, "execFile", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFile");
+        },
+      });
+      wrapExport(exports, "execFileSync", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFileSync");
+        },
+      });
+      wrapExport(exports, "fork", pkgInfo, {
+        inspectArgs: (args) => {
+          return this.inspectFork(args, "fork");
+        },
+      });
+    });
+  }
 
-    childProcess
-      .addSubject((exports) => exports)
-      .inspect("exec", (args) => this.inspectExec(args, "exec"))
-      .inspect("execSync", (args) => this.inspectExec(args, "execSync"))
-      .inspect("spawn", (args) => this.inspectSpawn(args, "spawn"))
-      .inspect("spawnSync", (args) => this.inspectSpawn(args, "spawnSync"))
-      .inspect("execFile", (args) => this.inspectExecFile(args, "execFile"))
-      .inspect("execFileSync", (args) =>
-        this.inspectExecFile(args, "execFileSync")
-      );
+  private inspectFork(args: unknown[], name: string) {
+    const context = getContext();
+
+    if (!context) {
+      return undefined;
+    }
+
+    if (args.length > 0 && typeof args[0] === "string") {
+      const modulePath = args[0];
+
+      return checkContextForPathTraversal({
+        filename: modulePath,
+        operation: `child_process.${name}`,
+        context: context,
+      });
+    }
+
+    return undefined;
   }
 
   private inspectSpawn(args: unknown[], name: string) {

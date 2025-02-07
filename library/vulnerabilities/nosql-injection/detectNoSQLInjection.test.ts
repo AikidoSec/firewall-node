@@ -102,7 +102,7 @@ t.test("using $gt in query parameter", async (t) => {
     {
       injection: true,
       source: "query",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $gt: "" },
     }
   );
@@ -135,7 +135,7 @@ t.test("using $ne in body", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -154,7 +154,7 @@ t.test("using $ne in body (different name)", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -173,7 +173,7 @@ t.test("using $ne in headers with different name", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -199,7 +199,7 @@ t.test("using $ne inside $and", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -225,7 +225,7 @@ t.test("using $ne inside $or", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -251,7 +251,7 @@ t.test("using $ne inside $nor", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -272,7 +272,7 @@ t.test("using $ne inside $not", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".title",
+      pathsToPayload: [".title"],
       payload: { $ne: null },
     }
   );
@@ -293,7 +293,7 @@ t.test("using $ne nested in body", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".nested.nested",
+      pathsToPayload: [".nested.nested"],
       payload: { $ne: null },
     }
   );
@@ -325,7 +325,7 @@ t.test("using $ne in JWT in headers", async (t) => {
     {
       injection: true,
       source: "headers",
-      pathToPayload: ".Authorization<jwt>.username",
+      pathsToPayload: [".Authorization<jwt>.username"],
       payload: { $ne: null },
     }
   );
@@ -357,7 +357,7 @@ t.test("using $ne in JWT in bearer header", async (t) => {
     {
       injection: true,
       source: "headers",
-      pathToPayload: ".Authorization<jwt>.username",
+      pathsToPayload: [".Authorization<jwt>.username"],
       payload: { $ne: null },
     }
   );
@@ -389,7 +389,7 @@ t.test("using $ne in JWT in cookies", async (t) => {
     {
       injection: true,
       source: "cookies",
-      pathToPayload: ".session<jwt>.username",
+      pathsToPayload: [".session<jwt>.username"],
       payload: { $ne: null },
     }
   );
@@ -427,7 +427,7 @@ t.test("using $gt in query parameter", async (t) => {
     {
       injection: true,
       source: "query",
-      pathToPayload: ".age",
+      pathsToPayload: [".age"],
       payload: { $gt: "21" },
     }
   );
@@ -446,7 +446,7 @@ t.test("using $gt and $lt in query parameter", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".age",
+      pathsToPayload: [".age"],
       payload: { $gt: "21", $lt: "100" },
     }
   );
@@ -465,7 +465,7 @@ t.test("using $gt and $lt in query parameter (different name)", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".age",
+      pathsToPayload: [".age"],
       payload: { $gt: "21", $lt: "100" },
     }
   );
@@ -492,7 +492,7 @@ t.test("using $gt and $lt in query parameter (nested)", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".nested.nested.age",
+      pathsToPayload: [".nested.nested.age"],
       payload: { $gt: "21", $lt: "100" },
     }
   );
@@ -521,7 +521,7 @@ t.test("using $gt and $lt in query parameter (root)", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".",
+      pathsToPayload: ["."],
       payload: { $and: [{ someAgeField: { $gt: "21", $lt: "100" } }] },
     }
   );
@@ -550,7 +550,7 @@ t.test("$where", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".",
+      pathsToPayload: ["."],
       payload: {
         $and: [
           {
@@ -583,7 +583,7 @@ t.test("array body", async (t) => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".[0]",
+      pathsToPayload: [".[0]"],
       payload: { $where: "sleep(1000)" },
     }
   );
@@ -656,7 +656,7 @@ t.test("it flags pipeline aggregations", async () => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".[0]",
+      pathsToPayload: [".[0]"],
       payload: {
         $lookup: {
           from: "users",
@@ -696,7 +696,7 @@ t.test("it flags pipeline aggregations", async () => {
     {
       injection: true,
       source: "body",
-      pathToPayload: ".username",
+      pathsToPayload: [".username"],
       payload: {
         $gt: "",
       },
@@ -725,6 +725,98 @@ t.test("it ignores safe pipeline aggregations", async () => {
           },
         },
       ]
+    ),
+    {
+      injection: false,
+    }
+  );
+});
+
+t.test("detects root injection", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          $where: "test",
+        },
+      }),
+      { username: "admin", $where: "test" }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: ["."],
+      payload: { $where: "test" },
+    }
+  );
+});
+
+t.test("detects injection", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          test: { $ne: "", hello: "world" },
+        },
+      }),
+      { username: "admin", test: { $ne: "", hello: "world" } }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".test"],
+      payload: { $ne: "" },
+    }
+  );
+});
+
+t.test("it does not detect", async () => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          password: "test",
+        },
+      }),
+      { username: "admin", password: "test" }
+    ),
+    {
+      injection: false,
+    }
+  );
+});
+
+t.test("$where js inject sleep", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { name: "a' && sleep(2000) && 'b" },
+      }),
+      {
+        $where: "this.name === 'a' && sleep(2000) && 'b'",
+      }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".name"],
+      payload: { $where: "this.name === 'a' && sleep(2000) && 'b'" },
+    }
+  );
+});
+
+t.test("does not detect if not a string (js injection)", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { test: 123 },
+      }),
+      {
+        $where: "this.name === 123",
+      }
     ),
     {
       injection: false,

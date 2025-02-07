@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "node-red": "^4.0.5"
+  }
+}

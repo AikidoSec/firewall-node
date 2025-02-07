@@ -16,6 +16,10 @@ export type AgentInfo = {
     name: string;
     version: string;
   };
+  platform: {
+    version: string;
+    arch: string;
+  };
   nodeEnv: string;
   serverless: boolean;
   stack: string[];
@@ -90,7 +94,7 @@ type Heartbeat = {
       };
     };
   };
-  hostnames: { hostname: string; port: number | undefined }[];
+  hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
     method: string;
@@ -106,6 +110,7 @@ type Heartbeat = {
   }[];
   agent: AgentInfo;
   time: number;
+  middlewareInstalled?: boolean;
 };
 
 export type Event = Started | DetectedAttack | Heartbeat;

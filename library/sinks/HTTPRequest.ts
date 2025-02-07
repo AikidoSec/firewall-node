@@ -3,7 +3,7 @@ import { type RequestOptions } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { InterceptorResult } from "../agent/hooks/MethodInterceptor";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
@@ -11,6 +11,7 @@ import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupC
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
+import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
 
 export class HTTPRequest implements Wrapper {
@@ -22,7 +23,9 @@ export class HTTPRequest implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(url.hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(url.hostname, port);
+    }
     const context = getContext();
 
     if (!context) {
@@ -47,7 +50,7 @@ export class HTTPRequest implements Wrapper {
         operation: `${module}.request`,
         kind: "ssrf",
         source: foundSSRFRedirect.source,
-        pathToPayload: foundSSRFRedirect.pathToPayload,
+        pathsToPayload: foundSSRFRedirect.pathsToPayload,
         metadata: {},
         payload: foundSSRFRedirect.payload,
       };
@@ -102,6 +105,7 @@ export class HTTPRequest implements Wrapper {
     );
 
     const url = getUrlFromHTTPRequestArgs(args, module);
+    const stackTraceCallingLocation = new Error();
 
     if (!optionObj) {
       const newOpts = {
@@ -110,7 +114,8 @@ export class HTTPRequest implements Wrapper {
           agent,
           module,
           `${module}.request`,
-          url
+          url,
+          stackTraceCallingLocation
         ),
       };
 
@@ -123,23 +128,20 @@ export class HTTPRequest implements Wrapper {
       return args.concat(newOpts);
     }
 
-    if (optionObj.lookup) {
-      optionObj.lookup = inspectDNSLookupCalls(
-        optionObj.lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
-    } else {
-      optionObj.lookup = inspectDNSLookupCalls(
-        lookup,
-        agent,
-        module,
-        `${module}.request`,
-        url
-      ) as RequestOptions["lookup"];
+    let nativeLookup: NonNullable<RequestOptions["lookup"]> = lookup;
+    if ("lookup" in optionObj && typeof optionObj.lookup === "function") {
+      // If the user has passed a custom lookup function, we'll use that instead
+      nativeLookup = optionObj.lookup;
     }
+
+    optionObj.lookup = inspectDNSLookupCalls(
+      nativeLookup,
+      agent,
+      module,
+      `${module}.request`,
+      url,
+      stackTraceCallingLocation
+    ) as NonNullable<RequestOptions["lookup"]>;
 
     return args;
   }
@@ -160,26 +162,22 @@ export class HTTPRequest implements Wrapper {
 
   wrap(hooks: Hooks) {
     const modules = ["http", "https"] as const;
+    const methods = ["request", "get"] as const;
 
-    modules.forEach((module) => {
-      hooks
-        .addBuiltinModule(module)
-        .addSubject((exports) => exports)
-        // Whenever a request is made, we'll check the hostname whether it's a private IP
-        .inspect("request", (args, subject, agent) =>
-          this.inspectHttpRequest(args, agent, module)
-        )
-        .inspect("get", (args, subject, agent) =>
-          this.inspectHttpRequest(args, agent, module)
-        )
-        // Whenever a request is made, we'll modify the options to pass a custom lookup function
-        // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
-        .modifyArguments("request", (args, subject, agent) => {
-          return this.monitorDNSLookups(args, agent, module);
-        })
-        .modifyArguments("get", (args, subject, agent) => {
-          return this.monitorDNSLookups(args, agent, module);
-        });
-    });
+    for (const module of modules) {
+      hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        for (const method of methods) {
+          wrapExport(exports, method, pkgInfo, {
+            // Whenever a request is made, we'll check the hostname whether it's a private IP
+            inspectArgs: (args, agent) =>
+              this.inspectHttpRequest(args, agent, module),
+            // Whenever a request is made, we'll modify the options to pass a custom lookup function
+            // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
+            modifyArgs: (args, agent) =>
+              this.monitorDNSLookups(args, agent, module),
+          });
+        }
+      });
+    }
   }
 }

@@ -1,24 +1,29 @@
-import { isIP } from "net";
+import { isIP, type LookupFunction } from "net";
 import { LookupAddress } from "dns";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
+import { cleanError } from "../../helpers/cleanError";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
   agent: Agent,
   module: string,
   operation: string,
-  url?: URL
-): Function {
+  url?: URL,
+  stackTraceCallingLocation?: Error
+): LookupFunction {
   return function inspectDNSLookup(...args: unknown[]) {
     const hostname =
       args.length > 0 && typeof args[0] === "string" ? args[0] : undefined;
@@ -43,7 +48,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ]
       : [
@@ -54,7 +60,8 @@ export function inspectDNSLookupCalls(
             module,
             agent,
             operation,
-            url
+            url,
+            stackTraceCallingLocation
           ),
         ];
 
@@ -69,7 +76,8 @@ function wrapDNSLookupCallback(
   module: string,
   agent: Agent,
   operation: string,
-  urlArg?: URL
+  urlArg?: URL,
+  callingLocationStackTrace?: Error
 ): Function {
   // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
@@ -102,7 +110,7 @@ function wrapDNSLookupCallback(
       if (agent.shouldBlock()) {
         return callback(
           new Error(
-            `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
+            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from unknown source`
           )
         );
       }
@@ -171,25 +179,40 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
+    const isAllowedIP =
+      context &&
+      context.remoteAddress &&
+      agent.getConfig().isAllowedIP(context.remoteAddress);
+
+    if (isAllowedIP) {
+      // If the IP address is allowed, we don't need to block the request
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
+    }
+
+    // Used to get the stack trace of the calling location
+    // We don't throw the error, we just use it to get the stack trace
+    const stackTraceError = callingLocationStackTrace || new Error();
+
     agent.onDetectedAttack({
       module: module,
       operation: operation,
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
-      path: found.pathToPayload,
-      metadata: {
-        hostname: hostname,
-      },
+      stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+      paths: found.pathsToPayload,
+      metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
     });
 
     if (agent.shouldBlock()) {
       return callback(
-        new Error(
-          `Aikido firewall has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        cleanError(
+          new Error(
+            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+          )
         )
       );
     }

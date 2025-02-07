@@ -1,10 +1,8 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { runWithContext, type Context } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { NodeSQLite } from "./NodeSqlite";
 import { isPackageInstalled } from "../helpers/isPackageInstalled";
+import { createTestAgent } from "../helpers/createTestAgent";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -35,13 +33,7 @@ const safeContext: Context = {
 };
 
 t.test("does not break when the Node.js version is too low", async (t) => {
-  const agent = new Agent(
-    true,
-    new LoggerNoop(),
-    new ReportingAPIForTesting(),
-    undefined,
-    undefined
-  );
+  const agent = createTestAgent();
   agent.start([new NodeSQLite()]);
 
   t.end();
@@ -55,13 +47,7 @@ t.test(
       : false,
   },
   async () => {
-    const agent = new Agent(
-      true,
-      new LoggerNoop(),
-      new ReportingAPIForTesting(),
-      undefined,
-      undefined
-    );
+    const agent = createTestAgent();
     agent.start([new NodeSQLite()]);
 
     const { DatabaseSync } = require("node:sqlite");
@@ -80,7 +66,7 @@ t.test(
         } catch (error: any) {
           t.match(
             error.message,
-            /Aikido firewall has blocked an SQL injection: node:sqlite.exec/
+            /Zen has blocked an SQL injection: node:sqlite.exec/
           );
         }
       });
@@ -96,7 +82,7 @@ t.test(
         } catch (error: any) {
           t.match(
             error.message,
-            /Aikido firewall has blocked an SQL injection: node:sqlite.prepare/
+            /Zen has blocked an SQL injection: node:sqlite.prepare/
           );
         }
       });
