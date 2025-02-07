@@ -28,6 +28,10 @@ function getClientIpFromXForwardedFor(value: string) {
   const forwardedIps = value.split(",").map((e) => {
     const ip = e.trim();
 
+    if (isIP(ip)) {
+      return ip;
+    }
+
     if (ip.includes(":")) {
       const parts = ip.split(":");
 

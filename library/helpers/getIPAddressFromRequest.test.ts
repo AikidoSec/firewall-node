@@ -81,6 +81,19 @@ t.test(
   }
 );
 
+t.test("x-forwarded-for with trust proxy and IP contains port", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "true";
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "9.9.9.9:8080",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "9.9.9.9"
+  );
+});
+
 t.test(
   'x-forwarded-for with trust proxy and "x-forwarded-for" is a private IP',
   async (t) => {
