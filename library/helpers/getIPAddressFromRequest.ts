@@ -1,4 +1,5 @@
 import { isIP } from "net";
+import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
@@ -38,8 +39,10 @@ function getClientIpFromXForwardedFor(value: string) {
     return ip;
   });
 
+  // When selecting an address from the X-Forwarded-For header,
+  // we should select the first valid IP address that is not a private IP address
   for (let i = 0; i < forwardedIps.length; i++) {
-    if (isIP(forwardedIps[i])) {
+    if (isIP(forwardedIps[i]) && !isPrivateIP(forwardedIps[i])) {
       return forwardedIps[i];
     }
   }
