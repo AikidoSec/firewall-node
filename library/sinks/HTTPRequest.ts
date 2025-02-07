@@ -23,7 +23,9 @@ export class HTTPRequest implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(url.hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(url.hostname, port);
+    }
     const context = getContext();
 
     if (!context) {

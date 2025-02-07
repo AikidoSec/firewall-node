@@ -21,23 +21,24 @@ t.test("it works", async () => {
     { hostname: "google.com", port: 80, hits: 1 },
   ]);
 
-  hostnames.add("google.com", undefined);
+  hostnames.add("google.com", 0);
+  hostnames.add("google.com", -1);
   t.same(hostnames.asArray(), [
+    { hostname: "aikido.dev", port: 443, hits: 1 },
     { hostname: "aikido.dev", port: 80, hits: 1 },
     { hostname: "google.com", port: 80, hits: 1 },
-    { hostname: "google.com", port: undefined, hits: 1 },
   ]);
 
   hostnames.add("github.com", 80);
   t.same(hostnames.asArray(), [
+    { hostname: "aikido.dev", port: 80, hits: 1 },
     { hostname: "google.com", port: 80, hits: 1 },
-    { hostname: "google.com", port: undefined, hits: 1 },
     { hostname: "github.com", port: 80, hits: 1 },
   ]);
 
   hostnames.add("jetbrains.com", 80);
   t.same(hostnames.asArray(), [
-    { hostname: "google.com", port: undefined, hits: 1 },
+    { hostname: "google.com", port: 80, hits: 1 },
     { hostname: "github.com", port: 80, hits: 1 },
     { hostname: "jetbrains.com", port: 80, hits: 1 },
   ]);

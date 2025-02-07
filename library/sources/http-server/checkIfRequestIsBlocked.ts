@@ -26,15 +26,11 @@ export function checkIfRequestIsBlocked(
     return false;
   }
 
-  const result = context.remoteAddress
-    ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
-    : ({ blocked: false } as const);
-
-  if (result.blocked) {
+  if (!ipAllowedToAccessRoute(context, agent)) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");
 
-    let message = `Your IP address is blocked due to ${escapeHTML(result.reason)}.`;
+    let message = "Your IP address is not allowed to access this resource.";
     if (context.remoteAddress) {
       message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }
@@ -48,11 +44,23 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
-  if (!ipAllowedToAccessRoute(context, agent)) {
+  const isAllowedIP =
+    context.remoteAddress &&
+    agent.getConfig().isAllowedIP(context.remoteAddress);
+
+  if (isAllowedIP) {
+    return false;
+  }
+
+  const result = context.remoteAddress
+    ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
+    : ({ blocked: false } as const);
+
+  if (result.blocked) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");
 
-    let message = "Your IP address is not allowed to access this resource.";
+    let message = `Your IP address is blocked due to ${escapeHTML(result.reason)}.`;
     if (context.remoteAddress) {
       message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }

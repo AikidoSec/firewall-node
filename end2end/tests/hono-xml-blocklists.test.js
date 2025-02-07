@@ -14,27 +14,46 @@ t.beforeEach(async () => {
   const body = await response.json();
   token = body.token;
 
-  // Apply rate limiting
-  const updateConfigResponse = await fetch(
-    `${testServerUrl}/api/runtime/firewall/lists`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-      body: JSON.stringify({
-        blockedIPAddresses: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-        blockedUserAgentsV2: [
+  const config = await fetch(`${testServerUrl}/api/runtime/config`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({
+      allowedIPAddresses: ["1.3.2.1", "1.3.2.2"],
+      endpoints: [
+        {
+          route: "/admin",
+          method: "GET",
+          forceProtectionOff: false,
+          allowedIPAddresses: ["1.3.2.1"],
+          rateLimiting: {
+            enabled: false,
+          },
+        },
+      ],
+    }),
+  });
+  t.same(config.status, 200);
+
+  const lists = await fetch(`${testServerUrl}/api/runtime/firewall/lists`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({
+      blockedIPAddresses: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+      blockedUserAgentsV2: [
           {
             key: "some/key",
             pattern: "hacker|attacker|GPTBot",
           },
         ],
-      }),
-    }
-  );
-  t.same(updateConfigResponse.status, 200);
+    }),
+  });
+  t.same(lists.status, 200);
 });
 
 t.test("it blocks geo restricted IPs", (t) => {
@@ -53,7 +72,7 @@ t.test("it blocks geo restricted IPs", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -112,7 +131,7 @@ t.test("it blocks geo restricted IPs", (t) => {
       t.same(await resp3.text(), JSON.stringify({ success: true }));
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -135,7 +154,7 @@ t.test("it blocks bots", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -195,7 +214,73 @@ t.test("it blocks bots", (t) => {
       }
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
+    })
+    .finally(() => {
+      server.kill();
+    });
+});
+
+t.test("it does not block bypass IP if in blocklist", (t) => {
+  const server = spawn(`node`, [pathToApp, "4004"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCKING: "true",
+      AIKIDO_TOKEN: token,
+      AIKIDO_URL: testServerUrl,
+    },
+  });
+
+  server.on("close", () => {
+    t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err);
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  // Wait for the server to start
+  timeout(2000)
+    .then(async () => {
+      const resp1 = await fetch("http://127.0.0.1:4004/", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.1",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp1.status, 200);
+
+      const resp2 = await fetch("http://127.0.0.1:4004/admin", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.1",
+        },
+      });
+      t.same(resp2.status, 200);
+
+      const resp3 = await fetch("http://127.0.0.1:4004/admin", {
+        headers: {
+          "X-Forwarded-For": "1.3.2.2",
+        },
+      });
+      t.same(resp3.status, 403);
+      t.same(
+        await resp3.text(),
+        `Your IP address is not allowed to access this resource. (Your IP: 1.3.2.2)`
+      );
+    })
+    .catch((error) => {
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

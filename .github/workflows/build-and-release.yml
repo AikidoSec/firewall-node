@@ -27,7 +27,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
       - name: Install dependencies
-        run: npm install
+        run: npm run install-lib-only
       - name: Get the version
         id: get_version
         run: echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
