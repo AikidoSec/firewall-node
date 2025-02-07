@@ -18,6 +18,7 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
+import type { Response } from "./api/fetchBlockedLists";
 
 wrap(fetch, "fetch", function mock() {
   return async function mock() {
@@ -42,7 +43,7 @@ wrap(fetch, "fetch", function mock() {
             pattern: "Bytespider",
           },
         ],
-      }),
+      } satisfies Response),
     };
   };
 });

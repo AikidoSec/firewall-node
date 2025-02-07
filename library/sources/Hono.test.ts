@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import type { Blocklist, AgentBlockList } from "../agent/api/fetchBlockedLists";
+import type { Response } from "../agent/api/fetchBlockedLists";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -38,10 +38,7 @@ wrap(fetch, "fetch", function mock(original) {
               pattern: "hacker|attacker",
             },
           ],
-        } satisfies {
-          blockedIPAddresses: Blocklist[];
-          blockedUserAgentsV2: AgentBlockList[];
-        }),
+        } satisfies Response),
       };
     }
 

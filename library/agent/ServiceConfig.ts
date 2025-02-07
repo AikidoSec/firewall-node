@@ -2,7 +2,7 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { Endpoint } from "./Config";
 import {
-  Blocklist as BlocklistType,
+  IPBlocklist as BlocklistType,
   AgentBlockList,
 } from "./api/fetchBlockedLists";
 

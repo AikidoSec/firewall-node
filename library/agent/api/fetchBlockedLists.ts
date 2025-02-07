@@ -2,7 +2,7 @@ import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
-export type Blocklist = {
+export type IPBlocklist = {
   key: string;
   source: string;
   description: string;
@@ -14,8 +14,13 @@ export type AgentBlockList = {
   pattern: string; // e.g. "Googlebot|Bingbot"
 };
 
+export type Response = {
+  blockedIPAddresses: IPBlocklist[];
+  blockedUserAgentsV2: AgentBlockList[];
+};
+
 export async function fetchBlockedLists(token: Token): Promise<{
-  blockedIPAddresses: Blocklist[];
+  blockedIPAddresses: IPBlocklist[];
   blockedUserAgents: AgentBlockList[];
 }> {
   const baseUrl = getAPIURL();
@@ -34,10 +39,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
     throw new Error(`Failed to fetch blocked lists: ${statusCode}`);
   }
 
-  const result: {
-    blockedIPAddresses: Blocklist[];
-    blockedUserAgentsV2: string;
-  } = JSON.parse(body);
+  const result: Response = JSON.parse(body);
 
   return {
     blockedIPAddresses:
