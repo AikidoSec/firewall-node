@@ -33,7 +33,7 @@ module.exports = function updateIPLists(req, res) {
 
   if (
     req.body.blockedUserAgentsV2 &&
-    typeof req.body.blockedUserAgentsV2 === "string"
+    Array.isArray(req.body.blockedUserAgentsV2)
   ) {
     updateBlockedUserAgents(req.app, req.body.blockedUserAgentsV2);
   }
