@@ -63,6 +63,10 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
+    agent
+      .getInspectionStatistics()
+      .onBlockedRequest({ match: "ipBlocklist", key: result.key });
+
     return true;
   }
 
@@ -78,6 +82,11 @@ export function checkIfRequestIsBlocked(
     res.end(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
+
+    agent.getInspectionStatistics().onBlockedRequest({
+      match: "userAgentList",
+      key: isUserAgentBlocked.key,
+    });
 
     return true;
   }
