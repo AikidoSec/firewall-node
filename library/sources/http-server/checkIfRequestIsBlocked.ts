@@ -37,10 +37,6 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
-    agent
-      .getInspectionStatistics()
-      .onBlockedRequest({ match: "ipBlocklist", key: result.key });
-
     return true;
   }
 
@@ -66,6 +62,10 @@ export function checkIfRequestIsBlocked(
     }
 
     res.end(message);
+
+    agent
+      .getInspectionStatistics()
+      .onBlockedRequest({ match: "ipBlocklist", key: result.key });
 
     return true;
   }
