@@ -85,6 +85,8 @@ async function dlZenInternals() {
 
 async function modifyDtsFilesAfterBuild() {
   // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DPENDENCY **/
+  // The // @ts-expect-error comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
+  // That's why we need to replace a JSDoc comment with a // @ts-expect-error comment
   const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
