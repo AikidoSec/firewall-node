@@ -1,4 +1,5 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
+/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
 import type { Env, Hono, Schema } from "hono";
 import { escapeHTML } from "../helpers/escapeHTML";
 
