@@ -1,6 +1,6 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
-/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DPENDENCY **/
+/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
 import type * as Application from "koa";
 
 /**
