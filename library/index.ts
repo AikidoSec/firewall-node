@@ -25,3 +25,13 @@ export {
   addFastifyHook,
   addKoaMiddleware,
 };
+
+export default {
+  setUser,
+  shouldBlockRequest,
+  addExpressMiddleware,
+  addHonoMiddleware,
+  addHapiMiddleware,
+  addFastifyHook,
+  addKoaMiddleware,
+};
