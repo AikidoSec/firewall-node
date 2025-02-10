@@ -1,7 +1,7 @@
-import { extname } from "path";
+import { getFileExtension } from "../../helpers/getFileExtension";
 
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
-const IGNORE_EXTENSIONS = ["properties", "php", "asp", "aspx", "jsp", "config"];
+const IGNORE_EXTENSIONS = ["properties", "config"];
 const IGNORE_STRINGS = ["cgi-bin"];
 
 export function shouldDiscoverRoute({
@@ -34,23 +34,27 @@ export function shouldDiscoverRoute({
     return false;
   }
 
-  return segments.every(isAllowedExtension);
+  // Check for every file segment if it contains an file extension and if it should be discovered or ignored
+  return segments.every(shouldDiscoverExtension);
 }
 
-function isAllowedExtension(segment: string) {
-  let extension = extname(segment);
+// Ignore routes which contain file extensions
+function shouldDiscoverExtension(segment: string) {
+  const extension = getFileExtension(segment);
 
-  if (extension && extension.startsWith(".")) {
-    // Remove the dot from the extension
-    extension = extension.slice(1);
+  // No file extension, allow discovery
+  if (!extension) {
+    return true;
+  }
 
-    if (extension.length >= 2 && extension.length <= 5) {
-      return false;
-    }
+  // Do not discover files with extensions of 1 to 5 characters, e.g. file.css, file.js, file.woff2
+  if (extension.length > 1 && extension.length < 6) {
+    return false;
+  }
 
-    if (IGNORE_EXTENSIONS.includes(extension)) {
-      return false;
-    }
+  // Ignore some file extensions that are longer than 5 characters or shorter than 2 chars
+  if (IGNORE_EXTENSIONS.includes(extension)) {
+    return false;
   }
 
   return true;
