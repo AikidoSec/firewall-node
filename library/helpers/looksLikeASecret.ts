@@ -39,6 +39,7 @@ export function looksLikeASecret(str: string) {
   }
 
   // Ignore static assests with random file names, e.g. index.BRaz9DSe.css"
+  // The function shouldDiscoverRoutes already checks for this, but it's executed after this function, so the route would already be /asset/:secret
   const extension = getFileExtension(str);
   if (extension && extension.length > 1 && extension.length < 6) {
     return false;
