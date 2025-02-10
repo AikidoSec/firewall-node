@@ -28,10 +28,14 @@ function getClientIpFromXForwardedFor(value: string) {
   const forwardedIps = value.split(",").map((e) => {
     const ip = e.trim();
 
+    // We do a first check here to make sure that valid IPv6 addresses don't
+    // get split on ":" below.
     if (isIP(ip)) {
       return ip;
     }
 
+    // According to https://www.rfc-editor.org/rfc/rfc7239 (5.2) X-Forwarded-For
+    // is allowed to include a port number, so we check this here :
     if (ip.includes(":")) {
       const parts = ip.split(":");
 
