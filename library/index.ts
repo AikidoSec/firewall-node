@@ -1,4 +1,4 @@
-/* eslint-disable import/no-unused-modules */
+/* eslint-disable import/no-unused-modules, no-console */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
