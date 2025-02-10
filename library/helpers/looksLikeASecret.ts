@@ -1,3 +1,5 @@
+import { getFileExtension } from "./getFileExtension";
+
 const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
 const UPPERCASE = LOWERCASE.map((char) => char.toUpperCase());
 const NUMBERS = "0123456789".split("");
@@ -33,6 +35,12 @@ export function looksLikeASecret(str: string) {
   }
 
   if (KNOWN_WORD_SEPARATORS.some((separator) => str.includes(separator))) {
+    return false;
+  }
+
+  // Ignore static assests with random file names, e.g. index.BRaz9DSe.css"
+  const extension = getFileExtension(str);
+  if (extension && extension.length > 1 && extension.length < 6) {
     return false;
   }
 
