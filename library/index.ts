@@ -8,11 +8,18 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { isESM } from "./helpers/isESM";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
 
 if (supported && shouldEnable) {
+  if (isESM()) {
+    console.warn(
+      "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
+    );
+  }
+
   require("./agent/protect").protect();
 }
 
