@@ -44,7 +44,7 @@ t.beforeEach(async () => {
       Authorization: token,
     },
     body: JSON.stringify({
-      onlyAllowedIPAddresses: ["4.3.2.1/32", "fe80::1234:5678:abcd:ef12/64"],
+      allowedIPAddresses: ["4.3.2.1/32", "fe80::1234:5678:abcd:ef12/64"],
       blockedIPAddresses: [],
       blockedUserAgents: "hacker|attacker|GPTBot",
     }),

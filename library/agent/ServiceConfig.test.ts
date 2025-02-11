@@ -148,8 +148,6 @@ t.test("it blocks bots", async () => {
   t.same(config.isUserAgentBlocked("123 bingbot abc"), { blocked: true });
   t.same(config.isUserAgentBlocked("bing"), { blocked: false });
 
-  t.same(config.shouldOnlyAllowSomeIPAddresses(), false);
-
   config.updateBlockedUserAgents("");
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
@@ -172,13 +170,14 @@ t.test("restricting access to some ips", async () => {
     ]
   );
 
-  t.same(config.shouldOnlyAllowSomeIPAddresses(), true);
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, false);
+  t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true); // Always allow private ips
 
-  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, true);
-  t.same(config.isOnlyAllowedIPAddress("4.3.2.1").allowed, false);
-
-  config.updateOnlyAllowedIPAddresses([]);
-  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
+  config.updateAllowedIPAddresses([]);
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
 });
 
 t.test("only allow some ips: empty list", async () => {
@@ -198,8 +197,6 @@ t.test("only allow some ips: empty list", async () => {
     ]
   );
 
-  t.same(config.shouldOnlyAllowSomeIPAddresses(), false);
-
-  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
-  t.same(config.isOnlyAllowedIPAddress("4.3.2.1").allowed, false);
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
 });

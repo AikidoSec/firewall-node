@@ -34,7 +34,7 @@ wrap(fetch, "fetch", function mock() {
           },
         ],
         blockedUserAgents: "AI2Bot|Bytespider",
-        onlyAllowedIPAddresses: shouldOnlyAllowSomeIPAddresses
+        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
                 source: "name",
@@ -1110,7 +1110,9 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
     blocked: false,
   });
 
-  t.same(agent.getConfig().shouldOnlyAllowSomeIPAddresses(), false);
+  t.same(agent.getConfig().isAllowedIPAddress("1.3.2.4"), {
+    allowed: true,
+  });
 
   t.same(
     agent
@@ -1144,7 +1146,10 @@ t.test("it only allows some IP addresses", async () => {
     reason: "Description",
   });
 
-  t.same(agent.getConfig().shouldOnlyAllowSomeIPAddresses(), true);
-  t.same(agent.getConfig().isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
-  t.same(agent.getConfig().isOnlyAllowedIPAddress("4.3.2.1").allowed, true);
+  t.same(agent.getConfig().isAllowedIPAddress("1.2.3.4"), {
+    allowed: false,
+  });
+  t.same(agent.getConfig().isAllowedIPAddress("4.3.2.1"), {
+    allowed: true,
+  });
 });

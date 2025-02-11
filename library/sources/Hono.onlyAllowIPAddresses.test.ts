@@ -27,7 +27,7 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           blockedUserAgents: "hacker|attacker",
-          onlyAllowedIPAddresses: [
+          allowedIPAddresses: [
             {
               source: "geoip",
               description: "geo restrictions",

@@ -4,7 +4,6 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
-import { isPrivateIP } from "../../vulnerabilities/ssrf/isPrivateIP";
 
 /**
  * Inspects the IP address of the request:
@@ -51,9 +50,7 @@ export function checkIfRequestIsBlocked(
 
   if (
     context.remoteAddress &&
-    agent.getConfig().shouldOnlyAllowSomeIPAddresses() &&
-    !isPrivateIP(context.remoteAddress) &&
-    !agent.getConfig().isOnlyAllowedIPAddress(context.remoteAddress).allowed
+    !agent.getConfig().isAllowedIPAddress(context.remoteAddress).allowed
   ) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");

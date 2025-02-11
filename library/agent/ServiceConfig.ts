@@ -1,5 +1,6 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
+import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import { Endpoint } from "./Config";
 import { IPList } from "./api/fetchBlockedLists";
 
@@ -14,7 +15,7 @@ export class ServiceConfig {
   private blockedUserAgentRegex: RegExp | undefined;
   // If not empty, only ips in this list are allowed to access the service
   // e.g. for country allowlists
-  private onlyAllowedIPAddresses: {
+  private allowedIPAddresses: {
     allowlist: IPMatcher;
     description: string;
   }[] = [];
@@ -26,13 +27,13 @@ export class ServiceConfig {
     bypassedIPAddresses: string[],
     private receivedAnyStats: boolean,
     blockedIPAddresses: IPList[],
-    onlyAllowedIPAddresses: IPList[]
+    allowedIPAddresses: IPList[]
   ) {
     this.setBlockedUserIds(blockedUserIds);
     this.setBypassedIPAddresses(bypassedIPAddresses);
     this.setEndpoints(endpoints);
     this.setBlockedIPAddresses(blockedIPAddresses);
-    this.setOnlyAllowedIPAddresses(onlyAllowedIPAddresses);
+    this.setAllowedIPAddresses(allowedIPAddresses);
   }
 
   private setEndpoints(endpoints: Endpoint[]) {
@@ -135,34 +136,36 @@ export class ServiceConfig {
     return { blocked: false };
   }
 
-  private setOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.onlyAllowedIPAddresses = [];
+  private setAllowedIPAddresses(ipAddresses: IPList[]) {
+    this.allowedIPAddresses = [];
 
     for (const source of ipAddresses) {
       // Skip empty allowlists
       if (source.ips.length === 0) {
         continue;
       }
-      this.onlyAllowedIPAddresses.push({
+      this.allowedIPAddresses.push({
         allowlist: new IPMatcher(source.ips),
         description: source.description,
       });
     }
   }
 
-  updateOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.setOnlyAllowedIPAddresses(ipAddresses);
+  updateAllowedIPAddresses(ipAddresses: IPList[]) {
+    this.setAllowedIPAddresses(ipAddresses);
   }
 
-  /**
-   * Returns true if only some IP addresses are allowed to access the service, e.g. if a geoip country allowlist is set.
-   */
-  shouldOnlyAllowSomeIPAddresses() {
-    return this.onlyAllowedIPAddresses.length > 0;
-  }
+  isAllowedIPAddress(ip: string): { allowed: boolean } {
+    if (this.allowedIPAddresses.length < 1) {
+      return { allowed: true };
+    }
 
-  isOnlyAllowedIPAddress(ip: string): { allowed: boolean } {
-    const allowlist = this.onlyAllowedIPAddresses.find((list) =>
+    // Always allow access from local IP addresses
+    if (isPrivateIP(ip)) {
+      return { allowed: true };
+    }
+
+    const allowlist = this.allowedIPAddresses.find((list) =>
       list.allowlist.has(ip)
     );
 

@@ -1,7 +1,7 @@
 const {
   getBlockedIPAddresses,
   getBlockedUserAgents,
-  getOnlyAllowedIPAddresses,
+  getAllowedIPAddresses,
 } = require("../zen/config");
 
 module.exports = function lists(req, res) {
@@ -11,7 +11,7 @@ module.exports = function lists(req, res) {
 
   const blockedIps = getBlockedIPAddresses(req.app);
   const blockedUserAgents = getBlockedUserAgents(req.app);
-  const allowedIps = getOnlyAllowedIPAddresses(req.app);
+  const allowedIps = getAllowedIPAddresses(req.app);
 
   res.json({
     success: true,
@@ -27,7 +27,7 @@ module.exports = function lists(req, res) {
           ]
         : [],
     blockedUserAgents: blockedUserAgents,
-    onlyAllowedIPAddresses:
+    allowedIPAddresses:
       allowedIps.length > 0
         ? [
             {
