@@ -5,12 +5,15 @@ import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
+  // IP addresses that are allowed to bypass rate limiting, attack blocking, etc.
   private bypassedIPAddresses: Set<string> = new Set();
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
     [];
   private blockedUserAgentRegex: RegExp | undefined;
+  // If not empty, only ips in this list are allowed to access the service
+  // e.g. for country allowlists
   private onlyAllowedIPAddresses: {
     allowlist: IPMatcher;
     description: string;
