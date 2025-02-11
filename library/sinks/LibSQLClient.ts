@@ -70,12 +70,11 @@ export class LibSQLClient implements Wrapper {
 
   wrap(hooks: Hooks) {
     const sqlFunctions = ["execute", "executeMultiple", "batch", "migrate"];
-
-    // Todo transactions
+    const transactionSqlFunctions = ["execute", "executeMultiple", "batch"];
 
     hooks
       .addPackage("@libsql/client")
-      .withVersion("^0.14.0")
+      .withVersion("^0.10.0")
       .onRequire((exports, pkgInfo) => {
         // Modify the return value of createClient function -> the client object
         wrapExport(exports, "createClient", pkgInfo, {
@@ -88,6 +87,28 @@ export class LibSQLClient implements Wrapper {
                 },
               });
             }
+
+            // Wrap transaction functions
+            wrapExport(returnValue, "transaction", pkgInfo, {
+              modifyReturnValue: async (args, returnValue, agent) => {
+                // Await the promise
+                const transaction = await returnValue;
+
+                // Wrap all functions in the transaction object
+                for (const transactionFunc of transactionSqlFunctions) {
+                  wrapExport(transaction, transactionFunc, pkgInfo, {
+                    inspectArgs: (args) => {
+                      return this.inspectQuery(
+                        `@libsql/client.transaction.${transactionFunc}`,
+                        args
+                      );
+                    },
+                  });
+                }
+
+                return transaction;
+              },
+            });
             return returnValue;
           },
         });

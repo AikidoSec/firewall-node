@@ -31,10 +31,12 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
+const testOpts = { skip: !global.Request ? "fetch is not available" : false };
+
 const agent = createTestAgent();
 agent.start([new LibSQLClient()]);
 
-t.test("it works with @libsql/client: in-memory", async (t) => {
+t.test("it works with @libsql/client: in-memory", testOpts, async (t) => {
   const { createClient } =
     require("@libsql/client") as typeof import("@libsql/client");
 
@@ -166,6 +168,36 @@ t.test("it works with @libsql/client: in-memory", async (t) => {
           "Cannot read properties of null (reading 'map')"
         );
       }
+
+      const transaction = await client.transaction("write");
+
+      const error9 = await t.rejects(() =>
+        transaction.execute("SELECT 1;-- should be blocked")
+      );
+      t.ok(error9 instanceof Error);
+      if (error9 instanceof Error) {
+        t.same(
+          error9.message,
+          "Zen has blocked an SQL injection: @libsql/client.transaction.execute(...) originating from body.myTitle"
+        );
+      }
+
+      const error10 = await t.rejects(() =>
+        transaction.batch(["SELECT 1;-- should be blocked"])
+      );
+      t.ok(error10 instanceof Error);
+      if (error10 instanceof Error) {
+        t.same(
+          error10.message,
+          "Zen has blocked an SQL injection: @libsql/client.transaction.batch(...) originating from body.myTitle"
+        );
+      }
+
+      await transaction.commit();
+    });
+
+    await runWithContext(safeContext, async () => {
+      await client.execute("SELECT 1;-- This is a comment");
     });
   } catch (error: any) {
     t.fail(error);
@@ -174,7 +206,7 @@ t.test("it works with @libsql/client: in-memory", async (t) => {
   }
 });
 
-t.test("it works with @libsql/client: http", async (t) => {
+t.test("it works with @libsql/client: http", testOpts, async (t) => {
   const { createClient } =
     require("@libsql/client") as typeof import("@libsql/client");
 
@@ -270,6 +302,32 @@ t.test("it works with @libsql/client: http", async (t) => {
           "Zen has blocked an SQL injection: @libsql/client.batch(...) originating from body.myTitle"
         );
       }
+
+      const transaction = await client.transaction("write");
+
+      const error9 = await t.rejects(() =>
+        transaction.execute("SELECT 1;-- should be blocked")
+      );
+      t.ok(error9 instanceof Error);
+      if (error9 instanceof Error) {
+        t.same(
+          error9.message,
+          "Zen has blocked an SQL injection: @libsql/client.transaction.execute(...) originating from body.myTitle"
+        );
+      }
+
+      const error10 = await t.rejects(() =>
+        transaction.batch(["SELECT 1;-- should be blocked"])
+      );
+      t.ok(error10 instanceof Error);
+      if (error10 instanceof Error) {
+        t.same(
+          error10.message,
+          "Zen has blocked an SQL injection: @libsql/client.transaction.batch(...) originating from body.myTitle"
+        );
+      }
+
+      await transaction.commit();
     });
   } catch (error: any) {
     t.fail(error);
