@@ -40,11 +40,11 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
-  const isAllowedIP =
+  const isBypassedIP =
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isAllowedIP) {
+  if (isBypassedIP) {
     return false;
   }
 

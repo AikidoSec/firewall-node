@@ -27,12 +27,12 @@ export function onInspectionInterceptorResult(
     withoutContext: !context,
   });
 
-  const isAllowedIP =
+  const isBypassedIP =
     context &&
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (result && context && !isAllowedIP) {
+  if (result && context && !isBypassedIP) {
     // Flag request as having an attack detected
     updateContext(context, "attackDetected", true);
 
