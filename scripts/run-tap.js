@@ -4,7 +4,7 @@ const version = process.versions.node.split(".");
 const major = parseInt(version[0], 10);
 const minor = parseInt(version[1], 10);
 
-let args = "--allow-incomplete-coverage --jobs=8";
+let args = "--allow-incomplete-coverage";
 
 // If script is called with arg --ci, set env CI to true
 if (process.argv.includes("--ci")) {

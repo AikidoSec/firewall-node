@@ -1,8 +1,8 @@
-const { rm, copyFile, mkdir, readFile } = require("fs/promises");
+const { rm, copyFile, mkdir, readFile, writeFile } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
-const { fileExists } = require("./helpers/fs");
+const { fileExists, findFilesWithExtension } = require("./helpers/fs");
 const {
   downloadFile,
   verifyFileHash,
@@ -44,6 +44,8 @@ async function main() {
     join(buildDir, "internals", "zen_internals_bg.wasm")
   );
 
+  await modifyDtsFilesAfterBuild();
+
   console.log("Build successful");
   process.exit(0);
 }
@@ -79,6 +81,25 @@ async function dlZenInternals() {
   await rm(join(internalsDir, tarballFile));
   await rm(join(internalsDir, checksumFile));
   await rm(join(internalsDir, "zen_internals.d.ts"));
+}
+
+async function modifyDtsFilesAfterBuild() {
+  // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
+  // The // @ts-expect-error comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
+  // That's why we need to replace a JSDoc comment with a // @ts-expect-error comment
+  const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
+  for (const dtsFile of dtsFiles) {
+    const content = await readFile(dtsFile, "utf8");
+    const modifiedContent = content.replaceAll(
+      "/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/",
+      "// @ts-expect-error Optional dependency"
+    );
+
+    // Write modified content back to the file if it was changed
+    if (content !== modifiedContent) {
+      await writeFile(dtsFile, modifiedContent);
+    }
+  }
 }
 
 (async () => {
