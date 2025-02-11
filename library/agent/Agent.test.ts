@@ -1145,6 +1145,6 @@ t.test("it only allows some IP addresses", async () => {
   });
 
   t.same(agent.getConfig().shouldOnlyAllowSomeIPAddresses(), true);
-  t.same(agent.getConfig().isOnlyAllowedIPAddress("1.2.3.4"), false);
-  t.same(agent.getConfig().isOnlyAllowedIPAddress("4.3.2.1"), true);
+  t.same(agent.getConfig().isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
+  t.same(agent.getConfig().isOnlyAllowedIPAddress("4.3.2.1").allowed, true);
 });

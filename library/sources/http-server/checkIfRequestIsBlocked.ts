@@ -53,7 +53,7 @@ export function checkIfRequestIsBlocked(
     context.remoteAddress &&
     agent.getConfig().shouldOnlyAllowSomeIPAddresses() &&
     !isPrivateIP(context.remoteAddress) &&
-    !agent.getConfig().isOnlyAllowedIPAddress(context.remoteAddress)
+    !agent.getConfig().isOnlyAllowedIPAddress(context.remoteAddress).allowed
   ) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");

@@ -174,9 +174,32 @@ t.test("restricting access to some ips", async () => {
 
   t.same(config.shouldOnlyAllowSomeIPAddresses(), true);
 
-  t.same(config.isOnlyAllowedIPAddress("1.2.3.4"), true);
-  t.same(config.isOnlyAllowedIPAddress("4.3.2.1"), false);
+  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isOnlyAllowedIPAddress("4.3.2.1").allowed, false);
 
   config.updateOnlyAllowedIPAddresses([]);
-  t.same(config.isOnlyAllowedIPAddress("1.2.3.4"), false);
+  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
+});
+
+t.test("only allow some ips: empty list", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    [],
+    true,
+    [],
+    [
+      {
+        source: "geoip",
+        description: "description",
+        ips: [],
+      },
+    ]
+  );
+
+  t.same(config.shouldOnlyAllowSomeIPAddresses(), false);
+
+  t.same(config.isOnlyAllowedIPAddress("1.2.3.4").allowed, false);
+  t.same(config.isOnlyAllowedIPAddress("4.3.2.1").allowed, false);
 });

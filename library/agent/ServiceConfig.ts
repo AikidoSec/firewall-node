@@ -11,7 +11,10 @@ export class ServiceConfig {
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
     [];
   private blockedUserAgentRegex: RegExp | undefined;
-  private onlyAllowedIPAddresses: IPMatcher | undefined;
+  private onlyAllowedIPAddresses: {
+    allowlist: IPMatcher;
+    description: string;
+  }[] = [];
 
   constructor(
     endpoints: Endpoint[],
@@ -127,15 +130,18 @@ export class ServiceConfig {
   }
 
   private setOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
-    this.onlyAllowedIPAddresses = undefined;
+    this.onlyAllowedIPAddresses = [];
 
-    if (ipAddresses.length === 0) {
-      return;
+    for (const source of ipAddresses) {
+      // Skip empty allowlists
+      if (source.ips.length === 0) {
+        continue;
+      }
+      this.onlyAllowedIPAddresses.push({
+        allowlist: new IPMatcher(source.ips),
+        description: source.description,
+      });
     }
-
-    const ips = ipAddresses.map((source) => source.ips).flat();
-
-    this.onlyAllowedIPAddresses = new IPMatcher(ips);
   }
 
   updateOnlyAllowedIPAddresses(ipAddresses: IPList[]) {
@@ -146,13 +152,15 @@ export class ServiceConfig {
    * Returns true if only some IP addresses are allowed to access the service, e.g. if a geoip country allowlist is set.
    */
   shouldOnlyAllowSomeIPAddresses() {
-    return this.onlyAllowedIPAddresses !== undefined;
+    return this.onlyAllowedIPAddresses.length > 0;
   }
 
-  isOnlyAllowedIPAddress(ip: string) {
-    return this.onlyAllowedIPAddresses
-      ? this.onlyAllowedIPAddresses.has(ip)
-      : false;
+  isOnlyAllowedIPAddress(ip: string): { allowed: boolean } {
+    const allowlist = this.onlyAllowedIPAddresses.find((list) =>
+      list.allowlist.has(ip)
+    );
+
+    return { allowed: !!allowlist };
   }
 
   updateConfig(
