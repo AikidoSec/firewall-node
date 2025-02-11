@@ -5,7 +5,7 @@ t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
-  t.same(config.isAllowedIP("1.2.3.4"), false);
+  t.same(config.isBypassedIP("1.2.3.4"), false);
   t.same(
     config.getEndpoints({
       url: undefined,
@@ -81,10 +81,10 @@ t.test("it works", async () => {
   );
 });
 
-t.test("it checks if IP is allowed", async () => {
+t.test("it checks if IP is bypassed", async () => {
   const config = new ServiceConfig([], 0, [], ["1.2.3.4"], false, [], []);
-  t.same(config.isAllowedIP("1.2.3.4"), true);
-  t.same(config.isAllowedIP("1.2.3.5"), false);
+  t.same(config.isBypassedIP("1.2.3.4"), true);
+  t.same(config.isBypassedIP("1.2.3.5"), false);
 });
 
 t.test("ip blocking works", async () => {
