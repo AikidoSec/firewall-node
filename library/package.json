@@ -51,6 +51,7 @@
     "@hono/node-server": "^1.12.2",
     "@koa/bodyparser": "^5.1.1",
     "@koa/router": "^13.0.0",
+    "@libsql/client": "^0.14.0",
     "@prisma/client": "^5.22.0",
     "@sinonjs/fake-timers": "^11.2.2",
     "@types/aws-lambda": "^8.10.131",

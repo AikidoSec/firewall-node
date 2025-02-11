@@ -31,10 +31,10 @@ const safeContext: Context = {
   route: "/posts/:id",
 };
 
-t.test("it detects SQL injections", async (t) => {
-  const agent = createTestAgent();
-  agent.start([new LibSQL()]);
+const agent = createTestAgent();
+agent.start([new LibSQL()]);
 
+t.test("it detects SQL injections", async (t) => {
   const Database = require("libsql") as typeof import("libsql");
   const db = new Database(":memory:");
 
@@ -96,9 +96,6 @@ t.test("it detects SQL injections", async (t) => {
 });
 
 t.test("it detects SQL injections using promises", async (t) => {
-  const agent = createTestAgent();
-  agent.start([new LibSQL()]);
-
   const Database = require("libsql/promise");
   const db = new Database(":memory:");
 

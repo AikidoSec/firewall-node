@@ -50,6 +50,7 @@ import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
 import { LibSQL } from "../sinks/LibSQL";
+import { LibSQLClient } from "../sinks/LibSQLClient";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -142,6 +143,7 @@ export function getWrappers() {
     new Prisma(),
     new Function(),
     new LibSQL(),
+    new LibSQLClient(),
   ];
 }
 
