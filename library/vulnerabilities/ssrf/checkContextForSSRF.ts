@@ -7,7 +7,7 @@ import { extractStringsFromUserInputCached } from "../../helpers/extractStringsF
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
-import { isRequestToItself } from "./isRequestToItself";
+import { shouldIgnoreForSSRF } from "./shouldIgnoreForSSRF";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -44,16 +44,12 @@ export function checkContextForSSRF({
         const paths = getPathsToPayload(str, context[source]);
 
         if (
-          isRequestToItself({
-            str: str,
+          shouldIgnoreForSSRF({
             source: source,
-            port: port,
             paths: paths,
           })
         ) {
-          // Application might do a request to itself when the hostname is localhost
-          // Let's allow this for the following headers: Host, Origin, Referer
-          // We still want to block if the port is different
+          // Ignore the Host, Origin, and Referer headers when checking for SSRF to prevent false positives
           continue;
         }
         return {
