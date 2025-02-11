@@ -5,7 +5,7 @@ import { Blocklist as BlocklistType } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
-  private allowedIPAddresses: Map<string, string> = new Map();
+  private bypassedIPAddresses: Set<string> = new Set();
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
@@ -16,12 +16,12 @@ export class ServiceConfig {
     endpoints: Endpoint[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
-    allowedIPAddresses: string[],
+    bypassedIPAddresses: string[],
     private receivedAnyStats: boolean,
     blockedIPAddresses: BlocklistType[]
   ) {
     this.setBlockedUserIds(blockedUserIds);
-    this.setAllowedIPAddresses(allowedIPAddresses);
+    this.setBypassedIPAddresses(bypassedIPAddresses);
     this.setEndpoints(endpoints);
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
@@ -60,15 +60,15 @@ export class ServiceConfig {
     return endpoints.length > 0 ? endpoints[0] : undefined;
   }
 
-  private setAllowedIPAddresses(allowedIPAddresses: string[]) {
-    this.allowedIPAddresses = new Map();
-    allowedIPAddresses.forEach((ip) => {
-      this.allowedIPAddresses.set(ip, ip);
+  private setBypassedIPAddresses(ipAddresses: string[]) {
+    this.bypassedIPAddresses = new Set();
+    ipAddresses.forEach((ip) => {
+      this.bypassedIPAddresses.add(ip);
     });
   }
 
-  isAllowedIP(ip: string) {
-    return this.allowedIPAddresses.has(ip);
+  isBypassedIP(ip: string) {
+    return this.bypassedIPAddresses.has(ip);
   }
 
   private setBlockedUserIds(blockedUserIds: string[]) {
@@ -130,12 +130,12 @@ export class ServiceConfig {
     endpoints: Endpoint[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
-    allowedIPAddresses: string[],
+    bypassedIPAddresses: string[],
     hasReceivedAnyStats: boolean
   ) {
     this.setEndpoints(endpoints);
     this.setBlockedUserIds(blockedUserIds);
-    this.setAllowedIPAddresses(allowedIPAddresses);
+    this.setBypassedIPAddresses(bypassedIPAddresses);
     this.lastUpdatedAt = lastUpdatedAt;
     this.receivedAnyStats = hasReceivedAnyStats;
   }
