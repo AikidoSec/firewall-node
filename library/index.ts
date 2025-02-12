@@ -26,6 +26,8 @@ export {
   addKoaMiddleware,
 };
 
+// Required for ESM / TypeScript default export support
+// e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
   shouldBlockRequest,
