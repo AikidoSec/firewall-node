@@ -175,7 +175,6 @@ t.test("it works", async (t) => {
     );
 
     if (isWindows) {
-      console.error("-".repeat(16));
       throws(
         () =>
           rename(new URL("file:/X://../test.txt"), "../test2.txt", () => {}),
@@ -193,7 +192,6 @@ t.test("it works", async (t) => {
           rename(new URL("file:/C://../../test.txt"), "../test2.txt", () => {}),
         "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
       );
-      console.error("-".repeat(16));
     } else {
       throws(
         () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),

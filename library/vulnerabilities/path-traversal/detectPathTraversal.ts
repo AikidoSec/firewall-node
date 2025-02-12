@@ -22,8 +22,6 @@ export function detectPathTraversal(
   // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
-    console.error("filePathFromUrl", filePathFromUrl);
-    console.error("origFilePath", filePath);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
       return true;
     }
