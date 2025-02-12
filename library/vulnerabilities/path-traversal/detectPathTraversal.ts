@@ -1,3 +1,4 @@
+import { isAbsolute } from "path";
 import { isWindows } from "../../helpers/isWindows";
 import { containsUnsafePathParts } from "./containsUnsafePathParts";
 import { startsWithUnsafePath } from "./unsafePathStart";
@@ -21,6 +22,8 @@ export function detectPathTraversal(
   // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
   if (isUrl && containsUnsafePathParts(userInput)) {
     const filePathFromUrl = parseAsFileUrl(userInput);
+    console.error("filePathFromUrl", filePathFromUrl);
+    console.error("origFilePath", filePath);
     if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
       return true;
     }
@@ -58,16 +61,57 @@ export function detectPathTraversal(
  * Another sample: new URL("file:///./test.txt") => /test.txt
  */
 function parseAsFileUrl(path: string) {
+  if (isWindows) {
+    return parseAsFileUrlWin(path);
+  }
   let url = path;
   if (!url.startsWith("file:")) {
-    if (!isWindows && !url.startsWith("/")) {
+    if (!url.startsWith("/")) {
       url = `/${url}`;
     }
+
     url = `file://${url}`;
   }
 
   try {
     return fileURLToPath(url);
+  } catch (e) {
+    //
+  }
+  return undefined;
+}
+
+/**
+ * This function is used to convert a file path as a URL to a file path on Windows.
+ * It is used to handle cases where a URL object is passed to a fs function.
+ * For example new URL("file://X:/../../test.txt") => file://X:/test.txt
+ * This function will convert ../../test.txt to /test.txt
+ * If the URL is not a file URL, it will return undefined.
+ * Another sample: new URL("file://X:/./test.txt") => /test.txt
+ */
+function parseAsFileUrlWin(path: string) {
+  let url = path;
+  let addedDriveLetter = false;
+  if (!url.startsWith("file:")) {
+    if (isWindows && !isAbsolute(url)) {
+      // The fileURLToPath function does not work without a drive letter, so we add one temporarily
+      url = `X:/${url}`;
+      addedDriveLetter = true;
+    }
+
+    url = `file://${url}`;
+  }
+
+  try {
+    let res = fileURLToPath(url);
+
+    if (addedDriveLetter) {
+      // Remove the temporary drive letter
+      res = res.slice(2);
+    }
+
+    // Replace backslashes with forward slashes
+    return res.replace(/\\/g, "/");
   } catch (e) {
     //
   }

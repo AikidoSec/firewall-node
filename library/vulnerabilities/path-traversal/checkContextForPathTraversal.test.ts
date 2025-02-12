@@ -95,7 +95,7 @@ t.test("it detects path traversal with URL", async () => {
       source: "routeParams",
       pathsToPayload: [".path"],
       metadata: {
-        filename: "/file/test.txt",
+        filename: isWindows ? "/C:/file/test.txt" : "/file/test.txt",
       },
       payload: "../file",
     }
