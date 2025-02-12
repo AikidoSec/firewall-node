@@ -168,3 +168,17 @@ t.test("it replaces ULID strings", async () => {
     "/posts/:ulid"
   );
 });
+
+t.test("it does not detect static files as secrets", async () => {
+  const files = [
+    "ClientRouter.astro_astro_type_script_index_0_lang.AWhPxJ6s.js",
+    "index.BRaz9DSe.css",
+    "icon.DbNf-ftQ_Z18kUbq.svg",
+    "Layout.astro_astro_type_script_index_1_lang.DBtfcKk0.js",
+    "nunito-latin-wght-normal.BaTF6Vo7.woff2",
+  ];
+
+  for (const file of files) {
+    t.same(buildRouteFromURL(`/assets/${file}`), `/assets/${file}`);
+  }
+});

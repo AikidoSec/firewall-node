@@ -183,6 +183,7 @@ const secrets = [
   "CnJ4DunhYfv2db6T1FRfciRBHtlNKOYrjoz",
   "Gic*EfMq:^MQ|ZcmX:yW1",
   "AG7DrGi3pDDIUU1PrEsj",
+  "XnJ6DughYfv2db6T1.dFRfciRBHrgKOYrheio",
 ];
 
 t.test("it returns true for known secrets", async () => {
@@ -192,5 +193,19 @@ t.test("it returns true for known secrets", async () => {
       true,
       `Expected ${secret} to look like a secret`
     );
+  }
+});
+
+t.test("it does not flag static assets", async () => {
+  const paths = [
+    "ClientRouter.astro_astro_type_script_index_0_lang.AWhPxJ6s.js",
+    "index.BRaz9DSe.css",
+    "icon.DbNf-ftQ_Z18kUbq.svg",
+    "Layout.astro_astro_type_script_index_1_lang.DBtfcKk0.js",
+    "nunito-latin-wght-normal.BaTF6Vo7.woff2",
+  ];
+
+  for (const path of paths) {
+    t.same(looksLikeASecret(path), false);
   }
 });
