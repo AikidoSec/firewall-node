@@ -106,9 +106,10 @@ jobs:
       - run: npm run build
       - run: npm run test:ci
       - name: Upload coverage
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v5
         with:
-          file: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info
+          fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node
