@@ -179,12 +179,12 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const isAllowedIP =
+    const isBypassedIP =
       context &&
       context.remoteAddress &&
-      agent.getConfig().isAllowedIP(context.remoteAddress);
+      agent.getConfig().isBypassedIP(context.remoteAddress);
 
-    if (isAllowedIP) {
+    if (isBypassedIP) {
       // If the IP address is allowed, we don't need to block the request
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);

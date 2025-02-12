@@ -82,12 +82,12 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
  * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
-  const isAllowedIP =
+  const isBypassedIP =
     context &&
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isAllowedIP) {
+  if (isBypassedIP) {
     // If the IP address is allowed, we don't need to block the request
     return;
   }
