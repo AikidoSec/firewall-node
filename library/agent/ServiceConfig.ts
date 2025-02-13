@@ -5,7 +5,7 @@ import { Blocklist as BlocklistType } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
-  private bypassedIPAddresses: Set<string> = new Set();
+  private bypassedIPAddresses: IPMatcher | undefined;
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
@@ -61,14 +61,15 @@ export class ServiceConfig {
   }
 
   private setBypassedIPAddresses(ipAddresses: string[]) {
-    this.bypassedIPAddresses = new Set();
-    ipAddresses.forEach((ip) => {
-      this.bypassedIPAddresses.add(ip);
-    });
+    if (ipAddresses.length === 0) {
+      this.bypassedIPAddresses = undefined;
+      return;
+    }
+    this.bypassedIPAddresses = new IPMatcher(ipAddresses);
   }
 
   isBypassedIP(ip: string) {
-    return this.bypassedIPAddresses.has(ip);
+    return this.bypassedIPAddresses ? this.bypassedIPAddresses.has(ip) : false;
   }
 
   private setBlockedUserIds(blockedUserIds: string[]) {

@@ -21,7 +21,7 @@ t.beforeEach(async () => {
       Authorization: token,
     },
     body: JSON.stringify({
-      allowedIPAddresses: ["1.3.2.1", "1.3.2.2"],
+      allowedIPAddresses: ["1.3.2.1", "1.3.2.2", "123.4.0.0/16"], // bypass list
       endpoints: [
         {
           route: "/admin",
@@ -208,6 +208,17 @@ t.test("it blocks bots", (t) => {
         await resp2.text(),
         "You are not allowed to access this resource because you have been identified as a bot."
       );
+
+      // Do not block if on allowlist
+      const resp3 = await fetch("http://127.0.0.1:4003/", {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot",
+          "X-Forwarded-For": "123.4.5.6",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp3.status, 200);
 
       // Does not block allowed user agents
       const allowedUserAgents = [
