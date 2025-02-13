@@ -29,11 +29,6 @@ export class RateLimiter {
     this.rateLimitedItems.set(key, filteredTimestamps);
 
     // Check if the number of requests is less or equal to the maxRequests
-    if (filteredTimestamps.length <= maxRequests) {
-      return true;
-    }
-
-    // Deny the request if the maxRequests is reached within windowSizeInMS
-    return false;
+    return filteredTimestamps.length <= maxRequests;
   }
 }
