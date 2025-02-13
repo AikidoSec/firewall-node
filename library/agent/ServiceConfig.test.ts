@@ -143,3 +143,34 @@ t.test("it blocks bots", async () => {
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
 });
+
+t.test("bypassed ips support cidr", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    ["192.168.2.0/24", "::1"],
+    false,
+    []
+  );
+
+  t.same(config.isBypassedIP("192.168.2.32"), true);
+  t.same(config.isBypassedIP("::1"), true);
+  t.same(config.isBypassedIP("::2"), false);
+  t.same(config.isBypassedIP("10.0.0.1"), false);
+
+  config.updateConfig(
+    [],
+    0,
+    [],
+    ["invalid", "2002::1/124", "127.0.0.1"],
+    false
+  );
+
+  t.same(config.isBypassedIP("2002::6"), true);
+  t.same(config.isBypassedIP("2002::f"), true);
+  t.same(config.isBypassedIP("2002::10"), false);
+  t.same(config.isBypassedIP("127.0.0.1"), true);
+  t.same(config.isBypassedIP("192.168.2.1"), false);
+  t.same(config.isBypassedIP("::1"), false);
+});
