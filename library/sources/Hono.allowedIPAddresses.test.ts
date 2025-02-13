@@ -61,7 +61,7 @@ const agent = createTestAgent({
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
-    allowedIPAddresses: ["4.3.2.1"],
+    allowedIPAddresses: ["5.6.7.8"],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -123,6 +123,27 @@ t.test("test access only allowed for some IP addresses", opts, async (t) => {
     },
   });
   t.equal(response4.statusCode, 200);
+
+  const response5 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8768/"),
+    headers: {
+      "X-Forwarded-For": "11.9.8.7",
+    },
+  });
+  t.equal(response5.statusCode, 403);
+  t.equal(
+    response5.body,
+    "Your IP address is not allowed to access this resource. (Your IP: 11.9.8.7)"
+  );
+
+  // Allow bypased IP addresses
+  const response6 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8768/"),
+    headers: {
+      "X-Forwarded-For": "5.6.7.8",
+    },
+  });
+  t.equal(response6.statusCode, 200);
 
   server.close();
 });
