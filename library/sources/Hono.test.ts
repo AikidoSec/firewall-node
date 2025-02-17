@@ -29,13 +29,14 @@ wrap(fetch, "fetch", function mock(original) {
               key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
-              ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+              ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
             },
           ],
           blockedUserAgentsV2: [
             {
               key: "key",
               pattern: "hacker|attacker",
+              allowedIPAddresses: [],
             },
           ],
         } satisfies Response),
@@ -365,13 +366,13 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   const response2 = await fetch.fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
-      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12", // Blocked IP
+      "X-Forwarded-For": "e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2", // Blocked IP
     },
   });
   t.equal(response2.statusCode, 403);
   t.equal(
     response2.body,
-    "Your IP address is blocked due to geo restrictions. (Your IP: fe80::1234:5678:abcd:ef12)"
+    "Your IP address is blocked due to geo restrictions. (Your IP: e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2)"
   );
 
   // Test allowed IP

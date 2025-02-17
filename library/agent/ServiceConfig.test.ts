@@ -2,10 +2,10 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([], 0, [], [], false, []);
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
-  t.same(config.isAllowedIP("1.2.3.4"), false);
+  t.same(config.isBypassedIP("1.2.3.4"), false);
   t.same(
     config.getEndpoints({
       url: undefined,
@@ -54,6 +54,7 @@ t.test("it works", async () => {
     ["123"],
     [],
     false,
+    [],
     []
   );
 
@@ -80,27 +81,35 @@ t.test("it works", async () => {
   );
 });
 
-t.test("it checks if IP is allowed", async () => {
-  const config = new ServiceConfig([], 0, [], ["1.2.3.4"], false, []);
-  t.same(config.isAllowedIP("1.2.3.4"), true);
-  t.same(config.isAllowedIP("1.2.3.5"), false);
+t.test("it checks if IP is bypassed", async () => {
+  const config = new ServiceConfig([], 0, [], ["1.2.3.4"], false, [], []);
+  t.same(config.isBypassedIP("1.2.3.4"), true);
+  t.same(config.isBypassedIP("1.2.3.5"), false);
 });
 
 t.test("ip blocking works", async () => {
-  const config = new ServiceConfig([], 0, [], [], false, [
-    {
-      key: "geoip/Belgium;BE",
-      source: "geoip",
-      description: "description",
-      ips: [
-        "1.2.3.4",
-        "192.168.2.1/24",
-        "fd00:1234:5678:9abc::1",
-        "fd00:3234:5678:9abc::1/64",
-        "5.6.7.8/32",
-      ],
-    },
-  ]);
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    [],
+    false,
+    [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "description",
+        ips: [
+          "1.2.3.4",
+          "192.168.2.1/24",
+          "fd00:1234:5678:9abc::1",
+          "fd00:3234:5678:9abc::1/64",
+          "5.6.7.8/32",
+        ],
+      },
+    ],
+    []
+  );
   t.same(config.isIPAddressBlocked("1.2.3.4"), {
     blocked: true,
     reason: "description",
@@ -139,7 +148,7 @@ t.test("ip blocking works", async () => {
 });
 
 t.test("it blocks bots", async () => {
-  const config = new ServiceConfig([], 0, [], [], true, []);
+  const config = new ServiceConfig([], 0, [], [], true, [], []);
   config.updateBlockedUserAgents([
     {
       key: "search",
@@ -160,4 +169,54 @@ t.test("it blocks bots", async () => {
   config.updateBlockedUserAgents([]);
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+});
+
+t.test("restricting access to some ips", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    [],
+    true,
+    [],
+    [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "description",
+        ips: ["1.2.3.4"],
+      },
+    ]
+  );
+
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, false);
+  t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true); // Always allow private ips
+
+  config.updateAllowedIPAddresses([]);
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("127.0.0.1").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
+});
+
+t.test("only allow some ips: empty list", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    [],
+    true,
+    [],
+    [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "description",
+        ips: [],
+      },
+    ]
+  );
+
+  t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
+  t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
 });

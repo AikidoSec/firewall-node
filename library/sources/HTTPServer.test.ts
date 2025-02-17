@@ -53,6 +53,7 @@ agent.start([new HTTPServer()]);
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
   return async function fetchBlockedLists(): Promise<Response> {
     return {
+      allowedIPAddresses: [],
       blockedIPAddresses: [
         {
           key: "geoip/Belgium;BE",
@@ -288,12 +289,12 @@ t.test("it parses x-forwarded-for header with proxy", async (t) => {
         method: "GET",
         headers: {
           "x-forwarded-for":
-            "203.0.113.195,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
+            "1.2.3.4,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
         },
         timeoutInMS: 500,
       }).then(({ body }) => {
         const context = JSON.parse(body);
-        t.same(context.remoteAddress, "203.0.113.195");
+        t.same(context.remoteAddress, "1.2.3.4");
         server.close();
         resolve();
       });
@@ -313,12 +314,12 @@ t.test("it uses x-forwarded-for header", async (t) => {
         url: new URL("http://localhost:3350"),
         method: "GET",
         headers: {
-          "x-forwarded-for": "203.0.113.195",
+          "x-forwarded-for": "1.2.3.4,",
         },
         timeoutInMS: 500,
       }).then(({ body }) => {
         const context = JSON.parse(body);
-        t.same(context.remoteAddress, "203.0.113.195");
+        t.same(context.remoteAddress, "1.2.3.4");
         server.close();
         resolve();
       });

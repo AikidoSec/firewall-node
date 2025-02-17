@@ -44,7 +44,7 @@ t.beforeEach(async () => {
       Authorization: token,
     },
     body: JSON.stringify({
-      blockedIPAddresses: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+      blockedIPAddresses: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
       blockedUserAgentsV2: [
         {
           key: "some/key",
@@ -103,19 +103,37 @@ t.test("it blocks geo restricted IPs", (t) => {
         "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
       );
 
+      const xForwardedForWithPrivateIP = await fetch(
+        "http://127.0.0.1:4002/add",
+        {
+          method: "POST",
+          body: "<cat><name>Njuska</name></cat>",
+          headers: {
+            "Content-Type": "application/xml",
+            "X-Forwarded-For": "127.0.0.1, 1.3.2.4",
+          },
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+      t.same(xForwardedForWithPrivateIP.status, 403);
+      t.same(
+        await xForwardedForWithPrivateIP.text(),
+        "Your IP address is blocked due to geo restrictions. (Your IP: 1.3.2.4)"
+      );
+
       const resp2 = await fetch("http://127.0.0.1:4002/add", {
         method: "POST",
         body: "<cat><name>Harry</name></cat>",
         headers: {
           "Content-Type": "application/xml",
-          "X-Forwarded-For": "fe80::1234:5678:abcd:ef12",
+          "X-Forwarded-For": "e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2",
         },
         signal: AbortSignal.timeout(5000),
       });
       t.same(resp2.status, 403);
       t.same(
         await resp2.text(),
-        "Your IP address is blocked due to geo restrictions. (Your IP: fe80::1234:5678:abcd:ef12)"
+        "Your IP address is blocked due to geo restrictions. (Your IP: e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2)"
       );
 
       const resp3 = await fetch("http://127.0.0.1:4002/add", {

@@ -40,12 +40,29 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
-  const isAllowedIP =
+  const isBypassedIP =
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isAllowedIP) {
+  if (isBypassedIP) {
     return false;
+  }
+
+  if (
+    context.remoteAddress &&
+    !agent.getConfig().isAllowedIPAddress(context.remoteAddress).allowed
+  ) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
+
+    let message = "Your IP address is not allowed to access this resource.";
+    if (context.remoteAddress) {
+      message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
+    }
+
+    res.end(message);
+
+    return true;
   }
 
   const result = context.remoteAddress

@@ -2,7 +2,7 @@ import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
-export type IPBlocklist = {
+export type IPList = {
   key: string;
   source: string;
   description: string;
@@ -15,12 +15,14 @@ export type AgentBlockList = {
 };
 
 export type Response = {
-  blockedIPAddresses: IPBlocklist[];
+  blockedIPAddresses: IPList[];
+  allowedIPAddresses: IPList[];
   blockedUserAgentsV2: AgentBlockList[];
 };
 
 export async function fetchBlockedLists(token: Token): Promise<{
-  blockedIPAddresses: IPBlocklist[];
+  blockedIPAddresses: IPList[];
+  allowedIPAddresses: IPList[];
   blockedUserAgents: AgentBlockList[];
 }> {
   const baseUrl = getAPIURL();
@@ -50,6 +52,10 @@ export async function fetchBlockedLists(token: Token): Promise<{
     blockedIPAddresses:
       result && Array.isArray(result.blockedIPAddresses)
         ? result.blockedIPAddresses
+        : [],
+    allowedIPAddresses:
+      result && Array.isArray(result.allowedIPAddresses)
+        ? result.allowedIPAddresses
         : [],
     blockedUserAgents:
       result && Array.isArray(result.blockedUserAgentsV2)
