@@ -35,16 +35,6 @@ wrap(fetch, "fetch", function mock() {
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
           },
         ],
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
-          ? [
-              {
-                key: "some/key",
-                source: "name",
-                description: "Description",
-                ips: ["4.3.2.1"],
-              },
-            ]
-          : [],
         blockedUserAgentsV2: [
           {
             key: "ai",
@@ -55,6 +45,16 @@ wrap(fetch, "fetch", function mock() {
             pattern: "Bytespider",
           },
         ],
+        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
+          ? [
+              {
+                key: "some/key",
+                source: "name",
+                description: "Description",
+                ips: ["4.3.2.1"],
+              },
+            ]
+          : [],
       } satisfies Response),
     };
   };
