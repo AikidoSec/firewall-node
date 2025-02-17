@@ -9,7 +9,7 @@ export type APISpec = {
   auth?: APIAuthType[];
 };
 
-export type APIBodyInfo = {
+type APIBodyInfo = {
   type: BodyDataType;
   schema: DataSchema;
 };
