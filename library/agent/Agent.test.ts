@@ -1156,10 +1156,12 @@ t.test("it only allows some IP addresses", async () => {
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
     reason: "Description",
+    key: "some/key",
   });
   t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
     blocked: true,
     reason: "Description",
+    key: "some/key",
   });
 
   t.same(agent.getConfig().isAllowedIPAddress("1.2.3.4"), {
