@@ -6,6 +6,7 @@ import { getContext } from "../../agent/Context";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { tryParseURL } from "../../helpers/tryParseURL";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
@@ -126,11 +127,21 @@ function wrapDNSLookupCallback(
     const requestContext = RequestContextStorage.getStore();
 
     let port: number | undefined;
-
     if (urlArg) {
       port = getPortFromURL(urlArg);
     } else if (requestContext) {
       port = requestContext.port;
+    }
+
+    if (context.url) {
+      const baseURL = tryParseURL(context.url);
+      if (
+        baseURL &&
+        baseURL.hostname === hostname &&
+        getPortFromURL(baseURL) === port
+      ) {
+        return callback(err, addresses, family);
+      }
     }
 
     const privateIP = resolvedIPAddresses.find(isPrivateIP);

@@ -4,6 +4,8 @@ import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { tryParseURL } from "../../helpers/tryParseURL";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
@@ -30,6 +32,17 @@ export function checkContextForSSRF({
   // Where the hostname might be a private IP address (or localhost)
   if (!containsPrivateIPAddress(hostname)) {
     return;
+  }
+
+  if (context.url) {
+    const baseURL = tryParseURL(context.url);
+    if (
+      baseURL &&
+      baseURL.hostname === hostname &&
+      getPortFromURL(baseURL) === port
+    ) {
+      return;
+    }
   }
 
   for (const source of SOURCES) {
