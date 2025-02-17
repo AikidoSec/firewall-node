@@ -74,6 +74,13 @@ services:
       context: ../end2end/server
     ports:
       - "5874:3000"
+  libsql:
+    image: ghcr.io/tursodatabase/libsql-server:v0.24.30
+    platform: linux/amd64
+    ports:
+      - "27021:8080"
+    volumes:
+      - libsql:/var/lib/sqld
 
 volumes:
   mongodb:
