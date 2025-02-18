@@ -9,7 +9,6 @@ import { tryParseURL } from "../../helpers/tryParseURL";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
-import { isRequestToItself } from "./isRequestToItself";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -35,6 +34,9 @@ export function checkContextForSSRF({
   }
 
   if (context.url) {
+    // We don't want to block outgoing requests to the same host as the server
+    // (often happens that we have a match on headers like `Host`, `Origin`, `Referer`, etc.)
+    // We have to check the port as well, because the hostname can be the same but with a different port
     const baseURL = tryParseURL(context.url);
     if (
       baseURL &&
@@ -56,19 +58,6 @@ export function checkContextForSSRF({
       if (found) {
         const paths = getPathsToPayload(str, context[source]);
 
-        if (
-          isRequestToItself({
-            str: str,
-            source: source,
-            port: port,
-            paths: paths,
-          })
-        ) {
-          // Application might do a request to itself when the hostname is localhost
-          // Let's allow this for the following headers: Host, Origin, Referer
-          // We still want to block if the port is different
-          continue;
-        }
         return {
           operation: operation,
           kind: "ssrf",

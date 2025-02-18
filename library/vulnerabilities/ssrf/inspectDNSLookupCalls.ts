@@ -133,17 +133,6 @@ function wrapDNSLookupCallback(
       port = requestContext.port;
     }
 
-    if (context.url) {
-      const baseURL = tryParseURL(context.url);
-      if (
-        baseURL &&
-        baseURL.hostname === hostname &&
-        getPortFromURL(baseURL) === port
-      ) {
-        return callback(err, addresses, family);
-      }
-    }
-
     const privateIP = resolvedIPAddresses.find(isPrivateIP);
 
     if (!privateIP) {

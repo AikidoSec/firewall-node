@@ -66,7 +66,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -92,13 +92,34 @@ t.test("it blocks in blocking mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(
+          `http://local.aikido.io:4000/images/${encodeURIComponent("http://local.aikido.io:4000")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+            headers: {
+              Origin: "http://local.aikido.io:4000",
+              Referer: "http://local.aikido.io:4000",
+            },
+          }
+        ),
+        fetch(
+          `http://local.aikido.io:4000/images/${encodeURIComponent("http://local.aikido.io:5875")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
       ]);
     })
-    .then(([safeRequest, ssrfRequest]) => {
+    .then(([safeRequest, ssrfRequest, requestToItself, differentPort]) => {
       t.equal(safeRequest.status, 200);
       t.equal(ssrfRequest.status, 500);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked a server-side request forgery/);
+
+      // Requests to same hostname as the server should be allowed
+      t.equal(requestToItself.status, 200);
+      // If the port is different, it should be blocked
+      t.equal(differentPort.status, 500);
 
       return fetch(`${testServerUrl}/api/runtime/events`, {
         method: "GET",
@@ -114,14 +135,14 @@ t.test("it blocks in blocking mode", (t) => {
       const attacks = events.filter(
         (event) => event.type === "detected_attack"
       );
-      t.same(attacks.length, 1);
+      t.same(attacks.length, 2);
       const [attack] = attacks;
       t.match(attack.attack.stack, /app\.js/);
       t.match(attack.attack.stack, /fetchImage\.js/);
       t.match(attack.attack.stack, /express-async-handler/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -140,6 +161,10 @@ t.test("it does not block in dry mode", (t) => {
 
   server.on("close", () => {
     t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err);
   });
 
   let stdout = "";
@@ -174,7 +199,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a server-side request forgery/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
