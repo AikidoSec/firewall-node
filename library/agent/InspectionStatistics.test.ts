@@ -39,6 +39,11 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -53,6 +58,11 @@ t.test("it resets stats", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -79,6 +89,11 @@ t.test("it keeps track of amount of calls", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -112,6 +127,11 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -144,6 +164,11 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -169,6 +194,11 @@ t.test("it keeps track of amount of calls", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -202,6 +232,11 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -233,6 +268,11 @@ t.test("it keeps track of amount of calls", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -285,6 +325,11 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -332,6 +377,11 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -346,6 +396,11 @@ t.test("it keeps track of requests", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -363,6 +418,11 @@ t.test("it keeps track of requests", async () => {
         total: 1,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
 
@@ -378,6 +438,11 @@ t.test("it keeps track of requests", async () => {
       attacksDetected: {
         total: 2,
         blocked: 1,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -395,6 +460,11 @@ t.test("it keeps track of requests", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -419,6 +489,11 @@ t.test("it force compresses stats", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
       },
     },
   });
@@ -462,6 +537,54 @@ t.test("it keeps track of aborted requests", async () => {
         total: 0,
         blocked: 0,
       },
+      blocked: {
+        total: 0,
+        userAgentList: {},
+        ipBlocklist: {},
+      },
     },
   });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of blocked requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onBlockedRequest({
+    match: "ipBlocklist",
+    key: "known_threat_actors/public_scanners",
+  });
+  stats.onBlockedRequest({ match: "userAgentList", key: "ai_data_scrapers" });
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      blocked: {
+        total: 2,
+        ipBlocklist: {
+          // eslint-disable-next-line camelcase
+          "known_threat_actors/public_scanners": 1,
+        },
+        userAgentList: {
+          // eslint-disable-next-line camelcase
+          ai_data_scrapers: 1,
+        },
+      },
+    },
+  });
+
+  clock.uninstall();
 });
