@@ -1,7 +1,7 @@
 import { getFileExtension } from "../../helpers/getFileExtension";
 
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
-const IGNORE_EXTENSIONS = ["properties", "config"];
+const IGNORE_EXTENSIONS = ["properties", "config", "webmanifest"];
 const IGNORE_STRINGS = ["cgi-bin"];
 
 export function shouldDiscoverRoute({
