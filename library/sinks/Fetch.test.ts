@@ -43,20 +43,22 @@ wrap(dns, "lookup", function lookup(original) {
   };
 });
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost:4000/api/internal",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
-};
+function createContext(): Context {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://local.aikido.io:4000",
+    query: {},
+    headers: {},
+    body: {
+      image: "http://localhost:4000/api/internal",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+}
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 const redirecTestUrl2 =
@@ -113,7 +115,7 @@ t.test(
 
     agent.getHostnames().clear();
 
-    await runWithContext(context, async () => {
+    await runWithContext(createContext(), async () => {
       // Don't await fetch to see how it handles
       // multiple requests at the same time
       // Because there's a single instance of the dispatcher
@@ -178,7 +180,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{
           body: {
             image2: [
@@ -221,7 +223,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
@@ -238,7 +240,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
@@ -255,7 +257,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.ipTwice } },
       },
       async () => {
@@ -272,7 +274,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
@@ -291,7 +293,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.ipv6 } },
       },
       async () => {
@@ -308,7 +310,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.ipv6Twice } },
       },
       async () => {
@@ -325,7 +327,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{
           body: {
             image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
@@ -349,7 +351,7 @@ t.test(
     // Manual redirect
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.ip } },
       },
       async () => {
@@ -373,7 +375,7 @@ t.test(
     // Manual redirect
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
@@ -398,7 +400,7 @@ t.test(
 
     await runWithContext(
       {
-        ...context,
+        ...createContext(),
         ...{
           body: {
             image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
