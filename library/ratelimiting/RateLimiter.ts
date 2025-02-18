@@ -17,13 +17,13 @@ export class RateLimiter {
     const currentTime = performance.now();
     const requestTimestamps = this.rateLimitedItems.get(key) || [];
 
-    // Add current request timestamp to the list
-    requestTimestamps.push(currentTime);
-
     // Filter out timestamps that are older than windowSizeInMS and already expired
     const filteredTimestamps = requestTimestamps.filter(
       (timestamp) => currentTime - timestamp <= windowSizeInMS
     );
+
+    // Add current request timestamp to the list
+    filteredTimestamps.push(currentTime);
 
     // Update the list of timestamps for the key
     this.rateLimitedItems.set(key, filteredTimestamps);
