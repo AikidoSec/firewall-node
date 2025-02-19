@@ -32,6 +32,7 @@ Zen operates autonomously on the same server as your Node.js app to:
 * ✅ Secure your app like a classic web application firewall (WAF), but with none of the infrastructure or cost.
 * ✅ Auto-generate API specifications
 * ✅ Block known threat actors and bots.
+* ✅ Geo-fencing to block or allow a selection of countries
 * ✅ Rate limit specific API endpoints by IP or by user
 * ✅ Allow you to block specific users manually
 
