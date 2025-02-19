@@ -13,7 +13,7 @@ Zen, your in-app firewall for peace of mind– at runtime.
 
 Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
 
-It protects your Node.js apps by preventing user input containing dangerous strings, which allow injection, pollution, and path traversal attacks. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
+It protects your Node.js apps by scanning incoming data and where that data flows to, allowing Zen to more accurately block SQL Injections, Path traversal attacks, and more. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
 
 ## Features
 
@@ -30,6 +30,8 @@ Zen will autonomously protect your Node.js applications against:
 Zen operates autonomously on the same server as your Node.js app to:
 
 * ✅ Secure your app like a classic web application firewall (WAF), but with none of the infrastructure or cost.
+* ✅ Auto-generate API specifications
+* ✅ Block known threat actors and bots.
 * ✅ Rate limit specific API endpoints by IP or by user
 * ✅ Allow you to block specific users manually
 
@@ -129,13 +131,16 @@ For framework- and provider- specific instructions, check out our docs:
 
 > Aikido is your no nonsense application security platform. One central system that scans your source code & cloud, shows you what vulnerabilities matter, and how to fix them - fast. So you can get back to building.
 
-Zen is a new product by Aikido. Built for developers to level up their security. While Aikido scans, get Zen for always-on protection.
+Zen improves Aikido's offering by providing you with security in production. Use the automatic generation of API specifications together with our DAST offering for even better API Security.
 
-You can use some of Zen’s features without Aikido, of course. Peace of mind is just a few lines of code away.
+Only the necessary data gets reported back to Aikido, we scan your requests locally and only report back data once every 10 minutes.
+If an attack on your application is detected, we report immediately allowing you to take swift action.
 
-But you will get the most value by reporting your data to Aikido.
+You can easily select which IP addresses and/or bots to block from curated lists inside our Dashboard.
 
-You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login).
+Running Zen locally without Aikido is possibly but the feature set is limited and we don't recommend this setup for production environments.
+
+You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login). (No credit card required)
 
 Here's how:
 * [Log in to your Aikido account](https://app.aikido.dev/login).
