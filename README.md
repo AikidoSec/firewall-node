@@ -139,7 +139,6 @@ If an attack on your application is detected, we report immediately allowing you
 
 You can easily select which IP addresses and/or bots to block from curated lists inside our Dashboard.
 
-Running Zen locally without Aikido is possibly but the feature set is limited and we don't recommend this setup for production environments.
 
 You will need an Aikido account and a token to report events to Aikido. If you don't have an account, you can [sign up for free](https://app.aikido.dev/login). (No credit card required)
 
