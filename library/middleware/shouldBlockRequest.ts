@@ -9,6 +9,38 @@ type Result = {
   ip?: string;
 };
 
+const SERVERLESS_URL = "http://localhost:5132";
+
+export async function shouldBlockRequestAsync(): Promise<Result> {
+  const context = getContext();
+  if (!context) {
+    return { block: false };
+  }
+
+  const agent = getInstance();
+  if (!agent) {
+    return { block: false };
+  }
+
+  const response = await fetch(`${SERVERLESS_URL}/check-request`, {
+    method: "POST",
+    headers: {
+      // TODO: Remove "!", token is not guaranteed to be present
+      Authorization: agent.getToken()!.asString(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      method: context.method,
+      headers: context.headers,
+      url: context.url,
+      route: context.route,
+      clientIp: context.remoteAddress,
+    }),
+  });
+
+  return await response.json();
+}
+
 export function shouldBlockRequest(): Result {
   const context = getContext();
   if (!context) {

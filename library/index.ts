@@ -3,7 +3,10 @@ import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
-import { addExpressMiddleware } from "./middleware/express";
+import {
+  addExpressMiddleware,
+  addExpressMiddlewareAsync,
+} from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
@@ -20,6 +23,7 @@ export {
   setUser,
   shouldBlockRequest,
   addExpressMiddleware,
+  addExpressMiddlewareAsync,
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
@@ -32,6 +36,7 @@ export default {
   setUser,
   shouldBlockRequest,
   addExpressMiddleware,
+  addExpressMiddlewareAsync,
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,

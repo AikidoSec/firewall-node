@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 const Sentry = require("@sentry/node");
 
 Sentry.init({
@@ -58,6 +58,8 @@ async function main(port) {
   const cats = new Cats(db);
 
   const app = express();
+
+  Zen.addExpressMiddlewareAsync(app);
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(morgan("tiny"));

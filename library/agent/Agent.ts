@@ -546,4 +546,8 @@ export class Agent {
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
   }
+
+  getToken() {
+    return this.token;
+  }
 }
