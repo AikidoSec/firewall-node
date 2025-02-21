@@ -1,9 +1,10 @@
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { tryParseURL } from "../../helpers/tryParseURL";
+import { Hostname } from "../../vulnerabilities/ssrf/Hostname";
 import { isOptionsObject } from "../http-request/isOptionsObject";
 
 type HostnameAndPort = {
-  hostname: string;
+  hostname: Hostname;
   port: number | undefined;
 };
 
@@ -36,7 +37,7 @@ export function getHostnameAndPortFromArgs(
     // If url is not undefined, extract the hostname and port
     if (url && url.hostname.length > 0) {
       return {
-        hostname: url.hostname,
+        hostname: Hostname.fromURL(url),
         port: getPortFromURL(url),
       };
     }
@@ -60,7 +61,7 @@ function parseOptionsObject(obj: any): HostnameAndPort | undefined {
     const url = tryParseURL(obj.origin);
     if (url) {
       return {
-        hostname: url.hostname,
+        hostname: Hostname.fromURL(url),
         port: getPortFromURL(url),
       };
     }
@@ -87,8 +88,13 @@ function parseOptionsObject(obj: any): HostnameAndPort | undefined {
     return undefined;
   }
 
+  const hostname = Hostname.fromString(obj.hostname);
+  if (!hostname) {
+    return undefined;
+  }
+
   return {
-    hostname: obj.hostname,
+    hostname,
     port,
   };
 }

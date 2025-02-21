@@ -27,28 +27,24 @@ const methods = [
 export class Undici implements Wrapper {
   private inspectHostname(
     agent: Agent,
-    hostname: string,
+    hostname: Hostname,
     port: number | undefined,
     method: string
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
-      agent.onConnectHostname(hostname, port);
+      agent.onConnectHostname(hostname.asString(), port);
     }
+
     const context = getContext();
 
     if (!context) {
       return undefined;
     }
 
-    const hostnameURL = tryParseURL(`http://${hostname}`);
-    if (!hostnameURL) {
-      return undefined;
-    }
-
     return checkContextForSSRF({
-      hostname: Hostname.fromURL(hostnameURL),
+      hostname: hostname,
       operation: `undici.${method}`,
       context,
       port,
