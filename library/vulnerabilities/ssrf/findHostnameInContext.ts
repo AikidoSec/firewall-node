@@ -3,6 +3,7 @@ import { Source, SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
+import { Hostname } from "./Hostname";
 import { isRequestToItself } from "./isRequestToItself";
 
 type HostnameLocation = {
@@ -14,7 +15,7 @@ type HostnameLocation = {
 };
 
 export function findHostnameInContext(
-  hostname: string,
+  hostname: Hostname,
   context: Context,
   port: number | undefined
 ): HostnameLocation | undefined {
@@ -48,7 +49,7 @@ export function findHostnameInContext(
           pathsToPayload: paths,
           payload: str,
           port: port,
-          hostname: hostname,
+          hostname: hostname.asString(),
         };
       }
     }

@@ -2,6 +2,7 @@ import { Context } from "../../agent/Context";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
+import { Hostname } from "./Hostname";
 
 /**
  * This function is called before a outgoing request is made.
@@ -23,7 +24,7 @@ export function isRedirectToPrivateIP(url: URL, context: Context) {
 
     if (redirectOrigin) {
       return findHostnameInContext(
-        redirectOrigin.hostname,
+        Hostname.fromURL(redirectOrigin),
         context,
         parseInt(redirectOrigin.port, 10)
       );

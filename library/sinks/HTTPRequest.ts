@@ -7,6 +7,7 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getPortFromURL } from "../helpers/getPortFromURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { Hostname } from "../vulnerabilities/ssrf/Hostname";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
@@ -34,7 +35,7 @@ export class HTTPRequest implements Wrapper {
 
     // Check if the hostname is inside the context
     const foundDirectSSRF = checkContextForSSRF({
-      hostname: url.hostname,
+      hostname: Hostname.fromURL(url),
       operation: `${module}.request`,
       context: context,
       port: port,

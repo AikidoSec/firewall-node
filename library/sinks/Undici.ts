@@ -7,7 +7,9 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
+import { tryParseURL } from "../helpers/tryParseURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
+import { Hostname } from "../vulnerabilities/ssrf/Hostname";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -40,8 +42,13 @@ export class Undici implements Wrapper {
       return undefined;
     }
 
+    const hostnameURL = tryParseURL(`http://${hostname}`);
+    if (!hostnameURL) {
+      return undefined;
+    }
+
     return checkContextForSSRF({
-      hostname: hostname,
+      hostname: Hostname.fromURL(hostnameURL),
       operation: `undici.${method}`,
       context,
       port,

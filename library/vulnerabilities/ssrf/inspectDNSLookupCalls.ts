@@ -7,6 +7,7 @@ import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
+import { Hostname } from "./Hostname";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
 import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage";
@@ -141,7 +142,12 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    let found = findHostnameInContext(hostname, context, port);
+    const validHostname = Hostname.fromString(hostname);
+    if (!validHostname) {
+      return callback(err, addresses, family);
+    }
+
+    let found = findHostnameInContext(validHostname, context, port);
 
     // The hostname is not found in the context, check if it's a redirect
     if (!found && context.outgoingRequestRedirects) {
@@ -165,7 +171,7 @@ function wrapDNSLookupCallback(
         // If the URL is the result of a redirect, get the origin of the redirect chain for reporting the attack source
         if (redirectOrigin) {
           found = findHostnameInContext(
-            redirectOrigin.hostname,
+            Hostname.fromURL(redirectOrigin),
             context,
             getPortFromURL(redirectOrigin)
           );

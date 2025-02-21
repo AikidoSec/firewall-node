@@ -1,6 +1,7 @@
 import { Context, updateContext } from "../../agent/Context";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
+import { Hostname } from "../../vulnerabilities/ssrf/Hostname";
 import { RequestContextStorage } from "./RequestContextStorage";
 
 /**
@@ -20,7 +21,7 @@ export function onRedirect(
 
   // Check if the source hostname is in the context - is true if it's the first redirect in the chain and the user input is the source
   const found = findHostnameInContext(
-    requestContext.url.hostname,
+    Hostname.fromURL(requestContext.url),
     context,
     requestContext.port
   );

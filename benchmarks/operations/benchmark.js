@@ -30,6 +30,10 @@ const modules = [
     module: "http-request",
     name: "Outgoing HTTP request (`http.request`)",
   },
+  {
+    module: "undici",
+    name: "Outgoing HTTP request (`undici.request`)",
+  },
 ];
 
 (async () => {

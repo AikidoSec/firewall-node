@@ -6,6 +6,7 @@ import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
 import { getRedirectOrigin } from "../../vulnerabilities/ssrf/getRedirectOrigin";
+import { Hostname } from "../../vulnerabilities/ssrf/Hostname";
 import { getUrlFromHTTPRequestArgs } from "./getUrlFromHTTPRequestArgs";
 
 /**
@@ -78,7 +79,11 @@ function addRedirectToContext(source: URL, destination: URL, context: Context) {
   const sourcePort = getPortFromURL(source);
 
   // Check if the source hostname is in the context - is true if it's the first redirect in the chain and the user input is the source
-  const found = findHostnameInContext(source.hostname, context, sourcePort);
+  const found = findHostnameInContext(
+    Hostname.fromURL(source),
+    context,
+    sourcePort
+  );
 
   // If the source hostname is not in the context, check if it's a redirect in a already existing chain
   if (!found && context.outgoingRequestRedirects) {

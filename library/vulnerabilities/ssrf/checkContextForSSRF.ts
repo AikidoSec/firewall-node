@@ -7,6 +7,7 @@ import { extractStringsFromUserInputCached } from "../../helpers/extractStringsF
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
+import { Hostname } from "./Hostname";
 import { isRequestToItself } from "./isRequestToItself";
 
 /**
@@ -19,7 +20,7 @@ export function checkContextForSSRF({
   operation,
   context,
 }: {
-  hostname: string;
+  hostname: Hostname;
   port: number | undefined;
   operation: string;
   context: Context;
@@ -28,7 +29,7 @@ export function checkContextForSSRF({
   // DNS lookup calls will be inspected somewhere else
   // This is just to inspect direct invocations of `http.request` and similar
   // Where the hostname might be a private IP address (or localhost)
-  if (!containsPrivateIPAddress(hostname)) {
+  if (!containsPrivateIPAddress(hostname.asString())) {
     return;
   }
 
@@ -61,7 +62,10 @@ export function checkContextForSSRF({
           kind: "ssrf",
           source: source,
           pathsToPayload: paths,
-          metadata: getMetadataForSSRFAttack({ hostname, port }),
+          metadata: getMetadataForSSRFAttack({
+            hostname: hostname.asString(),
+            port,
+          }),
           payload: str,
         };
       }
