@@ -57,6 +57,8 @@ async function run() {
   // Stop the server
   withoutFirewallProc.kill();
 
+  console.log("Starting server with OpenTelemetry...");
+
   const withOpenTelemetryProc = spawn("node", ["app.js"], {
     env: {
       ...process.env,
@@ -81,14 +83,39 @@ async function run() {
   withOpenTelemetryProc.unref();
   withOpenTelemetryProc.kill();
 
+  console.log("Starting server with Elastic APM...");
+
+  const withElasticAPMProc = spawn("node", ["app.js"], {
+    env: {
+      ...process.env,
+      PORT: 5004,
+      NODE_OPTIONS: "--require elastic-apm-node/start",
+      ELASTIC_APM_DISABLE_SEND: "true",
+    },
+    stdio: "inherit",
+  });
+
+  // Wait 2 seconds for the server to start and settle
+  await setTimeout(2000);
+
+  const resultWithElasticAPM = await exec(
+    generateWrkCommandForUrl("http://localhost:5004/empty")
+  );
+
+  // Stop the server
+  withElasticAPMProc.unref();
+  withElasticAPMProc.kill();
+
   const withFirewall = parseFloat(resultWithFirewall.stdout.trim());
   const withoutFirewall = parseFloat(resultWithoutFirewall.stdout.trim());
   const withOpenTelemetry = parseFloat(resultWithOpenTelemetry.stdout.trim());
+  const withElasticAPM = parseFloat(resultWithElasticAPM.stdout.trim());
 
   console.log("--- Results ---");
   console.log(`Without Zen: ${withoutFirewall} Requests/sec`);
   console.log(`With Zen: ${withFirewall} Requests/sec`);
   console.log(`With OpenTelemetry: ${withOpenTelemetry} Requests/sec`);
+  console.log(`With Elastic APM: ${withElasticAPM} Requests/sec`);
 
   const increase = ((withoutFirewall - withFirewall) / withoutFirewall) * 100;
   console.log(`Decrease with Zen for an empty route: ${increase.toFixed(2)}%`);
