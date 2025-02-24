@@ -4,7 +4,7 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
 export function contextFromRequest(req: Request): Context {
-  const url = req.protocol + "://" + req.get("host") + req.originalUrl;
+  const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
   return {
     method: req.method,
