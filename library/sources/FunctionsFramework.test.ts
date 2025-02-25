@@ -91,6 +91,11 @@ t.test("it counts requests", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    blocked: {
+      total: 0,
+      userAgentList: {},
+      ipBlocklist: {},
+    },
   });
 });
 
@@ -107,6 +112,11 @@ t.test("it counts attacks", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 1, blocked: 1 },
+    blocked: {
+      total: 0,
+      userAgentList: {},
+      ipBlocklist: {},
+    },
   });
 });
 
@@ -123,6 +133,11 @@ t.test("it counts request if error", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    blocked: {
+      total: 0,
+      userAgentList: {},
+      ipBlocklist: {},
+    },
   });
 });
 

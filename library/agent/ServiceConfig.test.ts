@@ -96,6 +96,7 @@ t.test("ip blocking works", async () => {
     false,
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [
@@ -112,15 +113,18 @@ t.test("ip blocking works", async () => {
   t.same(config.isIPAddressBlocked("1.2.3.4"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("2.3.4.5"), { blocked: false });
   t.same(config.isIPAddressBlocked("192.168.2.2"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::1"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::2"), {
     blocked: false,
@@ -128,27 +132,41 @@ t.test("ip blocking works", async () => {
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("5.6.7.8"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("1.2"), { blocked: false });
 });
 
 t.test("it blocks bots", async () => {
   const config = new ServiceConfig([], 0, [], [], true, [], []);
-  config.updateBlockedUserAgents("googlebot|bingbot");
+  config.updateBlockedUserAgents([
+    {
+      key: "search",
+      pattern: "googlebot|bingbot",
+    },
+  ]);
 
-  t.same(config.isUserAgentBlocked("googlebot"), { blocked: true });
-  t.same(config.isUserAgentBlocked("123 bingbot abc"), { blocked: true });
+  t.same(config.isUserAgentBlocked("googlebot"), {
+    blocked: true,
+    key: "search",
+  });
+  t.same(config.isUserAgentBlocked("123 bingbot abc"), {
+    blocked: true,
+    key: "search",
+  });
   t.same(config.isUserAgentBlocked("bing"), { blocked: false });
 
-  config.updateBlockedUserAgents("");
+  config.updateBlockedUserAgents([]);
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
 });
@@ -163,6 +181,7 @@ t.test("restricting access to some ips", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: ["1.2.3.4"],
@@ -190,6 +209,7 @@ t.test("only allow some ips: empty list", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [],

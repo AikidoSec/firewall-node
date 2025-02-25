@@ -26,7 +26,9 @@ module.exports = function lists(req, res) {
             },
           ]
         : [],
-    blockedUserAgents: blockedUserAgents,
+    blockedUserAgentsV2: Array.isArray(blockedUserAgents)
+      ? blockedUserAgents
+      : [],
     allowedIPAddresses:
       allowedIps.length > 0
         ? [
