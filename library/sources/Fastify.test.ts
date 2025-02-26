@@ -409,7 +409,7 @@ t.test(
   },
   async (t) => {
     const app = getApp();
-    await app.listen({ port: 4123 });
+    await app.listen({ port: 4123, host: "127.0.0.1" });
     await app.ready();
 
     const response = await fetch("http://127.0.0.1:4123/blocked-user");

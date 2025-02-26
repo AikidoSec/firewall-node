@@ -1,15 +1,16 @@
 import * as t from "tap";
 import { getModuleInfoFromPath } from "./getModuleInfoFromPath";
+import { toWinPathIfWin as toWin } from "../../helpers/toWinPathIfWin";
 
 t.test("it works", async (t) => {
   t.same(
     getModuleInfoFromPath(
-      "/Users/aikido/Projects/sec/node_modules/mysql/lib/Connection.js"
+      toWin("/Users/aikido/Projects/sec/node_modules/mysql/lib/Connection.js")
     ),
     {
       name: "mysql",
-      base: "/Users/aikido/Projects/sec/node_modules/mysql",
-      path: "lib/Connection.js",
+      base: toWin("/Users/aikido/Projects/sec/node_modules/mysql"),
+      path: toWin("lib/Connection.js"),
     }
   );
 });
@@ -17,12 +18,16 @@ t.test("it works", async (t) => {
 t.test("it works with scoped package", async (t) => {
   t.same(
     getModuleInfoFromPath(
-      "/Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework/build/src/logger.js"
+      toWin(
+        "/Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework/build/src/logger.js"
+      )
     ),
     {
       name: "@google-cloud/functions-framework",
-      base: "/Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework",
-      path: "build/src/logger.js",
+      base: toWin(
+        "/Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework"
+      ),
+      path: toWin("build/src/logger.js"),
     }
   );
 });

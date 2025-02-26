@@ -42,7 +42,10 @@ t.test("it works", async (t) => {
   function safeCalls() {
     t.same(join("test.txt"), "test.txt");
     t.same(resolve(__dirname, "./test.txt"), join(__dirname, "./test.txt"));
-    t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
+    if (process.platform !== "win32") {
+      t.same(join("/app", "/etc/data"), resolve("/app/etc/data"));
+    }
+    t.same(resolve("/app/./etc/data"), resolve("/app/etc/data"));
   }
 
   safeCalls();
