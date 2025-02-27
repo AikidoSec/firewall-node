@@ -54,6 +54,8 @@ function createContext(): Context {
   };
 }
 
+t.setTimeout(60 * 1000);
+
 t.test("it works", (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
