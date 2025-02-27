@@ -63,6 +63,11 @@ jobs:
       - name: Build and run server
         run: |
           cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - run: npm install
       - run: npm run build
       - run: npm run end2end

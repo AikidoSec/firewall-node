@@ -1,7 +1,9 @@
+import { BuiltinInstrumentationInstruction } from "./instrumentation/types";
 import { RequireInterceptor } from "./RequireInterceptor";
 
 export class BuiltinModule {
   private requireInterceptors: RequireInterceptor[] = [];
+  private instrumentationInstructions: BuiltinInstrumentationInstruction[] = [];
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -19,5 +21,13 @@ export class BuiltinModule {
 
   getRequireInterceptors() {
     return this.requireInterceptors;
+  }
+
+  addInstrumentation(instruction: BuiltinInstrumentationInstruction) {
+    this.instrumentationInstructions.push(instruction);
+  }
+
+  getInstrumentationInstructions() {
+    return this.instrumentationInstructions;
   }
 }
