@@ -1,8 +1,11 @@
+import { PackageFileInstrumentationInstruction } from "./instrumentation/types";
 import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
   private requireInterceptors: RequireInterceptor[] = [];
   private requireFileInterceptors = new Map<string, RequireInterceptor>();
+  private fileInstrumentationInstructions: PackageFileInstrumentationInstruction[] =
+    [];
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -54,11 +57,21 @@ export class VersionedPackage {
     return this;
   }
 
+  addFileInstrumentation(instruction: PackageFileInstrumentationInstruction) {
+    this.fileInstrumentationInstructions.push(instruction);
+
+    return this;
+  }
+
   getRequireInterceptors() {
     return this.requireInterceptors;
   }
 
   getRequireFileInterceptor(relativePath: string) {
     return this.requireFileInterceptors.get(relativePath);
+  }
+
+  getFileInstrumentationInstructions() {
+    return this.fileInstrumentationInstructions;
   }
 }

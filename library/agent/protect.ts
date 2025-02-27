@@ -87,7 +87,13 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: string | undefined }) {
+function getAgent({
+  serverless,
+  newInstrumentation,
+}: {
+  serverless: string | undefined;
+  newInstrumentation: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -99,7 +105,8 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    newInstrumentation
   );
 
   setInstance(agent);
@@ -147,6 +154,7 @@ export function getWrappers() {
 export function protect() {
   const agent = getAgent({
     serverless: undefined,
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
@@ -155,6 +163,7 @@ export function protect() {
 export function lambda(): (handler: Handler) => Handler {
   const agent = getAgent({
     serverless: "lambda",
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
@@ -165,9 +174,19 @@ export function lambda(): (handler: Handler) => Handler {
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   const agent = getAgent({
     serverless: "gcp",
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
 
   return createCloudFunctionWrapper;
+}
+
+export function protectWithNewInstrumentation() {
+  const agent = getAgent({
+    serverless: undefined,
+    newInstrumentation: true,
+  });
+
+  agent.start(getWrappers());
 }

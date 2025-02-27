@@ -53,5 +53,11 @@ module.exports = {
         "max-lines-per-function": "off",
       },
     },
+    {
+      files: "**/agent/hooks/instrumentation/*.ts",
+      rules: {
+        "no-warning-comments": "off",
+      },
+    },
   ],
 };
