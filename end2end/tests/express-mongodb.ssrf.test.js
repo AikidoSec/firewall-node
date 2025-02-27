@@ -206,6 +206,57 @@ t.test("it does not block in dry mode", (t) => {
     });
 });
 
+t.test("it blocks request to base URL if proxy is not trusted", (t) => {
+  const server = spawn(`node`, [pathToApp, "4002"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCKING: "true",
+      AIKIDO_TOKEN: token,
+      AIKIDO_URL: testServerUrl,
+      AIKIDO_TRUST_PROXY: "false",
+    },
+  });
+
+  server.on("close", () => {
+    t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err);
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  // Wait for the server to start
+  timeout(2000)
+    .then(() => {
+      return fetch(
+        `http://local.aikido.io:4002/images/${encodeURIComponent("http://local.aikido.io:4002")}`,
+        {
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+    })
+    .then((requestToItself) => {
+      t.equal(requestToItself.status, 500);
+    })
+    .catch((error) => {
+      t.fail(error);
+    })
+    .finally(() => {
+      server.kill();
+    });
+});
+
 t.after(async () => {
   server.close();
 });
