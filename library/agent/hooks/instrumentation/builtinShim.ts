@@ -1,8 +1,5 @@
 import { getExportsForBuiltin } from "./getExportsForBuiltin";
-import {
-  BuiltinInstrumentationInstruction,
-  BuiltinInstrumentationInstructionJSON,
-} from "./types";
+import { BuiltinInstrumentationInstructionJSON } from "./types";
 
 export function generateBuildinShim(
   builtinName: string,
@@ -19,28 +16,25 @@ export function generateBuildinShim(
     return;
   }
 
-  const unpatchedExports = instructions.filter(
-    (m) => !methods.some((method) => method.name === m.name)
+  const unpatchedExports = Array.from(exports).filter(
+    (m: any) => !methods.some((method) => method.name === m.name)
   );
 
   // Todos: Copy over properties of patched methods?
-  return `
-        const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-        const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');
+  // Todo check default export !!!
+  return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
+const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');
 
-        ${methods
-          .map(
-            (method) => `
-                exports.${method.name} = function() {
-                    ${method.inspectArgs ? `__instrumentInspectArgs("${builtinNameWithoutPrefix}.${method.name}", true, arguments);` : ""}
-                    return orig.${method.name}(...arguments);
-                };`
-          )
-          .join("\n")}
-            
-            // Export all other properties and methods directly
-            ${unpatchedExports
-              .map((method) => `exports.${method.name} = orig.${method.name};`)
-              .join("\n")}
-    `;
+${methods
+  .map(
+    (method) => `
+  exports.${method.name} = function() {
+    ${method.inspectArgs ? `__instrumentInspectArgs("${builtinNameWithoutPrefix}.${method.name}", true, arguments);` : ""}
+    return orig.${method.name}(...arguments);
+  };`
+  )
+  .join("\n")}
+  
+  ${unpatchedExports.map((e) => `exports.${e} = orig.${e};`).join("\n")}
+`;
 }

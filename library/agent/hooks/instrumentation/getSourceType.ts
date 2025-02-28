@@ -11,7 +11,7 @@ export function getSourceType(path: string, isESM: boolean): number {
 
   switch (extension) {
     case "js": {
-      return isESM ? 1 : 2;
+      return isESM ? 3 : 2;
     }
     case "ts": {
       return 1;
