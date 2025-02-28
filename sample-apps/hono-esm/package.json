@@ -1,0 +1,13 @@
+{
+  "name": "hono-test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import @aikidosec/firewall/instrument ./app.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "hono": "^4.7.2",
+    "@aikidosec/firewall": "file:../../build"
+  }
+}

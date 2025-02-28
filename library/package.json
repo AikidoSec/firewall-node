@@ -7,6 +7,15 @@
     "url": "git+https://github.com/AikidoSec/firewall-node.git"
   },
   "type": "commonjs",
+  "exports": {
+    ".": "./index.js",
+    "./instrument": "./instrument/index.js",
+    "./instrument/internals": "./instrument/internals.js",
+    "./context": "./context/index.js",
+    "./lambda": "./lambda/index.js",
+    "./nopp": "./nopp/index.js",
+    "./cloud-function": "./cloud-function/index.js"
+  },
   "homepage": "https://aikido.dev/zen",
   "author": "Aikido Security",
   "bugs": {

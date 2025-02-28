@@ -1,3 +1,7 @@
-export function __instrumentInspectArgs(name: string, args: unknown[]): void {
+export function __instrumentInspectArgs(
+  id: string,
+  isBuiltin: boolean,
+  args: unknown[]
+): void {
   // Todo do something
 }

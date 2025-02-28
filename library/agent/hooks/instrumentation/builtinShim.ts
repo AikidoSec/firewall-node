@@ -1,11 +1,15 @@
 import { getExportsForBuiltin } from "./getExportsForBuiltin";
-import { BuiltinInstrumentationInstruction } from "./types";
+import {
+  BuiltinInstrumentationInstruction,
+  BuiltinInstrumentationInstructionJSON,
+} from "./types";
 
 export function generateBuildinShim(
-  moduleName: string,
-  instructions: BuiltinInstrumentationInstruction["functions"]
+  builtinName: string,
+  builtinNameWithoutPrefix: string,
+  instructions: BuiltinInstrumentationInstructionJSON["functions"]
 ): string | undefined {
-  const exports = getExportsForBuiltin(moduleName);
+  const exports = getExportsForBuiltin(builtinName);
 
   // Filter out non-existing exports
   const methods = instructions.filter((m) => exports.has(m.name));
@@ -20,14 +24,14 @@ export function generateBuildinShim(
   );
 
   return `
-        const orig = process.getBuiltinModule(${JSON.stringify(moduleName)});
+        const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
         const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');
 
         ${methods
           .map(
             (method) => `
                 exports.${method.name} = function() {
-                    ${method.inspectArgs ? `__instrumentInspectArgs("${moduleName}.${method.name}", arguments);` : ""}
+                    ${method.inspectArgs ? `__instrumentInspectArgs("${builtinNameWithoutPrefix}.${method.name}", true, arguments);` : ""}
                     return orig.${method.name}(...arguments);
                 };`
           )

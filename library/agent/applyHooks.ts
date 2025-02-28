@@ -9,7 +9,7 @@ import { registerNodeHooks } from "./hooks/instrumentation";
 import {
   setBuiltinsToInstrument,
   setPackagesToInstrument,
-} from "./hooks/instrumentation/loadHook";
+} from "./hooks/instrumentation/instructions";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -26,7 +26,7 @@ export function applyHooks(hooks: Hooks, newInstrumentation: boolean = false) {
   } else {
     setPackagesToInstrument(hooks.getPackages());
     setBuiltinsToInstrument(hooks.getBuiltInModules());
-    registerNodeHooks(hooks);
+    registerNodeHooks();
   }
 
   hooks.getGlobals().forEach((g) => {

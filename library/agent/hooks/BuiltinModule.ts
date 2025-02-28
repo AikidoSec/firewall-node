@@ -3,7 +3,9 @@ import { RequireInterceptor } from "./RequireInterceptor";
 
 export class BuiltinModule {
   private requireInterceptors: RequireInterceptor[] = [];
-  private instrumentationInstructions: BuiltinInstrumentationInstruction[] = [];
+  private instrumentationInstructions:
+    | BuiltinInstrumentationInstruction
+    | undefined;
 
   constructor(private readonly name: string) {
     if (!this.name) {
@@ -23,11 +25,13 @@ export class BuiltinModule {
     return this.requireInterceptors;
   }
 
-  addInstrumentation(instruction: BuiltinInstrumentationInstruction) {
-    this.instrumentationInstructions.push(instruction);
+  setInstrumentationInstruction(
+    instruction: BuiltinInstrumentationInstruction
+  ) {
+    this.instrumentationInstructions = instruction;
   }
 
-  getInstrumentationInstructions() {
+  getInstrumentationInstruction() {
     return this.instrumentationInstructions;
   }
 }

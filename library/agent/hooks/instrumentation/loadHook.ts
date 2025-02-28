@@ -3,24 +3,14 @@ import type { LoadFunction } from "./types";
 import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
-import { satisfiesVersion } from "../../../helpers/satisfiesVersion";
 import { transformCode } from "./codeTransformation";
 import { generateBuildinShim } from "./builtinShim";
-import { Package } from "../Package";
-import { BuiltinModule } from "../BuiltinModule";
-import { getInstance } from "../../AgentSingleton";
-
-let packages: Package[] = [];
-let builtins: BuiltinModule[] = [];
-// Todo check if caching is done by node or if we need to implement it
-
-export function setPackagesToInstrument(_packages: Package[]) {
-  packages = _packages;
-}
-
-export function setBuiltinsToInstrument(_builtins: BuiltinModule[]) {
-  builtins = _builtins;
-}
+import {
+  getBuiltinInstrumentationInstructions,
+  getPackageFileInstrumentationInstructions,
+  shouldPatchPackage,
+} from "./instructions";
+import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
 
 export function onModuleLoad(
   path: string,
@@ -72,12 +62,7 @@ function patchPackage(
     return previousLoadResult;
   }
 
-  const versionedPackages = packages
-    .filter((pkg) => pkg.getName() === moduleInfo.name)
-    .map((pkg) => pkg.getVersions())
-    .flat();
-
-  if (!versionedPackages) {
+  if (!shouldPatchPackage(moduleInfo.name)) {
     // We don't want to modify this module
     return previousLoadResult;
   }
@@ -90,10 +75,16 @@ function patchPackage(
   }
 
   // Check if the installed package version is supported (get all matching versioned packages)
-  const matchingVersionedPackages = versionedPackages.filter((pkg) =>
-    satisfiesVersion(pkg.getRange(), pkgVersion)
+  // Todo: Right now we only allow one matching instruction set for one file
+  // So if e.g. multiple version are matching, we only use the first one
+  // To discuss if there is any use case for multiple matching versions
+  const matchingInstructions = getPackageFileInstrumentationInstructions(
+    moduleInfo.name,
+    pkgVersion
   );
 
+  // Todo: This is called for every file of the package, find a better way to do this
+  /*
   const agent = getInstance();
   if (agent) {
     // Report to the agent that the package was wrapped or not if it's version is not supported
@@ -101,20 +92,10 @@ function patchPackage(
       version: pkgVersion,
       supported: !!matchingVersionedPackages.length,
     });
-  }
+  }*/
 
-  if (!matchingVersionedPackages.length) {
-    // We don't want to patch this package version
-    return previousLoadResult;
-  }
-
-  const instructions = matchingVersionedPackages
-    .map((pkg) => pkg.getFileInstrumentationInstructions())
-    .flat();
-
-  const fileInstructions = instructions.find((f) => f.path === moduleInfo.path);
-  if (!fileInstructions) {
-    // We don't want to modify this file
+  if (!matchingInstructions) {
+    // We don't want to patch this package version or file
     return previousLoadResult;
   }
 
@@ -125,7 +106,7 @@ function patchPackage(
     previousLoadResult.source.toString(),
     moduleInfo.name,
     isESM,
-    fileInstructions
+    matchingInstructions
   );
 
   if (newSource === null) {
@@ -140,7 +121,7 @@ function patchPackage(
 }
 
 function patchBuiltin(
-  moduleName: string,
+  builtinName: string,
   previousLoadResult: ReturnType<LoadFunction>,
   isAlreadyModified: boolean
 ) {
@@ -149,35 +130,25 @@ function patchBuiltin(
     return previousLoadResult;
   }
 
-  const matchingBuiltins = builtins.filter(
-    (b) => b.getName() === moduleName || `node:${b.getName()}` === moduleName
+  const builtinNameWithoutPrefix = removeNodePrefix(builtinName);
+
+  const builtin = getBuiltinInstrumentationInstructions(
+    builtinNameWithoutPrefix
   );
+  if (!builtin) {
+    return previousLoadResult;
+  }
 
-  if (matchingBuiltins.length === 0) {
+  if (!builtin.functions || builtin.functions.length === 0) {
     // We don't want to modify this module
     return previousLoadResult;
   }
 
-  if (matchingBuiltins.length > 1) {
-    // Todo support?
-    return previousLoadResult;
-  }
-
-  const functionInstructions = matchingBuiltins
-    .map((b) =>
-      b
-        .getInstrumentationInstructions()
-        .map((i) => i.functions)
-        .flat()
-    )
-    .flat();
-
-  if (!functionInstructions) {
-    // We don't want to modify this module
-    return previousLoadResult;
-  }
-
-  const shim = generateBuildinShim(moduleName, functionInstructions);
+  const shim = generateBuildinShim(
+    builtinName,
+    builtinNameWithoutPrefix,
+    builtin.functions
+  );
   if (!shim) {
     return previousLoadResult;
   }

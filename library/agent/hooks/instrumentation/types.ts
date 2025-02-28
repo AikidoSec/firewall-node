@@ -53,10 +53,27 @@ export type RegisterHookFunction = (options: {
   ) => ResolveReturnValue;
 }) => void;
 
+export type IntereptorFunctionsObj = {
+  inspectArgs?: InspectArgsInterceptor;
+  modifyArgs?: ModifyArgsInterceptor;
+  modifyReturnValue?: ModifyReturnValueInterceptor;
+};
+
 export type BuiltinInstrumentationInstruction = {
   functions: {
     name: string;
+    inspectArgs?: InspectArgsInterceptor;
+    modifyArgs?: ModifyArgsInterceptor;
+    modifyReturnValue?: ModifyReturnValueInterceptor;
+  }[];
+};
+
+export type BuiltinInstrumentationInstructionJSON = {
+  functions: {
+    name: string;
     inspectArgs: boolean;
+    modifyArgs: boolean;
+    modifyReturnValue: boolean;
   }[];
 };
 
@@ -68,5 +85,17 @@ export type PackageFileInstrumentationInstruction = {
     inspectArgs?: InspectArgsInterceptor;
     modifyArgs?: ModifyArgsInterceptor;
     modifyReturnValue?: ModifyReturnValueInterceptor;
+  }[];
+};
+
+export type PackageFileInstrumentationInstructionJSON = {
+  path: string; // Relative path to required file inside the package folder
+  versionRange: string;
+  functions: {
+    nodeType: "MethodDefinition";
+    name: string;
+    inspectArgs: boolean;
+    modifyArgs: boolean;
+    modifyReturnValue: boolean;
   }[];
 };
