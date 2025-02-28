@@ -138,3 +138,9 @@ export function getPackageCallbacks(
 ): IntereptorFunctionsObj {
   return packageFileCallbacks.get(identifier) || {};
 }
+
+export function getBuiltinCallbacks(
+  identifier: string
+): IntereptorFunctionsObj {
+  return builtinCallbacks.get(identifier) || {};
+}

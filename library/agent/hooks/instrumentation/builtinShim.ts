@@ -23,6 +23,7 @@ export function generateBuildinShim(
     (m) => !methods.some((method) => method.name === m.name)
   );
 
+  // Todos: Copy over properties of patched methods?
   return `
         const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
         const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');

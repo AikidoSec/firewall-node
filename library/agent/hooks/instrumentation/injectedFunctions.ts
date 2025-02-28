@@ -1,5 +1,5 @@
 import { getInstance } from "../../AgentSingleton";
-import { getPackageCallbacks } from "./instructions";
+import { getBuiltinCallbacks, getPackageCallbacks } from "./instructions";
 
 export function __instrumentInspectArgs(
   id: string,
@@ -12,7 +12,13 @@ export function __instrumentInspectArgs(
   }
 
   if (isBuiltin) {
-    // Todo
+    const callbacks = getBuiltinCallbacks(id);
+
+    if (typeof callbacks.inspectArgs === "function") {
+      // Todo support subject?
+      callbacks.inspectArgs(args, agent, undefined);
+    }
+
     return;
   }
 

@@ -153,8 +153,19 @@ export class FileSystem implements Wrapper {
       this.wrapPromises(exports.promises, pkgInfo);
     });
 
-    hooks
-      .addBuiltinModule("fs/promises")
-      .onRequire((exports, pkgInfo) => this.wrapPromises(exports, pkgInfo));
+    const fsPromises = hooks.addBuiltinModule("fs/promises");
+    fsPromises.onRequire((exports, pkgInfo) =>
+      this.wrapPromises(exports, pkgInfo)
+    );
+    fsPromises.setInstrumentationInstruction({
+      functions: [
+        {
+          name: "readFile",
+          inspectArgs: (args) => {
+            console.log("readFile", args);
+          },
+        },
+      ],
+    });
   }
 }
