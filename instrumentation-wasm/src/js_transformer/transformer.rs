@@ -52,10 +52,10 @@ pub fn transform_code_str(
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
-        current_function_identifier: None,
-        modify_return_value: false,
+        //current_function_identifier: None,
+        //modify_return_value: false,
         module_name,
-        sub_function_counter: 0,
+        //sub_function_counter: 0,
     };
 
     traverse_mut(t, &allocator, program, symbols, scopes);
@@ -90,9 +90,9 @@ pub fn transform_code_str(
 struct Transformer<'a> {
     allocator: &'a Allocator,
     file_instructions: &'a FileInstructions,
-    current_function_identifier: Option<String>, // Only set if we want to instrument the current function
-    sub_function_counter: i32, // Counter to keep track of how many sub functions we are in
-    modify_return_value: bool,
+    //current_function_identifier: Option<String>, // Only set if we want to instrument the current function
+    //sub_function_counter: i32, // Counter to keep track of how many sub functions we are in
+    //modify_return_value: bool,
     module_name: &'a str,
 }
 
@@ -117,23 +117,23 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             .find(|f| f.node_type == "MethodDefinition" && f.name == method_name);
 
         if found_instruction.is_none() {
-            self.current_function_identifier = None;
-            self.modify_return_value = false;
+            //self.current_function_identifier = None;
+            //self.modify_return_value = false;
             return;
         }
 
         let instruction = found_instruction.unwrap();
 
-        let function_identifier = format!("{}.{}", self.module_name, method_name);
+        /*let function_identifier = format!("{}.{}", self.module_name, method_name);
         self.current_function_identifier = Some(function_identifier.clone());
-        self.modify_return_value = instruction.modify_return_value;
+        self.modify_return_value = instruction.modify_return_value;*/
 
         let body = node.value.body.as_mut().unwrap();
 
         if instruction.inspect_args {
             let source_text: &'a str = self.allocator.alloc_str(&format!(
                 "__instrumentInspectArgs('{}', false, arguments);",
-                self.current_function_identifier.as_ref().unwrap()
+                instruction.identifier
             ));
 
             body.statements.insert(
@@ -146,7 +146,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         }
     }
 
-    fn exit_method_definition(
+    /*fn exit_method_definition(
         &mut self,
         _node: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -183,5 +183,5 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         // Todo support modifying return value
         //AstBuilder::new(self.allocator).return_statement(node.span, argument)
-    }
+    }*/
 }

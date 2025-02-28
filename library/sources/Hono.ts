@@ -53,6 +53,18 @@ export class Hono implements Wrapper {
         });
 
         return newExports;
+      })
+      .addFileInstrumentation({
+        path: "lib/hono-base.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "addRoute",
+            inspectArgs: (args) => {
+              console.log(args);
+            },
+          },
+        ],
       });
   }
 }

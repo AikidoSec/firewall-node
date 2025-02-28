@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct FileInstructions {
     pub path: String,
+    pub version_range: String,
     pub functions: Vec<FunctionInstructions>,
 }
 
@@ -12,6 +13,8 @@ pub struct FileInstructions {
 pub struct FunctionInstructions {
     pub node_type: String,
     pub name: String,
+    pub identifier: String,
     pub inspect_args: bool,
+    pub modify_args: bool,
     pub modify_return_value: bool,
 }

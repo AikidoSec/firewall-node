@@ -36,6 +36,12 @@ export function setPackagesToInstrument(_packages: Package[]) {
               functions: file.functions.map((func) => {
                 const identifier = `${pkg.getName()}.${file.path}.${func.name}.${versionedPackage.getRange()}`;
 
+                packageFileCallbacks.set(identifier, {
+                  inspectArgs: func.inspectArgs,
+                  modifyArgs: func.modifyArgs,
+                  modifyReturnValue: func.modifyReturnValue,
+                });
+
                 return {
                   nodeType: func.nodeType,
                   name: func.name,
@@ -51,7 +57,9 @@ export function setPackagesToInstrument(_packages: Package[]) {
       })
       .flat();
 
-    packages.set(pkg.getName(), packageInstructions);
+    if (packageInstructions.length !== 0) {
+      packages.set(pkg.getName(), packageInstructions);
+    }
   }
 }
 
@@ -123,4 +131,10 @@ export function getPackageFileInstrumentationInstructions(
   }
 
   return instructions.find((f) => satisfiesVersion(f.versionRange, version));
+}
+
+export function getPackageCallbacks(
+  identifier: string
+): IntereptorFunctionsObj {
+  return packageFileCallbacks.get(identifier) || {};
 }

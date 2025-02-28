@@ -14,7 +14,8 @@
     "./context": "./context/index.js",
     "./lambda": "./lambda/index.js",
     "./nopp": "./nopp/index.js",
-    "./cloud-function": "./cloud-function/index.js"
+    "./cloud-function": "./cloud-function/index.js",
+    "./bundler": "./bundler/index.js"
   },
   "homepage": "https://aikido.dev/zen",
   "author": "Aikido Security",

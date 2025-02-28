@@ -94,6 +94,7 @@ export type PackageFileInstrumentationInstructionJSON = {
   functions: {
     nodeType: "MethodDefinition";
     name: string;
+    identifier: string;
     inspectArgs: boolean;
     modifyArgs: boolean;
     modifyReturnValue: boolean;
