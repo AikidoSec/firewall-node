@@ -26,7 +26,8 @@ export function shouldDiscoverRoute({
 
   const segments = route.split("/");
 
-  // e.g. /path/to/.file or /.directory/file
+  // Do not discover routes with dot files like `/path/to/.file` or `/.directory/file`
+  // We want to allow discovery of well-known URIs like `/.well-known/acme-challenge`
   if (!isWellKnownURI(route) && segments.some(isDotFile)) {
     return false;
   }
