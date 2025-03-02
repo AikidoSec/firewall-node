@@ -128,5 +128,8 @@
     "lint": "npm run lint-eslint && npm run lint-tsc",
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc"
+  },
+  "overrides": {
+    "undici@<=6.15.0": "6.15.0"
   }
 }
