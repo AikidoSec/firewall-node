@@ -1,4 +1,5 @@
 import { getFileExtension } from "../../helpers/getFileExtension";
+import { isWellKnownURI } from "../../helpers/isWellKnownURI";
 
 const EXCLUDED_METHODS = ["OPTIONS", "HEAD"];
 const IGNORE_EXTENSIONS = ["properties", "config", "webmanifest"];
@@ -25,8 +26,9 @@ export function shouldDiscoverRoute({
 
   const segments = route.split("/");
 
-  // e.g. /path/to/.file or /.directory/file
-  if (segments.some(isDotFile)) {
+  // Do not discover routes with dot files like `/path/to/.file` or `/.directory/file`
+  // We want to allow discovery of well-known URIs like `/.well-known/acme-challenge`
+  if (!isWellKnownURI(route) && segments.some(isDotFile)) {
     return false;
   }
 
@@ -34,7 +36,7 @@ export function shouldDiscoverRoute({
     return false;
   }
 
-  // Check for every file segment if it contains an file extension and if it should be discovered or ignored
+  // Check for every file segment if it contains a file extension and if it should be discovered or ignored
   return segments.every(shouldDiscoverExtension);
 }
 
@@ -61,11 +63,6 @@ function shouldDiscoverExtension(segment: string) {
 }
 
 function isDotFile(segment: string) {
-  // See https://www.rfc-editor.org/rfc/rfc8615
-  if (segment === ".well-known") {
-    return false;
-  }
-
   return segment.startsWith(".") && segment.length > 1;
 }
 

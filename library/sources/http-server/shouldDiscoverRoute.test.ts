@@ -215,7 +215,7 @@ t.test("it allows .well-known directory", async () => {
       route: "/.well-known",
       method: "GET",
     }),
-    true
+    false
   );
   t.same(
     shouldDiscoverRoute({
