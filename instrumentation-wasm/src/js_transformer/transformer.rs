@@ -77,6 +77,7 @@ pub fn transform_code_str(
         .with_options(CodegenOptions {
             comments: true,
             minify: false,
+            // Todo add source map using source_map_path
             ..CodegenOptions::default()
         })
         .build(&program);
