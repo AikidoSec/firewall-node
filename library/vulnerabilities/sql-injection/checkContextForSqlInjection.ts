@@ -20,7 +20,7 @@ export function checkContextForSqlInjection({
   operation: string;
   context: Context;
   dialect: SQLDialect;
-}): InterceptorResult {
+}): InterceptorResult | undefined {
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
     if (!userInput) {
