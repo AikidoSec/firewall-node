@@ -145,19 +145,17 @@ function patchBuiltin(
       typeof context.conditions.has === "function" &&
       context.conditions.has("require"));
 
-  const format = isCJSRequire ? "commonjs" : "module";
-
   const shim = generateBuildinShim(
     builtinName,
     builtinNameWithoutPrefix,
-    format
+    isCJSRequire
   );
   if (!shim) {
     return previousLoadResult;
   }
 
   return {
-    format: format,
+    format: "commonjs",
     shortCircuit: previousLoadResult.shortCircuit,
     source: shim,
   };

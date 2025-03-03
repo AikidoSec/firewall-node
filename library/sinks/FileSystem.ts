@@ -22,7 +22,6 @@ export class FileSystem implements Wrapper {
     name: string,
     amountOfPathArgs: number
   ): InterceptorResult {
-    console.log("Inspecting path", args, name, amountOfPathArgs);
     const context = getContext();
 
     if (!context) {

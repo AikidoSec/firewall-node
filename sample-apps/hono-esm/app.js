@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-//import * as test from "fs/promises";
-import { createRequire } from "module";
-//console.log(test);
+import { readFile } from "fs/promises";
+//import { createRequire } from "module";
 
-console.log(createRequire(import.meta.url)("node:fs/promises"));
+//console.log(createRequire(import.meta.url)("node:fs/promises"));
 
 const app = new Hono();
 
