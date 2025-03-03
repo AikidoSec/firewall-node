@@ -8,13 +8,11 @@ import { getSourceType } from "./getSourceType";
 export function transformCode(
   path: string,
   code: string,
-  moduleName: string,
   isESM: boolean,
   fileInstructions: PackageFileInstrumentationInstructionJSON
 ): string {
   const result = wasm_transform_code_str(
     code,
-    moduleName,
     JSON.stringify(fileInstructions),
     getSourceType(path, isESM)
   );

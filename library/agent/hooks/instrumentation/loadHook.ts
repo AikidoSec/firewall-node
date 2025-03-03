@@ -46,6 +46,7 @@ export function onModuleLoad(
 
     return patchPackage(path, previousLoadResult);
   } catch (error) {
+    console.error("Error in onModuleLoad", error);
     // Do not break the module loading process, just log the error
     return previousLoadResult;
   }
@@ -80,7 +81,8 @@ function patchPackage(
   // To discuss if there is any use case for multiple matching versions
   const matchingInstructions = getPackageFileInstrumentationInstructions(
     moduleInfo.name,
-    pkgVersion
+    pkgVersion,
+    moduleInfo.path
   );
 
   // Todo: This is called for every file of the package, find a better way to do this
@@ -104,7 +106,6 @@ function patchPackage(
   const newSource = transformCode(
     path,
     previousLoadResult.source.toString(),
-    moduleInfo.name,
     isESM,
     matchingInstructions
   );

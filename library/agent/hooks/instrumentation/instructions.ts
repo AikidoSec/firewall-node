@@ -81,14 +81,17 @@ export function shouldPatchPackage(name: string): boolean {
 
 export function getPackageFileInstrumentationInstructions(
   packageName: string,
-  version: string
+  version: string,
+  filePath: string
 ): PackageFileInstrumentationInstructionJSON | undefined {
   const instructions = packages.get(packageName);
   if (!instructions) {
     return;
   }
 
-  return instructions.find((f) => satisfiesVersion(f.versionRange, version));
+  return instructions.find(
+    (f) => f.path === filePath && satisfiesVersion(f.versionRange, version)
+  );
 }
 
 export function getPackageCallbacks(

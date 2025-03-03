@@ -55,7 +55,7 @@ export class Hono implements Wrapper {
         return newExports;
       })
       .addFileInstrumentation({
-        path: "lib/hono-base.js",
+        path: "dist/hono-base.js", //CJS has a different path
         functions: [
           {
             nodeType: "MethodDefinition",

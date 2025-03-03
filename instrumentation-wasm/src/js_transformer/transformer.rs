@@ -14,12 +14,7 @@ use super::{
     instructions::FileInstructions,
 };
 
-pub fn transform_code_str(
-    code: &str,
-    module_name: &str,
-    instructions_json: &str,
-    src_type: i32,
-) -> String {
+pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) -> String {
     let allocator = Allocator::default();
 
     let file_instructions: FileInstructions =
@@ -54,23 +49,38 @@ pub fn transform_code_str(
         file_instructions: &file_instructions,
         //current_function_identifier: None,
         //modify_return_value: false,
-        module_name,
         //sub_function_counter: 0,
     };
 
     traverse_mut(t, &allocator, program, symbols, scopes);
 
-    // Add import statement
-    program.body.insert(
-        0,
-        parse_js_code_to_statements(
-            &allocator,
-            "import { __instrumentInspectArgs } from '@aikidosec/firewall/instrument/internals';",
-            SourceType::mjs(),
-        )
-        .pop()
-        .unwrap(),
-    );
+    if source_type.is_script()
+        || source_type.is_unambiguous() && parser_result.module_record.has_module_syntax == false
+    {
+        // Add require statement
+        program.body.insert(
+            0,
+            parse_js_code_to_statements(
+                &allocator,
+                "const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');",
+                SourceType::cjs(),
+            )
+            .pop()
+            .unwrap(),
+        );
+    } else {
+        // Add import statement
+        program.body.insert(
+                    0,
+                    parse_js_code_to_statements(
+                        &allocator,
+                        "import { __instrumentInspectArgs } from '@aikidosec/firewall/instrument/internals';",
+                        SourceType::mjs(),
+                    )
+                    .pop()
+                    .unwrap(),
+                );
+    }
 
     // Todo: Update source map?
     let js = Codegen::new()
@@ -94,7 +104,6 @@ struct Transformer<'a> {
     //current_function_identifier: Option<String>, // Only set if we want to instrument the current function
     //sub_function_counter: i32, // Counter to keep track of how many sub functions we are in
     //modify_return_value: bool,
-    module_name: &'a str,
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
