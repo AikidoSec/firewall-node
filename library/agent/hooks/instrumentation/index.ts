@@ -1,7 +1,6 @@
 import { onModuleLoad } from "./loadHook";
 import * as mod from "node:module";
 import type { RegisterHookFunction } from "./types";
-import { Hooks } from "../Hooks";
 
 export function registerNodeHooks() {
   if (!("registerHooks" in mod) || typeof mod.registerHooks !== "function") {

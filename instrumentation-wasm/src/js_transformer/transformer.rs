@@ -132,7 +132,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         if instruction.inspect_args {
             let source_text: &'a str = self.allocator.alloc_str(&format!(
-                "__instrumentInspectArgs('{}', false, arguments);",
+                "__instrumentInspectArgs('{}', arguments);",
                 instruction.identifier
             ));
 

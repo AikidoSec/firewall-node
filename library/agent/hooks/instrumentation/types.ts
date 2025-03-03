@@ -33,7 +33,7 @@ type ResolveReturnValue = {
 export type LoadFunction = (
   url: string,
   context: {
-    conditions: string[];
+    conditions: Set<string> | string[];
     format: string | null | undefined;
     importAttributes: object;
   },
@@ -57,24 +57,6 @@ export type IntereptorFunctionsObj = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
-};
-
-export type BuiltinInstrumentationInstruction = {
-  functions: {
-    name: string;
-    inspectArgs?: InspectArgsInterceptor;
-    modifyArgs?: ModifyArgsInterceptor;
-    modifyReturnValue?: ModifyReturnValueInterceptor;
-  }[];
-};
-
-export type BuiltinInstrumentationInstructionJSON = {
-  functions: {
-    name: string;
-    inspectArgs: boolean;
-    modifyArgs: boolean;
-    modifyReturnValue: boolean;
-  }[];
 };
 
 export type PackageFileInstrumentationInstruction = {

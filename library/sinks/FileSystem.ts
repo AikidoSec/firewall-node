@@ -22,6 +22,7 @@ export class FileSystem implements Wrapper {
     name: string,
     amountOfPathArgs: number
   ): InterceptorResult {
+    console.log("Inspecting path", args, name, amountOfPathArgs);
     const context = getContext();
 
     if (!context) {
@@ -153,19 +154,8 @@ export class FileSystem implements Wrapper {
       this.wrapPromises(exports.promises, pkgInfo);
     });
 
-    const fsPromises = hooks.addBuiltinModule("fs/promises");
-    fsPromises.onRequire((exports, pkgInfo) =>
-      this.wrapPromises(exports, pkgInfo)
-    );
-    fsPromises.setInstrumentationInstruction({
-      functions: [
-        {
-          name: "readFile",
-          inspectArgs: (args) => {
-            console.log("readFile", args);
-          },
-        },
-      ],
-    });
+    hooks
+      .addBuiltinModule("fs/promises")
+      .onRequire((exports, pkgInfo) => this.wrapPromises(exports, pkgInfo));
   }
 }

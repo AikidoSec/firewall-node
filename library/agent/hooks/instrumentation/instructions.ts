@@ -1,19 +1,18 @@
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
 import {
-  BuiltinInstrumentationInstructionJSON,
   IntereptorFunctionsObj,
   PackageFileInstrumentationInstructionJSON,
 } from "./types";
 import { satisfiesVersion } from "../../../helpers/satisfiesVersion";
+import { RequireInterceptor } from "../RequireInterceptor";
 
 // Keys are package / builtin names
 let packages = new Map<string, PackageFileInstrumentationInstructionJSON[]>();
-let builtins = new Map<string, BuiltinInstrumentationInstructionJSON>();
 
 // Stores the callbacks for the instrumented functions of builtin modules
 // Identifier for builtin is: moduleName.functionName
-let builtinCallbacks = new Map<string, IntereptorFunctionsObj>();
+let builtinRequireInterceptors = new Map<string, RequireInterceptor[]>();
 // Stores the callbacks for the instrumented functions of package files
 // Identifier for package file is: packageName.relativePath.functionName.matchingVersion
 let packageFileCallbacks = new Map<string, IntereptorFunctionsObj>();
@@ -65,56 +64,15 @@ export function setPackagesToInstrument(_packages: Package[]) {
 
 export function setBuiltinsToInstrument(builtinModules: BuiltinModule[]) {
   // Clear the previous builtins
-  builtins = new Map();
-  builtinCallbacks = new Map();
+  builtinRequireInterceptors = new Map();
 
   for (const builtin of builtinModules) {
-    const instructions = builtin.getInstrumentationInstruction();
+    const interceptors = builtin.getRequireInterceptors();
 
-    if (
-      !instructions ||
-      !instructions.functions ||
-      instructions.functions.length === 0
-    ) {
-      continue;
+    if (interceptors.length > 0) {
+      builtinRequireInterceptors.set(builtin.getName(), interceptors);
     }
-
-    // Check if function is included twice
-    const functionNames = new Set<string>();
-    for (const f of instructions.functions) {
-      if (functionNames.has(f.name)) {
-        throw new Error(
-          `Function ${f.name} is included twice in the instrumentation instructions for ${builtin.getName()}`
-        );
-      }
-      functionNames.add(f.name);
-    }
-
-    const functions = instructions.functions.map((f) => {
-      builtinCallbacks.set(`${builtin.getName()}.${f.name}`, {
-        inspectArgs: f.inspectArgs,
-        modifyArgs: f.modifyArgs,
-        modifyReturnValue: f.modifyReturnValue,
-      });
-
-      return {
-        name: f.name,
-        inspectArgs: !!f.inspectArgs,
-        modifyArgs: !!f.modifyArgs,
-        modifyReturnValue: !!f.modifyReturnValue,
-      };
-    });
-
-    builtins.set(builtin.getName(), {
-      functions,
-    });
   }
-}
-
-export function getBuiltinInstrumentationInstructions(
-  name: string
-): BuiltinInstrumentationInstructionJSON | undefined {
-  return builtins.get(name);
 }
 
 export function shouldPatchPackage(name: string): boolean {
@@ -139,8 +97,10 @@ export function getPackageCallbacks(
   return packageFileCallbacks.get(identifier) || {};
 }
 
-export function getBuiltinCallbacks(
-  identifier: string
-): IntereptorFunctionsObj {
-  return builtinCallbacks.get(identifier) || {};
+export function getBuiltinInterceptors(name: string): RequireInterceptor[] {
+  return builtinRequireInterceptors.get(name) || [];
+}
+
+export function shouldPatchBuiltin(name: string): boolean {
+  return builtinRequireInterceptors.has(name);
 }

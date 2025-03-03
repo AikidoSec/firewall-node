@@ -2,6 +2,7 @@ import * as t from "tap";
 import { generateBuildinShim } from "./builtinShim";
 
 t.test("generate fs/promises shim", async (t) => {
+  // Todo update
   const shim = generateBuildinShim("fs/promises", "fs/promises", [
     {
       name: "readFile",
@@ -10,22 +11,30 @@ t.test("generate fs/promises shim", async (t) => {
       modifyReturnValue: false,
     },
   ]);
+  if (!shim) {
+    t.fail("shim is undefined");
+    return;
+  }
 
   t.match(
-    shim?.replace(/\s+/g, " "),
+    shim.replace(/\s+/g, " "),
     `const orig = process.getBuiltinModule("fs/promises"); 
 const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');
 
-exports.readFile = function() {
-    __instrumentInspectArgs("fs/promises.readFile", true, arguments);                
+orig.readFile = function() {
+    __instrumentInspectArgs("fs/promises.readFile", arguments);                
     return orig.readFile(...arguments);                                              
 };
+
+exports = orig;
 `.replace(/\s+/g, " ")
   );
 
-  t.match(shim, "exports.rename = orig.rename;");
-  t.match(shim, "exports.rmdir = orig.rmdir;");
-  t.match(shim, "exports.rm = orig.rm;");
-  t.match(shim, "exports.stat = orig.stat;");
-  t.match(shim, "exports.symlink = orig.symlink;");
+  const modifiedShim = shim.replace(
+    "@aikidosec/firewall/instrument/internals",
+    "./injectedFunctions"
+  );
+
+  let modifiedExports = eval(modifiedShim);
+  console.log(modifiedExports);
 });

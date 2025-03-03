@@ -1,40 +1,22 @@
-import { getExportsForBuiltin } from "./getExportsForBuiltin";
-import { BuiltinInstrumentationInstructionJSON } from "./types";
-
 export function generateBuildinShim(
   builtinName: string,
   builtinNameWithoutPrefix: string,
-  instructions: BuiltinInstrumentationInstructionJSON["functions"]
+  format: "commonjs" | "module"
 ): string | undefined {
-  const exports = getExportsForBuiltin(builtinName);
+  // Todo fix broken with ESM
+  // Todo access unwrapped methods inside our own library to prevent infinite recursion
 
-  // Filter out non-existing exports
-  const methods = instructions.filter((m) => exports.has(m.name));
+  if (format === "module") {
+    return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
+    import { __wrapBuiltinExports } from '@aikidosec/firewall/instrument/internals';
 
-  if (methods.length === 0) {
-    // No methods to instrument, return undefined
-    return;
+    export default __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
+  `;
   }
 
-  const unpatchedExports = Array.from(exports).filter(
-    (m: any) => !methods.some((method) => method.name === m.name)
-  );
-
-  // Todos: Copy over properties of patched methods?
-  // Todo check default export !!!
   return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');
-
-${methods
-  .map(
-    (method) => `
-  exports.${method.name} = function() {
-    ${method.inspectArgs ? `__instrumentInspectArgs("${builtinNameWithoutPrefix}.${method.name}", true, arguments);` : ""}
-    return orig.${method.name}(...arguments);
-  };`
-  )
-  .join("\n")}
+const { __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
   
-  ${unpatchedExports.map((e) => `exports.${e} = orig.${e};`).join("\n")}
+module.exports = __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
 `;
 }

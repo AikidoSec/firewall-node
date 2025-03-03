@@ -6,8 +6,8 @@ import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
 import { transformCode } from "./codeTransformation";
 import { generateBuildinShim } from "./builtinShim";
 import {
-  getBuiltinInstrumentationInstructions,
   getPackageFileInstrumentationInstructions,
+  shouldPatchBuiltin,
   shouldPatchPackage,
 } from "./instructions";
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
@@ -41,7 +41,7 @@ export function onModuleLoad(
 
     // For Node.js builtin modules
     if (isBuiltin) {
-      return patchBuiltin(path, previousLoadResult, isModifiedBuiltin);
+      return patchBuiltin(path, previousLoadResult, context, isModifiedBuiltin);
     }
 
     return patchPackage(path, previousLoadResult);
@@ -123,6 +123,7 @@ function patchPackage(
 function patchBuiltin(
   builtinName: string,
   previousLoadResult: ReturnType<LoadFunction>,
+  context: Parameters<LoadFunction>[1],
   isAlreadyModified: boolean
 ) {
   if (isAlreadyModified) {
@@ -132,29 +133,31 @@ function patchBuiltin(
 
   const builtinNameWithoutPrefix = removeNodePrefix(builtinName);
 
-  const builtin = getBuiltinInstrumentationInstructions(
-    builtinNameWithoutPrefix
-  );
+  const builtin = shouldPatchBuiltin(builtinNameWithoutPrefix);
   if (!builtin) {
     return previousLoadResult;
   }
 
-  if (!builtin.functions || builtin.functions.length === 0) {
-    // We don't want to modify this module
-    return previousLoadResult;
-  }
+  const isCJSRequire =
+    (Array.isArray(context.conditions) &&
+      context.conditions.includes("require")) ||
+    ("has" in context.conditions &&
+      typeof context.conditions.has === "function" &&
+      context.conditions.has("require"));
+
+  const format = isCJSRequire ? "commonjs" : "module";
 
   const shim = generateBuildinShim(
     builtinName,
     builtinNameWithoutPrefix,
-    builtin.functions
+    format
   );
   if (!shim) {
     return previousLoadResult;
   }
 
   return {
-    format: "commonjs",
+    format: format,
     shortCircuit: previousLoadResult.shortCircuit,
     source: shim,
   };
