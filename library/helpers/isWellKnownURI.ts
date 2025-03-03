@@ -1,4 +1,4 @@
-const wellKnown = [
+const wellKnown = new Set([
   "/.well-known/acme-challenge",
   "/.well-known/amphtml",
   "/.well-known/api-catalog",
@@ -88,11 +88,11 @@ const wellKnown = [
   "/.well-known/webfinger",
   "/.well-known/webweaver.json",
   "/.well-known/wot",
-];
+]);
 
 // Check if a path is a well-known URI
 // e.g. /.well-known/acme-challenge
 // https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml
 export function isWellKnownURI(path: string) {
-  return wellKnown.includes(path);
+  return wellKnown.has(path);
 }
