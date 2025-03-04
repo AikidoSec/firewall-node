@@ -1,13 +1,14 @@
 {
-  "name": "hono-test",
+  "name": "hono-pg-esm",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node --import @aikidosec/firewall/instrument ./app.js"
   },
   "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
     "@hono/node-server": "^1.13.8",
     "hono": "^4.7.2",
-    "@aikidosec/firewall": "file:../../build"
+    "pg": "^8.13.3"
   }
 }

@@ -1,5 +1,5 @@
-use oxc_allocator::Allocator;
-use oxc_ast::ast::MethodDefinition;
+use oxc_allocator::{Allocator, Box};
+use oxc_ast::ast::{FunctionBody, MethodDefinition};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -48,9 +48,6 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
-        //current_function_identifier: None,
-        //modify_return_value: false,
-        //sub_function_counter: 0,
     };
 
     traverse_mut(t, &allocator, program, symbols, scopes);
@@ -77,18 +74,12 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
         })
         .build(&program);
 
-    // Debug helper
-    //format!("{:?}", parser_result.program);
-
     js.code
 }
 
 struct Transformer<'a> {
     allocator: &'a Allocator,
     file_instructions: &'a FileInstructions,
-    //current_function_identifier: Option<String>, // Only set if we want to instrument the current function
-    //sub_function_counter: i32, // Counter to keep track of how many sub functions we are in
-    //modify_return_value: bool,
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
@@ -106,8 +97,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             return;
         }
 
-        // Todo implement submethod counting for nested functions for supporting modifications of return value
-
         let method_name = node.key.name().unwrap().to_string();
 
         let found_instruction = self
@@ -117,16 +106,10 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             .find(|f| f.node_type == "MethodDefinition" && f.name == method_name);
 
         if found_instruction.is_none() {
-            //self.current_function_identifier = None;
-            //self.modify_return_value = false;
             return;
         }
 
         let instruction = found_instruction.unwrap();
-
-        /*let function_identifier = format!("{}.{}", self.module_name, method_name);
-        self.current_function_identifier = Some(function_identifier.clone());
-        self.modify_return_value = instruction.modify_return_value;*/
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
@@ -149,13 +132,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
                 arg_names_str, instruction.identifier, arg_names_str
             ));
 
-            body.statements.insert(
-                0,
-                parse_js_code_to_statements(self.allocator, &source_text, SourceType::mjs())
-                    .into_iter()
-                    .next()
-                    .unwrap(),
-            );
+            insert_single_statement_into_func(self.allocator, body, 0, &source_text);
         }
 
         if instruction.inspect_args {
@@ -165,52 +142,24 @@ impl<'a> Traverse<'a> for Transformer<'a> {
                 instruction.identifier
             ));
 
-            body.statements.insert(
-                0,
-                parse_js_code_to_statements(self.allocator, &source_text, SourceType::mjs())
-                    .into_iter()
-                    .next()
-                    .unwrap(),
-            );
+            insert_single_statement_into_func(self.allocator, body, 0, source_text);
         }
+
+        // Todo support return value modification
     }
+}
 
-    /*fn exit_method_definition(
-        &mut self,
-        _node: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.current_function_identifier.is_none() {
-            return;
-        }
-
-        // If we are in a sub function, we need to decrease the counter
-        // If we leave the last sub function, we need to modify the return value again
-        if self.sub_function_counter > 0 {
-            self.sub_function_counter -= 1;
-
-            if self.sub_function_counter == 0 {
-                self.modify_return_value = true;
-            }
-
-            return;
-        }
-
-        // We leave the current function we want to instrument
-        self.modify_return_value = false;
-        self.current_function_identifier = None;
-    }
-
-    fn enter_return_statement(
-        &mut self,
-        node: &mut oxc_ast::ast::ReturnStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.modify_return_value {
-            return;
-        }
-
-        // Todo support modifying return value
-        //AstBuilder::new(self.allocator).return_statement(node.span, argument)
-    }*/
+fn insert_single_statement_into_func<'a>(
+    allocator: &'a Allocator,
+    body: &mut Box<'a, FunctionBody<'a>>,
+    pos: usize,
+    source_text: &'a str,
+) {
+    body.statements.insert(
+        pos,
+        parse_js_code_to_statements(&allocator, &source_text, SourceType::mjs())
+            .into_iter()
+            .next()
+            .unwrap(),
+    );
 }

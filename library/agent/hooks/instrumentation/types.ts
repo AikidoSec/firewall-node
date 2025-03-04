@@ -59,15 +59,17 @@ export type IntereptorFunctionsObj = {
   modifyReturnValue?: ModifyReturnValueInterceptor;
 };
 
+export type PackageFunctionInstrumentationInstruction = {
+  nodeType: "MethodDefinition";
+  name: string;
+  inspectArgs?: InspectArgsInterceptor;
+  modifyArgs?: ModifyArgsInterceptor;
+  modifyReturnValue?: ModifyReturnValueInterceptor;
+};
+
 export type PackageFileInstrumentationInstruction = {
   path: string; // Relative path to required file inside the package folder
-  functions: {
-    nodeType: "MethodDefinition";
-    name: string;
-    inspectArgs?: InspectArgsInterceptor;
-    modifyArgs?: ModifyArgsInterceptor;
-    modifyReturnValue?: ModifyReturnValueInterceptor;
-  }[];
+  functions: PackageFunctionInstrumentationInstruction[];
 };
 
 export type PackageFileInstrumentationInstructionJSON = {

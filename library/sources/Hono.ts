@@ -5,6 +5,7 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./hono/wrapRequestHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 
 const METHODS = [
   "get",
@@ -38,6 +39,17 @@ export class Hono implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    // Instrumentation instructions for the new system
+    const functionsToInstrument: PackageFunctionInstrumentationInstruction[] = [
+      {
+        nodeType: "MethodDefinition",
+        name: "addRoute",
+        modifyArgs: (args) => {
+          return this.wrapArgs(args);
+        },
+      },
+    ];
+
     hooks
       .addPackage("hono")
       .withVersion("^4.0.0")
@@ -56,15 +68,11 @@ export class Hono implements Wrapper {
       })
       .addFileInstrumentation({
         path: "dist/hono-base.js", //CJS has a different path
-        functions: [
-          {
-            nodeType: "MethodDefinition",
-            name: "addRoute",
-            modifyArgs: (args) => {
-              return this.wrapArgs(args);
-            },
-          },
-        ],
+        functions: functionsToInstrument,
+      })
+      .addFileInstrumentation({
+        path: "dist/cjs/hono-base.js",
+        functions: functionsToInstrument,
       });
   }
 }
