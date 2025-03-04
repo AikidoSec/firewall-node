@@ -34,7 +34,7 @@ Zen operates autonomously on the same server as your Node.js app to:
 * ✅ Block known threat actors and bots.
 * ✅ Geo-fencing to block or allow a selection of countries
 * ✅ Rate limit specific API endpoints by IP or by user
-* ✅ Allow you to block specific users manually
+* ✅ Allows you to block specific users manually
 
 ## Supported libraries and frameworks
 
