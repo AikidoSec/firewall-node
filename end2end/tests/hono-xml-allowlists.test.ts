@@ -59,7 +59,7 @@ t.test("it blocks non-allowed IP addresses", (t) => {
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCK: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
     },
   });
 
