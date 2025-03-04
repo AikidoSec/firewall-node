@@ -50,6 +50,10 @@ import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
 
+function isAgentAlreadySet() {
+  return !!getInstance();
+}
+
 function getLogger(): Logger {
   if (isDebugging()) {
     return new LoggerConsole();
@@ -87,7 +91,13 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: string | undefined }) {
+function getAgent({
+  serverless,
+  newInstrumentation,
+}: {
+  serverless: string | undefined;
+  newInstrumentation: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -99,7 +109,8 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    newInstrumentation
   );
 
   setInstance(agent);
@@ -145,8 +156,13 @@ export function getWrappers() {
 
 // eslint-disable-next-line import/no-unused-modules
 export function protect() {
+  if (isAgentAlreadySet()) {
+    return;
+  }
+
   const agent = getAgent({
     serverless: undefined,
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
@@ -155,6 +171,7 @@ export function protect() {
 export function lambda(): (handler: Handler) => Handler {
   const agent = getAgent({
     serverless: "lambda",
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
@@ -165,9 +182,24 @@ export function lambda(): (handler: Handler) => Handler {
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   const agent = getAgent({
     serverless: "gcp",
+    newInstrumentation: false,
   });
 
   agent.start(getWrappers());
 
   return createCloudFunctionWrapper;
+}
+
+export function protectWithNewInstrumentation() {
+  if (isAgentAlreadySet()) {
+    // Todo log warning?
+    return;
+  }
+
+  const agent = getAgent({
+    serverless: undefined,
+    newInstrumentation: true,
+  });
+
+  agent.start(getWrappers());
 }
