@@ -132,7 +132,7 @@ For framework- and provider- specific instructions, check out our docs:
 
 > Aikido is your no nonsense application security platform. One central system that scans your source code & cloud, shows you what vulnerabilities matter, and how to fix them - fast. So you can get back to building.
 
-Zen improves Aikido's offering by providing you with security in production. Use the automatic generation of API specifications together with our DAST offering for even better API Security.
+Zen improves Aikido's offering by providing you with security in production. Use the automatic generation of API specifications together with our API scanning offering for even better API Security.
 
 Only the necessary data gets reported back to Aikido, we scan your requests locally and only report back data once every 10 minutes.
 If an attack on your application is detected, we report immediately allowing you to take swift action.
