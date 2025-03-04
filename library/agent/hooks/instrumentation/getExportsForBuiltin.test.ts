@@ -43,5 +43,7 @@ t.test(
         // ...
       ])
     );
+
+    t.match(getExportsForBuiltin("abc"), undefined);
   }
 );

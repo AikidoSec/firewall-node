@@ -56,6 +56,10 @@ export function __wrapBuiltinExports(id: string, exports: unknown): unknown {
 }
 
 export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
+  if (!Array.isArray(args)) {
+    return [];
+  }
+
   const agent = getInstance();
   if (!agent) {
     return args;

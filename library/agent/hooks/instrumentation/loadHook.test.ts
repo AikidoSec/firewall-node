@@ -3,6 +3,23 @@ import { createTestAgent } from "../../../helpers/createTestAgent";
 import { applyHooks } from "../../applyHooks";
 import { Hooks } from "../Hooks";
 import * as mod from "node:module";
+import { registerNodeHooks } from ".";
+
+t.test(
+  "it throws an error if Node.js version is not supported",
+  {
+    skip:
+      "registerHooks" in mod ? "Only test on older Node.js versions" : false,
+  },
+  async (t) => {
+    createTestAgent();
+    const error = t.throws(() => applyHooks(new Hooks(), true));
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(error.message, /This Node.js version is not supported/);
+    }
+  }
+);
 
 t.test(
   "it works",
@@ -54,6 +71,9 @@ t.test(
       }
     }
 
+    // Try to register hooks again to test if it still works
+    registerNodeHooks();
+
     try {
       await import("hono");
       t.fail("import should not work");
@@ -98,6 +118,10 @@ t.test(
     t.equal(http.test, 42);
     t.equal(typeof http.createServer, "function");
     t.equal(typeof http.Server, "function");
+
+    // Require unpatched module
+    const assert = require("assert") as typeof import("assert");
+    t.equal(typeof assert, "function");
 
     process.env.AIKIDO_UNIT_TEST = "false";
   }

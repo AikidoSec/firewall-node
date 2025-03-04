@@ -66,6 +66,9 @@ t.test(
 `.replace(/\s+/g, " ")
     );
 
+    const nonExistingModuleShim = generateBuildinShim("abc", "abc", false);
+    t.equal(nonExistingModuleShim, undefined);
+
     t.end();
   }
 );
