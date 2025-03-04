@@ -7,12 +7,16 @@ export function __instrumentInspectArgs(id: string, args: unknown[]): void {
   if (!agent) {
     return;
   }
+  try {
+    const cbFuncs = getPackageCallbacks(id);
 
-  const cbFuncs = getPackageCallbacks(id);
-
-  if (typeof cbFuncs.inspectArgs === "function") {
-    // Todo support subject?
-    cbFuncs.inspectArgs(args, agent, undefined);
+    if (typeof cbFuncs.inspectArgs === "function") {
+      // Todo support subject?
+      cbFuncs.inspectArgs(args, agent, undefined);
+    }
+  } catch (error) {
+    // Do not crash the application if an error occurs
+    console.error(error); // We don't have a logger yet :(
   }
 }
 
@@ -49,4 +53,28 @@ export function __wrapBuiltinExports(id: string, exports: unknown): unknown {
   }
 
   return exports;
+}
+
+export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
+  const agent = getInstance();
+  if (!agent) {
+    return args;
+  }
+
+  try {
+    const cbFuncs = getPackageCallbacks(id);
+
+    if (typeof cbFuncs.modifyArgs === "function") {
+      const newArgs = cbFuncs.modifyArgs(args, agent);
+      // Only return the new arguments if they are an array
+      if (Array.isArray(newArgs)) {
+        return newArgs;
+      }
+    }
+  } catch (error) {
+    // Do not crash the application if an error occurs
+    console.error(error); // We don't have a logger yet :(
+  }
+
+  return args;
 }

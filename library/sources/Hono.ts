@@ -60,8 +60,8 @@ export class Hono implements Wrapper {
           {
             nodeType: "MethodDefinition",
             name: "addRoute",
-            inspectArgs: (args) => {
-              console.log(args);
+            modifyArgs: (args) => {
+              return this.wrapArgs(args);
             },
           },
         ],

@@ -3,8 +3,6 @@ import type { PackageFileInstrumentationInstructionJSON } from "./types";
 import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
 import { getSourceType } from "./getSourceType";
 
-// Todo check if caching is done by Node or if we need to cache the result
-
 export function transformCode(
   path: string,
   code: string,

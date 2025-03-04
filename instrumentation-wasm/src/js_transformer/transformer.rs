@@ -8,6 +8,7 @@ use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 use super::{
     helpers::{
+        get_import_code_str::get_import_code_str, get_method_arg_names::get_method_arg_names,
         parse_js_code_to_statements::parse_js_code_to_statements,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
@@ -54,33 +55,17 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
 
     traverse_mut(t, &allocator, program, symbols, scopes);
 
-    if source_type.is_script()
-        || source_type.is_unambiguous() && parser_result.module_record.has_module_syntax == false
-    {
-        // Add require statement
-        program.body.insert(
-            0,
-            parse_js_code_to_statements(
-                &allocator,
-                "const { __instrumentInspectArgs } = require('@aikidosec/firewall/instrument/internals');",
-                SourceType::cjs(),
-            )
-            .pop()
-            .unwrap(),
-        );
-    } else {
-        // Add import statement
-        program.body.insert(
-                    0,
-                    parse_js_code_to_statements(
-                        &allocator,
-                        "import { __instrumentInspectArgs } from '@aikidosec/firewall/instrument/internals';",
-                        SourceType::mjs(),
-                    )
-                    .pop()
-                    .unwrap(),
-                );
-    }
+    // Add import / require statement
+    program.body.insert(
+        0,
+        parse_js_code_to_statements(
+            &allocator,
+            get_import_code_str(&source_type, parser_result.module_record.has_module_syntax),
+            SourceType::cjs(),
+        )
+        .pop()
+        .unwrap(),
+    );
 
     // Todo: Update source map?
     let js = Codegen::new()
@@ -116,6 +101,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             return;
         }
 
+        if !node.kind.is_method() {
+            // Ignore constructor, getters and setters for now
+            return;
+        }
+
         // Todo implement submethod counting for nested functions for supporting modifications of return value
 
         let method_name = node.key.name().unwrap().to_string();
@@ -138,9 +128,38 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.current_function_identifier = Some(function_identifier.clone());
         self.modify_return_value = instruction.modify_return_value;*/
 
+        // We need to collect the arg names before we make the body mutable
+        let arg_names = if instruction.modify_args {
+            // Todo check whats appens if rest parameter is used
+
+            get_method_arg_names(node)
+        } else {
+            Vec::new()
+        };
+
         let body = node.value.body.as_mut().unwrap();
 
+        if instruction.modify_args {
+            // Modify the arguments by adding a statement to the beginning of the function
+            // [arg1, arg2, ...] = __instrumentModifyArgs('function_identifier', [arg1, arg2, ...]);
+
+            let arg_names_str = arg_names.join(", ");
+            let source_text: &'a str = self.allocator.alloc_str(&format!(
+                "[{}] = __instrumentModifyArgs('{}', [{}]);",
+                arg_names_str, instruction.identifier, arg_names_str
+            ));
+
+            body.statements.insert(
+                0,
+                parse_js_code_to_statements(self.allocator, &source_text, SourceType::mjs())
+                    .into_iter()
+                    .next()
+                    .unwrap(),
+            );
+        }
+
         if instruction.inspect_args {
+            // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments);
             let source_text: &'a str = self.allocator.alloc_str(&format!(
                 "__instrumentInspectArgs('{}', arguments);",
                 instruction.identifier
