@@ -1,3 +1,4 @@
+import { join } from "path";
 import { getExportsForBuiltin } from "./getExportsForBuiltin";
 
 export function generateBuildinShim(
@@ -7,9 +8,14 @@ export function generateBuildinShim(
 ): string | undefined {
   // Todo access unwrapped methods inside our own library to prevent infinite recursion
 
+  let importPath = "@aikidosec/firewall/instrument/internals";
+  if (process.env.AIKIDO_UNIT_TEST === "true") {
+    importPath = join(__dirname, "injectedFunctions");
+  }
+
   if (isCJSRequire) {
     return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-    const { __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
+    const { __wrapBuiltinExports } = require('${importPath}');
       
     module.exports = __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
     `;
@@ -22,7 +28,7 @@ export function generateBuildinShim(
   const exportArray = Array.from(modExports);
 
   return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-    const { __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
+    const { __wrapBuiltinExports } = require('${importPath}');
 
     const wrapped = __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
     

@@ -1,21 +1,18 @@
 import * as t from "tap";
 import { createTestAgent } from "../../../helpers/createTestAgent";
-import { wrapNewInstance } from "../wrapNewInstance";
-import { wrapExport } from "../wrapExport";
 import { applyHooks } from "../../applyHooks";
 import { Hooks } from "../Hooks";
-import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
+import * as mod from "node:module";
 
 t.test(
   "it works",
   {
-    skip: getMajorNodeVersion() < 20 ? "Node.js 20+ required" : false,
+    skip: !("registerHooks" in mod) ? "Recent Node.js version required" : false,
   },
   async (t) => {
     createTestAgent();
 
     const esmPkgInspectArgs: any[] = [];
-    const cjsPkgInspectArgs: any[] = [];
 
     const hooks = new Hooks();
 
@@ -34,27 +31,19 @@ t.test(
     });
 
     pkg.withVersion("^4.0.0").onRequire((exports, pkgInfo) => {
-      const newExports = Object.create(exports);
-
-      wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
-        wrapExport(instance, "get", pkgInfo, {
-          inspectArgs: (args, agent) => {
-            cjsPkgInspectArgs.push(args);
-          },
-        });
-      });
-
-      return newExports;
+      // This should not be called
+      t.fail("onRequire should not be called (old hook system)");
     });
 
-    hooks.addBuiltinModule("http");
+    hooks.addBuiltinModule("http").onRequire((exports, pkgInfo) => {
+      exports.test = 42;
+    });
 
     applyHooks(hooks, true);
 
     try {
-      // Todo find way to test with throwing error
-
-      const honoCJS = require("hono") as typeof import("hono");
+      require("hono") as typeof import("hono");
+      t.fail("require should fail");
     } catch (error) {
       t.ok(error instanceof Error);
       if (error instanceof Error) {
@@ -65,20 +54,51 @@ t.test(
       }
     }
 
-    t.same(esmPkgInspectArgs, []);
-    t.same(cjsPkgInspectArgs, []);
+    try {
+      await import("hono");
+      t.fail("import should not work");
+    } catch (error) {
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          /Cannot find module '@aikidosec\/firewall\/instrument\/internals'/
+        );
+      }
+    }
 
-    /*const honoESMInstance = new honoESM.Hono();
-    honoESMInstance.get("/test", async (c) => {
-        return c.text("Hello, World!");
+    process.env.AIKIDO_UNIT_TEST = "true";
+
+    const honoRequire = require("hono") as typeof import("hono");
+
+    t.same(esmPkgInspectArgs.length, 0);
+
+    const honoRequireInstance = new honoRequire.Hono();
+    honoRequireInstance.get("/test", async (c) => {
+      return c.text("Hello, World!");
     });
 
-    const honoCJSInstance = new honoCJS.Hono();
-    honoCJSInstance.get("/test2", async (c) => {
-      return c.text("Hello, World 2!");
+    t.same(esmPkgInspectArgs.length, 1);
+    t.same(esmPkgInspectArgs[0][0], "get");
+    t.same(esmPkgInspectArgs[0][1], "/test");
+    t.same(typeof esmPkgInspectArgs[0][2], "function");
+
+    const honoImport = await import("hono");
+    const honoImportInstance = new honoImport.Hono();
+    honoImportInstance.post("/test2", async (c) => {
+      return c.text("Hello, World!");
     });
 
-    t.same(esmPkgInspectArgs, [[{ path: "/test" }]]);
-    t.same(cjsPkgInspectArgs, [[{ path: "/test2" }]]);*/
+    t.same(esmPkgInspectArgs.length, 2);
+    t.same(esmPkgInspectArgs[1][0], "post");
+    t.same(esmPkgInspectArgs[1][1], "/test2");
+    t.same(typeof esmPkgInspectArgs[1][2], "function");
+
+    const http = require("node:http");
+    t.equal(http.test, 42);
+    t.equal(typeof http.createServer, "function");
+    t.equal(typeof http.Server, "function");
+
+    process.env.AIKIDO_UNIT_TEST = "false";
   }
 );
