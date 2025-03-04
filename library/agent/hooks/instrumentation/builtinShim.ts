@@ -6,8 +6,6 @@ export function generateBuildinShim(
   builtinNameWithoutPrefix: string,
   isCJSRequire: boolean
 ): string | undefined {
-  // Todo access unwrapped methods inside our own library to prevent infinite recursion
-
   let importPath = "@aikidosec/firewall/instrument/internals";
   if (process.env.AIKIDO_UNIT_TEST === "true") {
     importPath = join(__dirname, "injectedFunctions");

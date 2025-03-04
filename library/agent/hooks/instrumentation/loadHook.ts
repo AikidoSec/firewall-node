@@ -115,7 +115,7 @@ function patchPackage(
   }
 
   return {
-    format: previousLoadResult.format, // Todo maybe overwrite depending on the transformation
+    format: previousLoadResult.format,
     shortCircuit: previousLoadResult.shortCircuit,
     source: newSource,
   };

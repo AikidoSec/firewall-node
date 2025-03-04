@@ -19,13 +19,13 @@ export function transformCode(
     throw new Error(`Error transforming code: ${result}`);
   }
 
-  if (process.env.AIKIDO_UNIT_TEST !== "true") {
-    return result;
+  // Rewrite import path for unit tests if environment variable is set to true
+  if (process.env.AIKIDO_UNIT_TEST === "true") {
+    return result.replace(
+      "@aikidosec/firewall/instrument/internals",
+      "../../../../agent/hooks/instrumentation/injectedFunctions.ts"
+    );
   }
 
-  // Rewrite import path for unit tests
-  return result.replace(
-    "@aikidosec/firewall/instrument/internals",
-    "../../../../agent/hooks/instrumentation/injectedFunctions.ts"
-  );
+  return result;
 }

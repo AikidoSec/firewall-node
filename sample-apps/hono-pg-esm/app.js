@@ -1,11 +1,18 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { readFile } from "fs/promises";
+import fs from "fs/promises";
 import { join } from "path";
 import { createConnection } from "./db.js";
 
 const app = new Hono();
 const db = await createConnection();
+
+// Check until we have ESM unit tests
+if (!readFile.__wrapped || !fs.readFile.__wrapped) {
+  console.error("fs.readFile is not wrapped");
+  process.exit(1);
+}
 
 app.get("/", async (c) => {
   return c.text("Hello, World!");

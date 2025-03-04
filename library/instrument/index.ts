@@ -12,6 +12,10 @@ if (shouldEnable && isSupported) {
       "Error: Aikido Firewall requires that your Node.js version supports the `module.registerHooks` API. Please upgrade to a newer version of Node.js."
     );
   } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "AIKIDO: New instrumentation with ESM support is still under active development and not suitable for production use."
+    );
     protectWithNewInstrumentation();
   }
 }
