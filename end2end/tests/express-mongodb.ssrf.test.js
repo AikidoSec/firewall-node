@@ -57,7 +57,7 @@ t.test("it blocks in blocking mode", (t) => {
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
     },
   });
 
@@ -155,7 +155,7 @@ t.test("it does not block in dry mode", (t) => {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
     },
   });
 
@@ -213,7 +213,7 @@ t.test("it blocks request to base URL if proxy is not trusted", (t) => {
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
       AIKIDO_TRUST_PROXY: "false",
     },
   });
