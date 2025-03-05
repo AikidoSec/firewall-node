@@ -19,7 +19,7 @@ async function main() {
       `
         <html lang="en">
           <body>
-            <h1>Vulnerable app using XML</h1>
+            <h1>Vulnerable app</h1>
             <ul id="list">
               ${catNames.map((name) => `<li>${name}</li>`).join("")}
             </ul>
@@ -35,20 +35,25 @@ async function main() {
                 const form = document.getElementById("add-cat");
                 form.addEventListener("submit", async (event) => {
                   event.preventDefault();
-                  fetch("/add", {
+                  const response = await fetch("/add", {
                     method: "POST",
                     body: JSON.stringify({ name: form.petname.value }),
                     headers: {
                       "Content-Type": "application/json",
                     },
-                  }).then(response => response.json())
-                    .then(data => {
-                      if(!data.success) {
-                        throw new Error("Response was not successful");
-                      }
-                      window.location.reload();
-                    })
-                    .catch(error => document.getElementById("list").innerHTML = "<li>" + error.message + "</li>");
+                  })
+
+                  if(!response.ok) {
+                    alert("Failed to add cat");
+                    return;
+                  }
+                  
+                  const data = await response.json();
+                  if(!data.success) {
+                    alert("Failed to add cat");
+                    return;
+                  }
+                  window.location.reload();
                 });
               });
             </script>
@@ -68,7 +73,7 @@ async function main() {
 
   app.get("/clear", async (c) => {
     try {
-      await db.execute("DELETE FROM cats;");
+      await db.execute("DELETE FROM cats_2;");
       return c.redirect("/", 302);
     } catch (err) {
       return c.json({ error: "Failed to clear cats" }, 500);
