@@ -119,7 +119,10 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
         },
-        this.timeoutInMS
+        // We don't use `this.timeoutInMS` for startup event
+        // Since Node.js is single threaded, the HTTP request is fired before other imports are required
+        // It might take a long time before our code resumes
+        30 * 1000
       );
 
       this.checkForReportingAPIError(result);
@@ -444,7 +447,7 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.log("Starting agent...");
+    this.logger.log(`Starting agent v${getAgentVersion()}...`);
 
     if (!this.block) {
       this.logger.log("Dry mode enabled, no requests will be blocked!");
