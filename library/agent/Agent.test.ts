@@ -109,7 +109,7 @@ t.test("it sends started event", async (t) => {
   ]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "mongodb@6.9.0 is supported!",
   ]);
@@ -148,7 +148,7 @@ t.test("it logs if package is supported or not", async () => {
   agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "shell-quote@1.8.1 is not supported!",
   ]);
@@ -167,7 +167,7 @@ t.test("it starts in non-blocking mode", async () => {
   agent.start([]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Dry mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
   ]);
@@ -675,7 +675,7 @@ t.test("it logs when failed to report event", async () => {
   await setTimeout(0);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "Heartbeat...",
     "Failed to do heartbeat",
@@ -697,7 +697,7 @@ t.test("unable to prevent prototype pollution", async () => {
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
