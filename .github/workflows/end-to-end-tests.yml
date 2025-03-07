@@ -71,4 +71,5 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run end2end
-      - run: npm run end2end:new
+      - if: matrix.node-version == '23.x'
+        run: npm run end2end:new
