@@ -50,10 +50,6 @@ import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
 
-function isAgentAlreadySet() {
-  return !!getInstance();
-}
-
 function getLogger(): Logger {
   if (isDebugging()) {
     return new LoggerConsole();
@@ -156,10 +152,6 @@ export function getWrappers() {
 
 // eslint-disable-next-line import/no-unused-modules
 export function protect() {
-  if (isAgentAlreadySet()) {
-    return;
-  }
-
   const agent = getAgent({
     serverless: undefined,
     newInstrumentation: false,
@@ -191,11 +183,6 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
 }
 
 export function protectWithNewInstrumentation() {
-  if (isAgentAlreadySet()) {
-    // Todo log warning?
-    return;
-  }
-
   const agent = getAgent({
     serverless: undefined,
     newInstrumentation: true,

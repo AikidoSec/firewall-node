@@ -2,6 +2,9 @@ import * as mod from "node:module";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";
 import { protectWithNewInstrumentation } from "../agent/protect";
+import { setIsNewHookSystemUsed } from "../agent/isNewHookSystemUsed";
+
+setIsNewHookSystemUsed(true);
 
 const isSupported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();

@@ -8,12 +8,16 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 
-const supported = isFirewallSupported();
-const shouldEnable = shouldEnableFirewall();
+// Prevent logging twice / trying to start agent twice
+if (!isNewHookSystemUsed()) {
+  const supported = isFirewallSupported();
+  const shouldEnable = shouldEnableFirewall();
 
-if (supported && shouldEnable) {
-  require("./agent/protect").protect();
+  if (supported && shouldEnable) {
+    require("./agent/protect").protect();
+  }
 }
 
 export {
