@@ -1,13 +1,24 @@
 import { readFileSync } from "fs";
 
+const cache = new Map<string, string>();
+
 /**
  * Get the installed version of a package
  */
 export function getPackageVersionFromPath(
   basePath: string
 ): string | undefined {
+  // This function is called for every file of a imported package, so we cache the result
+  if (cache.has(basePath)) {
+    return cache.get(basePath);
+  }
+
   try {
-    return JSON.parse(readFileSync(`${basePath}/package.json`, "utf8")).version;
+    const version = JSON.parse(
+      readFileSync(`${basePath}/package.json`, "utf8")
+    ).version;
+    cache.set(basePath, version);
+    return version;
   } catch {
     // Return undefined if the package is not found
   }
