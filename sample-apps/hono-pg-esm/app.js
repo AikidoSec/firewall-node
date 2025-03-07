@@ -27,6 +27,18 @@ app.get("/file", async (c) => {
   return c.text(data);
 });
 
+app.post("/add", async (c) => {
+  const json = await c.req.json();
+  const name = json.name;
+  if (!name) {
+    return c.status(400).text("Name is required");
+  }
+
+  // Insecure
+  await db.query(`INSERT INTO cats_3 (petname) VALUES ('${name}');`);
+  return c.text("OK");
+});
+
 app.get("/clear", async (c) => {
   await db.query("DELETE FROM cats_3;");
   return c.text("Table cleared");

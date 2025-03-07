@@ -17,6 +17,7 @@
     "end2end": "cd end2end && npm run test",
     "format": "prettier --write .",
     "benchmark": "node scripts/benchmark.js",
-    "sample-app": "node scripts/run-sample-app.js"
+    "sample-app": "node scripts/run-sample-app.js",
+    "end2end:new": "cd end2end && npm run test:new"
   }
 }

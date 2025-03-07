@@ -71,3 +71,4 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run end2end
+      - run: npm run end2end:new

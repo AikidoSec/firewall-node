@@ -1,4 +1,6 @@
 import { getInstance } from "../../AgentSingleton";
+import { getContext } from "../../Context";
+import { inspectArgs } from "../wrapExport";
 import { WrapPackageInfo } from "../WrapPackageInfo";
 import { getBuiltinInterceptors, getPackageCallbacks } from "./instructions";
 
@@ -7,16 +9,27 @@ export function __instrumentInspectArgs(id: string, args: unknown[]): void {
   if (!agent) {
     return;
   }
-  try {
-    const cbFuncs = getPackageCallbacks(id);
 
-    if (typeof cbFuncs.inspectArgs === "function") {
-      // Todo support subject?
-      cbFuncs.inspectArgs(args, agent, undefined);
-    }
-  } catch (error) {
-    // Do not crash the application if an error occurs
-    console.error(error); // We don't have a logger yet :(
+  const context = getContext();
+
+  const cbFuncs = getPackageCallbacks(id);
+
+  if (typeof cbFuncs.inspectArgs === "function") {
+    // Todo check subject (this) might be broken?
+    inspectArgs(
+      args,
+      cbFuncs.inspectArgs,
+      context,
+      agent,
+      {
+        // Todo implement
+        name: "foo",
+        version: "bar",
+        type: "external",
+      },
+      // Todo implement
+      ""
+    );
   }
 }
 

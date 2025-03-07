@@ -117,7 +117,7 @@ export function wrapExport(
   }
 }
 
-function inspectArgs(
+export function inspectArgs(
   args: unknown[],
   interceptor: InspectArgsInterceptor,
   context: ReturnType<typeof getContext>,
