@@ -6,6 +6,8 @@ import { Source, SOURCES } from "./Source";
 
 export type User = { id: string; name?: string };
 
+export type Route = { path: string; framework: string };
+
 export type Context = {
   url: string | undefined;
   method: string | undefined;
@@ -19,7 +21,7 @@ export type Context = {
   consumedRateLimit?: boolean;
   user?: { id: string; name?: string };
   source: string;
-  route: string | undefined;
+  route: string | Route | undefined;
   graphql?: string[];
   xml?: unknown[];
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
@@ -108,4 +110,28 @@ export function runWithContext<T>(context: Context, fn: () => T) {
  */
 export function bindContext<T>(fn: () => T) {
   return AsyncResource.bind(fn);
+}
+
+export function getRoute(context: Context): string | undefined {
+  if (!context.route) {
+    return;
+  }
+
+  if (typeof context.route === "string") {
+    return context.route;
+  }
+
+  return context.route.path;
+}
+
+export function getFramework(context: Context): string | undefined {
+  if (!context.route) {
+    return;
+  }
+
+  if (typeof context.route === "string") {
+    return;
+  }
+
+  return context.route.framework;
 }

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
-import { Context, getContext, updateContext } from "../agent/Context";
+import { Context, getContext, getRoute, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
@@ -28,14 +28,20 @@ export class GraphQL implements Wrapper {
       return;
     }
 
-    if (!context.method || !context.route) {
+    if (!context.method) {
       return;
     }
 
-    if (!agent.hasGraphQLSchema(context.method, context.route)) {
+    const route = getRoute(context);
+
+    if (!route) {
+      return;
+    }
+
+    if (!agent.hasGraphQLSchema(context.method, route)) {
       try {
         const schema = this.graphqlModule.printSchema(executeArgs.schema);
-        agent.onGraphQLSchema(context.method, context.route, schema);
+        agent.onGraphQLSchema(context.method, route, schema);
       } catch (e) {
         // Ignore errors
       }
@@ -47,7 +53,13 @@ export class GraphQL implements Wrapper {
     executeArgs: ExecutionArgs,
     agent: Agent
   ) {
-    if (!context.method || !context.route) {
+    if (!context.method) {
+      return;
+    }
+
+    const route = getRoute(context);
+
+    if (!route) {
       return;
     }
 
@@ -59,7 +71,7 @@ export class GraphQL implements Wrapper {
     if (topLevelFields) {
       agent.onGraphQLExecute(
         context.method,
-        context.route,
+        route,
         topLevelFields.type,
         topLevelFields.fields.map((field) => field.name.value)
       );

@@ -13,7 +13,7 @@ import { AgentInfo, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { pollForChanges } from "./realtime/pollForChanges";
-import { Context } from "./Context";
+import { Context, getFramework, getRoute } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
@@ -211,7 +211,8 @@ export class Agent {
         body: convertRequestBodyToString(request.body),
         headers: filterEmptyRequestHeaders(request.headers),
         source: request.source,
-        route: request.route,
+        route: getRoute(request),
+        framework: getFramework(request),
       },
       agent: this.getAgentInfo(),
     };

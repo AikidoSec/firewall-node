@@ -3,8 +3,18 @@ import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
-export function contextFromRequest(req: Request): Context {
+export function contextFromRequest(req: Request, middleware: boolean): Context {
   const url = req.protocol + "://" + req.get("host") + req.originalUrl;
+
+  let route: Context["route"];
+  if (!middleware && req.route?.path) {
+    route = {
+      path: req.route.path,
+      framework: "express",
+    };
+  } else {
+    route = buildRouteFromURL(url);
+  }
 
   return {
     method: req.method,
@@ -20,7 +30,7 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.cookies ? req.cookies : {},
     source: "express",
-    route: buildRouteFromURL(url),
+    route: route,
     subdomains: req.subdomains,
   };
 }

@@ -47,7 +47,8 @@ const agent = createTestAgent({
     endpoints: [
       {
         method: "GET",
-        route: "/rate-limited",
+        route: "/api/:version/login",
+        framework: "hono",
         forceProtectionOff: false,
         rateLimiting: {
           windowSizeInMS: 2000,
@@ -94,6 +95,20 @@ function getApp() {
   app.all("/", (c) => {
     return c.json(getContext());
   });
+
+  app.mount("/mounted", (c) => {
+    return new Response(JSON.stringify(getContext()), {
+      headers: { "content-type": "application/json" },
+    });
+  });
+
+  const nested = new Hono();
+
+  nested.get("/posts/:id", (c) => {
+    return c.json(getContext());
+  });
+
+  app.route("/nested", nested);
 
   app.post("/json", async (c) => {
     try {
@@ -158,7 +173,7 @@ t.test("it adds context from request for GET", opts, async (t) => {
     cookies: { session: "123" },
     headers: { accept: "application/json", cookie: "session=123" },
     source: "hono",
-    route: "/",
+    route: { path: "/", framework: "hono" },
   });
 });
 
@@ -176,7 +191,7 @@ t.test("it adds JSON body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/json",
+    route: { path: "/json", framework: "hono" },
   });
 });
 
@@ -194,7 +209,7 @@ t.test("it adds form body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/form",
+    route: { path: "/form", framework: "hono" },
   });
 });
 
@@ -212,7 +227,7 @@ t.test("it adds text body to context", opts, async (t) => {
     method: "POST",
     body: "test",
     source: "hono",
-    route: "/text",
+    route: { path: "/text", framework: "hono" },
   });
 });
 
@@ -230,7 +245,7 @@ t.test("it adds xml body to context", opts, async (t) => {
     method: "POST",
     body: "<test>test</test>",
     source: "hono",
-    route: "/text",
+    route: { path: "/text", framework: "hono" },
   });
 });
 
@@ -243,7 +258,7 @@ t.test("it sets the user in the context", opts, async (t) => {
   t.match(body, {
     method: "GET",
     source: "hono",
-    route: "/",
+    route: { path: "/", framework: "hono" },
     user: { id: "123" },
   });
 });
@@ -256,6 +271,41 @@ t.test("it blocks user", opts, async (t) => {
   const body = await response.text();
   t.equal(body, "You are blocked by Zen.");
 });
+
+t.test(
+  "it adds correct context to nested routes",
+  /*opts,*/ async (t) => {
+    const response = await getApp().request("/nested/posts/123", {
+      method: "GET",
+    });
+
+    const body = await response.json();
+    t.match(body, {
+      method: "GET",
+      source: "hono",
+      route: {
+        path: "/nested/posts/:id",
+        framework: "hono",
+      },
+    });
+  }
+);
+
+/*t.test(
+  "it adds correct context to mounted routes",
+  /!*opts,*!/ async (t) => {
+    const response = await getApp().request("/mounted", {
+      method: "GET",
+    });
+
+    const body = await response.json();
+    t.match(body, {
+      method: "GET",
+      source: "hono",
+      route: {path:"/mounted"},
+    });
+  }
+);*/
 
 t.test("it rate limits based on IP address", opts, async (t) => {
   const response = await getApp().request("/rate-limited", {
@@ -303,7 +353,7 @@ t.test("it ignores invalid json body", opts, async (t) => {
     method: "POST",
     body: undefined,
     source: "hono",
-    route: "/",
+    route: { path: "/", framework: "hono" },
   });
 });
 
@@ -326,7 +376,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     method: "GET",
     query: { abc: "test" },
     source: "hono",
-    route: "/",
+    route: { path: "/", framework: "hono" },
   });
   t.ok(isLocalhostIP(body.remoteAddress));
   server.close();
@@ -489,7 +539,7 @@ t.test("Body parsing in middleware", opts, async (t) => {
     method: "POST",
     body: { x: 42 },
     source: "hono",
-    route: "/",
+    route: { path: "/", framework: "hono" },
   });
 });
 

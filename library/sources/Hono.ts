@@ -26,14 +26,14 @@ export class Hono implements Wrapper {
   // hono.METHOD(path, middleware, middleware, ..., handler)
   // hono.use(middleware)
   // hono.use(middleware, middleware, ...)
-  private wrapArgs(args: unknown[]) {
+  private wrapArgs(args: unknown[], middleware: boolean) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
         return arg;
       }
 
-      return wrapRequestHandler(arg as MiddlewareHandler);
+      return wrapRequestHandler(arg as MiddlewareHandler, middleware);
     });
   }
 
@@ -44,13 +44,19 @@ export class Hono implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         const newExports = Object.create(exports);
 
-        wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
-          METHODS.forEach((method) => {
-            wrapExport(instance, method, pkgInfo, {
-              modifyArgs: this.wrapArgs,
+        wrapNewInstance(
+          newExports,
+          "Hono",
+          pkgInfo,
+          (instance: typeof import("hono").Hono) => {
+            METHODS.forEach((method) => {
+              wrapExport(instance, method, pkgInfo, {
+                modifyArgs: (args, agent, subject) =>
+                  this.wrapArgs(args, method === "use"),
+              });
             });
-          });
-        });
+          }
+        );
 
         return newExports;
       });

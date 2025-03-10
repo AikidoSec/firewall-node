@@ -3,6 +3,7 @@ import {
   bindContext,
   Context,
   getContext,
+  getRoute,
   runWithContext,
 } from "../../../agent/Context";
 import { contextFromStream } from "./contextFromStream";
@@ -60,19 +61,27 @@ function discoverRouteFromStream(
   stream: ServerHttp2Stream,
   agent: Agent
 ) {
-  if (context && context.route && context.method) {
-    const statusCode = parseInt(stream.sentHeaders[":status"] as string);
+  if (!context || !context.method) {
+    return;
+  }
 
-    if (
-      !isNaN(statusCode) &&
-      shouldDiscoverRoute({
-        statusCode: statusCode,
-        route: context.route,
-        method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
-    }
+  const route = getRoute(context);
+
+  if (!route) {
+    return;
+  }
+
+  const statusCode = parseInt(stream.sentHeaders[":status"] as string);
+
+  if (
+    !isNaN(statusCode) &&
+    shouldDiscoverRoute({
+      statusCode: statusCode,
+      route: route,
+      method: context.method,
+    })
+  ) {
+    agent.onRouteExecute(context);
   }
 }
 

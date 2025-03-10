@@ -2,11 +2,12 @@ import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples"
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import { isAikidoDASTRequest } from "./AikidoDAST";
-import type { Context } from "./Context";
+import { Context, getFramework, getRoute } from "./Context";
 
 export type Route = {
   method: string;
   path: string;
+  framework?: string;
   hits: number;
   graphql?: { type: "query" | "mutation"; name: string };
   apispec: APISpec;
@@ -27,8 +28,14 @@ export class Routes {
       return;
     }
 
-    const { method, route: path } = context;
-    if (!method || !path) {
+    if (!context.method) {
+      return;
+    }
+
+    const method = context.method;
+    const path = getRoute(context);
+
+    if (!path) {
       return;
     }
 
@@ -55,6 +62,7 @@ export class Routes {
       path,
       hits: 1,
       apispec,
+      framework: getFramework(context),
     });
   }
 
@@ -146,6 +154,7 @@ export class Routes {
         graphql: route.graphql,
         apispec: route.apispec,
         graphQLSchema: this.graphQLSchemas.get(key),
+        framework: route.framework,
       };
     });
   }

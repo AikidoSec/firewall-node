@@ -1,6 +1,8 @@
 import { Endpoint } from "../agent/Config";
 import { Context } from "../agent/Context";
 import { ServiceConfig } from "../agent/ServiceConfig";
+import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
+import { tryParseURLPath } from "../helpers/tryParseURLPath";
 
 export function getRateLimitedEndpoint(
   context: Readonly<Context>,
@@ -14,7 +16,23 @@ export function getRateLimitedEndpoint(
     return undefined;
   }
 
-  const exact = matches.find((m) => m.route === context.route);
+  if (!context.url) {
+    return undefined;
+  }
+
+  const path = tryParseURLPath(context.url);
+
+  if (!path) {
+    return undefined;
+  }
+
+  const route = buildRouteFromURL(path);
+
+  if (!route) {
+    return undefined;
+  }
+
+  const exact = matches.find((m) => m.route === route);
 
   if (exact) {
     return exact;

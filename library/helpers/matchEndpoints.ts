@@ -1,10 +1,8 @@
 import { Endpoint } from "../agent/Config";
-import { Context } from "../agent/Context";
+import { Context, getFramework, getRoute } from "../agent/Context";
 import { tryParseURLPath } from "./tryParseURLPath";
 
-export type LimitedContext = Pick<Context, "url" | "method" | "route">;
-
-export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
+export function matchEndpoints(context: Context, endpoints: Endpoint[]) {
   const matches: Endpoint[] = [];
 
   if (!context.method) {
@@ -32,7 +30,21 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
     return -1;
   });
 
-  const exact = possible.find((endpoint) => endpoint.route === context.route);
+  const route = getRoute(context);
+  const framework = getFramework(context);
+  const exact = possible.find((endpoint) => {
+    // If it's a framework route, (e.g. /api/:version/login)
+    // We will never have an exact match with the context URL
+    if (!framework || !endpoint.framework) {
+      return false;
+    }
+
+    if (endpoint.framework && framework) {
+      return endpoint.framework === framework && endpoint.route === route;
+    }
+
+    return endpoint.route === route;
+  });
   if (exact) {
     matches.push(exact);
   }

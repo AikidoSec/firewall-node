@@ -4,10 +4,11 @@ import { contextFromRequest } from "./contextFromRequest";
 import { wrapRequestBodyParsing } from "./wrapRequestBodyParsing";
 
 export function wrapRequestHandler(
-  handler: Handler | MiddlewareHandler
+  handler: Handler | MiddlewareHandler,
+  middleware: boolean
 ): MiddlewareHandler {
   return async (c, next) => {
-    const context = await contextFromRequest(c);
+    const context = await contextFromRequest(c, middleware);
 
     return await runWithContext(context, async () => {
       wrapRequestBodyParsing(c.req);

@@ -5,11 +5,23 @@ import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 import { getRemoteAddress } from "./getRemoteAddress";
 
-export async function contextFromRequest(c: HonoContext): Promise<Context> {
+export async function contextFromRequest(
+  c: HonoContext,
+  middleware: boolean
+): Promise<Context> {
   const { req } = c;
-
   const cookieHeader = req.header("cookie");
   const existingContext = getContext();
+
+  let route: Context["route"];
+  if (!middleware && c.req.routePath) {
+    route = {
+      path: c.req.routePath === "/*" ? "/" : c.req.routePath,
+      framework: "hono",
+    };
+  } else {
+    route = buildRouteFromURL(req.url);
+  }
 
   return {
     method: c.req.method,
@@ -29,6 +41,6 @@ export async function contextFromRequest(c: HonoContext): Promise<Context> {
     /* c8 ignore next */
     cookies: cookieHeader ? parse(cookieHeader) : {},
     source: "hono",
-    route: buildRouteFromURL(req.url),
+    route: route,
   };
 }

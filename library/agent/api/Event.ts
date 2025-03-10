@@ -47,6 +47,7 @@ export type DetectedAttack = {
     body: string | undefined;
     source: string;
     route: string | undefined;
+    framework?: string;
   };
   attack: {
     kind: Kind;
@@ -96,6 +97,7 @@ type Heartbeat = {
   };
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
+    framework?: string;
     path: string;
     method: string;
     hits: number;

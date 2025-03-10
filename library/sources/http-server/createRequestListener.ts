@@ -1,7 +1,13 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { bindContext, getContext, runWithContext } from "../../agent/Context";
+import {
+  bindContext,
+  getContext,
+  getRoute,
+  runWithContext,
+} from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
+import { tryParseURLPath } from "../../helpers/tryParseURLPath";
 import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
@@ -91,17 +97,18 @@ function createOnFinishRequestHandler(
 
     const context = getContext();
 
-    if (
-      context &&
-      context.route &&
-      context.method &&
-      shouldDiscoverRoute({
-        statusCode: res.statusCode,
-        route: context.route,
-        method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
+    if (context && context.method && context.url) {
+      const path = tryParseURLPath(context.url);
+      if (
+        path &&
+        shouldDiscoverRoute({
+          statusCode: res.statusCode,
+          route: path,
+          method: context.method,
+        })
+      ) {
+        agent.onRouteExecute(context);
+      }
     }
 
     agent.getInspectionStatistics().onRequest();

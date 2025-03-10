@@ -4,14 +4,17 @@ import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
 import { createWrappedFunction } from "../../helpers/wrap";
 
-export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
+export function wrapRequestHandler(
+  handler: RequestHandler,
+  middleware: boolean
+): RequestHandler {
   const fn = createWrappedFunction(handler, function wrap(handler) {
     return function wrap(this: RequestHandler) {
       if (arguments.length === 0) {
         return handler.apply(this);
       }
 
-      const context = contextFromRequest(arguments[0]);
+      const context = contextFromRequest(arguments[0], middleware);
 
       return runWithContext(context, () => {
         return handler.apply(this, arguments);
