@@ -94,6 +94,7 @@ export async function fetch({
         );
       }, timeoutInMS);
 
+      // We don't want to keep Node.js running because of this timeout
       timeout.unref();
     }),
   ]);
