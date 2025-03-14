@@ -38,7 +38,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private timeoutInMS = 10000;
+  private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
   private serviceConfig = new ServiceConfig(
@@ -121,7 +121,7 @@ export class Agent {
         // We don't use `this.timeoutInMS` for startup event
         // Since Node.js is single threaded, the HTTP request is fired before other imports are required
         // It might take a long time before our code resumes
-        30 * 1000
+        60 * 1000
       );
 
       this.checkForReportingAPIError(result);
