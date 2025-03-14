@@ -22,7 +22,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
       "Accept-Encoding": "gzip",
       Authorization: token.asString(),
     },
-    timeoutInMS: 20000,
+    timeoutInMS: 60 * 1000,
   });
 
   if (statusCode !== 200) {
