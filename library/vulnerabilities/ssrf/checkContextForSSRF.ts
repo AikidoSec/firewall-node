@@ -40,12 +40,19 @@ export function checkContextForSSRF({
     // We have to check the port as well, because the hostname can be the same but with a different port
     // If Node.js is exposed to the internet, we can't be sure about the Host header
     const baseURL = tryParseURL(context.url);
-    if (
-      baseURL &&
-      baseURL.hostname === hostname &&
-      getPortFromURL(baseURL) === port
-    ) {
-      return;
+    if (baseURL && baseURL.hostname === hostname) {
+      const baseURLPort = getPortFromURL(baseURL);
+      if (baseURLPort === port) {
+        return undefined;
+      }
+      // Special case for HTTP/HTTPS ports
+      // In production, the app will be served on port 80 and 443
+      if (baseURLPort === 80 && port === 443) {
+        return undefined;
+      }
+      if (baseURLPort === 443 && port === 80) {
+        return undefined;
+      }
     }
   }
 
