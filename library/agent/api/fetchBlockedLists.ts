@@ -1,4 +1,5 @@
 import { fetch } from "../../helpers/fetch";
+import { LRUMap } from "../../ratelimiting/LRUMap";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
@@ -8,11 +9,19 @@ export type IPList = {
   ips: string[];
 };
 
+const invalidTokens = new LRUMap(100, 60 * 60 * 1000);
+
 export async function fetchBlockedLists(token: Token): Promise<{
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
   blockedUserAgents: string;
 }> {
+  if (invalidTokens.get(token.asString())) {
+    throw new Error(
+      `Unable to access the Aikido platform, please check your token.`
+    );
+  }
+
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -27,10 +36,13 @@ export async function fetchBlockedLists(token: Token): Promise<{
 
   if (statusCode !== 200) {
     if (statusCode === 401) {
+      invalidTokens.set(token.asString(), true);
+
       throw new Error(
         `Unable to access the Aikido platform, please check your token.`
       );
     }
+
     throw new Error(`Failed to fetch blocked lists: ${statusCode}`);
   }
 
