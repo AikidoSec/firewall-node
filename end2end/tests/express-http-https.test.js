@@ -49,11 +49,13 @@ t.test("it blocks in blocking mode", (t) => {
   let stdout = "";
   server.stdout.on("data", (data) => {
     stdout += data.toString();
+    console.log(data.toString());
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
+    console.log(data.toString());
   });
 
   // Wait for the server to start
