@@ -65,5 +65,4 @@ jobs:
           cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
       - run: npm install
       - run: npm run build
-      - run: sudo capset cap_net_bind_service=+ep $(which node)
       - run: npm run end2end
