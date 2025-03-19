@@ -32,7 +32,7 @@ export function checkContextForSSRF({
   // This is just to inspect direct invocations of `http.request` and similar
   // Where the hostname might be a private IP address (or localhost)
   if (!containsPrivateIPAddress(hostname)) {
-    return undefined;
+    return;
   }
 
   if (
@@ -70,6 +70,4 @@ export function checkContextForSSRF({
       }
     }
   }
-
-  return undefined;
 }
