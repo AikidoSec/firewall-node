@@ -14,7 +14,9 @@ export function isRequestToItself({
   outboundHostname: string;
   outboundPort: number | undefined;
 }): boolean {
-  // If Node.js is exposed to the internet, we can't be sure about the Host header
+  // When Node.js is not behind a reverse proxy, we can't trust the hostname inside `serverUrl`
+  // The hostname in `serverUrl` is built from the request headers
+  // The headers can be manipulated by the client if Node.js is directly exposed to the internet
   if (!trustProxy()) {
     return false;
   }
