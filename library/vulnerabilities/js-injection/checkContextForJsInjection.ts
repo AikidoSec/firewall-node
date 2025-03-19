@@ -28,11 +28,12 @@ export function checkContextForJsInjection({
       if (detectJsInjection(js, str)) {
         return {
           operation: operation,
-          kind: "js_injection",
+          kind: "code_injection",
           source: source,
           pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
-            js: js,
+            language: "js",
+            code: js,
           },
           payload: str,
         };
