@@ -186,6 +186,24 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/hello/:name",
+    asyncHandler(async (req, res) => {
+      const { name } = req.params;
+
+      if (!name) {
+        return res.status(400).end();
+      }
+
+      // This code is vulnerable to code injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      const welcome = new Function(`return "Hello, your name is ${name}!"`);
+
+      res.send(welcome());
+    })
+  );
+
   return new Promise((resolve, reject) => {
     try {
       app.listen(port, () => {
