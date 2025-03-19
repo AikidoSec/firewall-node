@@ -21,7 +21,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -47,17 +47,27 @@ t.test("it blocks in blocking mode", (t) => {
         fetch("http://127.0.0.1:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4000/hello/hans", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch(`http://127.0.0.1:4000/hello/${encodeURIComponent(`hans" //`)}`, {
+          signal: AbortSignal.timeout(5000),
+        }),
       ]);
     })
-    .then(([noSQLInjection, jsInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 500);
-      t.equal(jsInjection.status, 500);
-      t.equal(normalSearch.status, 200);
-      t.match(stdout, /Starting agent/);
-      t.match(stderr, /Zen has blocked a NoSQL injection/);
-    })
+    .then(
+      ([noSQLInjection, jsInjection, normalSearch, safeName, unsafeName]) => {
+        t.equal(noSQLInjection.status, 500);
+        t.equal(jsInjection.status, 500);
+        t.equal(normalSearch.status, 200);
+        t.equal(safeName.status, 200);
+        t.equal(unsafeName.status, 500);
+        t.match(stdout, /Starting agent/);
+        t.match(stderr, /Zen has blocked a NoSQL injection/);
+      }
+    )
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -96,17 +106,27 @@ t.test("it does not block in dry mode", (t) => {
         fetch("http://127.0.0.1:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4001/hello/hans", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch(`http://127.0.0.1:4001/hello/${encodeURIComponent(`hans" //`)}`, {
+          signal: AbortSignal.timeout(5000),
+        }),
       ])
     )
-    .then(([noSQLInjection, jsInjection, normalSearch]) => {
-      t.equal(noSQLInjection.status, 200);
-      t.equal(jsInjection.status, 200);
-      t.equal(normalSearch.status, 200);
-      t.match(stdout, /Starting agent/);
-      t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
-    })
+    .then(
+      ([noSQLInjection, jsInjection, normalSearch, safeName, unsafeName]) => {
+        t.equal(noSQLInjection.status, 200);
+        t.equal(jsInjection.status, 200);
+        t.equal(normalSearch.status, 200);
+        t.equal(safeName.status, 200);
+        t.equal(unsafeName.status, 200);
+        t.match(stdout, /Starting agent/);
+        t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
+      }
+    )
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -141,7 +161,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -174,7 +194,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");
@@ -237,7 +257,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");
