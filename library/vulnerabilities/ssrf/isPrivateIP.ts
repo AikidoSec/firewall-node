@@ -11,7 +11,7 @@ const PRIVATE_IP_RANGES = [
   "192.0.0.0/24", // IETF Protocol Assignments (RFC 5736)
   "192.0.2.0/24", // TEST-NET-1 (RFC 5737)
   "192.31.196.0/24", // AS112 Redirection Anycast (RFC 7535)
-  "192.52.193.0/24",
+  "192.52.193.0/24", // Automatic Multicast Tunneling (RFC 7450)
   "192.88.99.0/24", // 6to4 Relay Anycast (RFC 3068)
   "192.168.0.0/16", // Private-Use Networks (RFC 1918)
   "192.175.48.0/24", // AS112 Redirection Anycast (RFC 7535)
@@ -31,7 +31,6 @@ const PRIVATE_IPV6_RANGES = [
   "100::/64", // Discard prefix (RFC 6666)
   "2001:db8::/32", // Documentation prefix (RFC 3849)
   "3fff::/20", // Documentation prefix (RFC 9637)
-  "::ffff:0:0",
 ].concat(
   // Add the IPv4-mapped IPv6 addresses
   PRIVATE_IP_RANGES.map(mapIPv4ToIPv6)
