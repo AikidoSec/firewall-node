@@ -1,4 +1,5 @@
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
+import mapIPv4ToIPv6 from "../../helpers/mapIPv4ToIPv6";
 
 const PRIVATE_IP_RANGES = [
   "0.0.0.0/8", // "This" network (RFC 1122)
@@ -27,12 +28,14 @@ const PRIVATE_IPV6_RANGES = [
   "::1/128", // Loopback address (RFC 4291)
   "fc00::/7", // Unique local address (ULA) (RFC 4193)
   "fe80::/10", // Link-local address (LLA) (RFC 4291)
-  "::ffff:127.0.0.1/128", // IPv4-mapped address (RFC 4291)
-  "::ffff:0:0",
   "100::/64", // Discard prefix (RFC 6666)
   "2001:db8::/32", // Documentation prefix (RFC 3849)
   "3fff::/20", // Documentation prefix (RFC 9637)
-];
+  "::ffff:0:0",
+].concat(
+  // Add the IPv4-mapped IPv6 addresses
+  PRIVATE_IP_RANGES.map(mapIPv4ToIPv6)
+);
 
 const privateIp = new IPMatcher();
 

@@ -31,6 +31,9 @@ const publicIPs = [
   "fb00::",
   "fbff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
   "fec0::",
+  "::ffff:1.2.3.4",
+  "::ffff:172.1.2.3",
+  "::ffff:192.145.0.0",
 ];
 
 const privateIPs = [
@@ -139,6 +142,10 @@ const privateIPs = [
   "::1",
   "::ffff:0.0.0.0",
   "::ffff:127.0.0.1",
+  "::ffff:127.0.0.2",
+  "::ffff:10.0.0.1",
+  "::ffff:172.16.1.2",
+  "::ffff:192.168.2.2",
   "fe80::",
   "fe80::1",
   "fe80::abc:1",
