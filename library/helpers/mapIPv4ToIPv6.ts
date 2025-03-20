@@ -1,6 +1,6 @@
 /**
  * Maps an IPv4 address to an IPv6 address.
- * e.g. 127.0.0.1/8 -> ::ffff:127
+ * e.g. 127.0.0.0/8 -> ::ffff:127.0.0.0/104
  */
 export default function mapIPv4ToIPv6(ip: string): string {
   if (!ip.includes("/")) {
