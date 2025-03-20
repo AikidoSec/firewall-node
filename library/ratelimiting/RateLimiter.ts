@@ -22,6 +22,14 @@ export class RateLimiter {
       (timestamp) => currentTime - timestamp <= windowSizeInMS
     );
 
+    // Ensure the number of entries exceeds maxRequests by only 1
+    if (filteredTimestamps.length > maxRequests + 1) {
+      filteredTimestamps.splice(
+        0,
+        filteredTimestamps.length - (maxRequests + 1)
+      );
+    }
+
     // Add current request timestamp to the list
     filteredTimestamps.push(currentTime);
 
