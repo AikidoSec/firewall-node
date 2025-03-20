@@ -4,7 +4,7 @@ export type Kind =
   | "shell_injection"
   | "path_traversal"
   | "ssrf"
-  | "js_injection";
+  | "code_injection";
 
 export function attackKindHumanName(kind: Kind) {
   switch (kind) {
@@ -18,7 +18,7 @@ export function attackKindHumanName(kind: Kind) {
       return "a path traversal attack";
     case "ssrf":
       return "a server-side request forgery";
-    case "js_injection":
+    case "code_injection":
       return "a JavaScript injection";
   }
 }

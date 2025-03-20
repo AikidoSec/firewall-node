@@ -1,4 +1,4 @@
-import Zen from "@aikidosec/firewall";
+import "@aikidosec/firewall";
 import * as Sentry from "@sentry/nestjs";
 
 Sentry.init({
@@ -22,8 +22,6 @@ function getPort() {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  Zen.addExpressMiddleware(app);
 
   app.useGlobalGuards(new ZenGuard());
   await app.listen(getPort());

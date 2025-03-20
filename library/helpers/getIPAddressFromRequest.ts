@@ -1,5 +1,6 @@
 import { isIP } from "net";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
+import { trustProxy } from "./trustProxy";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
@@ -56,17 +57,4 @@ function getClientIpFromXForwardedFor(value: string) {
   }
 
   return null;
-}
-
-function trustProxy() {
-  if (!process.env.AIKIDO_TRUST_PROXY) {
-    // Trust proxy by default
-    // Most of the time, the application is behind a reverse proxy
-    return true;
-  }
-
-  return (
-    process.env.AIKIDO_TRUST_PROXY === "1" ||
-    process.env.AIKIDO_TRUST_PROXY === "true"
-  );
 }

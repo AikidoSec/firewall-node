@@ -31,6 +31,7 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           blockedUserAgents: "hacker|attacker",
+          allowedIPAddresses: [],
         }),
       };
     }
@@ -58,7 +59,7 @@ const agent = createTestAgent({
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
-    allowedIPAddresses: ["4.3.2.1"],
+    allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -505,4 +506,60 @@ t.test("invalid json body", opts, async (t) => {
 
   t.same(response.status, 400);
   t.same(await response.text(), "Invalid JSON");
+});
+
+t.test("bypass list works", opts, async (t) => {
+  // Start a server with a real socket
+  // The blocking is implemented in the HTTPServer source
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8769,
+  });
+
+  // It blocks bot
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.2.2.2",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response.statusCode, 403);
+  t.equal(
+    response.body,
+    "You are not allowed to access this resource because you have been identified as a bot."
+  );
+
+  // It does not block bypassed IP
+  const response2 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "4.3.2.1",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response2.statusCode, 200);
+
+  const response3 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.1.2.2",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response3.statusCode, 200);
+
+  const response4 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.1.2.254",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response4.statusCode, 200);
+
+  // Cleanup server
+  server.close();
 });
