@@ -160,17 +160,21 @@ export class Fetch implements Wrapper {
       }
     }
 
-    hooks.addGlobal("fetch", {
-      // Whenever a request is made, we'll check the hostname whether it's a private IP
-      inspectArgs: (args, agent) => this.inspectFetch(args, agent),
-      modifyArgs: (args, agent) => {
-        if (!this.patchedGlobalDispatcher) {
-          this.patchGlobalDispatcher(agent);
-          this.patchedGlobalDispatcher = true;
-        }
+    hooks.addGlobal(
+      "fetch",
+      {
+        // Whenever a request is made, we'll check the hostname whether it's a private IP
+        inspectArgs: (args, agent) => this.inspectFetch(args, agent),
+        modifyArgs: (args, agent) => {
+          if (!this.patchedGlobalDispatcher) {
+            this.patchGlobalDispatcher(agent);
+            this.patchedGlobalDispatcher = true;
+          }
 
-        return args;
+          return args;
+        },
       },
-    });
+      "outgoing_http_op"
+    );
   }
 }

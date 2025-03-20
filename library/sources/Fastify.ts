@@ -94,9 +94,15 @@ export class Fastify implements Wrapper {
     }
 
     // Wrap the new route method
-    wrapExport(appInstance, method, pkgInfo, {
-      modifyArgs: this.wrapRequestArgs,
-    });
+    wrapExport(
+      appInstance,
+      method,
+      pkgInfo,
+      {
+        modifyArgs: this.wrapRequestArgs,
+      },
+      undefined
+    );
 
     return appInstance;
   }
@@ -116,26 +122,50 @@ export class Fastify implements Wrapper {
     for (const func of requestFunctions) {
       // Check if the function exists - new functions in Fastify 5
       if (typeof instance[func] === "function") {
-        wrapExport(instance, func, pkgInfo, {
-          modifyArgs: this.wrapRequestArgs,
-        });
+        wrapExport(
+          instance,
+          func,
+          pkgInfo,
+          {
+            modifyArgs: this.wrapRequestArgs,
+          },
+          undefined
+        );
       }
     }
 
-    wrapExport(instance, "route", pkgInfo, {
-      modifyArgs: this.wrapRouteMethod,
-    });
+    wrapExport(
+      instance,
+      "route",
+      pkgInfo,
+      {
+        modifyArgs: this.wrapRouteMethod,
+      },
+      undefined
+    );
 
-    wrapExport(instance, "addHook", pkgInfo, {
-      modifyArgs: this.wrapAddHookArgs,
-    });
+    wrapExport(
+      instance,
+      "addHook",
+      pkgInfo,
+      {
+        modifyArgs: this.wrapAddHookArgs,
+      },
+      undefined
+    );
 
     // Added in Fastify 5
     if (typeof instance.addHttpMethod === "function") {
-      wrapExport(instance, "addHttpMethod", pkgInfo, {
-        modifyReturnValue: (args, returnValue) =>
-          this.wrapNewRouteMethod(args, returnValue, pkgInfo),
-      });
+      wrapExport(
+        instance,
+        "addHttpMethod",
+        pkgInfo,
+        {
+          modifyReturnValue: (args, returnValue) =>
+            this.wrapNewRouteMethod(args, returnValue, pkgInfo),
+        },
+        undefined
+      );
     }
   }
 

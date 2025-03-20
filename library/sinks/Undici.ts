@@ -116,22 +116,34 @@ export class Undici implements Wrapper {
         this.patchGlobalDispatcher(agent, exports);
 
         // Print a warning that we can't provide protection if setGlobalDispatcher is called
-        wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
-          inspectArgs: (args, agent) => {
-            agent.log(
-              `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
-            );
+        wrapExport(
+          exports,
+          "setGlobalDispatcher",
+          pkgInfo,
+          {
+            inspectArgs: (args, agent) => {
+              agent.log(
+                `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
+              );
+            },
           },
-        });
+          undefined
+        );
 
         // Wrap all methods that can make requests
         for (const method of methods) {
-          wrapExport(exports, method, pkgInfo, {
-            // Whenever a request is made, we'll check the hostname whether it's a private IP
-            inspectArgs: (args, agent) => {
-              return this.inspect(args, agent, method);
+          wrapExport(
+            exports,
+            method,
+            pkgInfo,
+            {
+              // Whenever a request is made, we'll check the hostname whether it's a private IP
+              inspectArgs: (args, agent) => {
+                return this.inspect(args, agent, method);
+              },
             },
-          });
+            "outgoing_http_op"
+          );
         }
       });
   }

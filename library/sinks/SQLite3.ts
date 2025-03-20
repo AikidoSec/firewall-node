@@ -79,18 +79,30 @@ export class SQLite3 implements Wrapper {
         const db = exports.Database.prototype;
 
         for (const func of sqlFunctions) {
-          wrapExport(db, func, pkgInfo, {
-            inspectArgs: (args, agent) => {
-              return this.inspectQuery(`sqlite3.${func}`, args);
+          wrapExport(
+            db,
+            func,
+            pkgInfo,
+            {
+              inspectArgs: (args, agent) => {
+                return this.inspectQuery(`sqlite3.${func}`, args);
+              },
             },
-          });
+            "sql_op"
+          );
         }
 
-        wrapExport(db, "backup", pkgInfo, {
-          inspectArgs: (args, agent) => {
-            return this.inspectPath(`sqlite3.backup`, args);
+        wrapExport(
+          db,
+          "backup",
+          pkgInfo,
+          {
+            inspectArgs: (args, agent) => {
+              return this.inspectPath(`sqlite3.backup`, args);
+            },
           },
-        });
+          "fs_op"
+        );
       });
   }
 }

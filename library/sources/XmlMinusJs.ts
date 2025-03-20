@@ -42,18 +42,30 @@ export class XmlMinusJs implements Wrapper {
       .addPackage("xml-js")
       .withVersion("^1.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(exports, "xml2js", pkgInfo, {
-          modifyReturnValue: (args, result) => {
-            this.inspectParse(args, result, false);
-            return result;
+        wrapExport(
+          exports,
+          "xml2js",
+          pkgInfo,
+          {
+            modifyReturnValue: (args, result) => {
+              this.inspectParse(args, result, false);
+              return result;
+            },
           },
-        });
-        wrapExport(exports, "xml2json", pkgInfo, {
-          modifyReturnValue: (args, result) => {
-            this.inspectParse(args, result, true);
-            return result;
+          "unserialize_op"
+        );
+        wrapExport(
+          exports,
+          "xml2json",
+          pkgInfo,
+          {
+            modifyReturnValue: (args, result) => {
+              this.inspectParse(args, result, true);
+              return result;
+            },
           },
-        });
+          "unserialize_op"
+        );
       });
   }
 }

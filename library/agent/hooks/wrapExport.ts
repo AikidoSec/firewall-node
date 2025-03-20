@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
+import { MonitoredSinkStatsKind } from "../api/Event";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
 import type { WrapPackageInfo } from "./WrapPackageInfo";
@@ -35,7 +36,8 @@ export function wrapExport(
   subject: unknown,
   methodName: string | undefined,
   pkgInfo: WrapPackageInfo,
-  interceptors: InterceptorObject
+  interceptors: InterceptorObject,
+  kind: MonitoredSinkStatsKind | undefined
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -69,7 +71,8 @@ export function wrapExport(
               context,
               agent,
               pkgInfo,
-              methodName || ""
+              methodName || "",
+              kind
             );
           }
 
@@ -120,7 +123,8 @@ function inspectArgs(
   context: ReturnType<typeof getContext>,
   agent: Agent,
   pkgInfo: WrapPackageInfo,
-  methodName: string
+  methodName: string,
+  kind: MonitoredSinkStatsKind | undefined
 ) {
   if (context) {
     const matches = agent.getConfig().getEndpoints(context);
@@ -141,12 +145,13 @@ function inspectArgs(
       this
     );
   } catch (error: any) {
-    agent.getInspectionStatistics().interceptorThrewError(pkgInfo.name);
+    agent.getInspectionStatistics().interceptorThrewError(pkgInfo.name, kind);
     agent.onErrorThrownByInterceptor({
       error: error,
       method: methodName,
       module: pkgInfo.name,
     });
   }
-  onInspectionInterceptorResult(context, agent, result, pkgInfo, start);
+
+  onInspectionInterceptorResult(context, agent, result, pkgInfo, start, kind);
 }

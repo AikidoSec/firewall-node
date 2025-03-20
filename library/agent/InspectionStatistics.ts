@@ -1,4 +1,5 @@
 import { percentiles } from "../helpers/percentiles";
+import { MonitoredSinkStatsKind } from "./api/Event";
 
 type SinkCompressedTimings = {
   averageInMS: number;
@@ -7,6 +8,7 @@ type SinkCompressedTimings = {
 };
 
 type SinkStats = {
+  kind: MonitoredSinkStatsKind | undefined;
   withoutContext: number;
   total: number;
   // array where we accumulate durations for each sink-request (e.g. mysql.query)
@@ -87,6 +89,7 @@ export class InspectionStatistics {
     for (const sink in this.stats) {
       const sinkStats = this.stats[sink];
       sinks[sink] = {
+        kind: sinkStats.kind,
         total: sinkStats.total,
         attacksDetected: {
           total: sinkStats.attacksDetected.total,
@@ -105,10 +108,14 @@ export class InspectionStatistics {
     };
   }
 
-  private ensureSinkStats(sink: string) {
+  private ensureSinkStats(
+    sink: string,
+    kind: MonitoredSinkStatsKind | undefined
+  ) {
     if (!this.stats[sink]) {
       this.stats[sink] = {
         withoutContext: 0,
+        kind: kind,
         total: 0,
         durations: [],
         compressedTimings: [],
@@ -118,6 +125,11 @@ export class InspectionStatistics {
           blocked: 0,
         },
       };
+    }
+
+    if (kind && !this.stats[sink].kind) {
+      // if we don't have a kind yet, set it
+      this.stats[sink].kind = kind;
     }
   }
 
@@ -163,8 +175,11 @@ export class InspectionStatistics {
     this.stats[sink].durations = [];
   }
 
-  interceptorThrewError(sink: string) {
-    this.ensureSinkStats(sink);
+  interceptorThrewError(
+    sink: string,
+    kind: MonitoredSinkStatsKind | undefined
+  ) {
+    this.ensureSinkStats(sink, kind);
     this.stats[sink].total += 1;
     this.stats[sink].interceptorThrewError += 1;
   }
@@ -186,18 +201,20 @@ export class InspectionStatistics {
 
   onInspectedCall({
     sink,
+    kind,
     blocked,
     attackDetected,
     durationInMs,
     withoutContext,
   }: {
     sink: string;
+    kind: MonitoredSinkStatsKind | undefined;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
     withoutContext: boolean;
   }) {
-    this.ensureSinkStats(sink);
+    this.ensureSinkStats(sink, kind);
 
     this.stats[sink].total += 1;
 

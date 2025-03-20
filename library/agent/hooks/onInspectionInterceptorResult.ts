@@ -2,6 +2,7 @@ import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import type { Agent } from "../Agent";
+import { MonitoredSinkStatsKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
@@ -16,11 +17,13 @@ export function onInspectionInterceptorResult(
   agent: Agent,
   result: InterceptorResult,
   pkgInfo: WrapPackageInfo,
-  start: number
+  start: number,
+  kind: MonitoredSinkStatsKind | undefined
 ) {
   const end = performance.now();
   agent.getInspectionStatistics().onInspectedCall({
     sink: pkgInfo.name,
+    kind: kind,
     attackDetected: !!result,
     blocked: agent.shouldBlock(),
     durationInMs: end - start,

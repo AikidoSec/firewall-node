@@ -1,3 +1,4 @@
+import { MonitoredSinkStatsKind } from "../api/Event";
 import { BuiltinModule } from "./BuiltinModule";
 import { Global } from "./Global";
 import { Package } from "./Package";
@@ -15,8 +16,12 @@ export class Hooks {
     return pkg;
   }
 
-  addGlobal(name: string, interceptors: InterceptorObject) {
-    const global = new Global(name, interceptors);
+  addGlobal(
+    name: string,
+    interceptors: InterceptorObject,
+    kind: MonitoredSinkStatsKind
+  ) {
+    const global = new Global(name, interceptors, kind);
     this.globals.push(global);
   }
 

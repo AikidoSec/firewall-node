@@ -53,9 +53,15 @@ export class MySQL implements Wrapper {
       .addPackage("mysql")
       .withVersion("^2.0.0")
       .onFileRequire("lib/Connection.js", (exports, pkgInfo) => {
-        wrapExport(exports.prototype, "query", pkgInfo, {
-          inspectArgs: (args) => this.inspectQuery(args),
-        });
+        wrapExport(
+          exports.prototype,
+          "query",
+          pkgInfo,
+          {
+            inspectArgs: (args) => this.inspectQuery(args),
+          },
+          "sql_op"
+        );
       });
   }
 }

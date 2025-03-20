@@ -43,9 +43,15 @@ export class Path implements Wrapper {
     const functions = ["join", "resolve", "normalize"];
 
     for (const func of functions) {
-      wrapExport(exports, func, pkgInfo, {
-        inspectArgs: (args) => this.inspectPath(args, func),
-      });
+      wrapExport(
+        exports,
+        func,
+        pkgInfo,
+        {
+          inspectArgs: (args) => this.inspectPath(args, func),
+        },
+        "path_op"
+      );
     }
   }
 

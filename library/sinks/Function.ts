@@ -34,8 +34,12 @@ export class Function implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks.addGlobal("Function", {
-      inspectArgs: this.inspectFunction,
-    });
+    hooks.addGlobal(
+      "Function",
+      {
+        inspectArgs: this.inspectFunction,
+      },
+      "eval_op"
+    );
   }
 }

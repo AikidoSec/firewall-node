@@ -10,21 +10,27 @@ export class PubSub implements Wrapper {
       .addPackage("@google-cloud/pubsub")
       .withVersion("^4.0.0")
       .onFileRequire("build/src/subscription.js", (exports, pkgInfo) => {
-        wrapExport(exports.Subscription.prototype, "on", pkgInfo, {
-          modifyArgs: (args) => {
-            if (
-              args.length > 0 &&
-              typeof args[0] === "string" &&
-              args[0] === "message" &&
-              typeof args[1] === "function"
-            ) {
-              const originalCallback = args[1];
-              args[1] = handleMessage(originalCallback);
-            }
+        wrapExport(
+          exports.Subscription.prototype,
+          "on",
+          pkgInfo,
+          {
+            modifyArgs: (args) => {
+              if (
+                args.length > 0 &&
+                typeof args[0] === "string" &&
+                args[0] === "message" &&
+                typeof args[1] === "function"
+              ) {
+                const originalCallback = args[1];
+                args[1] = handleMessage(originalCallback);
+              }
 
-            return args;
+              return args;
+            },
           },
-        });
+          undefined
+        );
       });
   }
 }

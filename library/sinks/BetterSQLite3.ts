@@ -70,18 +70,30 @@ export class BetterSQLite3 implements Wrapper {
       .withVersion("^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
       .onRequire((exports, pkgInfo) => {
         for (const func of sqlFunctions) {
-          wrapExport(exports.prototype, func, pkgInfo, {
-            inspectArgs: (args) => {
-              return this.inspectQuery(`better-sqlite3.${func}`, args);
+          wrapExport(
+            exports.prototype,
+            func,
+            pkgInfo,
+            {
+              inspectArgs: (args) => {
+                return this.inspectQuery(`better-sqlite3.${func}`, args);
+              },
             },
-          });
+            "sql_op"
+          );
         }
         for (const func of fsPathFunctions) {
-          wrapExport(exports.prototype, func, pkgInfo, {
-            inspectArgs: (args) => {
-              return this.inspectPath(`better-sqlite3.${func}`, args);
+          wrapExport(
+            exports.prototype,
+            func,
+            pkgInfo,
+            {
+              inspectArgs: (args) => {
+                return this.inspectPath(`better-sqlite3.${func}`, args);
+              },
             },
-          });
+            "sql_op"
+          );
         }
       });
   }

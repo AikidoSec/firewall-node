@@ -196,7 +196,8 @@ export class Prisma implements Wrapper {
         agent,
         inspectionResult,
         pkgInfo,
-        start
+        start,
+        isNoSQLClient ? "nosql_op" : "sql_op"
       );
     }
 

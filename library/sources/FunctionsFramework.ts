@@ -59,16 +59,22 @@ export class FunctionsFramework implements Wrapper {
       .addPackage("@google-cloud/functions-framework")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(exports, "http", pkgInfo, {
-          modifyArgs: (args) => {
-            if (args.length === 2 && typeof args[1] === "function") {
-              const httpFunction = args[1] as HttpFunction;
-              args[1] = createCloudFunctionWrapper(httpFunction);
-            }
+        wrapExport(
+          exports,
+          "http",
+          pkgInfo,
+          {
+            modifyArgs: (args) => {
+              if (args.length === 2 && typeof args[1] === "function") {
+                const httpFunction = args[1] as HttpFunction;
+                args[1] = createCloudFunctionWrapper(httpFunction);
+              }
 
-            return args;
+              return args;
+            },
           },
-        });
+          undefined
+        );
       });
   }
 }

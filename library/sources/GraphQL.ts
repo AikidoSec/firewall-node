@@ -160,11 +160,17 @@ export class GraphQL implements Wrapper {
     const methods = ["execute", "executeSync"];
 
     for (const method of methods) {
-      wrapExport(exports, method, pkgInfo, {
-        modifyReturnValue: (args, returnValue, agent) =>
-          this.handleRateLimiting(args, returnValue, agent),
-        inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
-      });
+      wrapExport(
+        exports,
+        method,
+        pkgInfo,
+        {
+          modifyReturnValue: (args, returnValue, agent) =>
+            this.handleRateLimiting(args, returnValue, agent),
+          inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
+        },
+        "graphql_op"
+      );
     }
   }
 

@@ -53,9 +53,15 @@ export class Xml2js implements Wrapper {
       .addPackage("xml2js")
       .withVersion("^0.6.0 || ^0.5.0 || ^0.4.18")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(exports.Parser.prototype, "parseString", pkgInfo, {
-          modifyArgs: (args) => this.modifyArgs(args),
-        });
+        wrapExport(
+          exports.Parser.prototype,
+          "parseString",
+          pkgInfo,
+          {
+            modifyArgs: (args) => this.modifyArgs(args),
+          },
+          "unserialize_op"
+        );
       });
   }
 }
