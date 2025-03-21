@@ -53,15 +53,10 @@ export class Postgres implements Wrapper {
       .addPackage("pg")
       .withVersion("^7.0.0 || ^8.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(
-          exports.Client.prototype,
-          "query",
-          pkgInfo,
-          {
-            inspectArgs: (args) => this.inspectQuery(args),
-          },
-          "sql_op"
-        );
+        wrapExport(exports.Client.prototype, "query", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(args),
+        });
       });
   }
 }

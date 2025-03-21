@@ -42,26 +42,16 @@ export class Express implements Wrapper {
       .withVersion("^4.0.0 || ^5.0.0")
       .onRequire((exports, pkgInfo) => {
         for (const method of expressMethodNames) {
-          wrapExport(
-            exports.Route.prototype,
-            method,
-            pkgInfo,
-            {
-              modifyArgs: (args, agent) => this.wrapArgs(args, agent),
-            },
-            undefined
-          );
+          wrapExport(exports.Route.prototype, method, pkgInfo, {
+            kind: undefined,
+            modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+          });
         }
 
-        wrapExport(
-          exports.application,
-          "use",
-          pkgInfo,
-          {
-            modifyArgs: (args, agent) => this.wrapArgs(args, agent),
-          },
-          undefined
-        );
+        wrapExport(exports.application, "use", pkgInfo, {
+          kind: undefined,
+          modifyArgs: (args, agent) => this.wrapArgs(args, agent),
+        });
       });
   }
 }

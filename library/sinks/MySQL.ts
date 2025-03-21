@@ -11,7 +11,7 @@ import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDi
 export class MySQL implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
 
-  private inspectQuery(args: unknown[]): InterceptorResult {
+  private inspectQuery(args: unknown[], operation: string): InterceptorResult {
     const context = getContext();
 
     if (!context) {
@@ -24,7 +24,7 @@ export class MySQL implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: "MySQL.query",
+        operation: operation,
         dialect: this.dialect,
       });
     }
@@ -40,7 +40,7 @@ export class MySQL implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: "MySQL.query",
+        operation: operation,
         dialect: this.dialect,
       });
     }
@@ -53,15 +53,18 @@ export class MySQL implements Wrapper {
       .addPackage("mysql")
       .withVersion("^2.0.0")
       .onFileRequire("lib/Connection.js", (exports, pkgInfo) => {
-        wrapExport(
-          exports.prototype,
-          "query",
-          pkgInfo,
-          {
-            inspectArgs: (args) => this.inspectQuery(args),
-          },
-          "sql_op"
-        );
+        wrapExport(exports.prototype, "query", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(args, "query"),
+        });
+        wrapExport(exports.prototype, "execute", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(args, "execute"),
+        });
+        wrapExport(exports.prototype, "prepare", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(args, "prepare"),
+        });
       });
   }
 }

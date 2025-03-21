@@ -26,6 +26,10 @@ export type InterceptorObject = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  // Set the kind of operation for the wrapped function/method
+  // This will be used to collect stats
+  // For sources, this will often be undefined
+  kind: OperationKind | undefined;
 };
 
 /**
@@ -36,8 +40,7 @@ export function wrapExport(
   subject: unknown,
   methodName: string | undefined,
   pkgInfo: WrapPackageInfo,
-  interceptors: InterceptorObject,
-  kind: OperationKind | undefined
+  interceptors: InterceptorObject
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -72,7 +75,7 @@ export function wrapExport(
               agent,
               pkgInfo,
               methodName || "",
-              kind
+              interceptors.kind
             );
           }
 

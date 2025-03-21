@@ -13,8 +13,8 @@ t.test("Agent is not initialized", async (t) => {
       { name: "test", type: "external" },
       {
         inspectArgs: () => {},
-      },
-      "outgoing_http_op"
+        kind: "outgoing_http_op"
+      }
     );
     t.fail();
   } catch (e: unknown) {
@@ -48,8 +48,8 @@ t.test("Inspect args", async (t) => {
       inspectArgs: (args) => {
         t.same(args, ["input"]);
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.same(toWrap.test("input"), "input");
@@ -70,8 +70,8 @@ t.test("Modify args", async (t) => {
       modifyArgs: (args) => {
         return ["modified"];
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.same(toWrap.test("input"), "modified");
@@ -92,8 +92,8 @@ t.test("Modify return value", async (t) => {
       modifyReturnValue: (args) => {
         return "modified";
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.same(toWrap.test(), "modified");
@@ -120,8 +120,8 @@ t.test("Combine interceptors", async (t) => {
       modifyReturnValue: (args, returnVal) => {
         return returnVal + "modReturn";
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.same(toWrap.test("input"), "modArgsmodReturn");
@@ -148,8 +148,8 @@ t.test("Catches error in interceptors", async (t) => {
       modifyReturnValue: () => {
         throw new Error("Error in interceptor");
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.same(toWrap.test(), "test");
@@ -174,8 +174,8 @@ t.test("With callback", async (t) => {
       inspectArgs: (args) => {
         t.same(args, ["input", bindContext(() => {})]);
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   toWrap.test("input", () => {});
@@ -192,8 +192,8 @@ t.test("Wrap non existing method", async (t) => {
     { name: "test", type: "external" },
     {
       inspectArgs: () => {},
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   );
 
   t.match(logger.getMessages(), [
@@ -215,8 +215,8 @@ t.test("Wrap default export", async (t) => {
       inspectArgs: (args) => {
         t.same(args, ["input"]);
       },
-    },
-    "outgoing_http_op"
+      kind: "outgoing_http_op"
+    }
   ) as Function;
 
   t.same(patched("input"), "input");

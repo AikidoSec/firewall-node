@@ -17,16 +17,10 @@ export class NodeSQLite implements Wrapper {
     hooks.addBuiltinModule("sqlite").onRequire((exports, pkgInfo) => {
       const dbSyncProto = exports.DatabaseSync.prototype;
       for (const func of sqlFunctions) {
-        wrapExport(
-          dbSyncProto,
-          func,
-          pkgInfo,
-          {
-            inspectArgs: (args) =>
-              this.inspectQuery(`node:sqlite.${func}`, args),
-          },
-          "sql_op"
-        );
+        wrapExport(dbSyncProto, func, pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery(`node:sqlite.${func}`, args),
+        });
       }
     });
   }

@@ -32,8 +32,7 @@ export function applyHooks(hooks: Hooks) {
         name: name,
         type: "global",
       },
-      g.getInterceptors(),
-      g.getKind()
+      g.getInterceptors()
     );
   });
 }

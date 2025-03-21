@@ -44,18 +44,13 @@ export class FastXmlParser implements Wrapper {
       .withVersion("^4.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "XMLParser", pkgInfo, (instance) => {
-          wrapExport(
-            instance,
-            "parse",
-            pkgInfo,
-            {
-              modifyReturnValue: (args, returnValue) => {
-                this.inspectParse(args, returnValue);
-                return returnValue;
-              },
+          wrapExport(instance, "parse", pkgInfo, {
+            kind: "unserialize_op",
+            modifyReturnValue: (args, returnValue) => {
+              this.inspectParse(args, returnValue);
+              return returnValue;
             },
-            "unserialize_op"
-          );
+          });
         });
       });
   }

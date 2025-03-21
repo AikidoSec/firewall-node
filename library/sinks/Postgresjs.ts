@@ -36,26 +36,16 @@ export class Postgresjs implements Wrapper {
       .addPackage("postgres")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        return wrapExport(
-          exports,
-          undefined,
-          pkgInfo,
-          {
-            modifyReturnValue: (args, returnValue) => {
-              wrapExport(
-                returnValue,
-                "unsafe",
-                pkgInfo,
-                {
-                  inspectArgs: (args) => this.inspectQuery(args),
-                },
-                "sql_op"
-              );
-              return returnValue;
-            },
+        return wrapExport(exports, undefined, pkgInfo, {
+          kind: undefined,
+          modifyReturnValue: (args, returnValue) => {
+            wrapExport(returnValue, "unsafe", pkgInfo, {
+              kind: "sql_op",
+              inspectArgs: (args) => this.inspectQuery(args),
+            });
+            return returnValue;
           },
-          undefined
-        );
+        });
       });
   }
 }

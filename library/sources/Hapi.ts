@@ -78,33 +78,18 @@ export class Hapi implements Wrapper {
   }
 
   private wrapServer(server: unknown, pkgInfo: WrapPackageInfo) {
-    wrapExport(
-      server,
-      "route",
-      pkgInfo,
-      {
-        modifyArgs: (args) => this.wrapRouteHandler(args),
-      },
-      undefined
-    );
-    wrapExport(
-      server,
-      "ext",
-      pkgInfo,
-      {
-        modifyArgs: (args) => this.wrapExtensionFunction(args),
-      },
-      undefined
-    );
-    wrapExport(
-      server,
-      "decorate",
-      pkgInfo,
-      {
-        modifyArgs: (args) => this.wrapDecorateFunction(args),
-      },
-      undefined
-    );
+    wrapExport(server, "route", pkgInfo, {
+      kind: undefined,
+      modifyArgs: (args) => this.wrapRouteHandler(args),
+    });
+    wrapExport(server, "ext", pkgInfo, {
+      kind: undefined,
+      modifyArgs: (args) => this.wrapExtensionFunction(args),
+    });
+    wrapExport(server, "decorate", pkgInfo, {
+      kind: undefined,
+      modifyArgs: (args) => this.wrapDecorateFunction(args),
+    });
   }
 
   wrap(hooks: Hooks) {

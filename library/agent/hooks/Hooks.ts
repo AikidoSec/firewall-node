@@ -1,4 +1,3 @@
-import { OperationKind } from "../api/Event";
 import { BuiltinModule } from "./BuiltinModule";
 import { Global } from "./Global";
 import { Package } from "./Package";
@@ -16,12 +15,8 @@ export class Hooks {
     return pkg;
   }
 
-  addGlobal(
-    name: string,
-    interceptors: InterceptorObject,
-    kind: OperationKind
-  ) {
-    const global = new Global(name, interceptors, kind);
+  addGlobal(name: string, interceptors: InterceptorObject) {
+    const global = new Global(name, interceptors);
     this.globals.push(global);
   }
 

@@ -49,74 +49,49 @@ export class HTTPServer implements Wrapper {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
         // Server classes are not exported in the http2 module
         if (module !== "http2") {
-          wrapExport(
-            exports,
-            "Server",
-            pkgInfo,
-            {
-              modifyArgs: (args, agent) => {
-                return this.wrapRequestListener(args, module, agent);
-              },
-            },
-            undefined
-          );
-        }
-
-        wrapExport(
-          exports,
-          "createServer",
-          pkgInfo,
-          {
+          wrapExport(exports, "Server", pkgInfo, {
+            kind: undefined,
             modifyArgs: (args, agent) => {
               return this.wrapRequestListener(args, module, agent);
             },
+          });
+        }
+
+        wrapExport(exports, "createServer", pkgInfo, {
+          kind: undefined,
+          modifyArgs: (args, agent) => {
+            return this.wrapRequestListener(args, module, agent);
           },
-          undefined
-        );
+        });
 
         wrapNewInstance(exports, "createServer", pkgInfo, (instance) => {
-          wrapExport(
-            instance,
-            "on",
-            pkgInfo,
-            {
-              modifyArgs: (args, agent) => {
-                return this.wrapOn(args, module, agent);
-              },
+          wrapExport(instance, "on", pkgInfo, {
+            kind: undefined,
+            modifyArgs: (args, agent) => {
+              return this.wrapOn(args, module, agent);
             },
-            undefined
-          );
+          });
         });
 
         if (module === "http2") {
-          wrapExport(
-            exports,
-            "createSecureServer",
-            pkgInfo,
-            {
-              modifyArgs: (args, agent) => {
-                return this.wrapRequestListener(args, module, agent);
-              },
+          wrapExport(exports, "createSecureServer", pkgInfo, {
+            kind: undefined,
+            modifyArgs: (args, agent) => {
+              return this.wrapRequestListener(args, module, agent);
             },
-            undefined
-          );
+          });
 
           wrapNewInstance(
             exports,
             "createSecureServer",
             pkgInfo,
             (instance) => {
-              wrapExport(
-                instance,
-                "on",
-                pkgInfo,
-                {
-                  modifyArgs: (args, agent) => {
-                    return this.wrapOn(args, module, agent);
-                  },
+              wrapExport(instance, "on", pkgInfo, {
+                kind: undefined,
+                modifyArgs: (args, agent) => {
+                  return this.wrapOn(args, module, agent);
                 },
-                undefined
-              );
+              });
             }
           );
         }

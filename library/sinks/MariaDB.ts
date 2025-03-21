@@ -53,15 +53,10 @@ export class MariaDB implements Wrapper {
     const functions = ["query", "execute", "prepare", "batch"];
 
     for (const fn of functions) {
-      wrapExport(
-        exports.prototype,
-        fn,
-        pkgInfo,
-        {
-          inspectArgs: (args) => this.inspectQuery(args, fn),
-        },
-        "sql_op"
-      );
+      wrapExport(exports.prototype, fn, pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery(args, fn),
+      });
     }
   }
 
@@ -69,15 +64,10 @@ export class MariaDB implements Wrapper {
     const functions = ["query", "execute", "batch"];
 
     for (const fn of functions) {
-      wrapExport(
-        exports.prototype,
-        fn,
-        pkgInfo,
-        {
-          inspectArgs: (args) => this.inspectQuery(args, fn),
-        },
-        "sql_op"
-      );
+      wrapExport(exports.prototype, fn, pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => this.inspectQuery(args, fn),
+      });
     }
   }
 

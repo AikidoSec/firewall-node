@@ -20,83 +20,48 @@ const PATH_PREFIXES = [
 export class ChildProcess implements Wrapper {
   wrap(hooks: Hooks) {
     hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
-      wrapExport(
-        exports,
-        "exec",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectExec(args, "exec");
-          },
+      wrapExport(exports, "exec", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "exec");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "execSync",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectExec(args, "execSync");
-          },
+      });
+      wrapExport(exports, "execSync", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectExec(args, "execSync");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "spawn",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectSpawn(args, "spawn");
-          },
+      });
+      wrapExport(exports, "spawn", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawn");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "spawnSync",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectSpawn(args, "spawnSync");
-          },
+      });
+      wrapExport(exports, "spawnSync", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectSpawn(args, "spawnSync");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "execFile",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectExecFile(args, "execFile");
-          },
+      });
+      wrapExport(exports, "execFile", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFile");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "execFileSync",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectExecFile(args, "execFileSync");
-          },
+      });
+      wrapExport(exports, "execFileSync", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectExecFile(args, "execFileSync");
         },
-        "exec_op"
-      );
-      wrapExport(
-        exports,
-        "fork",
-        pkgInfo,
-        {
-          inspectArgs: (args) => {
-            return this.inspectFork(args, "fork");
-          },
+      });
+      wrapExport(exports, "fork", pkgInfo, {
+        kind: "exec_op",
+        inspectArgs: (args) => {
+          return this.inspectFork(args, "fork");
         },
-        "exec_op"
-      );
+      });
     });
   }
 

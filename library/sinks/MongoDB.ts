@@ -194,50 +194,30 @@ export class MongoDB implements Wrapper {
     const collectionProto = exports.Collection.prototype;
 
     OPERATIONS_WITH_FILTER.forEach((operation) => {
-      wrapExport(
-        collectionProto,
-        operation,
-        pkgInfo,
-        {
-          inspectArgs: (args, agent, collection) =>
-            this.inspectOperation(operation, args, collection as Collection),
-        },
-        "nosql_op"
-      );
+      wrapExport(collectionProto, operation, pkgInfo, {
+        kind: "nosql_op",
+        inspectArgs: (args, agent, collection) =>
+          this.inspectOperation(operation, args, collection as Collection),
+      });
     });
 
-    wrapExport(
-      collectionProto,
-      "bulkWrite",
-      pkgInfo,
-      {
-        inspectArgs: (args, agent, collection) =>
-          this.inspectBulkWrite(args, collection as Collection),
-      },
-      "nosql_op"
-    );
+    wrapExport(collectionProto, "bulkWrite", pkgInfo, {
+      kind: "nosql_op",
+      inspectArgs: (args, agent, collection) =>
+        this.inspectBulkWrite(args, collection as Collection),
+    });
 
-    wrapExport(
-      collectionProto,
-      "aggregate",
-      pkgInfo,
-      {
-        inspectArgs: (args, agent, collection) =>
-          this.inspectAggregate(args, collection as Collection),
-      },
-      "nosql_op"
-    );
+    wrapExport(collectionProto, "aggregate", pkgInfo, {
+      kind: "nosql_op",
+      inspectArgs: (args, agent, collection) =>
+        this.inspectAggregate(args, collection as Collection),
+    });
 
-    wrapExport(
-      collectionProto,
-      "distinct",
-      pkgInfo,
-      {
-        inspectArgs: (args, agent, collection) =>
-          this.inspectDistinct(args, collection as Collection),
-      },
-      "nosql_op"
-    );
+    wrapExport(collectionProto, "distinct", pkgInfo, {
+      kind: "nosql_op",
+      inspectArgs: (args, agent, collection) =>
+        this.inspectDistinct(args, collection as Collection),
+    });
   }
 
   wrap(hooks: Hooks) {
