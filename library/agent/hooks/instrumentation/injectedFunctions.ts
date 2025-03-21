@@ -50,7 +50,6 @@ export function __wrapBuiltinExports(id: string, exports: unknown): unknown {
     type: "builtin",
   };
 
-  // Todo check if cache is needed
   for (const interceptor of interceptors) {
     try {
       const returnVal = interceptor(exports, pkgInfo);

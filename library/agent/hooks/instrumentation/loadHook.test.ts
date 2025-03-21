@@ -52,8 +52,11 @@ t.test(
       t.fail("onRequire should not be called (old hook system)");
     });
 
+    let httpOnRequireCount = 0;
+
     hooks.addBuiltinModule("http").onRequire((exports, pkgInfo) => {
       exports.test = 42;
+      ++httpOnRequireCount;
     });
 
     applyHooks(hooks, true);
@@ -89,6 +92,8 @@ t.test(
 
     process.env.AIKIDO_UNIT_TEST = "true";
 
+    t.same(httpOnRequireCount, 0);
+
     const honoRequire = require("hono") as typeof import("hono");
 
     t.same(esmPkgInspectArgs.length, 0);
@@ -114,10 +119,16 @@ t.test(
     t.same(esmPkgInspectArgs[1][1], "/test2");
     t.same(typeof esmPkgInspectArgs[1][2], "function");
 
+    t.same(httpOnRequireCount, 0);
     const http = require("node:http");
     t.equal(http.test, 42);
     t.equal(typeof http.createServer, "function");
     t.equal(typeof http.Server, "function");
+    t.same(httpOnRequireCount, 1);
+
+    // Not patched twice
+    require("node:http");
+    t.same(httpOnRequireCount, 1);
 
     // Require unpatched module
     const assert = require("assert") as typeof import("assert");

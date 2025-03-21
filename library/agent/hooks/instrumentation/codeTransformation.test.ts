@@ -408,3 +408,93 @@ t.test(
     );
   }
 );
+
+// Rest args like ...args are not supported at the moment, so we don't want to modify the source code
+t.test("modify rest parameter args", async (t) => {
+  const result = transformCode(
+    "test.js",
+    `class Test {
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(...args) {
+            console.log("test");
+          }
+        }`,
+    true,
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          inspectArgs: false,
+          modifyArgs: true,
+          modifyReturnValue: false,
+        },
+      ],
+    }
+  );
+
+  t.same(
+    compareCodeStrings(
+      result,
+      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+        class Test {
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(...args) {
+                console.log("test");
+            }
+        }`
+    ),
+    true
+  );
+
+  const result2 = transformCode(
+    "test.js",
+    `class Test {
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(abc, ...args) {
+            console.log("test");
+          }
+        }`,
+    true,
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          inspectArgs: false,
+          modifyArgs: true,
+          modifyReturnValue: false,
+        },
+      ],
+    }
+  );
+
+  t.same(
+    compareCodeStrings(
+      result2,
+      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+        class Test {
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(abc, ...args) {
+                [abc] = __instrumentModifyArgs("testmodule.test.js.testFunction.v1.0.0", [abc]);
+                console.log("test");
+            }
+        }`
+    ),
+    true
+  );
+});

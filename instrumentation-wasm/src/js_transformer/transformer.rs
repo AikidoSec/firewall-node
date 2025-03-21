@@ -113,8 +113,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            // Todo check whats appens if rest parameter is used
-
             get_method_arg_names(node)
         } else {
             Vec::new()
@@ -122,7 +120,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         let body = node.value.body.as_mut().unwrap();
 
-        if instruction.modify_args {
+        if instruction.modify_args && !arg_names.is_empty() {
             // Modify the arguments by adding a statement to the beginning of the function
             // [arg1, arg2, ...] = __instrumentModifyArgs('function_identifier', [arg1, arg2, ...]);
 
