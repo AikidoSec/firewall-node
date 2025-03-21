@@ -15,6 +15,7 @@ export class MySQL2 implements Wrapper {
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
+
     if (!context) {
       return undefined;
     }
@@ -93,7 +94,8 @@ export class MySQL2 implements Wrapper {
         // Wrap connection.execute
         wrapExport(connectionPrototype, "execute", pkgInfo, {
           kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+          inspectArgs: (args, agent) =>
+            this.inspectQuery("mysql2.execute", args),
         });
       }
     };
