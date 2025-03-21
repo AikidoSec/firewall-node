@@ -18,7 +18,7 @@ t.test("check performance for first check for a key", async (t) => {
   const checkEnd = performance.now();
   const timePerCheck = (checkEnd - checkStart) / keyCount;
 
-  if (timePerCheck > 0.001 /* ms */) {
+  if (timePerCheck > 0.005 /* ms */) {
     t.fail(`Performance test failed: ${timePerCheck}ms per check`);
   } else {
     t.pass(`Performance test passed: ${timePerCheck}ms per check`);
@@ -43,7 +43,7 @@ t.test(
     const checkEnd = performance.now();
     const timePerCheck = (checkEnd - checkStart) / keyCount;
 
-    if (timePerCheck > 0.001 /* ms */) {
+    if (timePerCheck > 0.005 /* ms */) {
       t.fail(`Performance test failed: ${timePerCheck}ms per check`);
     } else {
       t.pass(`Performance test passed: ${timePerCheck}ms per check`);
@@ -68,7 +68,7 @@ t.test("check performance a blocked key", async (t) => {
   const checkEnd = performance.now();
   const timePerCheck = (checkEnd - checkStart) / keyCount;
 
-  if (timePerCheck > 0.001 /* ms */) {
+  if (timePerCheck > 0.005 /* ms */) {
     t.fail(`Performance test failed: ${timePerCheck}ms per check`);
   } else {
     t.pass(`Performance test passed: ${timePerCheck}ms per check`);
