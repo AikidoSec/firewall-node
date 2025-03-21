@@ -35,38 +35,29 @@ t.test(
     const hooks = new Hooks();
 
     let modifyCalled = false;
-    hooks.addGlobal(
-      "fetch",
-      {
-        modifyArgs: (args) => {
-          modifyCalled = true;
-          return args;
-        },
+    hooks.addGlobal("fetch", {
+      kind: "outgoing_http_op",
+      modifyArgs: (args) => {
+        modifyCalled = true;
+        return args;
       },
-      "outgoing_http_op"
-    );
+    });
 
     let inspectCalled = false;
-    hooks.addGlobal(
-      "atob",
-      {
-        inspectArgs: (args) => {
-          inspectCalled = true;
-        },
+    hooks.addGlobal("atob", {
+      kind: "outgoing_http_op",
+      inspectArgs: (args) => {
+        inspectCalled = true;
       },
-      "outgoing_http_op"
-    );
+    });
 
     // Unknown global
-    hooks.addGlobal(
-      "unknown",
-      {
-        inspectArgs: (args) => {
-          return;
-        },
+    hooks.addGlobal("unknown", {
+      kind: "outgoing_http_op",
+      inspectArgs: (args) => {
+        return;
       },
-      "outgoing_http_op"
-    );
+    });
 
     // Without name
     // @ts-expect-error Test with invalid arguments
@@ -102,17 +93,12 @@ t.test("it ignores route if force protection off is on", async (t) => {
 
   const hooks = new Hooks();
   hooks.addBuiltinModule("dns/promises").onRequire((exports, pkgInfo) => {
-    wrapExport(
-      exports,
-      "lookup",
-      pkgInfo,
-      {
-        inspectArgs: (args, agent) => {
-          inspectionCalls.push({ args });
-        },
+    wrapExport(exports, "lookup", pkgInfo, {
+      kind: "outgoing_http_op",
+      inspectArgs: (args, agent) => {
+        inspectionCalls.push({ args });
       },
-      "outgoing_http_op"
-    );
+    });
   });
 
   applyHooks(hooks);
@@ -174,24 +160,19 @@ t.test("it ignores route if force protection off is on", async (t) => {
 t.test("it does not report attack if IP is allowed", async (t) => {
   const hooks = new Hooks();
   hooks.addBuiltinModule("os").onRequire((exports, pkgInfo) => {
-    wrapExport(
-      exports,
-      "hostname",
-      pkgInfo,
-      {
-        inspectArgs: (args, agent) => {
-          return {
-            operation: "os.hostname",
-            source: "body",
-            pathsToPayload: ["path"],
-            payload: "payload",
-            metadata: {},
-            kind: "path_traversal",
-          };
-        },
+    wrapExport(exports, "hostname", pkgInfo, {
+      kind: "path_op",
+      inspectArgs: (args, agent) => {
+        return {
+          operation: "os.hostname",
+          source: "body",
+          pathsToPayload: ["path"],
+          payload: "payload",
+          metadata: {},
+          kind: "path_traversal",
+        };
       },
-      "path_op"
-    );
+    });
   });
 
   applyHooks(hooks);
