@@ -12,8 +12,8 @@ t.test("Agent is not initialized", async (t) => {
       "test",
       { name: "test", type: "external" },
       {
+        kind: "outgoing_http_op",
         inspectArgs: () => {},
-        kind: "outgoing_http_op"
       }
     );
     t.fail();
@@ -45,10 +45,10 @@ t.test("Inspect args", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         t.same(args, ["input"]);
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -67,10 +67,10 @@ t.test("Modify args", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       modifyArgs: (args) => {
         return ["modified"];
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -89,10 +89,10 @@ t.test("Modify return value", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       modifyReturnValue: (args) => {
         return "modified";
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -111,6 +111,7 @@ t.test("Combine interceptors", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         t.same(args, ["input"]);
       },
@@ -120,7 +121,6 @@ t.test("Combine interceptors", async (t) => {
       modifyReturnValue: (args, returnVal) => {
         return returnVal + "modReturn";
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -139,6 +139,7 @@ t.test("Catches error in interceptors", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: () => {
         throw new Error("Error in interceptor");
       },
@@ -148,7 +149,6 @@ t.test("Catches error in interceptors", async (t) => {
       modifyReturnValue: () => {
         throw new Error("Error in interceptor");
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -171,10 +171,10 @@ t.test("With callback", async (t) => {
     "test",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         t.same(args, ["input", bindContext(() => {})]);
       },
-      kind: "outgoing_http_op"
     }
   );
 
@@ -191,8 +191,8 @@ t.test("Wrap non existing method", async (t) => {
     "test123",
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: () => {},
-      kind: "outgoing_http_op"
     }
   );
 
@@ -212,10 +212,10 @@ t.test("Wrap default export", async (t) => {
     undefined,
     { name: "test", type: "external" },
     {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         t.same(args, ["input"]);
       },
-      kind: "outgoing_http_op"
     }
   ) as Function;
 
