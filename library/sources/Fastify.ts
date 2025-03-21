@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { RouteOptions } from "fastify";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";

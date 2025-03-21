@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
@@ -121,9 +122,7 @@ export class FileSystem implements Wrapper {
     this.patchedPromises = true;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   wrap(hooks: Hooks) {
-    // eslint-disable-next-line max-lines-per-function
     hooks.addBuiltinModule("fs").onRequire((exports, pkgInfo) => {
       const functions = this.getFunctions();
 
