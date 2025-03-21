@@ -53,3 +53,5 @@ jobs:
         run: cd benchmarks/api-discovery && node benchmark.js
       - name: Run Express Benchmark
         run: cd benchmarks/express && node benchmark.js
+      - name: Check Rate Limiter memory usage
+        run: cd benchmarks/rate-limiting && node --expose-gc memory.js
