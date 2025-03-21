@@ -170,12 +170,12 @@ export class HTTPRequest implements Wrapper {
           wrapExport(exports, method, pkgInfo, {
             kind: "outgoing_http_op",
             // Whenever a request is made, we'll check the hostname whether it's a private IP
-            inspectArgs: (args) =>
-              this.inspectHttpRequest(args, exports.agent, module),
+            inspectArgs: (args, agent) =>
+              this.inspectHttpRequest(args, agent, module),
             // Whenever a request is made, we'll modify the options to pass a custom lookup function
             // that will inspect resolved IP address (and thus preventing TOCTOU attacks)
-            modifyArgs: (args) =>
-              this.monitorDNSLookups(args, exports.agent, module),
+            modifyArgs: (args, agent) =>
+              this.monitorDNSLookups(args, agent, module),
           });
         }
       });
