@@ -304,7 +304,7 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
           stats: {
-            sinks: stats.sinks,
+            operations: stats.operations,
             startedAt: stats.startedAt,
             endedAt: endedAt,
             requests: stats.requests,

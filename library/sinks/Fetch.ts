@@ -161,6 +161,7 @@ export class Fetch implements Wrapper {
     }
 
     hooks.addGlobal("fetch", {
+      kind: "outgoing_http_op",
       // Whenever a request is made, we'll check the hostname whether it's a private IP
       inspectArgs: (args, agent) => this.inspectFetch(args, agent),
       modifyArgs: (args, agent) => {

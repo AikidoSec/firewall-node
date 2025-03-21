@@ -47,6 +47,7 @@ export class Hono implements Wrapper {
         wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
           METHODS.forEach((method) => {
             wrapExport(instance, method, pkgInfo, {
+              kind: undefined,
               modifyArgs: this.wrapArgs,
             });
           });

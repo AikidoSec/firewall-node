@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
@@ -20,36 +21,43 @@ export class ChildProcess implements Wrapper {
   wrap(hooks: Hooks) {
     hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
       wrapExport(exports, "exec", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExec(args, "exec");
         },
       });
       wrapExport(exports, "execSync", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExec(args, "execSync");
         },
       });
       wrapExport(exports, "spawn", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectSpawn(args, "spawn");
         },
       });
       wrapExport(exports, "spawnSync", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectSpawn(args, "spawnSync");
         },
       });
       wrapExport(exports, "execFile", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExecFile(args, "execFile");
         },
       });
       wrapExport(exports, "execFileSync", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExecFile(args, "execFileSync");
         },
       });
       wrapExport(exports, "fork", pkgInfo, {
+        kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectFork(args, "fork");
         },

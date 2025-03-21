@@ -45,6 +45,7 @@ export class FastXmlParser implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "XMLParser", pkgInfo, (instance) => {
           wrapExport(instance, "parse", pkgInfo, {
+            kind: "unserialize_op",
             modifyReturnValue: (args, returnValue) => {
               this.inspectParse(args, returnValue);
               return returnValue;
