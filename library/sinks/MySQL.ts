@@ -11,7 +11,7 @@ import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDi
 export class MySQL implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
 
-  private inspectQuery(args: unknown[], operation: string): InterceptorResult {
+  private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
 
     if (!context) {
@@ -24,7 +24,7 @@ export class MySQL implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: operation,
+        operation: "MySQL.query",
         dialect: this.dialect,
       });
     }
@@ -40,7 +40,7 @@ export class MySQL implements Wrapper {
       return checkContextForSqlInjection({
         sql: sql,
         context: context,
-        operation: operation,
+        operation: "MySQL.query",
         dialect: this.dialect,
       });
     }
@@ -55,15 +55,7 @@ export class MySQL implements Wrapper {
       .onFileRequire("lib/Connection.js", (exports, pkgInfo) => {
         wrapExport(exports.prototype, "query", pkgInfo, {
           kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery(args, "query"),
-        });
-        wrapExport(exports.prototype, "execute", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery(args, "execute"),
-        });
-        wrapExport(exports.prototype, "prepare", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery(args, "prepare"),
+          inspectArgs: (args) => this.inspectQuery(args),
         });
       });
   }
