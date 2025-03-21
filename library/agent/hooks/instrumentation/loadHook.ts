@@ -8,9 +8,11 @@ import { generateBuildinShim } from "./builtinShim";
 import {
   getPackageFileInstrumentationInstructions,
   shouldPatchBuiltin,
+  shouldPatchFile,
   shouldPatchPackage,
 } from "./instructions";
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
+import { getInstance } from "../../AgentSingleton";
 
 export function onModuleLoad(
   path: string,
@@ -75,26 +77,27 @@ function patchPackage(
     return previousLoadResult;
   }
 
-  // Check if the installed package version is supported (get all matching versioned packages)
-  // Todo: Right now we only allow one matching instruction set for one file
+  if (!shouldPatchFile(moduleInfo.name, moduleInfo.path)) {
+    // We don't want to patch this file
+    return previousLoadResult;
+  }
+
+  // Right now we only allow one matching instruction set for one file
   // So if e.g. multiple version are matching, we only use the first one
-  // To discuss if there is any use case for multiple matching versions
   const matchingInstructions = getPackageFileInstrumentationInstructions(
     moduleInfo.name,
     pkgVersion,
     moduleInfo.path
   );
 
-  // Todo: This is called for every file of the package, find a better way to do this
-  /*
   const agent = getInstance();
   if (agent) {
     // Report to the agent that the package was wrapped or not if it's version is not supported
     agent.onPackageWrapped(moduleInfo.name, {
       version: pkgVersion,
-      supported: !!matchingVersionedPackages.length,
+      supported: !!matchingInstructions,
     });
-  }*/
+  }
 
   if (!matchingInstructions) {
     // We don't want to patch this package version or file

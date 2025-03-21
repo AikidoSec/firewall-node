@@ -94,6 +94,18 @@ export function getPackageFileInstrumentationInstructions(
   );
 }
 
+export function shouldPatchFile(
+  packageName: string,
+  filePath: string
+): boolean {
+  const instructions = packages.get(packageName);
+  if (!instructions) {
+    return false;
+  }
+
+  return instructions.some((f) => f.path === filePath);
+}
+
 export function getPackageCallbacks(
   identifier: string
 ): IntereptorFunctionsObj {
