@@ -1,20 +1,20 @@
 import { percentiles } from "../helpers/percentiles";
-import { MonitoredSinkStatsKind } from "./api/Event";
+import { OperationKind } from "./api/Event";
 
-type SinkCompressedTimings = {
+type OperationCompressedTimings = {
   averageInMS: number;
   percentiles: Record<string, number>;
   compressedAt: number;
 };
 
-type SinkStats = {
-  kind: MonitoredSinkStatsKind | undefined;
+type OperationStats = {
+  kind: OperationKind;
   withoutContext: number;
   total: number;
   // array where we accumulate durations for each sink-request (e.g. mysql.query)
   durations: number[];
   // array where we put compressed blocks of stats
-  compressedTimings: SinkCompressedTimings[];
+  compressedTimings: OperationCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
@@ -22,11 +22,11 @@ type SinkStats = {
   };
 };
 
-type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
+type OperationStatsWithoutTimings = Omit<OperationStats, "durations">;
 
 export class InspectionStatistics {
   private startedAt = Date.now();
-  private stats: Record<string, SinkStats> = {};
+  private operations: Record<string, OperationStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
   private requests: {
@@ -50,7 +50,7 @@ export class InspectionStatistics {
   }
 
   hasCompressedStats() {
-    return Object.values(this.stats).some(
+    return Object.values(this.operations).some(
       (sinkStats) => sinkStats.compressedTimings.length > 0
     );
   }
@@ -58,13 +58,13 @@ export class InspectionStatistics {
   isEmpty() {
     return (
       this.requests.total === 0 &&
-      Object.keys(this.stats).length === 0 &&
+      Object.keys(this.operations).length === 0 &&
       this.requests.attacksDetected.total === 0
     );
   }
 
   reset() {
-    this.stats = {};
+    this.operations = {};
     this.requests = {
       total: 0,
       aborted: 0,
@@ -74,7 +74,7 @@ export class InspectionStatistics {
   }
 
   getStats(): {
-    sinks: Record<string, SinkStatsWithoutTimings>;
+    operations: OperationStatsWithoutTimings[];
     startedAt: number;
     requests: {
       total: number;
@@ -85,35 +85,32 @@ export class InspectionStatistics {
       };
     };
   } {
-    const sinks: Record<string, SinkStatsWithoutTimings> = {};
-    for (const sink in this.stats) {
-      const sinkStats = this.stats[sink];
-      sinks[sink] = {
-        kind: sinkStats.kind,
-        total: sinkStats.total,
+    const operations: OperationStatsWithoutTimings[] = [];
+    for (const kind in this.operations) {
+      const stats = this.operations[kind];
+      operations.push({
+        kind: stats.kind,
+        withoutContext: stats.withoutContext,
+        interceptorThrewError: stats.interceptorThrewError,
+        total: stats.total,
         attacksDetected: {
-          total: sinkStats.attacksDetected.total,
-          blocked: sinkStats.attacksDetected.blocked,
+          total: stats.attacksDetected.total,
+          blocked: stats.attacksDetected.blocked,
         },
-        interceptorThrewError: sinkStats.interceptorThrewError,
-        withoutContext: sinkStats.withoutContext,
-        compressedTimings: sinkStats.compressedTimings,
-      };
+        compressedTimings: stats.compressedTimings,
+      });
     }
 
     return {
-      sinks: sinks,
+      operations: operations,
       startedAt: this.startedAt,
       requests: this.requests,
     };
   }
 
-  private ensureSinkStats(
-    sink: string,
-    kind: MonitoredSinkStatsKind | undefined
-  ) {
-    if (!this.stats[sink]) {
-      this.stats[sink] = {
+  private ensureOperationStats(kind: OperationKind) {
+    if (!this.operations[kind]) {
+      this.operations[kind] = {
         withoutContext: 0,
         kind: kind,
         total: 0,
@@ -126,25 +123,20 @@ export class InspectionStatistics {
         },
       };
     }
-
-    if (kind && !this.stats[sink].kind) {
-      // if we don't have a kind yet, set it
-      this.stats[sink].kind = kind;
-    }
   }
 
-  private compressPerfSamples(sink: string) {
+  private compressPerfSamples(kind: OperationKind) {
     /* c8 ignore start */
-    if (!this.stats[sink]) {
+    if (!this.operations[kind]) {
       return;
     }
 
-    if (this.stats[sink].durations.length === 0) {
+    if (this.operations[kind].durations.length === 0) {
       return;
     }
     /* c8 ignore stop */
 
-    const timings = this.stats[sink].durations;
+    const timings = this.operations[kind].durations;
     const averageInMS =
       timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
 
@@ -153,7 +145,7 @@ export class InspectionStatistics {
       timings
     );
 
-    this.stats[sink].compressedTimings.push({
+    this.operations[kind].compressedTimings.push({
       averageInMS,
       percentiles: {
         "50": p50,
@@ -166,22 +158,19 @@ export class InspectionStatistics {
     });
 
     if (
-      this.stats[sink].compressedTimings.length >
+      this.operations[kind].compressedTimings.length >
       this.maxCompressedStatsInMemory
     ) {
-      this.stats[sink].compressedTimings.shift();
+      this.operations[kind].compressedTimings.shift();
     }
 
-    this.stats[sink].durations = [];
+    this.operations[kind].durations = [];
   }
 
-  interceptorThrewError(
-    sink: string,
-    kind: MonitoredSinkStatsKind | undefined
-  ) {
-    this.ensureSinkStats(sink, kind);
-    this.stats[sink].total += 1;
-    this.stats[sink].interceptorThrewError += 1;
+  interceptorThrewError(kind: OperationKind) {
+    this.ensureOperationStats(kind);
+    this.operations[kind].total += 1;
+    this.operations[kind].interceptorThrewError += 1;
   }
 
   onDetectedAttack({ blocked }: { blocked: boolean }) {
@@ -200,46 +189,44 @@ export class InspectionStatistics {
   }
 
   onInspectedCall({
-    sink,
     kind,
     blocked,
     attackDetected,
     durationInMs,
     withoutContext,
   }: {
-    sink: string;
-    kind: MonitoredSinkStatsKind | undefined;
+    kind: OperationKind;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
     withoutContext: boolean;
   }) {
-    this.ensureSinkStats(sink, kind);
+    this.ensureOperationStats(kind);
 
-    this.stats[sink].total += 1;
+    this.operations[kind].total += 1;
 
     if (withoutContext) {
-      this.stats[sink].withoutContext += 1;
+      this.operations[kind].withoutContext += 1;
       return;
     }
 
-    if (this.stats[sink].durations.length >= this.maxPerfSamplesInMemory) {
-      this.compressPerfSamples(sink);
+    if (this.operations[kind].durations.length >= this.maxPerfSamplesInMemory) {
+      this.compressPerfSamples(kind);
     }
 
-    this.stats[sink].durations.push(durationInMs);
+    this.operations[kind].durations.push(durationInMs);
 
     if (attackDetected) {
-      this.stats[sink].attacksDetected.total += 1;
+      this.operations[kind].attacksDetected.total += 1;
       if (blocked) {
-        this.stats[sink].attacksDetected.blocked += 1;
+        this.operations[kind].attacksDetected.blocked += 1;
       }
     }
   }
 
   forceCompress() {
-    for (const sink in this.stats) {
-      this.compressPerfSamples(sink);
+    for (const kind in this.operations) {
+      this.compressPerfSamples(kind as OperationKind);
     }
   }
 }

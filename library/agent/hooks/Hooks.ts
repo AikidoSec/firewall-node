@@ -1,4 +1,4 @@
-import { MonitoredSinkStatsKind } from "../api/Event";
+import { OperationKind } from "../api/Event";
 import { BuiltinModule } from "./BuiltinModule";
 import { Global } from "./Global";
 import { Package } from "./Package";
@@ -19,7 +19,7 @@ export class Hooks {
   addGlobal(
     name: string,
     interceptors: InterceptorObject,
-    kind: MonitoredSinkStatsKind
+    kind: OperationKind
   ) {
     const global = new Global(name, interceptors, kind);
     this.globals.push(global);

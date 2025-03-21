@@ -64,7 +64,7 @@ export type DetectedAttack = {
   time: number;
 };
 
-export type MonitoredSinkStatsKind =
+export type OperationKind =
   | "sql_op"
   | "nosql_op"
   | "outgoing_http_op"
@@ -75,7 +75,8 @@ export type MonitoredSinkStatsKind =
   | "graphql_op"
   | "eval_op";
 
-type MonitoredSinkStats = {
+type OperationStats = {
+  kind: OperationKind;
   attacksDetected: {
     total: number;
     blocked: number;
@@ -83,7 +84,6 @@ type MonitoredSinkStats = {
   interceptorThrewError: number;
   withoutContext: number;
   total: number;
-  kind: MonitoredSinkStatsKind | undefined;
   compressedTimings: {
     averageInMS: number;
     percentiles: Record<string, number>;
@@ -94,7 +94,7 @@ type MonitoredSinkStats = {
 type Heartbeat = {
   type: "heartbeat";
   stats: {
-    sinks: Record<string, MonitoredSinkStats>;
+    operations: OperationStats[];
     startedAt: number;
     endedAt: number;
     requests: {
