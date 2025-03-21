@@ -126,7 +126,9 @@ export class FileSystem implements Wrapper {
 
         wrapExport(exports, name, pkgInfo, {
           kind: "fs_op",
-          inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
+          inspectArgs: (args) => {
+            return this.inspectPath(args, name, pathsArgs);
+          },
         });
 
         if (sync) {
