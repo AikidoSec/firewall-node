@@ -12,9 +12,9 @@ export function generateBuildinShim(
   }
 
   if (isCJSRequire) {
-    return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-    const { __wrapBuiltinExports } = require('${importPath}');
-      
+    return `const { __getUnpatchedBuiltinModule, __wrapBuiltinExports } = require('${importPath}');
+    const orig = __getUnpatchedBuiltinModule(${JSON.stringify(builtinName)});
+
     module.exports = __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
     `;
   }
@@ -25,9 +25,8 @@ export function generateBuildinShim(
   }
   const exportArray = Array.from(modExports);
 
-  return `const orig = process.getBuiltinModule(${JSON.stringify(builtinName)});
-    const { __wrapBuiltinExports } = require('${importPath}');
-
+  return `const { __getUnpatchedBuiltinModule, __wrapBuiltinExports } = require('${importPath}');
+    const orig = __getUnpatchedBuiltinModule(${JSON.stringify(builtinName)});
     const wrapped = __wrapBuiltinExports("${builtinNameWithoutPrefix}", orig);
     
     Object.defineProperty(exports, "__esModule", { value: true });

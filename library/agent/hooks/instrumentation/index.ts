@@ -1,6 +1,7 @@
 import { onModuleLoad } from "./loadHook";
 import * as mod from "node:module";
 import type { RegisterHookFunction } from "./types";
+import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
 
 let hooksRegistered = false;
 
@@ -23,4 +24,6 @@ export function registerNodeHooks() {
       return onModuleLoad(url, context, result);
     },
   });
+
+  patchProcessGetBuiltinModule();
 }

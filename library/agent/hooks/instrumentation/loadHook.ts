@@ -34,16 +34,10 @@ export function onModuleLoad(
     // The returned source is ignored if the format is 'builtin'
     const isBuiltin =
       previousLoadResult.format === "builtin" || isBuiltinModule(path);
-    // True if already patched by another hook system
-    const isModifiedBuiltin =
-      (context.format &&
-        context.format === "builtin" &&
-        previousLoadResult.format !== "builtin") ||
-      false;
 
     // For Node.js builtin modules
     if (isBuiltin) {
-      return patchBuiltin(path, previousLoadResult, context, isModifiedBuiltin);
+      return patchBuiltin(path, previousLoadResult, context);
     }
 
     return patchPackage(path, previousLoadResult);
@@ -127,13 +121,9 @@ function patchPackage(
 function patchBuiltin(
   builtinName: string,
   previousLoadResult: ReturnType<LoadFunction>,
-  context: Parameters<LoadFunction>[1],
-  isAlreadyModified: boolean
+  context: Parameters<LoadFunction>[1]
 ) {
-  if (isAlreadyModified) {
-    // Todo support
-    return previousLoadResult;
-  }
+  // Todo test if used with import-in-the-middle at the same time
 
   const builtinNameWithoutPrefix = removeNodePrefix(builtinName);
 

@@ -3,6 +3,7 @@ import { getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
 import { WrapPackageInfo } from "../WrapPackageInfo";
 import { getBuiltinInterceptors, getPackageCallbacks } from "./instructions";
+import { getUnpatchedBuiltinModule } from "./processGetBuiltin";
 
 export function __instrumentInspectArgs(id: string, args: unknown[]): void {
   const agent = getInstance();
@@ -93,4 +94,8 @@ export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
   }
 
   return args;
+}
+
+export function __getUnpatchedBuiltinModule(id: string) {
+  return getUnpatchedBuiltinModule(id);
 }
