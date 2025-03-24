@@ -15,7 +15,13 @@ use super::{
     instructions::FileInstructions,
 };
 
-pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) -> String {
+pub fn transform_code_str(
+    pkg_name: &str,
+    pkg_version: &str,
+    code: &str,
+    instructions_json: &str,
+    src_type: i32,
+) -> String {
     let allocator = Allocator::default();
 
     let file_instructions: FileInstructions =
@@ -48,6 +54,8 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
+        pkg_name: &pkg_name,
+        pkg_version: &pkg_version,
     };
 
     traverse_mut(t, &allocator, program, scopes);
@@ -80,6 +88,8 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
 struct Transformer<'a> {
     allocator: &'a Allocator,
     file_instructions: &'a FileInstructions,
+    pkg_name: &'a str,
+    pkg_version: &'a str,
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
@@ -136,8 +146,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         if instruction.inspect_args {
             // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments);
             let source_text: &'a str = self.allocator.alloc_str(&format!(
-                "__instrumentInspectArgs('{}', arguments);",
-                instruction.identifier
+                "__instrumentInspectArgs('{}', arguments, '{}', '{}', '{}');",
+                instruction.identifier, self.pkg_name, self.pkg_version, instruction.name
             ));
 
             insert_single_statement_into_func(self.allocator, body, 0, source_text);

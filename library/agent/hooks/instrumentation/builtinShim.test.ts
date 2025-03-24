@@ -11,7 +11,7 @@ t.test(
     skip: getMajorNodeVersion() < 20 ? "Node.js 20+ required" : false,
   },
   (t) => {
-    const agent = createTestAgent();
+    createTestAgent();
 
     const fsPromises = new BuiltinModule("fs/promises");
 

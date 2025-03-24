@@ -5,7 +5,13 @@ import { WrapPackageInfo } from "../WrapPackageInfo";
 import { getBuiltinInterceptors, getPackageCallbacks } from "./instructions";
 import { getUnpatchedBuiltinModule } from "./processGetBuiltin";
 
-export function __instrumentInspectArgs(id: string, args: unknown[]): void {
+export function __instrumentInspectArgs(
+  id: string,
+  args: unknown[],
+  pkgName: string,
+  pkgVersion: string,
+  methodName: string
+) {
   const agent = getInstance();
   if (!agent) {
     return;
@@ -23,13 +29,11 @@ export function __instrumentInspectArgs(id: string, args: unknown[]): void {
       context,
       agent,
       {
-        // Todo implement
-        name: "foo",
-        version: "bar",
+        name: pkgName,
+        version: pkgVersion,
         type: "external",
       },
-      // Todo implement
-      ""
+      methodName
     );
   }
 }

@@ -7,6 +7,8 @@ const compareCodeStrings = (code1: string, code2: string) => {
 
 t.test("add inspectArgs to method definition (ESM)", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `
         import { test } from "test";
@@ -30,7 +32,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -51,7 +53,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testmodule.test.js.testFunction.v1.0.0", arguments); 
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
             console.log("test");
         }
     }`
@@ -62,6 +64,8 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
 
 t.test("add inspectArgs to method definition (CJS)", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `
           import { test } from "test";
@@ -85,7 +89,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -106,7 +110,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
               this.testFunction(testValue);
           }
           testFunction(arg1) {
-              __instrumentInspectArgs("testmodule.test.js.testFunction.v1.0.0", arguments); 
+              __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
               console.log("test");
           }
       }`
@@ -117,6 +121,8 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
 
 t.test("wrong function name", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `
             import { test } from "test";
@@ -140,7 +146,7 @@ t.test("wrong function name", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunctionABC",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -171,6 +177,8 @@ t.test("wrong function name", async (t) => {
 
 t.test("typescript code", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.ts",
     `
               import { test } from "test";
@@ -194,7 +202,7 @@ t.test("typescript code", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunctionABC",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -226,6 +234,8 @@ t.test("typescript code", async (t) => {
 t.test("typescript code in a js file", async (t) => {
   try {
     transformCode(
+      "testpkg",
+      "1.0.0",
       "test.js",
       `
                 import { test } from "test";
@@ -271,7 +281,7 @@ t.test("typescript code in a js file", async (t) => {
 });
 
 t.test("empty code", async (t) => {
-  const result = transformCode("test.mjs", "", false, {
+  const result = transformCode("testpkg", "1.0.0", "test.mjs", "", false, {
     path: "test.mjs",
     versionRange: "^1.0.0",
     functions: [
@@ -297,6 +307,8 @@ t.test("empty code", async (t) => {
 
 t.test("add modifyArgs to method definition (ESM)", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `
           import { test } from "test";
@@ -354,6 +366,8 @@ t.test(
   "add modifyArgs and inspectArgs to method definition (ESM)",
   async (t) => {
     const result = transformCode(
+      "testpkg",
+      "1.0.0",
       "test.js",
       `
             import { test } from "test";
@@ -362,9 +376,9 @@ t.test(
                 private testValue = 42;
     
                 constructor() {
-                    this.testFunction(testValue);
+                    this.testFunction2(testValue);
                 }
-                testFunction(arg1) {
+                testFunction2(arg1) {
                     console.log("test");
                 }
             }
@@ -376,8 +390,8 @@ t.test(
         functions: [
           {
             nodeType: "MethodDefinition",
-            name: "testFunction",
-            identifier: "testmodule.test.js.testFunction.v1.0.0",
+            name: "testFunction2",
+            identifier: "testpkg.test.js.testFunction2.v1.0.0",
             inspectArgs: true,
             modifyArgs: true,
             modifyReturnValue: false,
@@ -395,11 +409,11 @@ t.test(
             private testValue = 42;
     
             constructor() {
-                this.testFunction(testValue);
+                this.testFunction2(testValue);
             }
-            testFunction(arg1) {
-                __instrumentInspectArgs("testmodule.test.js.testFunction.v1.0.0", arguments);
-                [arg1] = __instrumentModifyArgs("testmodule.test.js.testFunction.v1.0.0", [arg1]);
+            testFunction2(arg1) {
+                __instrumentInspectArgs("testpkg.test.js.testFunction2.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction2");
+                [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.v1.0.0", [arg1]);
                 console.log("test");
             }
         }`
@@ -412,6 +426,8 @@ t.test(
 // Rest args like ...args are not supported at the moment, so we don't want to modify the source code
 t.test("modify rest parameter args", async (t) => {
   const result = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `class Test {
           constructor() {
@@ -455,6 +471,8 @@ t.test("modify rest parameter args", async (t) => {
   );
 
   const result2 = transformCode(
+    "testpkg",
+    "1.0.0",
     "test.js",
     `class Test {
           constructor() {

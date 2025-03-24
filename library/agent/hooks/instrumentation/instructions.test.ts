@@ -150,11 +150,17 @@ t.test("it works using injected functions", async (t) => {
   setBuiltinsToInstrument([builtin]);
 
   t.equal(pkgInspectArgsCalled, false);
-  __instrumentInspectArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
+  __instrumentInspectArgs(
+    "foo.bar.js.bazABCDEF.^1.0.0",
+    [],
+    "foo",
+    "1.0.0",
+    "baz"
+  );
   __instrumentModifyArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
-  __instrumentInspectArgs("foo.bar.js.baz.^1.0.0", []);
+  __instrumentInspectArgs("foo.bar.js.baz.^1.0.0", [], "foo", "1.0.0", "baz");
   __instrumentModifyArgs("foo.bar.js.baz.^1.0.0", []);
   // No agent yet
   t.equal(pkgInspectArgsCalled, false);
@@ -162,12 +168,18 @@ t.test("it works using injected functions", async (t) => {
 
   createTestAgent();
 
-  __instrumentInspectArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
+  __instrumentInspectArgs(
+    "foo.bar.js.bazABCDEF.^1.0.0",
+    [],
+    "foo",
+    "1.0.0",
+    "bazABCDEF"
+  );
   __instrumentModifyArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
 
-  __instrumentInspectArgs("foo.bar.js.baz.^1.0.0", []);
+  __instrumentInspectArgs("foo.bar.js.baz.^1.0.0", [], "foo", "1.0.0", "baz");
   t.equal(pkgInspectArgsCalled, true);
   t.same(__instrumentModifyArgs("foo.bar.js.baz.^1.0.0", []), [42]);
   t.equal(pkgModifyArgsCalled, true);
@@ -240,7 +252,13 @@ t.test("all injected functions handle errors", async (t) => {
   setPackagesToInstrument([pkg]);
   createTestAgent();
 
-  __instrumentInspectArgs("foo.dist/test.mjs.abc.^1.0.0", []);
+  __instrumentInspectArgs(
+    "foo.dist/test.mjs.abc.^1.0.0",
+    [],
+    "foo",
+    "1.0.0",
+    "abc"
+  );
   __instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []);
   t.same(__instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []), []);
 });

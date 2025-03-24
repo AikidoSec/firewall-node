@@ -9,7 +9,7 @@ t.test(
   "it throws an error if Node.js version is not supported",
   {
     skip:
-      "registerHooks" in mod ? "Only test on older Node.js versions" : false,
+      "registerHooks" in mod ? "Only tested on older Node.js versions" : false,
   },
   async (t) => {
     createTestAgent();

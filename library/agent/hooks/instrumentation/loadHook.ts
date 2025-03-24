@@ -101,6 +101,8 @@ function patchPackage(
   const isESM = previousLoadResult.format === "module";
 
   const newSource = transformCode(
+    moduleInfo.name,
+    pkgVersion,
     path,
     previousLoadResult.source.toString(),
     isESM,
