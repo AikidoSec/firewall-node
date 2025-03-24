@@ -120,8 +120,9 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     },
     () => {
       const response = http.request(`http://[::]:${port}`, (res) => {
-        // consume body
-        while (res.read()) {}
+        while (res.read()) {
+          // consume body
+        }
 
         t.same(res.statusCode, 200);
       });

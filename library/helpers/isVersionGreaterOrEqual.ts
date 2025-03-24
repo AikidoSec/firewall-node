@@ -23,7 +23,7 @@ export function isVersionGreaterOrEqual(
     }
 
     return patch1 >= patch2;
-  } catch (e) {
+  } catch {
     return false;
   }
 }

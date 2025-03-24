@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
