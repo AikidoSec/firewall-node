@@ -1,4 +1,4 @@
-/* eslint-disable import/no-unused-modules */
+/* eslint-disable import/no-unused-modules, no-console */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
@@ -10,6 +10,7 @@ import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
+import { isESM } from "./helpers/isESM";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -17,7 +18,13 @@ if (!isNewHookSystemUsed()) {
   const shouldEnable = shouldEnableFirewall();
 
   if (supported && shouldEnable) {
-    require("./agent/protect").protect();
+    if (!isESM()) {
+      require("./agent/protect").protect();
+    } else {
+      console.warn(
+        "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable AIKIDO. Please refer to the documentation for more information."
+      );
+    }
   }
 }
 
