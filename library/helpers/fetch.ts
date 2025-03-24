@@ -1,4 +1,4 @@
-import { IncomingMessage, request as requestHttp } from "http";
+import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
@@ -84,15 +84,18 @@ export async function fetch({
     new Promise<{
       body: string;
       statusCode: number;
-    }>((_, reject) =>
-      setTimeout(() => {
+    }>((_, reject) => {
+      const timeout = setTimeout(() => {
         abort.abort();
         reject(
           new Error(
             `Request to ${url.toString()} timed out after ${timeoutInMS}ms`
           )
         );
-      }, timeoutInMS)
-    ),
+      }, timeoutInMS);
+
+      // We don't want to keep Node.js running because of this timeout
+      timeout.unref();
+    }),
   ]);
 }

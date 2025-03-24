@@ -102,10 +102,10 @@ t.test("it detects JS injections using Function", async (t) => {
         "const x = a + b + c + 1 + 1; console.log('hello'); return x;"
       )(2, 6)
     );
-    t.ok(error2 instanceof Error);
-    if (error2 instanceof Error) {
+    t.ok(error3 instanceof Error);
+    if (error3 instanceof Error) {
       t.same(
-        error2.message,
+        error3.message,
         "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
       );
     }

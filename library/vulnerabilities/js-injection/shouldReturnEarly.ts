@@ -1,6 +1,6 @@
 export function shouldReturnEarly(code: string, userInput: string) {
   // User input too small or larger than query
-  if (userInput.length <= 1 || code.length < userInput.length) {
+  if (userInput.length <= 2 || code.length < userInput.length) {
     return true;
   }
 
