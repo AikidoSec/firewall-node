@@ -44,8 +44,7 @@ export class Users {
   }
 
   asArray() {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return Array.from(this.users.entries()).map(([key, user]) => {
+    return Array.from(this.users.entries()).map(([_key, user]) => {
       return {
         id: user.id,
         name: user.name,

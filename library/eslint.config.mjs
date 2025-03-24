@@ -45,6 +45,10 @@ export default defineConfig([
           message: "Avoid using 'arguments' in arrow functions.",
         },
       ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
+      ],
     },
   },
   // Only for test files
