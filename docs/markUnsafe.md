@@ -1,40 +1,55 @@
 # Marking Unsafe Input
 
-To flag input as unsafe, you can use the `markUnsafe` function. This is useful when you want to explicitly label data as potentially dangerous, such as output from an LLM being used to generate a file name. Here's are some examples:
+To flag input as unsafe, you can use the `markUnsafe` function. This is useful when you want to explicitly label data as potentially dangerous, such as output from an LLM being used to generate a file name. Here's an example using OpenAI's function calling feature:
 
 ```js
-const Zen = require("@aikidosec/firewall");
-const OpenAI = require("openai");
-const fs = require("fs/promises");
+import Zen from "@aikidosec/firewall";
+import OpenAI from "openai";
+import { promises } from "fs/promises";
+
+const openai = new OpenAI();
 
 const completion = await openai.chat.completions.create({
+  model: "gpt-4",
   messages: [
-    { role: "user", content: "Generate a filename to save the report." },
+    {
+      role: "user",
+      content: "Read the contents of the config file"
+    }
   ],
+  tools: [
+    {
+      type: "function",
+      function: {
+        name: "read_file",
+        description: "Read the contents of a file",
+        parameters: {
+          type: "object",
+          properties: {
+            filepath: {
+              type: "string",
+              description: "The path to the file to read"
+            }
+          },
+          required: ["filepath"]
+        }
+      }
+    }
+  ]
 });
 
-const generatedFilename = completion.choices[0].message.content;
+const toolCall = completion.choices[0].message.tool_calls[0];
+const filepath = JSON.parse(toolCall.function.arguments).filepath;
 
-// Mark the generated filename as unsafe
-Zen.markUnsafe(generatedFilename);
+// Mark the filepath as unsafe since it came from the LLM
+Zen.markUnsafe(filepath);
 
-await fs.writeFile(`reports/${generatedFilename}`);
+// This will be blocked if the LLM tries to perform path traversal
+// e.g. if filepath is "../../../etc/passwd"
+await fs.readFile(filepath);
 ```
 
-The LLM returns JSON data:
-
-```js
-const completion = await openai.chat.completions.create({
-  messages: [
-    { role: "user", content: "Return some JSON data." },
-  ],
-});
-
-const data = JSON.parse(completion.choices[0].message.content);
-
-// Mark the generated JSON as unsafe
-Zen.markUnsafe(data);
-```
+This example shows how to protect against path traversal attacks when using OpenAI's function calling feature. The LLM might try to access sensitive files using path traversal (e.g., `../../../etc/passwd`), but Zen will detect and block these attempts.
 
 You can also pass multiple arguments to `markUnsafe`:
 
@@ -42,9 +57,9 @@ You can also pass multiple arguments to `markUnsafe`:
 Zen.markUnsafe(a, b, c);
 ```
 
-The output of LLM models should be treated as potentially dangerous, as they can be manipulated to perform attacks. Similarly, other dynamically generated or user-controlled inputs may also be sources of potential attacks.
-
 You can pass strings, objects, and arrays to `markUnsafe`. Zen will track the marked data across your application and will be able to detect any attacks that may be attempted using the marked data.
+
+## Caveats when marking data as unsafe
 
 ⚠️ Be careful when marking data as unsafe, as it may lead to false positives. If you generate a full SQL query using an LLM and mark it as unsafe, Zen will flag all queries using that SQL as an attack.
 
