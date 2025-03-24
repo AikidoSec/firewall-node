@@ -5,7 +5,7 @@ To flag input as unsafe, you can use the `markUnsafe` function. This is useful w
 ```js
 import Zen from "@aikidosec/firewall";
 import OpenAI from "openai";
-import { promises } from "fs/promises";
+import { readFile } from "fs/promises";
 
 const openai = new OpenAI();
 
@@ -46,7 +46,7 @@ Zen.markUnsafe(filepath);
 
 // This will be blocked if the LLM tries to perform path traversal
 // e.g. if filepath is "../../../etc/passwd"
-await fs.readFile(filepath);
+await readFile(filepath);
 ```
 
 This example shows how to protect against path traversal attacks when using OpenAI's function calling feature. The LLM might try to access sensitive files using path traversal (e.g., `../../../etc/passwd`), but Zen will detect and block these attempts.
