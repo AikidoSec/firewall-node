@@ -2,9 +2,6 @@ import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { getPortFromURL } from "../../helpers/getPortFromURL";
-import { trustProxy } from "../../helpers/trustProxy";
-import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isRequestToItself } from "./isRequestToItself";
 
