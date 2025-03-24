@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
 import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -36,7 +35,7 @@ export class GraphQL implements Wrapper {
       try {
         const schema = this.graphqlModule.printSchema(executeArgs.schema);
         agent.onGraphQLSchema(context.method, context.route, schema);
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     }
@@ -175,7 +174,7 @@ export class GraphQL implements Wrapper {
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
       })
-      .onRequire((exports, pkgInfo) => {
+      .onRequire((exports) => {
         this.graphqlModule = exports;
       });
 

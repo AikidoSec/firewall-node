@@ -31,7 +31,7 @@ export function wrapOnHeaders(
 
             onRedirect(destinationUrl, requestContext, context);
           }
-        } catch (e) {
+        } catch {
           // Ignore, log later if we have log levels
         }
       }

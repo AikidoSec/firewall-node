@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type { Collection } from "mongodb-v6";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";

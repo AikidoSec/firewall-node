@@ -14,7 +14,7 @@ export function getRemoteAddress(c: Context): string | undefined {
       if ("address" in addressInfo && typeof addressInfo.address === "string") {
         return addressInfo.address;
       }
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }

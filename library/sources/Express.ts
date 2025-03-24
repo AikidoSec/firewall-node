@@ -1,7 +1,5 @@
-/* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
 import { METHODS } from "http";
-import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./express/wrapRequestHandler";
@@ -18,7 +16,7 @@ export class Express implements Wrapper {
   // app.use(middleware, middleware, ...)
   // app.use(path, middleware)
   // app.use(path, middleware, middleware, ...)
-  private wrapArgs(args: unknown[], agent: Agent) {
+  private wrapArgs(args: unknown[]) {
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {

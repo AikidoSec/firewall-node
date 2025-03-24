@@ -1,0 +1,3 @@
+.tap/
+agent/hooks/instrumentation/wasm/
+internals/

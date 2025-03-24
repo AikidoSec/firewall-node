@@ -398,7 +398,6 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
 t.test(
   "it ignores IMDS SSRF with untrusted domain when endpoint protection is force off",
   async (t) => {
-    const logger = new LoggerNoop();
     const api = new ReportingAPIForTesting({
       success: true,
       heartbeatIntervalInMS: 10 * 60 * 1000,
