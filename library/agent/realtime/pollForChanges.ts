@@ -41,8 +41,8 @@ export function pollForChanges({
   }
 
   interval = setInterval(() => {
-    check(token, onConfigUpdate).catch(() => {
-      logger.log("Failed to check for config updates");
+    check(token, onConfigUpdate).catch((error) => {
+      logger.log(`Failed to check for config updates: ${error.message}`);
     });
   }, 60 * 1000);
 

@@ -61,6 +61,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
+* ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
 
 ### Cloud providers
 
@@ -154,6 +155,10 @@ To block requests, set the `AIKIDO_BLOCK` environment variable to `true`.
 
 See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn how to send events to Aikido.
 
+## Additional configuration
+
+[Configure Zen using environment variables for authentication, mode settings, debugging, and more.](https://help.aikido.dev/doc/configuration-via-env-vars/docrSItUkeR9)
+
 ## License
 
 This program is offered under a commercial and under the AGPL license.
@@ -165,19 +170,11 @@ disclosing the source code of your own applications.
 For more information, please contact Aikido Security at this
 address: support@aikido.dev or create an account at https://app.aikido.dev.
 
-## Performance
+## Benchmarks
 
 We run a benchmark on every commit to ensure Zen has a minimal impact on your application's performance.
 
-The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Zen:
-
-| Without Zen      | With Zen      | Difference in ms |
-|------------------|---------------|------------------|
-| 0.214ms          | 0.222ms       | +0.008ms         |
-
-(Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
-
-See [benchmarks](benchmarks) for more information.
+See [benchmarks](benchmarks)
 
 ## Bug bounty program
 

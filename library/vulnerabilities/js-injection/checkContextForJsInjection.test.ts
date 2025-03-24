@@ -23,11 +23,12 @@ t.test("it returns correct path", async () => {
     }),
     {
       operation: "eval",
-      kind: "js_injection",
+      kind: "code_injection",
       source: "body",
       pathsToPayload: [".calc"],
       metadata: {
-        js: "const x = 1 + 1; fetch();",
+        code: "const x = 1 + 1; fetch();",
+        language: "js",
       },
       payload: "1 + 1; fetch()",
     }

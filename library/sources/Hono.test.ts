@@ -27,9 +27,11 @@ wrap(fetch, "fetch", function mock(original) {
             {
               source: "geoip",
               description: "geo restrictions",
-              ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+              ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
             },
           ],
+          blockedUserAgents: "hacker|attacker",
+          allowedIPAddresses: [],
         }),
       };
     }
@@ -57,7 +59,7 @@ const agent = createTestAgent({
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
-    allowedIPAddresses: ["4.3.2.1"],
+    allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -90,6 +92,28 @@ function getApp() {
   addHonoMiddleware(app);
 
   app.all("/", (c) => {
+    return c.json(getContext());
+  });
+
+  app.post("/json", async (c) => {
+    try {
+      const json = await c.req.json();
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        return c.text("Invalid JSON", 400);
+      }
+      throw e;
+    }
+    return c.json(getContext());
+  });
+
+  app.post("/text", async (c) => {
+    const text = await c.req.text();
+    return c.json(getContext());
+  });
+
+  app.post("/form", async (c) => {
+    const form = await c.req.parseBody();
     return c.json(getContext());
   });
 
@@ -139,7 +163,7 @@ t.test("it adds context from request for GET", opts, async (t) => {
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/json", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -152,12 +176,12 @@ t.test("it adds JSON body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/",
+    route: "/json",
   });
 });
 
 t.test("it adds form body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/form", {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -170,12 +194,12 @@ t.test("it adds form body to context", opts, async (t) => {
     method: "POST",
     body: { title: "test" },
     source: "hono",
-    route: "/",
+    route: "/form",
   });
 });
 
 t.test("it adds text body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/text", {
     method: "POST",
     headers: {
       "content-type": "text/plain",
@@ -188,12 +212,12 @@ t.test("it adds text body to context", opts, async (t) => {
     method: "POST",
     body: "test",
     source: "hono",
-    route: "/",
+    route: "/text",
   });
 });
 
 t.test("it adds xml body to context", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const response = await getApp().request("/text", {
     method: "POST",
     headers: {
       "content-type": "application/xml",
@@ -206,7 +230,7 @@ t.test("it adds xml body to context", opts, async (t) => {
     method: "POST",
     body: "<test>test</test>",
     source: "hono",
-    route: "/",
+    route: "/text",
   });
 });
 
@@ -308,7 +332,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   server.close();
 });
 
-t.test("ip blocking works (real socket)", opts, async (t) => {
+t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   // Start a server with a real socket
   // The blocking is implemented in the HTTPServer source
   const { serve } =
@@ -335,13 +359,13 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
   const response2 = await fetch.fetch({
     url: new URL("http://127.0.0.1:8766/"),
     headers: {
-      "X-Forwarded-For": "fe80::1234:5678:abcd:ef12", // Blocked IP
+      "X-Forwarded-For": "e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2", // Blocked IP
     },
   });
   t.equal(response2.statusCode, 403);
   t.equal(
     response2.body,
-    "Your IP address is blocked due to geo restrictions. (Your IP: fe80::1234:5678:abcd:ef12)"
+    "Your IP address is blocked due to geo restrictions. (Your IP: e98c:a7ba:2329:8c69:a13a:8aff:a932:13f2)"
   );
 
   // Test allowed IP
@@ -352,6 +376,19 @@ t.test("ip blocking works (real socket)", opts, async (t) => {
     },
   });
   t.equal(response3.statusCode, 200);
+
+  // Test blocked user agent
+  const response4 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8766/"),
+    headers: {
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response4.statusCode, 403);
+  t.equal(
+    response4.body,
+    "You are not allowed to access this resource because you have been identified as a bot."
+  );
 
   // Cleanup server
   server.close();
@@ -364,4 +401,165 @@ t.test("The hono async context still works", opts, async (t) => {
 
   const body = await response.text();
   t.equal(body, "test-value");
+});
+
+t.test("Proxy request", opts, async (t) => {
+  const { Hono } = require("hono") as typeof import("hono");
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+
+  const app = new Hono();
+
+  app.on(["GET", "POST"], "/proxy", async (c) => {
+    const response = await globalThis.fetch(
+      new Request("http://127.0.0.1:8768/body", {
+        method: c.req.method,
+        headers: c.req.raw.headers,
+        body: c.req.raw.body,
+        // @ts-expect-error wrong types
+        duplex: "half",
+        redirect: "manual",
+      })
+    );
+    // clone the response to return a response with modifiable headers
+    return new Response(response.body, response);
+  });
+
+  app.post("/body", async (c) => {
+    return await c.req.json();
+  });
+
+  const server = serve({
+    fetch: app.fetch,
+    port: 8767,
+    hostname: "127.0.0.1",
+  });
+
+  const app2 = new Hono();
+  app2.all("/*", async (c) => {
+    return c.text(await c.req.text());
+  });
+
+  const server2 = serve({
+    fetch: app2.fetch,
+    port: 8768,
+    hostname: "127.0.0.1",
+  });
+
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8767/proxy"),
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ a: 1 }),
+  });
+  t.equal(response.statusCode, 200);
+  t.equal(response.body, JSON.stringify({ a: 1 }));
+
+  // Cleanup servers
+  server.close();
+  server2.close();
+});
+
+t.test("Body parsing in middleware", opts, async (t) => {
+  const { Hono } = require("hono") as typeof import("hono");
+
+  const app = new Hono<{ Variables: { body: any } }>();
+
+  app.use(async (c, next) => {
+    c.set("body", await c.req.json());
+    return next();
+  });
+
+  app.post("/", async (c) => {
+    return c.json(getContext());
+  });
+
+  const response = await app.request("/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ x: 42 }),
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    method: "POST",
+    body: { x: 42 },
+    source: "hono",
+    route: "/",
+  });
+});
+
+t.test("invalid json body", opts, async (t) => {
+  const app = getApp();
+
+  const response = await app.request("/json", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: "invalid",
+  });
+
+  t.same(response.status, 400);
+  t.same(await response.text(), "Invalid JSON");
+});
+
+t.test("bypass list works", opts, async (t) => {
+  // Start a server with a real socket
+  // The blocking is implemented in the HTTPServer source
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8769,
+  });
+
+  // It blocks bot
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.2.2.2",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response.statusCode, 403);
+  t.equal(
+    response.body,
+    "You are not allowed to access this resource because you have been identified as a bot."
+  );
+
+  // It does not block bypassed IP
+  const response2 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "4.3.2.1",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response2.statusCode, 200);
+
+  const response3 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.1.2.2",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response3.statusCode, 200);
+
+  const response4 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.1.2.254",
+      "User-Agent": "hacker",
+    },
+  });
+  t.equal(response4.statusCode, 200);
+
+  // Cleanup server
+  server.close();
 });

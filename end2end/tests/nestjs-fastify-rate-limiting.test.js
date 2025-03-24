@@ -53,14 +53,14 @@ t.beforeEach(async () => {
 });
 
 t.test("it rate limits requests", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     cwd: pathToApp,
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
       PORT: "4002",
     },
   });
@@ -115,14 +115,14 @@ t.test("it rate limits requests", (t) => {
 });
 
 t.test("user rate limiting works", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", "dist/main"], {
+  const server = spawn(`node`, ["dist/main"], {
     cwd: pathToApp,
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
       PORT: "4003",
     },
   });

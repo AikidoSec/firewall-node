@@ -1,4 +1,8 @@
-const { updateBlockedIPAddresses } = require("../zen/config");
+const {
+  updateBlockedIPAddresses,
+  updateBlockedUserAgents,
+  updateAllowedIPAddresses,
+} = require("../zen/config");
 
 module.exports = function updateIPLists(req, res) {
   if (!req.app) {
@@ -27,6 +31,20 @@ module.exports = function updateIPLists(req, res) {
   }
 
   updateBlockedIPAddresses(req.app, req.body.blockedIPAddresses);
+
+  if (
+    req.body.blockedUserAgents &&
+    typeof req.body.blockedUserAgents === "string"
+  ) {
+    updateBlockedUserAgents(req.app, req.body.blockedUserAgents);
+  }
+
+  if (
+    req.body.allowedIPAddresses &&
+    Array.isArray(req.body.allowedIPAddresses)
+  ) {
+    updateAllowedIPAddresses(req.app, req.body.allowedIPAddresses);
+  }
 
   res.json({ success: true });
 };

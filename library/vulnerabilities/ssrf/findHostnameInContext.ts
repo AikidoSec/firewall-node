@@ -2,6 +2,9 @@ import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { trustProxy } from "../../helpers/trustProxy";
+import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isRequestToItself } from "./isRequestToItself";
 
@@ -18,6 +21,19 @@ export function findHostnameInContext(
   context: Context,
   port: number | undefined
 ): HostnameLocation | undefined {
+  if (
+    context.url &&
+    isRequestToItself({
+      serverUrl: context.url,
+      outboundHostname: hostname,
+      outboundPort: port,
+    })
+  ) {
+    // We don't want to block outgoing requests to the same host as the server
+    // (often happens that we have a match on headers like `Host`, `Origin`, `Referer`, etc.)
+    return undefined;
+  }
+
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
     if (!userInput) {
@@ -28,20 +44,6 @@ export function findHostnameInContext(
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
         const paths = getPathsToPayload(str, context[source]);
-
-        if (
-          isRequestToItself({
-            str: str,
-            source: source,
-            port: port,
-            paths: paths,
-          })
-        ) {
-          // Application might do a request to itself when the hostname is localhost
-          // Let's allow this for the following headers: Host, Origin, Referer
-          // We still want to block if the port is different
-          continue;
-        }
 
         return {
           source: source,

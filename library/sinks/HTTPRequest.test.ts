@@ -37,20 +37,24 @@ wrap(dns, "lookup", function lookup(original) {
   };
 });
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost:4000/api/internal",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
-};
+function createContext(): Context {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://local.aikido.io",
+    query: {},
+    headers: {},
+    body: {
+      image: "http://localhost:4000/api/internal",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
+}
+
+t.setTimeout(60 * 1000);
 
 t.test("it works", (t) => {
   const agent = createTestAgent({
@@ -63,7 +67,7 @@ t.test("it works", (t) => {
   const http = require("http") as typeof import("http");
   const https = require("https") as typeof import("https");
 
-  runWithContext(context, () => {
+  runWithContext(createContext(), () => {
     const aikido = http.request("http://aikido.dev");
     aikido.end();
   });
@@ -73,7 +77,7 @@ t.test("it works", (t) => {
   ]);
   agent.getHostnames().clear();
 
-  runWithContext(context, () => {
+  runWithContext(createContext(), () => {
     const aikido = https.request("https://aikido.dev");
     aikido.end();
   });
@@ -133,7 +137,10 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(
-    { ...context, ...{ body: { image: "thisdomainpointstointernalip.com" } } },
+    {
+      ...createContext(),
+      ...{ body: { image: "thisdomainpointstointernalip.com" } },
+    },
     () => {
       https
         .request("https://thisdomainpointstointernalip.com")
@@ -155,7 +162,10 @@ t.test("it works", (t) => {
   );
 
   runWithContext(
-    { ...context, ...{ body: { image: "thisdomainpointstointernalip2.com" } } },
+    {
+      ...createContext(),
+      ...{ body: { image: "thisdomainpointstointernalip2.com" } },
+    },
     () => {
       https
         .request("https://thisdomainpointstointernalip2.com", (res) => {
@@ -174,7 +184,7 @@ t.test("it works", (t) => {
     }
   );
 
-  runWithContext(context, () => {
+  runWithContext(createContext(), () => {
     // With lookup function specified
     const google = http.request("http://google.com", { lookup: dns.lookup });
     google.end();
@@ -184,7 +194,7 @@ t.test("it works", (t) => {
     google2.end();
   });
 
-  runWithContext(context, () => {
+  runWithContext(createContext(), () => {
     // Safe request
     const google = https.request("https://www.google.com");
     google.end();

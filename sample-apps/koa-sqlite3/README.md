@@ -4,4 +4,4 @@ WARNING: This application contains security issues and should not be used in pro
 
 This example uses an in-memory SQLite database.
 
-In the root directory run `make koa-sqlite3` to start the server.
+In the root directory run `npm run sample-app koa-sqlite3` to start the server.

@@ -9,7 +9,7 @@ const pathToApp = resolve(__dirname, "../../sample-apps/http2", "index.js");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const server = spawn(`node`, [pathToApp, "4002"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -56,7 +56,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
+  const server = spawn(`node`, [pathToApp, "4003"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
