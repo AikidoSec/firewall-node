@@ -18,13 +18,12 @@ if (!isNewHookSystemUsed()) {
   const shouldEnable = shouldEnableFirewall();
 
   if (supported && shouldEnable) {
-    if (!isESM()) {
-      require("./agent/protect").protect();
-    } else {
+    if (isESM()) {
       console.warn(
         "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable AIKIDO. Please refer to the documentation for more information."
       );
     }
+    require("./agent/protect").protect();
   }
 }
 
