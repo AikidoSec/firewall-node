@@ -2,6 +2,7 @@
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
+import { markUnsafe } from "./agent/context/markUnsafe";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
@@ -18,6 +19,7 @@ if (supported && shouldEnable) {
 
 export {
   setUser,
+  markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
   addHonoMiddleware,
