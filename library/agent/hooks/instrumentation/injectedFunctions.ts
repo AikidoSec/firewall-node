@@ -93,8 +93,9 @@ export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
       }
     }
   } catch (error) {
-    // Do not crash the application if an error occurs
-    console.error(error); // We don't have a logger yet :(
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(id.split(".")[0], error);
+    }
   }
 
   return args;

@@ -42,8 +42,12 @@ export function onModuleLoad(
 
     return patchPackage(path, previousLoadResult);
   } catch (error) {
-    console.error("Error in onModuleLoad", error); // We don't have a logger yet :(
     // Do not break the module loading process, just log the error
+
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(path, error);
+    }
+
     return previousLoadResult;
   }
 }
