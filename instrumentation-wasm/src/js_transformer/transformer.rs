@@ -43,14 +43,14 @@ pub fn transform_code_str(code: &str, instructions_json: &str, src_type: i32) ->
         return format!("#ERR: {:?}", semantic.errors);
     }
 
-    let (symbols, scopes) = semantic.semantic.into_symbol_table_and_scope_tree();
+    let (scopes, _nodes) = semantic.semantic.into_scoping_and_nodes();
 
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
     };
 
-    traverse_mut(t, &allocator, program, symbols, scopes);
+    traverse_mut(t, &allocator, program, scopes);
 
     // Add import / require statement
     program.body.insert(
