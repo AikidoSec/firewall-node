@@ -48,7 +48,6 @@ export class Undici implements Wrapper {
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspect(
     args: unknown[],
     agent: Agent,

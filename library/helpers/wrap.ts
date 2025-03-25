@@ -50,7 +50,7 @@ export function createWrappedFunction(
     try {
       // Define the property on the wrapped function, keeping the original property's attributes.
       Object.defineProperty(wrapped, key as any, props[key as any]);
-    } catch (e) {
+    } catch {
       //
     }
   }
@@ -61,8 +61,9 @@ export function createWrappedFunction(
 // Sets a property on an object, preserving its enumerability.
 // This function assumes that the property is already writable.
 function defineProperty(obj: unknown, name: string, value: unknown) {
-  // @ts-expect-error We don't know the type of obj
-  const enumerable = !!obj[name] && obj.propertyIsEnumerable(name);
+  const enumerable =
+    // @ts-expect-error We don't know the type of obj
+    !!obj[name] && Object.prototype.propertyIsEnumerable.call(obj, name);
   Object.defineProperty(obj, name, {
     configurable: true,
     enumerable: enumerable,

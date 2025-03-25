@@ -39,7 +39,7 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
 
   if (context.url) {
     // Find matching wildcard routes
-    // Use path from URL
+    // We use the path from the URL, since the route can already include params like :id
     const path = tryParseURLPath(context.url);
     const wildcards = possible
       .filter((endpoint) => endpoint.route.includes("*"))

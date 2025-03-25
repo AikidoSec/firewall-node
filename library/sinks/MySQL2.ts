@@ -86,7 +86,7 @@ export class MySQL2 implements Wrapper {
         // Wrap connection.query
         wrapExport(connectionPrototype, "query", pkgInfo, {
           kind: "sql_op",
-          inspectArgs: (args, agent) => this.inspectQuery("mysql2.query", args),
+          inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
         });
       }
 
@@ -94,8 +94,7 @@ export class MySQL2 implements Wrapper {
         // Wrap connection.execute
         wrapExport(connectionPrototype, "execute", pkgInfo, {
           kind: "sql_op",
-          inspectArgs: (args, agent) =>
-            this.inspectQuery("mysql2.execute", args),
+          inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
         });
       }
     };

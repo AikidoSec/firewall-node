@@ -1,12 +1,8 @@
-/* eslint-disable max-lines-per-function */
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { getPortFromURL } from "../../helpers/getPortFromURL";
-import { trustProxy } from "../../helpers/trustProxy";
-import { tryParseURL } from "../../helpers/tryParseURL";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";

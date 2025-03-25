@@ -31,6 +31,26 @@ t.beforeEach(() => {
   createTestAgent();
 });
 
+t.test("usage outside of context", async (t) => {
+  let logs: string[] = [];
+  wrap(console, "warn", function warn() {
+    return function warn(message: string) {
+      logs.push(message);
+    };
+  });
+
+  setUser({ id: "id" });
+
+  t.same(logs, [
+    "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+  ]);
+
+  // Should not log again
+  logs = [];
+  setUser({ id: "id" });
+  t.same(logs, []);
+});
+
 t.test("it does not set user if empty id", async (t) => {
   const context = createContext();
 
@@ -82,45 +102,36 @@ t.test("it logs when setUser has invalid input", async () => {
   const logger = new LoggerForTesting();
   createTestAgent({ logger });
 
-  // @ts-expect-error User should be an object
-  setUser(1);
-  t.same(logger.getMessages(), [
-    "setUser(...) expects an object with 'id' and 'name' properties, found number instead.",
-  ]);
-  logger.clear();
+  const context = createContext();
 
-  // @ts-expect-error User is undefined
-  setUser(undefined);
-  t.same(logger.getMessages(), [
-    "setUser(...) can not be called with null or undefined.",
-  ]);
-  logger.clear();
+  runWithContext(context, () => {
+    // @ts-expect-error User should be an object
+    setUser(1);
+    t.same(logger.getMessages(), [
+      "setUser(...) expects an object with 'id' and 'name' properties, found number instead.",
+    ]);
+    logger.clear();
 
-  // @ts-expect-error ID should be string or number
-  setUser({ id: {} });
-  t.same(logger.getMessages(), [
-    "setUser(...) expects an object with 'id' property of type string or number, found object instead.",
-  ]);
-  logger.clear();
+    // @ts-expect-error ID should be string or number
+    setUser({ id: {} });
+    t.same(logger.getMessages(), [
+      "setUser(...) expects an object with 'id' property of type string or number, found object instead.",
+    ]);
+    logger.clear();
 
-  setUser({ id: "" });
-  t.same(logger.getMessages(), [
-    "setUser(...) expects an object with 'id' property non-empty string.",
-  ]);
-  logger.clear();
+    setUser({ id: "" });
+    t.same(logger.getMessages(), [
+      "setUser(...) expects an object with 'id' property non-empty string.",
+    ]);
+    logger.clear();
 
-  // @ts-expect-error ID is missing
-  setUser({ name: "name" });
-  t.same(logger.getMessages(), [
-    "setUser(...) expects an object with 'id' property.",
-  ]);
-  logger.clear();
-
-  // @ts-expect-error Testing invalid input
-  setUser(null);
-  t.same(logger.getMessages(), [
-    "setUser(...) can not be called with null or undefined.",
-  ]);
+    // @ts-expect-error ID is missing
+    setUser({ name: "name" });
+    t.same(logger.getMessages(), [
+      "setUser(...) expects an object with 'id' property.",
+    ]);
+    logger.clear();
+  });
 });
 
 t.test(

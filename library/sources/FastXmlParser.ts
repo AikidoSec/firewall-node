@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";

@@ -64,7 +64,7 @@ function handleMessage(handler: Function) {
 function tryParseJSON(jsonString: string) {
   try {
     return JSON.parse(jsonString);
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }

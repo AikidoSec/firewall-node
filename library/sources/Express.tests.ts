@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type { Hooks } from "../agent/hooks/Hooks";
 import type { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
