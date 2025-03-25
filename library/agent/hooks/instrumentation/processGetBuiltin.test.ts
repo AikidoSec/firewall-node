@@ -1,7 +1,10 @@
 import * as t from "tap";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { Hooks } from "../Hooks";
-import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
+import {
+  getBuiltinModuleWithoutPatching,
+  patchProcessGetBuiltinModule,
+} from "./processGetBuiltin";
 import { setBuiltinsToInstrument } from "./instructions";
 
 t.test(
@@ -27,15 +30,28 @@ t.test(
 
     // @ts-expect-error Ignore original types
     t.same(process.getBuiltinModule("http").test, undefined);
+    // @ts-expect-error Ignore original types
+    t.same(getBuiltinModuleWithoutPatching("http").test, undefined);
 
     setBuiltinsToInstrument(hooks.getBuiltInModules());
 
     // @ts-expect-error Ignore original types
+    t.same(getBuiltinModuleWithoutPatching("http").test, undefined);
+    // @ts-expect-error Ignore original types
     t.same(process.getBuiltinModule("http").test, 42);
+    // @ts-expect-error Ignore original types
+    t.same(getBuiltinModuleWithoutPatching("http").test, 42); // If the patch is already applied, it returns the patched version
+
     // @ts-expect-error Ignore original types
     t.same(process.getBuiltinModule("http2").test, undefined);
 
     const assert = require("assert");
     t.same(typeof assert.ok, "function");
+
+    // Invalid args
+    t.throws(() => {
+      // @ts-expect-error Ignore original types
+      getBuiltinModuleWithoutPatching(undefined);
+    });
   }
 );

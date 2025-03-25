@@ -24,7 +24,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
             }
         }
         `,
-    true,
+    "module",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -68,7 +68,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
     "1.0.0",
     "test.js",
     `
-          import { test } from "test";
+          const { test } = require("test");
           class Test {
   
               private testValue = 42;
@@ -81,7 +81,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
               }
           }
           `,
-    false,
+    "commonjs",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -102,7 +102,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
     compareCodeStrings(
       result,
       `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
-      import { test } from "test";
+      const { test } = require("test");
       class Test {
           private testValue = 42;
   
@@ -125,7 +125,7 @@ t.test("wrong function name", async (t) => {
     "1.0.0",
     "test.js",
     `
-            import { test } from "test";
+            const { test } = require("test");
             class Test {
     
                 private testValue = 42;
@@ -138,7 +138,7 @@ t.test("wrong function name", async (t) => {
                 }
             }
             `,
-    false,
+    "commonjs",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -159,7 +159,7 @@ t.test("wrong function name", async (t) => {
     compareCodeStrings(
       result,
       `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
-        import { test } from "test";
+        const { test } = require("test");
         class Test {
             private testValue = 42;
     
@@ -194,7 +194,7 @@ t.test("typescript code", async (t) => {
                   }
               }
               `,
-    false,
+    "commonjs",
     {
       path: "test.ts",
       versionRange: "^1.0.0",
@@ -251,7 +251,7 @@ t.test("typescript code in a js file", async (t) => {
                     }
                 }
                 `,
-      false,
+      "commonjs",
       {
         path: "test.js",
         versionRange: "^1.0.0",
@@ -281,7 +281,7 @@ t.test("typescript code in a js file", async (t) => {
 });
 
 t.test("empty code", async (t) => {
-  const result = transformCode("testpkg", "1.0.0", "test.mjs", "", false, {
+  const result = transformCode("testpkg", "1.0.0", "test.mjs", "", "commonjs", {
     path: "test.mjs",
     versionRange: "^1.0.0",
     functions: [
@@ -324,7 +324,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
               }
           }
           `,
-    true,
+    "module",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -383,7 +383,7 @@ t.test(
                 }
             }
             `,
-      true,
+      "module",
       {
         path: "test.js",
         versionRange: "^1.0.0",
@@ -437,7 +437,7 @@ t.test("modify rest parameter args", async (t) => {
             console.log("test");
           }
         }`,
-    true,
+    "module",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -482,7 +482,7 @@ t.test("modify rest parameter args", async (t) => {
             console.log("test");
           }
         }`,
-    true,
+    "module",
     {
       path: "test.js",
       versionRange: "^1.0.0",
@@ -512,6 +512,118 @@ t.test("modify rest parameter args", async (t) => {
                 console.log("test");
             }
         }`
+    ),
+    true
+  );
+});
+
+t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        import { test } from "test";
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "unambiguous",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+        },
+      ],
+    }
+  );
+
+  t.same(
+    compareCodeStrings(
+      result,
+      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+            console.log("test");
+        }
+    }`
+    ),
+    true
+  );
+
+  const result2 = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        const { test } = require("test");
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "unambiguous",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+        },
+      ],
+    }
+  );
+
+  t.same(
+    compareCodeStrings(
+      result2,
+      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+    const { test } = require("test");
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+            console.log("test");
+        }
+    }`
     ),
     true
   );

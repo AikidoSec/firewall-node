@@ -22,9 +22,9 @@ export function onModuleLoad(
   try {
     // Ignore unsupported formats, e.g. wasm, native addons or json
     if (
-      !["builtin", "commonjs", "module"].includes(
-        previousLoadResult.format ?? ""
-      )
+      // Sometimes the format is not set!
+      previousLoadResult.format &&
+      !["builtin", "commonjs", "module"].includes(previousLoadResult.format)
     ) {
       return previousLoadResult;
     }
@@ -102,18 +102,21 @@ function patchPackage(
     return previousLoadResult;
   }
 
-  const isESM = previousLoadResult.format === "module";
+  const pkgLoadFormat =
+    (previousLoadResult.format as "commonjs" | "module" | undefined) ??
+    "unambiguous";
 
   const newSource = transformCode(
     moduleInfo.name,
     pkgVersion,
     path,
     previousLoadResult.source.toString(),
-    isESM,
+    pkgLoadFormat,
     matchingInstructions
   );
 
-  if (newSource === null) {
+  // Prevent returning empty or undefined source text
+  if (!newSource) {
     return previousLoadResult;
   }
 

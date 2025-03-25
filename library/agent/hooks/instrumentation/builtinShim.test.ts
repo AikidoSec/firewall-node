@@ -30,8 +30,8 @@ t.test(
 
     t.match(
       shim.replace(/\s+/g, " "),
-      `const { __getUnpatchedBuiltinModule, __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
-      const orig = __getUnpatchedBuiltinModule("fs/promises");
+      `const { __getBuiltinModuleWithoutPatching, __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
+      const orig = __getBuiltinModuleWithoutPatching("fs/promises");
 
     module.exports = __wrapBuiltinExports("fs/promises", orig);
 `.replace(/\s+/g, " ")
@@ -56,8 +56,8 @@ t.test(
 
     t.match(
       shimESM.replace(/\s+/g, " "),
-      `const { __getUnpatchedBuiltinModule, __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
-    const orig = __getUnpatchedBuiltinModule("fs/promises");
+      `const { __getBuiltinModuleWithoutPatching, __wrapBuiltinExports } = require('@aikidosec/firewall/instrument/internals');
+    const orig = __getBuiltinModuleWithoutPatching("fs/promises");
 
     const wrapped = __wrapBuiltinExports("fs/promises", orig);
 

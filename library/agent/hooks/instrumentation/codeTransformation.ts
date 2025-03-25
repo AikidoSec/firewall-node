@@ -1,14 +1,14 @@
 import type { PackageFileInstrumentationInstructionJSON } from "./types";
 // eslint-disable-next-line camelcase
 import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
-import { getSourceType } from "./getSourceType";
+import { getSourceType, PackageLoadFormat } from "./getSourceType";
 
 export function transformCode(
   pkgName: string,
   pkgVersion: string,
   path: string,
   code: string,
-  isESM: boolean,
+  pkgLoadFormat: PackageLoadFormat,
   fileInstructions: PackageFileInstrumentationInstructionJSON
 ): string {
   const result = wasm_transform_code_str(
@@ -16,7 +16,7 @@ export function transformCode(
     pkgVersion,
     code,
     JSON.stringify(fileInstructions),
-    getSourceType(path, isESM)
+    getSourceType(path, pkgLoadFormat)
   );
 
   if (result.startsWith("#ERR:")) {

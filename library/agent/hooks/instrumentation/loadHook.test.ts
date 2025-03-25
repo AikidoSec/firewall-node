@@ -59,6 +59,22 @@ t.test(
       ++httpOnRequireCount;
     });
 
+    hooks
+      .addPackage("fastify")
+      .withVersion("^0.0.0")
+      .addFileInstrumentation({
+        path: "foo.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "bar",
+            inspectArgs: (args) => {
+              t.fail("inspectArgs should not be called");
+            },
+          },
+        ],
+      });
+
     applyHooks(hooks, true);
 
     try {
@@ -133,6 +149,22 @@ t.test(
     // Require unpatched module
     const assert = require("assert") as typeof import("assert");
     t.equal(typeof assert, "function");
+
+    // Require json file
+    const packageJson = require("../../../package.json");
+    t.same(packageJson.name, "@aikidosec/firewall");
+
+    // Load user code
+    const userCode = await import("./getSourceType");
+    t.same(typeof userCode.getSourceType, "function");
+
+    // Should not patch package
+    const express = require("express") as typeof import("express");
+    t.equal(typeof express, "function");
+
+    // Package with non-matching version
+    const fastify = require("fastify") as typeof import("fastify");
+    t.equal(typeof fastify, "function");
 
     process.env.AIKIDO_UNIT_TEST = "false";
   }

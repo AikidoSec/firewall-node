@@ -20,16 +20,16 @@ function patchedGetBuiltinModule(this: NodeJS.Process, id: string) {
   // Apply the original function
   const originalExports = originalProcessGetBuiltinModule!.call(this, id);
 
-  if (typeof id !== "string") {
-    return originalExports;
-  }
-
   const builtinNameWithoutPrefix = removeNodePrefix(id);
 
   return __wrapBuiltinExports(builtinNameWithoutPrefix, originalExports);
 }
 
-export function getUnpatchedBuiltinModule(id: string) {
+/**
+ * Returns the module without applying any patches
+ * If the patches are already applied, it will return the patched version!
+ */
+export function getBuiltinModuleWithoutPatching(id: string) {
   if (originalProcessGetBuiltinModule) {
     return originalProcessGetBuiltinModule(id);
   }

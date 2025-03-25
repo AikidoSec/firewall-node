@@ -6,6 +6,7 @@ import {
   setBuiltinsToInstrument,
   setPackagesToInstrument,
   shouldPatchBuiltin,
+  shouldPatchFile,
   shouldPatchPackage,
 } from "./instructions";
 import { Package } from "../Package";
@@ -166,6 +167,9 @@ t.test("it works using injected functions", async (t) => {
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
 
+  // Without agent
+  t.same(__wrapBuiltinExports("http", { a: 1 }), { a: 1 });
+
   createTestAgent();
 
   __instrumentInspectArgs(
@@ -226,6 +230,29 @@ t.test("modifyArgs always returns a array", async (t) => {
   t.same(__instrumentModifyArgs("foo.xyz.js.xyz.^1.0.0", [1, 2, 3]), [1, 2, 3]);
   // @ts-expect-error Testing invalid input
   t.same(__instrumentModifyArgs("foo.xyz.js.xyz.^1.0.0", undefined), []);
+
+  // Return default export
+  const builtin2 = new BuiltinModule("http2");
+  builtin2.onRequire((exports) => {
+    return "test";
+  });
+
+  setBuiltinsToInstrument([builtin2]);
+
+  t.equal(__wrapBuiltinExports("http2", {}), "test");
+
+  // Throw error
+  const builtin3 = new BuiltinModule("assert");
+  builtin3.onRequire(() => {
+    throw new Error("test");
+  });
+
+  setBuiltinsToInstrument([builtin3]);
+
+  __wrapBuiltinExports("assert", {});
+
+  // Non existing package
+  t.same(shouldPatchFile("abc123456", "foo.js"), false);
 });
 
 t.test("all injected functions handle errors", async (t) => {
