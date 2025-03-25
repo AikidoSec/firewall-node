@@ -17,14 +17,12 @@ export type AgentBlockList = {
 export type Response = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
-  blockedUserAgentsV2: AgentBlockList[];
+  monitoredIPAddresses: IPList[];
+  blockedUserAgents: string;
+  monitoredUserAgents: AgentBlockList[];
 };
 
-export async function fetchBlockedLists(token: Token): Promise<{
-  blockedIPAddresses: IPList[];
-  allowedIPAddresses: IPList[];
-  blockedUserAgents: AgentBlockList[];
-}> {
+export async function fetchBlockedLists(token: Token): Promise<Response> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -57,9 +55,18 @@ export async function fetchBlockedLists(token: Token): Promise<{
       result && Array.isArray(result.allowedIPAddresses)
         ? result.allowedIPAddresses
         : [],
+    monitoredIPAddresses:
+      result && Array.isArray(result.monitoredIPAddresses)
+        ? result.monitoredIPAddresses
+        : [],
+    // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
     blockedUserAgents:
-      result && Array.isArray(result.blockedUserAgentsV2)
-        ? result.blockedUserAgentsV2
+      result && typeof result.blockedUserAgents === "string"
+        ? result.blockedUserAgents
+        : "",
+    monitoredUserAgents:
+      result && Array.isArray(result.monitoredUserAgents)
+        ? result.monitoredUserAgents
         : [],
   };
 }

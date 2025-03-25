@@ -33,7 +33,7 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           allowedIPAddresses: [],
-          blockedUserAgentsV2: [
+          blockedUserAgents: [
             {
               key: "key",
               pattern: "hacker|attacker",

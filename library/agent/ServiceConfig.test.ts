@@ -149,24 +149,13 @@ t.test("ip blocking works", async () => {
 
 t.test("it blocks bots", async () => {
   const config = new ServiceConfig([], 0, [], [], true, [], []);
-  config.updateBlockedUserAgents([
-    {
-      key: "search",
-      pattern: "googlebot|bingbot",
-    },
-  ]);
+  config.updateBlockedUserAgents("googlebot|bingbot");
 
-  t.same(config.isUserAgentBlocked("googlebot"), {
-    blocked: true,
-    key: "search",
-  });
-  t.same(config.isUserAgentBlocked("123 bingbot abc"), {
-    blocked: true,
-    key: "search",
-  });
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: true });
+  t.same(config.isUserAgentBlocked("123 bingbot abc"), { blocked: true });
   t.same(config.isUserAgentBlocked("bing"), { blocked: false });
 
-  config.updateBlockedUserAgents([]);
+  config.updateBlockedUserAgents("");
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
 });
