@@ -53,7 +53,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
             console.log("test");
         }
     }`
@@ -110,7 +110,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
               this.testFunction(testValue);
           }
           testFunction(arg1) {
-              __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+              __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
               console.log("test");
           }
       }`
@@ -412,7 +412,7 @@ t.test(
                 this.testFunction2(testValue);
             }
             testFunction2(arg1) {
-                __instrumentInspectArgs("testpkg.test.js.testFunction2.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction2");
+                __instrumentInspectArgs("testpkg.test.js.testFunction2.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction2", this);
                 [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.v1.0.0", [arg1]);
                 console.log("test");
             }
@@ -565,7 +565,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
             console.log("test");
         }
     }`
@@ -620,7 +620,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction");
+            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
             console.log("test");
         }
     }`

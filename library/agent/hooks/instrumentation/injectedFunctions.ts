@@ -10,7 +10,8 @@ export function __instrumentInspectArgs(
   args: unknown[],
   pkgName: string,
   pkgVersion: string,
-  methodName: string
+  methodName: string,
+  subject: unknown // "This" of the method being called
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -22,8 +23,8 @@ export function __instrumentInspectArgs(
   const cbFuncs = getPackageCallbacks(id);
 
   if (typeof cbFuncs.inspectArgs === "function") {
-    // Todo check subject (this) might be broken?
-    inspectArgs(
+    inspectArgs.call(
+      subject,
       args,
       cbFuncs.inspectArgs,
       context,

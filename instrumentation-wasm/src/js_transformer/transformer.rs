@@ -146,7 +146,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         if instruction.inspect_args {
             // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments);
             let source_text: &'a str = self.allocator.alloc_str(&format!(
-                "__instrumentInspectArgs('{}', arguments, '{}', '{}', '{}');",
+                "__instrumentInspectArgs('{}', arguments, '{}', '{}', '{}', this);",
                 instruction.identifier, self.pkg_name, self.pkg_version, instruction.name
             ));
 

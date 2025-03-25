@@ -24,19 +24,16 @@ test("it blocks request in blocking mode", async () => {
 
   try {
     server.on("error", (err) => {
-      console.log(err);
       fail(err.message);
     });
 
     let stdout = "";
     server.stdout.on("data", (data) => {
-      console.log(data.toString());
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
-      console.log(data.toString());
       stderr += data.toString();
     });
 
@@ -89,19 +86,16 @@ test("it does not block request in monitoring mode", async () => {
 
   try {
     server.on("error", (err) => {
-      console.log(err);
       fail(err.message);
     });
 
     let stdout = "";
     server.stdout.on("data", (data) => {
-      console.log(data.toString());
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
-      console.log(data.toString());
       stderr += data.toString();
     });
 

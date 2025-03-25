@@ -4,6 +4,7 @@ import { applyHooks } from "../../applyHooks";
 import { Hooks } from "../Hooks";
 import * as mod from "node:module";
 import { registerNodeHooks } from ".";
+import { Agent } from "../../Agent";
 
 t.test(
   "it throws an error if Node.js version is not supported",
@@ -40,8 +41,25 @@ t.test(
         {
           nodeType: "MethodDefinition",
           name: "addRoute",
-          inspectArgs: (args) => {
+          inspectArgs: (args, agent, subject) => {
             esmPkgInspectArgs.push(args);
+
+            t.ok(agent instanceof Agent);
+            if (
+              typeof subject !== "object" ||
+              !subject ||
+              !("constructor" in subject)
+            ) {
+              t.fail("subject should have a constructor property");
+              return;
+            }
+
+            t.same(subject.constructor.name, "Hono");
+
+            if (!("get" in subject) || typeof subject.get !== "function") {
+              t.fail("subject should have a get method");
+              return;
+            }
           },
         },
       ],
