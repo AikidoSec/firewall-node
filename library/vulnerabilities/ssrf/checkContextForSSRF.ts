@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";

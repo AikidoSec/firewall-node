@@ -113,7 +113,13 @@ export function wrapExport(
       }
     );
   } catch (error) {
-    agent.onFailedToWrapMethod(pkgInfo.name, methodName || "default export");
+    if (error instanceof Error) {
+      agent.onFailedToWrapMethod(
+        pkgInfo.name,
+        methodName || "default export",
+        error
+      );
+    }
   }
 }
 

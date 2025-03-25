@@ -3,7 +3,6 @@ import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 type UserString = string;
 
-// eslint-disable-next-line max-lines-per-function
 export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
   const results: Set<UserString> = new Set();
 

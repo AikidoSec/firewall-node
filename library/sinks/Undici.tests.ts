@@ -1,4 +1,4 @@
-/* eslint-disable prefer-rest-params, max-lines-per-function */
+/* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";

@@ -220,7 +220,7 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
         this.logger.log("Failed to report attack");
       });
     }
@@ -230,7 +230,7 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch((err) => {
+    this.sendHeartbeat(timeoutInMS).catch(() => {
       this.logger.log("Failed to do heartbeat");
     });
   }
@@ -479,8 +479,10 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
-    this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  onFailedToWrapMethod(module: string, name: string, error: Error) {
+    this.logger.log(
+      `Failed to wrap method ${name} in module ${module}: ${error.message}`
+    );
   }
 
   onFailedToWrapModule(module: string, error: Error) {

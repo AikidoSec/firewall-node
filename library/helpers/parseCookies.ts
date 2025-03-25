@@ -21,7 +21,7 @@ function decode(str: string): string {
 function tryDecode(str: string): string {
   try {
     return decode(str);
-  } catch (e) {
+  } catch {
     return str;
   }
 }
@@ -66,7 +66,7 @@ export function parse(str: string) {
     const key = str.slice(keyStartIdx, keyEndIdx);
 
     // only assign once
-    if (!obj.hasOwnProperty(key)) {
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) {
       let valStartIdx = startIndex(str, eqIdx + 1, endIdx);
       let valEndIdx = endIndex(str, endIdx, valStartIdx);
 
