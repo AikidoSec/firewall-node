@@ -28,7 +28,7 @@ async function main() {
               <input type="text" name="petname">
               <input type="submit" value="Add" />
             </form>
-            <p>SQL Injection: '); DELETE FROM cats;-- H</p>
+            <p>SQL Injection: '); DELETE FROM cats_2;-- H</p>
             <a href="/clear">Clear all cats</a>
             <script>
               document.addEventListener("DOMContentLoaded", () => {

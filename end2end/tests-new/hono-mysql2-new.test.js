@@ -46,7 +46,7 @@ test("it blocks request in blocking mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats;-- H" }),
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -111,7 +111,7 @@ test("it does not block request in monitoring mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port2}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats;-- H" }),
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
