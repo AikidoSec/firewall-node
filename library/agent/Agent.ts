@@ -38,7 +38,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private timeoutInMS = 10000;
+  private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
   private serviceConfig = new ServiceConfig(
@@ -118,7 +118,10 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
         },
-        this.timeoutInMS
+        // We don't use `this.timeoutInMS` for startup event
+        // Since Node.js is single threaded, the HTTP request is fired before other imports are required
+        // It might take a long time before our code resumes
+        60 * 1000
       );
 
       this.checkForReportingAPIError(result);
@@ -216,7 +219,7 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch((err) => {
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
         this.logger.log("Failed to report attack");
       });
     }
@@ -226,7 +229,7 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch((err) => {
+    this.sendHeartbeat(timeoutInMS).catch(() => {
       this.logger.log("Failed to do heartbeat");
     });
   }
@@ -443,7 +446,7 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.log("Starting agent...");
+    this.logger.log(`Starting agent v${getAgentVersion()}...`);
 
     if (!this.block) {
       this.logger.log("Dry mode enabled, no requests will be blocked!");
@@ -475,8 +478,10 @@ export class Agent {
       });
   }
 
-  onFailedToWrapMethod(module: string, name: string) {
-    this.logger.log(`Failed to wrap method ${name} in module ${module}`);
+  onFailedToWrapMethod(module: string, name: string, error: Error) {
+    this.logger.log(
+      `Failed to wrap method ${name} in module ${module}: ${error.message}`
+    );
   }
 
   onFailedToWrapModule(module: string, error: Error) {

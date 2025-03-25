@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { createServer, Server } from "http";
 import { Token } from "../agent/api/Token";

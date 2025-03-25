@@ -66,7 +66,7 @@ function parseAsFileUrl(path: string) {
   }
   try {
     return fileURLToPath(url);
-  } catch (e) {
+  } catch {
     //
   }
   return undefined;

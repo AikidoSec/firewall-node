@@ -1,126 +1,182 @@
 import * as t from "tap";
 import { isRequestToItself } from "./isRequestToItself";
 
-t.test("it returns true for a request to itself", async (t) => {
+t.beforeEach(() => {
+  delete process.env.AIKIDO_TRUST_PROXY;
+});
+
+t.test("it returns false if server url is empty", async (t) => {
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".host"],
-      port: 1234,
-      str: "localhost:1234",
-    }),
-    true
-  );
-  t.same(
-    isRequestToItself({
-      source: "headers",
-      paths: [".origin"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    true
-  );
-  t.same(
-    isRequestToItself({
-      source: "headers",
-      paths: [".referer"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    true
-  );
-  t.same(
-    isRequestToItself({
-      source: "headers",
-      paths: [".referer", ".origin"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    true
+      serverUrl: "",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
   );
 });
 
-t.test("it returns false", async (t) => {
+t.test("it returns false if server url is invalid", async (t) => {
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".host"],
-      port: 1234,
-      str: "localhost:1235",
-    }),
-    false
+      serverUrl: "http://",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
+  );
+});
+
+t.test("it returns false if port is different", async (t) => {
+  t.same(
+    false,
+    isRequestToItself({
+      serverUrl: "http://aikido.dev:4000",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
   );
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".host"],
-      port: 1234,
-      str: "localhostabc:1234",
-    }),
-    false
+      serverUrl: "https://aikido.dev:4000",
+      outboundHostname: "aikido.dev",
+      outboundPort: 443,
+    })
+  );
+});
+
+t.test("it returns false if outbound port is undefined", async (t) => {
+  t.same(
+    false,
+    isRequestToItself({
+      serverUrl: "http://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: undefined,
+    })
   );
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".hostabc"],
-      port: 1234,
-      str: "localhost:1234",
-    }),
-    false
+      serverUrl: "https://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: undefined,
+    })
+  );
+});
+
+t.test("it returns false if hostname is different", async (t) => {
+  t.same(
+    false,
+    isRequestToItself({
+      serverUrl: "http://aikido.dev",
+      outboundHostname: "google.com",
+      outboundPort: 80,
+    })
   );
   t.same(
+    false,
     isRequestToItself({
-      // @ts-expect-error Testing
-      source: "headersabc",
-      path: ".host",
-      port: 1234,
-      str: "localhost:1234",
-    }),
-    false
+      serverUrl: "http://aikido.dev:4000",
+      outboundHostname: "google.com",
+      outboundPort: 4000,
+    })
   );
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".host"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    false
+      serverUrl: "https://aikido.dev",
+      outboundHostname: "google.com",
+      outboundPort: 443,
+    })
   );
   t.same(
+    false,
     isRequestToItself({
-      source: "headers",
-      paths: [".origin"],
-      port: 1234,
-      str: "http%%%://localhost:1234",
-    }),
-    false
+      serverUrl: "https://aikido.dev:4000",
+      outboundHostname: "google.com",
+      outboundPort: 443,
+    })
   );
+});
+
+t.test("it returns true if server does request to itself", async (t) => {
   t.same(
+    true,
     isRequestToItself({
-      source: "headers",
-      paths: [".referer", ".origin", ".x-test"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    false
+      serverUrl: "https://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 443,
+    })
   );
+
   t.same(
+    true,
     isRequestToItself({
-      source: "headers",
-      paths: [".referer", ".host"],
-      port: 1234,
-      str: "http://localhost:1234",
-    }),
-    false
+      serverUrl: "http://aikido.dev:4000",
+      outboundHostname: "aikido.dev",
+      outboundPort: 4000,
+    })
   );
+
   t.same(
+    true,
     isRequestToItself({
-      source: "headers",
-      paths: [],
-      port: 1234,
-      str: "localhost:1234",
-    }),
-    false
+      serverUrl: "http://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
+  );
+
+  t.same(
+    true,
+    isRequestToItself({
+      serverUrl: "https://aikido.dev:4000",
+      outboundHostname: "aikido.dev",
+      outboundPort: 4000,
+    })
+  );
+});
+
+t.test("it returns true for special case HTTP<->HTTPS", async (t) => {
+  t.same(
+    true,
+    isRequestToItself({
+      serverUrl: "http://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 443,
+    })
+  );
+
+  t.same(
+    true,
+    isRequestToItself({
+      serverUrl: "https://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
+  );
+});
+
+t.test("it returns false if trust proxy is false", async (t) => {
+  // Trust proxy is enabled by default
+  process.env.AIKIDO_TRUST_PROXY = "false";
+
+  t.same(
+    false,
+    isRequestToItself({
+      serverUrl: "https://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 443,
+    })
+  );
+
+  t.same(
+    false,
+    isRequestToItself({
+      serverUrl: "http://aikido.dev",
+      outboundHostname: "aikido.dev",
+      outboundPort: 80,
+    })
   );
 });

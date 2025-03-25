@@ -32,7 +32,7 @@ export function isPlainObject(o: unknown): o is Record<string, unknown> {
   if (isObject(prot) === false) return false;
 
   // Its constructor does not have an Object-specific method
-  if (prot.hasOwnProperty("isPrototypeOf") === false) {
+  if (Object.prototype.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
     return false;
   }
 

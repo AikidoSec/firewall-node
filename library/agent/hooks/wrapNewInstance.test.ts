@@ -66,7 +66,7 @@ t.test("Wrap non existing class", async (t) => {
   );
 
   t.same(logger.getMessages(), [
-    "Failed to wrap method test in module testmod",
+    "Failed to wrap method test in module testmod: no original function test to wrap",
   ]);
 });
 
@@ -115,7 +115,9 @@ t.test("Errors in interceptor are caught", async (t) => {
 
   const instance = new exports.test("input");
   t.same(instance.getInput(), "input");
-  t.same(logger.getMessages(), ["Failed to wrap method test in module test"]);
+  t.same(logger.getMessages(), [
+    "Failed to wrap method test in module test: test error",
+  ]);
 });
 
 t.test("Return value from interceptor is returned", async (t) => {
@@ -162,6 +164,6 @@ t.test("Logs error when wrapping default export", async (t) => {
   const instance = new exports("input");
   t.same(instance.getInput(), "input");
   t.same(logger.getMessages(), [
-    "Failed to wrap method default export in module test",
+    "Failed to wrap method default export in module test: test error",
   ]);
 });

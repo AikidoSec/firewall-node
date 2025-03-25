@@ -220,3 +220,57 @@ t.test("only allow some ips: empty list", async () => {
   t.same(config.isAllowedIPAddress("1.2.3.4").allowed, true);
   t.same(config.isAllowedIPAddress("4.3.2.1").allowed, true);
 });
+
+t.test("bypassed ips support cidr", async () => {
+  const config = new ServiceConfig(
+    [],
+    0,
+    [],
+    ["192.168.2.0/24", "::1"],
+    false,
+    [],
+    []
+  );
+
+  t.same(config.isBypassedIP("192.168.2.32"), true);
+  t.same(config.isBypassedIP("::1"), true);
+  t.same(config.isBypassedIP("::2"), false);
+  t.same(config.isBypassedIP("10.0.0.1"), false);
+
+  config.updateConfig(
+    [],
+    0,
+    [],
+    ["invalid", "2002::1/124", "127.0.0.1"],
+    false
+  );
+
+  t.same(config.isBypassedIP("2002::6"), true);
+  t.same(config.isBypassedIP("2002::f"), true);
+  t.same(config.isBypassedIP("2002::10"), false);
+  t.same(config.isBypassedIP("127.0.0.1"), true);
+  t.same(config.isBypassedIP("192.168.2.1"), false);
+  t.same(config.isBypassedIP("::1"), false);
+
+  config.updateConfig(
+    [],
+    0,
+    [],
+    ["0", "123.123.123.1/32", "234.0.0.0/8", "999.999.999.999", "::1/128"],
+    false
+  );
+
+  t.same(config.isBypassedIP("123.123.123.1"), true);
+  t.same(config.isBypassedIP("124.123.123.1"), false);
+  t.same(config.isBypassedIP("234.1.2.3"), true);
+  t.same(config.isBypassedIP("235.1.2.3"), false);
+  t.same(config.isBypassedIP("127.0.0.1"), false);
+  t.same(config.isBypassedIP("999.999.999.999"), false);
+  t.same(config.isBypassedIP("::1"), true);
+  t.same(config.isBypassedIP("::2"), false);
+
+  config.updateConfig([], 0, [], [], false);
+
+  t.same(config.isBypassedIP("123.123.123.1"), false);
+  t.same(config.isBypassedIP("999.999.999.999"), false);
+});

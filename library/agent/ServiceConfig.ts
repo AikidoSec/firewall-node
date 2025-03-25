@@ -7,7 +7,7 @@ import { IPList, AgentBlockList } from "./api/fetchBlockedLists";
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
   // IP addresses that are allowed to bypass rate limiting, attack blocking, etc.
-  private bypassedIPAddresses: Set<string> = new Set();
+  private bypassedIPAddresses: IPMatcher | undefined;
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
   private blockedIPAddresses: {
@@ -77,14 +77,15 @@ export class ServiceConfig {
   }
 
   private setBypassedIPAddresses(ipAddresses: string[]) {
-    this.bypassedIPAddresses = new Set();
-    ipAddresses.forEach((ip) => {
-      this.bypassedIPAddresses.add(ip);
-    });
+    if (ipAddresses.length === 0) {
+      this.bypassedIPAddresses = undefined;
+      return;
+    }
+    this.bypassedIPAddresses = new IPMatcher(ipAddresses);
   }
 
   isBypassedIP(ip: string) {
-    return this.bypassedIPAddresses.has(ip);
+    return this.bypassedIPAddresses ? this.bypassedIPAddresses.has(ip) : false;
   }
 
   private setBlockedUserIds(blockedUserIds: string[]) {
