@@ -9,19 +9,22 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { isESM } from "./helpers/isESM";
 
-const supported = isFirewallSupported();
-const shouldEnable = shouldEnableFirewall();
+// Prevent logging twice / trying to start agent twice
+if (!isNewHookSystemUsed()) {
+  const supported = isFirewallSupported();
+  const shouldEnable = shouldEnableFirewall();
 
-if (supported && shouldEnable) {
-  if (isESM()) {
-    console.warn(
-      "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
-    );
+  if (supported && shouldEnable) {
+    if (isESM()) {
+      console.warn(
+        "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable AIKIDO. Please refer to the documentation for more information."
+      );
+    }
+    require("./agent/protect").protect();
   }
-
-  require("./agent/protect").protect();
 }
 
 export {
