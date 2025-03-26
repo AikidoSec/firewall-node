@@ -11,9 +11,9 @@
 
 Zen, your in-app firewall for peace of mind– at runtime.
 
-Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks.
+Zen is an embedded Web Application Firewall that autonomously protects your apps against attacks and provides advanced access controls features.
 
-It protects your Node.js apps by preventing user input containing dangerous strings, which allow injection, pollution, and path traversal attacks. It runs on the same server as your Node.js app for simple [installation](#installation) and zero maintenance.
+Zen protects your Node.js apps by blocking malicious user input that could lead to security vulnerabilities. It guards against SQL injections, command injections, path traversal attacks, and more. Running directly on your Node.js app's server, it offers seamless installation and low maintenance.
 
 ## Features
 
