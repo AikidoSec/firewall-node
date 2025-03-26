@@ -1,6 +1,13 @@
 # AWS Lambda
 
-At the very beginning of the file that contains your handler, add the following line:
+## Installation
+
+1. Install the Aikido Zen package:
+```sh
+npm install @aikidosec/firewall
+```
+
+2. At the very beginning of the file that contains your handler, add the following line:
 
 ```js
 const protect = require("@aikidosec/firewall/lambda"); // <-- Include this before any other code or imports
@@ -20,6 +27,13 @@ import protect from "@aikidosec/firewall/lambda";
 
 // ...
 ```
+
+3. Set your Aikido token as an environment variable in your Lambda function configuration:
+```
+AIKIDO_TOKEN="AIK_RUNTIME_YOUR_TOKEN_HERE"
+```
+
+You can get your token from the [Aikido Security Dashboard](https://help.aikido.dev/doc/creating-an-aikido-zen-firewall-token/doc6vRJNzC4u).
 
 Right now, we support the following triggers:
 

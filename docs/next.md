@@ -1,12 +1,26 @@
 # Next.js
 
-At this moment, Zen only supports the standalone output in Next.js. To configure your Next.js app to use standalone output, you need to set the output property in your `next.config.js` file:
+## Installation
+
+1. Install the Aikido Zen package:
+```sh
+npm install @aikidosec/firewall
+```
+
+2. At this moment, Zen only supports the standalone output in Next.js. To configure your Next.js app to use standalone output, you need to set the output property in your `next.config.js` file:
 
 ```js
 const nextConfig = {
   output: "standalone",
 };
 ```
+
+3. Set your Aikido token as an environment variable:
+```sh
+AIKIDO_TOKEN="AIK_RUNTIME_YOUR_TOKEN_HERE" node -r @aikidosec/firewall .next/standalone/server.js
+```
+
+You can get your token from the [Aikido Security Dashboard](https://help.aikido.dev/doc/creating-an-aikido-zen-firewall-token/doc6vRJNzC4u).
 
 Next.js will create a `standalone` directory in your `.next` directory. This directory contains the standalone server that you can run with Node.js. Next.js will only copy dependencies that are required for the server to run. It does not know about @aikidosec/firewall, so you need to copy it manually:
 

@@ -1,6 +1,13 @@
 # Micro
 
-Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to load the Zen agent before the `http` module is loaded:
+## Installation
+
+1. Install the Aikido Zen package:
+```sh
+npm install @aikidosec/firewall
+```
+
+2. Since micro loads your handler from a file, you'll need to use `NODE_OPTIONS` to load the Zen agent before the `http` module is loaded:
 
 ```json
 {
@@ -15,6 +22,13 @@ or when using `node`:
 ```sh
 node --require @aikidosec/firewall ./node_modules/.bin/micro
 ```
+
+3. Set your Aikido token as an environment variable:
+```sh
+AIKIDO_TOKEN="AIK_RUNTIME_YOUR_TOKEN_HERE" npm start
+```
+
+You can get your token from the [Aikido Security Dashboard](https://help.aikido.dev/doc/creating-an-aikido-zen-firewall-token/doc6vRJNzC4u).
 
 ## Blocking mode
 

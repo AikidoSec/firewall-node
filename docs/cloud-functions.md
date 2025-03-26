@@ -1,6 +1,13 @@
 # Google Cloud Functions
 
-If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Zen automatically:
+## Installation
+
+1. Install the Aikido Zen package:
+```sh
+npm install @aikidosec/firewall
+```
+
+2. If you're using the `@google-cloud/functions-framework` package to register your handlers, your cloud function will be protected by Zen automatically:
 
 ```js
 require("@aikidosec/firewall/cloud-function"); // <-- Include this before any other code or imports
@@ -19,6 +26,13 @@ import "@aikidosec/firewall/cloud-function";
 
 // ...
 ```
+
+3. Set your Aikido token as an environment variable in your Cloud Function configuration:
+```
+AIKIDO_TOKEN="AIK_RUNTIME_YOUR_TOKEN_HERE"
+```
+
+You can get your token from the [Aikido Security Dashboard](https://help.aikido.dev/doc/creating-an-aikido-zen-firewall-token/doc6vRJNzC4u).
 
 If you're using the `exports.handler` style, you'll need to wrap your handler manually.
 

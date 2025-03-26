@@ -1,6 +1,13 @@
 # Express
 
-At the very beginning of your app.js file, add the following line:
+## Installation
+
+1. Install the Aikido Zen package:
+```sh
+npm install @aikidosec/firewall
+```
+
+2. At the very beginning of your app.js file, add the following line:
 
 ```js
 require("@aikidosec/firewall"); // <-- Include this before any other code or imports
@@ -19,6 +26,13 @@ import "@aikidosec/firewall";
 
 // ...
 ```
+
+3. Set your Aikido token as an environment variable:
+```sh
+AIKIDO_TOKEN="AIK_RUNTIME_YOUR_TOKEN_HERE" node app.js
+```
+
+You can get your token from the [Aikido Security Dashboard](https://help.aikido.dev/doc/creating-an-aikido-zen-firewall-token/doc6vRJNzC4u).
 
 ## Blocking mode
 
