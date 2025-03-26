@@ -15,7 +15,7 @@ export function wrapInstalledPackages(
   if (!serverless && isAnyPkgAlreadyRequired(hooks.getPackages())) {
     // eslint-disable-next-line no-console
     console.warn(
-      "Aikido: Some packages can't be protected because they were imported before Aikido was initialized. Please make sure to import Aikido as the first module in your application."
+      "AIKIDO: Some packages can't be protected because they were imported before Aikido was initialized. Please make sure to import Aikido as the first module in your application."
     );
   }
 
