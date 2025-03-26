@@ -61,6 +61,10 @@ jobs:
           MONGODB_REPLICA_SET_KEY: replicasetkey123
         ports:
           - "27020:27017"
+      libsql:
+        image: ghcr.io/tursodatabase/libsql-server:v0.24.30
+        ports:
+          - "27021:8080"
     strategy:
       fail-fast: false
       matrix:
