@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -49,6 +50,7 @@ export class HTTPServer implements Wrapper {
         // Server classes are not exported in the http2 module
         if (module !== "http2") {
           wrapExport(exports, "Server", pkgInfo, {
+            kind: undefined,
             modifyArgs: (args, agent) => {
               return this.wrapRequestListener(args, module, agent);
             },
@@ -56,6 +58,7 @@ export class HTTPServer implements Wrapper {
         }
 
         wrapExport(exports, "createServer", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args, agent) => {
             return this.wrapRequestListener(args, module, agent);
           },
@@ -63,6 +66,7 @@ export class HTTPServer implements Wrapper {
 
         wrapNewInstance(exports, "createServer", pkgInfo, (instance) => {
           wrapExport(instance, "on", pkgInfo, {
+            kind: undefined,
             modifyArgs: (args, agent) => {
               return this.wrapOn(args, module, agent);
             },
@@ -71,6 +75,7 @@ export class HTTPServer implements Wrapper {
 
         if (module === "http2") {
           wrapExport(exports, "createSecureServer", pkgInfo, {
+            kind: undefined,
             modifyArgs: (args, agent) => {
               return this.wrapRequestListener(args, module, agent);
             },
@@ -82,6 +87,7 @@ export class HTTPServer implements Wrapper {
             pkgInfo,
             (instance) => {
               wrapExport(instance, "on", pkgInfo, {
+                kind: undefined,
                 modifyArgs: (args, agent) => {
                   return this.wrapOn(args, module, agent);
                 },

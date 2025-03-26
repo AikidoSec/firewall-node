@@ -40,6 +40,7 @@ export class Koa implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
           wrapExport(instance, "use", pkgInfo, {
+            kind: undefined,
             modifyArgs: this.wrapUseArgs,
           });
         });

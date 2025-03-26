@@ -11,6 +11,7 @@ export class PubSub implements Wrapper {
       .withVersion("^4.0.0")
       .onFileRequire("build/src/subscription.js", (exports, pkgInfo) => {
         wrapExport(exports.Subscription.prototype, "on", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             if (
               args.length > 0 &&

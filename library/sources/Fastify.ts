@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { RouteOptions } from "fastify";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -95,6 +96,7 @@ export class Fastify implements Wrapper {
 
     // Wrap the new route method
     wrapExport(appInstance, method, pkgInfo, {
+      kind: undefined,
       modifyArgs: this.wrapRequestArgs,
     });
 
@@ -117,22 +119,26 @@ export class Fastify implements Wrapper {
       // Check if the function exists - new functions in Fastify 5
       if (typeof instance[func] === "function") {
         wrapExport(instance, func, pkgInfo, {
+          kind: undefined,
           modifyArgs: this.wrapRequestArgs,
         });
       }
     }
 
     wrapExport(instance, "route", pkgInfo, {
+      kind: undefined,
       modifyArgs: this.wrapRouteMethod,
     });
 
     wrapExport(instance, "addHook", pkgInfo, {
+      kind: undefined,
       modifyArgs: this.wrapAddHookArgs,
     });
 
     // Added in Fastify 5
     if (typeof instance.addHttpMethod === "function") {
       wrapExport(instance, "addHttpMethod", pkgInfo, {
+        kind: undefined,
         modifyReturnValue: (args, returnValue) =>
           this.wrapNewRouteMethod(args, returnValue, pkgInfo),
       });

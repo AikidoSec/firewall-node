@@ -18,6 +18,7 @@ export class NodeSQLite implements Wrapper {
       const dbSyncProto = exports.DatabaseSync.prototype;
       for (const func of sqlFunctions) {
         wrapExport(dbSyncProto, func, pkgInfo, {
+          kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(`node:sqlite.${func}`, args),
         });
       }
