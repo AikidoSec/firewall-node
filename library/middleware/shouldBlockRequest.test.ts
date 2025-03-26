@@ -28,6 +28,7 @@ t.test("without context", async (t) => {
   });
 
   const result = shouldBlockRequest();
+  shouldBlockRequest();
   t.same(result, { block: false });
   t.same(logs, [
     "shouldBlockRequest() was called without a context. The request will not be blocked. Make sure to call shouldBlockRequest() within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
