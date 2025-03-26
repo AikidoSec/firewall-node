@@ -109,7 +109,7 @@ t.test("it works", async () => {
   });
   markUnsafe("id = 1");
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
   ]);
 
   // Warning logged only once
@@ -124,7 +124,7 @@ t.test("it works", async () => {
     markUnsafe(obj);
   });
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
     "markUnsafe(...) failed to serialize the data",
   ]);
 
@@ -132,7 +132,7 @@ t.test("it works", async () => {
     markUnsafe();
   });
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
     "markUnsafe(...) failed to serialize the data",
     "markUnsafe(...) was called without any data.",
   ]);
@@ -141,7 +141,7 @@ t.test("it works", async () => {
     markUnsafe(1, true, null, undefined, () => {}, Symbol("test"));
   });
   t.same(logs, [
-    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
     "markUnsafe(...) failed to serialize the data",
     "markUnsafe(...) was called without any data.",
     "markUnsafe(...) expects an object, array, or string. Received: number",
