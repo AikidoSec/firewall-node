@@ -72,7 +72,7 @@ function logWarningMarkUnsafeWithoutContext() {
 
   // eslint-disable-next-line no-console
   console.warn(
-    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen."
+    "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports)."
   );
 
   loggedWarningMarkUnsafeWithoutContext = true;
