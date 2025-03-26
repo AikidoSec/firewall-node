@@ -45,12 +45,7 @@ t.beforeEach(async () => {
     },
     body: JSON.stringify({
       blockedIPAddresses: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
-      blockedUserAgents: [
-        {
-          key: "some/key",
-          pattern: "hacker|attacker|GPTBot",
-        },
-      ],
+      blockedUserAgents: "hacker|attacker|GPTBot",
     }),
   });
   t.same(lists.status, 200);

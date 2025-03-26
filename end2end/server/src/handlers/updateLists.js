@@ -32,7 +32,10 @@ module.exports = function updateIPLists(req, res) {
 
   updateBlockedIPAddresses(req.app, req.body.blockedIPAddresses);
 
-  if (req.body.blockedUserAgents && Array.isArray(req.body.blockedUserAgents)) {
+  if (
+    req.body.blockedUserAgents &&
+    typeof req.body.blockedUserAgents === "string"
+  ) {
     updateBlockedUserAgents(req.app, req.body.blockedUserAgents);
   }
 

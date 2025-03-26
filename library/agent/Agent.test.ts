@@ -35,16 +35,7 @@ wrap(fetch, "fetch", function mock() {
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
           },
         ],
-        blockedUserAgents: [
-          {
-            key: "ai",
-            pattern: "AI2Bot|SomethingElse",
-          },
-          {
-            key: "spider",
-            pattern: "Bytespider",
-          },
-        ],
+        blockedUserAgents: "AI2Bot|Bytespider",
         allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
@@ -55,6 +46,8 @@ wrap(fetch, "fetch", function mock() {
               },
             ]
           : [],
+        monitoredUserAgents: [],
+        monitoredIPAddresses: [],
       } satisfies Response),
     };
   };
