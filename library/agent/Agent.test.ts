@@ -1086,7 +1086,6 @@ t.test("it fetches blocked lists", async () => {
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
     {
-      key: "ai",
       blocked: true,
     }
   );
@@ -1094,7 +1093,6 @@ t.test("it fetches blocked lists", async () => {
   t.same(
     agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
     {
-      key: "spider",
       blocked: true,
     }
   );
