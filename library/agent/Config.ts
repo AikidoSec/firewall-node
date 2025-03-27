@@ -17,7 +17,7 @@ export type EndpointConfig = {
 };
 
 export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
-  allowedIPAddresses?: IPMatcher;
+  allowedIPAddresses: IPMatcher | undefined;
 };
 
 export type Config = {
