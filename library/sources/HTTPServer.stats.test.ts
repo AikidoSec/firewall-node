@@ -1,7 +1,6 @@
 import { Token } from "../agent/api/Token";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
 import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
@@ -95,6 +94,7 @@ t.test("it tracks monitored user agents", async () => {
         t.same(stats.requests.userAgents.monitor, {
           total: 2,
           breakdown: {
+            // eslint-disable-next-line camelcase
             ai_data_scrapers: 2,
           },
         });
