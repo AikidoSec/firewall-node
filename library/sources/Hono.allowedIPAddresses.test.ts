@@ -21,6 +21,7 @@ wrap(fetch, "fetch", function mock(original) {
         body: JSON.stringify({
           blockedIPAddresses: [
             {
+              key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
@@ -29,11 +30,14 @@ wrap(fetch, "fetch", function mock(original) {
           blockedUserAgents: "hacker|attacker",
           allowedIPAddresses: [
             {
+              key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: ["4.3.2.1"],
             },
           ],
+          monitoredIPAddresses: [],
+          monitoredUserAgents: [],
         }),
       };
     }
