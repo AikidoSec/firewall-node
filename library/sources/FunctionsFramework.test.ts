@@ -91,10 +91,24 @@ t.test("it counts requests", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
-    blocked: {
-      total: 0,
-      userAgentList: {},
-      ipBlocklist: {},
+    userAgents: {
+      blocked: {
+        total: 0,
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
+    },
+    ipAddresses: {
+      blocked: {
+        total: 0,
+        breakdown: {},
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
     },
   });
 });
@@ -112,10 +126,24 @@ t.test("it counts attacks", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 1, blocked: 1 },
-    blocked: {
-      total: 0,
-      userAgentList: {},
-      ipBlocklist: {},
+    userAgents: {
+      blocked: {
+        total: 0,
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
+    },
+    ipAddresses: {
+      blocked: {
+        total: 0,
+        breakdown: {},
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
     },
   });
 });
@@ -133,10 +161,24 @@ t.test("it counts request if error", async (t) => {
     total: 1,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
-    blocked: {
-      total: 0,
-      userAgentList: {},
-      ipBlocklist: {},
+    userAgents: {
+      blocked: {
+        total: 0,
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
+    },
+    ipAddresses: {
+      blocked: {
+        total: 0,
+        breakdown: {},
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
     },
   });
 });
