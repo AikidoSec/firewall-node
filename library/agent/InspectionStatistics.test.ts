@@ -772,7 +772,7 @@ t.test("it keeps track of aborted requests", async () => {
   clock.uninstall();
 });
 
-t.test("it keeps track of blocked requests", async () => {
+t.test("it keeps track of blocked IPs and user agents", async () => {
   const clock = FakeTimers.install();
 
   const stats = new InspectionStatistics({
@@ -806,7 +806,6 @@ t.test("it keeps track of blocked requests", async () => {
         blocked: {
           total: 1,
           breakdown: {
-            // eslint-disable-next-line camelcase
             "known_threat_actors/public_scanners": 1,
           },
         },
@@ -821,7 +820,7 @@ t.test("it keeps track of blocked requests", async () => {
   clock.uninstall();
 });
 
-t.test("it keeps track of monitored requests", async () => {
+t.test("it keeps track of monitored IPs and user agents", async () => {
   const clock = FakeTimers.install();
 
   const stats = new InspectionStatistics({
@@ -850,7 +849,7 @@ t.test("it keeps track of monitored requests", async () => {
           total: 1,
           breakdown: {
             // eslint-disable-next-line camelcase
-            "ai_data_scrapers": 1,
+            ai_data_scrapers: 1,
           },
         },
       },
@@ -862,7 +861,6 @@ t.test("it keeps track of monitored requests", async () => {
         monitor: {
           total: 1,
           breakdown: {
-            // eslint-disable-next-line camelcase
             "known_threat_actors/public_scanners": 1,
           },
         },
@@ -892,7 +890,7 @@ t.test("it keeps track of monitored requests", async () => {
           total: 2,
           breakdown: {
             // eslint-disable-next-line camelcase
-            "ai_data_scrapers": 2,
+            ai_data_scrapers: 2,
           },
         },
       },
@@ -904,7 +902,6 @@ t.test("it keeps track of monitored requests", async () => {
         monitor: {
           total: 2,
           breakdown: {
-            // eslint-disable-next-line camelcase
             "known_threat_actors/public_scanners": 2,
           },
         },
