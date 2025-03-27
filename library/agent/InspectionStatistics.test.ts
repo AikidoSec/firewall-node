@@ -820,3 +820,97 @@ t.test("it keeps track of blocked requests", async () => {
 
   clock.uninstall();
 });
+
+t.test("it keeps track of monitored requests", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.detectedMonitoredIPAddress("known_threat_actors/public_scanners");
+  stats.detectedMonitoredUserAgent("ai_data_scrapers");
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 1,
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            "ai_data_scrapers": 1,
+          },
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 1,
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            "known_threat_actors/public_scanners": 1,
+          },
+        },
+      },
+    },
+  });
+
+  // Test multiple occurrences
+  stats.detectedMonitoredIPAddress("known_threat_actors/public_scanners");
+  stats.detectedMonitoredUserAgent("ai_data_scrapers");
+
+  t.same(stats.getStats(), {
+    sinks: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 2,
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            "ai_data_scrapers": 2,
+          },
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 2,
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            "known_threat_actors/public_scanners": 2,
+          },
+        },
+      },
+    },
+  });
+
+  clock.uninstall();
+});
