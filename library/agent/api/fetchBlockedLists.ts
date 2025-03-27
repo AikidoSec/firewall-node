@@ -17,8 +17,8 @@ export type AgentBlockList = {
 export type Response = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
-  monitoredIPAddresses: IPList[];
   blockedUserAgents: string;
+  monitoredIPAddresses: IPList[];
   monitoredUserAgents: AgentBlockList[];
 };
 
@@ -46,27 +46,16 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
 
   const result: Response = JSON.parse(body);
 
-  return {
-    blockedIPAddresses:
-      result && Array.isArray(result.blockedIPAddresses)
-        ? result.blockedIPAddresses
-        : [],
-    allowedIPAddresses:
-      result && Array.isArray(result.allowedIPAddresses)
-        ? result.allowedIPAddresses
-        : [],
-    monitoredIPAddresses:
-      result && Array.isArray(result.monitoredIPAddresses)
-        ? result.monitoredIPAddresses
-        : [],
-    // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
-    blockedUserAgents:
-      result && typeof result.blockedUserAgents === "string"
-        ? result.blockedUserAgents
-        : "",
-    monitoredUserAgents:
-      result && Array.isArray(result.monitoredUserAgents)
-        ? result.monitoredUserAgents
-        : [],
-  };
+  const validResponse =
+    Array.isArray(result.blockedIPAddresses) &&
+    Array.isArray(result.allowedIPAddresses) &&
+    Array.isArray(result.monitoredIPAddresses) &&
+    Array.isArray(result.monitoredUserAgents) &&
+    typeof result.blockedUserAgents === "string";
+
+  if (!validResponse) {
+    throw new Error("Invalid response from fetchBlockedLists");
+  }
+
+  return result;
 }
