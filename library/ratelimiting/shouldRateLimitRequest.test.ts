@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { Endpoint } from "../agent/Config";
+import { Endpoint, EndpointConfig } from "../agent/Config";
 import type { Context } from "../agent/Context";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -36,7 +36,7 @@ wrap(console, "warn", function warn() {
 });
 
 async function createAgent(
-  endpoints: Endpoint[] = [],
+  endpoints: EndpointConfig[] = [],
   allowedIpAddresses: string[] = []
 ) {
   const agent = createTestAgent({

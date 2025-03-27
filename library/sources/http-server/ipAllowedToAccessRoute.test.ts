@@ -36,7 +36,7 @@ t.beforeEach(async () => {
           // @ts-expect-error Test
           rateLimiting: undefined,
           method: "POST",
-          allowedIPAddresses: ["1.2.3.4"],
+          allowedIPAddresses: ["1.2.3.4", "192.168.2.0/24"],
           forceProtectionOff: false,
         },
       ],
@@ -66,6 +66,10 @@ t.test("it always allows request if no match", async () => {
 t.test("it always allows request if allowed IP address", async () => {
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "1.2.3.4" }, agent),
+    true
+  );
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "192.168.2.1" }, agent),
     true
   );
 });
@@ -154,6 +158,10 @@ t.test("it allows request if allowed IP addresses is empty", async () => {
 t.test("it blocks request if not allowed IP address", async () => {
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
+    false
+  );
+  t.same(
+    ipAllowedToAccessRoute({ ...context, remoteAddress: "192.168.0.1" }, agent),
     false
   );
 });

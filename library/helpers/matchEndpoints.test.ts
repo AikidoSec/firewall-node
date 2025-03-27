@@ -48,6 +48,7 @@ t.test("it returns endpoint based on route", async () => {
           windowSizeInMS: 1000,
         },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]),
     [
@@ -56,6 +57,7 @@ t.test("it returns endpoint based on route", async () => {
         route: "/posts/:number",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -75,6 +77,7 @@ t.test("it returns endpoint based on relative url", async () => {
             windowSizeInMS: 1000,
           },
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
         },
       ]
     ),
@@ -84,6 +87,7 @@ t.test("it returns endpoint based on relative url", async () => {
         route: "/posts/:number",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -101,6 +105,7 @@ t.test("it returns endpoint based on wildcard", async () => {
           windowSizeInMS: 1000,
         },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]),
     [
@@ -109,6 +114,7 @@ t.test("it returns endpoint based on wildcard", async () => {
         route: "/posts/*",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -126,6 +132,7 @@ t.test("it returns endpoint based on wildcard with relative URL", async () => {
           windowSizeInMS: 1000,
         },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]),
     [
@@ -134,6 +141,7 @@ t.test("it returns endpoint based on wildcard with relative URL", async () => {
         route: "/posts/*",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -157,6 +165,7 @@ t.test("it favors more specific wildcard", async () => {
             windowSizeInMS: 1000,
           },
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
         },
         {
           method: "*",
@@ -167,6 +176,7 @@ t.test("it favors more specific wildcard", async () => {
             windowSizeInMS: 1000,
           },
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
         },
       ]
     ),
@@ -176,6 +186,7 @@ t.test("it favors more specific wildcard", async () => {
         route: "/posts/*/comments/*",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
       {
         method: "*",
@@ -186,6 +197,7 @@ t.test("it favors more specific wildcard", async () => {
           windowSizeInMS: 1000,
         },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -210,6 +222,7 @@ t.test("it matches wildcard route with specific method", async () => {
             windowSizeInMS: 1000,
           },
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
         },
       ]
     ),
@@ -219,6 +232,7 @@ t.test("it matches wildcard route with specific method", async () => {
         route: "/posts/*/comments/*",
         rateLimiting: { enabled: true, maxRequests: 10, windowSizeInMS: 1000 },
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
       },
     ]
   );
@@ -238,6 +252,7 @@ t.test("it prefers specific route over wildcard", async () => {
           method: "*",
           route: "/api/*",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 20,
@@ -248,6 +263,7 @@ t.test("it prefers specific route over wildcard", async () => {
           method: "POST",
           route: "/api/coach",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 100,
@@ -261,6 +277,7 @@ t.test("it prefers specific route over wildcard", async () => {
         method: "POST",
         route: "/api/coach",
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
         rateLimiting: {
           enabled: true,
           maxRequests: 100,
@@ -271,6 +288,7 @@ t.test("it prefers specific route over wildcard", async () => {
         method: "*",
         route: "/api/*",
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
         rateLimiting: {
           enabled: true,
           maxRequests: 20,
@@ -295,6 +313,7 @@ t.test("it prefers specific method over wildcard", async () => {
           method: "*",
           route: "/api/test",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 20,
@@ -305,6 +324,7 @@ t.test("it prefers specific method over wildcard", async () => {
           method: "POST",
           route: "/api/test",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 100,
@@ -318,6 +338,7 @@ t.test("it prefers specific method over wildcard", async () => {
         method: "POST",
         route: "/api/test",
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
         rateLimiting: {
           enabled: true,
           maxRequests: 100,
@@ -342,6 +363,7 @@ t.test("it prefers specific method over wildcard", async () => {
           method: "POST",
           route: "/api/test",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 100,
@@ -352,6 +374,7 @@ t.test("it prefers specific method over wildcard", async () => {
           method: "*",
           route: "/api/test",
           forceProtectionOff: false,
+          allowedIPAddresses: undefined,
           rateLimiting: {
             enabled: true,
             maxRequests: 20,
@@ -365,6 +388,7 @@ t.test("it prefers specific method over wildcard", async () => {
         method: "POST",
         route: "/api/test",
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
         rateLimiting: {
           enabled: true,
           maxRequests: 100,
