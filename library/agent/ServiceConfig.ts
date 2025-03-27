@@ -2,7 +2,7 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import { Endpoint } from "./Config";
-import { IPList, AgentBlockList } from "./api/fetchBlockedLists";
+import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -28,7 +28,7 @@ export class ServiceConfig {
   }[] = [];
   private monitoredIPAddresses: {
     key: string;
-    blocklist: IPMatcher;
+    matcher: IPMatcher;
   }[] = [];
 
   constructor(
@@ -189,6 +189,18 @@ export class ServiceConfig {
     );
 
     return { allowed: !!allowlist };
+  }
+
+  isMonitoredIPAddress(ip: string): { key: string } | undefined {
+    const list = this.monitoredIPAddresses.find((list) => list.matcher.has(ip));
+
+    return list ? { key: list.key } : undefined;
+  }
+
+  isMonitoredUserAgent(ua: string): { key: string } | undefined {
+    const list = this.monitoredUserAgents.find((list) => list.pattern.test(ua));
+
+    return list ? { key: list.key } : undefined;
   }
 
   updateConfig(

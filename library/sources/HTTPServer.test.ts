@@ -62,7 +62,9 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           description: "geo restrictions",
         },
       ],
-      blockedUserAgents: [],
+      blockedUserAgents: "",
+      monitoredUserAgents: [],
+      monitoredIPAddresses: [],
     };
   };
 });

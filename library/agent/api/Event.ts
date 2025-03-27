@@ -92,10 +92,24 @@ type Heartbeat = {
         total: number;
         blocked: number;
       };
-      blocked: {
-        total: number;
-        userAgentList: Record<string, number>;
-        ipBlocklist: Record<string, number>;
+      userAgents: {
+        blocked: {
+          total: number;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+      };
+      ipAddresses: {
+        blocked: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
       };
     };
   };

@@ -39,10 +39,24 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -59,10 +73,24 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -90,10 +118,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -127,10 +169,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -164,10 +220,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -195,10 +265,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -232,10 +316,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -269,10 +367,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -325,10 +437,24 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -377,10 +503,24 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -397,10 +537,24 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -418,10 +572,24 @@ t.test("it keeps track of requests", async () => {
         total: 1,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -439,10 +607,24 @@ t.test("it keeps track of requests", async () => {
         total: 2,
         blocked: 1,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -461,10 +643,24 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -490,10 +686,24 @@ t.test("it force compresses stats", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -537,10 +747,24 @@ t.test("it keeps track of aborted requests", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 0,
-        userAgentList: {},
-        ipBlocklist: {},
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });
@@ -556,11 +780,8 @@ t.test("it keeps track of blocked requests", async () => {
     maxCompressedStatsInMemory: 5,
   });
 
-  stats.onBlockedRequest({
-    match: "ipBlocklist",
-    key: "known_threat_actors/public_scanners",
-  });
-  stats.onBlockedRequest({ match: "userAgentList", key: "ai_data_scrapers" });
+  stats.onBlockedIPAddress("known_threat_actors/public_scanners");
+  stats.onBlockedUserAgent();
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -572,15 +793,26 @@ t.test("it keeps track of blocked requests", async () => {
         total: 0,
         blocked: 0,
       },
-      blocked: {
-        total: 2,
-        ipBlocklist: {
-          // eslint-disable-next-line camelcase
-          "known_threat_actors/public_scanners": 1,
+      userAgents: {
+        blocked: {
+          total: 1,
         },
-        userAgentList: {
-          // eslint-disable-next-line camelcase
-          ai_data_scrapers: 1,
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 1,
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            "known_threat_actors/public_scanners": 1,
+          },
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
         },
       },
     },

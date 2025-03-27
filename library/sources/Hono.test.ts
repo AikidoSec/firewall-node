@@ -33,12 +33,9 @@ wrap(fetch, "fetch", function mock(original) {
             },
           ],
           allowedIPAddresses: [],
-          blockedUserAgents: [
-            {
-              key: "key",
-              pattern: "hacker|attacker",
-            },
-          ],
+          monitoredIPAddresses: [],
+          blockedUserAgents: "hacker|attacker",
+          monitoredUserAgents: [],
         } satisfies Response),
       };
     }

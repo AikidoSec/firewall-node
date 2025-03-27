@@ -74,6 +74,7 @@ function callListenerWithContext(
 // Use symbol to avoid conflicts with other properties
 const countedRequest = Symbol("__zen_request_counted__");
 
+// eslint-disable-next-line max-lines-per-function
 function createOnFinishRequestHandler(
   req: IncomingMessage & { [countedRequest]?: boolean },
   res: ServerResponse,
@@ -105,10 +106,34 @@ function createOnFinishRequestHandler(
     }
 
     agent.getInspectionStatistics().onRequest();
+
     if (context && context.attackDetected) {
       agent.getInspectionStatistics().onDetectedAttack({
         blocked: agent.shouldBlock(),
       });
+    }
+
+    if (context) {
+      if (
+        context.headers &&
+        typeof context.headers["user-agent"] === "string"
+      ) {
+        const match = agent
+          .getConfig()
+          .isMonitoredUserAgent(context.headers["user-agent"]);
+        if (match) {
+          agent.getInspectionStatistics().detectedMonitoredUserAgent(match.key);
+        }
+      }
+
+      if (context.remoteAddress) {
+        const match = agent
+          .getConfig()
+          .isMonitoredIPAddress(context.remoteAddress);
+        if (match) {
+          agent.getInspectionStatistics().detectedMonitoredIPAddress(match.key);
+        }
+      }
     }
   };
 }

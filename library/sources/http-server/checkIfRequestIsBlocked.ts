@@ -80,6 +80,8 @@ export function checkIfRequestIsBlocked(
 
     res.end(message);
 
+    agent.getInspectionStatistics().onBlockedIPAddress(result.key);
+
     return true;
   }
 
@@ -95,6 +97,8 @@ export function checkIfRequestIsBlocked(
     res.end(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
+
+    agent.getInspectionStatistics().onBlockedUserAgent();
 
     return true;
   }
