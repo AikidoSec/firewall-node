@@ -96,6 +96,7 @@ t.test("ip blocking works", async () => {
     false,
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [
@@ -112,15 +113,18 @@ t.test("ip blocking works", async () => {
   t.same(config.isIPAddressBlocked("1.2.3.4"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("2.3.4.5"), { blocked: false });
   t.same(config.isIPAddressBlocked("192.168.2.2"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::1"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::2"), {
     blocked: false,
@@ -128,14 +132,17 @@ t.test("ip blocking works", async () => {
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("5.6.7.8"), {
     blocked: true,
     reason: "description",
+    key: "geoip/Belgium;BE",
   });
   t.same(config.isIPAddressBlocked("1.2"), { blocked: false });
 });
@@ -163,6 +170,7 @@ t.test("restricting access to some ips", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: ["1.2.3.4"],
@@ -190,6 +198,7 @@ t.test("only allow some ips: empty list", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [],

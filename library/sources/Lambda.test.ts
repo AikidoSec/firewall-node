@@ -303,6 +303,25 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             total: 0,
             blocked: 0,
           },
+          userAgents: {
+            blocked: {
+              total: 0,
+            },
+            monitor: {
+              total: 0,
+              breakdown: {},
+            },
+          },
+          ipAddresses: {
+            blocked: {
+              total: 0,
+              breakdown: {},
+            },
+            monitor: {
+              total: 0,
+              breakdown: {},
+            },
+          },
         },
       },
       middlewareInstalled: false,
@@ -459,6 +478,25 @@ t.test("it counts attacks", async () => {
       attacksDetected: {
         total: 1,
         blocked: 0,
+      },
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
       },
     },
   });

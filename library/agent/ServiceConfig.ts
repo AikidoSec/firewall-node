@@ -2,7 +2,7 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import { Endpoint } from "./Config";
-import { IPList } from "./api/fetchBlockedLists";
+import { AgentBlockList, IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -10,14 +10,25 @@ export class ServiceConfig {
   private bypassedIPAddresses: IPMatcher | undefined;
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
-  private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
-    [];
+  private blockedIPAddresses: {
+    key: string;
+    blocklist: IPMatcher;
+    description: string;
+  }[] = [];
   private blockedUserAgentRegex: RegExp | undefined;
+  private monitoredUserAgents: {
+    key: string;
+    pattern: RegExp;
+  }[] = [];
   // If not empty, only ips in this list are allowed to access the service
   // e.g. for country allowlists
   private allowedIPAddresses: {
     allowlist: IPMatcher;
     description: string;
+  }[] = [];
+  private monitoredIPAddresses: {
+    key: string;
+    matcher: IPMatcher;
   }[] = [];
 
   constructor(
@@ -95,13 +106,17 @@ export class ServiceConfig {
 
   isIPAddressBlocked(
     ip: string
-  ): { blocked: true; reason: string } | { blocked: false } {
+  ): { blocked: true; reason: string; key: string } | { blocked: false } {
     const blocklist = this.blockedIPAddresses.find((blocklist) =>
       blocklist.blocklist.has(ip)
     );
 
     if (blocklist) {
-      return { blocked: true, reason: blocklist.description };
+      return {
+        blocked: true,
+        reason: blocklist.description,
+        key: blocklist.key,
+      };
     }
 
     return { blocked: false };
@@ -112,6 +127,7 @@ export class ServiceConfig {
 
     for (const source of blockedIPAddresses) {
       this.blockedIPAddresses.push({
+        key: source.key,
         blocklist: new IPMatcher(source.ips),
         description: source.description,
       });
@@ -127,13 +143,29 @@ export class ServiceConfig {
       this.blockedUserAgentRegex = undefined;
       return;
     }
+
     this.blockedUserAgentRegex = new RegExp(blockedUserAgents, "i");
+  }
+
+  updateMonitoredUserAgents(monitoredUserAgents: AgentBlockList[]) {
+    this.monitoredUserAgents = monitoredUserAgents.map((list) => ({
+      key: list.key,
+      pattern: new RegExp(list.pattern, "i"),
+    }));
+  }
+
+  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
+    this.monitoredIPAddresses = monitoredIPAddresses.map((list) => ({
+      key: list.key,
+      matcher: new IPMatcher(list.ips),
+    }));
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
     if (this.blockedUserAgentRegex) {
       return { blocked: this.blockedUserAgentRegex.test(ua) };
     }
+
     return { blocked: false };
   }
 
@@ -171,6 +203,18 @@ export class ServiceConfig {
     );
 
     return { allowed: !!allowlist };
+  }
+
+  isMonitoredIPAddress(ip: string): { key: string } | undefined {
+    const list = this.monitoredIPAddresses.find((list) => list.matcher.has(ip));
+
+    return list ? { key: list.key } : undefined;
+  }
+
+  isMonitoredUserAgent(ua: string): { key: string } | undefined {
+    const list = this.monitoredUserAgents.find((list) => list.pattern.test(ua));
+
+    return list ? { key: list.key } : undefined;
   }
 
   updateConfig(

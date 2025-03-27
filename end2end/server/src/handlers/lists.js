@@ -37,5 +37,7 @@ module.exports = function lists(req, res) {
             },
           ]
         : [],
+    monitoredIPAddresses: [],
+    monitoredUserAgents: [],
   });
 };

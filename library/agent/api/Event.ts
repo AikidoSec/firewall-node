@@ -92,6 +92,25 @@ type Heartbeat = {
         total: number;
         blocked: number;
       };
+      userAgents: {
+        blocked: {
+          total: number;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+      };
+      ipAddresses: {
+        blocked: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+      };
     };
   };
   hostnames: { hostname: string; port: number | undefined; hits: number }[];

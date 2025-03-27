@@ -74,20 +74,21 @@ function callListenerWithContext(
 // Use symbol to avoid conflicts with other properties
 const countedRequest = Symbol("__zen_request_counted__");
 
+// eslint-disable-next-line max-lines-per-function
 function createOnFinishRequestHandler(
-  req: IncomingMessage,
+  req: IncomingMessage & { [countedRequest]?: boolean },
   res: ServerResponse,
   agent: Agent
 ) {
   return function onFinishRequest() {
-    if ((req as any)[countedRequest]) {
+    if (req[countedRequest]) {
       // The request has already been counted
       // This might happen if the server has multiple listeners
       return;
     }
 
     // Mark the request as counted
-    (req as any)[countedRequest] = true;
+    req[countedRequest] = true;
 
     const context = getContext();
 
@@ -105,10 +106,34 @@ function createOnFinishRequestHandler(
     }
 
     agent.getInspectionStatistics().onRequest();
+
     if (context && context.attackDetected) {
       agent.getInspectionStatistics().onDetectedAttack({
         blocked: agent.shouldBlock(),
       });
+    }
+
+    if (context) {
+      if (
+        context.headers &&
+        typeof context.headers["user-agent"] === "string"
+      ) {
+        const match = agent
+          .getConfig()
+          .isMonitoredUserAgent(context.headers["user-agent"]);
+        if (match) {
+          agent.getInspectionStatistics().detectedMonitoredUserAgent(match.key);
+        }
+      }
+
+      if (context.remoteAddress) {
+        const match = agent
+          .getConfig()
+          .isMonitoredIPAddress(context.remoteAddress);
+        if (match) {
+          agent.getInspectionStatistics().detectedMonitoredIPAddress(match.key);
+        }
+      }
     }
   };
 }

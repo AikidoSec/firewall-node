@@ -21,6 +21,8 @@ type SinkStats = {
 };
 
 type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
+type UserAgentBotKey = string;
+type IPListKey = string;
 
 export class InspectionStatistics {
   private startedAt = Date.now();
@@ -34,7 +36,51 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
-  } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
+    userAgents: {
+      blocked: {
+        // We cannot build a breakdown for blocked user agents
+        // We use one regex for matching user agents
+        total: number;
+      };
+      monitor: {
+        total: number;
+        breakdown: Record<UserAgentBotKey, number>;
+      };
+    };
+    ipAddresses: {
+      blocked: {
+        total: number;
+        breakdown: Record<IPListKey, number>;
+      };
+      monitor: {
+        total: number;
+        breakdown: Record<IPListKey, number>;
+      };
+    };
+  } = {
+    total: 0,
+    aborted: 0,
+    attacksDetected: { total: 0, blocked: 0 },
+    userAgents: {
+      blocked: {
+        total: 0,
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
+    },
+    ipAddresses: {
+      blocked: {
+        total: 0,
+        breakdown: {},
+      },
+      monitor: {
+        total: 0,
+        breakdown: {},
+      },
+    },
+  };
 
   constructor({
     maxPerfSamplesInMemory,
@@ -67,10 +113,30 @@ export class InspectionStatistics {
       total: 0,
       aborted: 0,
       attacksDetected: { total: 0, blocked: 0 },
+      userAgents: {
+        blocked: {
+          total: 0,
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
+      ipAddresses: {
+        blocked: {
+          total: 0,
+          breakdown: {},
+        },
+        monitor: {
+          total: 0,
+          breakdown: {},
+        },
+      },
     };
     this.startedAt = Date.now();
   }
 
+  // eslint-disable-next-line max-lines-per-function
   getStats(): {
     sinks: Record<string, SinkStatsWithoutTimings>;
     startedAt: number;
@@ -80,6 +146,25 @@ export class InspectionStatistics {
       attacksDetected: {
         total: number;
         blocked: number;
+      };
+      userAgents: {
+        blocked: {
+          total: number;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+      };
+      ipAddresses: {
+        blocked: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
+        monitor: {
+          total: number;
+          breakdown: Record<string, number>;
+        };
       };
     };
   } {
@@ -174,6 +259,40 @@ export class InspectionStatistics {
     if (blocked) {
       this.requests.attacksDetected.blocked += 1;
     }
+  }
+
+  onBlockedIPAddress(key: string) {
+    this.requests.ipAddresses.blocked.total += 1;
+
+    if (!this.requests.ipAddresses.blocked.breakdown[key]) {
+      this.requests.ipAddresses.blocked.breakdown[key] = 0;
+    }
+
+    this.requests.ipAddresses.blocked.breakdown[key] += 1;
+  }
+
+  onBlockedUserAgent() {
+    this.requests.userAgents.blocked.total += 1;
+  }
+
+  detectedMonitoredIPAddress(key: IPListKey) {
+    this.requests.ipAddresses.monitor.total += 1;
+
+    if (!this.requests.ipAddresses.monitor.breakdown[key]) {
+      this.requests.ipAddresses.monitor.breakdown[key] = 0;
+    }
+
+    this.requests.ipAddresses.monitor.breakdown[key] += 1;
+  }
+
+  detectedMonitoredUserAgent(key: UserAgentBotKey) {
+    this.requests.userAgents.monitor.total += 1;
+
+    if (!this.requests.userAgents.monitor.breakdown[key]) {
+      this.requests.userAgents.monitor.breakdown[key] = 0;
+    }
+
+    this.requests.userAgents.monitor.breakdown[key] += 1;
   }
 
   onAbortedRequest() {

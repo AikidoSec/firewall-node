@@ -154,6 +154,25 @@ function generateHeartbeatEvent(): Event {
           blocked: 0,
           total: 0,
         },
+        userAgents: {
+          blocked: {
+            total: 0,
+          },
+          monitor: {
+            total: 0,
+            breakdown: {},
+          },
+        },
+        ipAddresses: {
+          blocked: {
+            total: 0,
+            breakdown: {},
+          },
+          monitor: {
+            total: 0,
+            breakdown: {},
+          },
+        },
       },
     },
     agent: {
