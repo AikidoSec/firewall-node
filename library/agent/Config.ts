@@ -1,4 +1,6 @@
-export type Endpoint = {
+import type { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+
+export type EndpointConfig = {
   method: string;
   route: string;
   forceProtectionOff: boolean;
@@ -14,8 +16,12 @@ export type Endpoint = {
   };
 };
 
+export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
+  allowedIPAddresses?: IPMatcher;
+};
+
 export type Config = {
-  endpoints: Endpoint[];
+  endpoints: EndpointConfig[];
   heartbeatIntervalInMS: number;
   configUpdatedAt: number;
   blockedUserIds: string[];

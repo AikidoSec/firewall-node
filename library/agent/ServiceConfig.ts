@@ -1,7 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { Endpoint } from "./Config";
+import type { Endpoint, EndpointConfig } from "./Config";
 import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
@@ -21,7 +21,7 @@ export class ServiceConfig {
   }[] = [];
 
   constructor(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
@@ -36,7 +36,18 @@ export class ServiceConfig {
     this.setAllowedIPAddresses(allowedIPAddresses);
   }
 
-  private setEndpoints(endpoints: Endpoint[]) {
+  private setEndpoints(endpointConfigs: EndpointConfig[]) {
+    const endpoints = endpointConfigs.map((endpoint) => {
+      return {
+        ...endpoint,
+        allowedIPAddresses:
+          Array.isArray(endpoint.allowedIPAddresses) &&
+          endpoint.allowedIPAddresses.length > 0
+            ? new IPMatcher(endpoint.allowedIPAddresses)
+            : undefined,
+      };
+    });
+
     this.nonGraphQLEndpoints = endpoints.filter(
       (endpoint) => !endpoint.graphql
     );
@@ -174,7 +185,7 @@ export class ServiceConfig {
   }
 
   updateConfig(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
