@@ -82,7 +82,7 @@ export default function () {
     headers: headers,
   });
 
-  GET_TREND.add(getRes.timings.duration);
+  GET_TREND.add(getRes.timings.waiting);
 
   const postRes = http.post(
     "http://localhost:4000/api/posts",
@@ -92,7 +92,7 @@ export default function () {
     }
   );
 
-  POST_TREND.add(postRes.timings.duration);
+  POST_TREND.add(postRes.timings.waiting);
 }
 
 export function handleSummary(data) {
