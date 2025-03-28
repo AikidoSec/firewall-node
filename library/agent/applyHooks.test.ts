@@ -7,17 +7,19 @@ import { Hooks } from "./hooks/Hooks";
 import { wrapExport } from "./hooks/wrapExport";
 import { createTestAgent } from "../helpers/createTestAgent";
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: undefined,
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
+const getContext = (): Context => {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: undefined,
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
 };
 
 const reportingAPI = new ReportingAPIForTesting();
@@ -74,7 +76,7 @@ t.test(
 
     applyHooks(hooks);
 
-    await runWithContext(context, async () => {
+    await runWithContext(getContext(), async () => {
       await fetch("https://app.aikido.dev");
       t.same(modifyCalled, true);
 
@@ -127,7 +129,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
   await lookup("www.google.com");
   t.same(inspectionCalls, [{ args: ["www.google.com"] }]);
 
-  await runWithContext(context, async () => {
+  await runWithContext(getContext(), async () => {
     await lookup("www.aikido.dev");
   });
 
@@ -138,7 +140,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
 
   await runWithContext(
     {
-      ...context,
+      ...getContext(),
       method: "GET",
       route: "/route",
     },
@@ -187,7 +189,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
 
   const { hostname } = require("os");
 
-  await runWithContext(context, async () => {
+  await runWithContext(getContext(), async () => {
     const name = hostname();
     t.ok(typeof name === "string");
   });

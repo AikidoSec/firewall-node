@@ -30,6 +30,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  forceProtectionOff?: boolean;
 };
 
 /**

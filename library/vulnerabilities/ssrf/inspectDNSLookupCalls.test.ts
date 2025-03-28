@@ -15,19 +15,21 @@ wrap(console, "log", function log() {
   };
 });
 
-const context: Context = {
-  remoteAddress: "::1",
-  method: "POST",
-  url: "http://localhost:4000",
-  query: {},
-  headers: {},
-  body: {
-    image: "http://localhost",
-  },
-  cookies: {},
-  routeParams: {},
-  source: "express",
-  route: "/posts/:id",
+const getContext = (): Context => {
+  return {
+    remoteAddress: "::1",
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: {
+      image: "http://localhost",
+    },
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/posts/:id",
+  };
 };
 
 t.test("it resolves private IPv4 without context", (t) => {
@@ -86,7 +88,7 @@ t.test("it blocks lookup in blocking mode", (t) => {
     "operation"
   );
 
-  runWithContext(context, () => {
+  runWithContext(getContext(), () => {
     wrappedLookup("localhost", {}, (err, address) => {
       t.same(err instanceof Error, true);
       if (err instanceof Error) {
@@ -130,7 +132,7 @@ t.test("it allows resolved public IP", (t) => {
   );
 
   runWithContext(
-    { ...context, body: { image: "http://www.google.be" } },
+    { ...getContext(), body: { image: "http://www.google.be" } },
     () => {
       wrappedLookup("www.google.be", {}, (err, address) => {
         t.same(err, null);
@@ -160,7 +162,7 @@ t.test(
       "operation"
     );
 
-    runWithContext({ ...context, body: undefined }, () => {
+    runWithContext({ ...getContext(), body: undefined }, () => {
       wrappedLookup("localhost", {}, (err, address) => {
         t.same(err, null);
         t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
@@ -211,7 +213,7 @@ t.test(
     );
 
     await new Promise<void>((resolve) => {
-      runWithContext(context, () => {
+      runWithContext(getContext(), () => {
         wrappedLookup("localhost", {}, (err, address) => {
           t.same(err, null);
           t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
@@ -236,7 +238,7 @@ t.test("it blocks lookup in blocking mode with all option", (t) => {
     "operation"
   );
 
-  runWithContext(context, () => {
+  runWithContext(getContext(), () => {
     wrappedLookup("localhost", { all: true }, (err, address) => {
       t.same(err instanceof Error, true);
       if (err instanceof Error) {
@@ -268,7 +270,7 @@ t.test("it does not block in dry mode", (t) => {
     "operation"
   );
 
-  runWithContext(context, () => {
+  runWithContext(getContext(), () => {
     wrappedLookup("localhost", {}, (err, address) => {
       t.same(err, null);
       t.same(address, getMajorNodeVersion() === 16 ? "127.0.0.1" : "::1");
@@ -378,7 +380,7 @@ t.test("Blocks IMDS SSRF with untrusted domain", async (t) => {
       });
     }),
     new Promise<void>((resolve) => {
-      runWithContext(context, () => {
+      runWithContext(getContext(), () => {
         wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
           t.same(err instanceof Error, true);
           if (err instanceof Error) {
@@ -433,7 +435,7 @@ t.test(
       "operation"
     );
 
-    runWithContext(context, () => {
+    runWithContext(getContext(), () => {
       wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
         t.same(err, null);
         t.same(address, "169.254.169.254");
@@ -469,7 +471,7 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
       );
     }),
     new Promise<void>((resolve) => {
-      runWithContext(context, () => {
+      runWithContext(getContext(), () => {
         wrappedLookup(
           "metadata.google.internal",
           { family: 4 },
@@ -500,7 +502,7 @@ t.test("it ignores when the argument is an IP address", async (t) => {
   await Promise.all([
     new Promise<void>((resolve) => {
       runWithContext(
-        { ...context, routeParams: { id: "169.254.169.254" } },
+        { ...getContext(), routeParams: { id: "169.254.169.254" } },
         () => {
           wrappedLookup("169.254.169.254", {}, (err, address) => {
             t.same(err, null);
@@ -512,7 +514,7 @@ t.test("it ignores when the argument is an IP address", async (t) => {
     }),
     new Promise<void>((resolve) => {
       runWithContext(
-        { ...context, routeParams: { id: "fd00:ec2::254" } },
+        { ...getContext(), routeParams: { id: "fd00:ec2::254" } },
         () => {
           wrappedLookup("fd00:ec2::254", {}, (err, address) => {
             t.same(err, null);
