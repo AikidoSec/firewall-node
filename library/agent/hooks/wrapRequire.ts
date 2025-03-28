@@ -39,7 +39,6 @@ export function wrapRequire() {
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
 
-  // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
     // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
