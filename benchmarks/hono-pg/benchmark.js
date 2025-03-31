@@ -60,7 +60,6 @@ async function runBenchmarks() {
 async function getResult() {
   const json = await readFile("result.json", "utf8");
   await unlink("result.json");
-  console.log(json);
   return JSON.parse(json);
 }
 
