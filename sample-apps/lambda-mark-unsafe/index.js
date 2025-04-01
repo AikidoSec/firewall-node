@@ -1,7 +1,8 @@
 const protect = require("@aikidosec/firewall/lambda");
 
-require("@aikidosec/firewall/nopp");
 const { someFunction } = require("./submodule");
+
+require("@aikidosec/firewall/nopp");
 
 async function main(client, event) {
   someFunction();
