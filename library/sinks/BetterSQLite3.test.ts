@@ -2,6 +2,7 @@ import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { BetterSQLite3 } from "./BetterSQLite3";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { tmpdir } from "node:os";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -118,10 +119,10 @@ t.test("it detects SQL injections", async (t) => {
           "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
         );
       }
-      await db.backup("/tmp/sqlite-test-secure");
+      await db.backup(`${tmpdir()}/sqlite-test-secure`);
     });
 
-    await db.backup("/tmp/sqlite-test-secure-2");
+    await db.backup(`${tmpdir()}/sqlite-test-secure-2`);
 
     try {
       await db.backup();
