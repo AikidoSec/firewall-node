@@ -3,6 +3,7 @@ import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
 import { markUnsafe } from "./agent/context/markUnsafe";
+import { setRateLimits } from "./agent/context/setRateLimits";
 import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
@@ -27,6 +28,7 @@ if (supported && shouldEnable) {
 export {
   setUser,
   markUnsafe,
+  setRateLimits,
   shouldBlockRequest,
   addExpressMiddleware,
   addHonoMiddleware,
@@ -39,6 +41,7 @@ export {
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  setRateLimits,
   shouldBlockRequest,
   addExpressMiddleware,
   addHonoMiddleware,
