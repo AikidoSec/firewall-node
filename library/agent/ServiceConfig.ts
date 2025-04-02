@@ -19,6 +19,7 @@ export class ServiceConfig {
     allowlist: IPMatcher;
     description: string;
   }[] = [];
+  private customRateLimits: Endpoint[] = [];
 
   constructor(
     endpoints: Endpoint[],
@@ -45,8 +46,19 @@ export class ServiceConfig {
     );
   }
 
+  setCustomRateLimits(customRateLimits: Endpoint[]) {
+    this.customRateLimits = customRateLimits;
+  }
+
   getEndpoints(context: LimitedContext) {
-    return matchEndpoints(context, this.nonGraphQLEndpoints);
+    return matchEndpoints(
+      context,
+      this.nonGraphQLEndpoints.concat(
+        this.customRateLimits.filter((endpoint) => {
+          return !endpoint.graphql;
+        })
+      )
+    );
   }
 
   getGraphQLField(
@@ -56,7 +68,7 @@ export class ServiceConfig {
   ) {
     const endpoints = matchEndpoints(
       context,
-      this.graphqlFields.filter((field) => {
+      this.graphqlFields.concat(this.customRateLimits).filter((field) => {
         if (!field.graphql) {
           return false;
         }

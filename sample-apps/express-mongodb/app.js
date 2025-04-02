@@ -14,6 +14,13 @@ const fetchImage = require("./fetchImage");
 
 require("@aikidosec/firewall/nopp");
 
+Zen.setRateLimits({
+  "/": {
+    maxRequests: 3,
+    windowSizeInMS: 60 * 1000,
+  },
+});
+
 async function getPosts() {
   // Normally you'd use environment variables for this
   const url = "mongodb://root:password@127.0.0.1:27017";
