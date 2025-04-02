@@ -35,6 +35,4 @@ export function setRateLimits(rateLimits: Record<Route, Config>): void {
       };
     })
   );
-
-  console.log(agent.getConfig());
 }
