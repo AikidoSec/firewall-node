@@ -7,6 +7,7 @@ import type {
   EventHandler,
   EventHandlerResponse,
 } from "h3";
+import { wrapReadBody } from "./h3/wrapReadBody";
 
 /**
  * Todos:
@@ -28,17 +29,32 @@ export class H3 implements Wrapper {
       return args;
     }
 
-    if (typeof args[0] !== "function") {
-      // Todo support object
-      return args;
+    if (typeof args[0] === "function") {
+      return [
+        wrapEventHandler(
+          args[0] as EventHandler<EventHandlerRequest, EventHandlerResponse>,
+          h3
+        ),
+      ];
     }
 
-    return [
-      wrapEventHandler(
-        args[0] as EventHandler<EventHandlerRequest, EventHandlerResponse>,
+    if (
+      args[0] &&
+      typeof args[0] === "object" &&
+      !Array.isArray(args[0]) &&
+      "handler" in args[0] &&
+      typeof args[0].handler === "function"
+    ) {
+      args[0].handler = wrapEventHandler(
+        args[0].handler as EventHandler<
+          EventHandlerRequest,
+          EventHandlerResponse
+        >,
         h3
-      ),
-    ];
+      );
+    }
+
+    return args;
   }
 
   wrap(hooks: Hooks) {
@@ -51,6 +67,18 @@ export class H3 implements Wrapper {
             return this.wrapEventHandler(args, exports);
           },
         });
+        const bodyFuncs = [
+          "readBody",
+          "readFormData",
+          "readMultipartFormData",
+          "readRawBody",
+          "readValidatedBody",
+        ];
+        for (const func of bodyFuncs) {
+          wrapExport(exports, func, pkgInfo, {
+            modifyReturnValue: wrapReadBody,
+          });
+        }
       });
   }
 }

@@ -1,7 +1,6 @@
 import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
-import { parse } from "../../helpers/parseCookies";
 import type { EventHandlerRequest, H3Event } from "h3";
 
 export async function contextFromEvent(
@@ -11,7 +10,6 @@ export async function contextFromEvent(
   const existingContext = getContext();
 
   const headers = h3.getHeaders(event);
-  const cookieHeader = headers.cookie;
 
   const url = h3.getRequestURL(event).toString();
 
@@ -32,7 +30,7 @@ export async function contextFromEvent(
     headers: headers,
     routeParams: h3.getRouterParams(event),
     query: h3.getQuery(event),
-    cookies: cookieHeader ? parse(cookieHeader) : {},
+    cookies: h3.parseCookies(event),
     source: "h3",
     route: buildRouteFromURL(url),
   };

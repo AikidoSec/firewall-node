@@ -7,7 +7,6 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getContext } from "../agent/Context";
-import { setResponseStatus } from "h3";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -40,8 +39,18 @@ t.test(
       getMajorNodeVersion() < 20 ? "h3 does not work on node < 20" : undefined,
   },
   async (t) => {
-    const { createApp, defineEventHandler, toNodeListener, createRouter } =
-      require("h3") as typeof import("h3");
+    const {
+      createApp,
+      defineEventHandler,
+      toNodeListener,
+      createRouter,
+      setResponseStatus,
+      readBody,
+      readFormData,
+      readMultipartFormData,
+      readRawBody,
+      readValidatedBody,
+    } = require("h3") as typeof import("h3");
 
     const { createServer } = require("http") as typeof import("http");
 
@@ -66,6 +75,75 @@ t.test(
       "/context/:name",
       defineEventHandler((event) => {
         return getContext();
+      })
+    );
+
+    router.add(
+      "/context2",
+      defineEventHandler({
+        onRequest: [],
+        onBeforeResponse: [],
+        handler: (event) => {
+          return getContext();
+        },
+      })
+    );
+
+    router.post(
+      "/post-json",
+      defineEventHandler(async (event) => {
+        const body = await readBody(event);
+
+        return {
+          context: getContext(),
+          body,
+        };
+      })
+    );
+
+    router.post(
+      "/post-form-data",
+      defineEventHandler(async (event) => {
+        const body = await readFormData(event);
+        return {
+          context: getContext(),
+          body: body.getAll("arr"),
+        };
+      })
+    );
+
+    router.post(
+      "/post-multipart-form-data",
+      defineEventHandler(async (event) => {
+        const body = await readMultipartFormData(event);
+        return {
+          context: getContext(),
+          body,
+        };
+      })
+    );
+
+    router.post(
+      "/post-raw-body",
+      defineEventHandler(async (event) => {
+        const body = await readRawBody(event);
+        return {
+          context: getContext(),
+          body,
+        };
+      })
+    );
+
+    router.post(
+      "/post-validated-body",
+      defineEventHandler(async (event) => {
+        const body = await readValidatedBody(event, (body) => {
+          return typeof body === "object" && body !== null;
+        });
+        return {
+          context: getContext(),
+          body,
+        };
       })
     );
 
@@ -126,6 +204,80 @@ t.test(
         cookies: {
           abc: "123",
         },
+      });
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/context2");
+      const body = await response.json();
+      t.match(body, {
+        method: "GET",
+        url: "/context2",
+        headers: {
+          host: "localhost:4123",
+          connection: "keep-alive",
+          accept: "*/*",
+          "accept-language": "*",
+          "sec-fetch-mode": "cors",
+          "user-agent": "node",
+          "accept-encoding": "gzip, deflate",
+        },
+        route: "/context2",
+        query: {},
+        source: "h3",
+        routeParams: {},
+        cookies: {},
+      });
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/post-json", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ abc: "123", arr: [1, 2, 3] }),
+      });
+
+      const body = await response.json();
+      t.match(body, {
+        context: {
+          method: "POST",
+          url: "/post-json",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: {
+            abc: "123",
+            arr: [1, 2, 3],
+          },
+        },
+        body: {
+          abc: "123",
+          arr: [1, 2, 3],
+        },
+      });
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/post-form-data", {
+        method: "POST",
+        body: "abc=123&arr=1&arr=2&arr=3",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+        },
+      });
+      const body = await response.json();
+      t.match(body, {
+        context: {
+          method: "POST",
+          url: "/post-form-data",
+          body: {
+            abc: "123",
+            arr: ["1", "2", "3"],
+          },
+        },
+        body: ["1", "2", "3"],
       });
     }
 
