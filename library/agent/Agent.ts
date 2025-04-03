@@ -464,7 +464,7 @@ export class Agent {
       }
     }
 
-    wrapInstalledPackages(wrappers);
+    wrapInstalledPackages(wrappers, this.serverless);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
