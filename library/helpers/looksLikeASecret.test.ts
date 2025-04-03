@@ -155,6 +155,7 @@ const urlTerms = [
   "queryLocator",
   "relevantItems",
   "parameterizedSearch",
+  "test_ratelimiting_1",
 ];
 
 t.test("it returns false for common url terms", async () => {
