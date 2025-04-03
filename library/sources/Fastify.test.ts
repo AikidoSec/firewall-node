@@ -141,7 +141,6 @@ function getApp(
     reply.code(200).send("ok");
   });
 
-  // @ts-expect-error not typed yet after release
   app.addHttpMethod("MKCOL");
 
   app.mkcol("/testurl", async (request, reply) => {

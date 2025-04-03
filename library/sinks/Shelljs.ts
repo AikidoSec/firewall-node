@@ -43,7 +43,7 @@ export class Shelljs implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("shelljs")
-      .withVersion("^0.8.0 || ^0.7.0")
+      .withVersion("^0.9.0 || ^0.8.0 || ^0.7.0")
       // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
       .onFileRequire("src/common.js", (exports, pkgInfo) => {
         wrapExport(exports, "register", pkgInfo, {
