@@ -169,6 +169,7 @@ t.test("it returns false for common url terms", async () => {
 
 t.test("it returns false for known word separators", async () => {
   t.same(looksLikeASecret("this-is-a-secret-1"), false);
+  t.same(looksLikeASecret("test_ratelimiting_1"), false);
 });
 
 t.test("a number is not a secret", async () => {

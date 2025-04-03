@@ -4,7 +4,7 @@ const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
 const UPPERCASE = LOWERCASE.map((char) => char.toUpperCase());
 const NUMBERS = "0123456789".split("");
 const SPECIAL = "!#$%^&*|;:<>".split("");
-const KNOWN_WORD_SEPARATORS = ["-"];
+const KNOWN_WORD_SEPARATORS = ["-", "_"];
 const WHITE_SPACE = /\s+/;
 const MINIMUM_LENGTH = 10;
 
