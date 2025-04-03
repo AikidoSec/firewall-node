@@ -21,13 +21,13 @@ t.beforeEach(async () => {
       Authorization: token,
     },
     body: JSON.stringify({
-      allowedIPAddresses: ["5.6.7.8"],
+      allowedIPAddresses: ["5.6.7.8", "10.0.0.1/16"],
       endpoints: [
         {
           route: "/admin",
           method: "GET",
           forceProtectionOff: false,
-          allowedIPAddresses: [],
+          allowedIPAddresses: ["10.0.0.1/16"],
           rateLimiting: {
             enabled: false,
           },
@@ -134,6 +134,22 @@ t.test("it blocks non-allowed IP addresses", (t) => {
       });
       t.same(resp4.status, 200);
       t.same(await resp4.text(), JSON.stringify({ success: true }));
+
+      const resp5 = await fetch("http://127.0.0.1:4002/admin", {
+        headers: {
+          "X-Forwarded-For": "10.0.0.2",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp5.status, 200);
+
+      const resp6 = await fetch("http://127.0.0.1:4002/admin", {
+        headers: {
+          "X-Forwarded-For": "5.6.7.8",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp6.status, 403);
     })
     .catch((error) => {
       t.fail(error);

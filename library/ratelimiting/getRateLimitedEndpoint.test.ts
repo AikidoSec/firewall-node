@@ -116,7 +116,7 @@ t.test("it returns endpoint if matching and enabled", async () => {
       method: "POST",
       route: "/api/login",
       forceProtectionOff: false,
-      allowedIPAddresses: [],
+      allowedIPAddresses: undefined,
       rateLimiting: {
         enabled: true,
         maxRequests: 3,
@@ -167,7 +167,7 @@ t.test("it returns endpoint with lowest max requests", async () => {
       method: "POST",
       route: "/api/*",
       forceProtectionOff: false,
-      allowedIPAddresses: [],
+      allowedIPAddresses: undefined,
       rateLimiting: {
         enabled: true,
         maxRequests: 1,
@@ -218,7 +218,7 @@ t.test("it returns endpoint with smallest window size", async () => {
       method: "POST",
       route: "/api/log*",
       forceProtectionOff: false,
-      allowedIPAddresses: [],
+      allowedIPAddresses: undefined,
       rateLimiting: {
         enabled: true,
         maxRequests: 3,
@@ -269,7 +269,7 @@ t.test("it always returns exact matches first", async () => {
       method: "POST",
       route: "/api/login",
       forceProtectionOff: false,
-      allowedIPAddresses: [],
+      allowedIPAddresses: undefined,
       rateLimiting: {
         enabled: true,
         maxRequests: 10,
