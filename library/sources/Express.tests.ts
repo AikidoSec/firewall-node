@@ -410,7 +410,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.body, { error: "test" });
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0, // Errors are not counted
         attacksDetected: {
           total: 0,
           blocked: 0,
