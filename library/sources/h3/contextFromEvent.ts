@@ -1,10 +1,10 @@
 import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
-import type { EventHandlerRequest, H3Event } from "h3";
+import type { H3Event } from "h3";
 
 export async function contextFromEvent(
-  event: H3Event<EventHandlerRequest>,
+  event: H3Event,
   h3: typeof import("h3")
 ): Promise<Context> {
   const existingContext = getContext();

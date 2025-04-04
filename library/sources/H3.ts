@@ -8,24 +8,11 @@ import type {
   EventHandlerResponse,
 } from "h3";
 import { wrapReadBody } from "./h3/wrapReadBody";
-
-/**
- * Todos:
- *
- * createApp:
- *  onRequest
- *  onBeforeResponse
- *  onAfterResponse
- *
- * Body parsing
- * defineLazyEventHandler
- *
- * ...
- */
+import { wrapMiddleware } from "./h3/wrapMiddleware";
 
 export class H3 implements Wrapper {
   private wrapEventHandler(args: unknown[], h3: typeof import("h3")) {
-    if (args.length !== 1) {
+    if (args.length < 1) {
       return args;
     }
 
@@ -38,20 +25,64 @@ export class H3 implements Wrapper {
       ];
     }
 
-    if (
-      args[0] &&
-      typeof args[0] === "object" &&
-      !Array.isArray(args[0]) &&
-      "handler" in args[0] &&
-      typeof args[0].handler === "function"
-    ) {
-      args[0].handler = wrapEventHandler(
-        args[0].handler as EventHandler<
-          EventHandlerRequest,
-          EventHandlerResponse
-        >,
-        h3
-      );
+    if (args[0] && typeof args[0] === "object" && !Array.isArray(args[0])) {
+      const config = args[0] as { [key: string]: unknown };
+
+      if ("handler" in config && typeof config.handler === "function") {
+        config.handler = wrapEventHandler(
+          config.handler as EventHandler<
+            EventHandlerRequest,
+            EventHandlerResponse
+          >,
+          h3
+        );
+      }
+
+      const middlewareFuncs = ["onRequest", "onBeforeResponse"];
+      for (const func of middlewareFuncs) {
+        if (func in config) {
+          // Can be a function or a  array of functions
+          if (typeof config[func] === "function") {
+            config[func] = wrapMiddleware(
+              config[func] as (...args: unknown[]) => void | Promise<void>,
+              h3
+            );
+          } else if (Array.isArray(config[func])) {
+            config[func] = (
+              config[func] as ((...args: unknown[]) => void | Promise<void>)[]
+            ).map((m) =>
+              wrapMiddleware(
+                m as (...args: unknown[]) => void | Promise<void>,
+                h3
+              )
+            );
+          }
+        }
+      }
+    }
+    return args;
+  }
+
+  private wrapCreateApp(args: unknown[], h3: typeof import("h3")) {
+    if (args.length < 1 || typeof args[0] !== "object" || !args[0]) {
+      return args;
+    }
+
+    const config = args[0] as { [key: string]: unknown };
+    const funcs = [
+      "onRequest",
+      "onBeforeResponse",
+      "onAfterResponse",
+      "onError",
+    ];
+
+    for (const func of funcs) {
+      if (func in config && typeof config[func] === "function") {
+        config[func] = wrapMiddleware(
+          config[func] as (...args: unknown[]) => void | Promise<void>,
+          h3
+        );
+      }
     }
 
     return args;
@@ -67,6 +98,13 @@ export class H3 implements Wrapper {
             return this.wrapEventHandler(args, exports);
           },
         });
+
+        wrapExport(exports, "createApp", pkgInfo, {
+          modifyArgs: (args) => {
+            return this.wrapCreateApp(args, exports);
+          },
+        });
+
         const bodyFuncs = [
           "readBody",
           "readFormData",

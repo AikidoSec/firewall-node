@@ -26,3 +26,19 @@ t.test("with arrays", async (t) => {
     arr: ["1", "2", "3"],
   });
 });
+
+t.test("binary data", async (t) => {
+  const formData = new FormData();
+  formData.append("abc", "123");
+  formData.append("arr", "2");
+  formData.append("arr", "3");
+  formData.append(
+    "file",
+    new File(["hello"], "hello.txt", { type: "text/plain" })
+  );
+
+  t.same(formDataToPlainObject(formData), {
+    abc: "123",
+    arr: ["2", "3"],
+  });
+});
