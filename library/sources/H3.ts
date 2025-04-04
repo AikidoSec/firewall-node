@@ -8,7 +8,7 @@ import { wrapMiddleware } from "./h3/wrapMiddleware";
 
 export class H3 implements Wrapper {
   private wrapEventHandler(args: unknown[], h3: typeof import("h3")) {
-    if (args.length < 1) {
+    if (args.length === 0) {
       return args;
     }
 
