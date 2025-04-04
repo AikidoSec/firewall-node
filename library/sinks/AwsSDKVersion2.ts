@@ -76,6 +76,7 @@ export class AwsSDKVersion2 implements Wrapper {
         wrapNewInstance(exports, "S3", pkgInfo, (instance) => {
           for (const operation of operationsWithKey) {
             wrapExport(instance, operation, pkgInfo, {
+              kind: "fs_op",
               inspectArgs: (args) => this.inspectS3Operation(args, operation),
             });
           }

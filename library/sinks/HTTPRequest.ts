@@ -167,6 +167,7 @@ export class HTTPRequest implements Wrapper {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
+            kind: "outgoing_http_op",
             // Whenever a request is made, we'll check the hostname whether it's a private IP
             inspectArgs: (args, agent) =>
               this.inspectHttpRequest(args, agent, module),

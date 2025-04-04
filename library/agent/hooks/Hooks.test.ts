@@ -42,5 +42,5 @@ t.test("add builtin module throws if name is empty", async (t) => {
 t.test("it throws error if global name is empty", async () => {
   const hooks = new Hooks();
 
-  t.throws(() => hooks.addGlobal("", {}));
+  t.throws(() => hooks.addGlobal("", { kind: undefined }));
 });

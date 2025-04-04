@@ -17,7 +17,7 @@ export class Shelljs implements Wrapper {
       return undefined;
     }
 
-    // We do not have to check if its run as async, because then shelljs directly calls child_process.exec which is already protected
+    // We do not have to check if it's run as async, because then shelljs directly calls child_process.exec which is already protected
     if (args.length > 1) {
       // async option is set to true
       if (isPlainObject(args[1]) && args[1].async === true) {
@@ -47,6 +47,7 @@ export class Shelljs implements Wrapper {
       // We need to wrap exec, because shelljs is not using child_process.exec directly, it spawns a subprocess and shares the command via a json file. That subprocess then executes the command.
       .onFileRequire("src/common.js", (exports, pkgInfo) => {
         wrapExport(exports, "register", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             if (
               args.length > 0 &&
@@ -54,9 +55,11 @@ export class Shelljs implements Wrapper {
               typeof args[1] === "function"
             ) {
               args[1] = wrapExport(args[1], undefined, pkgInfo, {
+                kind: "exec_op",
                 inspectArgs: (args) => this.inspectExec("exec", args),
               });
             }
+
             return args;
           },
         });

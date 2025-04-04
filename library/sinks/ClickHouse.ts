@@ -45,6 +45,7 @@ export class ClickHouse implements Wrapper {
       .onFileRequire("dist/client.js", (exports, pkgInfo) => {
         for (const method of methodsToWrap) {
           wrapExport(exports.ClickHouseClient.prototype, method, pkgInfo, {
+            kind: "sql_op",
             inspectArgs: (args) => this.inspectQuery(method, args),
           });
         }
