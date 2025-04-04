@@ -10,6 +10,7 @@ import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { isESM } from "./helpers/isESM";
+import { addH3Middleware } from "./middleware/h3";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -33,6 +34,7 @@ export {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addH3Middleware,
 };
 
 // Required for ESM / TypeScript default export support
@@ -45,4 +47,5 @@ export default {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addH3Middleware,
 };

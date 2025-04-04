@@ -1,4 +1,4 @@
-require("@aikidosec/firewall");
+const Zen = require("@aikidosec/firewall");
 const {
   createApp,
   createRouter,
@@ -55,6 +55,8 @@ function getHTMLBody(cats) {
 
   // Create an app instance
   const app = createApp();
+
+  Zen.addH3Middleware(app);
 
   // Create a new router and register it in app
   const router = createRouter();

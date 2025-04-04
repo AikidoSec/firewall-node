@@ -8,7 +8,8 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getContext } from "../agent/Context";
 import type { IncomingMessage, ServerResponse } from "http";
-import type { PlainRequest } from "h3";
+import { addH3Middleware } from "../middleware/h3";
+import { setUser } from "../agent/context/user";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -61,6 +62,18 @@ t.test(
     const app = createApp();
 
     const router = createRouter();
+
+    app.use(
+      defineEventHandler((event) => {
+        if (event.path === "/block-user") {
+          setUser({
+            id: "567",
+          });
+        }
+      })
+    );
+
+    addH3Middleware(app);
 
     router.get(
       "/context",
@@ -194,6 +207,20 @@ t.test(
         handler: (event) => {
           return getContext();
         },
+      })
+    );
+
+    router.get(
+      "/rate-limited",
+      defineEventHandler(() => {
+        return "Hello world";
+      })
+    );
+
+    router.get(
+      "/block-user",
+      defineEventHandler(() => {
+        return "Hello world";
       })
     );
 
@@ -526,6 +553,26 @@ t.test(
         source: "h3",
         query: {},
       });
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/rate-limited");
+      t.equal(response.status, 200);
+
+      const response2 = await fetch("http://localhost:4123/rate-limited");
+      t.equal(response2.status, 200);
+
+      const response3 = await fetch("http://localhost:4123/rate-limited");
+      t.equal(response3.status, 429);
+      const text = await response3.text();
+      t.match(text, /You are rate limited by Zen./);
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/block-user");
+      t.equal(response.status, 403);
+      const text = await response.text();
+      t.equal(text, "You are blocked by Zen.");
     }
 
     server.close();
