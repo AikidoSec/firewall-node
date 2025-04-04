@@ -4,9 +4,9 @@ import { formDataToPlainObject } from "./formDataToPlainObject";
 t.test(
   "simple",
   {
-    skip: FormData
-      ? false
-      : "This Node.js version does not support FormData yet",
+    skip: !globalThis.FormData
+      ? "This Node.js version does not support FormData yet"
+      : false,
   },
   async (t) => {
     const formData = new FormData();
@@ -25,9 +25,9 @@ t.test(
 t.test(
   "with arrays",
   {
-    skip: FormData
-      ? false
-      : "This Node.js version does not support FormData yet",
+    skip: !globalThis.FormData
+      ? "This Node.js version does not support FormData yet"
+      : false,
   },
   async (t) => {
     const formData = new FormData();
@@ -47,9 +47,9 @@ t.test(
   "binary data",
   {
     skip:
-      FormData || File
-        ? false
-        : "This Node.js version does not support FormData or File yet",
+      !globalThis.FormData || !globalThis.File
+        ? "This Node.js version does not support FormData or File yet"
+        : false,
   },
   async (t) => {
     const formData = new FormData();

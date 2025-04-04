@@ -3,10 +3,12 @@ import { runWithContext } from "../../agent/Context";
 import { contextFromEvent } from "./contextFromEvent";
 import { createWrappedFunction } from "../../helpers/wrap";
 
+export type H3Middleware = (...args: unknown[]) => void | Promise<void>;
+
 export function wrapMiddleware(
-  middleware: (...args: unknown[]) => void | Promise<void>,
+  middleware: H3Middleware,
   h3: typeof import("h3")
-): (...args: unknown[]) => void | Promise<void> {
+): H3Middleware {
   return createWrappedFunction(middleware, (middleware) => {
     return async (...args: unknown[]) => {
       const event = getEventFromArgs(args);
@@ -21,7 +23,7 @@ export function wrapMiddleware(
         return await middleware(...args);
       });
     };
-  }) as (...args: unknown[]) => void | Promise<void>;
+  }) as H3Middleware;
 }
 
 function getEventFromArgs(args: unknown[]): H3Event | undefined {
