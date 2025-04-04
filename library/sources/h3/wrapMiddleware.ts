@@ -1,24 +1,27 @@
 import type { H3Event } from "h3";
 import { runWithContext } from "../../agent/Context";
 import { contextFromEvent } from "./contextFromEvent";
+import { createWrappedFunction } from "../../helpers/wrap";
 
 export function wrapMiddleware(
-  handler: (...args: unknown[]) => void | Promise<void>,
+  middleware: (...args: unknown[]) => void | Promise<void>,
   h3: typeof import("h3")
 ): (...args: unknown[]) => void | Promise<void> {
-  return async (...args) => {
-    const event = getEventFromArgs(args);
+  return createWrappedFunction(middleware, (middleware) => {
+    return async (...args: unknown[]) => {
+      const event = getEventFromArgs(args);
 
-    if (!event) {
-      return await handler(...args);
-    }
+      if (!event) {
+        return await middleware(...args);
+      }
 
-    const context = await contextFromEvent(event, h3);
+      const context = await contextFromEvent(event, h3);
 
-    return await runWithContext(context, async () => {
-      return await handler(...args);
-    });
-  };
+      return await runWithContext(context, async () => {
+        return await middleware(...args);
+      });
+    };
+  }) as (...args: unknown[]) => void | Promise<void>;
 }
 
 function getEventFromArgs(args: unknown[]): H3Event | undefined {

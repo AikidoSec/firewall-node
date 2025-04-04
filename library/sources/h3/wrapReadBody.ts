@@ -7,6 +7,7 @@ export async function wrapReadBody(_args: unknown[], returnValue: unknown) {
   if (!context) {
     return returnValue;
   }
+
   const body = await returnValue;
   if (body) {
     if (body instanceof FormData) {

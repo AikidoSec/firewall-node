@@ -8,6 +8,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getContext } from "../agent/Context";
 import type { IncomingMessage, ServerResponse } from "http";
+import type { PlainRequest } from "h3";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -51,6 +52,8 @@ t.test(
       readRawBody,
       readValidatedBody,
       fromNodeMiddleware,
+      fromWebHandler,
+      eventHandler,
     } = require("h3") as typeof import("h3");
 
     const { createServer } = require("http") as typeof import("http");
@@ -98,7 +101,7 @@ t.test(
 
     router.post(
       "/post-form-data",
-      defineEventHandler(async (event) => {
+      eventHandler(async (event) => {
         const body = await readFormData(event);
         return {
           context: getContext(),
@@ -146,6 +149,13 @@ t.test(
       "/from-node-middleware",
       fromNodeMiddleware((req: IncomingMessage, res: ServerResponse) => {
         res.end(JSON.stringify(getContext()));
+      })
+    );
+
+    router.get(
+      "/from-web-handler",
+      fromWebHandler(async (request: Request) => {
+        return new Response(JSON.stringify(getContext()));
       })
     );
 
@@ -504,6 +514,17 @@ t.test(
         query: {
           abc: "123",
         },
+      });
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/from-web-handler");
+      const body = await response.json();
+      t.match(body, {
+        method: "GET",
+        url: "/from-web-handler",
+        source: "h3",
+        query: {},
       });
     }
 
