@@ -65,6 +65,10 @@ function getApp(routerImport = 1) {
 
   addKoaMiddleware(app);
 
+  router.get("/", (ctx) => {
+    ctx.body = "Hello World";
+  });
+
   router.get("/context/user", async (ctx, next) => {
     await next();
     ctx.type = "application/json";
@@ -136,10 +140,10 @@ t.test("it counts requests", async () => {
   const app = getApp();
   agent.getInspectionStatistics().reset();
   await request(app.callback()).get("/");
-  await request(app.callback()).post("/");
+  await request(app.callback()).post("/"); // It does not count 404
   t.match(agent.getInspectionStatistics().getStats(), {
     requests: {
-      total: 2,
+      total: 1,
       attacksDetected: {
         total: 0,
         blocked: 0,

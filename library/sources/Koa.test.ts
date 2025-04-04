@@ -73,6 +73,9 @@ function getApp() {
       ctx.type = "application/json";
       ctx.body = getContext();
     }
+    if (ctx.path === "/") {
+      ctx.body = "Hello World";
+    }
   });
 
   // v1 Generator function middleware
