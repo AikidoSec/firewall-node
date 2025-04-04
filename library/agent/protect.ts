@@ -49,6 +49,7 @@ import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { Function } from "../sinks/Function";
+import { Sax } from "../sources/Sax";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -142,6 +143,7 @@ export function getWrappers() {
     new ClickHouse(),
     new Prisma(),
     new Function(),
+    new Sax(),
   ];
 }
 
