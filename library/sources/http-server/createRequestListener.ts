@@ -104,9 +104,6 @@ function createOnFinishRequestHandler(
       agent.onRouteExecute(context);
       // Only count the request if the route is discovered
       agent.getInspectionStatistics().onRequest();
-    } else if (context && context.attackDetected) {
-      // Also count the request if an attack was detected, also if the route is not discovered
-      agent.getInspectionStatistics().onRequest();
     }
 
     if (context && context.attackDetected) {
