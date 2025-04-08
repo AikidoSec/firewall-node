@@ -25,7 +25,7 @@ export function looksLikeASecret(str: string) {
   const charsets = [hasLower, hasUpper, hasSpecial];
 
   // If the string doesn't have at least 2 different charsets, it's not a secret
-  if (!charsets.some((charset) => charset)) {
+  if (charsets.filter((charset) => charset).length < 2) {
     return false;
   }
 
