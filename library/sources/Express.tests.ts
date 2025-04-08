@@ -394,7 +394,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.statusCode, 500);
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0,
         attacksDetected: {
           total: 1,
           blocked: 1,
