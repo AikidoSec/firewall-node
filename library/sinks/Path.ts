@@ -55,7 +55,7 @@ export class Path implements Wrapper {
       this.wrapFunctions(exports, pkgInfo);
     }
 
-    if (isWindows()) {
+    if (isWindows) {
       // `require("path").join` is the same as `require("path/win32").join`
       this.patchedWin32 = true;
     } else {
