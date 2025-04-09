@@ -482,3 +482,123 @@ t.test("it keeps track of aborted requests", async () => {
 
   clock.uninstall();
 });
+
+t.test("it keeps track of multiple operations of the same kind", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.insert",
+    kind: "nosql_op",
+  });
+
+  t.same(stats.getStats(), {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+      "mongodb.insert": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  // Test that each operation maintains its own stats
+  stats.onInspectedCall({
+    withoutContext: true,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: true,
+    durationInMs: 0.1,
+    attackDetected: true,
+    operation: "mongodb.insert",
+    kind: "nosql_op",
+  });
+
+  t.same(stats.getStats(), {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 1,
+        total: 2,
+        compressedTimings: [],
+      },
+      "mongodb.insert": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 1,
+          blocked: 1,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 2,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  clock.uninstall();
+});
