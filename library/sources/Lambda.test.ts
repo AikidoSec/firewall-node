@@ -273,8 +273,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       routes: [],
       users: [],
       stats: {
-        operations: [
-          {
+        operations: {
+          "mongodb.query": {
             kind: "nosql_op",
             total: 100,
             attacksDetected: {
@@ -297,7 +297,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
               },
             ],
           },
-        ],
+        },
         startedAt: 0,
         endedAt: 60 * 1000 * 10 + 1,
         requests: {
