@@ -301,8 +301,8 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  // @ts-expect-error Stats is private
   t.ok(
+    // @ts-expect-error Stats is private
     stats.operations["mongodb.query"].durations.length < maxPerfSamplesInMemory
   );
 
