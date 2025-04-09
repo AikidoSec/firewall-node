@@ -169,6 +169,10 @@ t.test("it replaces ULID strings", async () => {
   );
 });
 
+t.test("test_ratelimiting_1 is not a secret", async () => {
+  t.same(buildRouteFromURL("/test_ratelimiting_1"), "/test_ratelimiting_1");
+});
+
 t.test("it does not detect static files as secrets", async () => {
   const files = [
     "ClientRouter.astro_astro_type_script_index_0_lang.AWhPxJ6s.js",
