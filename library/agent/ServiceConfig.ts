@@ -37,23 +37,26 @@ export class ServiceConfig {
   }
 
   private setEndpoints(endpointConfigs: EndpointConfig[]) {
-    const endpoints = endpointConfigs.map((endpoint) => {
-      return {
-        ...endpoint,
-        allowedIPAddresses:
-          Array.isArray(endpoint.allowedIPAddresses) &&
-          endpoint.allowedIPAddresses.length > 0
-            ? new IPMatcher(endpoint.allowedIPAddresses)
-            : undefined,
-      };
-    });
+    this.nonGraphQLEndpoints = [];
+    this.graphqlFields = [];
 
-    this.nonGraphQLEndpoints = endpoints.filter(
-      (endpoint) => !endpoint.graphql
-    );
-    this.graphqlFields = endpoints.filter((endpoint) =>
-      endpoint.graphql ? true : false
-    );
+    for (const endpoint of endpointConfigs) {
+      let allowedIPAddresses = undefined;
+      if (
+        Array.isArray(endpoint.allowedIPAddresses) &&
+        endpoint.allowedIPAddresses.length > 0
+      ) {
+        allowedIPAddresses = new IPMatcher(endpoint.allowedIPAddresses);
+      }
+
+      const endpointConfig = { ...endpoint, allowedIPAddresses };
+
+      if (endpoint.graphql) {
+        this.graphqlFields.push(endpointConfig);
+      } else {
+        this.nonGraphQLEndpoints.push(endpointConfig);
+      }
+    }
   }
 
   getEndpoints(context: LimitedContext) {
