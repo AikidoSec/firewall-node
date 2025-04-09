@@ -18,12 +18,14 @@ export function onInspectionInterceptorResult(
   result: InterceptorResult,
   pkgInfo: WrapPackageInfo,
   start: number,
+  operation: string,
   kind: OperationKind | undefined
 ) {
   const end = performance.now();
 
   if (kind) {
     agent.getInspectionStatistics().onInspectedCall({
+      operation: operation,
       kind: kind,
       attackDetected: !!result,
       blocked: agent.shouldBlock(),

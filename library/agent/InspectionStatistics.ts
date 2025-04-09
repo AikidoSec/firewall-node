@@ -74,7 +74,7 @@ export class InspectionStatistics {
   }
 
   getStats(): {
-    operations: OperationStatsWithoutTimings[];
+    operations: Record<string, OperationStatsWithoutTimings>;
     startedAt: number;
     requests: {
       total: number;
@@ -85,20 +85,20 @@ export class InspectionStatistics {
       };
     };
   } {
-    const operations: OperationStatsWithoutTimings[] = [];
-    for (const kind in this.operations) {
-      const stats = this.operations[kind];
-      operations.push({
-        kind: stats.kind,
-        withoutContext: stats.withoutContext,
-        interceptorThrewError: stats.interceptorThrewError,
-        total: stats.total,
+    const operations: Record<string, OperationStatsWithoutTimings> = {};
+    for (const operation in this.operations) {
+      const operationStats = this.operations[operation];
+      operations[operation] = {
+        kind: operationStats.kind,
+        total: operationStats.total,
         attacksDetected: {
-          total: stats.attacksDetected.total,
-          blocked: stats.attacksDetected.blocked,
+          total: operationStats.attacksDetected.total,
+          blocked: operationStats.attacksDetected.blocked,
         },
-        compressedTimings: stats.compressedTimings,
-      });
+        interceptorThrewError: operationStats.interceptorThrewError,
+        withoutContext: operationStats.withoutContext,
+        compressedTimings: operationStats.compressedTimings,
+      };
     }
 
     return {
@@ -108,9 +108,9 @@ export class InspectionStatistics {
     };
   }
 
-  private ensureOperationStats(kind: OperationKind) {
-    if (!this.operations[kind]) {
-      this.operations[kind] = {
+  private ensureOperationStats(operation: string, kind: OperationKind) {
+    if (!this.operations[operation]) {
+      this.operations[operation] = {
         withoutContext: 0,
         kind: kind,
         total: 0,
@@ -125,18 +125,22 @@ export class InspectionStatistics {
     }
   }
 
-  private compressPerfSamples(kind: OperationKind) {
-    /* c8 ignore start */
-    if (!this.operations[kind]) {
+  private compressPerfSamples(operation: string) {
+    if (operation.length === 0) {
       return;
     }
 
-    if (this.operations[kind].durations.length === 0) {
+    /* c8 ignore start */
+    if (!this.operations[operation]) {
+      return;
+    }
+
+    if (this.operations[operation].durations.length === 0) {
       return;
     }
     /* c8 ignore stop */
 
-    const timings = this.operations[kind].durations;
+    const timings = this.operations[operation].durations;
     const averageInMS =
       timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
 
@@ -145,7 +149,7 @@ export class InspectionStatistics {
       timings
     );
 
-    this.operations[kind].compressedTimings.push({
+    this.operations[operation].compressedTimings.push({
       averageInMS,
       percentiles: {
         "50": p50,
@@ -158,19 +162,23 @@ export class InspectionStatistics {
     });
 
     if (
-      this.operations[kind].compressedTimings.length >
+      this.operations[operation].compressedTimings.length >
       this.maxCompressedStatsInMemory
     ) {
-      this.operations[kind].compressedTimings.shift();
+      this.operations[operation].compressedTimings.shift();
     }
 
-    this.operations[kind].durations = [];
+    this.operations[operation].durations = [];
   }
 
-  interceptorThrewError(kind: OperationKind) {
-    this.ensureOperationStats(kind);
-    this.operations[kind].total += 1;
-    this.operations[kind].interceptorThrewError += 1;
+  interceptorThrewError(operation: string, kind: OperationKind) {
+    if (operation.length === 0) {
+      return;
+    }
+
+    this.ensureOperationStats(operation, kind);
+    this.operations[operation].total += 1;
+    this.operations[operation].interceptorThrewError += 1;
   }
 
   onDetectedAttack({ blocked }: { blocked: boolean }) {
@@ -189,37 +197,45 @@ export class InspectionStatistics {
   }
 
   onInspectedCall({
+    operation,
     kind,
     blocked,
     attackDetected,
     durationInMs,
     withoutContext,
   }: {
+    operation: string;
     kind: OperationKind;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
     withoutContext: boolean;
   }) {
-    this.ensureOperationStats(kind);
-
-    this.operations[kind].total += 1;
-
-    if (withoutContext) {
-      this.operations[kind].withoutContext += 1;
+    if (operation.length === 0) {
       return;
     }
 
-    if (this.operations[kind].durations.length >= this.maxPerfSamplesInMemory) {
-      this.compressPerfSamples(kind);
+    this.ensureOperationStats(operation, kind);
+
+    this.operations[operation].total += 1;
+
+    if (withoutContext) {
+      this.operations[operation].withoutContext += 1;
+      return;
     }
 
-    this.operations[kind].durations.push(durationInMs);
+    if (
+      this.operations[operation].durations.length >= this.maxPerfSamplesInMemory
+    ) {
+      this.compressPerfSamples(operation);
+    }
+
+    this.operations[operation].durations.push(durationInMs);
 
     if (attackDetected) {
-      this.operations[kind].attacksDetected.total += 1;
+      this.operations[operation].attacksDetected.total += 1;
       if (blocked) {
-        this.operations[kind].attacksDetected.blocked += 1;
+        this.operations[operation].attacksDetected.blocked += 1;
       }
     }
   }

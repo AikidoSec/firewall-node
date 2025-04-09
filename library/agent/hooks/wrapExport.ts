@@ -161,5 +161,13 @@ function inspectArgs(
     });
   }
 
-  onInspectionInterceptorResult(context, agent, result, pkgInfo, start, kind);
+  onInspectionInterceptorResult(
+    context,
+    agent,
+    result,
+    pkgInfo,
+    start,
+    `${pkgInfo.name}.${methodName}`,
+    kind
+  );
 }

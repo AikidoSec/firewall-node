@@ -69,9 +69,8 @@ export type OperationKind =
   | "nosql_op"
   | "outgoing_http_op"
   | "fs_op"
-  | "path_op"
   | "exec_op"
-  | "unserialize_op"
+  | "deserialize_op"
   | "graphql_op"
   | "eval_op";
 
@@ -94,7 +93,7 @@ type OperationStats = {
 type Heartbeat = {
   type: "heartbeat";
   stats: {
-    operations: OperationStats[];
+    operations: Record<string, OperationStats>;
     startedAt: number;
     endedAt: number;
     requests: {

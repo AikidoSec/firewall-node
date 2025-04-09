@@ -53,7 +53,7 @@ export class Xml2js implements Wrapper {
       .withVersion("^0.6.0 || ^0.5.0 || ^0.4.18")
       .onRequire((exports, pkgInfo) => {
         wrapExport(exports.Parser.prototype, "parseString", pkgInfo, {
-          kind: "unserialize_op",
+          kind: "deserialize_op",
           modifyArgs: (args) => this.modifyArgs(args),
         });
       });
