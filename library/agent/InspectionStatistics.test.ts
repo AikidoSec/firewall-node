@@ -604,3 +604,41 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
 
   clock.uninstall();
 });
+
+t.test("it handles empty operation strings", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  // Test onInspectedCall with empty operation
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "",
+    kind: "nosql_op",
+  });
+
+  // Test interceptorThrewError with empty operation
+  stats.interceptorThrewError("", "nosql_op");
+
+  // Verify no operation was added
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  clock.uninstall();
+});
