@@ -161,7 +161,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
   const hooks = new Hooks();
   hooks.addBuiltinModule("os").onRequire((exports, pkgInfo) => {
     wrapExport(exports, "hostname", pkgInfo, {
-      kind: "path_op",
+      kind: "fs_op",
       inspectArgs: (args, agent) => {
         return {
           operation: "os.hostname",
