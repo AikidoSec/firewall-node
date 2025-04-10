@@ -12,15 +12,17 @@ t.test("it resets stats", async () => {
 
   stats.onInspectedCall({
     withoutContext: false,
-    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
   });
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -45,7 +47,7 @@ t.test("it resets stats", async () => {
   clock.tick(1000);
   stats.reset();
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 1000,
     requests: {
       total: 0,
@@ -71,7 +73,7 @@ t.test("it keeps track of amount of calls", async () => {
   });
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -85,15 +87,17 @@ t.test("it keeps track of amount of calls", async () => {
 
   stats.onInspectedCall({
     withoutContext: false,
-    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
   });
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -117,15 +121,17 @@ t.test("it keeps track of amount of calls", async () => {
 
   stats.onInspectedCall({
     withoutContext: true,
-    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
   });
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -147,11 +153,12 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  stats.interceptorThrewError("mongodb");
+  stats.interceptorThrewError("mongodb.query", "nosql_op");
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -175,15 +182,17 @@ t.test("it keeps track of amount of calls", async () => {
 
   stats.onInspectedCall({
     withoutContext: false,
-    sink: "mongodb",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: true,
+    operation: "mongodb.query",
+    kind: "nosql_op",
   });
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 1,
           blocked: 0,
@@ -207,15 +216,17 @@ t.test("it keeps track of amount of calls", async () => {
 
   stats.onInspectedCall({
     withoutContext: false,
-    sink: "mongodb",
     blocked: true,
     durationInMs: 0.3,
     attackDetected: true,
+    operation: "mongodb.query",
+    kind: "nosql_op",
   });
 
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 2,
           blocked: 1,
@@ -244,7 +255,8 @@ t.test("it keeps track of amount of calls", async () => {
   for (let i = 0; i < maxPerfSamplesInMemory; i++) {
     stats.onInspectedCall({
       withoutContext: false,
-      sink: "mongodb",
+      kind: "nosql_op",
+      operation: "mongodb.query",
       blocked: false,
       durationInMs: i * 0.1,
       attackDetected: false,
@@ -253,8 +265,9 @@ t.test("it keeps track of amount of calls", async () => {
 
   t.same(stats.hasCompressedStats(), true);
   t.same(stats.getStats(), {
-    sinks: {
-      mongodb: {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
         attacksDetected: {
           total: 2,
           blocked: 1,
@@ -288,8 +301,10 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  // @ts-expect-error Stats is private
-  t.ok(stats.stats.mongodb.durations.length < maxPerfSamplesInMemory);
+  t.ok(
+    // @ts-expect-error Stats is private
+    stats.operations["mongodb.query"].durations.length < maxPerfSamplesInMemory
+  );
 
   for (
     let i = 0;
@@ -298,7 +313,8 @@ t.test("it keeps track of amount of calls", async () => {
   ) {
     stats.onInspectedCall({
       withoutContext: false,
-      sink: "mongodb",
+      kind: "nosql_op",
+      operation: "mongodb.query",
       blocked: false,
       durationInMs: i * 0.1,
       attackDetected: false,
@@ -307,7 +323,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   t.same(
     // @ts-expect-error Stats is private
-    stats.stats.mongodb.compressedTimings.length,
+    stats.operations["mongodb.query"].compressedTimings.length,
     maxCompressedStatsInMemory
   );
 
@@ -323,7 +339,7 @@ t.test("it keeps track of requests", async () => {
   });
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -338,7 +354,7 @@ t.test("it keeps track of requests", async () => {
   stats.onRequest();
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 1,
@@ -354,7 +370,7 @@ t.test("it keeps track of requests", async () => {
   stats.onDetectedAttack({ blocked: false });
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 2,
@@ -370,7 +386,7 @@ t.test("it keeps track of requests", async () => {
   stats.onDetectedAttack({ blocked: true });
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 3,
@@ -387,7 +403,7 @@ t.test("it keeps track of requests", async () => {
   stats.reset();
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 1000,
     requests: {
       total: 0,
@@ -411,7 +427,7 @@ t.test("it force compresses stats", async () => {
   });
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -427,7 +443,8 @@ t.test("it force compresses stats", async () => {
 
   stats.onInspectedCall({
     withoutContext: false,
-    sink: "mongodb",
+    kind: "nosql_op",
+    operation: "mongodb.query",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
@@ -453,7 +470,7 @@ t.test("it keeps track of aborted requests", async () => {
   stats.onAbortedRequest();
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -464,4 +481,164 @@ t.test("it keeps track of aborted requests", async () => {
       },
     },
   });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of multiple operations of the same kind", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.insert",
+    kind: "nosql_op",
+  });
+
+  t.same(stats.getStats(), {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+      "mongodb.insert": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 1,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  // Test that each operation maintains its own stats
+  stats.onInspectedCall({
+    withoutContext: true,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "mongodb.query",
+    kind: "nosql_op",
+  });
+
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: true,
+    durationInMs: 0.1,
+    attackDetected: true,
+    operation: "mongodb.insert",
+    kind: "nosql_op",
+  });
+
+  t.same(stats.getStats(), {
+    operations: {
+      "mongodb.query": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 1,
+        total: 2,
+        compressedTimings: [],
+      },
+      "mongodb.insert": {
+        kind: "nosql_op",
+        attacksDetected: {
+          total: 1,
+          blocked: 1,
+        },
+        interceptorThrewError: 0,
+        withoutContext: 0,
+        total: 2,
+        compressedTimings: [],
+      },
+    },
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  clock.uninstall();
+});
+
+t.test("it handles empty operation strings", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  // Test onInspectedCall with empty operation
+  stats.onInspectedCall({
+    withoutContext: false,
+    blocked: false,
+    durationInMs: 0.1,
+    attackDetected: false,
+    operation: "",
+    kind: "nosql_op",
+  });
+
+  // Test interceptorThrewError with empty operation
+  stats.interceptorThrewError("", "nosql_op");
+
+  // Verify no operation was added
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+  });
+
+  clock.uninstall();
 });

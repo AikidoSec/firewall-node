@@ -549,7 +549,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -563,7 +564,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
   for (let i = 0; i < 4001; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
