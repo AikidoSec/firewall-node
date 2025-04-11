@@ -42,7 +42,7 @@ t.test("usage outside of context", async (t) => {
   setUser({ id: "id" });
 
   t.same(logs, [
-    "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen.",
+    "setUser(...) was called without a context. The user will not be tracked. Make sure to call setUser(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
   ]);
 
   // Should not log again

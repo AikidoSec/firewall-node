@@ -2,6 +2,7 @@ import * as t from "tap";
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { wrap } from "../helpers/wrap";
 
 const sampleContext: Context = {
   remoteAddress: "::1",
@@ -19,7 +20,19 @@ const sampleContext: Context = {
 };
 
 t.test("without context", async (t) => {
-  t.same(shouldBlockRequest(), { block: false });
+  const logs: string[] = [];
+  wrap(console, "warn", function warn() {
+    return function warn(message: string) {
+      logs.push(message);
+    };
+  });
+
+  const result = shouldBlockRequest();
+  shouldBlockRequest();
+  t.same(result, { block: false });
+  t.same(logs, [
+    "shouldBlockRequest() was called without a context. The request will not be blocked. Make sure to call shouldBlockRequest() within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports).",
+  ]);
 });
 
 t.test("without agent", async (t) => {

@@ -217,6 +217,10 @@ export class Agent {
       agent: this.getAgentInfo(),
     };
 
+    this.getInspectionStatistics().onDetectedAttack({
+      blocked,
+    });
+
     this.attackLogger.log(attack);
 
     if (this.token) {

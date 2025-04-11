@@ -12,6 +12,7 @@ type Result = {
 export function shouldBlockRequest(): Result {
   const context = getContext();
   if (!context) {
+    logWarningShouldBlockRequestCalledWithoutContext();
     return { block: false };
   }
 
@@ -38,4 +39,19 @@ export function shouldBlockRequest(): Result {
   }
 
   return { block: false };
+}
+
+let loggedWarningShouldBlockRequestCalledWithoutContext = false;
+
+function logWarningShouldBlockRequestCalledWithoutContext() {
+  if (loggedWarningShouldBlockRequestCalledWithoutContext) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "shouldBlockRequest() was called without a context. The request will not be blocked. Make sure to call shouldBlockRequest() within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports)."
+  );
+
+  loggedWarningShouldBlockRequestCalledWithoutContext = true;
 }
