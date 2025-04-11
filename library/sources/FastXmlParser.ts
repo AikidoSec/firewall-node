@@ -38,39 +38,30 @@ export class FastXmlParser implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const pkg = hooks.addPackage("fast-xml-parser");
-    pkg.withVersion("^4.0.0").onRequire((exports, pkgInfo) => {
-      wrapNewInstance(exports, "XMLParser", pkgInfo, (instance) => {
-        wrapExport(instance, "parse", pkgInfo, {
-          modifyReturnValue: (args, returnValue) => {
-            this.inspectParse(args, returnValue);
-            return returnValue;
-          },
-        });
+    hooks
+      .addPackage("fast-xml-parser")
+      .withVersion("^4.0.0 || ^5.0.0")
+      .onRequire((exports, pkgInfo) => {
+        const parser = exports.XMLParser; // It's a getter in v5, so we can't directly pass it to wrapNewInstance
+
+        const wrappedParser = wrapNewInstance(
+          parser,
+          undefined,
+          pkgInfo,
+          (instance) => {
+            wrapExport(instance, "parse", pkgInfo, {
+              modifyReturnValue: (args, returnValue) => {
+                this.inspectParse(args, returnValue);
+                return returnValue;
+              },
+            });
+          }
+        );
+
+        return {
+          ...exports,
+          XMLParser: wrappedParser,
+        };
       });
-    });
-
-    pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
-      const parser = exports.XMLParser; // It's a getter, so we can't directly pass it to wrapNewInstance
-
-      const wrappedParser = wrapNewInstance(
-        parser,
-        undefined,
-        pkgInfo,
-        (instance) => {
-          wrapExport(instance, "parse", pkgInfo, {
-            modifyReturnValue: (args, returnValue) => {
-              this.inspectParse(args, returnValue);
-              return returnValue;
-            },
-          });
-        }
-      );
-
-      return {
-        ...exports,
-        XMLParser: wrappedParser,
-      };
-    });
   }
 }
