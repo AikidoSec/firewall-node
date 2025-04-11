@@ -38,15 +38,11 @@ t.test("it blocks in blocking mode", (t) => {
       return Promise.all([
         fetch(
           `http://localhost:4000/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch(
           `http://localhost:4000/cats/${encodeURIComponent("Njuska'; DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch("http://localhost:4000/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
@@ -93,15 +89,11 @@ t.test("it does not block in dry mode", (t) => {
       Promise.all([
         fetch(
           `http://localhost:4001/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch(
           `http://localhost:4001/cats/${encodeURIComponent("Njuska'; DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch("http://localhost:4001/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
@@ -116,7 +108,7 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
       t.notMatch(
         stderr,
-        /Some packages can't be protected because they were imported before Aikido was initialized\. Please make sure to import Aikido as the first module in your application\./
+        /Some packages can't be protected because they were imported before Zen was initialized\. Please make sure to import Zen as the first module in your application\./
       );
     })
     .catch((error) => {
@@ -157,15 +149,11 @@ t.test("it prints wrong import warning", (t) => {
       Promise.all([
         fetch(
           `http://localhost:4002/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch(
           `http://localhost:4002/cats/${encodeURIComponent("Njuska'; DELETE FROM cats;-- H")}`,
-          {
-            signal: AbortSignal.timeout(5000),
-          }
+          { signal: AbortSignal.timeout(5000) }
         ),
         fetch("http://localhost:4002/?petname=Njuska", {
           signal: AbortSignal.timeout(5000),
@@ -179,7 +167,7 @@ t.test("it prints wrong import warning", (t) => {
       t.match(stdout, /Starting agent/);
       t.match(
         stderr,
-        /Some packages can't be protected because they were imported before Aikido was initialized\. Please make sure to import Aikido as the first module in your application\./
+        /Some packages can't be protected because they were imported before Zen was initialized\. Please make sure to import Zen as the first module in your application\./
       );
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
     })
