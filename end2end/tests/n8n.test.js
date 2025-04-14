@@ -50,7 +50,7 @@ t.test("it logs in", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  timeout(8000)
     .then(() => {
       return fetch(`http://127.0.0.1:${port}/rest/owner/setup`, {
         method: "POST",
