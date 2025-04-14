@@ -178,10 +178,8 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
 }
 
 export function protectWithNewInstrumentation() {
-  const agent = startAgent({
+  startAgent({
     serverless: undefined,
     newInstrumentation: true,
   });
-
-  agent.start(getWrappers());
 }
