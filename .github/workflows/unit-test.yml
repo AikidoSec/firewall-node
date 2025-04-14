@@ -65,7 +65,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -77,6 +77,11 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run test:ci
