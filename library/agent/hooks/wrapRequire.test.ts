@@ -388,3 +388,13 @@ t.test(
     }
   }
 );
+
+t.test("cleans up stack trace if the module is not found", async (t) => {
+  const error = t.throws(() => require("unknown"));
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(error.message, /Cannot find module 'unknown'/);
+    t.match(error.stack, /node:internal\/modules/);
+    t.notMatch(error.stack, /Module\.patchedRequire/);
+  }
+});
