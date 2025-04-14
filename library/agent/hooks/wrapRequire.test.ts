@@ -397,4 +397,7 @@ t.test("cleans up stack trace if the module is not found", async (t) => {
     t.match(error.stack, /node:internal\/modules/);
     t.notMatch(error.stack, /Module\.patchedRequire/);
   }
+
+  const error2 = t.throws(() => require("./fixtures/require-throw-number"));
+  t.same(error2, 1);
 });
