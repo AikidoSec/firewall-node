@@ -1,11 +1,18 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+
+if (!process.env.TEST_IMPORT_TOO_LATE) {
+  require("@aikidosec/firewall");
+}
 
 const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
 const morgan = require("morgan");
 const mysql = require("mysql2/promise");
+
+if (process.env.TEST_IMPORT_TOO_LATE) {
+  require("@aikidosec/firewall");
+}
 
 require("@aikidosec/firewall/nopp");
 
