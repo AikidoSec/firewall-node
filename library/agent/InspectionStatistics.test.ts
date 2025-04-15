@@ -42,6 +42,7 @@ t.test("it resets stats", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -76,6 +77,7 @@ t.test("it resets stats", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -121,6 +123,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -172,6 +175,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -223,6 +227,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -268,6 +273,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -319,6 +325,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -370,6 +377,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -440,6 +448,7 @@ t.test("it keeps track of amount of calls", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -506,6 +515,7 @@ t.test("it keeps track of requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -540,6 +550,7 @@ t.test("it keeps track of requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -575,6 +586,7 @@ t.test("it keeps track of requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -610,6 +622,7 @@ t.test("it keeps track of requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -646,6 +659,7 @@ t.test("it keeps track of requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -689,6 +703,7 @@ t.test("it force compresses stats", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -750,6 +765,7 @@ t.test("it keeps track of aborted requests", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -781,7 +797,7 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
   });
 
   stats.onBlockedIPAddress("known_threat_actors/public_scanners");
-  stats.onBlockedUserAgent();
+  stats.onBlockedUserAgent("ai_bots");
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -796,6 +812,9 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
       userAgents: {
         blocked: {
           total: 1,
+          breakdown: {
+            ai_bots: 1,
+          },
         },
         monitor: {
           total: 0,
@@ -844,6 +863,7 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 1,
@@ -885,6 +905,7 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 2,

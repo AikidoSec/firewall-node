@@ -38,9 +38,8 @@ export class InspectionStatistics {
     };
     userAgents: {
       blocked: {
-        // We cannot build a breakdown for blocked user agents
-        // We use one regex for matching user agents
         total: number;
+        breakdown: Record<UserAgentBotKey, number>;
       };
       monitor: {
         total: number;
@@ -64,6 +63,7 @@ export class InspectionStatistics {
     userAgents: {
       blocked: {
         total: 0,
+        breakdown: {},
       },
       monitor: {
         total: 0,
@@ -116,6 +116,7 @@ export class InspectionStatistics {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,
@@ -150,6 +151,7 @@ export class InspectionStatistics {
       userAgents: {
         blocked: {
           total: number;
+          breakdown: Record<string, number>;
         };
         monitor: {
           total: number;
@@ -271,8 +273,14 @@ export class InspectionStatistics {
     this.requests.ipAddresses.blocked.breakdown[key] += 1;
   }
 
-  onBlockedUserAgent() {
+  onBlockedUserAgent(key: string) {
     this.requests.userAgents.blocked.total += 1;
+
+    if (!this.requests.userAgents.blocked.breakdown[key]) {
+      this.requests.userAgents.blocked.breakdown[key] = 0;
+    }
+
+    this.requests.userAgents.blocked.breakdown[key] += 1;
   }
 
   detectedMonitoredIPAddress(key: IPListKey) {

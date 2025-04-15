@@ -306,6 +306,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
           userAgents: {
             blocked: {
               total: 0,
+              breakdown: {},
             },
             monitor: {
               total: 0,
@@ -504,6 +505,7 @@ t.test("it counts attacks", async () => {
       userAgents: {
         blocked: {
           total: 0,
+          breakdown: {},
         },
         monitor: {
           total: 0,

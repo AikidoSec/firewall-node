@@ -33,9 +33,16 @@ wrap(fetch, "fetch", function mock() {
             source: "name",
             description: "Description",
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+            monitor: false,
           },
         ],
-        blockedUserAgents: "AI2Bot|Bytespider",
+        blockedUserAgents: [
+          {
+            key: "ai_bots",
+            pattern: "AI2Bot|Bytespider",
+            monitor: false,
+          },
+        ],
         allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
@@ -43,11 +50,10 @@ wrap(fetch, "fetch", function mock() {
                 source: "name",
                 description: "Description",
                 ips: ["4.3.2.1"],
+                monitor: false,
               },
             ]
           : [],
-        monitoredUserAgents: [],
-        monitoredIPAddresses: [],
       } satisfies Response),
     };
   };
@@ -1087,6 +1093,7 @@ t.test("it fetches blocked lists", async () => {
       ),
     {
       blocked: true,
+      key: "ai_bots",
     }
   );
 
@@ -1094,6 +1101,7 @@ t.test("it fetches blocked lists", async () => {
     agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
     {
       blocked: true,
+      key: "ai_bots",
     }
   );
 

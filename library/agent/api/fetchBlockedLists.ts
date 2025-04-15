@@ -7,19 +7,19 @@ export type IPList = {
   source: string;
   description: string;
   ips: string[];
+  monitor: boolean;
 };
 
 export type AgentBlockList = {
   key: string;
   pattern: string; // e.g. "Googlebot|Bingbot"
+  monitor: boolean;
 };
 
 export type Response = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
-  blockedUserAgents: string;
-  monitoredIPAddresses: IPList[];
-  monitoredUserAgents: AgentBlockList[];
+  blockedUserAgents: AgentBlockList[];
 };
 
 export async function fetchBlockedLists(token: Token): Promise<Response> {
@@ -30,6 +30,7 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     headers: {
       // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
       "Accept-Encoding": "gzip",
+      "x-supports-monitoring": "true",
       Authorization: token.asString(),
     },
     timeoutInMS: 60 * 1000,
@@ -49,9 +50,7 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
   const validResponse =
     Array.isArray(result.blockedIPAddresses) &&
     Array.isArray(result.allowedIPAddresses) &&
-    Array.isArray(result.monitoredIPAddresses) &&
-    Array.isArray(result.monitoredUserAgents) &&
-    typeof result.blockedUserAgents === "string";
+    Array.isArray(result.blockedUserAgents);
 
   if (!validResponse) {
     throw new Error("Invalid response from fetchBlockedLists");

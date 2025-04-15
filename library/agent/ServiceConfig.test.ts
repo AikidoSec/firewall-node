@@ -107,6 +107,7 @@ t.test("ip blocking works", async () => {
           "fd00:3234:5678:9abc::1/64",
           "5.6.7.8/32",
         ],
+        monitor: false,
       },
     ],
     []
@@ -150,13 +151,25 @@ t.test("ip blocking works", async () => {
 
 t.test("it blocks bots", async () => {
   const config = new ServiceConfig([], 0, [], [], true, [], []);
-  config.updateBlockedUserAgents("googlebot|bingbot");
+  config.updateBlockedUserAgents([
+    {
+      key: "test",
+      pattern: "googlebot|bingbot",
+      monitor: false,
+    },
+  ]);
 
-  t.same(config.isUserAgentBlocked("googlebot"), { blocked: true });
-  t.same(config.isUserAgentBlocked("123 bingbot abc"), { blocked: true });
+  t.same(config.isUserAgentBlocked("googlebot"), {
+    blocked: true,
+    key: "test",
+  });
+  t.same(config.isUserAgentBlocked("123 bingbot abc"), {
+    blocked: true,
+    key: "test",
+  });
   t.same(config.isUserAgentBlocked("bing"), { blocked: false });
 
-  config.updateBlockedUserAgents("");
+  config.updateBlockedUserAgents([]);
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
 });
@@ -175,6 +188,7 @@ t.test("restricting access to some ips", async () => {
         source: "geoip",
         description: "description",
         ips: ["1.2.3.4"],
+        monitor: false,
       },
     ]
   );
@@ -203,6 +217,7 @@ t.test("only allow some ips: empty list", async () => {
         source: "geoip",
         description: "description",
         ips: [],
+        monitor: false,
       },
     ]
   );
@@ -263,4 +278,60 @@ t.test("bypassed ips support cidr", async () => {
 
   t.same(config.isBypassedIP("123.123.123.1"), false);
   t.same(config.isBypassedIP("999.999.999.999"), false);
+});
+
+t.test("it updates blocked user agents", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents([
+    {
+      key: "bots",
+      pattern: "googlebot|bingbot",
+      monitor: false,
+    },
+  ]);
+  t.same(config.isUserAgentBlocked("googlebot"), {
+    blocked: true,
+    key: "bots",
+  });
+  t.same(config.isUserAgentBlocked("firefox"), { blocked: false });
+});
+
+t.test("it updates blocked user agents with empty list", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents([]);
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+});
+
+t.test("it updates blocked user agents with invalid pattern", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents([
+    {
+      key: "bots",
+      pattern: "googlebot|bingbot",
+      monitor: false,
+    },
+  ]);
+  t.same(config.isUserAgentBlocked("googlebot"), {
+    blocked: true,
+    key: "bots",
+  });
+});
+
+t.test("it updates blocked user agents with empty pattern", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents([]);
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+});
+
+t.test("it updates blocked user agents with monitor flag", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents([
+    {
+      key: "bots",
+      pattern: "googlebot|bingbot",
+      monitor: true,
+    },
+  ]);
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+  t.same(config.isMonitoredUserAgent("googlebot"), { key: "bots" });
 });

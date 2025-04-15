@@ -98,7 +98,7 @@ export function checkIfRequestIsBlocked(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
 
-    agent.getInspectionStatistics().onBlockedUserAgent();
+    agent.getInspectionStatistics().onBlockedUserAgent(isUserAgentBlocked.key);
 
     return true;
   }
