@@ -304,24 +304,14 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             blocked: 0,
           },
           userAgents: {
-            blocked: {
-              total: 0,
-              breakdown: {},
-            },
-            monitor: {
-              total: 0,
-              breakdown: {},
-            },
+            total: 0,
+            blocked: 0,
+            breakdown: {},
           },
           ipAddresses: {
-            blocked: {
-              total: 0,
-              breakdown: {},
-            },
-            monitor: {
-              total: 0,
-              breakdown: {},
-            },
+            total: 0,
+            blocked: 0,
+            breakdown: {},
           },
         },
       },
@@ -503,24 +493,14 @@ t.test("it counts attacks", async () => {
         blocked: 0,
       },
       userAgents: {
-        blocked: {
-          total: 0,
-          breakdown: {},
-        },
-        monitor: {
-          total: 0,
-          breakdown: {},
-        },
+        total: 0,
+        blocked: 0,
+        breakdown: {},
       },
       ipAddresses: {
-        blocked: {
-          total: 0,
-          breakdown: {},
-        },
-        monitor: {
-          total: 0,
-          breakdown: {},
-        },
+        total: 0,
+        blocked: 0,
+        breakdown: {},
       },
     },
   });
