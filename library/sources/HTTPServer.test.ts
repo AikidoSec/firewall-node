@@ -63,13 +63,7 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           monitor: false,
         },
       ],
-      blockedUserAgents: [
-        {
-          key: "bots",
-          pattern: "",
-          monitor: false,
-        },
-      ],
+      blockedUserAgents: [],
     } satisfies Response;
   };
 });
