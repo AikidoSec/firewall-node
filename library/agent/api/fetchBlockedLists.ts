@@ -30,6 +30,7 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     headers: {
       // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
       "Accept-Encoding": "gzip",
+      // Indicates to the server that this agent supports the new format with monitoring
       "x-supports-monitoring": "true",
       Authorization: token.asString(),
     },
