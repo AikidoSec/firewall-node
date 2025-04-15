@@ -124,6 +124,7 @@ t.test("it counts requests", async (t) => {
     userAgents: {
       blocked: {
         total: 0,
+        breakdown: {},
       },
       monitor: {
         total: 0,
@@ -159,6 +160,7 @@ t.test("it counts attacks", async (t) => {
     userAgents: {
       blocked: {
         total: 0,
+        breakdown: {},
       },
       monitor: {
         total: 0,
@@ -194,6 +196,7 @@ t.test("it counts request if error", async (t) => {
     userAgents: {
       blocked: {
         total: 0,
+        breakdown: {},
       },
       monitor: {
         total: 0,
