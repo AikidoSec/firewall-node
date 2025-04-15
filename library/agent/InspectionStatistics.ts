@@ -111,7 +111,6 @@ export class InspectionStatistics {
     this.startedAt = Date.now();
   }
 
-  // eslint-disable-next-line max-lines-per-function
   getStats(): {
     sinks: Record<string, SinkStatsWithoutTimings>;
     startedAt: number;

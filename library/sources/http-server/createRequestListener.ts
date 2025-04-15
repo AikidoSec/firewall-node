@@ -74,7 +74,6 @@ function callListenerWithContext(
 // Use symbol to avoid conflicts with other properties
 const countedRequest = Symbol("__zen_request_counted__");
 
-// eslint-disable-next-line max-lines-per-function
 function createOnFinishRequestHandler(
   req: IncomingMessage & { [countedRequest]?: boolean },
   res: ServerResponse,
