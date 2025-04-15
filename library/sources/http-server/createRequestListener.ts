@@ -103,9 +103,7 @@ function createOnFinishRequestHandler(
       })
     ) {
       agent.onRouteExecute(context);
-      // Only count the request
-
-    if the route is discovered
+      // Only count the request if the route is discovered
       agent.getInspectionStatistics().onRequest();
     }
 
