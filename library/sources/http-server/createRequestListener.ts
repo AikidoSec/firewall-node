@@ -103,14 +103,10 @@ function createOnFinishRequestHandler(
       })
     ) {
       agent.onRouteExecute(context);
-    }
+      // Only count the request
 
-    agent.getInspectionStatistics().onRequest();
-
-    if (context && context.attackDetected) {
-      agent.getInspectionStatistics().onDetectedAttack({
-        blocked: agent.shouldBlock(),
-      });
+    if the route is discovered
+      agent.getInspectionStatistics().onRequest();
     }
 
     if (context) {

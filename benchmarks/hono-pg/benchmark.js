@@ -4,38 +4,40 @@ const { promisify } = require("util");
 const exec = promisify(require("child_process").exec);
 const spawn = require("child_process").spawn;
 
-async function startServer(firewallEnabled) {
-  console.log("Spawning server. Firewall enabled:", firewallEnabled);
+async function runBenchmarks() {
+  console.log("Spawning servers...");
 
   let env = { ...process.env, AIKIDO_CI: "true" };
-  if (firewallEnabled) {
-    env = {
+
+  const serverWithFirewall = spawn("node", ["server.js", "4000"], {
+    env: {
       ...env,
       AIKIDO_BLOCKING: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
-    };
-  }
+    },
+    cwd: join(__dirname, "app"),
+  });
 
-  const server = spawn("node", ["server.js", "4000"], {
-    env,
+  const serverWithoutFirewall = spawn("node", ["server.js", "4001"], {
+    env: {
+      ...env,
+    },
     cwd: join(__dirname, "app"),
   });
 
   try {
-    server.on("error", (err) => {
-      throw err;
-    });
+    for (const server of [serverWithFirewall, serverWithoutFirewall]) {
+      server.on("error", (err) => {
+        throw err;
+      });
 
-    server.on("close", () => {
-      console.log("Closing test server...");
-    });
+      server.stderr.on("data", (data) => {
+        throw new Error(data.toString());
+      });
+    }
 
-    server.stderr.on("data", (data) => {
-      throw new Error(data.toString());
-    });
-
-    console.log("Waiting for server to start...");
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    console.log("Waiting for servers to start...");
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     console.log("Running k6...");
     const result = await exec("k6 run requests.mjs");
@@ -43,14 +45,14 @@ async function startServer(firewallEnabled) {
       throw new Error(result.stderr);
     }
 
-    server.kill();
-    // Wait for the server to close
-    await new Promise((resolve) => server.on("close", resolve));
+    serverWithFirewall.kill();
+    serverWithoutFirewall.kill();
   } catch (error) {
     console.error(error);
     return false;
   } finally {
-    server.kill();
+    serverWithFirewall.kill();
+    serverWithoutFirewall.kill();
     return true;
   }
 }
@@ -74,69 +76,52 @@ async function getResult() {
     process.exit(1);
   }
 
-  // Start with firewall enabled
-  if (!(await startServer(true))) {
+  if (!(await runBenchmarks())) {
     process.exit(1);
   }
 
-  const resultWithFirewall = await getResult();
-
-  // Start with firewall disabled
-  if (!(await startServer(false))) {
-    process.exit(1);
-  }
-
-  const resultWithoutFirewall = await getResult();
+  const results = await getResult();
 
   console.log("====================================");
-  console.log("Results with firewall enabled:");
-  const customGetFirewall =
-    resultWithFirewall.metrics.custom_get_duration.values;
+  console.log("Results with Zen enabled:");
+  const getResultsWithZen = results.metrics.get_with_zen.values;
   console.log(
-    `GET duration: avg=${customGetFirewall.avg}ms, min=${customGetFirewall.min}ms, max=${customGetFirewall.max}ms`
+    `GET duration: avg=${getResultsWithZen.avg}ms, min=${getResultsWithZen.min}ms, max=${getResultsWithZen.max}ms`
   );
-  const customPostFirewall =
-    resultWithFirewall.metrics.custom_post_duration.values;
+  const postResultsWithZen = results.metrics.post_with_zen.values;
   console.log(
-    `POST duration: avg=${customPostFirewall.avg}ms, min=${customPostFirewall.min}ms, max=${customPostFirewall.max}ms`
-  );
-  console.log(
-    `Total requests: ${resultWithFirewall.metrics.http_reqs.values.count}`
+    `POST duration: avg=${postResultsWithZen.avg}ms, min=${postResultsWithZen.min}ms, max=${postResultsWithZen.max}ms`
   );
 
   console.log("------------------------------------");
-  console.log("Results with firewall disabled:");
-  const customGetNoFirewall =
-    resultWithoutFirewall.metrics.custom_get_duration.values;
+  console.log("Results with Zen disabled:");
+  const getResultsWithoutZen = results.metrics.get_without_zen.values;
   console.log(
-    `GET duration: avg=${customGetNoFirewall.avg}ms, min=${customGetNoFirewall.min}ms, max=${customGetNoFirewall.max}ms`
+    `GET duration: avg=${getResultsWithoutZen.avg}ms, min=${getResultsWithoutZen.min}ms, max=${getResultsWithoutZen.max}ms`
   );
-  const customPostNoFirewall =
-    resultWithoutFirewall.metrics.custom_post_duration.values;
+  const postResultsWithoutZen = results.metrics.post_without_zen.values;
   console.log(
-    `POST duration: avg=${customPostNoFirewall.avg}ms, min=${customPostNoFirewall.min}ms, max=${customPostNoFirewall.max}ms`
-  );
-  console.log(
-    `Total requests: ${resultWithoutFirewall.metrics.http_reqs.values.count}`
+    `POST duration: avg=${postResultsWithoutZen.avg}ms, min=${postResultsWithoutZen.min}ms, max=${postResultsWithoutZen.max}ms`
   );
 
-  const getMedDiff = customGetFirewall.med - customGetNoFirewall.med;
-  const postMedDiff = customPostFirewall.med - customPostNoFirewall.med;
-  const getDiffPercent = (getMedDiff / customGetNoFirewall.med) * 100;
-  const postDiffPercent = (postMedDiff / customPostNoFirewall.med) * 100;
+  const getDiff = results.metrics.get_delta.values.avg;
+  const postDiff = results.metrics.post_delta.values.avg;
+
+  const getDiffPercent = (getDiff / getResultsWithoutZen.avg) * 100;
+  const postDiffPercent = (postDiff / postResultsWithoutZen.avg) * 100;
 
   console.log("------------------------------------");
-  console.log("Firewall performance impact:");
-  console.log(`GET med diff: ${getMedDiff}ms (${getDiffPercent.toFixed(2)}%)`);
+  console.log("Zen performance impact:");
   console.log(
-    `POST med diff: ${postMedDiff}ms (${postDiffPercent.toFixed(2)}%)`
+    `GET avg diff: ${getDiff.toFixed(3)}ms (${getDiffPercent.toFixed(2)}%)`
+  );
+  console.log(
+    `POST avg diff: ${postDiff.toFixed(3)}ms (${postDiffPercent.toFixed(2)}%)`
   );
 
   // Check if difference is larger than 3ms
-  if (getMedDiff > 3 || postMedDiff > 3) {
-    console.log(
-      "Firewall is causing a performance impact thats larger than 3ms"
-    );
+  if (getDiff > 3 || postDiff > 3) {
+    console.log("Zen is causing a performance impact thats larger than 3ms");
     process.exit(1);
   }
 

@@ -459,11 +459,33 @@ t.test("it counts attacks", async () => {
   agent.start([]);
 
   const handler = createLambdaWrapper(async (event, context) => {
-    const ctx = getContext();
-    if (ctx) {
-      updateContext(ctx, "attackDetected", true);
-    }
-    return ctx;
+    agent.onDetectedAttack({
+      module: "mongodb",
+      kind: "nosql_injection",
+      blocked: false,
+      source: "body",
+      request: {
+        method: "POST",
+        cookies: {},
+        query: {},
+        headers: {
+          "user-agent": "agent",
+        },
+        body: {},
+        url: "http://localhost:4000",
+        remoteAddress: "::1",
+        source: "express",
+        route: "/posts/:id",
+        routeParams: {},
+      },
+      operation: "operation",
+      payload: "payload",
+      stack: "stack",
+      paths: [".nested"],
+      metadata: {
+        db: "app",
+      },
+    });
   });
 
   // This one will flush the stats

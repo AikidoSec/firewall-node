@@ -71,6 +71,7 @@ t.test("it works", async () => {
         method: "GET",
         route: "/foo",
         forceProtectionOff: false,
+        allowedIPAddresses: undefined,
         rateLimiting: {
           enabled: false,
           maxRequests: 0,
