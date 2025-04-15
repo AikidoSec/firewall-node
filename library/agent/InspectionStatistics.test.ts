@@ -813,6 +813,7 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
         blocked: {
           total: 1,
           breakdown: {
+            // eslint-disable-next-line camelcase
             ai_bots: 1,
           },
         },
