@@ -1074,16 +1074,20 @@ t.test("it fetches blocked lists", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
-    blocked: true,
-    reason: "Description",
-    key: "some/key",
-  });
-  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
-    blocked: true,
-    reason: "Description",
-    key: "some/key",
-  });
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), [
+    {
+      key: "some/key",
+      monitor: false,
+      reason: "Description",
+    },
+  ]);
+  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), [
+    {
+      key: "some/key",
+      monitor: false,
+      reason: "Description",
+    },
+  ]);
 
   t.same(
     agent
@@ -1091,23 +1095,25 @@ t.test("it fetches blocked lists", async () => {
       .isUserAgentBlocked(
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
-    {
-      blocked: true,
-      key: "ai_bots",
-    }
+    [
+      {
+        key: "ai_bots",
+        monitor: false,
+      },
+    ]
   );
 
   t.same(
     agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
-    {
-      blocked: true,
-      key: "ai_bots",
-    }
+    [
+      {
+        key: "ai_bots",
+        monitor: false,
+      },
+    ]
   );
 
-  t.same(agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible)"), {
-    blocked: false,
-  });
+  t.same(agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible)"), []);
 });
 
 t.test("it does not fetch blocked IPs if serverless", async () => {
@@ -1121,10 +1127,7 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
-    blocked: false,
-  });
-
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), []);
   t.same(agent.getConfig().isAllowedIPAddress("1.3.2.4"), {
     allowed: true,
   });
@@ -1135,9 +1138,7 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
       .isUserAgentBlocked(
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
-    {
-      blocked: false,
-    }
+    []
   );
 });
 
@@ -1152,16 +1153,20 @@ t.test("it only allows some IP addresses", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
-    blocked: true,
-    reason: "Description",
-    key: "some/key",
-  });
-  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
-    blocked: true,
-    reason: "Description",
-    key: "some/key",
-  });
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), [
+    {
+      key: "some/key",
+      monitor: false,
+      reason: "Description",
+    },
+  ]);
+  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), [
+    {
+      key: "some/key",
+      monitor: false,
+      reason: "Description",
+    },
+  ]);
 
   t.same(agent.getConfig().isAllowedIPAddress("1.2.3.4"), {
     allowed: false,
