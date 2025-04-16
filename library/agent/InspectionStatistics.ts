@@ -48,22 +48,20 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
-    userAgents: UserAgentStats;
-    ipAddresses: IPAddressStats;
   } = {
     total: 0,
     aborted: 0,
     attacksDetected: { total: 0, blocked: 0 },
-    userAgents: {
-      total: 0,
-      blocked: 0,
-      breakdown: {},
-    },
-    ipAddresses: {
-      total: 0,
-      blocked: 0,
-      breakdown: {},
-    },
+  };
+  private userAgents: UserAgentStats = {
+    total: 0,
+    blocked: 0,
+    breakdown: {},
+  };
+  private ipAddresses: IPAddressStats = {
+    total: 0,
+    blocked: 0,
+    breakdown: {},
   };
 
   constructor({
@@ -97,16 +95,16 @@ export class InspectionStatistics {
       total: 0,
       aborted: 0,
       attacksDetected: { total: 0, blocked: 0 },
-      userAgents: {
-        total: 0,
-        blocked: 0,
-        breakdown: {},
-      },
-      ipAddresses: {
-        total: 0,
-        blocked: 0,
-        breakdown: {},
-      },
+    };
+    this.userAgents = {
+      total: 0,
+      blocked: 0,
+      breakdown: {},
+    };
+    this.ipAddresses = {
+      total: 0,
+      blocked: 0,
+      breakdown: {},
     };
     this.startedAt = Date.now();
   }
@@ -121,16 +119,16 @@ export class InspectionStatistics {
         total: number;
         blocked: number;
       };
-      userAgents: {
-        total: number;
-        blocked: number;
-        breakdown: Record<string, { total: number; blocked: number }>;
-      };
-      ipAddresses: {
-        total: number;
-        blocked: number;
-        breakdown: Record<string, { total: number; blocked: number }>;
-      };
+    };
+    userAgents: {
+      total: number;
+      blocked: number;
+      breakdown: Record<string, { total: number; blocked: number }>;
+    };
+    ipAddresses: {
+      total: number;
+      blocked: number;
+      breakdown: Record<string, { total: number; blocked: number }>;
     };
   } {
     const sinks: Record<string, SinkStatsWithoutTimings> = {};
@@ -152,6 +150,8 @@ export class InspectionStatistics {
       sinks: sinks,
       startedAt: this.startedAt,
       requests: this.requests,
+      userAgents: this.userAgents,
+      ipAddresses: this.ipAddresses,
     };
   }
 
@@ -227,47 +227,47 @@ export class InspectionStatistics {
   }
 
   onBlockedIPAddress(key: string) {
-    this.requests.ipAddresses.total += 1;
-    this.requests.ipAddresses.blocked += 1;
+    this.ipAddresses.total += 1;
+    this.ipAddresses.blocked += 1;
 
-    if (!this.requests.ipAddresses.breakdown[key]) {
-      this.requests.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
+    if (!this.ipAddresses.breakdown[key]) {
+      this.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
     }
 
-    this.requests.ipAddresses.breakdown[key].total += 1;
-    this.requests.ipAddresses.breakdown[key].blocked += 1;
+    this.ipAddresses.breakdown[key].total += 1;
+    this.ipAddresses.breakdown[key].blocked += 1;
   }
 
   onBlockedUserAgent(key: string) {
-    this.requests.userAgents.total += 1;
-    this.requests.userAgents.blocked += 1;
+    this.userAgents.total += 1;
+    this.userAgents.blocked += 1;
 
-    if (!this.requests.userAgents.breakdown[key]) {
-      this.requests.userAgents.breakdown[key] = { total: 0, blocked: 0 };
+    if (!this.userAgents.breakdown[key]) {
+      this.userAgents.breakdown[key] = { total: 0, blocked: 0 };
     }
 
-    this.requests.userAgents.breakdown[key].total += 1;
-    this.requests.userAgents.breakdown[key].blocked += 1;
+    this.userAgents.breakdown[key].total += 1;
+    this.userAgents.breakdown[key].blocked += 1;
   }
 
   detectedMonitoredIPAddress(key: IPListKey) {
-    this.requests.ipAddresses.total += 1;
+    this.ipAddresses.total += 1;
 
-    if (!this.requests.ipAddresses.breakdown[key]) {
-      this.requests.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
+    if (!this.ipAddresses.breakdown[key]) {
+      this.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
     }
 
-    this.requests.ipAddresses.breakdown[key].total += 1;
+    this.ipAddresses.breakdown[key].total += 1;
   }
 
   detectedMonitoredUserAgent(key: UserAgentBotKey) {
-    this.requests.userAgents.total += 1;
+    this.userAgents.total += 1;
 
-    if (!this.requests.userAgents.breakdown[key]) {
-      this.requests.userAgents.breakdown[key] = { total: 0, blocked: 0 };
+    if (!this.userAgents.breakdown[key]) {
+      this.userAgents.breakdown[key] = { total: 0, blocked: 0 };
     }
 
-    this.requests.userAgents.breakdown[key].total += 1;
+    this.userAgents.breakdown[key].total += 1;
   }
 
   onAbortedRequest() {
