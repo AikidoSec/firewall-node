@@ -71,13 +71,7 @@ export function checkIfRequestIsBlocked(
 
   if (blockedIPs.length > 0) {
     // The same IP address can be blocked by multiple lists
-    blockedIPs.forEach((match) => {
-      if (match.monitor) {
-        agent.getInspectionStatistics().detectedMonitoredIPAddress(match.key);
-      } else {
-        agent.getInspectionStatistics().onBlockedIPAddress(match.key);
-      }
-    });
+    agent.getInspectionStatistics().onIPAddressMatches(blockedIPs);
 
     const blockingMatch = blockedIPs.find((match) => !match.monitor);
     if (blockingMatch) {
@@ -101,13 +95,7 @@ export function checkIfRequestIsBlocked(
 
   if (blockedUserAgents.length > 0) {
     // The same user agent can be blocked by multiple lists
-    blockedUserAgents.forEach((match) => {
-      if (match.monitor) {
-        agent.getInspectionStatistics().detectedMonitoredUserAgent(match.key);
-      } else {
-        agent.getInspectionStatistics().onBlockedUserAgent(match.key);
-      }
-    });
+    agent.getInspectionStatistics().onUserAgentMatches(blockedUserAgents);
 
     if (blockedUserAgents.find((match) => !match.monitor)) {
       res.statusCode = 403;

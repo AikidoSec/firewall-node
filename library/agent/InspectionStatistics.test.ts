@@ -636,8 +636,10 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
     maxCompressedStatsInMemory: 5,
   });
 
-  stats.onBlockedIPAddress("known_threat_actors/public_scanners");
-  stats.onBlockedUserAgent("ai_bots");
+  stats.onIPAddressMatches([
+    { key: "known_threat_actors/public_scanners", monitor: false },
+  ]);
+  stats.onUserAgentMatches([{ key: "ai_bots", monitor: false }]);
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -678,8 +680,10 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
     maxCompressedStatsInMemory: 5,
   });
 
-  stats.detectedMonitoredIPAddress("known_threat_actors/public_scanners");
-  stats.detectedMonitoredUserAgent("ai_data_scrapers");
+  stats.onIPAddressMatches([
+    { key: "known_threat_actors/public_scanners", monitor: true },
+  ]);
+  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -710,8 +714,10 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
   });
 
   // Test multiple occurrences
-  stats.detectedMonitoredIPAddress("known_threat_actors/public_scanners");
-  stats.detectedMonitoredUserAgent("ai_data_scrapers");
+  stats.onIPAddressMatches([
+    { key: "known_threat_actors/public_scanners", monitor: true },
+  ]);
+  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -742,4 +748,40 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
   });
 
   clock.uninstall();
+});
+
+t.test("should track multiple matches for the same key", (t) => {
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 100,
+    maxCompressedStatsInMemory: 10,
+  });
+
+  stats.onIPAddressMatches([
+    { key: "known_threat_actors/public_scanners", monitor: true },
+    { key: "known_threat_actors/public_scanners", monitor: false },
+  ]);
+  stats.onUserAgentMatches([
+    { key: "ai_data_scrapers", monitor: true },
+    { key: "ai_data_scrapers", monitor: false },
+  ]);
+
+  const result = stats.getStats();
+
+  t.equal(result.ipAddresses.total, 1);
+  t.equal(result.ipAddresses.blocked, 1);
+  t.equal(
+    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].total,
+    2
+  );
+  t.equal(
+    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].blocked,
+    1
+  );
+
+  t.equal(result.userAgents.total, 1);
+  t.equal(result.userAgents.blocked, 1);
+  t.equal(result.userAgents.breakdown["ai_data_scrapers"].total, 2);
+  t.equal(result.userAgents.breakdown["ai_data_scrapers"].blocked, 1);
+
+  t.end();
 });

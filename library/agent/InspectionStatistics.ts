@@ -226,48 +226,48 @@ export class InspectionStatistics {
     }
   }
 
-  onBlockedIPAddress(key: string) {
-    this.ipAddresses.total += 1;
-    this.ipAddresses.blocked += 1;
-
-    if (!this.ipAddresses.breakdown[key]) {
-      this.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
+  onIPAddressMatches(matches: { key: IPListKey; monitor: boolean }[]) {
+    if (matches.length > 0) {
+      this.ipAddresses.total += 1;
     }
 
-    this.ipAddresses.breakdown[key].total += 1;
-    this.ipAddresses.breakdown[key].blocked += 1;
+    const blockingMatches = matches.filter((match) => !match.monitor);
+    if (blockingMatches.length > 0) {
+      this.ipAddresses.blocked += 1;
+    }
+
+    matches.forEach((match) => {
+      if (!this.ipAddresses.breakdown[match.key]) {
+        this.ipAddresses.breakdown[match.key] = { total: 0, blocked: 0 };
+      }
+      this.ipAddresses.breakdown[match.key].total += 1;
+
+      if (!match.monitor) {
+        this.ipAddresses.breakdown[match.key].blocked += 1;
+      }
+    });
   }
 
-  onBlockedUserAgent(key: string) {
-    this.userAgents.total += 1;
-    this.userAgents.blocked += 1;
-
-    if (!this.userAgents.breakdown[key]) {
-      this.userAgents.breakdown[key] = { total: 0, blocked: 0 };
+  onUserAgentMatches(matches: { key: UserAgentBotKey; monitor: boolean }[]) {
+    if (matches.length > 0) {
+      this.userAgents.total += 1;
     }
 
-    this.userAgents.breakdown[key].total += 1;
-    this.userAgents.breakdown[key].blocked += 1;
-  }
-
-  detectedMonitoredIPAddress(key: IPListKey) {
-    this.ipAddresses.total += 1;
-
-    if (!this.ipAddresses.breakdown[key]) {
-      this.ipAddresses.breakdown[key] = { total: 0, blocked: 0 };
+    const blockingMatches = matches.filter((match) => !match.monitor);
+    if (blockingMatches.length > 0) {
+      this.userAgents.blocked += 1;
     }
 
-    this.ipAddresses.breakdown[key].total += 1;
-  }
+    matches.forEach((match) => {
+      if (!this.userAgents.breakdown[match.key]) {
+        this.userAgents.breakdown[match.key] = { total: 0, blocked: 0 };
+      }
+      this.userAgents.breakdown[match.key].total += 1;
 
-  detectedMonitoredUserAgent(key: UserAgentBotKey) {
-    this.userAgents.total += 1;
-
-    if (!this.userAgents.breakdown[key]) {
-      this.userAgents.breakdown[key] = { total: 0, blocked: 0 };
-    }
-
-    this.userAgents.breakdown[key].total += 1;
+      if (!match.monitor) {
+        this.userAgents.breakdown[match.key].blocked += 1;
+      }
+    });
   }
 
   onAbortedRequest() {
