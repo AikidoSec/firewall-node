@@ -62,6 +62,8 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 * ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
+* ✅ [`@libsql/client`](https://www.npmjs.com/package/@libsql/client) ^0.10.x
+* ✅ [`libsql`](https://www.npmjs.com/package/libsql) ^0.4.x
 
 ### Cloud providers
 

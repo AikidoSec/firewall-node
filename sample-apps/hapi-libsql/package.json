@@ -1,0 +1,12 @@
+{
+  "name": "hapi-libsql",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SQL Injection with libsql",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hapi/hapi": "^21.3.12",
+    "@libsql/client": "^0.14.0"
+  }
+}
