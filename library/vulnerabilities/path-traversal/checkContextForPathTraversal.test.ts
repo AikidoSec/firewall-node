@@ -97,81 +97,81 @@ t.test("it detects path traversal with URL", async () => {
       payload: "../file",
     }
   );
+});
 
-  t.test("it detects path traversal with Buffer", async () => {
+t.test("it detects path traversal with Buffer", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      filename: Buffer.from("../file/test.txt"),
+    }),
+    {
+      operation: "operation",
+      kind: "path_traversal",
+      source: "routeParams",
+      pathsToPayload: [".path"],
+      metadata: {
+        filename: "../file/test.txt",
+      },
+      payload: "../file",
+    }
+  );
+});
+
+t.test("it ignores non utf-8 Buffer", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      filename: Buffer.from([0x80, 0x81, 0x82, 0x83]),
+    }),
+    undefined
+  );
+});
+
+t.test("it ignores invalid filename type", async () => {
+  t.same(
+    checkContextForPathTraversal({
+      ...unsafeContext,
+      // @ts-expect-error Testing invalid type
+      filename: new Date(),
+    }),
+    undefined
+  );
+});
+
+t.test("it works with control characters removed by new URL", async (t) => {
+  const queries = [".\t./etc/passwd", ".\n./etc/passwd", ".\r./etc/passwd"];
+
+  for (const query of queries) {
     t.same(
       checkContextForPathTraversal({
-        ...unsafeContext,
-        filename: Buffer.from("../file/test.txt"),
+        filename: new URL(`file:///test/${query}`),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            q: query,
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
       }),
       {
         operation: "operation",
         kind: "path_traversal",
-        source: "routeParams",
-        pathsToPayload: [".path"],
+        source: "query",
+        pathsToPayload: [".q"],
         metadata: {
-          filename: "../file/test.txt",
+          filename: "/etc/passwd",
         },
-        payload: "../file",
+        payload: query,
       }
     );
-  });
-
-  t.test("it ignores non utf-8 Buffer", async () => {
-    t.same(
-      checkContextForPathTraversal({
-        ...unsafeContext,
-        filename: Buffer.from([0x80, 0x81, 0x82, 0x83]),
-      }),
-      undefined
-    );
-  });
-
-  t.test("it ignores invalid filename type", async () => {
-    t.same(
-      checkContextForPathTraversal({
-        ...unsafeContext,
-        // @ts-expect-error Testing invalid type
-        filename: new Date(),
-      }),
-      undefined
-    );
-  });
-
-  t.test("it works with control characters removed by new URL", async (t) => {
-    const queries = [".\t./etc/passwd", ".\n./etc/passwd", ".\r./etc/passwd"];
-
-    for (const query of queries) {
-      t.same(
-        checkContextForPathTraversal({
-          filename: new URL(`file:///test/${query}`),
-          operation: "operation",
-          context: {
-            cookies: {},
-            headers: {},
-            remoteAddress: "ip",
-            method: "POST",
-            url: "url",
-            query: {
-              q: query,
-            },
-            body: {},
-            routeParams: {},
-            source: "express",
-            route: undefined,
-          },
-        }),
-        {
-          operation: "operation",
-          kind: "path_traversal",
-          source: "query",
-          pathsToPayload: [".q"],
-          metadata: {
-            filename: "/etc/passwd",
-          },
-          payload: query,
-        }
-      );
-    }
-  });
+  }
 });
