@@ -65,42 +65,59 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
-  const result = context.remoteAddress
+  const blockedIPs = context.remoteAddress
     ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
-    : ({ blocked: false } as const);
+    : [];
 
-  if (result.blocked) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
+  if (blockedIPs.length > 0) {
+    // The same IP address can be blocked by multiple lists
+    blockedIPs.forEach((match) => {
+      if (match.monitor) {
+        agent.getInspectionStatistics().detectedMonitoredIPAddress(match.key);
+      } else {
+        agent.getInspectionStatistics().onBlockedIPAddress(match.key);
+      }
+    });
 
-    let message = `Your IP address is blocked due to ${escapeHTML(result.reason)}.`;
-    if (context.remoteAddress) {
-      message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
+    const blockingMatch = blockedIPs.find((match) => !match.monitor);
+    if (blockingMatch) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      let message = `Your IP address is blocked due to ${escapeHTML(blockingMatch.reason)}.`;
+      if (context.remoteAddress) {
+        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
+      }
+
+      res.end(message);
+      return true;
     }
-
-    res.end(message);
-
-    agent.getInspectionStatistics().onBlockedIPAddress(result.key);
-
-    return true;
   }
 
-  const isUserAgentBlocked =
+  const blockedUserAgents =
     context.headers && typeof context.headers["user-agent"] === "string"
       ? agent.getConfig().isUserAgentBlocked(context.headers["user-agent"])
-      : ({ blocked: false } as const);
+      : [];
 
-  if (isUserAgentBlocked.blocked) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
+  if (blockedUserAgents.length > 0) {
+    // The same user agent can be blocked by multiple lists
+    blockedUserAgents.forEach((match) => {
+      if (match.monitor) {
+        agent.getInspectionStatistics().detectedMonitoredUserAgent(match.key);
+      } else {
+        agent.getInspectionStatistics().onBlockedUserAgent(match.key);
+      }
+    });
 
-    res.end(
-      "You are not allowed to access this resource because you have been identified as a bot."
-    );
+    if (blockedUserAgents.find((match) => !match.monitor)) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
 
-    agent.getInspectionStatistics().onBlockedUserAgent(isUserAgentBlocked.key);
-
-    return true;
+      res.end(
+        "You are not allowed to access this resource because you have been identified as a bot."
+      );
+      return true;
+    }
   }
 
   return false;

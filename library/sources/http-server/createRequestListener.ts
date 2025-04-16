@@ -105,28 +105,5 @@ function createOnFinishRequestHandler(
       // Only count the request if the route is discovered
       agent.getInspectionStatistics().onRequest();
     }
-
-    if (context) {
-      if (
-        context.headers &&
-        typeof context.headers["user-agent"] === "string"
-      ) {
-        const match = agent
-          .getConfig()
-          .isMonitoredUserAgent(context.headers["user-agent"]);
-        if (match) {
-          agent.getInspectionStatistics().detectedMonitoredUserAgent(match.key);
-        }
-      }
-
-      if (context.remoteAddress) {
-        const match = agent
-          .getConfig()
-          .isMonitoredIPAddress(context.remoteAddress);
-        if (match) {
-          agent.getInspectionStatistics().detectedMonitoredIPAddress(match.key);
-        }
-      }
-    }
   };
 }

@@ -117,20 +117,14 @@ export class ServiceConfig {
 
   isIPAddressBlocked(
     ip: string
-  ): { blocked: true; reason: string; key: string } | { blocked: false } {
-    const blocklist = this.blockedIPAddresses
-      .filter((list) => !list.monitor)
-      .find((blocklist) => blocklist.blocklist.has(ip));
-
-    if (blocklist) {
-      return {
-        blocked: true,
-        reason: blocklist.description,
-        key: blocklist.key,
-      };
-    }
-
-    return { blocked: false };
+  ): Array<{ key: string; monitor: boolean; reason: string }> {
+    return this.blockedIPAddresses
+      .filter((list) => list.blocklist.has(ip))
+      .map((list) => ({
+        key: list.key,
+        monitor: list.monitor,
+        reason: list.description,
+      }));
   }
 
   private setBlockedIPAddresses(blockedIPAddresses: IPList[]) {
@@ -162,21 +156,13 @@ export class ServiceConfig {
     this.setBlockedUserAgents(blockedUserAgents);
   }
 
-  isUserAgentBlocked(
-    ua: string
-  ): { blocked: boolean; key: string } | { blocked: false } {
-    const match = this.blockedUserAgents
-      .filter((list) => !list.monitor)
-      .find((list) => list.pattern.test(ua));
-
-    if (match) {
-      return {
-        blocked: true,
-        key: match.key,
-      };
-    }
-
-    return { blocked: false };
+  isUserAgentBlocked(ua: string): Array<{ key: string; monitor: boolean }> {
+    return this.blockedUserAgents
+      .filter((list) => list.pattern.test(ua))
+      .map((list) => ({
+        key: list.key,
+        monitor: list.monitor,
+      }));
   }
 
   private setAllowedIPAddresses(ipAddresses: IPList[]) {
@@ -213,25 +199,6 @@ export class ServiceConfig {
     );
 
     return { allowed: !!allowlist };
-  }
-
-  isMonitoredIPAddress(ip: string): { key: string } | undefined {
-    const blocklist = this.blockedIPAddresses
-      .filter((list) => list.monitor)
-      .find((list) => list.blocklist.has(ip));
-    if (blocklist) {
-      return { key: blocklist.key };
-    }
-
-    return undefined;
-  }
-
-  isMonitoredUserAgent(ua: string): { key: string } | undefined {
-    const match = this.blockedUserAgents
-      .filter((list) => list.monitor)
-      .find((list) => list.pattern.test(ua));
-
-    return match ? { key: match.key } : undefined;
   }
 
   updateConfig(
