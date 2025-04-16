@@ -151,8 +151,8 @@ function generateHeartbeatEvent(): Event {
         total: 0,
         aborted: 0,
         attacksDetected: {
-          total: 0,
           blocked: 0,
+          total: 0,
         },
       },
       userAgents: {
