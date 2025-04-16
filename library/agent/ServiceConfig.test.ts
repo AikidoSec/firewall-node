@@ -157,6 +157,23 @@ t.test("ip blocking works", async () => {
     },
   ]);
   t.same(config.isIPAddressBlocked("1.2"), []);
+
+  config.updateBlockedIPAddresses([]);
+  t.same(config.isIPAddressBlocked("1.2.3.4"), []);
+});
+
+t.test("update blocked IPs contains empty IPs", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedIPAddresses([
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      description: "description",
+      ips: [],
+      monitor: false,
+    },
+  ]);
+  t.same(config.isIPAddressBlocked("1.2.3.4"), []);
 });
 
 t.test("it blocks bots", async () => {
@@ -294,7 +311,7 @@ t.test("bypassed ips support cidr", async () => {
   t.same(config.isBypassedIP("999.999.999.999"), false);
 });
 
-t.test("it updates blocked user agents", async (t) => {
+t.test("should return all matching user agent patterns", async (t) => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
   config.updateBlockedUserAgents([
     {
@@ -312,13 +329,7 @@ t.test("it updates blocked user agents", async (t) => {
   t.same(config.isUserAgentBlocked("firefox"), []);
 });
 
-t.test("it updates blocked user agents with empty list", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
-  config.updateBlockedUserAgents([]);
-  t.same(config.isUserAgentBlocked("googlebot"), []);
-});
-
-t.test("it updates blocked user agents with invalid pattern", async (t) => {
+t.test("it returns and updates blocked user agents", async (t) => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
   config.updateBlockedUserAgents([
     {
@@ -326,34 +337,58 @@ t.test("it updates blocked user agents with invalid pattern", async (t) => {
       pattern: "googlebot|bingbot",
       monitor: false,
     },
+    {
+      key: "crawlers",
+      pattern: "googlebot",
+      monitor: true,
+    },
   ]);
   t.same(config.isUserAgentBlocked("googlebot"), [
     {
       key: "bots",
       monitor: false,
     },
+    {
+      key: "crawlers",
+      monitor: true,
+    },
   ]);
-});
+  t.same(config.isUserAgentBlocked("bingbot"), [
+    {
+      key: "bots",
+      monitor: false,
+    },
+  ]);
 
-t.test("it updates blocked user agents with empty pattern", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
   config.updateBlockedUserAgents([]);
   t.same(config.isUserAgentBlocked("googlebot"), []);
+  t.same(config.isUserAgentBlocked("bingbot"), []);
+  t.same(config.isUserAgentBlocked("firefox"), []);
 });
 
-t.test("it updates blocked user agents with monitor flag", async (t) => {
+t.test("it ignores user agent lists with empty patterns", async (t) => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
   config.updateBlockedUserAgents([
     {
       key: "bots",
-      pattern: "googlebot|bingbot",
-      monitor: true,
+      pattern: "",
+      monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("googlebot"), [
-    {
-      key: "bots",
-      monitor: true,
-    },
-  ]);
+  t.same(config.isUserAgentBlocked("googlebot"), []);
 });
+
+t.test(
+  "it does not throw error when updating user agent lists with invalid patterns",
+  async (t) => {
+    const config = new ServiceConfig([], 0, [], [], false, [], []);
+    config.updateBlockedUserAgents([
+      {
+        key: "bots",
+        pattern: "[",
+        monitor: false,
+      },
+    ]);
+    t.same(config.isUserAgentBlocked("googlebot"), []);
+  }
+);
