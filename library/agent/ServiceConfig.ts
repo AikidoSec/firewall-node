@@ -145,11 +145,21 @@ export class ServiceConfig {
   }
 
   private setBlockedUserAgents(blockedUserAgents: AgentBlockList[]) {
-    this.blockedUserAgents = blockedUserAgents.map((list) => ({
-      key: list.key,
-      pattern: new RegExp(list.pattern, "i"),
-      monitor: list.monitor,
-    }));
+    this.blockedUserAgents = [];
+
+    for (const list of blockedUserAgents) {
+      if (list.pattern.length > 0) {
+        try {
+          this.blockedUserAgents.push({
+            key: list.key,
+            pattern: new RegExp(list.pattern, "i"),
+            monitor: list.monitor,
+          });
+        } catch {
+          // Invalid regex, ignore this entry
+        }
+      }
+    }
   }
 
   updateBlockedUserAgents(blockedUserAgents: AgentBlockList[]) {
