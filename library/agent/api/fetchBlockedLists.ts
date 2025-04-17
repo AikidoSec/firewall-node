@@ -10,7 +10,7 @@ export type IPList = {
   monitor: boolean;
 };
 
-export type AgentBlockList = {
+export type BotBlocklist = {
   key: string;
   pattern: string; // e.g. "Googlebot|Bingbot"
   monitor: boolean;
@@ -19,7 +19,7 @@ export type AgentBlockList = {
 export type Response = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
-  blockedUserAgents: AgentBlockList[];
+  blockedUserAgents: BotBlocklist[];
 };
 
 export async function fetchBlockedLists(token: Token): Promise<Response> {

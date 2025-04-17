@@ -2,7 +2,7 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig } from "./Config";
-import { AgentBlockList, IPList } from "./api/fetchBlockedLists";
+import { BotBlocklist, IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -144,7 +144,7 @@ export class ServiceConfig {
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
 
-  private setBlockedUserAgents(blockedUserAgents: AgentBlockList[]) {
+  private setBlockedUserAgents(blockedUserAgents: BotBlocklist[]) {
     this.blockedUserAgents = [];
 
     for (const list of blockedUserAgents) {
@@ -162,7 +162,7 @@ export class ServiceConfig {
     }
   }
 
-  updateBlockedUserAgents(blockedUserAgents: AgentBlockList[]) {
+  updateBlockedUserAgents(blockedUserAgents: BotBlocklist[]) {
     this.setBlockedUserAgents(blockedUserAgents);
   }
 
