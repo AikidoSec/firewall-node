@@ -13,6 +13,8 @@ import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { FileSystem } from "../sinks/FileSystem";
+import { Path } from "../sinks/Path";
 const execAsync = promisify(exec);
 
 // Before require("http")
@@ -48,7 +50,7 @@ const agent = createTestAgent({
   token: new Token("123"),
   api,
 });
-agent.start([new HTTPServer()]);
+agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
   return async function fetchBlockedLists(): Promise<{
@@ -78,6 +80,7 @@ t.beforeEach(() => {
 
 const http = require("http") as typeof import("http");
 const https = require("https") as typeof import("https");
+const { readFileSync } = require("fs");
 
 t.test("it wraps the createServer function of http module", async () => {
   const server = http.createServer((req, res) => {
@@ -719,3 +722,61 @@ t.test(
     });
   }
 );
+
+t.test("it blocks path traversal in path", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      // @ts-expect-error Ignore
+      const file = readFileSync(join(__dirname, req.url));
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      const response = await new Promise((resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "localhost",
+            port: 3327,
+            path: "/../package.json", // Path traversal attempt
+            method: "GET",
+          },
+          (res) => {
+            let data = "";
+
+            res.on("data", (chunk) => {
+              data += chunk;
+            });
+
+            res.on("end", () => {
+              resolve(data);
+            });
+          }
+        );
+
+        req.on("error", (err) => {
+          reject(err);
+        });
+
+        req.end();
+      });
+
+      t.equal(
+        response,
+        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+      );
+      server.close();
+      resolve();
+    });
+  });
+});
