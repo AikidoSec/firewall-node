@@ -1,7 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { Endpoint } from "./Config";
+import type { Endpoint, EndpointConfig } from "./Config";
 import { IPList } from "./api/fetchBlockedLists";
 
 export class ServiceConfig {
@@ -21,7 +21,7 @@ export class ServiceConfig {
   }[] = [];
 
   constructor(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
@@ -36,13 +36,27 @@ export class ServiceConfig {
     this.setAllowedIPAddresses(allowedIPAddresses);
   }
 
-  private setEndpoints(endpoints: Endpoint[]) {
-    this.nonGraphQLEndpoints = endpoints.filter(
-      (endpoint) => !endpoint.graphql
-    );
-    this.graphqlFields = endpoints.filter((endpoint) =>
-      endpoint.graphql ? true : false
-    );
+  private setEndpoints(endpointConfigs: EndpointConfig[]) {
+    this.nonGraphQLEndpoints = [];
+    this.graphqlFields = [];
+
+    for (const endpoint of endpointConfigs) {
+      let allowedIPAddresses = undefined;
+      if (
+        Array.isArray(endpoint.allowedIPAddresses) &&
+        endpoint.allowedIPAddresses.length > 0
+      ) {
+        allowedIPAddresses = new IPMatcher(endpoint.allowedIPAddresses);
+      }
+
+      const endpointConfig = { ...endpoint, allowedIPAddresses };
+
+      if (endpoint.graphql) {
+        this.graphqlFields.push(endpointConfig);
+      } else {
+        this.nonGraphQLEndpoints.push(endpointConfig);
+      }
+    }
   }
 
   getEndpoints(context: LimitedContext) {
@@ -174,7 +188,7 @@ export class ServiceConfig {
   }
 
   updateConfig(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],

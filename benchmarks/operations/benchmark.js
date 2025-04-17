@@ -14,10 +14,12 @@ const modules = [
     module: "nosqli",
     name: "NoSQL query",
   },
+  /*
+  Disabled because functionName.constructor === Function is false after patching global
   {
     module: "jsinjection",
     name: "`new Function(...)`",
-  },
+  },*/
   {
     module: "shelli",
     name: "Shell command",

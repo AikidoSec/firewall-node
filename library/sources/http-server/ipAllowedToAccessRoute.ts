@@ -10,11 +10,7 @@ export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
   const matches = agent.getConfig().getEndpoints(context);
 
   for (const endpoint of matches) {
-    if (!Array.isArray(endpoint.allowedIPAddresses)) {
-      continue;
-    }
-
-    if (endpoint.allowedIPAddresses.length === 0) {
+    if (!endpoint.allowedIPAddresses) {
       continue;
     }
 
@@ -24,7 +20,7 @@ export function ipAllowedToAccessRoute(context: Context, agent: Agent) {
 
     const { allowedIPAddresses } = endpoint;
 
-    if (!allowedIPAddresses.includes(context.remoteAddress)) {
+    if (!allowedIPAddresses.has(context.remoteAddress)) {
       return false;
     }
   }
