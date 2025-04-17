@@ -231,8 +231,8 @@ export class InspectionStatistics {
       this.ipAddresses.total += 1;
     }
 
-    const blockingMatches = matches.filter((match) => !match.monitor);
-    if (blockingMatches.length > 0) {
+    const blockingMatch = matches.find((match) => !match.monitor);
+    if (blockingMatch) {
       this.ipAddresses.blocked += 1;
     }
 
@@ -240,6 +240,7 @@ export class InspectionStatistics {
       if (!this.ipAddresses.breakdown[match.key]) {
         this.ipAddresses.breakdown[match.key] = { total: 0, blocked: 0 };
       }
+
       this.ipAddresses.breakdown[match.key].total += 1;
 
       if (!match.monitor) {
@@ -253,8 +254,8 @@ export class InspectionStatistics {
       this.userAgents.total += 1;
     }
 
-    const blockingMatches = matches.filter((match) => !match.monitor);
-    if (blockingMatches.length > 0) {
+    const blockingMatch = matches.find((match) => !match.monitor);
+    if (blockingMatch) {
       this.userAgents.blocked += 1;
     }
 
@@ -262,6 +263,7 @@ export class InspectionStatistics {
       if (!this.userAgents.breakdown[match.key]) {
         this.userAgents.breakdown[match.key] = { total: 0, blocked: 0 };
       }
+
       this.userAgents.breakdown[match.key].total += 1;
 
       if (!match.monitor) {
