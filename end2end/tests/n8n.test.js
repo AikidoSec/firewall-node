@@ -1,9 +1,19 @@
 const t = require("tap");
-const { spawnSync, spawn, execSync } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const { resolve, join } = require("path");
 const timeout = require("../timeout");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/n8n");
+const dataFolder = join(pathToApp, ".n8n");
+
+t.before(() => {
+  // Delete the .n8n folder if it exists
+  try {
+    execSync(`rm -rf ${dataFolder}`);
+  } catch (error) {
+    // Ignore error
+  }
+});
 
 t.test("it logs in", (t) => {
   const port = 5678;
@@ -14,6 +24,7 @@ t.test("it logs in", (t) => {
       AIKIDO_BLOCK: "true",
       NODE_OPTIONS: "-r @aikidosec/firewall",
       N8N_PORT: port.toString(),
+      N8N_USER_FOLDER: dataFolder,
     },
     cwd: pathToApp,
   });
@@ -37,7 +48,7 @@ t.test("it logs in", (t) => {
   });
 
   // Wait for the server to start
-  timeout(5000)
+  timeout(8000)
     .then(() => {
       return fetch(`http://127.0.0.1:${port}/rest/owner/setup`, {
         method: "POST",
