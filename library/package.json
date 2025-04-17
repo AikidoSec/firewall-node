@@ -130,5 +130,8 @@
     "lint-eslint": "eslint '**/*.ts'",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
+  },
+  "overrides": {
+    "undici@<=6.15.0": "6.15.0"
   }
 }
