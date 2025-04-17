@@ -14,10 +14,10 @@ const modules = [
     module: "nosqli",
     name: "NoSQL query",
   },
-  {
+  /*{
     module: "jsinjection",
     name: "`new Function(...)`",
-  },
+  },*/
   {
     module: "shelli",
     name: "Shell command",

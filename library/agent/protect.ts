@@ -141,7 +141,7 @@ export function getWrappers() {
     new Koa(),
     new ClickHouse(),
     new Prisma(),
-    new Function(),
+    // new Function(), Disabled because functionName.constructor === Function is false after patching global
   ];
 }
 
