@@ -115,7 +115,7 @@ export class ServiceConfig {
     return this.blockedUserIds.has(userId);
   }
 
-  isIPAddressBlocked(
+  getBlockedIPAddresses(
     ip: string
   ): { key: string; monitor: boolean; reason: string }[] {
     return this.blockedIPAddresses
@@ -166,7 +166,7 @@ export class ServiceConfig {
     this.setBlockedUserAgents(blockedUserAgents);
   }
 
-  isUserAgentBlocked(ua: string): { key: string; monitor: boolean }[] {
+  getBlockedUserAgents(ua: string): { key: string; monitor: boolean }[] {
     return this.blockedUserAgents
       .filter((list) => list.pattern.test(ua))
       .map((list) => ({

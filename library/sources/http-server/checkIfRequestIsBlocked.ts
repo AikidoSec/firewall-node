@@ -66,7 +66,7 @@ export function checkIfRequestIsBlocked(
   }
 
   const blockedIPs = context.remoteAddress
-    ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
+    ? agent.getConfig().getBlockedIPAddresses(context.remoteAddress)
     : [];
 
   if (blockedIPs.length > 0) {
@@ -90,7 +90,7 @@ export function checkIfRequestIsBlocked(
 
   const blockedUserAgents =
     context.headers && typeof context.headers["user-agent"] === "string"
-      ? agent.getConfig().isUserAgentBlocked(context.headers["user-agent"])
+      ? agent.getConfig().getBlockedUserAgents(context.headers["user-agent"])
       : [];
 
   if (blockedUserAgents.length > 0) {

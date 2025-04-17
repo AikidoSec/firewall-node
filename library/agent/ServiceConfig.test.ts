@@ -112,54 +112,54 @@ t.test("ip blocking works", async () => {
     ],
     []
   );
-  t.same(config.isIPAddressBlocked("1.2.3.4"), [
+  t.same(config.getBlockedIPAddresses("1.2.3.4"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("2.3.4.5"), []);
-  t.same(config.isIPAddressBlocked("192.168.2.2"), [
+  t.same(config.getBlockedIPAddresses("2.3.4.5"), []);
+  t.same(config.getBlockedIPAddresses("192.168.2.2"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::1"), [
+  t.same(config.getBlockedIPAddresses("fd00:1234:5678:9abc::1"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("fd00:1234:5678:9abc::2"), []);
-  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::1"), [
+  t.same(config.getBlockedIPAddresses("fd00:1234:5678:9abc::2"), []);
+  t.same(config.getBlockedIPAddresses("fd00:3234:5678:9abc::1"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("fd00:3234:5678:9abc::2"), [
+  t.same(config.getBlockedIPAddresses("fd00:3234:5678:9abc::2"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("5.6.7.8"), [
+  t.same(config.getBlockedIPAddresses("5.6.7.8"), [
     {
       key: "geoip/Belgium;BE",
       monitor: false,
       reason: "description",
     },
   ]);
-  t.same(config.isIPAddressBlocked("1.2"), []);
+  t.same(config.getBlockedIPAddresses("1.2"), []);
 
   config.updateBlockedIPAddresses([]);
-  t.same(config.isIPAddressBlocked("1.2.3.4"), []);
+  t.same(config.getBlockedIPAddresses("1.2.3.4"), []);
 });
 
 t.test("update blocked IPs contains empty IPs", async (t) => {
@@ -173,7 +173,7 @@ t.test("update blocked IPs contains empty IPs", async (t) => {
       monitor: false,
     },
   ]);
-  t.same(config.isIPAddressBlocked("1.2.3.4"), []);
+  t.same(config.getBlockedIPAddresses("1.2.3.4"), []);
 });
 
 t.test("it blocks bots", async () => {
@@ -186,23 +186,23 @@ t.test("it blocks bots", async () => {
     },
   ]);
 
-  t.same(config.isUserAgentBlocked("googlebot"), [
+  t.same(config.getBlockedUserAgents("googlebot"), [
     {
       key: "test",
       monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("123 bingbot abc"), [
+  t.same(config.getBlockedUserAgents("123 bingbot abc"), [
     {
       key: "test",
       monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("bing"), []);
+  t.same(config.getBlockedUserAgents("bing"), []);
 
   config.updateBlockedUserAgents([]);
 
-  t.same(config.isUserAgentBlocked("googlebot"), []);
+  t.same(config.getBlockedUserAgents("googlebot"), []);
 });
 
 t.test("restricting access to some ips", async () => {
@@ -320,13 +320,13 @@ t.test("should return all matching user agent patterns", async (t) => {
       monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("googlebot"), [
+  t.same(config.getBlockedUserAgents("googlebot"), [
     {
       key: "bots",
       monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("firefox"), []);
+  t.same(config.getBlockedUserAgents("firefox"), []);
 });
 
 t.test("it returns and updates blocked user agents", async (t) => {
@@ -343,7 +343,7 @@ t.test("it returns and updates blocked user agents", async (t) => {
       monitor: true,
     },
   ]);
-  t.same(config.isUserAgentBlocked("googlebot"), [
+  t.same(config.getBlockedUserAgents("googlebot"), [
     {
       key: "bots",
       monitor: false,
@@ -353,7 +353,7 @@ t.test("it returns and updates blocked user agents", async (t) => {
       monitor: true,
     },
   ]);
-  t.same(config.isUserAgentBlocked("bingbot"), [
+  t.same(config.getBlockedUserAgents("bingbot"), [
     {
       key: "bots",
       monitor: false,
@@ -361,9 +361,9 @@ t.test("it returns and updates blocked user agents", async (t) => {
   ]);
 
   config.updateBlockedUserAgents([]);
-  t.same(config.isUserAgentBlocked("googlebot"), []);
-  t.same(config.isUserAgentBlocked("bingbot"), []);
-  t.same(config.isUserAgentBlocked("firefox"), []);
+  t.same(config.getBlockedUserAgents("googlebot"), []);
+  t.same(config.getBlockedUserAgents("bingbot"), []);
+  t.same(config.getBlockedUserAgents("firefox"), []);
 });
 
 t.test("it ignores user agent lists with empty patterns", async (t) => {
@@ -375,7 +375,7 @@ t.test("it ignores user agent lists with empty patterns", async (t) => {
       monitor: false,
     },
   ]);
-  t.same(config.isUserAgentBlocked("googlebot"), []);
+  t.same(config.getBlockedUserAgents("googlebot"), []);
 });
 
 t.test(
@@ -389,6 +389,6 @@ t.test(
         monitor: false,
       },
     ]);
-    t.same(config.isUserAgentBlocked("googlebot"), []);
+    t.same(config.getBlockedUserAgents("googlebot"), []);
   }
 );

@@ -1074,14 +1074,14 @@ t.test("it fetches blocked lists", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), [
+  t.same(agent.getConfig().getBlockedIPAddresses("1.3.2.4"), [
     {
       key: "some/key",
       monitor: false,
       reason: "Description",
     },
   ]);
-  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), [
+  t.same(agent.getConfig().getBlockedIPAddresses("fe80::1234:5678:abcd:ef12"), [
     {
       key: "some/key",
       monitor: false,
@@ -1092,7 +1092,7 @@ t.test("it fetches blocked lists", async () => {
   t.same(
     agent
       .getConfig()
-      .isUserAgentBlocked(
+      .getBlockedUserAgents(
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
     [
@@ -1104,7 +1104,9 @@ t.test("it fetches blocked lists", async () => {
   );
 
   t.same(
-    agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible) Bytespider"),
+    agent
+      .getConfig()
+      .getBlockedUserAgents("Mozilla/5.0 (compatible) Bytespider"),
     [
       {
         key: "ai_bots",
@@ -1113,7 +1115,10 @@ t.test("it fetches blocked lists", async () => {
     ]
   );
 
-  t.same(agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible)"), []);
+  t.same(
+    agent.getConfig().getBlockedUserAgents("Mozilla/5.0 (compatible)"),
+    []
+  );
 });
 
 t.test("it does not fetch blocked IPs if serverless", async () => {
@@ -1127,7 +1132,7 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), []);
+  t.same(agent.getConfig().getBlockedIPAddresses("1.3.2.4"), []);
   t.same(agent.getConfig().isAllowedIPAddress("1.3.2.4"), {
     allowed: true,
   });
@@ -1135,7 +1140,7 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
   t.same(
     agent
       .getConfig()
-      .isUserAgentBlocked(
+      .getBlockedUserAgents(
         "Mozilla/5.0 (compatible) AI2Bot (+https://www.allenai.org/crawler)"
       ),
     []
@@ -1153,14 +1158,14 @@ t.test("it only allows some IP addresses", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), [
+  t.same(agent.getConfig().getBlockedIPAddresses("1.3.2.4"), [
     {
       key: "some/key",
       monitor: false,
       reason: "Description",
     },
   ]);
-  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), [
+  t.same(agent.getConfig().getBlockedIPAddresses("fe80::1234:5678:abcd:ef12"), [
     {
       key: "some/key",
       monitor: false,
