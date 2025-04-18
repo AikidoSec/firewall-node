@@ -5,13 +5,15 @@ import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 
+const checkedBlocks = Symbol("__zen_checked_blocks__");
+
 /**
  * Inspects the IP address of the request:
  * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
  */
 export function checkIfRequestIsBlocked(
-  res: ServerResponse,
+  res: ServerResponse & { [checkedBlocks]?: boolean },
   agent: Agent
 ): boolean {
   if (res.headersSent) {
@@ -25,6 +27,14 @@ export function checkIfRequestIsBlocked(
   if (!context) {
     return false;
   }
+
+  if (res[checkedBlocks]) {
+    return false;
+  }
+
+  // We don't need to check again if the request has already been checked
+  // Also ensures that the statistics are only counted once
+  // res[checkedBlocklist] = true;
 
   if (!ipAllowedToAccessRoute(context, agent)) {
     res.statusCode = 403;
@@ -69,23 +79,20 @@ export function checkIfRequestIsBlocked(
     ? agent.getConfig().getBlockedIPAddresses(context.remoteAddress)
     : [];
 
-  if (blockedIPs.length > 0) {
-    // The same IP address can be blocked by multiple lists
-    agent.getInspectionStatistics().onIPAddressMatches(blockedIPs);
+  agent.getInspectionStatistics().onIPAddressMatches(blockedIPs);
+  const blockingMatch = blockedIPs.find((match) => !match.monitor);
 
-    const blockingMatch = blockedIPs.find((match) => !match.monitor);
-    if (blockingMatch) {
-      res.statusCode = 403;
-      res.setHeader("Content-Type", "text/plain");
+  if (blockingMatch) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
 
-      let message = `Your IP address is blocked due to ${escapeHTML(blockingMatch.reason)}.`;
-      if (context.remoteAddress) {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
-      }
-
-      res.end(message);
-      return true;
+    let message = `Your IP address is blocked due to ${escapeHTML(blockingMatch.reason)}.`;
+    if (context.remoteAddress) {
+      message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }
+
+    res.end(message);
+    return true;
   }
 
   const blockedUserAgents =
@@ -93,19 +100,16 @@ export function checkIfRequestIsBlocked(
       ? agent.getConfig().getBlockedUserAgents(context.headers["user-agent"])
       : [];
 
-  if (blockedUserAgents.length > 0) {
-    // The same user agent can be blocked by multiple lists
-    agent.getInspectionStatistics().onUserAgentMatches(blockedUserAgents);
+  agent.getInspectionStatistics().onUserAgentMatches(blockedUserAgents);
 
-    if (blockedUserAgents.find((match) => !match.monitor)) {
-      res.statusCode = 403;
-      res.setHeader("Content-Type", "text/plain");
+  if (blockedUserAgents.find((match) => !match.monitor)) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
 
-      res.end(
-        "You are not allowed to access this resource because you have been identified as a bot."
-      );
-      return true;
-    }
+    res.end(
+      "You are not allowed to access this resource because you have been identified as a bot."
+    );
+    return true;
   }
 
   return false;

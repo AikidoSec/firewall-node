@@ -154,3 +154,59 @@ t.test("it tracks monitored IP addresses", async () => {
     });
   });
 });
+
+t.test("it only counts once if multiple listeners", async () => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  server.on("request", (req, res) => {
+    if (res.headersSent) {
+      return;
+    }
+
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3329, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3329/test"),
+          method: "GET",
+          headers: {
+            "user-agent": "GPTBot",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3329/test"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "1.2.3.4",
+          },
+          timeoutInMS: 500,
+        }),
+      ]).then(() => {
+        const { userAgents, ipAddresses } = agent
+          .getInspectionStatistics()
+          .getStats();
+        t.same(userAgents, {
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            ai_data_scrapers: { total: 1, blocked: 0 },
+          },
+        });
+        t.same(ipAddresses, {
+          breakdown: {
+            "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
+          },
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
