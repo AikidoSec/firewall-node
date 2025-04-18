@@ -96,16 +96,12 @@ t.test("it tracks monitored user agents", async () => {
         t.equal(response3.statusCode, 200);
         const stats = agent.getInspectionStatistics().getStats();
         t.same(stats.userAgents, {
-          total: 2,
-          blocked: 0,
           breakdown: {
             // eslint-disable-next-line camelcase
             ai_data_scrapers: { total: 2, blocked: 0 },
           },
         });
         t.same(stats.ipAddresses, {
-          total: 0,
-          blocked: 0,
           breakdown: {},
         });
         server.close();
@@ -145,13 +141,9 @@ t.test("it tracks monitored IP addresses", async () => {
         t.equal(response2.statusCode, 200);
         const stats = agent.getInspectionStatistics().getStats();
         t.same(stats.userAgents, {
-          total: 0,
-          blocked: 0,
           breakdown: {},
         });
         t.same(stats.ipAddresses, {
-          total: 1,
-          blocked: 0,
           breakdown: {
             "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
           },

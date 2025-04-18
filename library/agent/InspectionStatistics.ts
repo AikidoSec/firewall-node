@@ -25,14 +25,10 @@ type UserAgentBotKey = string;
 type IPListKey = string;
 
 type UserAgentStats = {
-  total: number;
-  blocked: number;
   breakdown: Record<UserAgentBotKey, { total: number; blocked: number }>;
 };
 
 type IPAddressStats = {
-  total: number;
-  blocked: number;
   breakdown: Record<IPListKey, { total: number; blocked: number }>;
 };
 
@@ -54,13 +50,9 @@ export class InspectionStatistics {
     attacksDetected: { total: 0, blocked: 0 },
   };
   private userAgents: UserAgentStats = {
-    total: 0,
-    blocked: 0,
     breakdown: {},
   };
   private ipAddresses: IPAddressStats = {
-    total: 0,
-    blocked: 0,
     breakdown: {},
   };
 
@@ -97,13 +89,9 @@ export class InspectionStatistics {
       attacksDetected: { total: 0, blocked: 0 },
     };
     this.userAgents = {
-      total: 0,
-      blocked: 0,
       breakdown: {},
     };
     this.ipAddresses = {
-      total: 0,
-      blocked: 0,
       breakdown: {},
     };
     this.startedAt = Date.now();
@@ -121,13 +109,9 @@ export class InspectionStatistics {
       };
     };
     userAgents: {
-      total: number;
-      blocked: number;
       breakdown: Record<string, { total: number; blocked: number }>;
     };
     ipAddresses: {
-      total: number;
-      blocked: number;
       breakdown: Record<string, { total: number; blocked: number }>;
     };
   } {
@@ -227,15 +211,6 @@ export class InspectionStatistics {
   }
 
   onIPAddressMatches(matches: { key: IPListKey; monitor: boolean }[]) {
-    if (matches.length > 0) {
-      this.ipAddresses.total += 1;
-    }
-
-    const blockingMatch = matches.find((match) => !match.monitor);
-    if (blockingMatch) {
-      this.ipAddresses.blocked += 1;
-    }
-
     matches.forEach((match) => {
       if (!this.ipAddresses.breakdown[match.key]) {
         this.ipAddresses.breakdown[match.key] = { total: 0, blocked: 0 };
@@ -250,15 +225,6 @@ export class InspectionStatistics {
   }
 
   onUserAgentMatches(matches: { key: UserAgentBotKey; monitor: boolean }[]) {
-    if (matches.length > 0) {
-      this.userAgents.total += 1;
-    }
-
-    const blockingMatch = matches.find((match) => !match.monitor);
-    if (blockingMatch) {
-      this.userAgents.blocked += 1;
-    }
-
     matches.forEach((match) => {
       if (!this.userAgents.breakdown[match.key]) {
         this.userAgents.breakdown[match.key] = { total: 0, blocked: 0 };

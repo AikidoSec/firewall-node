@@ -94,13 +94,9 @@ type Heartbeat = {
       };
     };
     userAgents: {
-      total: number;
-      blocked: number;
       breakdown: Record<string, { total: number; blocked: number }>;
     };
     ipAddresses: {
-      total: number;
-      blocked: number;
       breakdown: Record<string, { total: number; blocked: number }>;
     };
   };
