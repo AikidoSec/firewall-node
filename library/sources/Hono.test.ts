@@ -1,5 +1,6 @@
 /* eslint-disable prefer-rest-params */
 import * as t from "tap";
+import type { Response } from "../agent/api/fetchBlockedLists";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
@@ -25,14 +26,22 @@ wrap(fetch, "fetch", function mock(original) {
         body: JSON.stringify({
           blockedIPAddresses: [
             {
+              key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
+              monitor: false,
             },
           ],
-          blockedUserAgents: "hacker|attacker",
           allowedIPAddresses: [],
-        }),
+          blockedUserAgents: [
+            {
+              key: "hackers",
+              pattern: "hacker|attacker",
+              monitor: false,
+            },
+          ],
+        } satisfies Response),
       };
     }
 

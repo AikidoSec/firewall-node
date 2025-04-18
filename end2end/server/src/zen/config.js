@@ -90,7 +90,7 @@ function getAllowedIPAddresses(app) {
 }
 
 function updateBlockedUserAgents(app, uas) {
-  let entry = blockedUserAgents.find((e) => e.serviceId === e.serviceId);
+  let entry = blockedUserAgents.find((e) => e.serviceId === app.serviceId);
 
   if (entry) {
     entry.userAgents = uas;
@@ -104,13 +104,13 @@ function updateBlockedUserAgents(app, uas) {
 }
 
 function getBlockedUserAgents(app) {
-  const entry = blockedUserAgents.find((e) => e.serviceId === e.serviceId);
+  const entry = blockedUserAgents.find((e) => e.serviceId === app.serviceId);
 
   if (entry) {
     return entry.userAgents;
   }
 
-  return "";
+  return { serviceId: app.serviceId, userAgents: [] };
 }
 
 module.exports = {
