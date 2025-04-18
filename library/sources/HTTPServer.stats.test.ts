@@ -162,12 +162,11 @@ t.test("it only counts once if multiple listeners", async () => {
   });
 
   server.on("request", (req, res) => {
-    if (res.headersSent) {
-      return;
-    }
+    // This is a second listener
+  });
 
-    res.setHeader("Content-Type", "text/plain");
-    res.end("OK");
+  server.on("request", (req, res) => {
+    // This is a third listener
   });
 
   await new Promise<void>((resolve) => {
@@ -178,6 +177,7 @@ t.test("it only counts once if multiple listeners", async () => {
           method: "GET",
           headers: {
             "user-agent": "GPTBot",
+            "x-forwarded-for": "1.2.3.4",
           },
           timeoutInMS: 500,
         }),
@@ -185,6 +185,7 @@ t.test("it only counts once if multiple listeners", async () => {
           url: new URL("http://localhost:3329/test"),
           method: "GET",
           headers: {
+            "user-agent": "GPTBot",
             "x-forwarded-for": "1.2.3.4",
           },
           timeoutInMS: 500,
@@ -196,12 +197,12 @@ t.test("it only counts once if multiple listeners", async () => {
         t.same(userAgents, {
           breakdown: {
             // eslint-disable-next-line camelcase
-            ai_data_scrapers: { total: 1, blocked: 0 },
+            ai_data_scrapers: { total: 2, blocked: 0 },
           },
         });
         t.same(ipAddresses, {
           breakdown: {
-            "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
+            "known_threat_actors/public_scanners": { total: 2, blocked: 0 },
           },
         });
         server.close();

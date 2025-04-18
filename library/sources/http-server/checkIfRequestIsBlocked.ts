@@ -8,9 +8,10 @@ import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 const checkedBlocks = Symbol("__zen_checked_blocks__");
 
 /**
- * Inspects the IP address of the request:
+ * Inspects the IP address and user agent of the request:
  * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
+ * - Whether the user agent is blocked by a user agent blocklist
  */
 export function checkIfRequestIsBlocked(
   res: ServerResponse & { [checkedBlocks]?: boolean },
@@ -34,7 +35,7 @@ export function checkIfRequestIsBlocked(
 
   // We don't need to check again if the request has already been checked
   // Also ensures that the statistics are only counted once
-  // res[checkedBlocklist] = true;
+  res[checkedBlocks] = true;
 
   if (!ipAllowedToAccessRoute(context, agent)) {
     res.statusCode = 403;
