@@ -64,7 +64,7 @@ You can also pass a `Router` instance to `Zen.addExpressMiddleware`:
 ```js
 const router = express.Router();
 
-// Note: The middleware should run once per request
+// Note: The middleware should be executed once per request
 Zen.addExpressMiddleware(router);
 
 router.get(...);
