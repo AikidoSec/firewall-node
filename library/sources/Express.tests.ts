@@ -723,7 +723,6 @@ export function createExpressTests(expressPackageName: string) {
     const app = express();
     const router = express.Router();
 
-    // Add user middleware to set user data
     router.use((req, res, next) => {
       setUser({ id: "567" });
       next();
@@ -738,7 +737,6 @@ export function createExpressTests(expressPackageName: string) {
 
     app.use(router);
 
-    // Test blocked user is properly handled by the router middleware
     const blockedResponse = await request(app).get("/router-block-user");
     t.same(blockedResponse.statusCode, 403);
     t.same(blockedResponse.text, "You are blocked by Zen.");
