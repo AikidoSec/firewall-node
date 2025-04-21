@@ -502,6 +502,6 @@ t.test(
       block: false,
     });
 
-    t.same(logs, ["Zen.addMiddleware(...) should be called only once."]);
+    t.same(logs, []);
   }
 );

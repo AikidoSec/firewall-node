@@ -23,7 +23,6 @@ export function shouldBlockRequest(): Result {
 
   if (context.executedMiddleware) {
     logWarningAlreadyExecutedMiddleware();
-    return { block: false };
   }
 
   updateContext(context, "executedMiddleware", true);
