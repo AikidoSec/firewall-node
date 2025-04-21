@@ -89,16 +89,3 @@ export function shouldRateLimitRequest(
 
   return { block: false };
 }
-
-let loggedWarningIfMiddlewareExecutedTwice = false;
-
-function logWarningIfMiddlewareExecutedTwice(): void {
-  if (loggedWarningIfMiddlewareExecutedTwice) {
-    return;
-  }
-
-  // eslint-disable-next-line no-console
-  console.warn(`Zen.addMiddleware(...) should be called only once.`);
-
-  loggedWarningIfMiddlewareExecutedTwice = true;
-}
