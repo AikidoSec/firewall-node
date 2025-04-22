@@ -20,5 +20,6 @@ export function containsUnsafePathParts(filePath: string) {
  * See https://url.spec.whatwg.org/#url-parsing
  */
 export function containsUnsafePathPartsUrl(filePath: string) {
-  return /(?:\.(?:\t|\n|\r)*){2}(?:\/|\\)/.test(filePath);
+  const normalized = filePath.replace(/[\t\n\r]/g, "");
+  return containsUnsafePathParts(normalized);
 }
