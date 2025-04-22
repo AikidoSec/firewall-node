@@ -192,6 +192,86 @@ t.test("it works", async (t) => {
           rename(new URL("file:/C://../../test.txt"), "../test2.txt", () => {}),
         "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
       );
+
+      runWithContext(
+        {
+          remoteAddress: "::1",
+          method: "POST",
+          url: "http://localhost:4000",
+          query: {
+            q: ".\t./etc/passwd",
+          },
+          headers: {},
+          body: {},
+          cookies: {},
+          routeParams: {},
+          source: "express",
+          route: "/posts/:id",
+        },
+        () => {
+          throws(
+            () =>
+              rename(
+                new URL("file://D:/.\t./etc/passwd"),
+                "../test123.txt",
+                () => {}
+              ),
+            "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+          );
+        }
+      );
+
+      runWithContext(
+        {
+          remoteAddress: "::1",
+          method: "POST",
+          url: "http://localhost:4000",
+          query: {
+            q: "test/test.txt",
+          },
+          headers: {},
+          body: {},
+          cookies: {},
+          routeParams: {},
+          source: "express",
+          route: "/posts/:id",
+        },
+        () => {
+          rename(
+            new URL("file://D:/test/test.txt"),
+            "../test123.txt",
+            () => {}
+          );
+        }
+      );
+
+      runWithContext(
+        {
+          remoteAddress: "::1",
+          method: "POST",
+          url: "http://localhost:4000",
+          query: {
+            q: ".\t\t./etc/passwd",
+          },
+          headers: {},
+          body: {},
+          cookies: {},
+          routeParams: {},
+          source: "express",
+          route: "/posts/:id",
+        },
+        () => {
+          throws(
+            () =>
+              rename(
+                new URL("file://D:/.\t\t./etc/passwd"),
+                "../test123.txt",
+                () => {}
+              ),
+            "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+          );
+        }
+      );
     } else {
       throws(
         () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),
@@ -214,6 +294,82 @@ t.test("it works", async (t) => {
     throws(
       () => rename(Buffer.from("../test.txt"), "../test2.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file:///.\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: "test/test.txt",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        rename(new URL("file:///test/test.txt"), "../test123.txt", () => {});
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file:///.\t\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
     );
   });
 
