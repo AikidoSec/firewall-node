@@ -20,5 +20,5 @@ export function containsUnsafePathParts(filePath: string) {
  * See https://url.spec.whatwg.org/#url-parsing
  */
 export function containsUnsafePathPartsUrl(filePath: string) {
-  return /(?:\.(?:\t|\n|\r)?){2}(?:\/|\\)/.test(filePath);
+  return /(?:\.(?:\t|\n|\r)*){2}(?:\/|\\)/.test(filePath);
 }

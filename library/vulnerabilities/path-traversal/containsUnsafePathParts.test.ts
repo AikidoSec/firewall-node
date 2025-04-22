@@ -40,6 +40,8 @@ t.test("it detects dangerous path parts for URLs", async () => {
   t.same(containsUnsafePathPartsUrl("file:///.\t./test.txt"), true);
   t.same(containsUnsafePathPartsUrl("file://.\n./test.txt"), true);
   t.same(containsUnsafePathPartsUrl("file://.\r./test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("file:///.\t\t./test.txt"), true);
+  t.same(containsUnsafePathPartsUrl("file:///.\t\n./test.txt"), true);
 });
 
 t.test("it only removes some chars from the URL", async () => {
@@ -51,4 +53,6 @@ t.test("it only removes some chars from the URL", async () => {
   t.same(fileURLToPath("file:///.\v./test.txt"), "/.\v./test.txt");
   t.same(fileURLToPath("file:///.\f./test.txt"), "/.\f./test.txt");
   t.same(fileURLToPath("file:///.\b./test.txt"), "/.\b./test.txt");
+  t.same(fileURLToPath("file:///.\t\t./test.txt"), "/test.txt");
+  t.same(fileURLToPath("file:///.\t\n./test.txt"), "/test.txt");
 });
