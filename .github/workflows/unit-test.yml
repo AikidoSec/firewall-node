@@ -106,7 +106,7 @@ jobs:
       - run: npm run build
       - run: npm run test:ci
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
           files: ./library/.tap/report/lcov.info
           fail_ci_if_error: true

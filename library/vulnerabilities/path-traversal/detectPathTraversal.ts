@@ -110,7 +110,7 @@ function parseAsFileUrlWin(path: string) {
 
     // Replace backslashes with forward slashes
     return res.replace(/\\/g, "/");
-  } catch (e) {
+  } catch {
     //
   }
   return undefined;
