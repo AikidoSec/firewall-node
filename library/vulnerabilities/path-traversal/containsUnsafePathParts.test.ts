@@ -4,6 +4,7 @@ import {
   containsUnsafePathPartsUrl,
 } from "./containsUnsafePathParts";
 import { fileURLToPath } from "url";
+import { isWindows } from "../../helpers/isWindows";
 
 t.test("not a dangerous path", async () => {
   t.same(containsUnsafePathParts("test.txt"), false);
@@ -45,14 +46,30 @@ t.test("it detects dangerous path parts for URLs", async () => {
 });
 
 t.test("it only removes some chars from the URL", async () => {
-  t.same(fileURLToPath("file:///.\t./test.txt"), "/test.txt");
-  t.same(fileURLToPath("file:///.\n./test.txt"), "/test.txt");
-  t.same(fileURLToPath("file:///.\r./test.txt"), "/test.txt");
-  t.same(fileURLToPath("file:///.\0./test.txt"), "/.\0./test.txt");
-  t.same(fileURLToPath("file:///.\u0000./test.txt"), "/.\u0000./test.txt");
-  t.same(fileURLToPath("file:///.\v./test.txt"), "/.\v./test.txt");
-  t.same(fileURLToPath("file:///.\f./test.txt"), "/.\f./test.txt");
-  t.same(fileURLToPath("file:///.\b./test.txt"), "/.\b./test.txt");
-  t.same(fileURLToPath("file:///.\t\t./test.txt"), "/test.txt");
-  t.same(fileURLToPath("file:///.\t\n./test.txt"), "/test.txt");
+  if (!isWindows) {
+    t.same(fileURLToPath("file:///.\t./test.txt"), "/test.txt");
+    t.same(fileURLToPath("file:///.\n./test.txt"), "/test.txt");
+    t.same(fileURLToPath("file:///.\r./test.txt"), "/test.txt");
+    t.same(fileURLToPath("file:///.\0./test.txt"), "/.\0./test.txt");
+    t.same(fileURLToPath("file:///.\u0000./test.txt"), "/.\u0000./test.txt");
+    t.same(fileURLToPath("file:///.\v./test.txt"), "/.\v./test.txt");
+    t.same(fileURLToPath("file:///.\f./test.txt"), "/.\f./test.txt");
+    t.same(fileURLToPath("file:///.\b./test.txt"), "/.\b./test.txt");
+    t.same(fileURLToPath("file:///.\t\t./test.txt"), "/test.txt");
+    t.same(fileURLToPath("file:///.\t\n./test.txt"), "/test.txt");
+  } else {
+    t.same(fileURLToPath("file://X:/.\t./test.txt"), "X:\\test.txt");
+    t.same(fileURLToPath("file://X:/.\n./test.txt"), "X:\\test.txt");
+    t.same(fileURLToPath("file://X:/.\r./test.txt"), "X:\\test.txt");
+    t.same(fileURLToPath("file://X:/.\0./test.txt"), "X:\\.\0.\\test.txt");
+    t.same(
+      fileURLToPath("file://X:/.\u0000./test.txt"),
+      "X:\\.\u0000.\\test.txt"
+    );
+    t.same(fileURLToPath("file://X:/.\v./test.txt"), "X:\\.\v.\\test.txt");
+    t.same(fileURLToPath("file://X:/.\f./test.txt"), "X:\\.\f.\\test.txt");
+    t.same(fileURLToPath("file://X:/.\b./test.txt"), "X:\\.\b.\\test.txt");
+    t.same(fileURLToPath("file://X:/.\t\t./test.txt"), "X:\\test.txt");
+    t.same(fileURLToPath("file://X:/.\t\n./test.txt"), "X:\\test.txt");
+  }
 });
