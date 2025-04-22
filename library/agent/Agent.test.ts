@@ -19,6 +19,8 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 
+let shouldOnlyAllowSomeIPAddresses = false;
+
 wrap(fetch, "fetch", function mock() {
   return async function mock() {
     return {
@@ -32,6 +34,15 @@ wrap(fetch, "fetch", function mock() {
           },
         ],
         blockedUserAgents: "AI2Bot|Bytespider",
+        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
+          ? [
+              {
+                source: "name",
+                description: "Description",
+                ips: ["4.3.2.1"],
+              },
+            ]
+          : [],
       }),
     };
   };
@@ -98,7 +109,7 @@ t.test("it sends started event", async (t) => {
   ]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "mongodb@6.9.0 is supported!",
   ]);
@@ -137,7 +148,7 @@ t.test("it logs if package is supported or not", async () => {
   agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "shell-quote@1.8.1 is not supported!",
   ]);
@@ -156,7 +167,7 @@ t.test("it starts in non-blocking mode", async () => {
   agent.start([]);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Dry mode enabled, no requests will be blocked!",
     "Found token, reporting enabled!",
   ]);
@@ -664,7 +675,7 @@ t.test("it logs when failed to report event", async () => {
   await setTimeout(0);
 
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "Heartbeat...",
     "Failed to do heartbeat",
@@ -686,7 +697,7 @@ t.test("unable to prevent prototype pollution", async () => {
   agent.start([]);
   agent.unableToPreventPrototypePollution({ mongoose: "1.0.0" });
   t.same(logger.getMessages(), [
-    "Starting agent...",
+    "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
     "Unable to prevent prototype pollution, incompatible packages found: mongoose@1.0.0",
   ]);
@@ -1099,6 +1110,10 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
     blocked: false,
   });
 
+  t.same(agent.getConfig().isAllowedIPAddress("1.3.2.4"), {
+    allowed: true,
+  });
+
   t.same(
     agent
       .getConfig()
@@ -1109,4 +1124,32 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
       blocked: false,
     }
   );
+});
+
+t.test("it only allows some IP addresses", async () => {
+  shouldOnlyAllowSomeIPAddresses = true;
+  const agent = createTestAgent({
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+
+  agent.start([]);
+
+  await setTimeout(0);
+
+  t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
+    blocked: true,
+    reason: "Description",
+  });
+  t.same(agent.getConfig().isIPAddressBlocked("fe80::1234:5678:abcd:ef12"), {
+    blocked: true,
+    reason: "Description",
+  });
+
+  t.same(agent.getConfig().isAllowedIPAddress("1.2.3.4"), {
+    allowed: false,
+  });
+  t.same(agent.getConfig().isAllowedIPAddress("4.3.2.1"), {
+    allowed: true,
+  });
 });

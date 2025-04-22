@@ -24,7 +24,7 @@ export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
   // Let's set up a proxy to forward the property access to the original handler
   // e.g. https://github.com/TryGhost/Ghost/blob/fefb9ec395df8695d06442b6ecd3130dae374d94/ghost/core/core/frontend/web/site.js#L192
   for (const key in handler) {
-    if (handler.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(handler, key)) {
       continue;
     }
 
@@ -64,7 +64,7 @@ function preserveLayerName(wrappedFunction: Function, originalName: string) {
       enumerable: false,
       configurable: true,
     });
-  } catch (e) {
+  } catch {
     // Ignore
   }
 }

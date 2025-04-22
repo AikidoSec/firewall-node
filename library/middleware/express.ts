@@ -1,5 +1,5 @@
 /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-import type { Express } from "express";
+import type { Express, Router } from "express";
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
 
@@ -8,7 +8,7 @@ import { escapeHTML } from "../helpers/escapeHTML";
  * Attacks will still be blocked by Zen if you do not call this function.
  * Execute this function as early as possible in your Express app, but after the middleware that sets the user.
  */
-export function addExpressMiddleware(app: Express) {
+export function addExpressMiddleware(app: Express | Router) {
   app.use((req, res, next) => {
     const result = shouldBlockRequest();
 

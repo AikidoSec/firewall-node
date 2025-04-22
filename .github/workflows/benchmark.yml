@@ -34,7 +34,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
       - name: Install K6
-        uses: grafana/setup-k6-action@v1
+        uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2 # v1
       - name: Install wrk
         run: |
           sudo apt-get update
@@ -53,3 +53,5 @@ jobs:
         run: cd benchmarks/api-discovery && node benchmark.js
       - name: Run Express Benchmark
         run: cd benchmarks/express && node benchmark.js
+      - name: Check Rate Limiter memory usage
+        run: cd benchmarks/rate-limiting && node --expose-gc memory.js

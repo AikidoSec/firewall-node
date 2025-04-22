@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";

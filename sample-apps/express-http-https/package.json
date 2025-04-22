@@ -1,0 +1,13 @@
+{
+  "name": "express-http-https",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SSRF",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^5.0.0",
+    "express-async-handler": "^1.2.0",
+    "morgan": "^1.10.0"
+  }
+}

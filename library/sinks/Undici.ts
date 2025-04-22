@@ -48,7 +48,6 @@ export class Undici implements Wrapper {
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspect(
     args: unknown[],
     agent: Agent,
@@ -128,7 +127,6 @@ export class Undici implements Wrapper {
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
             // Whenever a request is made, we'll check the hostname whether it's a private IP
-            // If global dispatcher is not patched, we'll patch it
             inspectArgs: (args, agent) => {
               return this.inspect(args, agent, method);
             },

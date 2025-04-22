@@ -1,45 +1,42 @@
 import { LRUMap } from "./LRUMap";
 
+/**
+ * Sliding window rate limiter implementation
+ */
 export class RateLimiter {
-  private rateLimitedItems: LRUMap<
-    string,
-    { count: number; startTime: number }
-  >;
+  private rateLimitedItems: LRUMap<string, number[]>;
 
   constructor(
     readonly maxItems: number,
     readonly timeToLiveInMS: number
   ) {
-    this.rateLimitedItems = new LRUMap<
-      string,
-      { count: number; startTime: number }
-    >(maxItems, timeToLiveInMS);
+    this.rateLimitedItems = new LRUMap(maxItems, timeToLiveInMS);
   }
 
   isAllowed(key: string, windowSizeInMS: number, maxRequests: number): boolean {
     const currentTime = performance.now();
-    const requestInfo = this.rateLimitedItems.get(key);
+    const requestTimestamps = this.rateLimitedItems.get(key) || [];
 
-    if (!requestInfo) {
-      this.rateLimitedItems.set(key, { count: 1, startTime: currentTime });
-      return true;
+    // Filter out timestamps that are older than windowSizeInMS and already expired
+    const filteredTimestamps = requestTimestamps.filter(
+      (timestamp) => currentTime - timestamp <= windowSizeInMS
+    );
+
+    // Ensure the number of entries exceeds maxRequests by only 1
+    if (filteredTimestamps.length > maxRequests + 1) {
+      filteredTimestamps.splice(
+        0,
+        filteredTimestamps.length - (maxRequests + 1)
+      );
     }
 
-    const elapsedTime = currentTime - requestInfo.startTime;
+    // Add current request timestamp to the list
+    filteredTimestamps.push(currentTime);
 
-    if (elapsedTime > windowSizeInMS) {
-      // Reset the counter and timestamp if windowSizeInMS has expired
-      this.rateLimitedItems.set(key, { count: 1, startTime: currentTime });
-      return true;
-    }
+    // Update the list of timestamps for the key
+    this.rateLimitedItems.set(key, filteredTimestamps);
 
-    if (requestInfo.count < maxRequests) {
-      // Increment the counter if it is within the windowSizeInMS and maxRequests
-      requestInfo.count += 1;
-      return true;
-    }
-
-    // Deny the request if the maxRequests is reached within windowSizeInMS
-    return false;
+    // Check if the number of requests is less or equal to the maxRequests
+    return filteredTimestamps.length <= maxRequests;
   }
 }

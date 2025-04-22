@@ -8,10 +8,10 @@
     "@aikidosec/firewall": "file:../../build",
     "dd-trace": "^4.49.0",
     "dotenv": "^16.4.1",
+    "esbuild": "^0.25.2",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "morgan": "^1.10.0",
-    "pg": "^8.11.3",
-    "esbuild": "^0.24.0"
+    "pg": "^8.11.3"
   }
 }

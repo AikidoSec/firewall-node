@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -395,7 +394,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.statusCode, 500);
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0,
         attacksDetected: {
           total: 1,
           blocked: 1,
@@ -411,7 +410,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.body, { error: "test" });
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0, // Errors are not counted
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -719,4 +718,27 @@ export function createExpressTests(expressPackageName: string) {
       );
     }
   );
+
+  t.test("it supports adding middleware to a Router instance", async (t) => {
+    const app = express();
+    const router = express.Router();
+
+    router.use((req, res, next) => {
+      setUser({ id: "567" });
+      next();
+    });
+
+    // Add Zen middleware to router instead of app
+    addExpressMiddleware(router);
+
+    router.get("/router-block-user", (req, res) => {
+      res.send({ willNotBeSent: true });
+    });
+
+    app.use(router);
+
+    const blockedResponse = await request(app).get("/router-block-user");
+    t.same(blockedResponse.statusCode, 403);
+    t.same(blockedResponse.text, "You are blocked by Zen.");
+  });
 }

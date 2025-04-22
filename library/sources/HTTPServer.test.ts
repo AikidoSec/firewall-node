@@ -8,11 +8,13 @@ import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
 import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { Blocklist } from "../agent/api/fetchBlockedLists";
+import type { IPList } from "../agent/api/fetchBlockedLists";
 import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { FileSystem } from "../sinks/FileSystem";
+import { Path } from "../sinks/Path";
 const execAsync = promisify(exec);
 import { tmpdir } from "node:os";
 
@@ -49,11 +51,11 @@ const agent = createTestAgent({
   token: new Token("123"),
   api,
 });
-agent.start([new HTTPServer()]);
+agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
   return async function fetchBlockedLists(): Promise<{
-    blockedIPAddresses: Blocklist[];
+    blockedIPAddresses: IPList[];
     blockedUserAgents: string;
   }> {
     return {
@@ -79,6 +81,8 @@ t.beforeEach(() => {
 
 const http = require("http") as typeof import("http");
 const https = require("https") as typeof import("https");
+const { readFileSync } = require("fs") as typeof import("fs");
+const path = require("path") as typeof import("path");
 
 t.test("it wraps the createServer function of http module", async () => {
   const server = http.createServer((req, res) => {
@@ -551,9 +555,6 @@ t.test("it wraps on request event of http", async () => {
 });
 
 t.test("it wraps on request event of https", async () => {
-  const { readFileSync } = require("fs");
-  const path = require("path");
-
   // Otherwise, the self-signed certificate will be rejected
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -720,3 +721,71 @@ t.test(
     });
   }
 );
+
+/**
+ * Explanation:
+ * - Makes a request to the server with a path traversal attack inside the pathname
+ * - The /../ is not removed from the path during the request because path normalization is not applied (by default many http libraries do this, e.g. if new URL(...) is used)
+ * - The server gets the raw string path from the HTTP header that is not normalized and passes it to path.join
+ */
+t.test("it blocks path traversal in path", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      // req.url contains only the path and query string, not the full URL
+      // e.g. "/foo/bar?baz=qux"
+      // req.url is not sanitized, it's a raw string, thats why /../ is not removed
+      const path = req.url || "/";
+      const file = readFileSync(join(__dirname, path));
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      const response = await new Promise((resolve, reject) => {
+        // Directly using http.request with a url-like object to prevent path normalization that would remove /../
+        const req = http.request(
+          {
+            hostname: "localhost",
+            port: 3327,
+            path: "/../package.json", // Path traversal attempt
+            method: "GET",
+          },
+          (res) => {
+            let data = "";
+
+            res.on("data", (chunk) => {
+              data += chunk;
+            });
+
+            res.on("end", () => {
+              resolve(data);
+            });
+          }
+        );
+
+        req.on("error", (err) => {
+          reject(err);
+        });
+
+        req.end();
+      });
+
+      t.equal(
+        response,
+        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+      );
+      server.close();
+      resolve();
+    });
+  });
+});

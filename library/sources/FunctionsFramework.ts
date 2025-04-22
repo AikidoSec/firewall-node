@@ -35,10 +35,6 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
             const stats = agent.getInspectionStatistics();
             stats.onRequest();
 
-            if (context.attackDetected) {
-              stats.onDetectedAttack({ blocked: agent.shouldBlock() });
-            }
-
             if (
               lastFlushStatsAt === undefined ||
               lastFlushStatsAt + flushEveryMS < performance.now()
@@ -55,7 +51,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
 
 export class FunctionsFramework implements Wrapper {
   wrap(hooks: Hooks) {
-    const functions = hooks
+    hooks
       .addPackage("@google-cloud/functions-framework")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {

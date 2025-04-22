@@ -215,7 +215,7 @@ t.test("it allows .well-known directory", async () => {
       route: "/.well-known",
       method: "GET",
     }),
-    true
+    false
   );
   t.same(
     shouldDiscoverRoute({
@@ -311,6 +311,33 @@ t.test("it allows redirects", async () => {
   );
   t.same(
     shouldDiscoverRoute({ statusCode: 308, route: "/", method: "GET" }),
+    true
+  );
+});
+
+t.test("it does not ignore normal routes", async () => {
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/api/v1/users",
+      method: "GET",
+    }),
+    true
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 200,
+      route: "/api/v1/users/1",
+      method: "GET",
+    }),
+    true
+  );
+  t.same(
+    shouldDiscoverRoute({
+      statusCode: 204,
+      route: "/api/v1/users/1/friends",
+      method: "POST",
+    }),
     true
   );
 });

@@ -46,7 +46,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 2.x
-* ✅ [NestJS](docs/nestjs.md) 10.x
+* ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
 
 ### Database drivers
 
@@ -87,12 +87,12 @@ See list above for supported database drivers.
 ### Data serialization tools
 
 * ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
-* ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
+* ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 5.x, 4.x
 * ✅ [`xml-js`](https://www.npmjs.com/package/xml-js) 1.x
 
 ### Shell tools
 
-* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
+* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.9.x, 0.8.x, 0.7.x
 
 ### Routers
 

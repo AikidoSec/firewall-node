@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
