@@ -42,6 +42,7 @@
   },
   "sideEffects": true,
   "devDependencies": {
+    "@ai-sdk/google": "^1.2.13",
     "@clickhouse/client": "^1.7.0",
     "@eslint/js": "^9.23.0",
     "@fastify/cookie": "^10.0.0",
@@ -70,6 +71,7 @@
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
     "@types/xml2js": "^0.4.14",
+    "ai": "^4.3.9",
     "aws-sdk": "^2.1595.0",
     "axios": "^1.8.4",
     "better-sqlite3": "^11.2.0",
@@ -119,7 +121,8 @@
     "undici-v6": "npm:undici@^6.0.0",
     "undici-v7": "npm:undici@^7.0.0",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "zod": "^3.24.3"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
