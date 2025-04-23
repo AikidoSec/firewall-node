@@ -7,15 +7,18 @@ import { wrapToolExecution } from "./ai/wrapToolExecution";
 
 export class AiSDK implements Wrapper {
   private wrapToolExecution(args: unknown[]) {
-    if (!args || args.length === 0) {
+    if (
+      !args ||
+      args.length === 0 ||
+      !isPlainObject(args[0]) ||
+      typeof args[0].execute !== "function"
+    ) {
       return args;
     }
 
-    if (!isPlainObject(args[0]) || typeof args[0].execute !== "function") {
-      return args;
-    }
-
-    const toolObject = args[0] as Tool;
+    const toolObject = args[0] as Tool & {
+      execute: NonNullable<Tool["execute"]>;
+    };
 
     toolObject.execute = wrapToolExecution(toolObject.execute);
 
