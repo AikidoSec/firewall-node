@@ -378,11 +378,16 @@ export class Agent {
     }
 
     try {
-      const { blockedIPAddresses, blockedUserAgents, allowedIPAddresses } =
-        await fetchBlockedLists(this.token);
+      const {
+        blockedIPAddresses,
+        blockedUserAgents,
+        allowedIPAddresses,
+        botSpoofingData,
+      } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
+      this.serviceConfig.updateBotSpoofingData(botSpoofingData);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }

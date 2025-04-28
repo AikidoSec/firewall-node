@@ -8,10 +8,18 @@ export type IPList = {
   ips: string[];
 };
 
+export type BotSpoofingData = {
+  key: string;
+  uaPattern: string;
+  ips: string[];
+  hostnames: string[];
+};
+
 export async function fetchBlockedLists(token: Token): Promise<{
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
   blockedUserAgents: string;
+  botSpoofingData: BotSpoofingData[];
 }> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
@@ -38,6 +46,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
     blockedIPAddresses: IPList[];
     allowedIPAddresses: IPList[];
     blockedUserAgents: string;
+    botSpoofingData: BotSpoofingData[];
   } = JSON.parse(body);
 
   return {
@@ -54,5 +63,9 @@ export async function fetchBlockedLists(token: Token): Promise<{
       result && typeof result.blockedUserAgents === "string"
         ? result.blockedUserAgents
         : "",
+    botSpoofingData:
+      result && Array.isArray(result.botSpoofingData)
+        ? result.botSpoofingData
+        : [],
   };
 }
