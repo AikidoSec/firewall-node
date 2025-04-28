@@ -37,5 +37,14 @@ t.test("it works with hostnames (bingbot)", async (t) => {
   };
 
   t.same(await verifyBotAuthenticity("1.1.1.1", matchingBot), false);
+  t.same(
+    await verifyBotAuthenticity("2606:4700:4700::1111", matchingBot),
+    false
+  );
+  t.same(
+    await verifyBotAuthenticity("192.0.2.1", matchingBot), // TEST-NET-1
+    false
+  );
+  t.same(await verifyBotAuthenticity("1", matchingBot), true); // Fallback to true on error
   t.same(await verifyBotAuthenticity("207.46.13.14", matchingBot), true);
 });

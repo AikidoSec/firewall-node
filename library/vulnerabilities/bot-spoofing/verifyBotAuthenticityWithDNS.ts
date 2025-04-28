@@ -22,10 +22,6 @@ export async function verifyBotAuthenticityWithDNS(
   try {
     // Send a reverse DNS lookup request
     const hostnames = await reverse(requestIp);
-    if (!Array.isArray(hostnames)) {
-      // No PTR record found
-      return false;
-    }
 
     // Filter out hostnames that don't end with any of the whitelisted hostnames
     const matchingHostnames = hostnames.filter((hostname) =>
@@ -57,6 +53,14 @@ export async function verifyBotAuthenticityWithDNS(
 
     return false;
   } catch (error) {
+    if (
+      error instanceof Error &&
+      (error as NodeJS.ErrnoException).code === "ENOTFOUND"
+    ) {
+      // No matching hostnames found, so the bot is not authentic
+      return false;
+    }
+
     getInstance()?.log(`Bot Spoofing Protection: DNS check failed: ${error}`);
     return true; // Fallback to true on error to prevent blocking legitimate requests
   }

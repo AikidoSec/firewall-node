@@ -1,8 +1,12 @@
 import type { Agent } from "../../agent/Agent";
 import type { Context } from "../../agent/Context";
+import { isPrivateIP } from "../ssrf/isPrivateIP";
 import { verifyBotAuthenticity } from "./verifyBotAuthenticity";
 
-export function checkRequestForBotSpoofing(context: Context, agent: Agent) {
+export async function checkContextForBotSpoofing(
+  context: Context,
+  agent: Agent
+) {
   const botSpoofingData = agent.getConfig().getBotSpoofingData();
 
   if (!botSpoofingData || botSpoofingData.length === 0) {
@@ -12,7 +16,7 @@ export function checkRequestForBotSpoofing(context: Context, agent: Agent) {
   const userAgent = context.headers["user-agent"];
   const ip = context.remoteAddress;
 
-  if (!ip) {
+  if (!ip || isPrivateIP(ip)) {
     return false;
   }
 
@@ -30,5 +34,5 @@ export function checkRequestForBotSpoofing(context: Context, agent: Agent) {
     return false;
   }
 
-  return verifyBotAuthenticity(ip, matchingBot);
+  return !(await verifyBotAuthenticity(ip, matchingBot));
 }
