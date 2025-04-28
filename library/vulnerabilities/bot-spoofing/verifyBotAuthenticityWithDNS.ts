@@ -1,10 +1,14 @@
-import { resolve, reverse } from "dns/promises";
+import { Resolver } from "dns/promises";
 import type { ServiceConfigBotSpoofingData } from "../../agent/ServiceConfig";
 import { getInstance } from "../../agent/AgentSingleton";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 
 // Cache results to avoid repeated DNS lookups for the same IP address and bot combination
 const cache = new LRUMap<string, boolean>(1000, 5 * 60 * 1000);
+
+const dnsResolver = new Resolver({
+  timeout: 50, // ms
+});
 
 /**
  * Checks the authenticity of a bot by performing a reverse DNS lookup on the request IP address.
@@ -33,7 +37,7 @@ export async function verifyBotAuthenticityWithDNS(
 
   try {
     // Send a reverse DNS lookup request
-    const hostnames = await reverse(requestIp);
+    const hostnames = await dnsResolver.reverse(requestIp);
 
     // Filter out hostnames that don't end with any of the whitelisted hostnames
     const matchingHostnames = hostnames.filter((hostname) =>
@@ -53,7 +57,7 @@ export async function verifyBotAuthenticityWithDNS(
 
     // Check if the IP address matches any of the A or AAAA records for the matching hostnames
     for (const hostname of matchingHostnames) {
-      const addresses = await resolve(hostname, rrType);
+      const addresses = await dnsResolver.resolve(hostname, rrType);
       if (!Array.isArray(addresses)) {
         // No A or AAAA records found
         continue;
