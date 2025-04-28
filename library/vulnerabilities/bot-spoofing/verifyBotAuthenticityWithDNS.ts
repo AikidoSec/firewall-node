@@ -1,6 +1,10 @@
 import { resolve, reverse } from "dns/promises";
 import type { ServiceConfigBotSpoofingData } from "../../agent/ServiceConfig";
 import { getInstance } from "../../agent/AgentSingleton";
+import { LRUMap } from "../../ratelimiting/LRUMap";
+
+// Cache results to avoid repeated DNS lookups for the same IP address and bot combination
+const cache = new LRUMap<string, boolean>(1000, 5 * 60 * 1000);
 
 /**
  * Checks the authenticity of a bot by performing a reverse DNS lookup on the request IP address.
@@ -19,6 +23,14 @@ export async function verifyBotAuthenticityWithDNS(
   requestIp: string,
   matchingBot: ServiceConfigBotSpoofingData
 ) {
+  // Cache key contains the request IP and the matching bot key
+  const cacheKey = `${requestIp}-${matchingBot.key}`;
+  // Check if the result is already cached
+  const cacheResult = cache.get(cacheKey);
+  if (typeof cacheResult === "boolean") {
+    return cacheResult;
+  }
+
   try {
     // Send a reverse DNS lookup request
     const hostnames = await reverse(requestIp);
@@ -33,6 +45,7 @@ export async function verifyBotAuthenticityWithDNS(
 
     if (matchingHostnames.length === 0) {
       // No matching hostnames found, so the bot is not authentic
+      cache.set(cacheKey, false);
       return false;
     }
 
@@ -46,11 +59,13 @@ export async function verifyBotAuthenticityWithDNS(
         continue;
       }
       if (addresses.some((address) => address === requestIp)) {
-        // The IP address matches the A or AAAA record for the hostname
+        // The IP address matches the A or AAAA record for the
+        cache.set(cacheKey, true);
         return true;
       }
     }
 
+    cache.set(cacheKey, false);
     return false;
   } catch (error) {
     if (
@@ -58,6 +73,7 @@ export async function verifyBotAuthenticityWithDNS(
       (error as NodeJS.ErrnoException).code === "ENOTFOUND"
     ) {
       // No matching hostnames found, so the bot is not authentic
+      cache.set(cacheKey, false);
       return false;
     }
 

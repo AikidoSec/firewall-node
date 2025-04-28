@@ -14,10 +14,7 @@ export async function verifyBotAuthenticity(
 
   if (matchingBot.hostnames.length > 0) {
     // Check if the hostname matches any of the whitelisted hostnames
-    if (await verifyBotAuthenticityWithDNS(requestIp, matchingBot)) {
-      // Todo cache
-      return true;
-    }
+    return await verifyBotAuthenticityWithDNS(requestIp, matchingBot);
   }
 
   return false;
