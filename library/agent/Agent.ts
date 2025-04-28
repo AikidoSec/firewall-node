@@ -382,12 +382,12 @@ export class Agent {
         blockedIPAddresses,
         blockedUserAgents,
         allowedIPAddresses,
-        botSpoofingData,
+        botSpoofingProtection,
       } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
-      this.serviceConfig.updateBotSpoofingData(botSpoofingData);
+      this.serviceConfig.updateBotSpoofingData(botSpoofingProtection);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }

@@ -2,6 +2,7 @@ const {
   getBlockedIPAddresses,
   getBlockedUserAgents,
   getAllowedIPAddresses,
+  getBotSpoofingData,
 } = require("../zen/config");
 
 module.exports = function lists(req, res) {
@@ -12,6 +13,7 @@ module.exports = function lists(req, res) {
   const blockedIps = getBlockedIPAddresses(req.app);
   const blockedUserAgents = getBlockedUserAgents(req.app);
   const allowedIps = getAllowedIPAddresses(req.app);
+  const botSpoofingData = getBotSpoofingData(req.app);
 
   res.json({
     success: true,
@@ -37,5 +39,6 @@ module.exports = function lists(req, res) {
             },
           ]
         : [],
+    botSpoofingProtection: botSpoofingData,
   });
 };

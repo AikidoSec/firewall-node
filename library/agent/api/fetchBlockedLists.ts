@@ -19,7 +19,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
   blockedUserAgents: string;
-  botSpoofingData: BotSpoofingData[];
+  botSpoofingProtection: BotSpoofingData[];
 }> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
@@ -46,7 +46,7 @@ export async function fetchBlockedLists(token: Token): Promise<{
     blockedIPAddresses: IPList[];
     allowedIPAddresses: IPList[];
     blockedUserAgents: string;
-    botSpoofingData: BotSpoofingData[];
+    botSpoofingProtection: BotSpoofingData[];
   } = JSON.parse(body);
 
   return {
@@ -63,9 +63,9 @@ export async function fetchBlockedLists(token: Token): Promise<{
       result && typeof result.blockedUserAgents === "string"
         ? result.blockedUserAgents
         : "",
-    botSpoofingData:
-      result && Array.isArray(result.botSpoofingData)
-        ? result.botSpoofingData
+    botSpoofingProtection:
+      result && Array.isArray(result.botSpoofingProtection)
+        ? result.botSpoofingProtection
         : [],
   };
 }
