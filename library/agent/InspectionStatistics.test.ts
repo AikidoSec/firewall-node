@@ -595,7 +595,7 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
   stats.onUserAgentMatches([{ key: "ai_bots", monitor: false }]);
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -635,7 +635,7 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
   stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -665,7 +665,7 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
   stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
 
   t.same(stats.getStats(), {
-    sinks: {},
+    operations: {},
     startedAt: 0,
     requests: {
       total: 0,
@@ -692,6 +692,8 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
 });
 
 t.test("should track multiple matches for the same key", (t) => {
+  const clock = FakeTimers.install();
+
   const stats = new InspectionStatistics({
     maxPerfSamplesInMemory: 100,
     maxCompressedStatsInMemory: 10,
@@ -785,6 +787,12 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   // Test that each operation maintains its own stats
@@ -840,6 +848,12 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   clock.uninstall();
@@ -877,6 +891,12 @@ t.test("it handles empty operation strings", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
