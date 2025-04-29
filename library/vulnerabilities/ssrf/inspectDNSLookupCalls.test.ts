@@ -18,7 +18,7 @@ wrap(console, "log", function log() {
 const context: Context = {
   remoteAddress: "::1",
   method: "POST",
-  url: "http://localhost:4000",
+  url: "http://app.example.com:4000",
   query: {},
   headers: {},
   body: {
