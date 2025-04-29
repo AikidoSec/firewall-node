@@ -74,6 +74,7 @@ export function createExpressTests(expressPackageName: string) {
   });
 
   const express = require(expressPackageName) as typeof import("express");
+  const { readFile } = require("fs") as typeof import("fs");
 
   function getApp(userMiddleware = true) {
     const app = express();
@@ -740,5 +741,30 @@ export function createExpressTests(expressPackageName: string) {
     const blockedResponse = await request(app).get("/router-block-user");
     t.same(blockedResponse.statusCode, 403);
     t.same(blockedResponse.text, "You are blocked by Zen.");
+  });
+
+  t.test("it detects path traversal with double encoding", async (t) => {
+    const app = express();
+
+    app.get("/search", (req, res) => {
+      const searchTerm = req.query.q;
+      const fileUrl = new URL(`file:///public/${searchTerm}`);
+
+      readFile(fileUrl, "utf-8", (err, data) => {
+        if (err) {
+          return res.status(500).send("Error reading file");
+        }
+        res.send(`File content of /public/${searchTerm} : ${data}`);
+      });
+    });
+
+    const blockedResponse = await request(app).get(
+      "/search?q=.%252E/etc/passwd"
+    );
+    t.same(blockedResponse.statusCode, 500);
+    t.match(
+      blockedResponse.text,
+      /Error: Zen has blocked a path traversal attack: fs.readFile\(\.\.\.\) originating from query/
+    );
   });
 }
