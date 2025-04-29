@@ -41,11 +41,13 @@ export class Express implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         for (const method of expressMethodNames) {
           wrapExport(exports.Route.prototype, method, pkgInfo, {
+            kind: undefined,
             modifyArgs: (args) => this.wrapArgs(args),
           });
         }
 
         wrapExport(exports.application, "use", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => this.wrapArgs(args),
         });
       });
