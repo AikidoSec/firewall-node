@@ -2,11 +2,11 @@ import * as t from "tap";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 
 t.test("it decodes a URI component", async (t) => {
-  t.equal(decodeURIComponent("%20"), " ");
-  t.equal(decodeURIComponent("%3A"), ":");
-  t.equal(decodeURIComponent("%2F"), "/");
-  t.equal(decodeURIComponent("test%20test"), "test test");
-  t.equal(decodeURIComponent("test%3Atest"), "test:test");
+  t.equal(safeDecodeURIComponent("%20"), " ");
+  t.equal(safeDecodeURIComponent("%3A"), ":");
+  t.equal(safeDecodeURIComponent("%2F"), "/");
+  t.equal(safeDecodeURIComponent("test%20test"), "test test");
+  t.equal(safeDecodeURIComponent("test%3Atest"), "test:test");
 });
 
 t.test("it returns undefined for invalid URI components", async (t) => {
