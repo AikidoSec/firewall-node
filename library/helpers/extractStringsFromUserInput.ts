@@ -32,7 +32,7 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
   if (typeof obj == "string") {
     results.add(obj);
 
-    if (obj.includes("%")) {
+    if (obj.includes("%") && obj.length >= 3) {
       const r = safeDecodeURIComponent(obj);
       if (r && r !== obj) {
         results.add(r);
