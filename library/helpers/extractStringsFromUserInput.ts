@@ -31,6 +31,14 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
   if (typeof obj == "string") {
     results.add(obj);
 
+    if (obj.includes("%")) {
+      try {
+        results.add(decodeURIComponent(obj));
+      } catch {
+        // Ignore
+      }
+    }
+
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
       // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
