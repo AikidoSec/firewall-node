@@ -1,4 +1,5 @@
 import { isPlainObject } from "./isPlainObject";
+import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 type UserString = string;
@@ -32,10 +33,9 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
     results.add(obj);
 
     if (obj.includes("%")) {
-      try {
-        results.add(decodeURIComponent(obj));
-      } catch {
-        // Ignore
+      const r = safeDecodeURIComponent(obj);
+      if (r && r !== obj) {
+        results.add(r);
       }
     }
 
