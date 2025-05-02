@@ -830,3 +830,89 @@ t.test("it blocks double encoded path traversal", async (t) => {
     });
   });
 });
+
+t.test("it blocks absolute path traversal with tab inside", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      const query = new URL(
+        req.url!.startsWith("http") ? req.url! : `http://acme.com${req.url!}`
+      ).searchParams;
+      const file = readFileSync(new URL(`file://${query.get("path")}`));
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3328, async () => {
+      fetch({
+        url: new URL(
+          `http://localhost:3328/?path=/etc${encodeURIComponent("\t")}/passwd`
+        ),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "1.2.3.4",
+        },
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.equal(statusCode, 500);
+        t.equal(
+          body,
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.path"
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it blocks backslash path traversal", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      const query = new URL(
+        req.url!.startsWith("http") ? req.url! : `http://acme.com${req.url!}`
+      ).searchParams;
+      const file = readFileSync(new URL(`file://${query.get("path")}`));
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3328, async () => {
+      fetch({
+        url: new URL("http://localhost:3328/?path=\\etc/passwd"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "1.2.3.4",
+        },
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.equal(statusCode, 500);
+        t.equal(
+          body,
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.path"
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});

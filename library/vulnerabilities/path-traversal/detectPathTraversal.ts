@@ -2,7 +2,10 @@ import {
   containsUnsafePathParts,
   containsUnsafePathPartsUrl,
 } from "./containsUnsafePathParts";
-import { startsWithUnsafePath } from "./unsafePathStart";
+import {
+  startsWithUnsafePath,
+  startsWithUnsafePathUrl,
+} from "./unsafePathStart";
 import { fileURLToPath } from "url";
 
 export function detectPathTraversal(
@@ -19,13 +22,18 @@ export function detectPathTraversal(
   // Check for URL path traversal
   // Reason: new URL("file:///../../test.txt") => /test.txt
   // The normal check for relative path traversal will fail in this case, because transformed path does not contain ../.
-  // For absolute path traversal, we dont need to check the transformed path, because it will always start with /.
   // Also /./ is checked by normal absolute path traversal check (if #219 is merged)
   // Use containsUnsafePathPartsUrl, because urls can contain a TAB, carriage return or line feed that is silently removed by the URL constructor.
-  if (isUrl && containsUnsafePathPartsUrl(userInput)) {
-    const filePathFromUrl = parseAsFileUrl(userInput);
-    if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
-      return true;
+  // Use startsWithUnsafePathUrl, because URLs can contain backward slashes that are converted to forward slashes by the URL constructor.
+  if (isUrl) {
+    const containsUnsafePath = containsUnsafePathPartsUrl(userInput);
+    const startWithUnsafePath = startsWithUnsafePathUrl(filePath, userInput);
+
+    if (containsUnsafePath || startWithUnsafePath) {
+      const filePathFromUrl = parseAsFileUrl(userInput);
+      if (filePathFromUrl && filePath.includes(filePathFromUrl)) {
+        return true;
+      }
     }
   }
 
@@ -63,7 +71,7 @@ export function detectPathTraversal(
 function parseAsFileUrl(path: string) {
   let url = path;
   if (!url.startsWith("file:")) {
-    if (!url.startsWith("/")) {
+    if (!url.startsWith("/") && !url.startsWith("\\")) {
       url = `/${url}`;
     }
     url = `file://${url}`;
