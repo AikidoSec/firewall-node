@@ -27,7 +27,8 @@ export function detectPathTraversal(
   // Use startsWithUnsafePathUrl, because URLs can contain backward slashes that are converted to forward slashes by the URL constructor.
   if (isUrl) {
     const containsUnsafePath = containsUnsafePathPartsUrl(userInput);
-    const startWithUnsafePath = startsWithUnsafePathUrl(filePath, userInput);
+    const startWithUnsafePath =
+      checkPathStart && startsWithUnsafePathUrl(filePath, userInput);
 
     if (containsUnsafePath || startWithUnsafePath) {
       const filePathFromUrl = parseAsFileUrl(userInput);
