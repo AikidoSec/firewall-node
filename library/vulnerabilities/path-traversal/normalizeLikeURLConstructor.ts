@@ -5,7 +5,7 @@
  * - Remove all ASCII tab or newline from input.
  * - An ASCII tab or newline is U+0009 TAB, U+000A LF, or U+000D CR.
  *
- * Also, backward slashes are converted to forward slashes by the URL constructor.
+ * Also, backslashes are converted to forward slashes by the URL constructor.
  *
  * See https://url.spec.whatwg.org/#url-parsing
  */
