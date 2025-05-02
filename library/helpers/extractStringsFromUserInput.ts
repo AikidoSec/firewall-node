@@ -35,6 +35,8 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
     if (obj.includes("%") && obj.length >= 3) {
       const r = safeDecodeURIComponent(obj);
       if (r && r !== obj) {
+        // Only add if the decoded value is different from the original, to avoid duplicates in results
+        // This improves the performance of all injection tests
         results.add(r);
       }
     }
