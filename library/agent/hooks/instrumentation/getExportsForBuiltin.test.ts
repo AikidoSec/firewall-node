@@ -28,7 +28,6 @@ t.test(
         "writeFileSync",
         "constants",
         "promises",
-        "F_OK",
         // ...
       ])
     );
