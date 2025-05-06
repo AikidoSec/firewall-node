@@ -36,7 +36,7 @@ export class Koa implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("koa")
-      .withVersion("^2.0.0")
+      .withVersion("^3.0.0 || ^2.0.0")
       .onRequire((exports, pkgInfo) => {
         return wrapNewInstance(exports, undefined, pkgInfo, (instance) => {
           wrapExport(instance, "use", pkgInfo, {

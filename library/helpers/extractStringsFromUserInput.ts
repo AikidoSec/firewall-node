@@ -1,4 +1,5 @@
 import { isPlainObject } from "./isPlainObject";
+import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 
 type UserString = string;
@@ -30,6 +31,15 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
 
   if (typeof obj == "string") {
     results.add(obj);
+
+    if (obj.includes("%") && obj.length >= 3) {
+      const r = safeDecodeURIComponent(obj);
+      if (r && r !== obj) {
+        // Only add if the decoded value is different from the original, to avoid duplicates in results
+        // This improves the performance of all injection tests
+        results.add(r);
+      }
+    }
 
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {

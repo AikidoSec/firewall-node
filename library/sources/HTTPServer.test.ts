@@ -788,3 +788,45 @@ t.test("it blocks path traversal in path", async (t) => {
     });
   });
 });
+
+t.test("it blocks double encoded path traversal", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      const url = new URL(req.url!, `http://${req.headers.host}`);
+      const filePath = url.searchParams.get("path");
+      const fileUrl = new URL(`file:///public/${filePath}`);
+      const file = readFileSync(fileUrl);
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      fetch({
+        url: new URL("http://localhost:3327/?path=.%252E/etc/passwd"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "1.2.3.4",
+        },
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.equal(statusCode, 500);
+        t.equal(
+          body,
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query"
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
