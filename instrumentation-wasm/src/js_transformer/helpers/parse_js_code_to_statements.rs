@@ -10,7 +10,7 @@ pub fn parse_js_code_to_statements<'a>(
 ) -> Vec<'a, Statement<'a>> {
     let parser_result = Parser::new(&allocator, source_text, source_type)
         .with_options(ParseOptions {
-            allow_return_outside_function: true,
+            allow_return_outside_function: true, // Could be partical code string that should be parsed
             ..ParseOptions::default()
         })
         .parse();

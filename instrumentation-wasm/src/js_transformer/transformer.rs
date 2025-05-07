@@ -29,12 +29,7 @@ pub fn transform_code_str(
 
     let source_type = select_sourcetype_based_on_enum(src_type);
 
-    let parser_result = Parser::new(&allocator, &code, source_type)
-        .with_options(ParseOptions {
-            allow_return_outside_function: true, // Maybe some run
-            ..ParseOptions::default()
-        })
-        .parse();
+    let parser_result = Parser::new(&allocator, &code, source_type).parse();
 
     if parser_result.panicked || parser_result.errors.len() > 0 {
         return format!("#ERR: {:?}", parser_result.errors);

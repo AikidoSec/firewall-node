@@ -1,4 +1,4 @@
-use oxc_ast::ast::MethodDefinition;
+use oxc_ast::ast::{Function, MethodDefinition};
 
 pub fn get_method_arg_names(method_definition: &MethodDefinition) -> Vec<String> {
     let mut arg_names = Vec::new();
@@ -11,6 +11,16 @@ pub fn get_method_arg_names(method_definition: &MethodDefinition) -> Vec<String>
         .for_each(|param| {
             arg_names.push(param.pattern.get_identifier_name().unwrap().to_string());
         });
+
+    arg_names
+}
+
+pub fn get_function_arg_names(method_definition: &Function) -> Vec<String> {
+    let mut arg_names = Vec::new();
+
+    method_definition.params.items.iter().for_each(|param| {
+        arg_names.push(param.pattern.get_identifier_name().unwrap().to_string());
+    });
 
     arg_names
 }

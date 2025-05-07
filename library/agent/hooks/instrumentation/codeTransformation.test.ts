@@ -628,3 +628,230 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     true
   );
 });
+
+t.test(
+  "add inspectArgs to static function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        app.use = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app.use",
+            identifier: "express.application.js.app.use.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        app.use = function (fn) {
+            __instrumentInspectArgs("express.application.js.app.use.v1.0.0", arguments, "express", "1.0.0", "app.use", this);
+            console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test(
+  "add modifyArgs to static function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        app.use = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app.use",
+            identifier: "express.application.js.app.use.v1.0.0",
+            inspectArgs: false,
+            modifyArgs: true,
+            modifyReturnValue: false,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        app.use = function (fn) {
+            [fn] = __instrumentModifyArgs("express.application.js.app.use.v1.0.0", [fn]);
+            console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test(
+  "add inspectArgs to dynamic function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[key]",
+            identifier: "express.application.js.app[key].v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+            __instrumentInspectArgs("express.application.js.app[key].v1.0.0", arguments, "express", "1.0.0", "app[key]", this);
+            console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test(
+  "add modifyArgs to dynamic function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[key]",
+            identifier: "express.application.js.app[key].v1.0.0",
+            inspectArgs: false,
+            modifyArgs: true,
+            modifyReturnValue: false,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+          [fn] = __instrumentModifyArgs("express.application.js.app[key].v1.0.0", [fn]);
+          console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test("does not modify code if function name is not found", async (t) => {
+  const result = transformCode(
+    "express",
+    "1.0.0",
+    "application.js",
+    `
+        const app = require("example");
+        const key = "get";
+        app[key2] = function (fn) {
+            console.log("test");
+        };
+        `,
+    "commonjs",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionAssignment",
+          name: "app[key]",
+          identifier: "express.application.js.app[key].v1.0.0",
+          inspectArgs: false,
+          modifyArgs: true,
+          modifyReturnValue: false,
+        },
+      ],
+    }
+  );
+
+  t.same(
+    compareCodeStrings(
+      result,
+      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        const key = "get";
+        app[key2] = function (fn) {
+          console.log("test");
+        };`
+    ),
+    true
+  );
+});

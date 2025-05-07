@@ -76,7 +76,7 @@ export type PackageFileInstrumentationInstructionJSON = {
   path: string; // Relative path to required file inside the package folder
   versionRange: string;
   functions: {
-    nodeType: "MethodDefinition";
+    nodeType: "MethodDefinition" | "FunctionAssignment";
     name: string;
     identifier: string;
     inspectArgs: boolean;
