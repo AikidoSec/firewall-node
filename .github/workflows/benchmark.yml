@@ -54,6 +54,9 @@ jobs:
       - name: Run API Discovery Benchmark
         run: cd benchmarks/api-discovery && node benchmark.js
       - name: Run Express Benchmark
+        # Skip on Node 24.x because benchmark currently fails.
+        # Big performance improve in comparison to older Node.js versions, but higher difference between usage with and without Zen
+        if: matrix.node-version != '24.x'
         run: cd benchmarks/express && node benchmark.js
       - name: Check Rate Limiter memory usage
         run: cd benchmarks/rate-limiting && node --expose-gc memory.js
