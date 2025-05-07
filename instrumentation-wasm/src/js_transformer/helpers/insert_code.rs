@@ -42,7 +42,24 @@ pub fn insert_modify_args<'a>(
     identifier: &str,
     arg_names_str: &str,
     body: &mut Box<'a, FunctionBody<'a>>,
+    modify_arguments_object: bool,
 ) {
+    if modify_arguments_object {
+        // If we are modifying the arguments object, we need to use the arguments object directly
+        // instead of the individual arguments
+        let source_text: &'a str = allocator.alloc_str(&format!(
+            "Object.assign(arguments, __instrumentModifyArgs('{}', Array.from(arguments)));",
+            identifier
+        ));
+        insert_single_statement_into_func(allocator, body, 0, source_text);
+        return;
+    }
+
+    if arg_names_str.is_empty() {
+        // If there are no arguments to modify, we can skip this step
+        return;
+    }
+
     let source_text: &'a str = allocator.alloc_str(&format!(
         "[{}] = __instrumentModifyArgs('{}', [{}]);",
         arg_names_str, identifier, arg_names_str

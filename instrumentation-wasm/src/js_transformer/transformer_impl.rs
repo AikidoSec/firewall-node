@@ -62,6 +62,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
                 &instruction.identifier,
                 &arg_names_str,
                 body,
+                instruction.modify_arguments_object,
             );
         }
 
@@ -130,13 +131,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         let body = function_expression.body.as_mut().unwrap();
 
-        if instruction.modify_args && !arg_names.is_empty() {
+        if instruction.modify_args {
             let arg_names_str = arg_names.join(", ");
             insert_modify_args(
                 self.allocator,
                 &instruction.identifier,
                 &arg_names_str,
                 body,
+                instruction.modify_arguments_object,
             );
         }
 

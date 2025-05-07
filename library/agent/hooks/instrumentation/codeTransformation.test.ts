@@ -36,6 +36,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -93,6 +94,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -150,6 +152,7 @@ t.test("wrong function name", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -206,6 +209,7 @@ t.test("typescript code", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -263,6 +267,7 @@ t.test("typescript code in a js file", async (t) => {
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -292,6 +297,7 @@ t.test("empty code", async (t) => {
         inspectArgs: true,
         modifyArgs: false,
         modifyReturnValue: false,
+        modifyArgumentsObject: false,
       },
     ],
   });
@@ -336,6 +342,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -395,6 +402,7 @@ t.test(
             inspectArgs: true,
             modifyArgs: true,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -449,6 +457,7 @@ t.test("modify rest parameter args", async (t) => {
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -494,6 +503,7 @@ t.test("modify rest parameter args", async (t) => {
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -548,6 +558,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -603,6 +614,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }
@@ -654,6 +666,7 @@ t.test(
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -699,6 +712,7 @@ t.test(
             inspectArgs: false,
             modifyArgs: true,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -745,6 +759,7 @@ t.test(
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -792,6 +807,7 @@ t.test(
             inspectArgs: false,
             modifyArgs: true,
             modifyReturnValue: false,
+            modifyArgumentsObject: false,
           },
         ],
       }
@@ -805,6 +821,54 @@ t.test(
         const key = "get";
         app[key] = function (fn) {
           [fn] = __instrumentModifyArgs("express.application.js.app[key].v1.0.0", [fn]);
+          console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test(
+  "add modifyArgs to dynamic function assignment expression with arguments object (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[key]",
+            identifier: "express.application.js.app[key].v1.0.0",
+            inspectArgs: false,
+            modifyArgs: true,
+            modifyReturnValue: false,
+            modifyArgumentsObject: true,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        const key = "get";
+        app[key] = function (fn) {
+          Object.assign(arguments, __instrumentModifyArgs("express.application.js.app[key].v1.0.0", Array.from(arguments)));
           console.log("test");
         };`
       ),
@@ -837,6 +901,7 @@ t.test("does not modify code if function name is not found", async (t) => {
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
+          modifyArgumentsObject: false,
         },
       ],
     }

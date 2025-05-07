@@ -58,6 +58,7 @@ t.test("it works", async (t) => {
         inspectArgs: true,
         modifyArgs: false,
         modifyReturnValue: false,
+        modifyArgumentsObject: false,
       },
     ],
   });

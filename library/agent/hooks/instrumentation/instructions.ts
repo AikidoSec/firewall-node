@@ -48,6 +48,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   inspectArgs: !!func.inspectArgs,
                   modifyArgs: !!func.modifyArgs,
                   modifyReturnValue: !!func.modifyReturnValue,
+                  modifyArgumentsObject: func.modifyArgumentsObject ?? false,
                 };
               }),
             };

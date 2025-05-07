@@ -5,8 +5,8 @@ pub fn get_name_str_for_member_expr<'a>(
     allocator: &'a Allocator,
     member_expr: &MemberExpression,
 ) -> Option<&'a str> {
-    let mut obj_name_str: &str = "";
-    let mut prop_name_str: &str = "";
+    let obj_name_str: &str;
+    let prop_name_str: &str;
 
     match member_expr {
         MemberExpression::StaticMemberExpression(static_member_expr) => {
