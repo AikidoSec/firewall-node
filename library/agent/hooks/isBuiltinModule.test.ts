@@ -9,7 +9,17 @@ t.test("it works", async (t) => {
   t.equal(isBuiltinModule("node:http"), true);
   t.equal(isBuiltinModule("test"), false);
   t.equal(isBuiltinModule(""), false);
-  if (getMajorNodeVersion() >= 24) {
+});
+
+t.test(
+  "it works with node:sqlite",
+  {
+    skip:
+      getMajorNodeVersion() < 24
+        ? "node:sqlite is not available in older Node.js versions"
+        : undefined,
+  },
+  async (t) => {
     t.equal(isBuiltinModule("node:sqlite"), true);
   }
-});
+);
