@@ -4,16 +4,17 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import { checkContextForBotSpoofing } from "../../vulnerabilities/bot-spoofing/checkContextForBotSpoofing";
 
 /**
  * Inspects the IP address of the request:
  * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
  */
-export function checkIfRequestIsBlocked(
+export async function checkIfRequestIsBlocked(
   res: ServerResponse,
   agent: Agent
-): boolean {
+): Promise<boolean> {
   if (res.headersSent) {
     // The headers have already been sent, so we can't block the request
     // This might happen if the server has multiple listeners
@@ -96,6 +97,15 @@ export function checkIfRequestIsBlocked(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
 
+    return true;
+  }
+
+  const isBotSpoofing = await checkContextForBotSpoofing(context, agent);
+  if (isBotSpoofing) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
+
+    res.end("You are not allowed to access this resource.");
     return true;
   }
 

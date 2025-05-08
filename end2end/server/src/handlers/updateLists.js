@@ -2,6 +2,7 @@ const {
   updateBlockedIPAddresses,
   updateBlockedUserAgents,
   updateAllowedIPAddresses,
+  updateBotSpoofingData,
 } = require("../zen/config");
 
 module.exports = function updateIPLists(req, res) {
@@ -44,6 +45,13 @@ module.exports = function updateIPLists(req, res) {
     Array.isArray(req.body.allowedIPAddresses)
   ) {
     updateAllowedIPAddresses(req.app, req.body.allowedIPAddresses);
+  }
+
+  if (
+    req.body.botSpoofingProtection &&
+    Array.isArray(req.body.botSpoofingProtection)
+  ) {
+    updateBotSpoofingData(req.app, req.body.botSpoofingProtection);
   }
 
   res.json({ success: true });
