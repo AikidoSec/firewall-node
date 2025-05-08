@@ -66,3 +66,5 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run end2end
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
