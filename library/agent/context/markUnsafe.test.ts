@@ -66,6 +66,7 @@ t.test("it works", async () => {
       source: "markUnsafe",
       metadata: {
         sql: 'SELECT * FROM "users" WHERE id = 1',
+        dialect: "PostgreSQL",
       },
       payload: "id = 1",
       pathsToPayload: [".[0]"],
@@ -94,6 +95,7 @@ t.test("it works", async () => {
       source: "markUnsafe",
       metadata: {
         sql: 'SELECT * FROM "users" WHERE id = 1',
+        dialect: "PostgreSQL",
       },
       payload: "id = 1",
       pathsToPayload: [".[0].somePropertyThatContainsSQL"],

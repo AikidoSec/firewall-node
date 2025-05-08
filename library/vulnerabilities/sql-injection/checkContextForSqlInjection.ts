@@ -36,6 +36,7 @@ export function checkContextForSqlInjection({
           pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
             sql: sql,
+            dialect: dialect.getHumanReadableName(),
           },
           payload: str,
         };
