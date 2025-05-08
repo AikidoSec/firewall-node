@@ -56,6 +56,16 @@ export class Postgres implements Wrapper {
         wrapExport(exports.Client.prototype, "query", pkgInfo, {
           inspectArgs: (args) => this.inspectQuery(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/client.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "query",
+            inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
       });
   }
 }
