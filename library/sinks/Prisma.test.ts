@@ -5,6 +5,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
 import * as path from "path";
+import { isWindowsCi } from "../helpers/isWindowsCi";
 
 const execAsync = promisify(execCb);
 
@@ -40,7 +41,9 @@ const noSQLContext: Context = {
   route: "/posts/:id",
 };
 
-const testOpts = {};
+const testOpts = {
+  skip: isWindowsCi ? "Skip on Windows CI" : false,
+};
 
 t.test("it works with sqlite", testOpts, async (t) => {
   const agent = createTestAgent();
