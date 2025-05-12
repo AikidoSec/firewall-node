@@ -27,17 +27,17 @@ t.beforeEach(async () => {
       userAgentDetails: [
         {
           key: "suspicious-bot",
-          pattern: "suspicious-bot"
+          pattern: "suspicious-bot",
         },
         {
           key: "monitored-crawler",
-          pattern: "monitored-crawler"
+          pattern: "monitored-crawler",
         },
         {
           key: "gpt-bot",
-          pattern: "GPTBot"
-        }
-      ]
+          pattern: "GPTBot",
+        },
+      ],
     }),
   });
   t.same(lists.status, 200);
@@ -175,4 +175,4 @@ t.test("it does not block monitored user agents", (t) => {
     .finally(() => {
       server.kill();
     });
-}); 
+});
