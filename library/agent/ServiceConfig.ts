@@ -159,10 +159,6 @@ export class ServiceConfig {
     this.setMonitoredIPAddresses(monitoredIPAddresses);
   }
 
-  isMonitoredIPAddress(ip: string): boolean {
-    return this.monitoredIPAddresses.some((list) => list.list.has(ip));
-  }
-
   updateBlockedUserAgents(blockedUserAgents: string) {
     if (!blockedUserAgents) {
       // If an empty string is passed, we want to set the regex to undefined

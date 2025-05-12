@@ -262,8 +262,8 @@ t.test("bypassed ips support cidr", async () => {
 t.test("it sets and updates monitored IP lists", async (t) => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
 
-  t.same(config.isMonitoredIPAddress("9.9.9.9"), false);
-  t.same(config.isMonitoredIPAddress("1.2.3.4"), false);
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
 
   config.updateMonitoredIPAddresses([
     {
@@ -274,13 +274,13 @@ t.test("it sets and updates monitored IP lists", async (t) => {
     },
   ]);
 
-  t.same(config.isMonitoredIPAddress("9.9.9.9"), true);
-  t.same(config.isMonitoredIPAddress("1.2.3.4"), true);
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), ["tor/exit_nodes"]);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), ["tor/exit_nodes"]);
 
   config.updateMonitoredIPAddresses([]);
 
-  t.same(config.isMonitoredIPAddress("9.9.9.9"), false);
-  t.same(config.isMonitoredIPAddress("1.2.3.4"), false);
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
 });
 
 t.test("it returns matching IP lists keys", async (t) => {
