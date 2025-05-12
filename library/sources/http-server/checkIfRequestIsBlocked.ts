@@ -115,7 +115,7 @@ export function checkIfRequestIsBlocked(
       source: "url",
       blocked: agent.shouldBlock(),
       stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
-      paths: ["path"],
+      paths: [".path"],
       metadata: {},
       request: context,
       payload: pathTraversalResult.payload,
