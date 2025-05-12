@@ -26,14 +26,17 @@ wrap(fetch, "fetch", function mock(original) {
               source: "geoip",
               description: "geo restrictions",
               ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-              monitor: false,
             },
           ],
-          blockedUserAgents: [
+          blockedUserAgents: "hacker|attacker",
+          userAgentDetails: [
             {
               key: "hacker",
-              monitor: false,
-              pattern: "hacker|attacker",
+              pattern: "hacker",
+            },
+            {
+              key: "attacker",
+              pattern: "attacker",
             },
           ],
           allowedIPAddresses: [
@@ -42,9 +45,10 @@ wrap(fetch, "fetch", function mock(original) {
               source: "geoip",
               description: "geo restrictions",
               ips: ["4.3.2.1"],
-              monitor: false,
             },
           ],
+          monitoredIPAddresses: [],
+          monitoredUserAgents: "",
         } satisfies Response),
       };
     }

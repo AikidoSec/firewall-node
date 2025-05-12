@@ -27,11 +27,11 @@ type UserAgentBotKey = string;
 type IPListKey = string;
 
 type UserAgentStats = {
-  breakdown: Record<UserAgentBotKey, { total: number; blocked: number }>;
+  breakdown: Record<UserAgentBotKey, number>;
 };
 
 type IPAddressStats = {
-  breakdown: Record<IPListKey, { total: number; blocked: number }>;
+  breakdown: Record<IPListKey, number>;
 };
 
 export class InspectionStatistics {
@@ -111,10 +111,10 @@ export class InspectionStatistics {
       };
     };
     userAgents: {
-      breakdown: Record<string, { total: number; blocked: number }>;
+      breakdown: Record<string, number>;
     };
     ipAddresses: {
-      breakdown: Record<string, { total: number; blocked: number }>;
+      breakdown: Record<string, number>;
     };
   } {
     const operations: Record<string, OperationStatsWithoutTimings> = {};
@@ -222,31 +222,23 @@ export class InspectionStatistics {
     }
   }
 
-  onIPAddressMatches(matches: { key: IPListKey; monitor: boolean }[]) {
-    matches.forEach((match) => {
-      if (!this.ipAddresses.breakdown[match.key]) {
-        this.ipAddresses.breakdown[match.key] = { total: 0, blocked: 0 };
+  onIPAddressMatches(matches: IPListKey[]) {
+    matches.forEach((key) => {
+      if (!this.ipAddresses.breakdown[key]) {
+        this.ipAddresses.breakdown[key] = 0;
       }
 
-      this.ipAddresses.breakdown[match.key].total += 1;
-
-      if (!match.monitor) {
-        this.ipAddresses.breakdown[match.key].blocked += 1;
-      }
+      this.ipAddresses.breakdown[key] += 1;
     });
   }
 
-  onUserAgentMatches(matches: { key: UserAgentBotKey; monitor: boolean }[]) {
-    matches.forEach((match) => {
-      if (!this.userAgents.breakdown[match.key]) {
-        this.userAgents.breakdown[match.key] = { total: 0, blocked: 0 };
+  onUserAgentMatches(matches: UserAgentBotKey[]) {
+    matches.forEach((key) => {
+      if (!this.userAgents.breakdown[key]) {
+        this.userAgents.breakdown[key] = 0;
       }
 
-      this.userAgents.breakdown[match.key].total += 1;
-
-      if (!match.monitor) {
-        this.userAgents.breakdown[match.key].blocked += 1;
-      }
+      this.userAgents.breakdown[key] += 1;
     });
   }
 

@@ -581,7 +581,7 @@ t.test("it keeps track of aborted requests", async () => {
   clock.uninstall();
 });
 
-t.test("it keeps track of blocked IPs and user agents", async () => {
+t.test("it keeps track of matched IPs and user agents", async () => {
   const clock = FakeTimers.install();
 
   const stats = new InspectionStatistics({
@@ -589,50 +589,8 @@ t.test("it keeps track of blocked IPs and user agents", async () => {
     maxCompressedStatsInMemory: 5,
   });
 
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: false },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_bots", monitor: false }]);
-
-  t.same(stats.getStats(), {
-    operations: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-    userAgents: {
-      breakdown: {
-        // eslint-disable-next-line camelcase
-        ai_bots: { total: 1, blocked: 1 },
-      },
-    },
-    ipAddresses: {
-      breakdown: {
-        "known_threat_actors/public_scanners": { total: 1, blocked: 1 },
-      },
-    },
-  });
-
-  clock.uninstall();
-});
-
-t.test("it keeps track of monitored IPs and user agents", async () => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
-
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
+  stats.onIPAddressMatches(["known_threat_actors/public_scanners"]);
+  stats.onUserAgentMatches(["ai_data_scrapers"]);
 
   t.same(stats.getStats(), {
     operations: {},
@@ -659,10 +617,8 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
   });
 
   // Test multiple occurrences
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
+  stats.onIPAddressMatches(["known_threat_actors/public_scanners"]);
+  stats.onUserAgentMatches(["ai_data_scrapers"]);
 
   t.same(stats.getStats(), {
     operations: {},
@@ -687,42 +643,6 @@ t.test("it keeps track of monitored IPs and user agents", async () => {
       },
     },
   });
-
-  clock.uninstall();
-});
-
-t.test("should track multiple matches for the same key", (t) => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 100,
-    maxCompressedStatsInMemory: 10,
-  });
-
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-    { key: "known_threat_actors/public_scanners", monitor: false },
-  ]);
-  stats.onUserAgentMatches([
-    { key: "ai_data_scrapers", monitor: true },
-    { key: "ai_data_scrapers", monitor: false },
-  ]);
-
-  const result = stats.getStats();
-
-  t.equal(
-    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].total,
-    2
-  );
-  t.equal(
-    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].blocked,
-    1
-  );
-
-  t.equal(result.userAgents.breakdown["ai_data_scrapers"].total, 2);
-  t.equal(result.userAgents.breakdown["ai_data_scrapers"].blocked, 1);
-
-  t.end();
 
   clock.uninstall();
 });
