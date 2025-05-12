@@ -88,7 +88,7 @@ export function checkIfRequestIsBlocked(
     agent.getInspectionStatistics().onIPAddressMatches(monitoredKeys);
 
     if (result.blocked) {
-      // Let's see if the IP occurs on more than one blocklist
+      // Let's see if the IP occurs on one or more blocked lists and collect those keys
       const blockedKeys = agent
         .getConfig()
         .getMatchingBlockedIPListKeys(context.remoteAddress);
