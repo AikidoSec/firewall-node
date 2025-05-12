@@ -110,15 +110,14 @@ export function checkIfRequestIsBlocked(
     return true;
   }
 
-  const isUserAgentBlocked =
-    context.headers && typeof context.headers["user-agent"] === "string"
-      ? agent.getConfig().isUserAgentBlocked(context.headers["user-agent"])
-      : ({ blocked: false } as const);
-
   const userAgent =
     context.headers && typeof context.headers["user-agent"] === "string"
       ? context.headers["user-agent"]
       : undefined;
+
+  const isUserAgentBlocked = userAgent
+    ? agent.getConfig().isUserAgentBlocked(userAgent)
+    : ({ blocked: false } as const);
 
   if (userAgent) {
     const isMonitoredUserAgent = agent
