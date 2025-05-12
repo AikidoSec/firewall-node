@@ -51,6 +51,18 @@ t.test("it does not detect", async (t) => {
     ).found,
     false
   );
+  t.equal(
+    checkUrlPathForPathTraversal("https://example.com/path/to/resource/%C3%A4")
+      .found,
+    false
+  );
+
+  // Invalid url encoded characters
+  t.equal(
+    checkUrlPathForPathTraversal("https://example.com/path/to/resource/%a")
+      .found,
+    false
+  );
 });
 
 t.test("only detect in path segments", async (t) => {
