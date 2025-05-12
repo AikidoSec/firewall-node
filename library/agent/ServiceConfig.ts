@@ -144,7 +144,7 @@ export class ServiceConfig {
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
 
-  private setMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
+  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
     this.monitoredIPAddresses = [];
 
     for (const source of monitoredIPAddresses) {
@@ -153,10 +153,6 @@ export class ServiceConfig {
         list: new IPMatcher(source.ips),
       });
     }
-  }
-
-  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
-    this.setMonitoredIPAddresses(monitoredIPAddresses);
   }
 
   updateBlockedUserAgents(blockedUserAgents: string) {
@@ -176,7 +172,7 @@ export class ServiceConfig {
     return { blocked: false };
   }
 
-  private setUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
+  updateUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
     this.userAgentDetails = [];
     for (const detail of userAgentDetails) {
       const pattern = safeCreateRegExp(detail.pattern, "i");
@@ -187,10 +183,6 @@ export class ServiceConfig {
         });
       }
     }
-  }
-
-  updateUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
-    this.setUserAgentDetails(userAgentDetails);
   }
 
   updateMonitoredUserAgents(monitoredUserAgent: string) {
