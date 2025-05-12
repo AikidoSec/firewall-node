@@ -65,7 +65,7 @@ module.exports = function updateIPLists(req, res) {
 
   if (
     req.body.userAgentDetails &&
-    typeof req.body.userAgentDetails === "string"
+    Array.isArray(req.body.userAgentDetails)
   ) {
     updateUserAgentDetails(req.app, req.body.userAgentDetails);
   }
