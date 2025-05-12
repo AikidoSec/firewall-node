@@ -81,16 +81,18 @@ export function checkIfRequestIsBlocked(
     : ({ blocked: false } as const);
 
   if (context.remoteAddress) {
-    const isMonitoredIP = agent
+    // Let's see if the IP occurs on one or more monitored lists and collect those keys
+    const monitoredKeys = agent
       .getConfig()
-      .isMonitoredIPAddress(context.remoteAddress);
+      .getMatchingMonitoredIPListKeys(context.remoteAddress);
+    agent.getInspectionStatistics().onIPAddressMatches(monitoredKeys);
 
-    if (result.blocked || isMonitoredIP) {
-      // Find all the matching IP list keys when the IP is part of a blocklist or monitored list
-      const matchingIPListKeys = agent
+    if (result.blocked) {
+      // Let's see if the IP occurs on more than one blocklist
+      const blockedKeys = agent
         .getConfig()
-        .getMatchingIPListKeys(context.remoteAddress);
-      agent.getInspectionStatistics().onIPAddressMatches(matchingIPListKeys);
+        .getMatchingBlockedIPListKeys(context.remoteAddress);
+      agent.getInspectionStatistics().onIPAddressMatches(blockedKeys);
     }
   }
 

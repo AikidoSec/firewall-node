@@ -221,16 +221,16 @@ export class ServiceConfig {
       .map((details) => details.key);
   }
 
-  getMatchingIPListKeys(ip: string): string[] {
-    const matchingBlocklistKeys = this.blockedIPAddresses
+  getMatchingBlockedIPListKeys(ip: string): string[] {
+    return this.blockedIPAddresses
       .filter((list) => list.blocklist.has(ip))
       .map((list) => list.key);
+  }
 
-    const matchingMonitoredListKeys = this.monitoredIPAddresses
+  getMatchingMonitoredIPListKeys(ip: string): string[] {
+    return this.monitoredIPAddresses
       .filter((list) => list.list.has(ip))
       .map((list) => list.key);
-
-    return matchingBlocklistKeys.concat(matchingMonitoredListKeys);
   }
 
   private setAllowedIPAddresses(ipAddresses: IPList[]) {

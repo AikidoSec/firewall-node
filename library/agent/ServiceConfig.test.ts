@@ -325,15 +325,18 @@ t.test("it returns matching IP lists keys", async (t) => {
     },
   ]);
 
-  t.same(config.getMatchingIPListKeys("7.7.7.7"), []);
-  t.same(config.getMatchingIPListKeys("8.8.8.8"), [
-    "geoip/Belgium;BE",
-    "geoip/Germany;DE",
-  ]);
-  t.same(config.getMatchingIPListKeys("9.9.9.9"), [
+  t.same(config.getMatchingBlockedIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), [
     "tor/exit_nodes",
     "known_threat_actors/public_scanners",
   ]);
+  t.same(config.getMatchingBlockedIPListKeys("8.8.8.8"), [
+    "geoip/Belgium;BE",
+    "geoip/Germany;DE",
+  ]);
+  t.same(config.getMatchingMonitoredIPListKeys("8.8.8.8"), []);
+  t.same(config.getMatchingBlockedIPListKeys("7.7.7.7"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("7.7.7.7"), []);
 });
 
 t.test("should return all matching user agent patterns", async (t) => {
