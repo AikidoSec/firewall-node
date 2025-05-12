@@ -175,11 +175,11 @@ export class ServiceConfig {
   updateUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
     this.userAgentDetails = [];
     for (const detail of userAgentDetails) {
-      const pattern = safeCreateRegExp(detail.pattern, "i");
-      if (pattern) {
+      const regex = safeCreateRegExp(detail.pattern, "i");
+      if (regex) {
         this.userAgentDetails.push({
           key: detail.key,
-          pattern,
+          pattern: regex,
         });
       }
     }
