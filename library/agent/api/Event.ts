@@ -105,10 +105,10 @@ type Heartbeat = {
       };
     };
     userAgents: {
-      breakdown: Record<string, { total: number; blocked: number }>;
+      breakdown: Record<string, number>;
     };
     ipAddresses: {
-      breakdown: Record<string, { total: number; blocked: number }>;
+      breakdown: Record<string, number>;
     };
   };
   hostnames: { hostname: string; port: number | undefined; hits: number }[];

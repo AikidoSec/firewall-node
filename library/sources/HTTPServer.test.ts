@@ -62,10 +62,12 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           source: "geoip",
           ips: ["9.9.9.9"],
           description: "geo restrictions",
-          monitor: false,
         },
       ],
-      blockedUserAgents: [],
+      blockedUserAgents: "",
+      monitoredUserAgents: "",
+      monitoredIPAddresses: [],
+      userAgentDetails: [],
     } satisfies Response;
   };
 });

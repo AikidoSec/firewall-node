@@ -30,15 +30,20 @@ wrap(fetch, "fetch", function mock(original) {
               source: "geoip",
               description: "geo restrictions",
               ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
-              monitor: false,
             },
           ],
+          blockedUserAgents: "hacker|attacker",
           allowedIPAddresses: [],
-          blockedUserAgents: [
+          monitoredIPAddresses: [],
+          monitoredUserAgents: "",
+          userAgentDetails: [
             {
-              key: "hackers",
-              pattern: "hacker|attacker",
-              monitor: false,
+              key: "hacker",
+              pattern: "hacker",
+            },
+            {
+              key: "attacker",
+              pattern: "attacker",
             },
           ],
         } satisfies Response),

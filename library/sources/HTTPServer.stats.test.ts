@@ -29,19 +29,20 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
   return async function fetchBlockedLists(): Promise<Response> {
     return {
       allowedIPAddresses: [],
-      blockedIPAddresses: [
+      blockedIPAddresses: [],
+      monitoredIPAddresses: [
         {
           key: "known_threat_actors/public_scanners",
-          monitor: true,
           ips: ["1.2.3.4/32"],
           source: "test",
           description: "Test IP list",
         },
       ],
-      blockedUserAgents: [
+      blockedUserAgents: "",
+      monitoredUserAgents: "GPTBot|Google-Extended",
+      userAgentDetails: [
         {
           key: "ai_data_scrapers",
-          monitor: true,
           pattern: "GPTBot|Google-Extended",
         },
       ],
