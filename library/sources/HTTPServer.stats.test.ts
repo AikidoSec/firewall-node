@@ -43,7 +43,11 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
       userAgentDetails: [
         {
           key: "ai_data_scrapers",
-          pattern: "GPTBot|Google-Extended",
+          pattern: "GPTBot",
+        },
+        {
+          key: "google_extended",
+          pattern: "Google-Extended",
         },
       ],
     } satisfies Response;
@@ -99,7 +103,9 @@ t.test("it tracks monitored user agents", async () => {
         t.same(stats.userAgents, {
           breakdown: {
             // eslint-disable-next-line camelcase
-            ai_data_scrapers: { total: 2, blocked: 0 },
+            ai_data_scrapers: 1,
+            // eslint-disable-next-line camelcase
+            google_extended: 1,
           },
         });
         t.same(stats.ipAddresses, {
@@ -146,7 +152,7 @@ t.test("it tracks monitored IP addresses", async () => {
         });
         t.same(stats.ipAddresses, {
           breakdown: {
-            "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
+            "known_threat_actors/public_scanners": 1,
           },
         });
         server.close();
@@ -198,12 +204,12 @@ t.test("it only counts once if multiple listeners", async () => {
         t.same(userAgents, {
           breakdown: {
             // eslint-disable-next-line camelcase
-            ai_data_scrapers: { total: 2, blocked: 0 },
+            ai_data_scrapers: 2,
           },
         });
         t.same(ipAddresses, {
           breakdown: {
-            "known_threat_actors/public_scanners": { total: 2, blocked: 0 },
+            "known_threat_actors/public_scanners": 2,
           },
         });
         server.close();

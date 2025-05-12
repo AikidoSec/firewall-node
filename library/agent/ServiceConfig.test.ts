@@ -368,8 +368,10 @@ t.test("it clears RegExp when updating with empty pattern", async (t) => {
 
   config.updateBlockedUserAgents("");
   config.updateMonitoredUserAgents("");
+  config.updateUserAgentDetails([]);
 
-  t.same(config.getMatchingUserAgentKeys("googlebot"), []);
+  t.same(config.isMonitoredUserAgent("googlebot"), false);
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
   t.same(config.getMatchingUserAgentKeys("googlebot"), []);
 });
 
@@ -377,8 +379,9 @@ t.test(
   "it does not throw error when updating user agent lists with invalid patterns",
   async (t) => {
     const config = new ServiceConfig([], 0, [], [], false, [], []);
-    config.updateBlockedUserAgents("[");
-    config.updateMonitoredUserAgents("[");
+
+    config.updateBlockedUserAgents("googlebot");
+    config.updateMonitoredUserAgents("googlebot");
     config.updateUserAgentDetails([
       {
         key: "googlebot",
@@ -386,7 +389,17 @@ t.test(
       },
     ]);
 
-    t.same(config.getMatchingUserAgentKeys("googlebot"), []);
+    config.updateBlockedUserAgents("[");
+    config.updateMonitoredUserAgents("[");
+    config.updateUserAgentDetails([
+      {
+        key: "googlebot",
+        pattern: "[",
+      },
+    ]);
+
+    t.same(config.isMonitoredUserAgent("googlebot"), false);
+    t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
     t.same(config.getMatchingUserAgentKeys("googlebot"), []);
   }
 );

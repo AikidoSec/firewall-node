@@ -606,12 +606,12 @@ t.test("it keeps track of matched IPs and user agents", async () => {
     userAgents: {
       breakdown: {
         // eslint-disable-next-line camelcase
-        ai_data_scrapers: { total: 1, blocked: 0 },
+        ai_data_scrapers: 1,
       },
     },
     ipAddresses: {
       breakdown: {
-        "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
+        "known_threat_actors/public_scanners": 1,
       },
     },
   });
@@ -634,12 +634,12 @@ t.test("it keeps track of matched IPs and user agents", async () => {
     userAgents: {
       breakdown: {
         // eslint-disable-next-line camelcase
-        ai_data_scrapers: { total: 2, blocked: 0 },
+        ai_data_scrapers: 2,
       },
     },
     ipAddresses: {
       breakdown: {
-        "known_threat_actors/public_scanners": { total: 2, blocked: 0 },
+        "known_threat_actors/public_scanners": 2,
       },
     },
   });

@@ -12,6 +12,9 @@ module.exports = function lists(req, res) {
   const blockedIps = getBlockedIPAddresses(req.app);
   const blockedUserAgents = getBlockedUserAgents(req.app);
   const allowedIps = getAllowedIPAddresses(req.app);
+  const monitoredUserAgents = getMonitoredUserAgents(req.app);
+  const monitoredIps = getMonitoredIPAddresses(req.app);
+  const userAgentDetails = getUserAgentDetails(req.app);
 
   res.json({
     success: true,
@@ -24,20 +27,12 @@ module.exports = function lists(req, res) {
               source: "geoip",
               description: "geo restrictions",
               ips: blockedIps,
-              monitor: false,
             },
           ]
         : [],
-    blockedUserAgents:
-      blockedUserAgents.length > 0
-        ? [
-            {
-              key: "hackers",
-              pattern: blockedUserAgents,
-              monitor: false,
-            },
-          ]
-        : [],
+    blockedUserAgents: blockedUserAgents,
+    monitoredUserAgents: monitoredUserAgents,
+    userAgentDetails: userAgentDetails,
     allowedIPAddresses:
       allowedIps.length > 0
         ? [
@@ -46,11 +41,19 @@ module.exports = function lists(req, res) {
               source: "geoip",
               description: "geo restrictions",
               ips: allowedIps,
-              monitor: false,
             },
           ]
         : [],
-    monitoredIPAddresses: [],
-    monitoredUserAgents: [],
+    monitoredIPAddresses:
+      monitoredIps.length > 0
+        ? monitoredIps
+        : [
+            {
+              key: "geoip/Belgium;BE",
+              source: "geoip",
+              description: "geo restrictions",
+              ips: monitoredIps,
+            },
+          ],
   });
 };

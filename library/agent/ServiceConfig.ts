@@ -162,12 +162,21 @@ export class ServiceConfig {
     return this.monitoredIPAddresses.some((list) => list.list.has(ip));
   }
 
+  private safeCreateRegExp(pattern: string, flags: string): RegExp | undefined {
+    try {
+      return new RegExp(pattern, flags);
+    } catch {
+      // Don't throw errors when the regex is invalid
+      return undefined;
+    }
+  }
+
   updateBlockedUserAgents(blockedUserAgents: string) {
     if (!blockedUserAgents) {
       this.blockedUserAgentRegex = undefined;
       return;
     }
-    this.blockedUserAgentRegex = new RegExp(blockedUserAgents, "i");
+    this.blockedUserAgentRegex = this.safeCreateRegExp(blockedUserAgents, "i");
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
@@ -178,10 +187,16 @@ export class ServiceConfig {
   }
 
   private setUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
-    this.userAgentDetails = userAgentDetails.map((userAgentDetails) => ({
-      key: userAgentDetails.key,
-      pattern: new RegExp(userAgentDetails.pattern, "i"),
-    }));
+    this.userAgentDetails = [];
+    for (const detail of userAgentDetails) {
+      const pattern = this.safeCreateRegExp(detail.pattern, "i");
+      if (pattern) {
+        this.userAgentDetails.push({
+          key: detail.key,
+          pattern,
+        });
+      }
+    }
   }
 
   updateUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
@@ -193,14 +208,17 @@ export class ServiceConfig {
       this.monitoredUserAgentRegex = undefined;
       return;
     }
-    this.monitoredUserAgentRegex = new RegExp(monitoredUserAgent, "i");
+    this.monitoredUserAgentRegex = this.safeCreateRegExp(
+      monitoredUserAgent,
+      "i"
+    );
   }
 
-  isMonitoredUserAgent(ua: string): { monitored: boolean } {
+  isMonitoredUserAgent(ua: string): boolean {
     if (this.monitoredUserAgentRegex) {
-      return { monitored: this.monitoredUserAgentRegex.test(ua) };
+      return this.monitoredUserAgentRegex.test(ua);
     }
-    return { monitored: false };
+    return false;
   }
 
   getMatchingUserAgentKeys(ua: string): string[] {

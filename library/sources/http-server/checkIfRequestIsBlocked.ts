@@ -81,7 +81,6 @@ export function checkIfRequestIsBlocked(
     : ({ blocked: false } as const);
 
   if (context.remoteAddress) {
-    const result = agent.getConfig().isIPAddressBlocked(context.remoteAddress);
     const isMonitoredIP = agent
       .getConfig()
       .isMonitoredIPAddress(context.remoteAddress);
@@ -120,12 +119,11 @@ export function checkIfRequestIsBlocked(
       : undefined;
 
   if (userAgent) {
-    const isUserAgentBlocked = agent.getConfig().isUserAgentBlocked(userAgent);
     const isMonitoredUserAgent = agent
       .getConfig()
       .isMonitoredUserAgent(userAgent);
 
-    if (isUserAgentBlocked || isMonitoredUserAgent) {
+    if (isUserAgentBlocked.blocked || isMonitoredUserAgent) {
       // Find all the matching user agent keys when it's a blocked or monitored user agent
       const userAgentKeys = agent
         .getConfig()

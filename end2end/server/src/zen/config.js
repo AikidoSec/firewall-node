@@ -40,6 +40,9 @@ function updateAppConfig(app, newConfig) {
 const blockedIPAddresses = [];
 const blockedUserAgents = [];
 const allowedIPAddresses = [];
+const monitoredUserAgents = [];
+const monitoredIPAddresses = [];
+const userAgentDetails = [];
 
 function updateBlockedIPAddresses(app, ips) {
   let entry = blockedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
@@ -110,7 +113,79 @@ function getBlockedUserAgents(app) {
     return entry.userAgents;
   }
 
-  return { serviceId: app.serviceId, userAgents: [] };
+  return "";
+}
+
+function updateMonitoredUserAgents(app, uas) {
+  let entry = monitoredUserAgents.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.userAgents = uas;
+  } else {
+    entry = { serviceId: app.serviceId, userAgents: uas };
+    monitoredUserAgents.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getMonitoredUserAgents(app) {
+  const entry = monitoredUserAgents.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.userAgents;
+  }
+
+  return "";
+}
+
+function updateMonitoredIPAddresses(app, ips) {
+  let entry = monitoredIPAddresses.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.ipAddresses = ips;
+  } else {
+    entry = { serviceId: app.serviceId, ipAddresses: ips };
+    monitoredIPAddresses.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getMonitoredIPAddresses(app) {
+  const entry = monitoredIPAddresses.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.ipAddresses;
+  }
+
+  return [];
+}
+
+function updateUserAgentDetails(app, uas) {
+  let entry = userAgentDetails.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.userAgents = uas;
+  } else {
+    entry = { serviceId: app.serviceId, userAgents: uas };
+    userAgentDetails.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getUserAgentDetails(app) {
+  const entry = userAgentDetails.find((e) => e.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.userAgents;
+  }
+
+  return [];
 }
 
 module.exports = {
@@ -122,4 +197,10 @@ module.exports = {
   getBlockedUserAgents,
   getAllowedIPAddresses,
   updateAllowedIPAddresses,
+  updateMonitoredUserAgents,
+  getMonitoredUserAgents,
+  updateMonitoredIPAddresses,
+  getMonitoredIPAddresses,
+  updateUserAgentDetails,
+  getUserAgentDetails,
 };
