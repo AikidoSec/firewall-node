@@ -4,6 +4,10 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import { checkUrlPathForPathTraversal } from "../../vulnerabilities/path-traversal/checkUrlPathForPathTraversal";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
+import { attackKindHumanName } from "../../agent/Attack";
 
 /**
  * Inspects the IP address of the request:
@@ -97,6 +101,36 @@ export function checkIfRequestIsBlocked(
     );
 
     return true;
+  }
+
+  // Only checks the url path for path traversal attacks, other inputs are checked using the sinks
+  const pathTraversalResult = checkUrlPathForPathTraversal(context.url);
+  if (pathTraversalResult && pathTraversalResult.found) {
+    const stackTraceError = new Error();
+
+    agent.onDetectedAttack({
+      module: "http",
+      operation: "",
+      kind: "path_traversal",
+      source: "url",
+      blocked: agent.shouldBlock(),
+      stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+      paths: ["path"],
+      metadata: {},
+      request: context,
+      payload: pathTraversalResult.payload,
+    });
+
+    if (agent.shouldBlock()) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      res.end(
+        `Zen has blocked ${attackKindHumanName("path_traversal")} originating from url.path.`
+      );
+
+      return true;
+    }
   }
 
   return false;
