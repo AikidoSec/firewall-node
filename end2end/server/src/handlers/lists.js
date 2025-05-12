@@ -2,6 +2,9 @@ const {
   getBlockedIPAddresses,
   getBlockedUserAgents,
   getAllowedIPAddresses,
+  getMonitoredUserAgents,
+  getMonitoredIPAddresses,
+  getUserAgentDetails,
 } = require("../zen/config");
 
 module.exports = function lists(req, res) {
