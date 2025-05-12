@@ -20,37 +20,22 @@ module.exports = function lists(req, res) {
       blockedIps.length > 0
         ? [
             {
-              key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: blockedIps,
-              monitor: false,
             },
           ]
         : [],
-    blockedUserAgents:
-      blockedUserAgents.length > 0
-        ? [
-            {
-              key: "hackers",
-              pattern: blockedUserAgents,
-              monitor: false,
-            },
-          ]
-        : [],
+    blockedUserAgents: blockedUserAgents,
     allowedIPAddresses:
       allowedIps.length > 0
         ? [
             {
-              key: "geoip/Belgium;BE",
               source: "geoip",
               description: "geo restrictions",
               ips: allowedIps,
-              monitor: false,
             },
           ]
         : [],
-    monitoredIPAddresses: [],
-    monitoredUserAgents: [],
   });
 };

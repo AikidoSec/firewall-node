@@ -155,12 +155,6 @@ function generateHeartbeatEvent(): Event {
           total: 0,
         },
       },
-      userAgents: {
-        breakdown: {},
-      },
-      ipAddresses: {
-        breakdown: {},
-      },
     },
     agent: {
       version: "1.0.0",

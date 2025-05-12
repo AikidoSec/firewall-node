@@ -312,8 +312,6 @@ export class Agent {
             startedAt: stats.startedAt,
             endedAt: endedAt,
             requests: stats.requests,
-            userAgents: stats.userAgents,
-            ipAddresses: stats.ipAddresses,
           },
           hostnames: outgoingDomains,
           routes: routes,

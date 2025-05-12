@@ -3,26 +3,16 @@ import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
 export type IPList = {
-  key: string;
   source: string;
   description: string;
   ips: string[];
-  monitor: boolean;
 };
 
-export type BotBlocklist = {
-  key: string;
-  pattern: string; // e.g. "Googlebot|Bingbot"
-  monitor: boolean;
-};
-
-export type Response = {
+export async function fetchBlockedLists(token: Token): Promise<{
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
-  blockedUserAgents: BotBlocklist[];
-};
-
-export async function fetchBlockedLists(token: Token): Promise<Response> {
+  blockedUserAgents: string;
+}> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -30,8 +20,6 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     headers: {
       // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
       "Accept-Encoding": "gzip",
-      // Indicates to the server that this agent supports the new format with monitoring
-      "x-supports-monitoring": "true",
       Authorization: token.asString(),
     },
     timeoutInMS: 60 * 1000,
@@ -46,16 +34,25 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     throw new Error(`Failed to fetch blocked lists: ${statusCode}`);
   }
 
-  const result: Response = JSON.parse(body);
+  const result: {
+    blockedIPAddresses: IPList[];
+    allowedIPAddresses: IPList[];
+    blockedUserAgents: string;
+  } = JSON.parse(body);
 
-  const validResponse =
-    Array.isArray(result.blockedIPAddresses) &&
-    Array.isArray(result.allowedIPAddresses) &&
-    Array.isArray(result.blockedUserAgents);
-
-  if (!validResponse) {
-    throw new Error("Invalid response from fetchBlockedLists");
-  }
-
-  return result;
+  return {
+    blockedIPAddresses:
+      result && Array.isArray(result.blockedIPAddresses)
+        ? result.blockedIPAddresses
+        : [],
+    allowedIPAddresses:
+      result && Array.isArray(result.allowedIPAddresses)
+        ? result.allowedIPAddresses
+        : [],
+    // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
+    blockedUserAgents:
+      result && typeof result.blockedUserAgents === "string"
+        ? result.blockedUserAgents
+        : "",
+  };
 }

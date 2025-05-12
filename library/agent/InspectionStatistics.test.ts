@@ -42,12 +42,6 @@ t.test("it resets stats", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   clock.tick(1000);
@@ -62,12 +56,6 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -94,12 +82,6 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -135,12 +117,6 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   stats.onInspectedCall({
@@ -175,12 +151,6 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   stats.interceptorThrewError("mongodb.query", "nosql_op");
@@ -207,12 +177,6 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -248,12 +212,6 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   stats.onInspectedCall({
@@ -287,12 +245,6 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -347,12 +299,6 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   t.ok(
@@ -403,12 +349,6 @@ t.test("it keeps track of requests", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   stats.onRequest();
@@ -423,12 +363,6 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -446,12 +380,6 @@ t.test("it keeps track of requests", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   stats.onRequest();
@@ -467,12 +395,6 @@ t.test("it keeps track of requests", async () => {
         total: 2,
         blocked: 1,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -490,12 +412,6 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -520,12 +436,6 @@ t.test("it force compresses stats", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 
@@ -570,159 +480,7 @@ t.test("it keeps track of aborted requests", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
-
-  clock.uninstall();
-});
-
-t.test("it keeps track of blocked IPs and user agents", async () => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
-
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: false },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_bots", monitor: false }]);
-
-  t.same(stats.getStats(), {
-    operations: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-    userAgents: {
-      breakdown: {
-        // eslint-disable-next-line camelcase
-        ai_bots: { total: 1, blocked: 1 },
-      },
-    },
-    ipAddresses: {
-      breakdown: {
-        "known_threat_actors/public_scanners": { total: 1, blocked: 1 },
-      },
-    },
-  });
-
-  clock.uninstall();
-});
-
-t.test("it keeps track of monitored IPs and user agents", async () => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
-
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
-
-  t.same(stats.getStats(), {
-    operations: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-    userAgents: {
-      breakdown: {
-        // eslint-disable-next-line camelcase
-        ai_data_scrapers: { total: 1, blocked: 0 },
-      },
-    },
-    ipAddresses: {
-      breakdown: {
-        "known_threat_actors/public_scanners": { total: 1, blocked: 0 },
-      },
-    },
-  });
-
-  // Test multiple occurrences
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-  ]);
-  stats.onUserAgentMatches([{ key: "ai_data_scrapers", monitor: true }]);
-
-  t.same(stats.getStats(), {
-    operations: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-    userAgents: {
-      breakdown: {
-        // eslint-disable-next-line camelcase
-        ai_data_scrapers: { total: 2, blocked: 0 },
-      },
-    },
-    ipAddresses: {
-      breakdown: {
-        "known_threat_actors/public_scanners": { total: 2, blocked: 0 },
-      },
-    },
-  });
-
-  clock.uninstall();
-});
-
-t.test("should track multiple matches for the same key", (t) => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 100,
-    maxCompressedStatsInMemory: 10,
-  });
-
-  stats.onIPAddressMatches([
-    { key: "known_threat_actors/public_scanners", monitor: true },
-    { key: "known_threat_actors/public_scanners", monitor: false },
-  ]);
-  stats.onUserAgentMatches([
-    { key: "ai_data_scrapers", monitor: true },
-    { key: "ai_data_scrapers", monitor: false },
-  ]);
-
-  const result = stats.getStats();
-
-  t.equal(
-    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].total,
-    2
-  );
-  t.equal(
-    result.ipAddresses.breakdown["known_threat_actors/public_scanners"].blocked,
-    1
-  );
-
-  t.equal(result.userAgents.breakdown["ai_data_scrapers"].total, 2);
-  t.equal(result.userAgents.breakdown["ai_data_scrapers"].blocked, 1);
-
-  t.end();
 
   clock.uninstall();
 });
@@ -787,12 +545,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   // Test that each operation maintains its own stats
@@ -848,12 +600,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
   });
 
   clock.uninstall();
@@ -891,12 +637,6 @@ t.test("it handles empty operation strings", async () => {
         total: 0,
         blocked: 0,
       },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
     },
   });
 

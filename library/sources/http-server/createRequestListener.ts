@@ -75,19 +75,19 @@ function callListenerWithContext(
 const countedRequest = Symbol("__zen_request_counted__");
 
 function createOnFinishRequestHandler(
-  req: IncomingMessage & { [countedRequest]?: boolean },
+  req: IncomingMessage,
   res: ServerResponse,
   agent: Agent
 ) {
   return function onFinishRequest() {
-    if (req[countedRequest]) {
+    if ((req as any)[countedRequest]) {
       // The request has already been counted
       // This might happen if the server has multiple listeners
       return;
     }
 
     // Mark the request as counted
-    req[countedRequest] = true;
+    (req as any)[countedRequest] = true;
 
     const context = getContext();
 
