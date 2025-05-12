@@ -165,6 +165,8 @@ export class ServiceConfig {
 
   updateBlockedUserAgents(blockedUserAgents: string) {
     if (!blockedUserAgents) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
       this.blockedUserAgentRegex = undefined;
       return;
     }
@@ -197,9 +199,12 @@ export class ServiceConfig {
 
   updateMonitoredUserAgents(monitoredUserAgent: string) {
     if (!monitoredUserAgent) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
       this.monitoredUserAgentRegex = undefined;
       return;
     }
+
     this.monitoredUserAgentRegex = safeCreateRegExp(monitoredUserAgent, "i");
   }
 
