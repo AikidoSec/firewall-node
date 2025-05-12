@@ -79,4 +79,13 @@ t.test("it detects", async (t) => {
   t.equal(checkUrlPathForPathTraversal("/%2E%2E/").found, true);
   t.equal(checkUrlPathForPathTraversal("/abc/%2E%2E").found, true);
   t.equal(checkUrlPathForPathTraversal("/abc/%2E%2E").payload, "/abc/%2E%2E");
+
+  // With space characters
+  t.equal(checkUrlPathForPathTraversal("/.%09./").found, true);
+  t.equal(checkUrlPathForPathTraversal("/abc/.%0a./def").found, true);
+  t.equal(checkUrlPathForPathTraversal("/abc/.%0D./def").found, true);
+  t.equal(
+    checkUrlPathForPathTraversal("/abc/.%0D./def").payload,
+    "/abc/.%0D./def"
+  );
 });

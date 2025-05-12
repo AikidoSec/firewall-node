@@ -1,4 +1,5 @@
 import { getRawUrlPath } from "../../helpers/getRawUrlPath";
+import { normalizeLikeURLConstructor } from "./normalizeLikeURLConstructor";
 
 const forbiddenPattern = /(?:^|[\\/])\.\.(?:[\\/]|$)/;
 
@@ -42,7 +43,7 @@ export function checkUrlPathForPathTraversal(url: string | undefined): {
   }
 
   // Also check encoded paths
-  const decodedPath = decodeURIComponent(rawPath);
+  const decodedPath = normalizeLikeURLConstructor(decodeURIComponent(rawPath));
 
   if (forbiddenPattern.test(decodedPath)) {
     return {
