@@ -3,6 +3,7 @@ import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig } from "./Config";
 import { IPList, UserAgentDetails } from "./api/fetchBlockedLists";
+import { safeCreateRegExp } from "./safeCreateRegExp";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -162,21 +163,12 @@ export class ServiceConfig {
     return this.monitoredIPAddresses.some((list) => list.list.has(ip));
   }
 
-  private safeCreateRegExp(pattern: string, flags: string): RegExp | undefined {
-    try {
-      return new RegExp(pattern, flags);
-    } catch {
-      // Don't throw errors when the regex is invalid
-      return undefined;
-    }
-  }
-
   updateBlockedUserAgents(blockedUserAgents: string) {
     if (!blockedUserAgents) {
       this.blockedUserAgentRegex = undefined;
       return;
     }
-    this.blockedUserAgentRegex = this.safeCreateRegExp(blockedUserAgents, "i");
+    this.blockedUserAgentRegex = safeCreateRegExp(blockedUserAgents, "i");
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
@@ -189,7 +181,7 @@ export class ServiceConfig {
   private setUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
     this.userAgentDetails = [];
     for (const detail of userAgentDetails) {
-      const pattern = this.safeCreateRegExp(detail.pattern, "i");
+      const pattern = safeCreateRegExp(detail.pattern, "i");
       if (pattern) {
         this.userAgentDetails.push({
           key: detail.key,
@@ -208,10 +200,7 @@ export class ServiceConfig {
       this.monitoredUserAgentRegex = undefined;
       return;
     }
-    this.monitoredUserAgentRegex = this.safeCreateRegExp(
-      monitoredUserAgent,
-      "i"
-    );
+    this.monitoredUserAgentRegex = safeCreateRegExp(monitoredUserAgent, "i");
   }
 
   isMonitoredUserAgent(ua: string): boolean {
