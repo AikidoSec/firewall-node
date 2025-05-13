@@ -25,6 +25,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { Packages } from "./Packages";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -38,7 +39,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private requiredPackages: Record<string, string[]> = {};
+  private packages = new Packages(1000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -297,12 +298,13 @@ export class Agent {
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
+      const packages = this.packages.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
-      this.requiredPackages = {};
+      this.packages.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -315,6 +317,7 @@ export class Agent {
             endedAt: endedAt,
             requests: stats.requests,
           },
+          packages,
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
@@ -425,7 +428,6 @@ export class Agent {
         },
         {}
       ),
-      requiredPackages: this.requiredPackages,
       incompatiblePackages: {
         prototypePollution: this.incompatiblePackages,
       },
@@ -496,15 +498,14 @@ export class Agent {
   }
 
   onPackageRequired(name: string, version: string) {
-    if (!this.requiredPackages[name]) {
-      this.requiredPackages[name] = [];
-    }
+    this.packages.addPackage({
+      name,
+      version,
+    });
+  }
 
-    if (this.requiredPackages[name].includes(version)) {
-      return;
-    }
-
-    this.requiredPackages[name].push(version);
+  getPackages() {
+    return this.packages;
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {

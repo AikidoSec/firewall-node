@@ -10,7 +10,6 @@ export type AgentInfo = {
   version: string;
   library: string;
   packages: Record<PackageName, Version>;
-  requiredPackages: Record<PackageName, Version[]>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
   incompatiblePackages: {
@@ -98,6 +97,12 @@ type Heartbeat = {
       };
     };
   };
+  packages: {
+    name: string;
+    version: string;
+    firstRequiredAt: number;
+    lastRequiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
