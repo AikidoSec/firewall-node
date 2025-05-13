@@ -110,6 +110,16 @@ async function main() {
     );
   });
 
+  app.get("/admin/public", async (c) => {
+    return c.html(
+      `<html lang="en">
+        <body>
+          <h1>Public subpage of the admin panel</h1>
+        </body>
+      </html>`
+    );
+  });
+
   app.post("/add-fast", async (c) => {
     const body = await c.req.text();
 
