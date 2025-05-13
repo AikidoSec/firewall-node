@@ -100,8 +100,7 @@ type Heartbeat = {
   packages: {
     name: string;
     version: string;
-    firstRequiredAt: number;
-    lastRequiredAt: number;
+    requiredAt: number;
   }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
