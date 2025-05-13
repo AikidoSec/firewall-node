@@ -23,6 +23,16 @@ type OperationStats = {
 };
 
 type OperationStatsWithoutTimings = Omit<OperationStats, "durations">;
+type UserAgentBotKey = string;
+type IPListKey = string;
+
+type UserAgentStats = {
+  breakdown: Record<UserAgentBotKey, number>;
+};
+
+type IPAddressStats = {
+  breakdown: Record<IPListKey, number>;
+};
 
 export class InspectionStatistics {
   private startedAt = Date.now();
@@ -36,7 +46,17 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
-  } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
+  } = {
+    total: 0,
+    aborted: 0,
+    attacksDetected: { total: 0, blocked: 0 },
+  };
+  private userAgents: UserAgentStats = {
+    breakdown: {},
+  };
+  private ipAddresses: IPAddressStats = {
+    breakdown: {},
+  };
 
   constructor({
     maxPerfSamplesInMemory,
@@ -70,6 +90,12 @@ export class InspectionStatistics {
       aborted: 0,
       attacksDetected: { total: 0, blocked: 0 },
     };
+    this.userAgents = {
+      breakdown: {},
+    };
+    this.ipAddresses = {
+      breakdown: {},
+    };
     this.startedAt = Date.now();
   }
 
@@ -83,6 +109,12 @@ export class InspectionStatistics {
         total: number;
         blocked: number;
       };
+    };
+    userAgents: {
+      breakdown: Record<string, number>;
+    };
+    ipAddresses: {
+      breakdown: Record<string, number>;
     };
   } {
     const operations: Record<string, OperationStatsWithoutTimings> = {};
@@ -105,6 +137,8 @@ export class InspectionStatistics {
       operations: operations,
       startedAt: this.startedAt,
       requests: this.requests,
+      userAgents: this.userAgents,
+      ipAddresses: this.ipAddresses,
     };
   }
 
@@ -186,6 +220,26 @@ export class InspectionStatistics {
     if (blocked) {
       this.requests.attacksDetected.blocked += 1;
     }
+  }
+
+  onIPAddressMatches(matches: IPListKey[]) {
+    matches.forEach((key) => {
+      if (!this.ipAddresses.breakdown[key]) {
+        this.ipAddresses.breakdown[key] = 0;
+      }
+
+      this.ipAddresses.breakdown[key] += 1;
+    });
+  }
+
+  onUserAgentMatches(matches: UserAgentBotKey[]) {
+    matches.forEach((key) => {
+      if (!this.userAgents.breakdown[key]) {
+        this.userAgents.breakdown[key] = 0;
+      }
+
+      this.userAgents.breakdown[key] += 1;
+    });
   }
 
   onAbortedRequest() {

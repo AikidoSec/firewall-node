@@ -104,6 +104,12 @@ type Heartbeat = {
         blocked: number;
       };
     };
+    userAgents: {
+      breakdown: Record<string, number>;
+    };
+    ipAddresses: {
+      breakdown: Record<string, number>;
+    };
   };
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {

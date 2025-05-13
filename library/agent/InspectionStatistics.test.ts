@@ -42,6 +42,12 @@ t.test("it resets stats", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   clock.tick(1000);
@@ -56,6 +62,12 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -82,6 +94,12 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -117,6 +135,12 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   stats.onInspectedCall({
@@ -151,6 +175,12 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   stats.interceptorThrewError("mongodb.query", "nosql_op");
@@ -177,6 +207,12 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -212,6 +248,12 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   stats.onInspectedCall({
@@ -245,6 +287,12 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -299,6 +347,12 @@ t.test("it keeps track of amount of calls", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   t.ok(
@@ -349,6 +403,12 @@ t.test("it keeps track of requests", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   stats.onRequest();
@@ -363,6 +423,12 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -380,6 +446,12 @@ t.test("it keeps track of requests", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   stats.onRequest();
@@ -395,6 +467,12 @@ t.test("it keeps track of requests", async () => {
         total: 2,
         blocked: 1,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -412,6 +490,12 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -436,6 +520,12 @@ t.test("it force compresses stats", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
@@ -478,6 +568,78 @@ t.test("it keeps track of aborted requests", async () => {
       attacksDetected: {
         total: 0,
         blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
+  });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of matched IPs and user agents", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onIPAddressMatches(["known_threat_actors/public_scanners"]);
+  stats.onUserAgentMatches(["ai_data_scrapers"]);
+
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {
+        // eslint-disable-next-line camelcase
+        ai_data_scrapers: 1,
+      },
+    },
+    ipAddresses: {
+      breakdown: {
+        "known_threat_actors/public_scanners": 1,
+      },
+    },
+  });
+
+  // Test multiple occurrences
+  stats.onIPAddressMatches(["known_threat_actors/public_scanners"]);
+  stats.onUserAgentMatches(["ai_data_scrapers"]);
+
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {
+        // eslint-disable-next-line camelcase
+        ai_data_scrapers: 2,
+      },
+    },
+    ipAddresses: {
+      breakdown: {
+        "known_threat_actors/public_scanners": 2,
       },
     },
   });
@@ -545,6 +707,12 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   // Test that each operation maintains its own stats
@@ -600,6 +768,12 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         blocked: 0,
       },
     },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
   });
 
   clock.uninstall();
@@ -637,6 +811,12 @@ t.test("it handles empty operation strings", async () => {
         total: 0,
         blocked: 0,
       },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
     },
   });
 
