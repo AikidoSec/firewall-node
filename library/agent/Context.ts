@@ -21,8 +21,9 @@ export type Context = {
   source: string;
   route: string | undefined;
   graphql?: string[];
-  xml?: unknown;
+  xml?: unknown[];
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
+  markUnsafe?: unknown[];
   cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
   /**
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
@@ -84,6 +85,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.xml = context.xml;
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
+    current.markUnsafe = context.markUnsafe;
 
     // Clear all the cached user input strings
     delete current.cache;

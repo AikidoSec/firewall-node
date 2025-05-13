@@ -21,10 +21,11 @@ Zen will autonomously protect your Node.js applications against:
 
 * 🛡️ [NoSQL injection attacks](https://www.aikido.dev/blog/web-application-security-vulnerabilities)
 * 🛡️ [SQL injection attacks](https://www.aikido.dev/blog/the-state-of-sql-injections)
-* 🛡️ [Command injection attacks](https://owasp.org/www-community/attacks/Command_Injection)
+* 🛡️ [Command injection attacks](https://www.aikido.dev/blog/command-injection-in-2024-unpacked)
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ JS injection
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -44,8 +45,8 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [micro](docs/micro.md) 10.x
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
-* ✅ [Koa](docs/koa.md) 2.x
-* ✅ [NestJS](docs/nestjs.md) 10.x
+* ✅ [Koa](docs/koa.md) 3.x and 2.x
+* ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
 
 ### Database drivers
 
@@ -60,6 +61,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
+* ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
 
 ### Cloud providers
 
@@ -85,12 +87,12 @@ See list above for supported database drivers.
 ### Data serialization tools
 
 * ✅ [`xml2js`](https://www.npmjs.com/package/xml2js) 0.6.x, 0.5.x, ^0.4.18
-* ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 4.x
+* ✅ [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser) 5.x, 4.x
 * ✅ [`xml-js`](https://www.npmjs.com/package/xml-js) 1.x
 
 ### Shell tools
 
-* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.8.x, 0.7.x
+* ✅ [`ShellJS`](https://www.npmjs.com/package/shelljs) 0.9.x, 0.8.x, 0.7.x
 
 ### Routers
 
@@ -111,7 +113,14 @@ $ yarn add --exact @aikidosec/firewall
 
 For framework- and provider- specific instructions, check out our docs:
 
-- [Express.js-based apps](docs/express.md)
+- [Express](docs/express.md)
+- [Fastify](docs/fastify.md)
+- [Hapi](docs/hapi.md)
+- [Koa](docs/koa.md)
+- [Hono](docs/hono.md)
+- [NestJS](docs/nestjs.md)
+- [micro](docs/micro.md)
+- [Next.js](docs/next.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
@@ -146,6 +155,10 @@ To block requests, set the `AIKIDO_BLOCK` environment variable to `true`.
 
 See [Reporting to Aikido](#reporting-to-your-aikido-security-dashboard) to learn how to send events to Aikido.
 
+## Additional configuration
+
+[Configure Zen using environment variables for authentication, mode settings, debugging, and more.](https://help.aikido.dev/doc/configuration-via-env-vars/docrSItUkeR9)
+
 ## License
 
 This program is offered under a commercial and under the AGPL license.
@@ -157,19 +170,11 @@ disclosing the source code of your own applications.
 For more information, please contact Aikido Security at this
 address: support@aikido.dev or create an account at https://app.aikido.dev.
 
-## Performance
+## Benchmarks
 
 We run a benchmark on every commit to ensure Zen has a minimal impact on your application's performance.
 
-The benchmark runs [a simple MongoDB query](benchmarks/nosql-injection/getUser.js) to measure the difference between two runs with and without Zen:
-
-| Without Zen      | With Zen      | Difference in ms |
-|------------------|---------------|------------------|
-| 0.214ms          | 0.222ms       | +0.008ms         |
-
-(Using Node.js 18.x and MongoDB 6.3.x. Results will vary depending on your hardware.)
-
-See [benchmarks](benchmarks) for more information.
+See [benchmarks](benchmarks)
 
 ## Bug bounty program
 

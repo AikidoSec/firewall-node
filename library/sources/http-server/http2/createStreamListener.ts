@@ -33,13 +33,6 @@ export function createStreamListener(
           const context = getContext();
 
           discoverRouteFromStream(context, stream, agent);
-
-          agent.getInspectionStatistics().onRequest();
-          if (context && context.attackDetected) {
-            agent.getInspectionStatistics().onDetectedAttack({
-              blocked: agent.shouldBlock(),
-            });
-          }
         })
       );
 
@@ -72,6 +65,8 @@ function discoverRouteFromStream(
       })
     ) {
       agent.onRouteExecute(context);
+      // Only count the request if the route is discovered
+      agent.getInspectionStatistics().onRequest();
     }
   }
 }

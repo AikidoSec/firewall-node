@@ -1,3 +1,5 @@
+import { getFileExtension } from "./getFileExtension";
+
 const LOWERCASE = "abcdefghijklmnopqrstuvwxyz".split("");
 const UPPERCASE = LOWERCASE.map((char) => char.toUpperCase());
 const NUMBERS = "0123456789".split("");
@@ -23,7 +25,7 @@ export function looksLikeASecret(str: string) {
   const charsets = [hasLower, hasUpper, hasSpecial];
 
   // If the string doesn't have at least 2 different charsets, it's not a secret
-  if (!charsets.some((charset) => charset)) {
+  if (charsets.filter((charset) => charset).length < 2) {
     return false;
   }
 
@@ -33,6 +35,13 @@ export function looksLikeASecret(str: string) {
   }
 
   if (KNOWN_WORD_SEPARATORS.some((separator) => str.includes(separator))) {
+    return false;
+  }
+
+  // Ignore static assests with random file names, e.g. index.BRaz9DSe.css"
+  // The function shouldDiscoverRoutes already checks for this, but it's executed after this function, so the route would already be /asset/:secret
+  const extension = getFileExtension(str);
+  if (extension && extension.length > 1 && extension.length < 6) {
     return false;
   }
 

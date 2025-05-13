@@ -39,7 +39,6 @@ export function wrapRequire() {
   // Prevent wrapping the require function multiple times
   isRequireWrapped = true;
 
-  // @ts-expect-error TS doesn't know that we are not overwriting the subproperties
   mod.prototype.require = function wrapped() {
     // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
@@ -304,4 +303,30 @@ function executeInterceptors(
  */
 export function getOriginalRequire() {
   return originalRequire;
+}
+
+// In order to support multiple versions of the same package, we need to rewrite the package name
+// e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
+// but in the tests we want to `require("undici-v6")` instead of `require("undici")`
+export function __internalRewritePackageName(
+  packageName: string,
+  aliasForTesting: string
+) {
+  if (!isRequireWrapped) {
+    throw new Error(
+      "Start the agent before calling __internalRewritePackageName(..)"
+    );
+  }
+
+  if (packages.length === 0) {
+    throw new Error("No packages to patch");
+  }
+
+  const pkg = packages.find((pkg) => pkg.getName() === packageName);
+
+  if (!pkg) {
+    throw new Error(`Could not find package ${packageName}`);
+  }
+
+  pkg.setName(aliasForTesting);
 }

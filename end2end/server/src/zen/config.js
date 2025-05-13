@@ -29,11 +29,97 @@ function updateAppConfig(app, newConfig) {
     getAppConfig(app);
     index = configs.length - 1;
   }
-  configs[index] = { ...configs[index], ...newConfig };
+  configs[index] = {
+    ...configs[index],
+    ...newConfig,
+    configUpdatedAt: Date.now(),
+  };
   return true;
+}
+
+const blockedIPAddresses = [];
+const blockedUserAgents = [];
+const allowedIPAddresses = [];
+
+function updateBlockedIPAddresses(app, ips) {
+  let entry = blockedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.ipAddresses = ips;
+  } else {
+    entry = { serviceId: app.serviceId, ipAddresses: ips };
+    blockedIPAddresses.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getBlockedIPAddresses(app) {
+  const entry = blockedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.ipAddresses;
+  }
+
+  return { serviceId: app.serviceId, ipAddresses: [] };
+}
+
+function updateAllowedIPAddresses(app, ips) {
+  let entry = allowedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.ipAddresses = ips;
+  } else {
+    entry = { serviceId: app.serviceId, ipAddresses: ips };
+    allowedIPAddresses.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getAllowedIPAddresses(app) {
+  const entry = allowedIPAddresses.find((ip) => ip.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.ipAddresses;
+  }
+
+  return { serviceId: app.serviceId, ipAddresses: [] };
+}
+
+function updateBlockedUserAgents(app, uas) {
+  let entry = blockedUserAgents.find((e) => e.serviceId === e.serviceId);
+
+  if (entry) {
+    entry.userAgents = uas;
+  } else {
+    entry = { serviceId: app.serviceId, userAgents: uas };
+    blockedUserAgents.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
+function getBlockedUserAgents(app) {
+  const entry = blockedUserAgents.find((e) => e.serviceId === e.serviceId);
+
+  if (entry) {
+    return entry.userAgents;
+  }
+
+  return "";
 }
 
 module.exports = {
   getAppConfig,
   updateAppConfig,
+  updateBlockedIPAddresses,
+  getBlockedIPAddresses,
+  updateBlockedUserAgents,
+  getBlockedUserAgents,
+  getAllowedIPAddresses,
+  updateAllowedIPAddresses,
 };

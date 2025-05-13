@@ -1,10 +1,9 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { bindContext, getContext, runWithContext } from "../../agent/Context";
-import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
+import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
-import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
 
@@ -47,7 +46,7 @@ export function createRequestListener(
 function callListenerWithContext(
   listener: Function,
   req: IncomingMessage,
-  res: ServerResponse<IncomingMessage>,
+  res: ServerResponse,
   module: string,
   agent: Agent,
   body: string
@@ -58,29 +57,38 @@ function callListenerWithContext(
     // This method is called when the response is finished and discovers the routes for display in the dashboard
     // The bindContext function is used to ensure that the context is available in the callback
     // If using http2, the context is not available in the callback without this
-    res.on("finish", bindContext(createOnFinishRequestHandler(res, agent)));
+    res.on(
+      "finish",
+      bindContext(createOnFinishRequestHandler(req, res, agent))
+    );
 
-    if (!ipAllowedToAccessRoute(context, agent)) {
-      res.statusCode = 403;
-      res.setHeader("Content-Type", "text/plain");
-
-      let message = "Your IP address is not allowed to access this resource.";
-      if (context.remoteAddress) {
-        message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
-      }
-
-      return res.end(message);
+    if (checkIfRequestIsBlocked(res, agent)) {
+      // The return is necessary to prevent the listener from being called
+      return;
     }
 
     return listener(req, res);
   });
 }
 
+// Use symbol to avoid conflicts with other properties
+const countedRequest = Symbol("__zen_request_counted__");
+
 function createOnFinishRequestHandler(
-  res: ServerResponse<IncomingMessage>,
+  req: IncomingMessage,
+  res: ServerResponse,
   agent: Agent
 ) {
   return function onFinishRequest() {
+    if ((req as any)[countedRequest]) {
+      // The request has already been counted
+      // This might happen if the server has multiple listeners
+      return;
+    }
+
+    // Mark the request as counted
+    (req as any)[countedRequest] = true;
+
     const context = getContext();
 
     if (
@@ -94,13 +102,8 @@ function createOnFinishRequestHandler(
       })
     ) {
       agent.onRouteExecute(context);
-    }
-
-    agent.getInspectionStatistics().onRequest();
-    if (context && context.attackDetected) {
-      agent.getInspectionStatistics().onDetectedAttack({
-        blocked: agent.shouldBlock(),
-      });
+      // Only count the request if the route is discovered
+      agent.getInspectionStatistics().onRequest();
     }
   };
 }

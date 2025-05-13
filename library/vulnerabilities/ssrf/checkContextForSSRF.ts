@@ -1,7 +1,7 @@
-/* eslint-disable max-lines-per-function */
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
+import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
@@ -31,33 +31,35 @@ export function checkContextForSSRF({
     return;
   }
 
+  if (
+    context.url &&
+    isRequestToItself({
+      serverUrl: context.url,
+      outboundHostname: hostname,
+      outboundPort: port,
+    })
+  ) {
+    // We don't want to block outgoing requests to the same host as the server
+    // (often happens that we have a match on headers like `Host`, `Origin`, `Referer`, etc.)
+    return undefined;
+  }
+
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
     if (!userInput) {
       continue;
     }
 
-    for (const [str, path] of userInput.entries()) {
+    for (const str of userInput) {
       const found = findHostnameInUserInput(str, hostname, port);
       if (found) {
-        if (
-          isRequestToItself({
-            str: str,
-            source: source,
-            port: port,
-            path: path,
-          })
-        ) {
-          // Application might do a request to itself when the hostname is localhost
-          // Let's allow this for the following headers: Host, Origin, Referer
-          // We still want to block if the port is different
-          continue;
-        }
+        const paths = getPathsToPayload(str, context[source]);
+
         return {
           operation: operation,
           kind: "ssrf",
           source: source,
-          pathToPayload: path,
+          pathsToPayload: paths,
           metadata: getMetadataForSSRFAttack({ hostname, port }),
           payload: str,
         };

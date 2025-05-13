@@ -1,4 +1,4 @@
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { getMetadataForSSRFAttack } from "../../vulnerabilities/ssrf/getMetadataForSSRFAttack";
 import { RequestContextStorage } from "./RequestContextStorage";
 import { Context, getContext } from "../../agent/Context";
@@ -9,6 +9,9 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isRedirectToPrivateIP } from "../../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { wrapOnHeaders } from "./wrapOnHeaders";
+import { cleanError } from "../../helpers/cleanError";
+import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 
 type Dispatch = Dispatcher["dispatch"];
 
@@ -79,12 +82,12 @@ export function wrapDispatch(orig: Dispatch, agent: Agent): Dispatch {
  * Checks if it's a redirect to a private IP that originates from a user input and blocks it if it is.
  */
 function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
-  const isAllowedIP =
+  const isBypassedIP =
     context &&
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isAllowedIP) {
+  if (isBypassedIP) {
     // If the IP address is allowed, we don't need to block the request
     return;
   }
@@ -98,8 +101,8 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: new Error().stack!,
-      path: found.pathToPayload,
+      stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
+      paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({
         hostname: found.hostname,
         port: found.port,
@@ -109,8 +112,10 @@ function blockRedirectToPrivateIP(url: URL, context: Context, agent: Agent) {
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName("ssrf")}: fetch(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+        )
       );
     }
   }

@@ -1,79 +1,97 @@
-const { readdir, stat, access, constants } = require("fs/promises");
+const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const { writeFile, mkdir } = require("fs/promises");
 const execAsync = promisify(exec);
 
+const projectRoot = join(__dirname, "..");
+
+// If script is called with arg --ci, set env CI to true
+if (process.argv.includes("--ci")) {
+  process.env.CI = "true";
+}
+
+if (process.env.AIKIDO_SKIP_INSTALL === "true") {
+  console.log("Skipping dependencies installation");
+  process.exit(0);
+}
+
 async function main() {
-  const sampleAppsDir = join(__dirname, "../sample-apps");
-  const sampleApps = await readdir(sampleAppsDir);
+  await prepareBuildDir();
 
-  await Promise.all(
-    sampleApps.map(async (file) => {
-      const stats = await stat(join(sampleAppsDir, file));
+  const libOnly = process.argv.includes("--lib-only");
 
-      if (
-        !stats.isFile() &&
-        (await fileExists(join(sampleAppsDir, file, "package.json")))
-      ) {
-        await installSampleAppDeps(file);
-      }
-    })
-  );
+  // . is the root directory, npm install is automatically run in the root directory if npm install is used, but not if npm run install-lib-only is executed
+  const installDirs = libOnly ? ["library", "."] : ["library", "end2end"];
+  const scanForSubDirs = libOnly ? [] : ["sample-apps", "benchmarks"];
 
-  const benchmarksDir = join(__dirname, "../benchmarks");
-  const benchmarks = await readdir(benchmarksDir);
+  for (const dir of scanForSubDirs) {
+    const subDirs = await scanForSubDirsWithPackageJson(dir);
+    installDirs.push(...subDirs);
+  }
 
-  await Promise.all(
-    benchmarks.map(async (file) => {
-      const stats = await stat(join(benchmarksDir, file));
+  await Promise.all(installDirs.map(installDependencies));
 
-      if (
-        !stats.isFile() &&
-        (await fileExists(join(benchmarksDir, file, "package.json")))
-      ) {
-        await installBenchmarkDeps(file);
-      }
-    })
-  );
+  console.log("Successfully installed all dependencies");
+  process.exit(0);
 }
 
-async function installSampleAppDeps(sampleApp) {
-  console.log(`Installing dependencies for ${sampleApp}`);
+/**
+ * Install dependencies for a given folder
+ */
+async function installDependencies(folder) {
+  console.log(`Installing dependencies for ${folder}`);
+
+  const cmd = process.env.CI ? "npm ci" : "npm install";
 
   try {
-    await execAsync(`npm install`, {
-      cwd: join(__dirname, "../sample-apps", sampleApp),
+    await execAsync(cmd, {
+      cwd: join(projectRoot, folder),
+      env: {
+        ...process.env,
+        AIKIDO_SKIP_INSTALL: "true",
+      },
     });
-    console.log(`Dependencies installed for ${sampleApp}`);
+    console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
-    console.error(`Failed to install dependencies for ${sampleApp}`);
+    console.error(`Failed to install dependencies for ${folder}`);
     console.error(error);
     process.exit(1);
   }
 }
 
-async function installBenchmarkDeps(benchmark) {
-  console.log(`Installing dependencies for ${benchmark}`);
-
+/**
+ * Prepare the build directory
+ */
+async function prepareBuildDir() {
   try {
-    await execAsync(`npm install`, {
-      cwd: join(__dirname, "../benchmarks", benchmark),
-    });
-    console.log(`Dependencies installed for ${benchmark}`);
+    const pkg = require(join(__dirname, "../library/package.json"));
+
+    // We're going to remove the devDependencies from the package.json
+    // Otherwise they will show up in every lock file
+    // whenever we add a new dev dependency to the library
+    delete pkg.devDependencies;
+
+    // If the build folder doesn't exist, create it
+    const buildDirPath = join(__dirname, "../build");
+    if (!(await fileExists(buildDirPath))) {
+      await mkdir(buildDirPath);
+    }
+
+    await writeFile(
+      join(buildDirPath, "package.json"),
+      JSON.stringify(pkg, null, 2)
+    );
+
+    // Create empty index.js file if it doesn't exist
+    if (!(await fileExists(join(buildDirPath, "index.js")))) {
+      await writeFile(join(buildDirPath, "index.js"), "");
+    }
   } catch (error) {
-    console.error(`Failed to install dependencies for ${benchmark}`);
+    console.error(`Failed to prepare build directory`);
     console.error(error);
     process.exit(1);
-  }
-}
-
-async function fileExists(path) {
-  try {
-    await access(path, constants.F_OK);
-    return true;
-  } catch {
-    return false;
   }
 }
 

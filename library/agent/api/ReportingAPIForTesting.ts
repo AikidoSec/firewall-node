@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Token } from "./Token";
 import { Event } from "./Event";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";

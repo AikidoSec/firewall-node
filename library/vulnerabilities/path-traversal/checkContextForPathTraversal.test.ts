@@ -25,7 +25,7 @@ t.test("it detects path traversal from route parameter", async () => {
     operation: "operation",
     kind: "path_traversal",
     source: "routeParams",
-    pathToPayload: ".path",
+    pathsToPayload: [".path"],
     metadata: {
       filename: "../file/test.txt",
     },
@@ -90,7 +90,7 @@ t.test("it detects path traversal with URL", async () => {
       operation: "operation",
       kind: "path_traversal",
       source: "routeParams",
-      pathToPayload: ".path",
+      pathsToPayload: [".path"],
       metadata: {
         filename: "/file/test.txt",
       },
@@ -109,7 +109,7 @@ t.test("it detects path traversal with Buffer", async () => {
       operation: "operation",
       kind: "path_traversal",
       source: "routeParams",
-      pathToPayload: ".path",
+      pathsToPayload: [".path"],
       metadata: {
         filename: "../file/test.txt",
       },
@@ -137,4 +137,41 @@ t.test("it ignores invalid filename type", async () => {
     }),
     undefined
   );
+});
+
+t.test("it works with control characters removed by new URL", async (t) => {
+  const queries = [".\t./etc/passwd", ".\n./etc/passwd", ".\r./etc/passwd"];
+
+  for (const query of queries) {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL(`file:///test/${query}`),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            q: query,
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".q"],
+        metadata: {
+          filename: "/etc/passwd",
+        },
+        payload: query,
+      }
+    );
+  }
 });

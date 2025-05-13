@@ -39,9 +39,19 @@ export function createWrappedFunction(
   // .inspect("realpath", (args) => {...})
   // We don't want to lose the original function's properties.
   // Most of the functions we're wrapping don't have any properties, so this is a rare case.
-  for (const prop in original) {
-    if (original.hasOwnProperty(prop)) {
-      defineProperty(wrapped, prop, original[prop as keyof Function]);
+  // Inspired by https://github.com/DataDog/dd-trace-js/blob/master/packages/datadog-shimmer/src/shimmer.js#L8
+
+  Object.setPrototypeOf(wrapped, original);
+
+  const props = Object.getOwnPropertyDescriptors(original);
+  const keys = Reflect.ownKeys(props);
+
+  for (const key of keys) {
+    try {
+      // Define the property on the wrapped function, keeping the original property's attributes.
+      Object.defineProperty(wrapped, key as any, props[key as any]);
+    } catch {
+      //
     }
   }
 
@@ -51,8 +61,9 @@ export function createWrappedFunction(
 // Sets a property on an object, preserving its enumerability.
 // This function assumes that the property is already writable.
 function defineProperty(obj: unknown, name: string, value: unknown) {
-  // @ts-expect-error We don't know the type of obj
-  const enumerable = !!obj[name] && obj.propertyIsEnumerable(name);
+  const enumerable =
+    // @ts-expect-error We don't know the type of obj
+    !!obj[name] && Object.prototype.propertyIsEnumerable.call(obj, name);
   Object.defineProperty(obj, name, {
     configurable: true,
     enumerable: enumerable,

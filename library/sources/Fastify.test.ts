@@ -141,7 +141,6 @@ function getApp(
     reply.code(200).send("ok");
   });
 
-  // @ts-expect-error not typed yet after release
   app.addHttpMethod("MKCOL");
 
   app.mkcol("/testurl", async (request, reply) => {
@@ -429,7 +428,7 @@ t.test("does ignore invalid route usage", opts, async (t) => {
   } catch (error) {
     t.match(
       (error as NodeJS.ErrnoException).code,
-      "FST_ERR_ROUTE_METHOD_INVALID"
+      "FST_ERR_ROUTE_MISSING_HANDLER"
     );
   }
 
@@ -440,7 +439,7 @@ t.test("does ignore invalid route usage", opts, async (t) => {
   } catch (error) {
     t.match(
       (error as NodeJS.ErrnoException).code,
-      "FST_ERR_ROUTE_METHOD_INVALID"
+      "FST_ERR_ROUTE_MISSING_HANDLER"
     );
   }
 });

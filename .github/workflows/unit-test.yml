@@ -3,7 +3,7 @@ on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     services:
       s3:
@@ -51,26 +51,39 @@ jobs:
           "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
         ports:
           - "27019:8123"
+      mongodb-replica:
+        image: bitnami/mongodb:8.0
+        env:
+          MONGODB_ADVERTISED_HOSTNAME: 127.0.0.1
+          MONGODB_REPLICA_SET_MODE: primary
+          MONGODB_ROOT_USER: root
+          MONGODB_ROOT_PASSWORD: password
+          MONGODB_REPLICA_SET_KEY: replicasetkey123
+        ports:
+          - "27020:27017"
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
+        node-version: [16.x, 18.x, 20.x, 22.x, 24.x]
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - run: make install
-      - run: make build
-      - run: make test-ci
+      - run: npm run install-lib-only
+      - run: npm run build
+      - run: npm run test:ci
       - name: "Upload coverage"
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
-          file: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node

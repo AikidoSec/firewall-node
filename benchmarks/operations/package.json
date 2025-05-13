@@ -1,0 +1,13 @@
+{
+  "name": "operations-benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "benchmark.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "better-sqlite3": "^11.7.2",
+    "mongodb": "^6.9.0",
+    "undici": "^7.3.0"
+  }
+}

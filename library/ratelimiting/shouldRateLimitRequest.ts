@@ -24,7 +24,6 @@ export function shouldRateLimitRequest(
   // Do not consume rate limit for the same request a second time
   // (Might happen if the user adds the middleware multiple times)
   if (context.consumedRateLimit) {
-    logWarningIfMiddlewareExecutedTwice();
     return { block: false };
   }
 
@@ -47,11 +46,11 @@ export function shouldRateLimitRequest(
     isProduction;
 
   // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isAllowedIP =
+  const isBypassedIP =
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isFromLocalhostInProduction || isAllowedIP) {
+  if (isFromLocalhostInProduction || isBypassedIP) {
     return { block: false };
   }
 
@@ -89,17 +88,4 @@ export function shouldRateLimitRequest(
   }
 
   return { block: false };
-}
-
-let loggedWarningIfMiddlewareExecutedTwice = false;
-
-function logWarningIfMiddlewareExecutedTwice(): void {
-  if (loggedWarningIfMiddlewareExecutedTwice) {
-    return;
-  }
-
-  // eslint-disable-next-line no-console
-  console.warn(`Zen.addMiddleware(...) should be called only once.`);
-
-  loggedWarningIfMiddlewareExecutedTwice = true;
 }

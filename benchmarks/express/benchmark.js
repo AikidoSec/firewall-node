@@ -57,12 +57,38 @@ async function run() {
   // Stop the server
   withoutFirewallProc.kill();
 
+  const withOpenTelemetryProc = spawn("node", ["app.js"], {
+    env: {
+      ...process.env,
+      PORT: 5003,
+      NODE_OPTIONS:
+        "--require @opentelemetry/auto-instrumentations-node/register",
+      OTEL_TRACES_EXPORTER: "none",
+      OTEL_METRICS_EXPORTER: "none",
+      OTEL_LOGS_EXPORTER: "none",
+    },
+    stdio: "inherit",
+  });
+
+  // Wait 2 seconds for the server to start and settle
+  await setTimeout(2000);
+
+  const resultWithOpenTelemetry = await exec(
+    generateWrkCommandForUrl("http://localhost:5003/empty")
+  );
+
+  // Stop the server
+  withOpenTelemetryProc.unref();
+  withOpenTelemetryProc.kill();
+
   const withFirewall = parseFloat(resultWithFirewall.stdout.trim());
   const withoutFirewall = parseFloat(resultWithoutFirewall.stdout.trim());
+  const withOpenTelemetry = parseFloat(resultWithOpenTelemetry.stdout.trim());
 
   console.log("--- Results ---");
   console.log(`Without Zen: ${withoutFirewall} Requests/sec`);
   console.log(`With Zen: ${withFirewall} Requests/sec`);
+  console.log(`With OpenTelemetry: ${withOpenTelemetry} Requests/sec`);
 
   const increase = ((withoutFirewall - withFirewall) / withoutFirewall) * 100;
   console.log(`Decrease with Zen for an empty route: ${increase.toFixed(2)}%`);

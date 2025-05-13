@@ -1,6 +1,5 @@
 import { isIP, type LookupFunction } from "net";
 import { LookupAddress } from "dns";
-import { resolve } from "path";
 import { Agent } from "../../agent/Agent";
 import { attackKindHumanName } from "../../agent/Attack";
 import { getContext } from "../../agent/Context";
@@ -14,6 +13,8 @@ import { RequestContextStorage } from "../../sinks/undici/RequestContextStorage"
 import { findHostnameInContext } from "./findHostnameInContext";
 import { getRedirectOrigin } from "./getRedirectOrigin";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
+import { cleanError } from "../../helpers/cleanError";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -178,18 +179,16 @@ function wrapDNSLookupCallback(
       return callback(err, addresses, family);
     }
 
-    const isAllowedIP =
+    const isBypassedIP =
       context &&
       context.remoteAddress &&
-      agent.getConfig().isAllowedIP(context.remoteAddress);
+      agent.getConfig().isBypassedIP(context.remoteAddress);
 
-    if (isAllowedIP) {
+    if (isBypassedIP) {
       // If the IP address is allowed, we don't need to block the request
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }
-
-    const libraryRoot = resolve(__dirname, "../..");
 
     // Used to get the stack trace of the calling location
     // We don't throw the error, we just use it to get the stack trace
@@ -201,8 +200,8 @@ function wrapDNSLookupCallback(
       kind: "ssrf",
       source: found.source,
       blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(stackTraceError.stack!, libraryRoot),
-      path: found.pathToPayload,
+      stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+      paths: found.pathsToPayload,
       metadata: getMetadataForSSRFAttack({ hostname, port }),
       request: context,
       payload: found.payload,
@@ -210,8 +209,10 @@ function wrapDNSLookupCallback(
 
     if (agent.shouldBlock()) {
       return callback(
-        new Error(
-          `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML(found.pathToPayload)}`
+        cleanError(
+          new Error(
+            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+          )
         )
       );
     }

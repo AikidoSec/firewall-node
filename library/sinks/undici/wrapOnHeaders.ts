@@ -1,7 +1,7 @@
 import { RequestContextStorage } from "./RequestContextStorage";
 import { parseHeaders } from "./parseHeaders";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
-import type { Dispatcher } from "undici";
+import type { Dispatcher } from "undici-v6";
 import { Context } from "../../agent/Context";
 import { onRedirect } from "./onRedirect";
 
@@ -31,7 +31,7 @@ export function wrapOnHeaders(
 
             onRedirect(destinationUrl, requestContext, context);
           }
-        } catch (e) {
+        } catch {
           // Ignore, log later if we have log levels
         }
       }

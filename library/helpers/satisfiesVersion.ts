@@ -49,9 +49,19 @@ export function satisfiesVersion(range: string, version: string) {
       .split(".")
       .map((p) => parseInt(p, 10));
 
-    if (major === rMajor && minor >= rMinor && patch >= rPatch) {
-      return true;
+    if (major !== rMajor) {
+      continue;
     }
+
+    if (minor < rMinor) {
+      continue;
+    }
+
+    if (minor === rMinor && patch < rPatch) {
+      continue;
+    }
+
+    return true;
   }
 
   return false;

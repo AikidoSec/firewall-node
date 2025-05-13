@@ -10,6 +10,7 @@ import {
 import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
+import { getInstance } from "../agent/AgentSingleton";
 
 function getExpressApp() {
   const app = express();
@@ -51,10 +52,39 @@ function getExpressApp() {
     asyncHandler(
       // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
-        const context = getContext();
-        if (context) {
-          updateContext(context, "attackDetected", true);
+        const agent = getInstance();
+        if (!agent) {
+          throw new Error("Agent not found");
         }
+        agent.onDetectedAttack({
+          module: "mongodb",
+          kind: "nosql_injection",
+          blocked: true,
+          source: "body",
+          request: {
+            method: "POST",
+            cookies: {},
+            query: {},
+            headers: {
+              "user-agent": "agent",
+            },
+            body: {},
+            url: "http://localhost:4000",
+            remoteAddress: "::1",
+            source: "express",
+            route: "/posts/:id",
+            routeParams: {},
+          },
+          operation: "operation",
+          payload: "payload",
+          stack: "stack",
+          paths: [".nested"],
+          metadata: {
+            db: "app",
+          },
+        });
+
+        const context = getContext();
         res.send(context);
       })
     )

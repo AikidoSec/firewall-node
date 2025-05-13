@@ -38,8 +38,8 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
   }
 
   if (context.url) {
-    // req.url is relative, so we need to prepend a host to make it absolute
-    // We just match the pathname, we don't use the host for matching
+    // Find matching wildcard routes
+    // We use the path from the URL, since the route can already include params like :id
     const path = tryParseURLPath(context.url);
     const wildcards = possible
       .filter((endpoint) => endpoint.route.includes("*"))

@@ -98,7 +98,7 @@ type Heartbeat = {
       };
     };
   };
-  hostnames: { hostname: string; port: number | undefined }[];
+  hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
     method: string;

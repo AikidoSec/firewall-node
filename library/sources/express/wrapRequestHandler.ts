@@ -1,29 +1,54 @@
+/* eslint-disable prefer-rest-params */
 import type { RequestHandler } from "express";
 import { runWithContext } from "../../agent/Context";
 import { contextFromRequest } from "./contextFromRequest";
+import { createWrappedFunction } from "../../helpers/wrap";
 
 export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
-  const fn: RequestHandler = (req, res, next) => {
-    const context = contextFromRequest(req);
+  const fn = createWrappedFunction(handler, function wrap(handler) {
+    return function wrap(this: RequestHandler) {
+      if (arguments.length === 0) {
+        return handler.apply(this);
+      }
 
-    return runWithContext(context, () => {
-      return handler(req, res, next);
+      const context = contextFromRequest(arguments[0]);
+
+      return runWithContext(context, () => {
+        return handler.apply(this, arguments);
+      });
+    };
+  }) as RequestHandler;
+
+  // Some libraries/apps have properties on the handler functions that are not copied by our createWrappedFunction function
+  // (createWrappedFunction only copies properties when hasOwnProperty is true)
+  // Let's set up a proxy to forward the property access to the original handler
+  // e.g. https://github.com/TryGhost/Ghost/blob/fefb9ec395df8695d06442b6ecd3130dae374d94/ghost/core/core/frontend/web/site.js#L192
+  for (const key in handler) {
+    if (Object.prototype.hasOwnProperty.call(handler, key)) {
+      continue;
+    }
+
+    Object.defineProperty(fn, key, {
+      get() {
+        // @ts-expect-error Types unknown
+        return handler[key];
+      },
+      set(value) {
+        // @ts-expect-error Types unknown
+        handler[key] = value;
+      },
     });
-  };
-
-  if (handler.name) {
-    preserveFunctionName(fn, handler.name);
   }
+
+  // For some libraries/apps it's important to preserve the function name
+  // e.g. Ghost looks up a middleware function by name in the router stack
+  preserveLayerName(fn, handler.name);
 
   return fn;
 }
 
 /**
- * Preserve the original function name
- * e.g. Ghost looks up a middleware function by name in the router stack
- *
  * Object.getOwnPropertyDescriptor(function myFunction() {}, "name")
- *
  * {
  *   value: 'myFunction',
  *   writable: false,
@@ -31,7 +56,7 @@ export function wrapRequestHandler(handler: RequestHandler): RequestHandler {
  *   configurable: true
  * }
  */
-function preserveFunctionName(wrappedFunction: Function, originalName: string) {
+function preserveLayerName(wrappedFunction: Function, originalName: string) {
   try {
     Object.defineProperty(wrappedFunction, "name", {
       value: originalName,
@@ -39,7 +64,7 @@ function preserveFunctionName(wrappedFunction: Function, originalName: string) {
       enumerable: false,
       configurable: true,
     });
-  } catch (e) {
+  } catch {
     // Ignore
   }
 }

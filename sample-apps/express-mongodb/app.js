@@ -103,6 +103,22 @@ async function main(port) {
     })
   );
 
+  app.get(
+    "/where",
+    express.json(),
+    asyncHandler(async (req, res) => {
+      // This code is vulnerable to JS injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      // Always validate and sanitize user input!
+      const title = req.query.title;
+      if (!title) {
+        return res.status(400).send("title parameter is required");
+      }
+      res.send(await posts.where(title));
+    })
+  );
+
   app.post("/ls", express.json(), (req, res) => {
     const { directory } = req.body;
 
@@ -167,6 +183,24 @@ async function main(port) {
 
       res.attachment(`image${extension}`);
       res.send(body);
+    })
+  );
+
+  app.get(
+    "/hello/:name",
+    asyncHandler(async (req, res) => {
+      const { name } = req.params;
+
+      if (!name) {
+        return res.status(400).end();
+      }
+
+      // This code is vulnerable to code injection
+      // This is just a sample app to demonstrate the vulnerability
+      // Do not use this code in production
+      const welcome = new Function(`return "Hello, your name is ${name}!"`);
+
+      res.send(welcome());
     })
   );
 

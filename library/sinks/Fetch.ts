@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
@@ -20,7 +21,9 @@ export class Fetch implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(hostname, port);
+    }
     const context = getContext();
 
     if (!context) {
@@ -37,6 +40,7 @@ export class Fetch implements Wrapper {
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
     if (args.length > 0) {
+      // URL string
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
         if (url) {
@@ -69,6 +73,7 @@ export class Fetch implements Wrapper {
         }
       }
 
+      // URL object
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,
@@ -77,6 +82,21 @@ export class Fetch implements Wrapper {
         );
         if (attack) {
           return attack;
+        }
+      }
+
+      // Request object
+      if (args[0] instanceof Request) {
+        const url = tryParseURL(args[0].url);
+        if (url) {
+          const attack = this.inspectHostname(
+            agent,
+            url.hostname,
+            getPortFromURL(url)
+          );
+          if (attack) {
+            return attack;
+          }
         }
       }
     }
@@ -121,7 +141,7 @@ export class Fetch implements Wrapper {
         globalThis[undiciGlobalDispatcherSymbol].dispatch,
         agent
       );
-    } catch (error) {
+    } catch {
       agent.log(
         `Failed to patch global dispatcher for fetch, we can't provide protection!`
       );
@@ -132,8 +152,12 @@ export class Fetch implements Wrapper {
     if (typeof globalThis.fetch === "function") {
       // Fetch is lazy loaded in Node.js
       // By calling fetch() we ensure that the global dispatcher is available
-      // @ts-expect-error Type is not defined
-      globalThis.fetch().catch(() => {});
+      try {
+        // @ts-expect-error Type is not defined
+        globalThis.fetch().catch(() => {});
+      } catch {
+        // Ignore errors
+      }
     }
 
     hooks.addGlobal("fetch", {

@@ -29,7 +29,9 @@ export class Users {
 
     if (this.users.size >= this.maxEntries) {
       const firstAdded = this.users.keys().next().value;
-      this.users.delete(firstAdded);
+      if (firstAdded) {
+        this.users.delete(firstAdded);
+      }
     }
 
     this.users.set(user.id, {
@@ -42,7 +44,7 @@ export class Users {
   }
 
   asArray() {
-    return Array.from(this.users.entries()).map(([key, user]) => {
+    return Array.from(this.users.entries()).map(([_, user]) => {
       return {
         id: user.id,
         name: user.name,

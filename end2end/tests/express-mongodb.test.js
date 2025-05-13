@@ -12,7 +12,7 @@ const pathToApp = resolve(
 t.setTimeout(60000);
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const server = spawn(`node`, [pathToApp, "4000"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -21,7 +21,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -41,19 +41,23 @@ t.test("it blocks in blocking mode", (t) => {
         fetch("http://127.0.0.1:4000/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4000/where?title=Test%27%7C%7C%27a", {
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://127.0.0.1:4000/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ]);
     })
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, jsInjection, normalSearch]) => {
       t.equal(noSQLInjection.status, 500);
+      t.equal(jsInjection.status, 500);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -61,7 +65,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const server = spawn(`node`, [pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -86,19 +90,23 @@ t.test("it does not block in dry mode", (t) => {
         fetch("http://127.0.0.1:4001/?search[$ne]=null", {
           signal: AbortSignal.timeout(5000),
         }),
+        fetch("http://127.0.0.1:4001/where?title=Test%27%7C%7C%27a", {
+          signal: AbortSignal.timeout(5000),
+        }),
         fetch("http://127.0.0.1:4001/?search=title", {
           signal: AbortSignal.timeout(5000),
         }),
       ])
     )
-    .then(([noSQLInjection, normalSearch]) => {
+    .then(([noSQLInjection, jsInjection, normalSearch]) => {
       t.equal(noSQLInjection.status, 200);
+      t.equal(jsInjection.status, 200);
       t.equal(normalSearch.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -109,7 +117,6 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   const server = spawn(
     `node`,
     [
-      "--preserve-symlinks",
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
@@ -134,7 +141,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -167,7 +174,7 @@ t.test("it blocks in blocking mode (with open telemetry enabled)", (t) => {
       t.match(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");
@@ -178,7 +185,6 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
   const server = spawn(
     `node`,
     [
-      "--preserve-symlinks",
       "--require",
       "@opentelemetry/auto-instrumentations-node/register",
       pathToApp,
@@ -231,7 +237,7 @@ t.test("it does not block in dry mode (with open telemetry enabled)", (t) => {
       t.notMatch(stderr, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill("SIGINT");

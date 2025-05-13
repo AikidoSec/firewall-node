@@ -47,6 +47,7 @@ import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
+import { Prisma } from "../sinks/Prisma";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -85,7 +86,7 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: string | undefined }) {
+function startAgent({ serverless }: { serverless: string | undefined }) {
   const current = getInstance();
 
   if (current) {
@@ -102,10 +103,12 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
 
   setInstance(agent);
 
+  agent.start(getWrappers());
+
   return agent;
 }
 
-function getWrappers() {
+export function getWrappers() {
   return [
     new Express(),
     new MongoDB(),
@@ -136,34 +139,29 @@ function getWrappers() {
     new Fastify(),
     new Koa(),
     new ClickHouse(),
+    new Prisma(),
+    // new Function(), Disabled because functionName.constructor === Function is false after patching global
   ];
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export function protect() {
-  const agent = getAgent({
+  startAgent({
     serverless: undefined,
   });
-
-  agent.start(getWrappers());
 }
 
 export function lambda(): (handler: Handler) => Handler {
-  const agent = getAgent({
+  startAgent({
     serverless: "lambda",
   });
-
-  agent.start(getWrappers());
 
   return createLambdaWrapper;
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
-  const agent = getAgent({
+  startAgent({
     serverless: "gcp",
   });
-
-  agent.start(getWrappers());
 
   return createCloudFunctionWrapper;
 }
