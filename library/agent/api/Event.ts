@@ -1,12 +1,15 @@
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
+type Version = string;
+type PackageName = string;
+
 export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
   version: string;
   library: string;
-  packages: Record<string, string>;
+  packages: Record<PackageName, Version>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
   incompatiblePackages: {
@@ -111,6 +114,11 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  packages: {
+    name: string;
+    version: string;
+    requiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;

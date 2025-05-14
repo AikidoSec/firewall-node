@@ -188,6 +188,7 @@ function generateHeartbeatEvent(): Event {
     hostnames: [],
     routes: [],
     users: [],
+    packages: [],
   };
 }
 
