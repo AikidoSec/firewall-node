@@ -348,7 +348,7 @@ t.test(
 
 t.test(
   "allows all IPs for /api/routes/authorize but restricts /api/routes/* to 1.1.1.1",
-  async () => {
+  async (t) => {
     const agent = createTestAgent({
       token: new Token("123"),
       api: new ReportingAPIForTesting({
