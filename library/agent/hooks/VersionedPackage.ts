@@ -1,3 +1,4 @@
+import { toWinPathIfWin } from "../../helpers/toWinPathIfWin";
 import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
@@ -48,6 +49,8 @@ export class VersionedPackage {
     if (relativePath.startsWith("./")) {
       relativePath = relativePath.slice(2);
     }
+
+    relativePath = toWinPathIfWin(relativePath);
 
     this.requireFileInterceptors.set(relativePath, interceptor);
 
