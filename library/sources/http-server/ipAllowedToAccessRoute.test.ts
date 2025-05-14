@@ -345,3 +345,84 @@ t.test(
     );
   }
 );
+
+t.test(
+  "allows all IPs for /api/routes/authorize but restricts /api/routes/* to 1.1.1.1",
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api: new ReportingAPIForTesting({
+        success: true,
+        allowedIPAddresses: [],
+        configUpdatedAt: 0,
+        blockedUserIds: [],
+        heartbeatIntervalInMS: 10 * 1000,
+        endpoints: [
+          {
+            route: "/api/routes/*",
+            // @ts-expect-error Test
+            rateLimiting: undefined,
+            method: "GET",
+            allowedIPAddresses: ["1.1.1.1"],
+            forceProtectionOff: false,
+          },
+          {
+            route: "/api/routes/authorize",
+            // @ts-expect-error Test
+            rateLimiting: undefined,
+            method: "GET",
+            allowedIPAddresses: ["0.0.0.0/0", "::/0"],
+            forceProtectionOff: false,
+          },
+        ],
+        block: true,
+      }),
+    });
+
+    agent.start([]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // /api/routes/authorize allowed from any IP
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/authorize",
+          route: "/api/routes/authorize",
+          method: "GET",
+          remoteAddress: "8.8.8.8",
+        },
+        agent
+      ),
+      true
+    );
+
+    // /api/routes/foo only allowed from 1.1.1.1
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/foo",
+          route: "/api/routes/foo",
+          method: "GET",
+          remoteAddress: "1.1.1.1",
+        },
+        agent
+      ),
+      true
+    );
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/foo",
+          route: "/api/routes/foo",
+          method: "GET",
+          remoteAddress: "8.8.8.8",
+        },
+        agent
+      ),
+      false
+    );
+  }
+);
