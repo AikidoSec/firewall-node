@@ -28,7 +28,7 @@ export function checkContextForSqlInjection({
     }
 
     for (const str of userInput) {
-      if (detectSQLInjection(sql, str, dialect)) {
+      if (detectSQLInjection(sql, str, dialect, source)) {
         return {
           operation: operation,
           kind: "sql_injection",
