@@ -2,7 +2,14 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig } from "./Config";
-import { IPList } from "./api/fetchBlockedLists";
+import { BotSpoofingData, IPList } from "./api/fetchBlockedLists";
+
+export type ServiceConfigBotSpoofingData = {
+  key: string;
+  uaPattern: RegExp;
+  ips: IPMatcher | undefined;
+  hostnames: string[];
+};
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -19,6 +26,7 @@ export class ServiceConfig {
     allowlist: IPMatcher;
     description: string;
   }[] = [];
+  private botSpoofingData: ServiceConfigBotSpoofingData[] = [];
 
   constructor(
     endpoints: EndpointConfig[],
@@ -207,5 +215,27 @@ export class ServiceConfig {
 
   hasReceivedAnyStats() {
     return this.receivedAnyStats;
+  }
+
+  updateBotSpoofingData(data: BotSpoofingData[]) {
+    this.botSpoofingData = [];
+
+    for (const source of data) {
+      // Skip empty
+      if (source.ips.length === 0 && source.hostnames.length === 0) {
+        continue;
+      }
+
+      this.botSpoofingData.push({
+        key: source.key,
+        uaPattern: new RegExp(source.uaPattern, "i"),
+        ips: new IPMatcher(source.ips),
+        hostnames: source.hostnames,
+      });
+    }
+  }
+
+  getBotSpoofingData() {
+    return this.botSpoofingData;
   }
 }
