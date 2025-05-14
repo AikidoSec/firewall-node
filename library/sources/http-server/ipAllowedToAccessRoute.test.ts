@@ -131,10 +131,37 @@ t.test("public subroute of private route", async () => {
     ipAllowedToAccessRoute(
       {
         ...context,
+        url: "/private/test",
+        route: "/private/test",
+        method: "GET",
+        remoteAddress: "127.0.0.1",
+      },
+      agent
+    ),
+    true
+  );
+
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
         url: "/private/public",
         route: "/private/public",
         method: "GET",
         remoteAddress: "1.1.1.1",
+      },
+      agent
+    ),
+    true
+  );
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
+        url: "/private/public",
+        route: "/private/public",
+        method: "GET",
+        remoteAddress: "127.0.0.1",
       },
       agent
     ),
@@ -154,6 +181,19 @@ t.test("public subroute of private route", async () => {
       agent
     ),
     false
+  );
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
+        url: "/private/public/test",
+        route: "/private/public/test",
+        method: "GET",
+        remoteAddress: "127.0.0.1",
+      },
+      agent
+    ),
+    true
   );
 });
 
