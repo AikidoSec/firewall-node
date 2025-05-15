@@ -25,6 +25,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { envToBool } from "../helpers/envToBool";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -69,6 +70,10 @@ export class Agent {
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
+    }
+
+    if (envToBool(process.env.AIKIDO_TEST_NEW_INSTRUMENTATION)) {
+      this.newInstrumentation = true;
     }
   }
 
@@ -566,5 +571,9 @@ export class Agent {
 
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
+  }
+
+  isUsingNewInstrumentation() {
+    return this.newInstrumentation;
   }
 }
