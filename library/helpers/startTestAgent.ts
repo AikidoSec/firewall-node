@@ -23,13 +23,17 @@ export function startTestAgent(opts: {
   const agent = createTestAgent(opts);
   agent.start(opts.wrappers);
 
-  // In order to support multiple versions of the same package, we need to rewrite the package name
-  // e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
-  // but in the tests we want to `require("undici-v6")` instead of `require("undici")`
-  // The `__internalRewritePackageName` function allows us to do this
-  Object.keys(opts.rewrite).forEach((packageName) => {
-    __internalRewritePackageName(packageName, opts.rewrite[packageName]);
-  });
+  if (!agent.isUsingNewInstrumentation()) {
+    // In order to support multiple versions of the same package, we need to rewrite the package name
+    // e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
+    // but in the tests we want to `require("undici-v6")` instead of `require("undici")`
+    // The `__internalRewritePackageName` function allows us to do this
+    Object.keys(opts.rewrite).forEach((packageName) => {
+      __internalRewritePackageName(packageName, opts.rewrite[packageName]);
+    });
+  }
+
+  // Todo support this in the new instrumentation
 
   return agent;
 }
