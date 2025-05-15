@@ -64,7 +64,8 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined
+    private readonly serverless: string | undefined,
+    private readonly newInstrumentation: boolean = false
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -479,7 +480,7 @@ export class Agent {
       }
     }
 
-    wrapInstalledPackages(wrappers, this.serverless);
+    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
