@@ -99,8 +99,14 @@ t.test("compare with original decodeURIComponent", async (t) => {
     } catch {
       //
     }
-    t.equal(safeDecodeURIComponent(testCase), origResult);
+    if (safeDecodeURIComponent(testCase) !== origResult) {
+      t.fail(
+        `safeDecodeURIComponent("${testCase}") !== decodeURIComponent("${testCase}")`
+      );
+    }
   }
+
+  t.pass("All test cases passed");
 });
 
 t.test("benchmark", async (t) => {
@@ -153,11 +159,20 @@ t.test("S15.1.3.2_A1.10_T1", async (t) => {
       indexJ <= interval[indexI][1];
       indexJ++
     ) {
-      t.equal(
-        safeDecodeURIComponent("%C0%" + String.fromCharCode(indexJ, indexJ)),
+      if (
+        safeDecodeURIComponent("%C0%" + String.fromCharCode(indexJ, indexJ)) !==
         undefined
-      );
+      ) {
+        t.fail(
+          `safeDecodeURIComponent("%C0%${String.fromCharCode(
+            indexJ,
+            indexJ
+          )}") should be undefined`
+        );
+      }
     }
+
+    t.pass("All test cases passed");
   }
 });
 
@@ -174,14 +189,22 @@ t.test("S15.1.3.2_A1.11_T1", async (t) => {
       indexJ <= interval[indexI][1];
       indexJ++
     ) {
-      t.equal(
+      if (
         safeDecodeURIComponent(
           "%E0%" + String.fromCharCode(indexJ, indexJ) + "%A0"
-        ),
-        undefined
-      );
+        ) !== undefined
+      ) {
+        t.fail(
+          `safeDecodeURIComponent("%E0%${String.fromCharCode(
+            indexJ,
+            indexJ
+          )}%A0") should be undefined`
+        );
+      }
     }
   }
+
+  t.pass("All test cases passed");
 });
 
 t.test("S15.1.3.2_A1.1_T1", async (t) => {

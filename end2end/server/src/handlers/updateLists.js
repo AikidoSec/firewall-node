@@ -2,6 +2,9 @@ const {
   updateBlockedIPAddresses,
   updateBlockedUserAgents,
   updateAllowedIPAddresses,
+  updateMonitoredUserAgents,
+  updateMonitoredIPAddresses,
+  updateUserAgentDetails,
 } = require("../zen/config");
 
 module.exports = function updateIPLists(req, res) {
@@ -44,6 +47,27 @@ module.exports = function updateIPLists(req, res) {
     Array.isArray(req.body.allowedIPAddresses)
   ) {
     updateAllowedIPAddresses(req.app, req.body.allowedIPAddresses);
+  }
+
+  if (
+    req.body.monitoredUserAgents &&
+    typeof req.body.monitoredUserAgents === "string"
+  ) {
+    updateMonitoredUserAgents(req.app, req.body.monitoredUserAgents);
+  }
+
+  if (
+    req.body.monitoredIPAddresses &&
+    Array.isArray(req.body.monitoredIPAddresses)
+  ) {
+    updateMonitoredIPAddresses(req.app, req.body.monitoredIPAddresses);
+  }
+
+  if (
+    req.body.userAgentDetails &&
+    Array.isArray(req.body.userAgentDetails)
+  ) {
+    updateUserAgentDetails(req.app, req.body.userAgentDetails);
   }
 
   res.json({ success: true });

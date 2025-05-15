@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
+import { OperationKind } from "../api/Event";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
 import type { WrapPackageInfo } from "./WrapPackageInfo";
@@ -28,6 +29,10 @@ export type InterceptorObject = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  // Set the kind of operation for the wrapped function/method
+  // This will be used to collect stats
+  // For sources, this will often be undefined
+  kind: OperationKind | undefined;
 };
 
 /**
@@ -72,7 +77,8 @@ export function wrapExport(
               context,
               agent,
               pkgInfo,
-              methodName || ""
+              methodName || "",
+              interceptors.kind
             );
           }
 
@@ -129,7 +135,8 @@ export function inspectArgs(
   context: ReturnType<typeof getContext>,
   agent: Agent,
   pkgInfo: WrapPackageInfo,
-  methodName: string
+  methodName: string,
+  kind: OperationKind | undefined
 ) {
   if (context) {
     const matches = agent.getConfig().getEndpoints(context);
@@ -150,12 +157,20 @@ export function inspectArgs(
       this
     );
   } catch (error: any) {
-    agent.getInspectionStatistics().interceptorThrewError(pkgInfo.name);
     agent.onErrorThrownByInterceptor({
       error: error,
       method: methodName,
       module: pkgInfo.name,
     });
   }
-  onInspectionInterceptorResult(context, agent, result, pkgInfo, start);
+
+  onInspectionInterceptorResult(
+    context,
+    agent,
+    result,
+    pkgInfo,
+    start,
+    `${pkgInfo.name}.${methodName}`,
+    kind
+  );
 }

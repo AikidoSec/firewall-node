@@ -30,6 +30,7 @@ t.test("it returns correct path", async () => {
       pathsToPayload: [".id"],
       metadata: {
         sql: "SELECT * FROM users WHERE id = '1' OR 1=1; -- '",
+        dialect: "MySQL",
       },
       payload: "1' OR 1=1; --",
     }

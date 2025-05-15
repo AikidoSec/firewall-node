@@ -79,12 +79,15 @@ export class Hapi implements Wrapper {
 
   private wrapServer(server: unknown, pkgInfo: WrapPackageInfo) {
     wrapExport(server, "route", pkgInfo, {
+      kind: undefined,
       modifyArgs: (args) => this.wrapRouteHandler(args),
     });
     wrapExport(server, "ext", pkgInfo, {
+      kind: undefined,
       modifyArgs: (args) => this.wrapExtensionFunction(args),
     });
     wrapExport(server, "decorate", pkgInfo, {
+      kind: undefined,
       modifyArgs: (args) => this.wrapDecorateFunction(args),
     });
   }

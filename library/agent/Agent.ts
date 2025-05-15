@@ -309,10 +309,12 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
           stats: {
-            sinks: stats.sinks,
+            operations: stats.operations,
             startedAt: stats.startedAt,
             endedAt: endedAt,
             requests: stats.requests,
+            userAgents: stats.userAgents,
+            ipAddresses: stats.ipAddresses,
           },
           hostnames: outgoingDomains,
           routes: routes,
@@ -379,11 +381,20 @@ export class Agent {
     }
 
     try {
-      const { blockedIPAddresses, blockedUserAgents, allowedIPAddresses } =
-        await fetchBlockedLists(this.token);
+      const {
+        blockedIPAddresses,
+        blockedUserAgents,
+        allowedIPAddresses,
+        monitoredIPAddresses,
+        monitoredUserAgents,
+        userAgentDetails,
+      } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
+      this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
+      this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
+      this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }

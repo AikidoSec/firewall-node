@@ -129,6 +129,21 @@ t.test("it works", async (t) => {
       },
     }
   );
+
+  t.same(
+    getDataSchema({
+      e: [],
+    }),
+    {
+      type: "object",
+      properties: {
+        e: {
+          type: "array",
+          items: null,
+        },
+      },
+    }
+  );
 });
 
 t.test("test max depth", async (t) => {

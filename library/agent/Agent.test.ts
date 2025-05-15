@@ -18,6 +18,7 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
+import type { Response } from "./api/fetchBlockedLists";
 
 let shouldOnlyAllowSomeIPAddresses = false;
 
@@ -28,6 +29,7 @@ wrap(fetch, "fetch", function mock() {
       body: JSON.stringify({
         blockedIPAddresses: [
           {
+            key: "some/key",
             source: "name",
             description: "Description",
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
@@ -37,13 +39,26 @@ wrap(fetch, "fetch", function mock() {
         allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
+                key: "some/key",
                 source: "name",
                 description: "Description",
                 ips: ["4.3.2.1"],
               },
             ]
           : [],
-      }),
+        monitoredIPAddresses: [],
+        monitoredUserAgents: "",
+        userAgentDetails: [
+          {
+            key: "AI2Bot",
+            pattern: "AI2Bot",
+          },
+          {
+            key: "Bytespider",
+            pattern: "Bytespider",
+          },
+        ],
+      } satisfies Response),
     };
   };
 });
@@ -549,7 +564,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -563,7 +579,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
   for (let i = 0; i < 4001; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
