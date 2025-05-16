@@ -78,24 +78,28 @@ export class H3 implements Wrapper {
       .withVersion("^1.8.0")
       .onRequire((exports, pkgInfo) => {
         wrapExport(exports, "defineEventHandler", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             return this.wrapEventHandler(args, exports);
           },
         });
 
         wrapExport(exports, "createApp", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             return this.wrapCreateApp(args, exports);
           },
         });
 
         wrapExport(exports, "fromNodeMiddleware", pkgInfo, {
+          kind: undefined,
           modifyReturnValue: (_args, returnValue) => {
             return this.wrapFromFunction(returnValue, exports);
           },
         });
 
         wrapExport(exports, "fromWebHandler", pkgInfo, {
+          kind: undefined,
           modifyReturnValue: (_args, returnValue) => {
             return this.wrapFromFunction(returnValue, exports);
           },
@@ -110,6 +114,7 @@ export class H3 implements Wrapper {
         ];
         for (const func of bodyFuncs) {
           wrapExport(exports, func, pkgInfo, {
+            kind: undefined,
             modifyReturnValue: wrapReadBody,
           });
         }
