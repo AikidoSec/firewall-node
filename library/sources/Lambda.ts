@@ -169,10 +169,6 @@ export function createLambdaWrapper(handler: Handler): Handler {
         const stats = agent.getInspectionStatistics();
         stats.onRequest();
 
-        if (agentContext.attackDetected) {
-          stats.onDetectedAttack({ blocked: agent.shouldBlock() });
-        }
-
         if (
           lastFlushStatsAt === undefined ||
           lastFlushStatsAt + flushEveryMS < performance.now()

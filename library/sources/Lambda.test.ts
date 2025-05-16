@@ -216,7 +216,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
 
   for (let i = 0; i < 99; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "mongodb.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -237,7 +238,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   clock.tick(1);
 
   agent.getInspectionStatistics().onInspectedCall({
-    sink: "mongodb",
+    operation: "mongodb.query",
+    kind: "nosql_op",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
@@ -251,7 +253,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   clock.tick(60 * 1000 * 10);
 
   agent.getInspectionStatistics().onInspectedCall({
-    sink: "mongodb",
+    operation: "mongodb.query",
+    kind: "nosql_op",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
@@ -270,8 +273,9 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       routes: [],
       users: [],
       stats: {
-        sinks: {
-          mongodb: {
+        operations: {
+          "mongodb.query": {
+            kind: "nosql_op",
             total: 100,
             attacksDetected: {
               total: 0,
@@ -304,6 +308,12 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             blocked: 0,
           },
         },
+        userAgents: {
+          breakdown: {},
+        },
+        ipAddresses: {
+          breakdown: {},
+        },
       },
       middlewareInstalled: false,
     },
@@ -333,7 +343,8 @@ t.test(
 
     for (let i = 0; i < 100; i++) {
       agent.getInspectionStatistics().onInspectedCall({
-        sink: "mongodb",
+        operation: "mongodb.query",
+        kind: "nosql_op",
         blocked: false,
         durationInMs: 0.1,
         attackDetected: false,
@@ -440,11 +451,33 @@ t.test("it counts attacks", async () => {
   agent.start([]);
 
   const handler = createLambdaWrapper(async (event, context) => {
-    const ctx = getContext();
-    if (ctx) {
-      updateContext(ctx, "attackDetected", true);
-    }
-    return ctx;
+    agent.onDetectedAttack({
+      module: "mongodb",
+      kind: "nosql_injection",
+      blocked: false,
+      source: "body",
+      request: {
+        method: "POST",
+        cookies: {},
+        query: {},
+        headers: {
+          "user-agent": "agent",
+        },
+        body: {},
+        url: "http://localhost:4000",
+        remoteAddress: "::1",
+        source: "express",
+        route: "/posts/:id",
+        routeParams: {},
+      },
+      operation: "operation",
+      payload: "payload",
+      stack: "stack",
+      paths: [".nested"],
+      metadata: {
+        db: "app",
+      },
+    });
   });
 
   // This one will flush the stats

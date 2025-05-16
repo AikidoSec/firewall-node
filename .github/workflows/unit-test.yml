@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
+        node-version: [16.x, 18.x, 20.x, 22.x, 24.x]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -81,9 +81,9 @@ jobs:
       - run: npm run build
       - run: npm run test:ci
       - name: "Upload coverage"
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
-          file: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node

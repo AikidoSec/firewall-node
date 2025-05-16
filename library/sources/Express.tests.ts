@@ -74,6 +74,7 @@ export function createExpressTests(expressPackageName: string) {
   });
 
   const express = require(expressPackageName) as typeof import("express");
+  const { readFile } = require("fs") as typeof import("fs");
 
   function getApp(userMiddleware = true) {
     const app = express();
@@ -394,7 +395,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.statusCode, 500);
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0,
         attacksDetected: {
           total: 1,
           blocked: 1,
@@ -410,7 +411,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.body, { error: "test" });
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0, // Errors are not counted
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -718,4 +719,52 @@ export function createExpressTests(expressPackageName: string) {
       );
     }
   );
+
+  t.test("it supports adding middleware to a Router instance", async (t) => {
+    const app = express();
+    const router = express.Router();
+
+    router.use((req, res, next) => {
+      setUser({ id: "567" });
+      next();
+    });
+
+    // Add Zen middleware to router instead of app
+    addExpressMiddleware(router);
+
+    router.get("/router-block-user", (req, res) => {
+      res.send({ willNotBeSent: true });
+    });
+
+    app.use(router);
+
+    const blockedResponse = await request(app).get("/router-block-user");
+    t.same(blockedResponse.statusCode, 403);
+    t.same(blockedResponse.text, "You are blocked by Zen.");
+  });
+
+  t.test("it detects path traversal with double encoding", async (t) => {
+    const app = express();
+
+    app.get("/search", (req, res) => {
+      const searchTerm = req.query.q;
+      const fileUrl = new URL(`file:///public/${searchTerm}`);
+
+      readFile(fileUrl, "utf-8", (err, data) => {
+        if (err) {
+          return res.status(500).send("Error reading file");
+        }
+        res.send(`File content of /public/${searchTerm} : ${data}`);
+      });
+    });
+
+    const blockedResponse = await request(app).get(
+      "/search?q=.%252E/etc/passwd"
+    );
+    t.same(blockedResponse.statusCode, 500);
+    t.match(
+      blockedResponse.text,
+      /Error: Zen has blocked a path traversal attack: fs.readFile\(\.\.\.\) originating from query/
+    );
+  });
 }

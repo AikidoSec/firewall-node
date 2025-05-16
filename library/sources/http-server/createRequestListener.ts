@@ -75,19 +75,19 @@ function callListenerWithContext(
 const countedRequest = Symbol("__zen_request_counted__");
 
 function createOnFinishRequestHandler(
-  req: IncomingMessage,
+  req: IncomingMessage & { [countedRequest]?: boolean },
   res: ServerResponse,
   agent: Agent
 ) {
   return function onFinishRequest() {
-    if ((req as any)[countedRequest]) {
+    if (req[countedRequest]) {
       // The request has already been counted
       // This might happen if the server has multiple listeners
       return;
     }
 
     // Mark the request as counted
-    (req as any)[countedRequest] = true;
+    req[countedRequest] = true;
 
     const context = getContext();
 
@@ -102,13 +102,8 @@ function createOnFinishRequestHandler(
       })
     ) {
       agent.onRouteExecute(context);
-    }
-
-    agent.getInspectionStatistics().onRequest();
-    if (context && context.attackDetected) {
-      agent.getInspectionStatistics().onDetectedAttack({
-        blocked: agent.shouldBlock(),
-      });
+      // Only count the request if the route is discovered
+      agent.getInspectionStatistics().onRequest();
     }
   };
 }

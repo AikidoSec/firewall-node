@@ -41,6 +41,7 @@ export {
 // e.g. import Zen from '@aikidosec/firewall'; would not work without this, as Zen.setUser would be undefined
 export default {
   setUser,
+  markUnsafe,
   shouldBlockRequest,
   addExpressMiddleware,
   addHonoMiddleware,
