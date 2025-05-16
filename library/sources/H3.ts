@@ -27,7 +27,7 @@ export class H3 implements Wrapper {
       const middlewareFuncs = ["onRequest", "onBeforeResponse"];
       for (const func of middlewareFuncs) {
         if (func in config) {
-          // Can be a function or a  array of functions
+          // Can be a function or an array of functions
           if (typeof config[func] === "function") {
             config[func] = wrapMiddleware(config[func] as H3Middleware, h3);
           } else if (Array.isArray(config[func])) {
@@ -38,6 +38,7 @@ export class H3 implements Wrapper {
         }
       }
     }
+
     return args;
   }
 
