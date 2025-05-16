@@ -1,4 +1,7 @@
-type SinkStats = {
+import { OperationKind } from "./api/Event";
+
+type OperationStats = {
+  kind: OperationKind;
   withoutContext: number;
   total: number;
   interceptorThrewError: number;
@@ -8,11 +11,21 @@ type SinkStats = {
   };
 };
 
-type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
+type OperationStatsWithoutTimings = Omit<OperationStats, "durations">;
+type UserAgentBotKey = string;
+type IPListKey = string;
+
+type UserAgentStats = {
+  breakdown: Record<UserAgentBotKey, number>;
+};
+
+type IPAddressStats = {
+  breakdown: Record<IPListKey, number>;
+};
 
 export class InspectionStatistics {
   private startedAt = Date.now();
-  private stats: Record<string, SinkStats> = {};
+  private operations: Record<string, OperationStats> = {};
   private requests: {
     total: number;
     aborted: number;
@@ -20,28 +33,44 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
-  } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
+  } = {
+    total: 0,
+    aborted: 0,
+    attacksDetected: { total: 0, blocked: 0 },
+  };
+  private userAgents: UserAgentStats = {
+    breakdown: {},
+  };
+  private ipAddresses: IPAddressStats = {
+    breakdown: {},
+  };
 
   isEmpty() {
     return (
       this.requests.total === 0 &&
-      Object.keys(this.stats).length === 0 &&
+      Object.keys(this.operations).length === 0 &&
       this.requests.attacksDetected.total === 0
     );
   }
 
   reset() {
-    this.stats = {};
+    this.operations = {};
     this.requests = {
       total: 0,
       aborted: 0,
       attacksDetected: { total: 0, blocked: 0 },
     };
+    this.userAgents = {
+      breakdown: {},
+    };
+    this.ipAddresses = {
+      breakdown: {},
+    };
     this.startedAt = Date.now();
   }
 
   getStats(): {
-    sinks: Record<string, SinkStatsWithoutTimings>;
+    operations: Record<string, OperationStatsWithoutTimings>;
     startedAt: number;
     requests: {
       total: number;
@@ -51,32 +80,42 @@ export class InspectionStatistics {
         blocked: number;
       };
     };
+    userAgents: {
+      breakdown: Record<string, number>;
+    };
+    ipAddresses: {
+      breakdown: Record<string, number>;
+    };
   } {
-    const sinks: Record<string, SinkStatsWithoutTimings> = {};
-    for (const sink in this.stats) {
-      const sinkStats = this.stats[sink];
-      sinks[sink] = {
-        total: sinkStats.total,
+    const operations: Record<string, OperationStatsWithoutTimings> = {};
+    for (const operation in this.operations) {
+      const operationStats = this.operations[operation];
+      operations[operation] = {
+        kind: operationStats.kind,
+        total: operationStats.total,
         attacksDetected: {
-          total: sinkStats.attacksDetected.total,
-          blocked: sinkStats.attacksDetected.blocked,
+          total: operationStats.attacksDetected.total,
+          blocked: operationStats.attacksDetected.blocked,
         },
-        interceptorThrewError: sinkStats.interceptorThrewError,
-        withoutContext: sinkStats.withoutContext,
+        interceptorThrewError: operationStats.interceptorThrewError,
+        withoutContext: operationStats.withoutContext,
       };
     }
 
     return {
-      sinks: sinks,
+      operations: operations,
       startedAt: this.startedAt,
       requests: this.requests,
+      userAgents: this.userAgents,
+      ipAddresses: this.ipAddresses,
     };
   }
 
-  private ensureSinkStats(sink: string) {
-    if (!this.stats[sink]) {
-      this.stats[sink] = {
+  private ensureOperationStats(operation: string, kind: OperationKind) {
+    if (!this.operations[operation]) {
+      this.operations[operation] = {
         withoutContext: 0,
+        kind: kind,
         total: 0,
         interceptorThrewError: 0,
         attacksDetected: {
@@ -87,10 +126,14 @@ export class InspectionStatistics {
     }
   }
 
-  interceptorThrewError(sink: string) {
-    this.ensureSinkStats(sink);
-    this.stats[sink].total += 1;
-    this.stats[sink].interceptorThrewError += 1;
+  interceptorThrewError(operation: string, kind: OperationKind) {
+    if (operation.length === 0) {
+      return;
+    }
+
+    this.ensureOperationStats(operation, kind);
+    this.operations[operation].total += 1;
+    this.operations[operation].interceptorThrewError += 1;
   }
 
   onDetectedAttack({ blocked }: { blocked: boolean }) {
@@ -98,6 +141,26 @@ export class InspectionStatistics {
     if (blocked) {
       this.requests.attacksDetected.blocked += 1;
     }
+  }
+
+  onIPAddressMatches(matches: IPListKey[]) {
+    matches.forEach((key) => {
+      if (!this.ipAddresses.breakdown[key]) {
+        this.ipAddresses.breakdown[key] = 0;
+      }
+
+      this.ipAddresses.breakdown[key] += 1;
+    });
+  }
+
+  onUserAgentMatches(matches: UserAgentBotKey[]) {
+    matches.forEach((key) => {
+      if (!this.userAgents.breakdown[key]) {
+        this.userAgents.breakdown[key] = 0;
+      }
+
+      this.userAgents.breakdown[key] += 1;
+    });
   }
 
   onAbortedRequest() {
@@ -109,7 +172,8 @@ export class InspectionStatistics {
   }
 
   onInspectedCall({
-    sink,
+    operation,
+    kind,
     blocked,
     attackDetected,
     // Let's remove later
@@ -117,25 +181,30 @@ export class InspectionStatistics {
     durationInMs,
     withoutContext,
   }: {
-    sink: string;
+    operation: string;
+    kind: OperationKind;
     durationInMs: number;
     attackDetected: boolean;
     blocked: boolean;
     withoutContext: boolean;
   }) {
-    this.ensureSinkStats(sink);
+    if (operation.length === 0) {
+      return;
+    }
 
-    this.stats[sink].total += 1;
+    this.ensureOperationStats(operation, kind);
+
+    this.operations[operation].total += 1;
 
     if (withoutContext) {
-      this.stats[sink].withoutContext += 1;
+      this.operations[operation].withoutContext += 1;
       return;
     }
 
     if (attackDetected) {
-      this.stats[sink].attacksDetected.total += 1;
+      this.operations[operation].attacksDetected.total += 1;
       if (blocked) {
-        this.stats[sink].attacksDetected.blocked += 1;
+        this.operations[operation].attacksDetected.blocked += 1;
       }
     }
   }

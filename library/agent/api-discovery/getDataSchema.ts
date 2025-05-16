@@ -17,7 +17,7 @@ export type DataSchema = {
   /**
    * Data schema for the items of an array.
    */
-  items?: DataSchema;
+  items?: DataSchema | null;
   /**
    * Format of the string, if it is a string.
    */
@@ -53,7 +53,7 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
     return {
       type: "array",
       // Assume that the array is homogenous (for performance reasons)
-      items: data.length > 0 ? getDataSchema(data[0]) : undefined,
+      items: data.length > 0 ? getDataSchema(data[0]) : null,
     };
   }
 
