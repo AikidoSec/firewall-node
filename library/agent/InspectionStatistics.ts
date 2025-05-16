@@ -1,20 +1,9 @@
-import { percentiles } from "../helpers/percentiles";
 import { OperationKind } from "./api/Event";
-
-type OperationCompressedTimings = {
-  averageInMS: number;
-  percentiles: Record<string, number>;
-  compressedAt: number;
-};
 
 type OperationStats = {
   kind: OperationKind;
   withoutContext: number;
   total: number;
-  // array where we accumulate durations for each sink-request (e.g. mysql.query)
-  durations: number[];
-  // array where we put compressed blocks of stats
-  compressedTimings: OperationCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
@@ -37,8 +26,6 @@ type IPAddressStats = {
 export class InspectionStatistics {
   private startedAt = Date.now();
   private operations: Record<string, OperationStats> = {};
-  private readonly maxPerfSamplesInMemory: number;
-  private readonly maxCompressedStatsInMemory: number;
   private requests: {
     total: number;
     aborted: number;
@@ -57,23 +44,6 @@ export class InspectionStatistics {
   private ipAddresses: IPAddressStats = {
     breakdown: {},
   };
-
-  constructor({
-    maxPerfSamplesInMemory,
-    maxCompressedStatsInMemory,
-  }: {
-    maxPerfSamplesInMemory: number;
-    maxCompressedStatsInMemory: number;
-  }) {
-    this.maxPerfSamplesInMemory = maxPerfSamplesInMemory;
-    this.maxCompressedStatsInMemory = maxCompressedStatsInMemory;
-  }
-
-  hasCompressedStats() {
-    return Object.values(this.operations).some(
-      (sinkStats) => sinkStats.compressedTimings.length > 0
-    );
-  }
 
   isEmpty() {
     return (
@@ -129,7 +99,6 @@ export class InspectionStatistics {
         },
         interceptorThrewError: operationStats.interceptorThrewError,
         withoutContext: operationStats.withoutContext,
-        compressedTimings: operationStats.compressedTimings,
       };
     }
 
@@ -148,8 +117,6 @@ export class InspectionStatistics {
         withoutContext: 0,
         kind: kind,
         total: 0,
-        durations: [],
-        compressedTimings: [],
         interceptorThrewError: 0,
         attacksDetected: {
           total: 0,
@@ -157,52 +124,6 @@ export class InspectionStatistics {
         },
       };
     }
-  }
-
-  private compressPerfSamples(operation: string) {
-    if (operation.length === 0) {
-      return;
-    }
-
-    /* c8 ignore start */
-    if (!this.operations[operation]) {
-      return;
-    }
-
-    if (this.operations[operation].durations.length === 0) {
-      return;
-    }
-    /* c8 ignore stop */
-
-    const timings = this.operations[operation].durations;
-    const averageInMS =
-      timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
-
-    const [p50, p75, p90, p95, p99] = percentiles(
-      [50, 75, 90, 95, 99],
-      timings
-    );
-
-    this.operations[operation].compressedTimings.push({
-      averageInMS,
-      percentiles: {
-        "50": p50,
-        "75": p75,
-        "90": p90,
-        "95": p95,
-        "99": p99,
-      },
-      compressedAt: Date.now(),
-    });
-
-    if (
-      this.operations[operation].compressedTimings.length >
-      this.maxCompressedStatsInMemory
-    ) {
-      this.operations[operation].compressedTimings.shift();
-    }
-
-    this.operations[operation].durations = [];
   }
 
   interceptorThrewError(operation: string, kind: OperationKind) {
@@ -255,6 +176,8 @@ export class InspectionStatistics {
     kind,
     blocked,
     attackDetected,
+    // Let's remove later
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     durationInMs,
     withoutContext,
   }: {
@@ -278,25 +201,11 @@ export class InspectionStatistics {
       return;
     }
 
-    if (
-      this.operations[operation].durations.length >= this.maxPerfSamplesInMemory
-    ) {
-      this.compressPerfSamples(operation);
-    }
-
-    this.operations[operation].durations.push(durationInMs);
-
     if (attackDetected) {
       this.operations[operation].attacksDetected.total += 1;
       if (blocked) {
         this.operations[operation].attacksDetected.blocked += 1;
       }
-    }
-  }
-
-  forceCompress() {
-    for (const kind in this.operations) {
-      this.compressPerfSamples(kind as OperationKind);
     }
   }
 }

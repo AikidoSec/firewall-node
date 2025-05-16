@@ -83,11 +83,6 @@ type OperationStats = {
   interceptorThrewError: number;
   withoutContext: number;
   total: number;
-  compressedTimings: {
-    averageInMS: number;
-    percentiles: Record<string, number>;
-    compressedAt: number;
-  }[];
 };
 
 type Heartbeat = {
