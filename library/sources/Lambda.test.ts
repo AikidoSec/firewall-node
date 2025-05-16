@@ -279,19 +279,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             },
             interceptorThrewError: 0,
             withoutContext: 0,
-            compressedTimings: [
-              {
-                averageInMS: 0.09999999999999981,
-                percentiles: {
-                  50: 0.1,
-                  75: 0.1,
-                  90: 0.1,
-                  95: 0.1,
-                  99: 0.1,
-                },
-                compressedAt: 60 * 1000 * 10 + 1,
-              },
-            ],
           },
         },
         startedAt: 0,

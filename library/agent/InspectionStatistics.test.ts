@@ -5,10 +5,7 @@ import { InspectionStatistics } from "./InspectionStatistics";
 t.test("it resets stats", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onInspectedCall({
     withoutContext: false,
@@ -28,7 +25,6 @@ t.test("it resets stats", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -65,10 +61,7 @@ t.test("it keeps track of amount of calls", async () => {
 
   const maxPerfSamplesInMemory = 50;
   const maxCompressedStatsInMemory = 5;
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: maxPerfSamplesInMemory,
-    maxCompressedStatsInMemory: maxCompressedStatsInMemory,
-  });
+  const stats = new InspectionStatistics();
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -101,7 +94,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -133,7 +125,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 0,
         withoutContext: 1,
         total: 2,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -159,7 +150,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 3,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -191,7 +181,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 4,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -223,7 +212,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 5,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -236,8 +224,6 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
   });
-
-  t.same(stats.hasCompressedStats(), false);
 
   clock.tick(1000);
 
@@ -251,7 +237,6 @@ t.test("it keeps track of amount of calls", async () => {
     });
   }
 
-  t.same(stats.hasCompressedStats(), true);
   t.same(stats.getStats(), {
     sinks: {
       mongodb: {
@@ -262,19 +247,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 55,
-        compressedTimings: [
-          {
-            averageInMS: 2.1719999999999997,
-            percentiles: {
-              "50": 2.1,
-              "75": 3.4000000000000004,
-              "90": 4.1000000000000005,
-              "95": 4.4,
-              "99": 4.6000000000000005,
-            },
-            compressedAt: 1000,
-          },
-        ],
       },
     },
     startedAt: 0,
@@ -287,9 +259,6 @@ t.test("it keeps track of amount of calls", async () => {
       },
     },
   });
-
-  // @ts-expect-error Stats is private
-  t.ok(stats.stats.mongodb.durations.length < maxPerfSamplesInMemory);
 
   for (
     let i = 0;
@@ -305,22 +274,13 @@ t.test("it keeps track of amount of calls", async () => {
     });
   }
 
-  t.same(
-    // @ts-expect-error Stats is private
-    stats.stats.mongodb.compressedTimings.length,
-    maxCompressedStatsInMemory
-  );
-
   clock.uninstall();
 });
 
 t.test("it keeps track of requests", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   t.same(stats.getStats(), {
     sinks: {},
@@ -402,53 +362,10 @@ t.test("it keeps track of requests", async () => {
   clock.uninstall();
 });
 
-t.test("it force compresses stats", async () => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
-
-  t.same(stats.getStats(), {
-    sinks: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-  });
-
-  stats.onRequest();
-
-  stats.onInspectedCall({
-    withoutContext: false,
-    sink: "mongodb",
-    blocked: false,
-    durationInMs: 0.1,
-    attackDetected: false,
-  });
-
-  t.same(stats.hasCompressedStats(), false);
-
-  stats.forceCompress();
-
-  t.same(stats.hasCompressedStats(), true);
-
-  clock.uninstall();
-});
-
 t.test("it keeps track of aborted requests", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onAbortedRequest();
 
@@ -464,4 +381,6 @@ t.test("it keeps track of aborted requests", async () => {
       },
     },
   });
+
+  clock.uninstall();
 });

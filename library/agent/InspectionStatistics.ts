@@ -1,18 +1,6 @@
-import { percentiles } from "../helpers/percentiles";
-
-type SinkCompressedTimings = {
-  averageInMS: number;
-  percentiles: Record<string, number>;
-  compressedAt: number;
-};
-
 type SinkStats = {
   withoutContext: number;
   total: number;
-  // array where we accumulate durations for each sink-request (e.g. mysql.query)
-  durations: number[];
-  // array where we put compressed blocks of stats
-  compressedTimings: SinkCompressedTimings[];
   interceptorThrewError: number;
   attacksDetected: {
     total: number;
@@ -25,8 +13,6 @@ type SinkStatsWithoutTimings = Omit<SinkStats, "durations">;
 export class InspectionStatistics {
   private startedAt = Date.now();
   private stats: Record<string, SinkStats> = {};
-  private readonly maxPerfSamplesInMemory: number;
-  private readonly maxCompressedStatsInMemory: number;
   private requests: {
     total: number;
     aborted: number;
@@ -35,23 +21,6 @@ export class InspectionStatistics {
       blocked: number;
     };
   } = { total: 0, aborted: 0, attacksDetected: { total: 0, blocked: 0 } };
-
-  constructor({
-    maxPerfSamplesInMemory,
-    maxCompressedStatsInMemory,
-  }: {
-    maxPerfSamplesInMemory: number;
-    maxCompressedStatsInMemory: number;
-  }) {
-    this.maxPerfSamplesInMemory = maxPerfSamplesInMemory;
-    this.maxCompressedStatsInMemory = maxCompressedStatsInMemory;
-  }
-
-  hasCompressedStats() {
-    return Object.values(this.stats).some(
-      (sinkStats) => sinkStats.compressedTimings.length > 0
-    );
-  }
 
   isEmpty() {
     return (
@@ -94,7 +63,6 @@ export class InspectionStatistics {
         },
         interceptorThrewError: sinkStats.interceptorThrewError,
         withoutContext: sinkStats.withoutContext,
-        compressedTimings: sinkStats.compressedTimings,
       };
     }
 
@@ -110,8 +78,6 @@ export class InspectionStatistics {
       this.stats[sink] = {
         withoutContext: 0,
         total: 0,
-        durations: [],
-        compressedTimings: [],
         interceptorThrewError: 0,
         attacksDetected: {
           total: 0,
@@ -119,48 +85,6 @@ export class InspectionStatistics {
         },
       };
     }
-  }
-
-  private compressPerfSamples(sink: string) {
-    /* c8 ignore start */
-    if (!this.stats[sink]) {
-      return;
-    }
-
-    if (this.stats[sink].durations.length === 0) {
-      return;
-    }
-    /* c8 ignore stop */
-
-    const timings = this.stats[sink].durations;
-    const averageInMS =
-      timings.reduce((acc, curr) => acc + curr, 0) / timings.length;
-
-    const [p50, p75, p90, p95, p99] = percentiles(
-      [50, 75, 90, 95, 99],
-      timings
-    );
-
-    this.stats[sink].compressedTimings.push({
-      averageInMS,
-      percentiles: {
-        "50": p50,
-        "75": p75,
-        "90": p90,
-        "95": p95,
-        "99": p99,
-      },
-      compressedAt: Date.now(),
-    });
-
-    if (
-      this.stats[sink].compressedTimings.length >
-      this.maxCompressedStatsInMemory
-    ) {
-      this.stats[sink].compressedTimings.shift();
-    }
-
-    this.stats[sink].durations = [];
   }
 
   interceptorThrewError(sink: string) {
@@ -188,6 +112,8 @@ export class InspectionStatistics {
     sink,
     blocked,
     attackDetected,
+    // Let's remove later
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     durationInMs,
     withoutContext,
   }: {
@@ -206,23 +132,11 @@ export class InspectionStatistics {
       return;
     }
 
-    if (this.stats[sink].durations.length >= this.maxPerfSamplesInMemory) {
-      this.compressPerfSamples(sink);
-    }
-
-    this.stats[sink].durations.push(durationInMs);
-
     if (attackDetected) {
       this.stats[sink].attacksDetected.total += 1;
       if (blocked) {
         this.stats[sink].attacksDetected.blocked += 1;
       }
-    }
-  }
-
-  forceCompress() {
-    for (const sink in this.stats) {
-      this.compressPerfSamples(sink);
     }
   }
 }
