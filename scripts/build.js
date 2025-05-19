@@ -84,6 +84,12 @@ async function dlZenInternals() {
 }
 
 async function modifyDtsFilesAfterBuild() {
+  // import type { Express, Router } from "express";
+  //                                       ^^^^^^^
+  // We reference express types, but we don't have it as a dependency
+  // If the user has `"skipLibCheck": false` in their tsconfig.json, TypeScript will complain when express is not installed
+  // If the user has `"skipLibCheck": true` in their tsconfig.json, it's fine
+  //
   // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
   // The // @ts-expect-error comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
   // That's why we need to replace a JSDoc comment with a // @ts-expect-error comment
