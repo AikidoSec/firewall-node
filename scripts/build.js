@@ -91,14 +91,14 @@ async function modifyDtsFilesAfterBuild() {
   // If the user has `"skipLibCheck": true` in their tsconfig.json, it's fine
   //
   // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-  // The // @ts-expect-error comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
-  // That's why we need to replace a JSDoc comment with a // @ts-expect-error comment
+  // The // @ts-ignore comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
+  // That's why we need to replace a JSDoc comment with a // @ts-ignore comment
   const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
     const modifiedContent = content.replaceAll(
       "/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/",
-      "// @ts-expect-error Optional dependency"
+      "// @ts-ignore"
     );
 
     // Write modified content back to the file if it was changed
