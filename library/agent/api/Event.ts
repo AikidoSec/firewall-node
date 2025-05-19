@@ -1,3 +1,4 @@
+import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
@@ -117,6 +118,7 @@ type Heartbeat = {
     method: string;
     hits: number;
     graphql?: { type: "query" | "mutation"; name: string };
+    apispec: APISpec;
   }[];
   users: {
     id: string;
