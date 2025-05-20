@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "h3": "^1.15.1",
+    "pg": "^8.14.1"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/pg": "^8.11.11"
+  }
+}
