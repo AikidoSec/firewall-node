@@ -14,6 +14,9 @@ const checkedBlocks = Symbol("__zen_checked_blocks__");
  * - Whether the user agent is blocked by a user agent blocklist
  */
 export function checkIfRequestIsBlocked(
+  // We use a Symbol to store a boolean on the response object
+  // So that we are the only ones who can access it
+  // This boolean flag is used to determine whether the request has already been checked
   res: ServerResponse & { [checkedBlocks]?: boolean },
   agent: Agent
 ): boolean {
