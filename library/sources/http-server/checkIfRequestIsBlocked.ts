@@ -15,8 +15,9 @@ const checkedBlocks = Symbol("__zen_checked_blocks__");
  */
 export function checkIfRequestIsBlocked(
   // We use a Symbol to store a boolean on the response object
-  // So that we are the only ones who can access it
   // This boolean flag is used to determine whether the request has already been checked
+  // We use a Symbol so that we don't accidentally overwrite any other properties on the response object
+  // and that we're the only ones that can access it
   res: ServerResponse & { [checkedBlocks]?: boolean },
   agent: Agent
 ): boolean {
