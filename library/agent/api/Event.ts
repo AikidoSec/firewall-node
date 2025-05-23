@@ -10,7 +10,7 @@ export type AgentInfo = {
   hostname: string;
   version: string;
   library: string;
-  packages: Record<PackageName, Version>;
+  packages: Record<string, string>;
   ipAddress: string;
   preventedPrototypePollution: boolean;
   incompatiblePackages: {
