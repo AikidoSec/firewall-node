@@ -97,6 +97,7 @@ t.test("ip blocking works", async () => {
     false,
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [
@@ -164,6 +165,7 @@ t.test("restricting access to some ips", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: ["1.2.3.4"],
@@ -191,6 +193,7 @@ t.test("only allow some ips: empty list", async () => {
     [],
     [
       {
+        key: "geoip/Belgium;BE",
         source: "geoip",
         description: "description",
         ips: [],
@@ -255,3 +258,151 @@ t.test("bypassed ips support cidr", async () => {
   t.same(config.isBypassedIP("123.123.123.1"), false);
   t.same(config.isBypassedIP("999.999.999.999"), false);
 });
+
+t.test("it sets and updates monitored IP lists", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
+
+  config.updateMonitoredIPAddresses([
+    {
+      key: "tor/exit_nodes",
+      source: "tor",
+      description: "due to tor usage",
+      ips: ["1.2.3.0/24", "9.9.9.9"],
+    },
+  ]);
+
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), ["tor/exit_nodes"]);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), ["tor/exit_nodes"]);
+
+  config.updateMonitoredIPAddresses([]);
+
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
+});
+
+t.test("it returns matching IP lists keys", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+
+  config.updateMonitoredIPAddresses([
+    {
+      key: "tor/exit_nodes",
+      source: "tor",
+      description: "due to tor usage",
+      ips: ["9.9.9.9"],
+    },
+    {
+      key: "known_threat_actors/public_scanners",
+      source: "tor",
+      description: "due to tor usage",
+      ips: ["9.9.9.9/32"],
+    },
+  ]);
+
+  config.updateBlockedIPAddresses([
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      description: "description",
+      ips: ["8.8.8.8"],
+    },
+    {
+      key: "geoip/Germany;DE",
+      source: "geoip",
+      description: "description",
+      ips: ["8.8.8.8/32"],
+    },
+  ]);
+
+  config.updateAllowedIPAddresses([
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      description: "description",
+      ips: ["7.7.7.7"],
+    },
+  ]);
+
+  t.same(config.getMatchingBlockedIPListKeys("9.9.9.9"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), [
+    "tor/exit_nodes",
+    "known_threat_actors/public_scanners",
+  ]);
+  t.same(config.getMatchingBlockedIPListKeys("8.8.8.8"), [
+    "geoip/Belgium;BE",
+    "geoip/Germany;DE",
+  ]);
+  t.same(config.getMatchingMonitoredIPListKeys("8.8.8.8"), []);
+  t.same(config.getMatchingBlockedIPListKeys("7.7.7.7"), []);
+  t.same(config.getMatchingMonitoredIPListKeys("7.7.7.7"), []);
+});
+
+t.test("should return all matching user agent patterns", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateUserAgentDetails([
+    {
+      key: "list1",
+      pattern: "a|b|c",
+    },
+    {
+      key: "list2",
+      pattern: "b",
+    },
+  ]);
+  t.same(config.getMatchingUserAgentKeys("a"), ["list1"]);
+  t.same(config.getMatchingUserAgentKeys("A"), ["list1"]);
+  t.same(config.getMatchingUserAgentKeys("b"), ["list1", "list2"]);
+  t.same(config.getMatchingUserAgentKeys("c"), ["list1"]);
+  t.same(config.getMatchingUserAgentKeys("d"), []);
+});
+
+t.test("it clears RegExp when updating with empty pattern", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  config.updateBlockedUserAgents("googlebot");
+  config.updateMonitoredUserAgents("googlebot");
+  config.updateUserAgentDetails([
+    {
+      key: "googlebot",
+      pattern: "googlebot",
+    },
+  ]);
+
+  config.updateBlockedUserAgents("");
+  config.updateMonitoredUserAgents("");
+  config.updateUserAgentDetails([]);
+
+  t.same(config.isMonitoredUserAgent("googlebot"), false);
+  t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+  t.same(config.getMatchingUserAgentKeys("googlebot"), []);
+});
+
+t.test(
+  "it does not throw error when updating user agent lists with invalid patterns",
+  async (t) => {
+    const config = new ServiceConfig([], 0, [], [], false, [], []);
+
+    config.updateBlockedUserAgents("googlebot");
+    config.updateMonitoredUserAgents("googlebot");
+    config.updateUserAgentDetails([
+      {
+        key: "googlebot",
+        pattern: "googlebot",
+      },
+    ]);
+
+    config.updateBlockedUserAgents("[");
+    config.updateMonitoredUserAgents("[");
+    config.updateUserAgentDetails([
+      {
+        key: "googlebot",
+        pattern: "[",
+      },
+    ]);
+
+    t.same(config.isMonitoredUserAgent("googlebot"), false);
+    t.same(config.isUserAgentBlocked("googlebot"), { blocked: false });
+    t.same(config.getMatchingUserAgentKeys("googlebot"), []);
+  }
+);

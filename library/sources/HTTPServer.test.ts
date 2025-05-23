@@ -8,7 +8,7 @@ import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
 import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { IPList } from "../agent/api/fetchBlockedLists";
+import type { Response } from "../agent/api/fetchBlockedLists";
 import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
@@ -53,20 +53,22 @@ const agent = createTestAgent({
 agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
-  return async function fetchBlockedLists(): Promise<{
-    blockedIPAddresses: IPList[];
-    blockedUserAgents: string;
-  }> {
+  return async function fetchBlockedLists(): Promise<Response> {
     return {
+      allowedIPAddresses: [],
       blockedIPAddresses: [
         {
+          key: "geoip/Belgium;BE",
           source: "geoip",
           ips: ["9.9.9.9"],
           description: "geo restrictions",
         },
       ],
       blockedUserAgents: "",
-    };
+      monitoredUserAgents: "",
+      monitoredIPAddresses: [],
+      userAgentDetails: [],
+    } satisfies Response;
   };
 });
 
