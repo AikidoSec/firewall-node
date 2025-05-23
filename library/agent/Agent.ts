@@ -25,6 +25,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { Packages } from "./Packages";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -38,6 +39,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private packages = new Packages();
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -296,11 +298,13 @@ export class Agent {
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
+      const packages = this.packages.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
+      this.packages.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -315,6 +319,7 @@ export class Agent {
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
           },
+          packages,
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
@@ -479,6 +484,10 @@ export class Agent {
       }
     }
 
+    // When our library is required, we are not intercepting `require` calls yet
+    // We need to add our library to the list of packages manually
+    this.onPackageRequired("@aikido/firewall", getAgentVersion());
+
     wrapInstalledPackages(wrappers, this.serverless);
 
     // Send startup event and wait for config
@@ -503,11 +512,19 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onPackageRequired(name: string, version: string) {
+    this.packages.addPackage({
+      name,
+      version,
+    });
+  }
+
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped
       return;
     }
+
     this.wrappedPackages[name] = details;
 
     if (details.version) {

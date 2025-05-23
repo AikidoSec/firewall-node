@@ -112,6 +112,11 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  packages: {
+    name: string;
+    version: string;
+    requiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
