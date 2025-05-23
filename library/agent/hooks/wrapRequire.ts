@@ -183,7 +183,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   const moduleName = pathInfo.name;
 
   // Get all versioned packages for the module name
-  const versionedPackages = packages
+  const versionedPackagesToInstrument = packages
     .filter((pkg) => pkg.getName() === moduleName)
     .map((pkg) => pkg.getVersions())
     .flat();
@@ -210,13 +210,13 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   agent?.onPackageRequired(moduleName, installedPkgVersion);
 
   // We don't want to patch this package because we do not have any hooks for it
-  if (!versionedPackages.length) {
+  if (!versionedPackagesToInstrument.length) {
     return originalExports;
   }
 
   // Check if the installed package version is supported (get all matching versioned packages)
-  const matchingVersionedPackages = versionedPackages.filter((pkg) =>
-    satisfiesVersion(pkg.getRange(), installedPkgVersion)
+  const matchingVersionedPackages = versionedPackagesToInstrument.filter(
+    (pkg) => satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
   // Report to the agent that the package was wrapped or not if it's version is not supported
