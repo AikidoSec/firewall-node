@@ -189,9 +189,14 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     .flat();
 
   // Read the package.json of the required package
-  const packageJson = originalRequire(
-    `${pathInfo.base}/package.json`
-  ) as PackageJson;
+  let packageJson: PackageJson | undefined;
+  try {
+    packageJson = originalRequire(
+      `${pathInfo.base}/package.json`
+    ) as PackageJson;
+  } catch (error) {
+    return originalExports;
+  }
 
   // Get the version of the installed package
   const installedPkgVersion = packageJson.version;
