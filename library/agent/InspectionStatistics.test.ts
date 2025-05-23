@@ -5,10 +5,7 @@ import { InspectionStatistics } from "./InspectionStatistics";
 t.test("it resets stats", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onInspectedCall({
     withoutContext: false,
@@ -30,7 +27,6 @@ t.test("it resets stats", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -77,12 +73,7 @@ t.test("it resets stats", async () => {
 t.test("it keeps track of amount of calls", async () => {
   const clock = FakeTimers.install();
 
-  const maxPerfSamplesInMemory = 50;
-  const maxCompressedStatsInMemory = 5;
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: maxPerfSamplesInMemory,
-    maxCompressedStatsInMemory: maxCompressedStatsInMemory,
-  });
+  const stats = new InspectionStatistics();
 
   t.same(stats.getStats(), {
     operations: {},
@@ -123,7 +114,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -163,7 +153,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 0,
         withoutContext: 1,
         total: 2,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -196,7 +185,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 3,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -236,7 +224,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 4,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -276,7 +263,6 @@ t.test("it keeps track of amount of calls", async () => {
         interceptorThrewError: 1,
         withoutContext: 1,
         total: 5,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -296,22 +282,8 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  t.same(stats.hasCompressedStats(), false);
-
   clock.tick(1000);
 
-  for (let i = 0; i < maxPerfSamplesInMemory; i++) {
-    stats.onInspectedCall({
-      withoutContext: false,
-      kind: "nosql_op",
-      operation: "mongodb.query",
-      blocked: false,
-      durationInMs: i * 0.1,
-      attackDetected: false,
-    });
-  }
-
-  t.same(stats.hasCompressedStats(), true);
   t.same(stats.getStats(), {
     operations: {
       "mongodb.query": {
@@ -322,20 +294,7 @@ t.test("it keeps track of amount of calls", async () => {
         },
         interceptorThrewError: 1,
         withoutContext: 1,
-        total: 55,
-        compressedTimings: [
-          {
-            averageInMS: 2.1719999999999997,
-            percentiles: {
-              "50": 2.1,
-              "75": 3.4000000000000004,
-              "90": 4.1000000000000005,
-              "95": 4.4,
-              "99": 4.6000000000000005,
-            },
-            compressedAt: 1000,
-          },
-        ],
+        total: 5,
       },
     },
     startedAt: 0,
@@ -355,42 +314,13 @@ t.test("it keeps track of amount of calls", async () => {
     },
   });
 
-  t.ok(
-    // @ts-expect-error Stats is private
-    stats.operations["mongodb.query"].durations.length < maxPerfSamplesInMemory
-  );
-
-  for (
-    let i = 0;
-    i < maxPerfSamplesInMemory * maxCompressedStatsInMemory * 2;
-    i++
-  ) {
-    stats.onInspectedCall({
-      withoutContext: false,
-      kind: "nosql_op",
-      operation: "mongodb.query",
-      blocked: false,
-      durationInMs: i * 0.1,
-      attackDetected: false,
-    });
-  }
-
-  t.same(
-    // @ts-expect-error Stats is private
-    stats.operations["mongodb.query"].compressedTimings.length,
-    maxCompressedStatsInMemory
-  );
-
   clock.uninstall();
 });
 
 t.test("it keeps track of requests", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   t.same(stats.getStats(), {
     operations: {},
@@ -502,60 +432,10 @@ t.test("it keeps track of requests", async () => {
   clock.uninstall();
 });
 
-t.test("it force compresses stats", async () => {
-  const clock = FakeTimers.install();
-
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
-
-  t.same(stats.getStats(), {
-    operations: {},
-    startedAt: 0,
-    requests: {
-      total: 0,
-      aborted: 0,
-      attacksDetected: {
-        total: 0,
-        blocked: 0,
-      },
-    },
-    userAgents: {
-      breakdown: {},
-    },
-    ipAddresses: {
-      breakdown: {},
-    },
-  });
-
-  stats.onRequest();
-
-  stats.onInspectedCall({
-    withoutContext: false,
-    kind: "nosql_op",
-    operation: "mongodb.query",
-    blocked: false,
-    durationInMs: 0.1,
-    attackDetected: false,
-  });
-
-  t.same(stats.hasCompressedStats(), false);
-
-  stats.forceCompress();
-
-  t.same(stats.hasCompressedStats(), true);
-
-  clock.uninstall();
-});
-
 t.test("it keeps track of aborted requests", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onAbortedRequest();
 
@@ -584,10 +464,7 @@ t.test("it keeps track of aborted requests", async () => {
 t.test("it keeps track of matched IPs and user agents", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onIPAddressMatches(["known_threat_actors/public_scanners"]);
   stats.onUserAgentMatches(["ai_data_scrapers"]);
@@ -650,10 +527,7 @@ t.test("it keeps track of matched IPs and user agents", async () => {
 t.test("it keeps track of multiple operations of the same kind", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   stats.onInspectedCall({
     withoutContext: false,
@@ -684,7 +558,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
       "mongodb.insert": {
         kind: "nosql_op",
@@ -695,7 +568,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 1,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -745,7 +617,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         interceptorThrewError: 0,
         withoutContext: 1,
         total: 2,
-        compressedTimings: [],
       },
       "mongodb.insert": {
         kind: "nosql_op",
@@ -756,7 +627,6 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         interceptorThrewError: 0,
         withoutContext: 0,
         total: 2,
-        compressedTimings: [],
       },
     },
     startedAt: 0,
@@ -782,10 +652,7 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
 t.test("it handles empty operation strings", async () => {
   const clock = FakeTimers.install();
 
-  const stats = new InspectionStatistics({
-    maxPerfSamplesInMemory: 50,
-    maxCompressedStatsInMemory: 5,
-  });
+  const stats = new InspectionStatistics();
 
   // Test onInspectedCall with empty operation
   stats.onInspectedCall({
