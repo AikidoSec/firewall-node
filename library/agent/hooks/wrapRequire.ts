@@ -194,7 +194,7 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     packageJson = originalRequire(
       `${pathInfo.base}/package.json`
     ) as PackageJson;
-  } catch (error) {
+  } catch {
     return originalExports;
   }
 

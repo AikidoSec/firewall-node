@@ -2,9 +2,6 @@ import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
-type Version = string;
-type PackageName = string;
-
 export type AgentInfo = {
   dryMode: boolean;
   hostname: string;
