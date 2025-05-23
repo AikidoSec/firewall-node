@@ -519,10 +519,6 @@ export class Agent {
     });
   }
 
-  getPackages() {
-    return this.packages;
-  }
-
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped
