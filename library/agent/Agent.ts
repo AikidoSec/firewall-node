@@ -54,10 +54,7 @@ export class Agent {
   );
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
-  private statistics = new InspectionStatistics({
-    maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 100,
-  });
+  private statistics = new InspectionStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
 
@@ -357,12 +354,10 @@ export class Agent {
       const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
-      const hasCompressedStats = this.statistics.hasCompressedStats();
       const canSendInitialStats =
         !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
       const shouldReportInitialStats =
-        !this.reportedInitialStats &&
-        (hasCompressedStats || canSendInitialStats);
+        !this.reportedInitialStats && canSendInitialStats;
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();
@@ -572,7 +567,6 @@ export class Agent {
   }
 
   async flushStats(timeoutInMS: number) {
-    this.statistics.forceCompress();
     await this.sendHeartbeat(timeoutInMS);
   }
 
