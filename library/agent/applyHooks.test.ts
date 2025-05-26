@@ -38,6 +38,7 @@ t.test(
 
     let modifyCalled = false;
     hooks.addGlobal("fetch", {
+      kind: "outgoing_http_op",
       modifyArgs: (args) => {
         modifyCalled = true;
         return args;
@@ -46,6 +47,7 @@ t.test(
 
     let inspectCalled = false;
     hooks.addGlobal("atob", {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         inspectCalled = true;
       },
@@ -53,6 +55,7 @@ t.test(
 
     // Unknown global
     hooks.addGlobal("unknown", {
+      kind: "outgoing_http_op",
       inspectArgs: (args) => {
         return;
       },
@@ -93,6 +96,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
   const hooks = new Hooks();
   hooks.addBuiltinModule("dns/promises").onRequire((exports, pkgInfo) => {
     wrapExport(exports, "lookup", pkgInfo, {
+      kind: "outgoing_http_op",
       inspectArgs: (args, agent) => {
         inspectionCalls.push({ args });
       },
@@ -159,6 +163,7 @@ t.test("it does not report attack if IP is allowed", async (t) => {
   const hooks = new Hooks();
   hooks.addBuiltinModule("os").onRequire((exports, pkgInfo) => {
     wrapExport(exports, "hostname", pkgInfo, {
+      kind: "fs_op",
       inspectArgs: (args, agent) => {
         return {
           operation: "os.hostname",

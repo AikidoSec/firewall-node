@@ -1,9 +1,10 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import { Endpoint } from "./Config";
 import { Context, updateContext } from "./Context";
-import { IPList } from "./api/fetchBlockedLists";
+import type { Endpoint, EndpointConfig } from "./Config";
+import { IPList, UserAgentDetails } from "./api/fetchBlockedLists";
+import { safeCreateRegExp } from "./safeCreateRegExp";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -11,8 +12,11 @@ export class ServiceConfig {
   private bypassedIPAddresses: IPMatcher | undefined;
   private nonGraphQLEndpoints: Endpoint[] = [];
   private graphqlFields: Endpoint[] = [];
-  private blockedIPAddresses: { blocklist: IPMatcher; description: string }[] =
-    [];
+  private blockedIPAddresses: {
+    blocklist: IPMatcher;
+    description: string;
+    key: string;
+  }[] = [];
   private blockedUserAgentRegex: RegExp | undefined;
   // If not empty, only ips in this list are allowed to access the service
   // e.g. for country allowlists
@@ -20,9 +24,12 @@ export class ServiceConfig {
     allowlist: IPMatcher;
     description: string;
   }[] = [];
+  private monitoredIPAddresses: { list: IPMatcher; key: string }[] = [];
+  private monitoredUserAgentRegex: RegExp | undefined;
+  private userAgentDetails: { pattern: RegExp; key: string }[] = [];
 
   constructor(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
@@ -37,13 +44,27 @@ export class ServiceConfig {
     this.setAllowedIPAddresses(allowedIPAddresses);
   }
 
-  private setEndpoints(endpoints: Endpoint[]) {
-    this.nonGraphQLEndpoints = endpoints.filter(
-      (endpoint) => !endpoint.graphql
-    );
-    this.graphqlFields = endpoints.filter((endpoint) =>
-      endpoint.graphql ? true : false
-    );
+  private setEndpoints(endpointConfigs: EndpointConfig[]) {
+    this.nonGraphQLEndpoints = [];
+    this.graphqlFields = [];
+
+    for (const endpoint of endpointConfigs) {
+      let allowedIPAddresses = undefined;
+      if (
+        Array.isArray(endpoint.allowedIPAddresses) &&
+        endpoint.allowedIPAddresses.length > 0
+      ) {
+        allowedIPAddresses = new IPMatcher(endpoint.allowedIPAddresses);
+      }
+
+      const endpointConfig = { ...endpoint, allowedIPAddresses };
+
+      if (endpoint.graphql) {
+        this.graphqlFields.push(endpointConfig);
+      } else {
+        this.nonGraphQLEndpoints.push(endpointConfig);
+      }
+    }
   }
 
   getEndpoints(context: Context): Endpoint[] {
@@ -119,6 +140,7 @@ export class ServiceConfig {
 
     for (const source of blockedIPAddresses) {
       this.blockedIPAddresses.push({
+        key: source.key,
         blocklist: new IPMatcher(source.ips),
         description: source.description,
       });
@@ -129,12 +151,25 @@ export class ServiceConfig {
     this.setBlockedIPAddresses(blockedIPAddresses);
   }
 
+  updateMonitoredIPAddresses(monitoredIPAddresses: IPList[]) {
+    this.monitoredIPAddresses = [];
+
+    for (const source of monitoredIPAddresses) {
+      this.monitoredIPAddresses.push({
+        key: source.key,
+        list: new IPMatcher(source.ips),
+      });
+    }
+  }
+
   updateBlockedUserAgents(blockedUserAgents: string) {
     if (!blockedUserAgents) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
       this.blockedUserAgentRegex = undefined;
       return;
     }
-    this.blockedUserAgentRegex = new RegExp(blockedUserAgents, "i");
+    this.blockedUserAgentRegex = safeCreateRegExp(blockedUserAgents, "i");
   }
 
   isUserAgentBlocked(ua: string): { blocked: boolean } {
@@ -142,6 +177,55 @@ export class ServiceConfig {
       return { blocked: this.blockedUserAgentRegex.test(ua) };
     }
     return { blocked: false };
+  }
+
+  updateUserAgentDetails(userAgentDetails: UserAgentDetails[]) {
+    this.userAgentDetails = [];
+    for (const detail of userAgentDetails) {
+      const regex = safeCreateRegExp(detail.pattern, "i");
+      if (regex) {
+        this.userAgentDetails.push({
+          key: detail.key,
+          pattern: regex,
+        });
+      }
+    }
+  }
+
+  updateMonitoredUserAgents(monitoredUserAgent: string) {
+    if (!monitoredUserAgent) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
+      this.monitoredUserAgentRegex = undefined;
+      return;
+    }
+
+    this.monitoredUserAgentRegex = safeCreateRegExp(monitoredUserAgent, "i");
+  }
+
+  isMonitoredUserAgent(ua: string): boolean {
+    if (this.monitoredUserAgentRegex) {
+      return this.monitoredUserAgentRegex.test(ua);
+    }
+    return false;
+  }
+
+  getMatchingUserAgentKeys(ua: string): string[] {
+    return this.userAgentDetails
+      .filter((details) => details.pattern.test(ua))
+      .map((details) => details.key);
+  }
+
+  getMatchingBlockedIPListKeys(ip: string): string[] {
+    return this.blockedIPAddresses
+      .filter((list) => list.blocklist.has(ip))
+      .map((list) => list.key);
+  }
+
+  getMatchingMonitoredIPListKeys(ip: string): string[] {
+    return this.monitoredIPAddresses
+      .filter((list) => list.list.has(ip))
+      .map((list) => list.key);
   }
 
   private setAllowedIPAddresses(ipAddresses: IPList[]) {
@@ -181,7 +265,7 @@ export class ServiceConfig {
   }
 
   updateConfig(
-    endpoints: Endpoint[],
+    endpoints: EndpointConfig[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],

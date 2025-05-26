@@ -19,7 +19,7 @@ const getContext = (): Context => {
   return {
     remoteAddress: "::1",
     method: "POST",
-    url: "http://localhost:4000",
+    url: "http://app.example.com:4000",
     query: {},
     headers: {},
     body: {

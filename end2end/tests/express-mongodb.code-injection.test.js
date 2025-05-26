@@ -38,19 +38,25 @@ t.test("it blocks in blocking mode", (t) => {
   timeout(2000)
     .then(() => {
       return Promise.all([
-        fetch("http://127.0.0.1:4000/hello/hans", {
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch(`http://127.0.0.1:4000/hello/${encodeURIComponent(`hans" //`)}`, {
-          signal: AbortSignal.timeout(5000),
-        }),
+        fetch(
+          `http://127.0.0.1:4000/where?title=${encodeURIComponent("Test'||'a")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
+        fetch(
+          `http://127.0.0.1:4000/where?title=${encodeURIComponent("Test' && sleep(10000); '")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
       ]);
     })
-    .then(([safeName, unsafeName]) => {
-      t.equal(safeName.status, 200);
-      t.equal(unsafeName.status, 500);
+    .then(([req1, req2]) => {
+      t.equal(req1.status, 500);
+      t.equal(req2.status, 500);
       t.match(stdout, /Starting agent/);
-      t.match(stdout, /Zen has blocked a JavaScript injection/);
+      t.match(stdout, /Zen has blocked a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error);
@@ -83,19 +89,25 @@ t.test("it does not block in dry mode", (t) => {
   timeout(2000)
     .then(() =>
       Promise.all([
-        fetch("http://127.0.0.1:4001/hello/hans", {
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch(`http://127.0.0.1:4001/hello/${encodeURIComponent(`hans" //`)}`, {
-          signal: AbortSignal.timeout(5000),
-        }),
+        fetch(
+          `http://127.0.0.1:4001/where?title=${encodeURIComponent("Test'||'a")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
+        fetch(
+          `http://127.0.0.1:4001/where?title=${encodeURIComponent("Test' && sleep(10000); '")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
       ])
     )
-    .then(([safeName, unsafeName]) => {
-      t.equal(safeName.status, 200);
-      t.equal(unsafeName.status, 200);
+    .then(([req1, req2]) => {
+      t.equal(req1.status, 200);
+      t.equal(req2.status, 200);
       t.match(stdout, /Starting agent/);
-      t.match(stdout, /Zen has detected a JavaScript injection/);
+      t.match(stdout, /Zen has detected a NoSQL injection/);
     })
     .catch((error) => {
       t.fail(error);
