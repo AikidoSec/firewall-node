@@ -304,6 +304,7 @@ t.test("matching endpoints are cached", async () => {
         maxRequests: 0,
         windowSizeInMS: 0,
       },
+      allowedIPAddresses: undefined,
     },
   ]);
 
@@ -317,6 +318,7 @@ t.test("matching endpoints are cached", async () => {
         maxRequests: 0,
         windowSizeInMS: 0,
       },
+      allowedIPAddresses: undefined,
     },
   ]);
   // Cached
@@ -330,6 +332,7 @@ t.test("matching endpoints are cached", async () => {
         maxRequests: 0,
         windowSizeInMS: 0,
       },
+      allowedIPAddresses: undefined,
     },
   ]);
 
