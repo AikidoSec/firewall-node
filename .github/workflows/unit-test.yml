@@ -1,4 +1,4 @@
-name: 🧪 Unit Tests
+name: 🧪 Unit tests
 on:
   push: {}
   workflow_call: {}
