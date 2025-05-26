@@ -56,7 +56,7 @@ export class Agent {
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 100,
+    maxCompressedStatsInMemory: 20, // per operation
   });
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
