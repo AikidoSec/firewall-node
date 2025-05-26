@@ -484,7 +484,7 @@ export class Agent {
 
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually
-    this.onPackageRequired("@aikido/firewall", getAgentVersion());
+    this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
     wrapInstalledPackages(wrappers, this.serverless);
 
