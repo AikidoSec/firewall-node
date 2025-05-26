@@ -3,7 +3,10 @@ import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { detectSQLInjection } from "./detectSQLInjection";
+import {
+  detectSQLInjection,
+  SQLInjectionDetectionResult,
+} from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
 
 /**
@@ -28,16 +31,28 @@ export function checkContextForSqlInjection({
     }
 
     for (const str of userInput) {
-      if (detectSQLInjection(sql, str, dialect)) {
+      const result = detectSQLInjection(sql, str, dialect);
+
+      if (
+        result === SQLInjectionDetectionResult.INJECTION_DETECTED ||
+        result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE
+      ) {
+        const metadata: Record<string, string> = {
+          sql: sql,
+          dialect: dialect.getHumanReadableName(),
+        };
+
+        if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
+          // eslint-disable-next-line camelcase
+          metadata.failed_to_tokenize = "true";
+        }
+
         return {
           operation: operation,
           kind: "sql_injection",
           source: source,
           pathsToPayload: getPathsToPayload(str, context[source]),
-          metadata: {
-            sql: sql,
-            dialect: dialect.getHumanReadableName(),
-          },
+          metadata: metadata,
           payload: str,
         };
       }

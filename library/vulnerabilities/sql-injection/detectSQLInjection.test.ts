@@ -10,7 +10,9 @@ import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
 t.test("It ignores invalid queries", async () => {
-  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
+  isTokenizeError("SELECT * FROM users WHERE id = 'users\\'", "users\\", [
+    new SQLDialectMySQL(),
+  ]);
 });
 
 t.test("It ignores safely escaped backslash", async () => {
@@ -41,11 +43,11 @@ t.test("user input inside IN (...)", async () => {
 });
 
 t.test("It checks whether the string is safely escaped", async () => {
-  isNotSqlInjection(
+  isTokenizeError(
     `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
     "I'm writting you"
   );
-  isNotSqlInjection(
+  isTokenizeError(
     `SELECT * FROM comments WHERE comment = "I"m writting you"`,
     'I"m writting you'
   );
@@ -336,7 +338,7 @@ function isSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      true,
+      1,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -356,7 +358,27 @@ function isNotSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      false,
+      0,
+      `${sql} (${dialect.constructor.name})`
+    );
+  }
+}
+
+function isTokenizeError(
+  sql: string,
+  input: string,
+  dialects = [
+    new SQLDialectGeneric(),
+    new SQLDialectMySQL(),
+    new SQLDialectPostgres(),
+    new SQLDialectSQLite(),
+    new SQLDialectClickHouse(),
+  ]
+) {
+  for (const dialect of dialects) {
+    t.same(
+      detectSQLInjection(sql, input, dialect),
+      3,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -368,4 +390,13 @@ t.test("get human readable name", async () => {
   t.same(new SQLDialectPostgres().getHumanReadableName(), "PostgreSQL");
   t.same(new SQLDialectSQLite().getHumanReadableName(), "SQLite");
   t.same(new SQLDialectClickHouse().getHumanReadableName(), "ClickHouse");
+});
+
+t.test("it returns 3 if tokenize fails", async () => {
+  const result = detectSQLInjection(
+    "SELECT * FROM users WHERE id = '1",
+    "id = '1",
+    new SQLDialectGeneric()
+  );
+  t.same(result, 3);
 });
