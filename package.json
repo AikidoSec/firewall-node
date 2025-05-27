@@ -13,6 +13,7 @@
     "watch": "cd library && npm run build:watch",
     "test": "cd library && npm run test",
     "test:ci": "cd library && npm run test:ci",
+    "test:new": "cd library && npm run test:new",
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
     "format": "prettier --write .",

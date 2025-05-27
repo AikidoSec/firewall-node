@@ -15,6 +15,10 @@ if (process.env.CI) {
   args += " --coverage-report=lcov";
 }
 
+if (process.argv.includes("--test-new-instrumentation")) {
+  process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
+}
+
 execSync(`tap ${args}`, {
   stdio: "inherit",
   env: {
