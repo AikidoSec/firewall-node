@@ -43,6 +43,7 @@ export class Hono implements Wrapper {
       {
         nodeType: "MethodDefinition",
         name: "addRoute",
+        operationKind: undefined,
         modifyArgs: (args) => {
           return this.wrapArgs(args);
         },

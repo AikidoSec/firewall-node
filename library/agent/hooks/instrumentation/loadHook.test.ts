@@ -41,6 +41,7 @@ t.test(
         {
           nodeType: "MethodDefinition",
           name: "addRoute",
+          operationKind: undefined,
           inspectArgs: (args, agent, subject) => {
             esmPkgInspectArgs.push(args);
 
@@ -86,6 +87,7 @@ t.test(
           {
             nodeType: "MethodDefinition",
             name: "bar",
+            operationKind: undefined,
             inspectArgs: (args) => {
               t.fail("inspectArgs should not be called");
             },
@@ -94,6 +96,9 @@ t.test(
       });
 
     applyHooks(hooks, true);
+
+    // Disable unit test path rewrite to throw error
+    process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "false";
 
     try {
       require("hono") as typeof import("hono");
@@ -124,7 +129,7 @@ t.test(
       }
     }
 
-    process.env.AIKIDO_UNIT_TEST = "true";
+    process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
 
     t.same(httpOnRequireCount, 0);
 
@@ -183,7 +188,5 @@ t.test(
     // Package with non-matching version
     const fastify = require("fastify") as typeof import("fastify");
     t.equal(typeof fastify, "function");
-
-    process.env.AIKIDO_UNIT_TEST = "false";
   }
 );

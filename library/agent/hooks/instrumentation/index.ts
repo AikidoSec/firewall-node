@@ -2,8 +2,6 @@ import { onModuleLoad } from "./loadHook";
 import * as mod from "node:module";
 import type { RegisterHookFunction } from "./types";
 import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
-import { join } from "node:path";
-import { envToBool } from "../../../helpers/envToBool";
 
 let hooksRegistered = false;
 
@@ -26,19 +24,6 @@ export function registerNodeHooks() {
       return onModuleLoad(url, context, result);
     },
   });
-
-  // DEV rewrite for unit tests
-  if (envToBool(process.env.AIKIDO_TEST_NEW_INSTRUMENTATION)) {
-    (mod.registerHooks as RegisterHookFunction)({
-      resolve(specifier, context, nextResolve) {
-        if (specifier === "@aikidosec/firewall/instrument/internals") {
-          specifier = join(__dirname, "injectedFunctions.ts");
-        }
-
-        return nextResolve(specifier, context);
-      },
-    });
-  }
 
   patchProcessGetBuiltinModule();
 }

@@ -16,7 +16,7 @@ use super::{
 };
 
 pub fn transform_code_str(
-    pkg_name: &str,
+    _pkg_name: &str,
     pkg_version: &str,
     code: &str,
     instructions_json: &str,
@@ -49,7 +49,6 @@ pub fn transform_code_str(
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
-        pkg_name: &pkg_name,
         pkg_version: &pkg_version,
     };
 

@@ -13,7 +13,6 @@ use super::instructions::FileInstructions;
 pub struct Transformer<'a> {
     pub allocator: &'a Allocator,
     pub file_instructions: &'a FileInstructions,
-    pub pkg_name: &'a str,
     pub pkg_version: &'a str,
 }
 
@@ -70,9 +69,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             insert_inspect_args(
                 self.allocator,
                 &instruction.identifier,
-                self.pkg_name,
                 self.pkg_version,
-                &instruction.name,
                 body,
             );
         }
@@ -146,9 +143,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             insert_inspect_args(
                 self.allocator,
                 &instruction.identifier,
-                self.pkg_name,
                 self.pkg_version,
-                &instruction.name,
                 body,
             );
         }

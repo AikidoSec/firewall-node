@@ -1,16 +1,13 @@
 import { getInstance } from "../../AgentSingleton";
 import { getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
-import { WrapPackageInfo } from "../WrapPackageInfo";
-import { getBuiltinInterceptors, getPackageCallbacks } from "./instructions";
+import { getPackageCallbackInfo } from "./instructions";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 
 export function __instrumentInspectArgs(
   id: string,
   args: unknown[],
-  pkgName: string,
   pkgVersion: string,
-  methodName: string,
   subject: unknown // "This" of the method being called
 ) {
   const agent = getInstance();
@@ -20,57 +17,28 @@ export function __instrumentInspectArgs(
 
   const context = getContext();
 
-  const cbFuncs = getPackageCallbacks(id);
+  const cbInfo = getPackageCallbackInfo(id);
+  if (!cbInfo) {
+    agent.onFailedToWrapMethod(id, id, new Error("No callback info found"));
+    return;
+  }
 
-  if (typeof cbFuncs.inspectArgs === "function") {
+  if (typeof cbInfo.funcs.inspectArgs === "function") {
     inspectArgs.call(
       subject,
       args,
-      cbFuncs.inspectArgs,
+      cbInfo.funcs.inspectArgs,
       context,
       agent,
       {
-        name: pkgName,
+        name: cbInfo.pkgName,
         version: pkgVersion,
         type: "external",
       },
-      methodName
+      cbInfo.methodName,
+      cbInfo.operationKind
     );
   }
-}
-
-export function __wrapBuiltinExports(id: string, exports: unknown): unknown {
-  const agent = getInstance();
-  if (!agent) {
-    return exports;
-  }
-
-  const interceptors = getBuiltinInterceptors(id);
-
-  if (interceptors.length === 0) {
-    return exports;
-  }
-
-  const pkgInfo: WrapPackageInfo = {
-    name: id,
-    type: "builtin",
-  };
-
-  for (const interceptor of interceptors) {
-    try {
-      const returnVal = interceptor(exports, pkgInfo);
-      // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
-        exports = returnVal;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        getInstance()?.onFailedToWrapModule(pkgInfo.name, error);
-      }
-    }
-  }
-
-  return exports;
 }
 
 export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
@@ -84,10 +52,10 @@ export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
   }
 
   try {
-    const cbFuncs = getPackageCallbacks(id);
+    const cbInfo = getPackageCallbackInfo(id);
 
-    if (typeof cbFuncs.modifyArgs === "function") {
-      const newArgs = cbFuncs.modifyArgs(args, agent);
+    if (cbInfo && typeof cbInfo.funcs.modifyArgs === "function") {
+      const newArgs = cbInfo.funcs.modifyArgs(args, agent);
       // Only return the new arguments if they are an array
       if (Array.isArray(newArgs)) {
         return newArgs;

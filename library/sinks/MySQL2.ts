@@ -119,11 +119,13 @@ export class MySQL2 implements Wrapper {
             nodeType: "MethodDefinition",
             name: "query",
             inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+            operationKind: "sql_op",
           },
           {
             nodeType: "MethodDefinition",
             name: "execute",
             inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+            operationKind: "sql_op",
           },
         ],
       });

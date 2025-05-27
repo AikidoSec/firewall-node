@@ -1,7 +1,7 @@
 import * as t from "tap";
 import {
   getBuiltinInterceptors,
-  getPackageCallbacks,
+  getPackageCallbackInfo,
   getPackageFileInstrumentationInstructions,
   setBuiltinsToInstrument,
   setPackagesToInstrument,
@@ -14,9 +14,9 @@ import { BuiltinModule } from "../BuiltinModule";
 import {
   __instrumentInspectArgs,
   __instrumentModifyArgs,
-  __wrapBuiltinExports,
 } from "./injectedFunctions";
 import { createTestAgent } from "../../../helpers/createTestAgent";
+import { wrapBuiltinExports } from "./wrapBuiltinExports";
 
 t.test("it works", async (t) => {
   let pkgInspectArgsCalled = false;
@@ -29,6 +29,7 @@ t.test("it works", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "baz",
+        operationKind: "sql_op",
         inspectArgs: () => {
           pkgInspectArgsCalled = true;
         },
@@ -54,7 +55,7 @@ t.test("it works", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "baz",
-        identifier: "foo.bar.js.baz.^1.0.0",
+        identifier: "foo.bar.js.baz.MethodDefinition.^1.0.0",
         inspectArgs: true,
         modifyArgs: false,
         modifyReturnValue: false,
@@ -79,23 +80,26 @@ t.test("it works", async (t) => {
     undefined
   );
 
-  t.match(getPackageCallbacks("foo.bar.js.baz.^1.0.0"), {
-    modifyArgs: undefined,
-    modifyReturnValue: undefined,
+  t.match(getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0"), {
+    pkgName: "foo",
+    methodName: "baz",
+    operationKind: "sql_op",
+    funcs: {
+      modifyArgs: undefined,
+      modifyReturnValue: undefined,
+    },
   });
   t.equal(
-    typeof getPackageCallbacks("foo.bar.js.baz.^1.0.0").inspectArgs,
+    typeof getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!
+      .funcs.inspectArgs,
     "function"
   );
-  t.same(getPackageCallbacks("foo.bar.js.baz.^1.0.1"), {});
-  t.same(getPackageCallbacks(""), {});
+  t.same(getPackageCallbackInfo("foo.bar.js.baz.^1.0.1"), undefined);
+  t.same(getPackageCallbackInfo(""), undefined);
 
   t.equal(pkgInspectArgsCalled, false);
-  getPackageCallbacks("foo.bar.js.baz.^1.0.0").inspectArgs!(
-    [],
-    undefined as any,
-    undefined
-  );
+  getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!.funcs
+    .inspectArgs!([], undefined as any, undefined);
   t.equal(pkgInspectArgsCalled, true);
 
   t.equal(shouldPatchBuiltin("http"), true);
@@ -109,7 +113,7 @@ t.test("it works", async (t) => {
   setPackagesToInstrument([]);
   setBuiltinsToInstrument([]);
 
-  t.same(getPackageCallbacks("foo.bar.js.baz.^1.0.0"), {});
+  t.same(getPackageCallbackInfo("foo.bar.js.baz.^1.0.0"), undefined);
   t.equal(
     getPackageFileInstrumentationInstructions("foo", "1.1.2", "bar.js"),
     undefined
@@ -131,6 +135,7 @@ t.test("it works using injected functions", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "baz",
+        operationKind: undefined,
         inspectArgs: () => {
           pkgInspectArgsCalled = true;
         },
@@ -153,60 +158,54 @@ t.test("it works using injected functions", async (t) => {
 
   t.equal(pkgInspectArgsCalled, false);
   __instrumentInspectArgs(
-    "foo.bar.js.bazABCDEF.^1.0.0",
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
     [],
-    "foo",
     "1.0.0",
-    "baz",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
+  __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   __instrumentInspectArgs(
-    "foo.bar.js.baz.^1.0.0",
+    "foo.bar.js.baz.MethodDefinition.^1.0.0",
     [],
-    "foo",
     "1.0.0",
-    "baz",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.baz.^1.0.0", []);
+  __instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", []);
   // No agent yet
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
 
   // Without agent
-  t.same(__wrapBuiltinExports("http", { a: 1 }), { a: 1 });
+  t.same(wrapBuiltinExports("http", { a: 1 }), { a: 1 });
 
   createTestAgent();
 
   __instrumentInspectArgs(
-    "foo.bar.js.bazABCDEF.^1.0.0",
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
     [],
-    "foo",
     "1.0.0",
-    "bazABCDEF",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.bazABCDEF.^1.0.0", []);
+  __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
 
   __instrumentInspectArgs(
-    "foo.bar.js.baz.^1.0.0",
+    "foo.bar.js.baz.MethodDefinition.^1.0.0",
     [],
-    "foo",
     "1.0.0",
-    "baz",
     this
   );
   t.equal(pkgInspectArgsCalled, true);
-  t.same(__instrumentModifyArgs("foo.bar.js.baz.^1.0.0", []), [42]);
+  t.same(__instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", []), [
+    42,
+  ]);
   t.equal(pkgModifyArgsCalled, true);
 
   t.equal(builtinOnRequireCalled, false);
-  const wrapped = __wrapBuiltinExports("http", {}) as any;
+  const wrapped = wrapBuiltinExports("http", {}) as any;
   t.equal(builtinOnRequireCalled, true);
   t.equal(wrapped.test, 42);
 });
@@ -219,6 +218,7 @@ t.test("modifyArgs always returns a array", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "abc",
+        operationKind: undefined,
         modifyArgs: (args) => {
           return args;
         },
@@ -237,16 +237,28 @@ t.test("modifyArgs always returns a array", async (t) => {
   setPackagesToInstrument([pkg]);
   createTestAgent();
 
-  t.same(__instrumentModifyArgs("foo.xyz.js.abc.^1.0.0", [1, 2, 3]), [1, 2, 3]);
-  // @ts-expect-error Testing invalid input
-  t.same(__instrumentModifyArgs("foo.xyz.js.abc.^1.0.0", undefined), []);
+  t.same(
+    __instrumentModifyArgs("foo.xyz.js.abc.MethodDefinition.^1.0.0", [1, 2, 3]),
+    [1, 2, 3]
+  );
+  t.same(
+    // @ts-expect-error Testing invalid input
+    __instrumentModifyArgs("foo.xyz.js.abc.MethodDefinition.^1.0.0", undefined),
+    []
+  );
   t.same(
     __instrumentModifyArgs("foo.xyz.js.doesnotexist", [1, 2, 3]),
     [1, 2, 3]
   );
-  t.same(__instrumentModifyArgs("foo.xyz.js.xyz.^1.0.0", [1, 2, 3]), [1, 2, 3]);
-  // @ts-expect-error Testing invalid input
-  t.same(__instrumentModifyArgs("foo.xyz.js.xyz.^1.0.0", undefined), []);
+  t.same(
+    __instrumentModifyArgs("foo.xyz.js.xyz.MethodDefinition.^1.0.0", [1, 2, 3]),
+    [1, 2, 3]
+  );
+  t.same(
+    // @ts-expect-error Testing invalid input
+    __instrumentModifyArgs("foo.xyz.js.xyz.MethodDefinition.^1.0.0", undefined),
+    []
+  );
 
   // Return default export
   const builtin2 = new BuiltinModule("http2");
@@ -256,7 +268,7 @@ t.test("modifyArgs always returns a array", async (t) => {
 
   setBuiltinsToInstrument([builtin2]);
 
-  t.equal(__wrapBuiltinExports("http2", {}), "test");
+  t.equal(wrapBuiltinExports("http2", {}), "test");
 
   // Throw error
   const builtin3 = new BuiltinModule("assert");
@@ -266,7 +278,7 @@ t.test("modifyArgs always returns a array", async (t) => {
 
   setBuiltinsToInstrument([builtin3]);
 
-  __wrapBuiltinExports("assert", {});
+  wrapBuiltinExports("assert", {});
 
   // Non existing package
   t.same(shouldPatchFile("abc123456", "foo.js"), false);
@@ -280,6 +292,7 @@ t.test("all injected functions handle errors", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "abc",
+        operationKind: "sql_op",
         inspectArgs: () => {
           throw new Error("test");
         },
@@ -296,14 +309,7 @@ t.test("all injected functions handle errors", async (t) => {
   setPackagesToInstrument([pkg]);
   createTestAgent();
 
-  __instrumentInspectArgs(
-    "foo.dist/test.mjs.abc.^1.0.0",
-    [],
-    "foo",
-    "1.0.0",
-    "abc",
-    this
-  );
+  __instrumentInspectArgs("foo.dist/test.mjs.abc.^1.0.0", [], "1.0.0", this);
   __instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []);
   t.same(__instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []), []);
 });

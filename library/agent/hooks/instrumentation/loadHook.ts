@@ -4,7 +4,6 @@ import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
 import { transformCode } from "./codeTransformation";
-import { generateBuildinShim } from "./builtinShim";
 import {
   getPackageFileInstrumentationInstructions,
   shouldPatchBuiltin,
@@ -13,6 +12,11 @@ import {
 } from "./instructions";
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
 import { getInstance } from "../../AgentSingleton";
+import { syncBuiltinESMExports } from "module";
+import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
+import { wrapBuiltinExports } from "./wrapBuiltinExports";
+
+const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
 
 export function onModuleLoad(
   path: string,
@@ -37,7 +41,7 @@ export function onModuleLoad(
 
     // For Node.js builtin modules
     if (isBuiltin) {
-      return patchBuiltin(path, previousLoadResult, context);
+      return patchBuiltin(path, previousLoadResult);
     }
 
     return patchPackage(path, previousLoadResult);
@@ -129,8 +133,7 @@ function patchPackage(
 
 function patchBuiltin(
   builtinName: string,
-  previousLoadResult: ReturnType<LoadFunction>,
-  context: Parameters<LoadFunction>[1]
+  previousLoadResult: ReturnType<LoadFunction>
 ) {
   // Todo test if used with import-in-the-middle at the same time
 
@@ -141,25 +144,28 @@ function patchBuiltin(
     return previousLoadResult;
   }
 
-  const isCJSRequire =
-    (Array.isArray(context.conditions) &&
-      context.conditions.includes("require")) ||
-    ("has" in context.conditions &&
-      typeof context.conditions.has === "function" &&
-      context.conditions.has("require"));
-
-  const shim = generateBuildinShim(
-    builtinName,
-    builtinNameWithoutPrefix,
-    isCJSRequire
-  );
-  if (!shim) {
+  let orig = getBuiltinModuleWithoutPatching(builtinNameWithoutPrefix) as
+    | (object & { [builtinPatchedSymbol]?: boolean })
+    | undefined;
+  if (!orig) {
     return previousLoadResult;
   }
 
-  return {
-    format: "commonjs",
-    shortCircuit: previousLoadResult.shortCircuit,
-    source: shim,
-  };
+  if (orig[builtinPatchedSymbol]) {
+    // The builtin module has already been patched, so we don't need to do it again
+    return previousLoadResult;
+  }
+
+  const newExports = wrapBuiltinExports(builtinNameWithoutPrefix, orig);
+  if (!newExports) {
+    return previousLoadResult;
+  }
+
+  orig = newExports;
+  syncBuiltinESMExports();
+
+  // Mark the builtin as patched to avoid double patching
+  orig[builtinPatchedSymbol] = true;
+
+  return previousLoadResult;
 }

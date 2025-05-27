@@ -22,14 +22,12 @@ pub fn insert_single_statement_into_func<'a>(
 pub fn insert_inspect_args<'a>(
     allocator: &'a Allocator,
     identifier: &str,
-    pkg_name: &'a str,
     pkg_version: &'a str,
-    instruction_name: &str,
     body: &mut Box<'a, FunctionBody<'a>>,
 ) {
     let source_text: &'a str = allocator.alloc_str(&format!(
-        "__instrumentInspectArgs('{}', arguments, '{}', '{}', '{}', this);",
-        identifier, pkg_name, pkg_version, instruction_name
+        "__instrumentInspectArgs('{}', arguments, '{}', this);",
+        identifier, pkg_version
     ));
 
     insert_single_statement_into_func(allocator, body, 0, source_text);

@@ -1,5 +1,5 @@
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
-import { __wrapBuiltinExports } from "./injectedFunctions";
+import { wrapBuiltinExports } from "./wrapBuiltinExports";
 
 let originalProcessGetBuiltinModule:
   | NodeJS.Process["getBuiltinModule"]
@@ -22,7 +22,7 @@ function patchedGetBuiltinModule(this: NodeJS.Process, id: string) {
 
   const builtinNameWithoutPrefix = removeNodePrefix(id);
 
-  return __wrapBuiltinExports(builtinNameWithoutPrefix, originalExports);
+  return wrapBuiltinExports(builtinNameWithoutPrefix, originalExports);
 }
 
 /**

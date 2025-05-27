@@ -5,6 +5,15 @@ const compareCodeStrings = (code1: string, code2: string) => {
   return code1.replace(/\s+/g, "") === code2.replace(/\s+/g, "");
 };
 
+t.before(() => {
+  // Skip replacing the import path for unit tests from @aikidosec/firewall/instrument/internals to the local path
+  process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "false";
+});
+
+t.after(() => {
+  process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
+});
+
 t.test("add inspectArgs to method definition (ESM)", async (t) => {
   const result = transformCode(
     "testpkg",
@@ -32,7 +41,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -54,7 +63,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
             console.log("test");
         }
     }`
@@ -90,7 +99,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -112,7 +121,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
               this.testFunction(testValue);
           }
           testFunction(arg1) {
-              __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
+              __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
               console.log("test");
           }
       }`
@@ -148,7 +157,7 @@ t.test("wrong function name", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunctionABC",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -205,7 +214,7 @@ t.test("typescript code", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunctionABC",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -263,7 +272,8 @@ t.test("typescript code in a js file", async (t) => {
           {
             nodeType: "MethodDefinition",
             name: "testFunctionABC",
-            identifier: "testmodule.test.js.testFunction.v1.0.0",
+            identifier:
+              "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
@@ -293,7 +303,7 @@ t.test("empty code", async (t) => {
       {
         nodeType: "MethodDefinition",
         name: "testFunctionABC",
-        identifier: "testmodule.test.js.testFunction.v1.0.0",
+        identifier: "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
         inspectArgs: true,
         modifyArgs: false,
         modifyReturnValue: false,
@@ -338,7 +348,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
@@ -360,7 +370,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
               this.testFunction(testValue);
           }
           testFunction(arg1) {
-              [arg1] = __instrumentModifyArgs("testmodule.test.js.testFunction.v1.0.0", [arg1]);
+              [arg1] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [arg1]);
               console.log("test");
           }
       }`
@@ -398,7 +408,7 @@ t.test(
           {
             nodeType: "MethodDefinition",
             name: "testFunction2",
-            identifier: "testpkg.test.js.testFunction2.v1.0.0",
+            identifier: "testpkg.test.js.testFunction2.MethodDefinition.v1.0.0",
             inspectArgs: true,
             modifyArgs: true,
             modifyReturnValue: false,
@@ -420,8 +430,8 @@ t.test(
                 this.testFunction2(testValue);
             }
             testFunction2(arg1) {
-                __instrumentInspectArgs("testpkg.test.js.testFunction2.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction2", this);
-                [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.v1.0.0", [arg1]);
+                __instrumentInspectArgs("testpkg.test.js.testFunction2.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+                [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.MethodDefinition.v1.0.0", [arg1]);
                 console.log("test");
             }
         }`
@@ -453,7 +463,7 @@ t.test("modify rest parameter args", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
@@ -499,7 +509,7 @@ t.test("modify rest parameter args", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.v1.0.0",
+          identifier: "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,
@@ -518,7 +528,7 @@ t.test("modify rest parameter args", async (t) => {
                 this.testFunction(testValue);
             }
             testFunction(abc, ...args) {
-                [abc] = __instrumentModifyArgs("testmodule.test.js.testFunction.v1.0.0", [abc]);
+                [abc] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [abc]);
                 console.log("test");
             }
         }`
@@ -554,7 +564,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -576,7 +586,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
             console.log("test");
         }
     }`
@@ -610,7 +620,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testpkg.test.js.testFunction.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
@@ -632,7 +642,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             this.testFunction(testValue);
         }
         testFunction(arg1) {
-            __instrumentInspectArgs("testpkg.test.js.testFunction.v1.0.0", arguments, "testpkg", "1.0.0", "testFunction", this);
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
             console.log("test");
         }
     }`
@@ -662,7 +672,8 @@ t.test(
           {
             nodeType: "FunctionAssignment",
             name: "app.use",
-            identifier: "express.application.js.app.use.v1.0.0",
+            identifier:
+              "express.application.js.app.use.MethodDefinition.v1.0.0",
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
@@ -678,7 +689,7 @@ t.test(
         `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         app.use = function (fn) {
-            __instrumentInspectArgs("express.application.js.app.use.v1.0.0", arguments, "express", "1.0.0", "app.use", this);
+            __instrumentInspectArgs("express.application.js.app.use.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
             console.log("test");
         };`
       ),
@@ -708,7 +719,8 @@ t.test(
           {
             nodeType: "FunctionAssignment",
             name: "app.use",
-            identifier: "express.application.js.app.use.v1.0.0",
+            identifier:
+              "express.application.js.app.use.MethodDefinition.v1.0.0",
             inspectArgs: false,
             modifyArgs: true,
             modifyReturnValue: false,
@@ -724,7 +736,7 @@ t.test(
         `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         app.use = function (fn) {
-            [fn] = __instrumentModifyArgs("express.application.js.app.use.v1.0.0", [fn]);
+            [fn] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn]);
             console.log("test");
         };`
       ),
@@ -755,7 +767,8 @@ t.test(
           {
             nodeType: "FunctionAssignment",
             name: "app[key]",
-            identifier: "express.application.js.app[key].v1.0.0",
+            identifier:
+              "express.application.js.app[key].MethodDefinition.v1.0.0",
             inspectArgs: true,
             modifyArgs: false,
             modifyReturnValue: false,
@@ -772,7 +785,7 @@ t.test(
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
-            __instrumentInspectArgs("express.application.js.app[key].v1.0.0", arguments, "express", "1.0.0", "app[key]", this);
+            __instrumentInspectArgs("express.application.js.app[key].MethodDefinition.v1.0.0", arguments, "1.0.0", this);
             console.log("test");
         };`
       ),
@@ -803,7 +816,8 @@ t.test(
           {
             nodeType: "FunctionAssignment",
             name: "app[key]",
-            identifier: "express.application.js.app[key].v1.0.0",
+            identifier:
+              "express.application.js.app[key].MethodDefinition.v1.0.0",
             inspectArgs: false,
             modifyArgs: true,
             modifyReturnValue: false,
@@ -820,7 +834,7 @@ t.test(
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
-          [fn] = __instrumentModifyArgs("express.application.js.app[key].v1.0.0", [fn]);
+          [fn] = __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", [fn]);
           console.log("test");
         };`
       ),
@@ -851,7 +865,8 @@ t.test(
           {
             nodeType: "FunctionAssignment",
             name: "app[key]",
-            identifier: "express.application.js.app[key].v1.0.0",
+            identifier:
+              "express.application.js.app[key].MethodDefinition.v1.0.0",
             inspectArgs: false,
             modifyArgs: true,
             modifyReturnValue: false,
@@ -868,7 +883,7 @@ t.test(
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
-          Object.assign(arguments, __instrumentModifyArgs("express.application.js.app[key].v1.0.0", Array.from(arguments)));
+          Object.assign(arguments, __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", Array.from(arguments)));
           console.log("test");
         };`
       ),
@@ -897,7 +912,7 @@ t.test("does not modify code if function name is not found", async (t) => {
         {
           nodeType: "FunctionAssignment",
           name: "app[key]",
-          identifier: "express.application.js.app[key].v1.0.0",
+          identifier: "express.application.js.app[key].MethodDefinition.v1.0.0",
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,

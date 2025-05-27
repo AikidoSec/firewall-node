@@ -1,4 +1,5 @@
-import {
+import type { OperationKind } from "../../api/Event";
+import type {
   InspectArgsInterceptor,
   ModifyArgsInterceptor,
   ModifyReturnValueInterceptor,
@@ -59,9 +60,20 @@ export type IntereptorFunctionsObj = {
   modifyReturnValue?: ModifyReturnValueInterceptor;
 };
 
+export type IntereptorCallbackInfoObj = {
+  pkgName: string;
+  methodName: string;
+  operationKind: OperationKind | undefined;
+  funcs: IntereptorFunctionsObj;
+};
+
 export type PackageFunctionInstrumentationInstruction = {
   nodeType: "MethodDefinition" | "FunctionAssignment";
   name: string;
+  /**
+   * Used for stats reporting to core, e.g. sql_op
+   */
+  operationKind: OperationKind | undefined;
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;

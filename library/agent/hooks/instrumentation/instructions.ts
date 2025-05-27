@@ -1,7 +1,7 @@
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
-import {
-  IntereptorFunctionsObj,
+import type {
+  IntereptorCallbackInfoObj,
   PackageFileInstrumentationInstructionJSON,
 } from "./types";
 import { satisfiesVersion } from "../../../helpers/satisfiesVersion";
@@ -13,14 +13,14 @@ let packages = new Map<string, PackageFileInstrumentationInstructionJSON[]>();
 // Stores the callbacks for the instrumented functions of builtin modules
 // Identifier for builtin is: moduleName.functionName
 let builtinRequireInterceptors = new Map<string, RequireInterceptor[]>();
-// Stores the callbacks for the instrumented functions of package files
-// Identifier for package file is: packageName.relativePath.functionName.matchingVersion
-let packageFileCallbacks = new Map<string, IntereptorFunctionsObj>();
+// Stores the callback functions and necessary information for the instrumented functions of instrumented function
+// Identifier for the function is: packageName.relativePath.functionName.nodeType.matchingVersion
+let packageCallbackInfo = new Map<string, IntereptorCallbackInfoObj>();
 
 export function setPackagesToInstrument(_packages: Package[]) {
   // Clear the previous packages
   packages = new Map();
-  packageFileCallbacks = new Map();
+  packageCallbackInfo = new Map();
 
   for (const pkg of _packages) {
     const packageInstructions = pkg
@@ -33,12 +33,17 @@ export function setPackagesToInstrument(_packages: Package[]) {
               path: file.path,
               versionRange: versionedPackage.getRange(),
               functions: file.functions.map((func) => {
-                const identifier = `${pkg.getName()}.${file.path}.${func.name}.${versionedPackage.getRange()}`;
+                const identifier = `${pkg.getName()}.${file.path}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
 
-                packageFileCallbacks.set(identifier, {
-                  inspectArgs: func.inspectArgs,
-                  modifyArgs: func.modifyArgs,
-                  modifyReturnValue: func.modifyReturnValue,
+                packageCallbackInfo.set(identifier, {
+                  pkgName: pkg.getName(),
+                  methodName: func.name,
+                  operationKind: func.operationKind,
+                  funcs: {
+                    inspectArgs: func.inspectArgs,
+                    modifyArgs: func.modifyArgs,
+                    modifyReturnValue: func.modifyReturnValue,
+                  },
                 });
 
                 return {
@@ -107,10 +112,10 @@ export function shouldPatchFile(
   return instructions.some((f) => f.path === filePath);
 }
 
-export function getPackageCallbacks(
+export function getPackageCallbackInfo(
   identifier: string
-): IntereptorFunctionsObj {
-  return packageFileCallbacks.get(identifier) || {};
+): IntereptorCallbackInfoObj | undefined {
+  return packageCallbackInfo.get(identifier);
 }
 
 export function getBuiltinInterceptors(name: string): RequireInterceptor[] {
