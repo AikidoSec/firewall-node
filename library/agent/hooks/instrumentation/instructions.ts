@@ -17,12 +17,22 @@ let builtinRequireInterceptors = new Map<string, RequireInterceptor[]>();
 // Identifier for the function is: packageName.relativePath.functionName.nodeType.matchingVersion
 let packageCallbackInfo = new Map<string, IntereptorCallbackInfoObj>();
 
+// In order to support multiple versions of the same package in unit tests, we need to rewrite the package name
+// e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
+// but in the tests we want to `require("undici-v6")` instead of `require("undici")`
+let __packageNamesToRewrite: Record<string, string> = {};
+
 export function setPackagesToInstrument(_packages: Package[]) {
   // Clear the previous packages
   packages = new Map();
   packageCallbackInfo = new Map();
 
   for (const pkg of _packages) {
+    if (pkg.getName() in __packageNamesToRewrite) {
+      // If the package name is in the rewrite map, we use the rewritten name
+      pkg.setName(__packageNamesToRewrite[pkg.getName()]);
+    }
+
     const packageInstructions = pkg
       .getVersions()
       .map((versionedPackage) => {
@@ -124,4 +134,10 @@ export function getBuiltinInterceptors(name: string): RequireInterceptor[] {
 
 export function shouldPatchBuiltin(name: string): boolean {
   return builtinRequireInterceptors.has(name);
+}
+
+export function __internalRewritePackageNamesForTesting(
+  rewrite: Record<string, string>
+) {
+  __packageNamesToRewrite = rewrite;
 }

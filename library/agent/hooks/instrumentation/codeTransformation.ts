@@ -3,6 +3,7 @@ import type { PackageFileInstrumentationInstructionJSON } from "./types";
 import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
 import { getSourceType, PackageLoadFormat } from "./getSourceType";
 import { envToBool } from "../../../helpers/envToBool";
+import { join } from "path";
 
 export function transformCode(
   pkgName: string,
@@ -28,7 +29,7 @@ export function transformCode(
   if (envToBool(process.env.AIKIDO_TEST_NEW_INSTRUMENTATION)) {
     return result.replace(
       "@aikidosec/firewall/instrument/internals",
-      "../../../../agent/hooks/instrumentation/injectedFunctions.ts"
+      join(__dirname, "injectedFunctions.ts")
     );
   }
 

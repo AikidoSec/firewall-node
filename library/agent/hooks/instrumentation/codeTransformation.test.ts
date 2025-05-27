@@ -287,10 +287,7 @@ t.test("typescript code in a js file", async (t) => {
     t.ok(error instanceof Error);
     if (error instanceof Error) {
       t.match(error.message, "Error transforming code: #ERR:");
-      t.match(
-        error.message,
-        "Expected a semicolon or an implicit semicolon after a statement, but found none"
-      );
+      t.match(error.message, 'Expected `;` but found `:`"');
     }
   }
 });

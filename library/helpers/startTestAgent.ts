@@ -1,5 +1,6 @@
 import type { ReportingAPI } from "../agent/api/ReportingAPI";
 import type { Token } from "../agent/api/Token";
+import { __internalRewritePackageNamesForTesting } from "../agent/hooks/instrumentation/instructions";
 import { __internalRewritePackageName } from "../agent/hooks/wrapRequire";
 import type { Logger } from "../agent/logger/Logger";
 import { Wrapper } from "../agent/Wrapper";
@@ -21,6 +22,11 @@ export function startTestAgent(opts: {
   rewrite: Record<PackageName, AliasToRequire>;
 }) {
   const agent = createTestAgent(opts);
+
+  if (agent.isUsingNewInstrumentation()) {
+    // See explanation in comment below
+    __internalRewritePackageNamesForTesting(opts.rewrite);
+  }
   agent.start(opts.wrappers);
 
   if (!agent.isUsingNewInstrumentation()) {
@@ -32,8 +38,6 @@ export function startTestAgent(opts: {
       __internalRewritePackageName(packageName, opts.rewrite[packageName]);
     });
   }
-
-  // Todo support this in the new instrumentation
 
   return agent;
 }
