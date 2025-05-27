@@ -2,8 +2,10 @@
   "name": "firewall-node",
   "devDependencies": {
     "follow-redirects": "^1.15.9",
+    "jscodeshift": "^17.3.0",
     "prettier": "^3.2.4",
-    "tar": "^7.4.3"
+    "tar": "^7.4.3",
+    "typescript": "^5.3.3"
   },
   "scripts": {
     "install": "node scripts/install.js",
