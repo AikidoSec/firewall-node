@@ -2,7 +2,10 @@ import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { detectSQLInjection } from "./detectSQLInjection";
+import {
+  detectSQLInjection,
+  SQLInjectionDetectionResult,
+} from "./detectSQLInjection";
 import { SQLDialectClickHouse } from "./dialects/SQLDialectClickHouse";
 import { SQLDialectGeneric } from "./dialects/SQLDialectGeneric";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
@@ -339,7 +342,7 @@ function isSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      1,
+      SQLInjectionDetectionResult.INJECTION_DETECTED,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -359,7 +362,7 @@ function isNotSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      0,
+      SQLInjectionDetectionResult.SAFE,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -379,7 +382,7 @@ function isTokenizeError(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      3,
+      SQLInjectionDetectionResult.FAILED_TO_TOKENIZE,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -391,13 +394,4 @@ t.test("get human readable name", async () => {
   t.same(new SQLDialectPostgres().getHumanReadableName(), "PostgreSQL");
   t.same(new SQLDialectSQLite().getHumanReadableName(), "SQLite");
   t.same(new SQLDialectClickHouse().getHumanReadableName(), "ClickHouse");
-});
-
-t.test("it returns 3 if tokenize fails", async () => {
-  const result = detectSQLInjection(
-    "SELECT * FROM users WHERE id = '1",
-    "id = '1",
-    new SQLDialectGeneric()
-  );
-  t.same(result, 3);
 });
