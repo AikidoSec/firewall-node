@@ -1,3 +1,4 @@
+import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
@@ -111,12 +112,18 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  packages: {
+    name: string;
+    version: string;
+    requiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
     method: string;
     hits: number;
     graphql?: { type: "query" | "mutation"; name: string };
+    apispec: APISpec;
   }[];
   users: {
     id: string;
