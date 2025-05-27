@@ -12,6 +12,7 @@ import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 t.test("It ignores invalid queries", async () => {
   isTokenizeError("SELECT * FROM users WHERE id = 'users\\'", "users\\", [
     new SQLDialectMySQL(),
+    // Postgres and others treat the backslash as a normal character
   ]);
 });
 
