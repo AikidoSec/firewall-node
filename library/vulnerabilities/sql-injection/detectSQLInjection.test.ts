@@ -361,3 +361,11 @@ function isNotSqlInjection(
     );
   }
 }
+
+t.test("get human readable name", async () => {
+  t.same(new SQLDialectGeneric().getHumanReadableName(), "Generic");
+  t.same(new SQLDialectMySQL().getHumanReadableName(), "MySQL");
+  t.same(new SQLDialectPostgres().getHumanReadableName(), "PostgreSQL");
+  t.same(new SQLDialectSQLite().getHumanReadableName(), "SQLite");
+  t.same(new SQLDialectClickHouse().getHumanReadableName(), "ClickHouse");
+});

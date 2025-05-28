@@ -56,6 +56,7 @@ export class FunctionsFramework implements Wrapper {
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapExport(exports, "http", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             if (args.length === 2 && typeof args[1] === "function") {
               const httpFunction = args[1] as HttpFunction;

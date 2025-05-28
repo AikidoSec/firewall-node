@@ -6,13 +6,19 @@ import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
 import { checkContextForBotSpoofing } from "../../vulnerabilities/bot-spoofing/checkContextForBotSpoofing";
 
+const checkedBlocks = Symbol("__zen_checked_blocks__");
+
 /**
- * Inspects the IP address of the request:
+ * Inspects the IP address and user agent of the request:
  * - Whether the IP address is blocked by an IP blocklist (e.g. Geo restrictions)
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
+ * - Whether the user agent is blocked by a user agent blocklist
  */
 export async function checkIfRequestIsBlocked(
-  res: ServerResponse,
+  // This flag is used to determine whether the request has already been checked
+  // We use a Symbol so that we don't accidentally overwrite any other properties on the response object
+  // and that we're the only ones that can access it
+  res: ServerResponse & { [checkedBlocks]?: boolean },
   agent: Agent
 ): Promise<boolean> {
   if (res.headersSent) {
@@ -26,6 +32,14 @@ export async function checkIfRequestIsBlocked(
   if (!context) {
     return false;
   }
+
+  if (res[checkedBlocks]) {
+    return false;
+  }
+
+  // We don't need to check again if the request has already been checked
+  // Also ensures that the statistics are only counted once
+  res[checkedBlocks] = true;
 
   if (!ipAllowedToAccessRoute(context, agent)) {
     res.statusCode = 403;
@@ -70,6 +84,22 @@ export async function checkIfRequestIsBlocked(
     ? agent.getConfig().isIPAddressBlocked(context.remoteAddress)
     : ({ blocked: false } as const);
 
+  if (context.remoteAddress) {
+    // Let's see if the IP occurs on one or more monitored lists and collect those keys
+    const monitoredKeys = agent
+      .getConfig()
+      .getMatchingMonitoredIPListKeys(context.remoteAddress);
+    agent.getInspectionStatistics().onIPAddressMatches(monitoredKeys);
+
+    if (result.blocked) {
+      // Let's see if the IP occurs on one or more blocked lists and collect those keys
+      const blockedKeys = agent
+        .getConfig()
+        .getMatchingBlockedIPListKeys(context.remoteAddress);
+      agent.getInspectionStatistics().onIPAddressMatches(blockedKeys);
+    }
+  }
+
   if (result.blocked) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");
@@ -84,10 +114,28 @@ export async function checkIfRequestIsBlocked(
     return true;
   }
 
-  const isUserAgentBlocked =
+  const userAgent =
     context.headers && typeof context.headers["user-agent"] === "string"
-      ? agent.getConfig().isUserAgentBlocked(context.headers["user-agent"])
-      : ({ blocked: false } as const);
+      ? context.headers["user-agent"]
+      : undefined;
+
+  const isUserAgentBlocked = userAgent
+    ? agent.getConfig().isUserAgentBlocked(userAgent)
+    : ({ blocked: false } as const);
+
+  if (userAgent) {
+    const isMonitoredUserAgent = agent
+      .getConfig()
+      .isMonitoredUserAgent(userAgent);
+
+    if (isUserAgentBlocked.blocked || isMonitoredUserAgent) {
+      // Find all the matching user agent keys when it's a blocked or monitored user agent
+      const userAgentKeys = agent
+        .getConfig()
+        .getMatchingUserAgentKeys(userAgent);
+      agent.getInspectionStatistics().onUserAgentMatches(userAgentKeys);
+    }
+  }
 
   if (isUserAgentBlocked.blocked) {
     res.statusCode = 403;

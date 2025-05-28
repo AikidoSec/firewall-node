@@ -1,3 +1,4 @@
+import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
@@ -64,7 +65,18 @@ export type DetectedAttack = {
   time: number;
 };
 
-type MonitoredSinkStats = {
+export type OperationKind =
+  | "sql_op"
+  | "nosql_op"
+  | "outgoing_http_op"
+  | "fs_op"
+  | "exec_op"
+  | "deserialize_op"
+  | "graphql_op"
+  | "eval_op";
+
+type OperationStats = {
+  kind: OperationKind;
   attacksDetected: {
     total: number;
     blocked: number;
@@ -82,7 +94,7 @@ type MonitoredSinkStats = {
 type Heartbeat = {
   type: "heartbeat";
   stats: {
-    sinks: Record<string, MonitoredSinkStats>;
+    operations: Record<string, OperationStats>;
     startedAt: number;
     endedAt: number;
     requests: {
@@ -93,13 +105,25 @@ type Heartbeat = {
         blocked: number;
       };
     };
+    userAgents: {
+      breakdown: Record<string, number>;
+    };
+    ipAddresses: {
+      breakdown: Record<string, number>;
+    };
   };
+  packages: {
+    name: string;
+    version: string;
+    requiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
     method: string;
     hits: number;
     graphql?: { type: "query" | "mutation"; name: string };
+    apispec: APISpec;
   }[];
   users: {
     id: string;

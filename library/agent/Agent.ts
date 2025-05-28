@@ -25,6 +25,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { Packages } from "./Packages";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -38,6 +39,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private packages = new Packages();
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -54,7 +56,7 @@ export class Agent {
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 100,
+    maxCompressedStatsInMemory: 20, // per operation
   });
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
@@ -296,11 +298,13 @@ export class Agent {
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
+      const packages = this.packages.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
+      this.packages.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -308,11 +312,14 @@ export class Agent {
           time: Date.now(),
           agent: this.getAgentInfo(),
           stats: {
-            sinks: stats.sinks,
+            operations: stats.operations,
             startedAt: stats.startedAt,
             endedAt: endedAt,
             requests: stats.requests,
+            userAgents: stats.userAgents,
+            ipAddresses: stats.ipAddresses,
           },
+          packages,
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
@@ -350,12 +357,10 @@ export class Agent {
       const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
-      const hasCompressedStats = this.statistics.hasCompressedStats();
       const canSendInitialStats =
         !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
       const shouldReportInitialStats =
-        !this.reportedInitialStats &&
-        (hasCompressedStats || canSendInitialStats);
+        !this.reportedInitialStats && canSendInitialStats;
 
       if (shouldSendHeartbeat || shouldReportInitialStats) {
         this.heartbeat();
@@ -383,11 +388,17 @@ export class Agent {
         blockedUserAgents,
         allowedIPAddresses,
         botSpoofingProtection,
+        monitoredIPAddresses,
+        monitoredUserAgents,
+        userAgentDetails,
       } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
       this.serviceConfig.updateBotSpoofingData(botSpoofingProtection);
+      this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
+      this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
+      this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
@@ -473,6 +484,10 @@ export class Agent {
       }
     }
 
+    // When our library is required, we are not intercepting `require` calls yet
+    // We need to add our library to the list of packages manually
+    this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
+
     wrapInstalledPackages(wrappers, this.serverless);
 
     // Send startup event and wait for config
@@ -497,11 +512,19 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onPackageRequired(name: string, version: string) {
+    this.packages.addPackage({
+      name,
+      version,
+    });
+  }
+
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped
       return;
     }
+
     this.wrappedPackages[name] = details;
 
     if (details.version) {

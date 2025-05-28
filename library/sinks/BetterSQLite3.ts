@@ -71,6 +71,7 @@ export class BetterSQLite3 implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         for (const func of sqlFunctions) {
           wrapExport(exports.prototype, func, pkgInfo, {
+            kind: "sql_op",
             inspectArgs: (args) => {
               return this.inspectQuery(`better-sqlite3.${func}`, args);
             },
@@ -78,6 +79,7 @@ export class BetterSQLite3 implements Wrapper {
         }
         for (const func of fsPathFunctions) {
           wrapExport(exports.prototype, func, pkgInfo, {
+            kind: "sql_op",
             inspectArgs: (args) => {
               return this.inspectPath(`better-sqlite3.${func}`, args);
             },

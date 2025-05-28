@@ -146,7 +146,7 @@ function generateHeartbeatEvent(): Event {
     stats: {
       endedAt: 0,
       startedAt: 0,
-      sinks: {},
+      operations: {},
       requests: {
         total: 0,
         aborted: 0,
@@ -154,6 +154,12 @@ function generateHeartbeatEvent(): Event {
           blocked: 0,
           total: 0,
         },
+      },
+      userAgents: {
+        breakdown: {},
+      },
+      ipAddresses: {
+        breakdown: {},
       },
     },
     agent: {
@@ -182,6 +188,7 @@ function generateHeartbeatEvent(): Event {
     hostnames: [],
     routes: [],
     users: [],
+    packages: [],
   };
 }
 

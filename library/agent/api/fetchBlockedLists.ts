@@ -1,8 +1,10 @@
+/* eslint-disable max-lines-per-function */
 import { fetch } from "../../helpers/fetch";
 import { getAPIURL } from "../getAPIURL";
 import { Token } from "./Token";
 
 export type IPList = {
+  key: string; // e.g. "tor/exit_nodes"
   source: string;
   description: string;
   ips: string[];
@@ -15,12 +17,25 @@ export type BotSpoofingData = {
   hostnames: string[];
 };
 
-export async function fetchBlockedLists(token: Token): Promise<{
+export type UserAgentDetails = {
+  key: string; // e.g. "claudebot"
+  pattern: string; // e.g. "ClaudeBot" (the regex pattern)
+};
+
+export type Response = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
+  monitoredIPAddresses: IPList[];
   blockedUserAgents: string;
   botSpoofingProtection: BotSpoofingData[];
-}> {
+  monitoredUserAgents: string;
+  // `monitoredUserAgents` and `blockedUserAgents` are one big regex pattern
+  // If we want to collect stats about the individual user agents,
+  // we can loop through the userAgentDetails and match each pattern.
+  userAgentDetails: UserAgentDetails[];
+};
+
+export async function fetchBlockedLists(token: Token): Promise<Response> {
   const baseUrl = getAPIURL();
   const { body, statusCode } = await fetch({
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
@@ -45,8 +60,11 @@ export async function fetchBlockedLists(token: Token): Promise<{
   const result: {
     blockedIPAddresses: IPList[];
     allowedIPAddresses: IPList[];
+    monitoredIPAddresses: IPList[];
     blockedUserAgents: string;
     botSpoofingProtection: BotSpoofingData[];
+    monitoredUserAgents: string;
+    userAgentDetails: UserAgentDetails[];
   } = JSON.parse(body);
 
   return {
@@ -58,6 +76,10 @@ export async function fetchBlockedLists(token: Token): Promise<{
       result && Array.isArray(result.allowedIPAddresses)
         ? result.allowedIPAddresses
         : [],
+    monitoredIPAddresses:
+      result && Array.isArray(result.monitoredIPAddresses)
+        ? result.monitoredIPAddresses
+        : [],
     // Blocked user agents are stored as a string pattern for usage in a regex (e.g. "Googlebot|Bingbot")
     blockedUserAgents:
       result && typeof result.blockedUserAgents === "string"
@@ -66,6 +88,15 @@ export async function fetchBlockedLists(token: Token): Promise<{
     botSpoofingProtection:
       result && Array.isArray(result.botSpoofingProtection)
         ? result.botSpoofingProtection
+        : [],
+    // Monitored user agents are stored as a string pattern for usage in a regex (e.g. "ClaudeBot|ChatGPTBot")
+    monitoredUserAgents:
+      result && typeof result.monitoredUserAgents === "string"
+        ? result.monitoredUserAgents
+        : "",
+    userAgentDetails:
+      result && Array.isArray(result.userAgentDetails)
+        ? result.userAgentDetails
         : [],
   };
 }

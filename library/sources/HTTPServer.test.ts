@@ -8,7 +8,7 @@ import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
 import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { IPList } from "../agent/api/fetchBlockedLists";
+import type { Response } from "../agent/api/fetchBlockedLists";
 import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
@@ -53,20 +53,22 @@ const agent = createTestAgent({
 agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
-  return async function fetchBlockedLists(): Promise<{
-    blockedIPAddresses: IPList[];
-    blockedUserAgents: string;
-  }> {
+  return async function fetchBlockedLists(): Promise<Response> {
     return {
+      allowedIPAddresses: [],
       blockedIPAddresses: [
         {
+          key: "geoip/Belgium;BE",
           source: "geoip",
           ips: ["9.9.9.9"],
           description: "geo restrictions",
         },
       ],
       blockedUserAgents: "",
-    };
+      monitoredUserAgents: "",
+      monitoredIPAddresses: [],
+      userAgentDetails: [],
+    } satisfies Response;
   };
 });
 
@@ -785,6 +787,48 @@ t.test("it blocks path traversal in path", async (t) => {
       );
       server.close();
       resolve();
+    });
+  });
+});
+
+t.test("it blocks double encoded path traversal", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      const url = new URL(req.url!, `http://${req.headers.host}`);
+      const filePath = url.searchParams.get("path");
+      const fileUrl = new URL(`file:///public/${filePath}`);
+      const file = readFileSync(fileUrl);
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      fetch({
+        url: new URL("http://localhost:3327/?path=.%252E/etc/passwd"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "1.2.3.4",
+        },
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.equal(statusCode, 500);
+        t.equal(
+          body,
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query"
+        );
+        server.close();
+        resolve();
+      });
     });
   });
 });
