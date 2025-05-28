@@ -19,13 +19,12 @@ export async function checkContextForBotSpoofing(
   }
 
   const userAgent = context.headers["user-agent"];
-  const ip = context.remoteAddress;
-
-  if (!ip || isPrivateIP(ip)) {
+  if (typeof userAgent !== "string" || userAgent.length === 0) {
     return false;
   }
 
-  if (typeof userAgent !== "string" || userAgent.length === 0) {
+  const ip = context.remoteAddress;
+  if (!ip || isPrivateIP(ip)) {
     return false;
   }
 
@@ -39,5 +38,12 @@ export async function checkContextForBotSpoofing(
     return false;
   }
 
-  return !(await verifyBotAuthenticity(ip, matchingBot));
+  // If the bot does not have any IPs or hostnames to verify, we can't determine if it's spoofing
+  if (!matchingBot.ips && matchingBot.hostnames.length === 0) {
+    return false;
+  }
+
+  const isAuthentic = await verifyBotAuthenticity(ip, matchingBot);
+
+  return !isAuthentic; // If the bot is not authentic, it is considered as bot spoofing
 }

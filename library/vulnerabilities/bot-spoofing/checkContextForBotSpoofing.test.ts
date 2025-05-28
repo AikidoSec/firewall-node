@@ -214,4 +214,22 @@ t.test("it works", async (t) => {
     ),
     false
   );
+
+  agent.getConfig().updateBotSpoofingData([
+    {
+      key: "google_test",
+      uaPattern: "Googlebot",
+      ips: [],
+      hostnames: [],
+    },
+  ]);
+
+  // No ips or hostnames to verify, so it should not be considered bot spoofing
+  t.same(
+    await checkContextForBotSpoofing(
+      getTestContext("1.1.1.1", "Googlebot"),
+      agent
+    ),
+    false
+  );
 });

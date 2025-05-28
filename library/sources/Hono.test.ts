@@ -46,6 +46,7 @@ wrap(fetch, "fetch", function mock(original) {
               pattern: "attacker",
             },
           ],
+          botSpoofingProtection: [],
         } satisfies Response),
       };
     }
