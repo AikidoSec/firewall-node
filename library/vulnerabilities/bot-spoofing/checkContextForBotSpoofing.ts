@@ -38,11 +38,6 @@ export async function checkContextForBotSpoofing(
     return false;
   }
 
-  // If the bot does not have any IPs or hostnames to verify, we can't determine if it's spoofing
-  if (!matchingBot.ips && matchingBot.hostnames.length === 0) {
-    return false;
-  }
-
   const isAuthentic = await verifyBotAuthenticity(ip, matchingBot);
 
   return !isAuthentic; // If the bot is not authentic, it is considered as bot spoofing
