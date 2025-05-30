@@ -1171,6 +1171,39 @@ t.test("it only allows some IP addresses", async () => {
   });
 });
 
+t.test("it includes agent's own package in heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      packages: [
+        {
+          name: "@aikidosec/firewall",
+          version: "0.0.0",
+          requiredAt: 0,
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
+});
+
 t.test("packages are not cleared after heartbeat", async () => {
   const clock = FakeTimers.install();
 
