@@ -49,6 +49,7 @@ wrap(fetch, "fetch", function mock(original) {
           ],
           monitoredIPAddresses: [],
           monitoredUserAgents: "",
+          botSpoofingProtection: [],
         } satisfies Response),
       };
     }

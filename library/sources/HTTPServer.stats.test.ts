@@ -30,6 +30,7 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
     return {
       allowedIPAddresses: [],
       blockedIPAddresses: [],
+      botSpoofingProtection: [],
       monitoredIPAddresses: [
         {
           key: "known_threat_actors/public_scanners",
