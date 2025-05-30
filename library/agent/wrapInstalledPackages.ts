@@ -5,6 +5,7 @@ import { Wrapper } from "./Wrapper";
 
 export function wrapInstalledPackages(
   wrappers: Wrapper[],
+  newInstrumentation: boolean,
   serverless: string | undefined
 ) {
   const hooks = new Hooks();
@@ -19,5 +20,5 @@ export function wrapInstalledPackages(
     );
   }
 
-  return applyHooks(hooks);
+  return applyHooks(hooks, newInstrumentation);
 }
