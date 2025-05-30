@@ -7,6 +7,7 @@ import type { InterceptorResult } from "./InterceptorResult";
 import type { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
+import { isProtectionOffForRoute } from "../context/isProtectionOffForRoute";
 
 type InspectArgsInterceptor = (
   args: unknown[],
@@ -135,12 +136,8 @@ function inspectArgs(
   methodName: string,
   kind: OperationKind | undefined
 ) {
-  if (context) {
-    const matches = agent.getConfig().getEndpoints(context);
-
-    if (matches.find((match) => match.forceProtectionOff)) {
-      return;
-    }
+  if (isProtectionOffForRoute(agent, context)) {
+    return;
   }
 
   const start = performance.now();
