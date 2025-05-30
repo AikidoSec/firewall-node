@@ -30,3 +30,6 @@ credentials.json
 # Test files
 library/test.txt
 library/test2.txt
+
+# Rust build files
+instrumentation-wasm/target/

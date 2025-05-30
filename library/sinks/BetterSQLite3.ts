@@ -79,7 +79,7 @@ export class BetterSQLite3 implements Wrapper {
         }
         for (const func of fsPathFunctions) {
           wrapExport(exports.prototype, func, pkgInfo, {
-            kind: "sql_op",
+            kind: "fs_op",
             inspectArgs: (args) => {
               return this.inspectPath(`better-sqlite3.${func}`, args);
             },
