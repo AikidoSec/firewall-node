@@ -48,6 +48,7 @@ import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
+import { H3 } from "../sources/H3";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -141,6 +142,7 @@ export function getWrappers() {
     new ClickHouse(),
     new Prisma(),
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
+    new H3(),
   ];
 }
 
