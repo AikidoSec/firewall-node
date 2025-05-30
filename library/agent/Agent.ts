@@ -304,7 +304,9 @@ export class Agent {
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
-      this.packages.clear();
+      // Note: packages are intentionally NOT cleared here because they persist
+      // for the lifetime of the application. If cleared, the dashboard would
+      // incorrectly show packages as "no longer in use" for long-running servers.
       const response = await this.api.report(
         this.token,
         {
