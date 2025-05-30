@@ -2,6 +2,7 @@ import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isWindows } from "../helpers/isWindows";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -95,7 +96,12 @@ t.test("it works", async (t) => {
       { encoding: "utf-8" }
     );
     rename("./test.txt", "./test2.txt", () => {});
-    rename(new URL("file:///test123.txt"), "test2.txt", () => {});
+    if (isWindows) {
+      rename(new URL("file://X:/test123.txt"), "test2.txt", () => {});
+    } else {
+      rename(new URL("file:///test123.txt"), "test2.txt", () => {});
+    }
+
     rename(Buffer.from("./test123.txt"), "test2.txt", () => {});
   };
 
@@ -168,20 +174,42 @@ t.test("it works", async (t) => {
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
 
-    throws(
-      () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+    if (isWindows) {
+      throws(
+        () =>
+          rename(new URL("file://X:/../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
 
-    throws(
-      () => rename(new URL("file:///./../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+      throws(
+        () =>
+          rename(new URL("file://D:/./../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
 
-    throws(
-      () => rename(new URL("file:///../../test.txt"), "../test2.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
+      throws(
+        () =>
+          rename(new URL("file://C:/../../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    } else {
+      throws(
+        () => rename(new URL("file:///../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+
+      throws(
+        () =>
+          rename(new URL("file:///./../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+
+      throws(
+        () =>
+          rename(new URL("file:///../../test.txt"), "../test2.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    }
 
     throws(
       () => rename(Buffer.from("../test.txt"), "../test2.txt", () => {}),
@@ -189,99 +217,179 @@ t.test("it works", async (t) => {
     );
   });
 
-  runWithContext(unsafeContextAbsolute, () => {
-    throws(
-      () => rename(new URL("file:///etc/passwd"), "../test123.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
-    throws(
-      () =>
-        rename(new URL("file:///../etc/passwd"), "../test123.txt", () => {}),
-      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
-    );
-  });
-
-  runWithContext(
-    {
-      remoteAddress: "::1",
-      method: "POST",
-      url: "http://localhost:4000",
-      query: {
-        q: ".\t./etc/passwd",
+  if (isWindows) {
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
       },
-      headers: {},
-      body: {},
-      cookies: {},
-      routeParams: {},
-      source: "express",
-      route: "/posts/:id",
-    },
-    () => {
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file://D:/.\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: "test/test.txt",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        rename(new URL("file://D:/test/test.txt"), "../test123.txt", () => {});
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file://D:/.\t\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
+    );
+  } else {
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file:///.\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: "test/test.txt",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        rename(new URL("file:///test/test.txt"), "../test123.txt", () => {});
+      }
+    );
+
+    runWithContext(
+      {
+        remoteAddress: "::1",
+        method: "POST",
+        url: "http://localhost:4000",
+        query: {
+          q: ".\t\t./etc/passwd",
+        },
+        headers: {},
+        body: {},
+        cookies: {},
+        routeParams: {},
+        source: "express",
+        route: "/posts/:id",
+      },
+      () => {
+        throws(
+          () =>
+            rename(
+              new URL("file:///.\t\t./etc/passwd"),
+              "../test123.txt",
+              () => {}
+            ),
+          "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+        );
+      }
+    );
+  }
+
+  if (!isWindows) {
+    runWithContext(unsafeContextAbsolute, () => {
+      throws(
+        () => rename(new URL("file:///etc/passwd"), "../test123.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
       throws(
         () =>
-          rename(
-            new URL("file:///.\t./etc/passwd"),
-            "../test123.txt",
-            () => {}
-          ),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+          rename(new URL("file:///../etc/passwd"), "../test123.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
       );
-    }
-  );
+    });
 
-  runWithContext(
-    {
-      remoteAddress: "::1",
-      method: "POST",
-      url: "http://localhost:4000",
-      query: {
-        q: "test/test.txt",
-      },
-      headers: {},
-      body: {},
-      cookies: {},
-      routeParams: {},
-      source: "express",
-      route: "/posts/:id",
-    },
-    () => {
-      rename(new URL("file:///test/test.txt"), "../test123.txt", () => {});
-    }
-  );
-
-  runWithContext(
-    {
-      remoteAddress: "::1",
-      method: "POST",
-      url: "http://localhost:4000",
-      query: {
-        q: ".\t\t./etc/passwd",
-      },
-      headers: {},
-      body: {},
-      cookies: {},
-      routeParams: {},
-      source: "express",
-      route: "/posts/:id",
-    },
-    () => {
-      throws(
-        () =>
-          rename(
-            new URL("file:///.\t\t./etc/passwd"),
-            "../test123.txt",
-            () => {}
-          ),
-        "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
-      );
-    }
-  );
-
-  // Ignores malformed URLs
-  runWithContext(
-    { ...unsafeContext, body: { file: { matches: "../%" } } },
-    () => {
-      rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
-    }
-  );
+    // Ignores malformed URLs
+    runWithContext(
+      { ...unsafeContext, body: { file: { matches: "../%" } } },
+      () => {
+        rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
+      }
+    );
+  }
 });
