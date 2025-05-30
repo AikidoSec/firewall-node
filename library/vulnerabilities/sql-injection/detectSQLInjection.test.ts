@@ -259,6 +259,59 @@ t.test("It does not match GROUP keyword", async () => {
   isNotSqlInjection(query, "ASC");
 });
 
+t.test(
+  "it ignores full SQL queries from the source aiToolParams",
+  async (t) => {
+    const generic = new SQLDialectGeneric();
+    t.same(
+      detectSQLInjection(
+        "SELECT * FROM 'test';",
+        "SELECT * FROM 'test';",
+        generic,
+        "body"
+      ),
+      true
+    );
+    t.same(
+      detectSQLInjection(
+        "SELECT * FROM 'test';",
+        "'test';",
+        generic,
+        "aiToolParams"
+      ),
+      true
+    );
+    t.same(
+      detectSQLInjection(
+        "SELECT * FROM 'test'; DELETE FROM 'test'; -- ';",
+        "test'; DELETE FROM 'test'; -- ';",
+        generic,
+        "aiToolParams"
+      ),
+      true
+    );
+
+    t.same(
+      detectSQLInjection(
+        "SELECT * FROM 'test';",
+        "SELECT * FROM 'test';",
+        generic,
+        "aiToolParams"
+      ),
+      false
+    );
+    t.same(
+      detectSQLInjection(
+        "DELETE FROM 'test';",
+        "DELETE FROM 'test';",
+        generic,
+        "aiToolParams"
+      ),
+      false
+    );
+  }
+);
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
