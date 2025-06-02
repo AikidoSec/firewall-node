@@ -258,7 +258,6 @@ export function createExpressTests(expressPackageName: string) {
         res.send({ hello: "world" });
       });
 
-      // @ts-expect-error Not types for express 5 available yet
       app.router.use("/middleware-rate-limited", (req, res, next) => {
         res.send({ hello: "world" });
       });
@@ -600,7 +599,6 @@ export function createExpressTests(expressPackageName: string) {
       stack = app._router.stack;
     } else {
       // On express v5, the router is available as `app.router`
-      // @ts-expect-error stack is private
       stack = app.router.stack;
     }
 
@@ -673,11 +671,10 @@ export function createExpressTests(expressPackageName: string) {
           stack = req.app._router.stack as any[];
         } else {
           // On express v5, the router is available as `app.router`
-          // @ts-expect-error stack is private
           stack = req.app.router.stack as any[];
         }
         routerLayer = stack.find((router) => router.name === "CustomRouter");
-        return res.status(200).send("bar");
+        res.status(200).send("bar");
       });
 
       // The patched router now has express router's own properties in its prototype so
