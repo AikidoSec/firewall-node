@@ -39,11 +39,11 @@ export async function verifyBotAuthenticityWithDNS(
     // Send a reverse DNS lookup request
     const hostnames = await dnsResolver.reverse(requestIp);
 
-    // Filter out hostnames that don't end with any of the whitelisted hostnames
+    // Filter out hostnames that don't end with any of the allowed hostnames
     const matchingHostnames = hostnames.filter((hostname) =>
-      matchingBot.hostnames.some((whitelistedHostname) =>
-        // Check if the hostname ends with the whitelisted hostname
-        hostname.endsWith(`.${whitelistedHostname}`)
+      matchingBot.hostnames.some((allowedHostname) =>
+        // Check if the hostname ends with the allowed hostname
+        hostname.endsWith(`.${allowedHostname}`)
       )
     );
 

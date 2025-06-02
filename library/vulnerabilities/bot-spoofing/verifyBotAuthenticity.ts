@@ -5,7 +5,7 @@ export async function verifyBotAuthenticity(
   requestIp: string,
   matchingBot: ServiceConfigBotSpoofingData
 ) {
-  // Check if the IP address matches any of the whitelisted IP addresses
+  // Check if the IP address matches any of the allowed IP addresses
   if (matchingBot.ips) {
     if (matchingBot.ips.has(requestIp)) {
       return true;
@@ -13,7 +13,7 @@ export async function verifyBotAuthenticity(
   }
 
   if (matchingBot.hostnames.length > 0) {
-    // Check if the hostname matches any of the whitelisted hostnames
+    // Check if the hostname matches any of the allowed hostnames
     return await verifyBotAuthenticityWithDNS(requestIp, matchingBot);
   }
 
