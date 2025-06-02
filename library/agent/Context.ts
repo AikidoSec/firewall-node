@@ -30,6 +30,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  aiToolParams?: unknown[]; // Parameters send to functions/tools that are called by a LLM
 };
 
 /**
