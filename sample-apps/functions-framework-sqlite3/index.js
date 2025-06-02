@@ -18,7 +18,6 @@ functions.http("function", (req, res) => {
     }
 
     const cats = db.prepare("SELECT petname FROM `cats`;").all();
-    console.log(cats);
     res.status(200).send(getHTMLBody(cats.map((cat) => cat.petname)));
     return;
   }
