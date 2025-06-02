@@ -300,12 +300,15 @@ export class ServiceConfig {
         continue;
       }
 
-      this.botSpoofingData.push({
-        key: source.key,
-        uaPattern: new RegExp(source.uaPattern, "i"),
-        ips: new IPMatcher(source.ips),
-        hostnames: source.hostnames,
-      });
+      const uaPattern = safeCreateRegExp(source.uaPattern, "i");
+      if (uaPattern) {
+        this.botSpoofingData.push({
+          key: source.key,
+          uaPattern,
+          ips: new IPMatcher(source.ips),
+          hostnames: source.hostnames,
+        });
+      }
     }
   }
 
