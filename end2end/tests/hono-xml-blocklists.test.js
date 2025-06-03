@@ -59,6 +59,7 @@ t.test("it blocks geo restricted IPs", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -159,6 +160,7 @@ t.test("it blocks bots", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -253,6 +255,7 @@ t.test("it does not block bypass IP if in blocklist", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
