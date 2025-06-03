@@ -6,9 +6,9 @@ module.exports = function realtimeConfig(req, res) {
   }
 
   const config = getAppConfig(req.app);
-  
+
   res.json({
     serviceId: req.app.serviceId,
-    configUpdatedAt: config.configUpdatedAt
+    configUpdatedAt: config.configUpdatedAt,
   });
-}; 
+};
