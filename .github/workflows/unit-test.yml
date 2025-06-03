@@ -63,7 +63,7 @@ jobs:
           - "27020:27017"
       google-pubsub-emulator:
         image: gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:11e9b10b6d61177b0046fcb5f1e9479f567a5dacbf66d194baf5a8872653c857
-        options: --entrypoint sh -c "gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085'"
+        options: --entrypoint "sh -c 'gcloud beta emulators pubsub start --project=sample-project --host-port=0.0.0.0:8085'"
         ports:
           - "8085:8085"
     strategy:
