@@ -22,7 +22,6 @@ t.test("it returns correct path", async () => {
         route: "/",
         routeParams: {},
       },
-      module: "mysql",
     }),
     {
       operation: "mysql.query",

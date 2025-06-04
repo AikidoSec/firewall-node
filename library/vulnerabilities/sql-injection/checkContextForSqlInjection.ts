@@ -22,13 +22,11 @@ export function checkContextForSqlInjection({
   operation,
   context,
   dialect,
-  module,
 }: {
   sql: string;
   operation: string;
   context: Context;
   dialect: SQLDialect;
-  module: string;
 }): InterceptorResult {
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
@@ -54,24 +52,9 @@ export function checkContextForSqlInjection({
       }
 
       if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
-        // We don't want to block queries that fail to tokenize, report them as non-blocked attacks for now.
-        // We'll use this information to improve our SQL tokenizer
-        // See `ReportingAPIRateLimitedClientSide`, attack events will be rate limited
-        getInstance()?.onDetectedAttack({
-          blocked: false,
-          operation: operation,
-          kind: "sql_injection",
-          metadata: {
-            sql: sql,
-            dialect: dialect.getHumanReadableName(),
-          },
-          request: context,
-          module: module,
-          source: source,
-          payload: str,
-          paths: getPathsToPayload(str, context[source]),
-          stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
-        });
+        // We don't want to block queries that fail to tokenize.
+        // This counter helps us monitor how often our SQL tokenizer fails.
+        getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
       }
     }
   }

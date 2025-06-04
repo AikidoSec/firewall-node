@@ -30,7 +30,6 @@ export class ClickHouse implements Wrapper {
         sql: args[0].query,
         context: context,
         dialect: this.dialect,
-        module: "@clickhouse/client-common",
       });
     }
 

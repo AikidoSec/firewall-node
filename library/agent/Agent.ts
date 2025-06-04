@@ -318,6 +318,7 @@ export class Agent {
             requests: stats.requests,
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
+            sqlTokenizationFailures: stats.sqlTokenizationFailures,
           },
           packages,
           hostnames: outgoingDomains,

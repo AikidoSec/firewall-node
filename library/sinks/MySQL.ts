@@ -26,7 +26,6 @@ export class MySQL implements Wrapper {
         context: context,
         operation: "MySQL.query",
         dialect: this.dialect,
-        module: "mysql",
       });
     }
 
@@ -43,7 +42,6 @@ export class MySQL implements Wrapper {
         context: context,
         operation: "MySQL.query",
         dialect: this.dialect,
-        module: "mysql",
       });
     }
 

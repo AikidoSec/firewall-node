@@ -29,7 +29,6 @@ export class MySQL2 implements Wrapper {
           sql: sql,
           context: context,
           dialect: this.dialect,
-          module: "mysql2",
         });
       }
 
@@ -45,7 +44,6 @@ export class MySQL2 implements Wrapper {
           sql: sql,
           context: context,
           dialect: this.dialect,
-          module: "mysql2",
         });
       }
     }
