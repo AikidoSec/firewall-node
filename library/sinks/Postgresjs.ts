@@ -25,6 +25,7 @@ export class Postgresjs implements Wrapper {
         context: context,
         operation: "sql.unsafe",
         dialect: this.dialect,
+        module: "postgres",
       });
     }
 
