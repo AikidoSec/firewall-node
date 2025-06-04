@@ -26,7 +26,6 @@ export class BetterSQLite3 implements Wrapper {
           sql: sql,
           context: context,
           dialect: this.dialect,
-          module: "better-sqlite3",
         });
       }
     }
