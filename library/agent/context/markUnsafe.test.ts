@@ -40,6 +40,7 @@ t.test("it works", async () => {
       operation: "pg.query",
       dialect: new SQLDialectPostgres(),
       context: context,
+      module: "pg",
     });
     t.same(result, undefined);
   });
@@ -59,6 +60,7 @@ t.test("it works", async () => {
       operation: "pg.query",
       dialect: new SQLDialectPostgres(),
       context: context,
+      module: "pg",
     });
     t.same(result, {
       kind: "sql_injection",
@@ -88,6 +90,7 @@ t.test("it works", async () => {
       operation: "pg.query",
       dialect: new SQLDialectPostgres(),
       context: context,
+      module: "pg",
     });
     t.same(result, {
       kind: "sql_injection",

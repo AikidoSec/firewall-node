@@ -40,6 +40,7 @@ export class NodeSQLite implements Wrapper {
           sql: sql,
           context: context,
           dialect: this.dialect,
+          module: "node:sqlite",
         });
       }
     }

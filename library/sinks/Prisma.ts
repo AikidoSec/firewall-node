@@ -92,6 +92,7 @@ export class Prisma implements Wrapper {
         context: context,
         operation: `prisma.${operation}`,
         dialect: dialect,
+        module: "@prisma/client",
       });
     }
 

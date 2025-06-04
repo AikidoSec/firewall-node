@@ -27,6 +27,7 @@ export class MariaDB implements Wrapper {
         context: context,
         operation: `mariadb.${operation}`,
         dialect: this.dialect,
+        module: "mariadb",
       });
     }
 
@@ -43,6 +44,7 @@ export class MariaDB implements Wrapper {
         context: context,
         operation: `mariadb.${operation}`,
         dialect: this.dialect,
+        module: "mariadb",
       });
     }
 

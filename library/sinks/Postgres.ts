@@ -26,6 +26,7 @@ export class Postgres implements Wrapper {
         context: context,
         operation: "pg.query",
         dialect: this.dialect,
+        module: "pg",
       });
     }
 
@@ -42,6 +43,7 @@ export class Postgres implements Wrapper {
         context: context,
         operation: "pg.query",
         dialect: this.dialect,
+        module: "pg",
       });
     }
 
