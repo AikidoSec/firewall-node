@@ -39,6 +39,7 @@ export class InspectionStatistics {
   private operations: Record<string, OperationStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
+  private sqlTokenizationFailures: number = 0;
   private requests: {
     total: number;
     aborted: number;
@@ -97,11 +98,13 @@ export class InspectionStatistics {
       breakdown: {},
     };
     this.startedAt = Date.now();
+    this.sqlTokenizationFailures = 0;
   }
 
   getStats(): {
     operations: Record<string, OperationStatsWithoutTimings>;
     startedAt: number;
+    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
@@ -136,6 +139,7 @@ export class InspectionStatistics {
     return {
       operations: operations,
       startedAt: this.startedAt,
+      sqlTokenizationFailures: this.sqlTokenizationFailures,
       requests: this.requests,
       userAgents: this.userAgents,
       ipAddresses: this.ipAddresses,
@@ -298,5 +302,9 @@ export class InspectionStatistics {
     for (const kind in this.operations) {
       this.compressPerfSamples(kind as OperationKind);
     }
+  }
+
+  onSqlTokenizationFailure() {
+    this.sqlTokenizationFailures += 1;
   }
 }

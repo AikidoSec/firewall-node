@@ -48,6 +48,7 @@ t.test("it resets stats", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.tick(1000);
@@ -69,6 +70,7 @@ t.test("it resets stats", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.uninstall();
@@ -101,6 +103,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onInspectedCall({
@@ -141,6 +144,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onInspectedCall({
@@ -181,6 +185,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.interceptorThrewError("mongodb.query", "nosql_op");
@@ -214,6 +219,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onInspectedCall({
@@ -254,6 +260,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onInspectedCall({
@@ -294,6 +301,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   t.same(stats.hasCompressedStats(), false);
@@ -353,6 +361,7 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   t.ok(
@@ -409,6 +418,7 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onRequest();
@@ -430,6 +440,7 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onRequest();
@@ -452,6 +463,7 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onRequest();
@@ -474,6 +486,7 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.tick(1000);
@@ -497,6 +510,7 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.uninstall();
@@ -527,6 +541,7 @@ t.test("it force compresses stats", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   stats.onRequest();
@@ -576,6 +591,7 @@ t.test("it keeps track of aborted requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.uninstall();
@@ -614,6 +630,7 @@ t.test("it keeps track of matched IPs and user agents", async () => {
         "known_threat_actors/public_scanners": 1,
       },
     },
+    sqlTokenizationFailures: 0,
   });
 
   // Test multiple occurrences
@@ -642,6 +659,7 @@ t.test("it keeps track of matched IPs and user agents", async () => {
         "known_threat_actors/public_scanners": 2,
       },
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.uninstall();
@@ -713,6 +731,7 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   // Test that each operation maintains its own stats
@@ -774,6 +793,7 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
   });
 
   clock.uninstall();
@@ -818,6 +838,40 @@ t.test("it handles empty operation strings", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    sqlTokenizationFailures: 0,
+  });
+
+  clock.uninstall();
+});
+
+t.test("it increments sqlTokenizationFailures", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onSqlTokenizationFailure();
+
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
+    sqlTokenizationFailures: 1,
   });
 
   clock.uninstall();

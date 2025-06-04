@@ -52,7 +52,7 @@ jobs:
         ports:
           - "27019:8123"
       mongodb-replica:
-        image: bitnami/mongodb:8.0
+        image: bitnami/mongodb:4.4
         env:
           MONGODB_ADVERTISED_HOSTNAME: 127.0.0.1
           MONGODB_REPLICA_SET_MODE: primary
