@@ -7,6 +7,7 @@ use super::helpers::{
     get_arg_names::get_method_arg_names,
     get_name_str_for_member_expr::get_name_str_for_member_expr,
     insert_code::{insert_inspect_args, insert_modify_args},
+    transform_return_statements::transform_return_statements,
 };
 use super::instructions::FileInstructions;
 
@@ -74,7 +75,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             );
         }
 
-        // Todo support return value modification
+        if instruction.modify_return_value {
+            transform_return_statements(self.allocator, &instruction.identifier, body);
+        }
     }
 
     fn enter_assignment_expression(
@@ -148,6 +151,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             );
         }
 
-        // Todo support return value modification
+        if instruction.modify_return_value {
+            transform_return_statements(self.allocator, &instruction.identifier, body);
+        }
     }
 }

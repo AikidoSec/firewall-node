@@ -14,6 +14,10 @@ t.after(() => {
   process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
 });
 
+const isSameCode = (code1: string, code2: string) => {
+  t.same(compareCodeStrings(code1, code2), true);
+};
+
 t.test("add inspectArgs to method definition (ESM)", async (t) => {
   const result = transformCode(
     "testpkg",
@@ -51,10 +55,9 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
         private testValue = 42;
@@ -67,8 +70,6 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
             console.log("test");
         }
     }`
-    ),
-    true
   );
 });
 
@@ -109,10 +110,9 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+  isSameCode(
+    result,
+    `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
       const { test } = require("test");
       class Test {
           private testValue = 42;
@@ -125,8 +125,6 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
               console.log("test");
           }
       }`
-    ),
-    true
   );
 });
 
@@ -167,10 +165,9 @@ t.test("wrong function name", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+  isSameCode(
+    result,
+    `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const { test } = require("test");
         class Test {
             private testValue = 42;
@@ -182,8 +179,6 @@ t.test("wrong function name", async (t) => {
                 console.log("test");
             }
         }`
-    ),
-    true
   );
 });
 
@@ -224,10 +219,9 @@ t.test("typescript code", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
           import { test } from "test";
           class Test {
               private testValue: number = 42;
@@ -239,8 +233,6 @@ t.test("typescript code", async (t) => {
                   console.log("test");
               }
           }`
-    ),
-    true
   );
 });
 
@@ -309,12 +301,9 @@ t.test("empty code", async (t) => {
     ],
   });
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";`
-    ),
-    true
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";`
   );
 });
 
@@ -355,10 +344,9 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
       import { test } from "test";
       class Test {
           private testValue = 42;
@@ -371,8 +359,6 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
               console.log("test");
           }
       }`
-    ),
-    true
   );
 });
 
@@ -418,7 +404,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+        `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
         import { test } from "test";
         class Test {
             private testValue = 42;
@@ -470,10 +456,9 @@ t.test("modify rest parameter args", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
         class Test {
             constructor() {
                 this.testFunction(testValue);
@@ -482,8 +467,6 @@ t.test("modify rest parameter args", async (t) => {
                 console.log("test");
             }
         }`
-    ),
-    true
   );
 
   const result2 = transformCode(
@@ -516,10 +499,9 @@ t.test("modify rest parameter args", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result2,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result2,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
         class Test {
             constructor() {
                 this.testFunction(testValue);
@@ -529,8 +511,6 @@ t.test("modify rest parameter args", async (t) => {
                 console.log("test");
             }
         }`
-    ),
-    true
   );
 });
 
@@ -571,10 +551,9 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `import { __instrumentInspectArgs, __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
     class Test {
         private testValue = 42;
@@ -587,8 +566,6 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             console.log("test");
         }
     }`
-    ),
-    true
   );
 
   const result2 = transformCode(
@@ -627,10 +604,9 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result2,
-      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+  isSameCode(
+    result2,
+    `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
     const { test } = require("test");
     class Test {
         private testValue = 42;
@@ -643,8 +619,6 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
             console.log("test");
         }
     }`
-    ),
-    true
   );
 });
 
@@ -683,7 +657,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         app.use = function (fn) {
             __instrumentInspectArgs("express.application.js.app.use.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
@@ -730,7 +704,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         app.use = function (fn) {
             [fn] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn]);
@@ -778,7 +752,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
@@ -827,7 +801,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
@@ -876,7 +850,7 @@ t.test(
     t.same(
       compareCodeStrings(
         result,
-        `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+        `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
@@ -919,16 +893,164 @@ t.test("does not modify code if function name is not found", async (t) => {
     }
   );
 
-  t.same(
-    compareCodeStrings(
-      result,
-      `const { __instrumentInspectArgs, __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+  isSameCode(
+    result,
+    `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         const key = "get";
         app[key2] = function (fn) {
           console.log("test");
         };`
+  );
+});
+
+t.test("add modifyArgs to method definition (ESM)", async (t) => {
+  const testWithReturnStatement = (returnStatement: string) =>
+    transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        import { test } from "test";
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+
+                ${returnStatement}
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: false,
+            modifyArgs: false,
+            modifyReturnValue: true,
+            modifyArgumentsObject: false,
+          },
+        ],
+      }
+    );
+
+  isSameCode(
+    testWithReturnStatement("return arg1;"),
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arg1);
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement("return 'test';"),
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", "test");
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement("return 'test\"';"),
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", "test\\"");
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement("return [1, 2];"),
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", [1, 2]);
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement("return function() { return 42; };"),
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", function() { return 42; });
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(
+      'return funcCall({foo: [1], test: Symbol("abc")});'
     ),
-    true
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", funcCall({foo: [1], test: Symbol("abc")}));
+        }
+    }`
   );
 });

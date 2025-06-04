@@ -14,6 +14,7 @@ import { BuiltinModule } from "../BuiltinModule";
 import {
   __instrumentInspectArgs,
   __instrumentModifyArgs,
+  __instrumentModifyReturnValue,
 } from "./injectedFunctions";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
@@ -127,6 +128,7 @@ t.test("it works using injected functions", async (t) => {
   let pkgInspectArgsCalled = false;
   let builtinOnRequireCalled = false;
   let pkgModifyArgsCalled = false;
+  let pkgModifyReturnValueCalled = false;
 
   const pkg = new Package("foo");
   pkg.withVersion("^1.0.0").addFileInstrumentation({
@@ -142,6 +144,11 @@ t.test("it works using injected functions", async (t) => {
         modifyArgs: (args) => {
           pkgModifyArgsCalled = true;
           return [42];
+        },
+        modifyReturnValue: (args, returnValue) => {
+          t.same(args, [1, 2, 3]);
+          pkgModifyReturnValueCalled = true;
+          return "test";
         },
       },
     ],
@@ -166,6 +173,7 @@ t.test("it works using injected functions", async (t) => {
   __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
+  t.equal(pkgModifyReturnValueCalled, false);
   __instrumentInspectArgs(
     "foo.bar.js.baz.MethodDefinition.^1.0.0",
     [],
@@ -176,6 +184,7 @@ t.test("it works using injected functions", async (t) => {
   // No agent yet
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
+  t.equal(pkgModifyReturnValueCalled, false);
 
   // Without agent
   t.same(wrapBuiltinExports("http", { a: 1 }), { a: 1 });
@@ -191,6 +200,7 @@ t.test("it works using injected functions", async (t) => {
   __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
+  t.equal(pkgModifyReturnValueCalled, false);
 
   __instrumentInspectArgs(
     "foo.bar.js.baz.MethodDefinition.^1.0.0",
@@ -203,6 +213,17 @@ t.test("it works using injected functions", async (t) => {
     42,
   ]);
   t.equal(pkgModifyArgsCalled, true);
+
+  t.equal(pkgModifyReturnValueCalled, false);
+  t.same(
+    __instrumentModifyReturnValue(
+      "foo.bar.js.baz.MethodDefinition.^1.0.0",
+      [1, 2, 3],
+      "42"
+    ),
+    "test"
+  );
+  t.equal(pkgModifyReturnValueCalled, true);
 
   t.equal(builtinOnRequireCalled, false);
   const wrapped = wrapBuiltinExports("http", {}) as any;
@@ -285,6 +306,8 @@ t.test("modifyArgs always returns a array", async (t) => {
 });
 
 t.test("all injected functions handle errors", async (t) => {
+  let callbackCalledCount = 0;
+
   const pkg = new Package("foo");
   pkg.withVersion("^1.0.0").addFileInstrumentation({
     path: "dist/test.mjs",
@@ -294,12 +317,15 @@ t.test("all injected functions handle errors", async (t) => {
         name: "abc",
         operationKind: "sql_op",
         inspectArgs: () => {
+          ++callbackCalledCount;
           throw new Error("test");
         },
         modifyArgs: () => {
+          ++callbackCalledCount;
           throw new Error("test");
         },
         modifyReturnValue: () => {
+          ++callbackCalledCount;
           throw new Error("test");
         },
       },
@@ -309,7 +335,25 @@ t.test("all injected functions handle errors", async (t) => {
   setPackagesToInstrument([pkg]);
   createTestAgent();
 
-  __instrumentInspectArgs("foo.dist/test.mjs.abc.^1.0.0", [], "1.0.0", this);
-  __instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []);
-  t.same(__instrumentModifyArgs("foo.dist/test.mjs.abc.^1.0.0", []), []);
+  __instrumentInspectArgs(
+    "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+    [],
+    "1.0.0",
+    this
+  );
+  __instrumentModifyArgs("foo.dist/test.mjs.abc.MethodDefinition.^1.0.0", []);
+  t.same(
+    __instrumentModifyArgs("foo.dist/test.mjs.abc.MethodDefinition.^1.0.0", []),
+    []
+  );
+  t.same(
+    __instrumentModifyReturnValue(
+      "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+      [],
+      42
+    ),
+    42
+  );
+
+  t.equal(callbackCalledCount, 4);
 });

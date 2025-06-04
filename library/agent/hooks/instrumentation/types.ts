@@ -78,7 +78,7 @@ export type PackageFunctionInstrumentationInstruction = {
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
   /**
-   * If true, the arguments object will be modified by modifyArgs instead modifying the named arguments.
+   * If true, the arguments object will be modified by modifyArgs instead of modifying the named arguments.
    *
    * Why is this needed?
    * If the library object uses the arguments object instead of named function arguments and no named arguments are defined in the function / method definition
