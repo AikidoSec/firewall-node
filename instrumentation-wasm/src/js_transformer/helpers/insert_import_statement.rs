@@ -8,12 +8,27 @@ use oxc_ast::{
 };
 use oxc_span::{SourceType, SPAN};
 
-use crate::js_transformer::instructions::FileInstructions;
+use crate::js_transformer::instructions::{FileInstructions, FunctionInstructions};
 
 const INSTRUMENT_IMPORT_SOURCE: &str = "@aikidosec/firewall/instrument/internals";
 const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
+
+const IMPORT_METHODS: [(&str, fn(&FunctionInstructions) -> bool); 3] = [
+    (
+        INSTRUMENT_INSPECT_ARGS_METHOD_NAME,
+        |f: &FunctionInstructions| f.inspect_args,
+    ),
+    (
+        INSTRUMENT_MODIFY_ARGS_METHOD_NAME,
+        |f: &FunctionInstructions| f.modify_args,
+    ),
+    (
+        INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME,
+        |f: &FunctionInstructions| f.modify_return_value,
+    ),
+];
 
 pub fn insert_import_statement<'a>(
     source_type: &SourceType,
@@ -24,7 +39,6 @@ pub fn insert_import_statement<'a>(
     file_instructions: &FileInstructions,
 ) {
     // Common JS require() statement
-
     if source_type.is_script() || source_type.is_unambiguous() && !has_module_syntax {
         let mut require_args: Vec<'a, Argument<'a>> = builder.vec_with_capacity(1);
         require_args.push(Argument::StringLiteral(builder.alloc_string_literal(
@@ -35,62 +49,21 @@ pub fn insert_import_statement<'a>(
 
         let mut binding_properties: Vec<'a, BindingProperty<'a>> = builder.vec_with_capacity(3);
 
-        if file_instructions.functions.iter().any(|f| f.inspect_args) {
-            binding_properties.push(builder.binding_property(
-                SPAN,
-                builder.property_key_static_identifier(SPAN, INSTRUMENT_INSPECT_ARGS_METHOD_NAME),
-                builder.binding_pattern(
-                    builder.binding_pattern_kind_binding_identifier(
-                        SPAN,
-                        INSTRUMENT_INSPECT_ARGS_METHOD_NAME,
-                    ),
-                    NONE,
-                    false,
-                ),
-                true,
-                false,
-            ));
-        }
-
-        if file_instructions.functions.iter().any(|f| f.modify_args) {
-            binding_properties.push(builder.binding_property(
-                SPAN,
-                builder.property_key_static_identifier(SPAN, INSTRUMENT_MODIFY_ARGS_METHOD_NAME),
-                builder.binding_pattern(
-                    builder.binding_pattern_kind_binding_identifier(
-                        SPAN,
-                        INSTRUMENT_MODIFY_ARGS_METHOD_NAME,
-                    ),
-                    NONE,
-                    false,
-                ),
-                true,
-                false,
-            ));
-        }
-
-        if file_instructions
-            .functions
-            .iter()
-            .any(|f| f.modify_return_value)
-        {
-            binding_properties.push(builder.binding_property(
-                SPAN,
-                builder.property_key_static_identifier(
+        for (method_name, predicate) in IMPORT_METHODS.iter() {
+            // Only import the function if it is used in the file
+            if file_instructions.functions.iter().any(|f| predicate(f)) {
+                binding_properties.push(builder.binding_property(
                     SPAN,
-                    INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME,
-                ),
-                builder.binding_pattern(
-                    builder.binding_pattern_kind_binding_identifier(
-                        SPAN,
-                        INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME,
+                    builder.property_key_static_identifier(SPAN, *method_name),
+                    builder.binding_pattern(
+                        builder.binding_pattern_kind_binding_identifier(SPAN, *method_name),
+                        NONE,
+                        false,
                     ),
-                    NONE,
+                    true,
                     false,
-                ),
-                true,
-                false,
-            ));
+                ));
+            }
         }
 
         let mut declarations = builder.vec_with_capacity(1);
@@ -127,41 +100,18 @@ pub fn insert_import_statement<'a>(
 
         return;
     }
+    // else: ESM import statement
 
     let mut specifiers: Vec<'a, ImportDeclarationSpecifier<'a>> = builder.vec_with_capacity(3);
-
-    if file_instructions.functions.iter().any(|f| f.inspect_args) {
-        specifiers.push(builder.import_declaration_specifier_import_specifier(
-            SPAN,
-            builder.module_export_name_identifier_name(SPAN, INSTRUMENT_INSPECT_ARGS_METHOD_NAME),
-            builder.binding_identifier(SPAN, INSTRUMENT_INSPECT_ARGS_METHOD_NAME),
-            ImportOrExportKind::Value,
-        ));
-    }
-
-    if file_instructions.functions.iter().any(|f| f.modify_args) {
-        specifiers.push(builder.import_declaration_specifier_import_specifier(
-            SPAN,
-            builder.module_export_name_identifier_name(SPAN, INSTRUMENT_MODIFY_ARGS_METHOD_NAME),
-            builder.binding_identifier(SPAN, INSTRUMENT_MODIFY_ARGS_METHOD_NAME),
-            ImportOrExportKind::Value,
-        ));
-    }
-
-    if file_instructions
-        .functions
-        .iter()
-        .any(|f| f.modify_return_value)
-    {
-        specifiers.push(builder.import_declaration_specifier_import_specifier(
-            SPAN,
-            builder.module_export_name_identifier_name(
+    for (method_name, predicate) in IMPORT_METHODS.iter() {
+        if file_instructions.functions.iter().any(|f| predicate(f)) {
+            specifiers.push(builder.import_declaration_specifier_import_specifier(
                 SPAN,
-                INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME,
-            ),
-            builder.binding_identifier(SPAN, INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME),
-            ImportOrExportKind::Value,
-        ));
+                builder.module_export_name_identifier_name(SPAN, *method_name),
+                builder.binding_identifier(SPAN, *method_name),
+                ImportOrExportKind::Value,
+            ));
+        }
     }
 
     let import_stmt = Statement::ImportDeclaration(builder.alloc_import_declaration(

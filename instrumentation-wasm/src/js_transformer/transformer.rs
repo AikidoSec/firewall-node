@@ -3,13 +3,11 @@ use oxc_ast::AstBuilder;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use oxc_traverse::traverse_mut;
 
 use super::{
     helpers::{
         insert_import_statement::insert_import_statement,
-        parse_js_code_to_statements::parse_js_code_to_statements,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
     instructions::FileInstructions,
