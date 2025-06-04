@@ -1,4 +1,5 @@
 use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -7,7 +8,7 @@ use oxc_traverse::traverse_mut;
 
 use super::{
     helpers::{
-        get_import_code_str::get_import_code_str,
+        insert_import_statement::insert_import_statement,
         parse_js_code_to_statements::parse_js_code_to_statements,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
@@ -46,24 +47,25 @@ pub fn transform_code_str(
 
     let (scopes, _nodes) = semantic.semantic.into_scoping_and_nodes();
 
+    let ast_builder = AstBuilder::new(&allocator);
+
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
         pkg_version: &pkg_version,
+        ast_builder: &ast_builder,
     };
 
     traverse_mut(t, &allocator, program, scopes);
 
     // Add import / require statement
-    program.body.insert(
-        0,
-        parse_js_code_to_statements(
-            &allocator,
-            get_import_code_str(&source_type, parser_result.module_record.has_module_syntax),
-            SourceType::cjs(),
-        )
-        .pop()
-        .unwrap(),
+    insert_import_statement(
+        &source_type,
+        parser_result.module_record.has_module_syntax,
+        &allocator,
+        &ast_builder,
+        &mut program.body,
+        &file_instructions,
     );
 
     // Todo: Update source map?

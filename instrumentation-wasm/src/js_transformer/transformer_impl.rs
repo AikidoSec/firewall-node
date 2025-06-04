@@ -15,6 +15,7 @@ pub struct Transformer<'a> {
     pub allocator: &'a Allocator,
     pub file_instructions: &'a FileInstructions,
     pub pkg_version: &'a str,
+    pub ast_builder: &'a oxc_ast::AstBuilder<'a>,
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
@@ -76,7 +77,12 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         }
 
         if instruction.modify_return_value {
-            transform_return_statements(self.allocator, &instruction.identifier, body);
+            transform_return_statements(
+                self.allocator,
+                self.ast_builder,
+                &instruction.identifier,
+                body,
+            );
         }
     }
 
@@ -152,7 +158,12 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         }
 
         if instruction.modify_return_value {
-            transform_return_statements(self.allocator, &instruction.identifier, body);
+            transform_return_statements(
+                self.allocator,
+                self.ast_builder,
+                &instruction.identifier,
+                body,
+            );
         }
     }
 }

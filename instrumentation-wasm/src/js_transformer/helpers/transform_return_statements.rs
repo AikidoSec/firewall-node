@@ -7,13 +7,12 @@ use oxc_span::SPAN;
 
 pub fn transform_return_statements<'a>(
     allocator: &'a Allocator,
+    builder: &AstBuilder<'a>,
     identifier: &str,
     body: &mut Box<'a, FunctionBody<'a>>,
 ) {
     // Iterate through the statements in the function body
     for statement in &mut body.statements {
-        let builder = AstBuilder::new(&allocator);
-
         match statement {
             Statement::ReturnStatement(return_stmt) => {
                 let mut instrument_args: Vec<'a, Argument<'a>> = builder.vec_with_capacity(2);
