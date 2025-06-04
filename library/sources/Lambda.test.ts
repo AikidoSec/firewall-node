@@ -315,7 +315,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
         ipAddresses: {
           breakdown: {},
         },
-        sqlTokenizationFailures: 0,
       },
       middlewareInstalled: false,
     },
