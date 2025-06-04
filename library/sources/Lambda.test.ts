@@ -216,7 +216,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
 
   for (let i = 0; i < 99; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "mongodb.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -237,7 +238,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   clock.tick(1);
 
   agent.getInspectionStatistics().onInspectedCall({
-    sink: "mongodb",
+    operation: "mongodb.query",
+    kind: "nosql_op",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
@@ -251,7 +253,8 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
   clock.tick(60 * 1000 * 10);
 
   agent.getInspectionStatistics().onInspectedCall({
-    sink: "mongodb",
+    operation: "mongodb.query",
+    kind: "nosql_op",
     blocked: false,
     durationInMs: 0.1,
     attackDetected: false,
@@ -269,9 +272,11 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       hostnames: [],
       routes: [],
       users: [],
+      packages: [],
       stats: {
-        sinks: {
-          mongodb: {
+        operations: {
+          "mongodb.query": {
+            kind: "nosql_op",
             total: 100,
             attacksDetected: {
               total: 0,
@@ -304,6 +309,12 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             blocked: 0,
           },
         },
+        userAgents: {
+          breakdown: {},
+        },
+        ipAddresses: {
+          breakdown: {},
+        },
       },
       middlewareInstalled: false,
     },
@@ -333,7 +344,8 @@ t.test(
 
     for (let i = 0; i < 100; i++) {
       agent.getInspectionStatistics().onInspectedCall({
-        sink: "mongodb",
+        operation: "mongodb.query",
+        kind: "nosql_op",
         blocked: false,
         durationInMs: 0.1,
         attackDetected: false,

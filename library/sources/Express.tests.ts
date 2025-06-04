@@ -74,6 +74,7 @@ export function createExpressTests(expressPackageName: string) {
   });
 
   const express = require(expressPackageName) as typeof import("express");
+  const { readFile } = require("fs") as typeof import("fs");
 
   function getApp(userMiddleware = true) {
     const app = express();
@@ -257,7 +258,6 @@ export function createExpressTests(expressPackageName: string) {
         res.send({ hello: "world" });
       });
 
-      // @ts-expect-error Not types for express 5 available yet
       app.router.use("/middleware-rate-limited", (req, res, next) => {
         res.send({ hello: "world" });
       });
@@ -599,7 +599,6 @@ export function createExpressTests(expressPackageName: string) {
       stack = app._router.stack;
     } else {
       // On express v5, the router is available as `app.router`
-      // @ts-expect-error stack is private
       stack = app.router.stack;
     }
 
@@ -672,11 +671,10 @@ export function createExpressTests(expressPackageName: string) {
           stack = req.app._router.stack as any[];
         } else {
           // On express v5, the router is available as `app.router`
-          // @ts-expect-error stack is private
           stack = req.app.router.stack as any[];
         }
         routerLayer = stack.find((router) => router.name === "CustomRouter");
-        return res.status(200).send("bar");
+        res.status(200).send("bar");
       });
 
       // The patched router now has express router's own properties in its prototype so
@@ -740,5 +738,30 @@ export function createExpressTests(expressPackageName: string) {
     const blockedResponse = await request(app).get("/router-block-user");
     t.same(blockedResponse.statusCode, 403);
     t.same(blockedResponse.text, "You are blocked by Zen.");
+  });
+
+  t.test("it detects path traversal with double encoding", async (t) => {
+    const app = express();
+
+    app.get("/search", (req, res) => {
+      const searchTerm = req.query.q;
+      const fileUrl = new URL(`file:///public/${searchTerm}`);
+
+      readFile(fileUrl, "utf-8", (err, data) => {
+        if (err) {
+          return res.status(500).send("Error reading file");
+        }
+        res.send(`File content of /public/${searchTerm} : ${data}`);
+      });
+    });
+
+    const blockedResponse = await request(app).get(
+      "/search?q=.%252E/etc/passwd"
+    );
+    t.same(blockedResponse.statusCode, 500);
+    t.match(
+      blockedResponse.text,
+      /Error: Zen has blocked a path traversal attack: fs.readFile\(\.\.\.\) originating from query/
+    );
   });
 }

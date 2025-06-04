@@ -44,6 +44,7 @@ export class Path implements Wrapper {
 
     for (const func of functions) {
       wrapExport(exports, func, pkgInfo, {
+        kind: "fs_op",
         inspectArgs: (args) => this.inspectPath(args, func),
       });
     }

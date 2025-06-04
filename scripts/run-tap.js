@@ -15,17 +15,12 @@ if (process.env.CI) {
   args += " --coverage-report=lcov";
 }
 
-// Enable the `--experimental-sqlite` flag for Node.js ^22.5.0
-if ((major === 22 && minor >= 5) || major === 23) {
-  args += " --node-arg=--experimental-sqlite --node-arg=--no-warnings";
-}
-
 execSync(`tap ${args}`, {
   stdio: "inherit",
   env: {
     ...process.env,
     AIKIDO_CI: "true",
     // In v23 some sub-dependencies are calling require on a esm module triggering an experimental warning
-    NODE_OPTIONS: major === 23 ? "--disable-warning=ExperimentalWarning" : "",
+    NODE_OPTIONS: major === 24 ? "--disable-warning=ExperimentalWarning" : "",
   },
 });

@@ -45,7 +45,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [micro](docs/micro.md) 10.x
 * ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
-* ✅ [Koa](docs/koa.md) 2.x
+* ✅ [Koa](docs/koa.md) 3.x and 2.x
 * ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
 
 ### Database drivers
@@ -65,8 +65,8 @@ Zen for Node.js 16+ is compatible with:
 
 ### Cloud providers
 
-* ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 3.x
-* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+* ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 4.x, 3.x
+* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
 * ✅ Google Cloud Functions
 * ✅ AWS Lambda
 
