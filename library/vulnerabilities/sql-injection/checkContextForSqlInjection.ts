@@ -1,12 +1,9 @@
-/* eslint-disable max-lines-per-function */
 import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
-import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 import {
   detectSQLInjection,
   SQLInjectionDetectionResult,
