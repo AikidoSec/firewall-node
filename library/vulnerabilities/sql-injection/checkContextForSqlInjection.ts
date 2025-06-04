@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
