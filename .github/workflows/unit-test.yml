@@ -52,7 +52,7 @@ jobs:
         ports:
           - "27019:8123"
       mongodb-replica:
-        image: bitnami/mongodb:8.0
+        image: bitnami/mongodb:4.4
         env:
           MONGODB_ADVERTISED_HOSTNAME: 127.0.0.1
           MONGODB_REPLICA_SET_MODE: primary
@@ -82,6 +82,14 @@ jobs:
           rustup toolchain install stable
           rustup default stable
           cargo install wasm-pack
+      - name: "Install Google Cloud SDK"
+        uses: google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a # v2
+        with:
+          install_components: "beta,pubsub-emulator"
+          version: "524.0.0"
+      - name: "Start Pub/Sub emulator"
+        run: |
+          gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085' &
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run test:ci

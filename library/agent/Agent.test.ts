@@ -126,7 +126,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.9.0 is supported!",
+    "mongodb@6.16.0 is supported!",
   ]);
 });
 
@@ -1169,4 +1169,37 @@ t.test("it only allows some IP addresses", async () => {
   t.same(agent.getConfig().isAllowedIPAddress("4.3.2.1"), {
     allowed: true,
   });
+});
+
+t.test("it includes agent's own package in heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      packages: [
+        {
+          name: "@aikidosec/firewall",
+          version: "0.0.0",
+          requiredAt: 0,
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
 });
