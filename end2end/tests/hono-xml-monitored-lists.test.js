@@ -43,6 +43,7 @@ t.test("it does not block monitored IPs", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -109,6 +110,7 @@ t.test("it does not block monitored user agents", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 

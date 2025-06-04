@@ -1,4 +1,4 @@
-name: Unit tests
+name: 🧪 Unit tests
 on:
   push: {}
   workflow_call: {}
@@ -77,6 +77,14 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - name: "Install Google Cloud SDK"
+        uses: google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a # v2
+        with:
+          install_components: "beta,pubsub-emulator"
+          version: "524.0.0"
+      - name: "Start Pub/Sub emulator"
+        run: |
+          gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085' &
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run test:ci
