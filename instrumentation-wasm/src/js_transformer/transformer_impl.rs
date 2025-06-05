@@ -57,11 +57,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         let body = node.value.body.as_mut().unwrap();
 
         if instruction.modify_args && !arg_names.is_empty() {
-            let arg_names_str = arg_names.join(", ");
             insert_modify_args(
                 self.allocator,
+                self.ast_builder,
                 &instruction.identifier,
-                &arg_names_str,
+                &arg_names,
                 body,
                 instruction.modify_arguments_object,
             );
@@ -70,6 +70,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         if instruction.inspect_args {
             insert_inspect_args(
                 self.allocator,
+                self.ast_builder,
                 &instruction.identifier,
                 self.pkg_version,
                 body,
@@ -138,11 +139,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         let body = function_expression.body.as_mut().unwrap();
 
         if instruction.modify_args {
-            let arg_names_str = arg_names.join(", ");
             insert_modify_args(
                 self.allocator,
+                self.ast_builder,
                 &instruction.identifier,
-                &arg_names_str,
+                &arg_names,
                 body,
                 instruction.modify_arguments_object,
             );
@@ -151,6 +152,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         if instruction.inspect_args {
             insert_inspect_args(
                 self.allocator,
+                self.ast_builder,
                 &instruction.identifier,
                 self.pkg_version,
                 body,

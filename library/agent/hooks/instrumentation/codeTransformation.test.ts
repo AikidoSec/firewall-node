@@ -678,7 +678,7 @@ t.test(
       "application.js",
       `
         const app = require("example");
-        app.use = function (fn) {
+        app.use = function (fn, arg2, arg3) {
             console.log("test");
         };
         `,
@@ -706,8 +706,8 @@ t.test(
         result,
         `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
-        app.use = function (fn) {
-            [fn] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn]);
+        app.use = function (fn, arg2, arg3) {
+            [fn, arg2, arg3] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn, arg2, arg3]);
             console.log("test");
         };`
       ),
@@ -1087,3 +1087,65 @@ t.test("it adds all imports if necessary (CJS)", async (t) => {
     test();`
   );
 });
+
+t.test(
+  "it does not add a empty require if no imports are needed (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `test();`,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[key]",
+            identifier:
+              "express.application.js.app[key].MethodDefinition.v1.0.0",
+            inspectArgs: false,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+      }
+    );
+
+    isSameCode(result, `test();`);
+  }
+);
+
+t.test(
+  "it does not add a empty import if no imports are needed (ESM)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `test();`,
+      "module",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[key]",
+            identifier:
+              "express.application.js.app[key].MethodDefinition.v1.0.0",
+            inspectArgs: false,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+      }
+    );
+
+    isSameCode(result, `test();`);
+  }
+);

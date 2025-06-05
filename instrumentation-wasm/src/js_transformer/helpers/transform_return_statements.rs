@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box, Vec};
+use oxc_allocator::{Allocator, Box, Vec as OxcVec};
 use oxc_ast::{
     ast::{Argument, FunctionBody, Statement},
     AstBuilder, NONE,
@@ -15,7 +15,7 @@ pub fn transform_return_statements<'a>(
     for statement in &mut body.statements {
         match statement {
             Statement::ReturnStatement(return_stmt) => {
-                let mut instrument_args: Vec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+                let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
 
                 // Add the identifier to the arguments
                 instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(

@@ -1,67 +1,197 @@
-use super::parse_js_code_to_statements::parse_js_code_to_statements;
-use oxc_allocator::{Allocator, Box};
-use oxc_ast::ast::FunctionBody;
-use oxc_span::SourceType;
-
-pub fn insert_single_statement_into_func<'a>(
-    allocator: &'a Allocator,
-    body: &mut Box<'a, FunctionBody<'a>>,
-    pos: usize,
-    source_text: &'a str,
-) {
-    body.statements.insert(
-        pos,
-        parse_js_code_to_statements(&allocator, &source_text, SourceType::mjs())
-            .into_iter()
-            .next()
-            .unwrap(),
-    );
-}
+use oxc_allocator::{Allocator, Box, Vec as OxcVec};
+use oxc_ast::{
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentOperator, AssignmentTarget, Expression,
+        FunctionBody,
+    },
+    AstBuilder, NONE,
+};
+use oxc_span::SPAN;
 
 // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments);
 pub fn insert_inspect_args<'a>(
     allocator: &'a Allocator,
+    builder: &'a AstBuilder,
     identifier: &str,
     pkg_version: &'a str,
     body: &mut Box<'a, FunctionBody<'a>>,
 ) {
-    let source_text: &'a str = allocator.alloc_str(&format!(
-        "__instrumentInspectArgs('{}', arguments, '{}', this);",
-        identifier, pkg_version
-    ));
+    let mut inspect_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(4);
 
-    insert_single_statement_into_func(allocator, body, 0, source_text);
+    // Add the identifier to the arguments
+    inspect_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(identifier),
+        None,
+    )));
+
+    // Add the arguments object as the second argument
+    inspect_args.push(builder.expression_identifier(SPAN, "arguments").into());
+
+    // Add the package version as the third argument
+    inspect_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(pkg_version),
+        None,
+    )));
+
+    // Add the `this` context as the fourth argument
+    inspect_args.push(builder.expression_identifier(SPAN, "this").into());
+
+    // Build and add a call expression
+    let call_expr = builder.expression_call(
+        SPAN,
+        builder.expression_identifier(SPAN, "__instrumentInspectArgs"),
+        NONE,
+        inspect_args,
+        false,
+    );
+
+    let stmt_expression = builder.statement_expression(SPAN, call_expr);
+
+    body.statements.insert(0, stmt_expression);
 }
 
 // Modify the arguments by adding a statement to the beginning of the function
 // [arg1, arg2, ...] = __instrumentModifyArgs('function_identifier', [arg1, arg2, ...]);
 pub fn insert_modify_args<'a>(
     allocator: &'a Allocator,
+    builder: &'a AstBuilder,
     identifier: &str,
-    arg_names_str: &str,
+    arg_names: &Vec<String>,
     body: &mut Box<'a, FunctionBody<'a>>,
     modify_arguments_object: bool,
 ) {
     if modify_arguments_object {
         // If we are modifying the arguments object, we need to use the arguments object directly
         // instead of the individual arguments
-        let source_text: &'a str = allocator.alloc_str(&format!(
-            "Object.assign(arguments, __instrumentModifyArgs('{}', Array.from(arguments)));",
-            identifier
+        // Object.assign(arguments, __instrumentModifyArgs('id', Array.from(arguments)));
+
+        let mut obj_assign_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+
+        // First argument is the arguments object
+        obj_assign_args.push(builder.expression_identifier(SPAN, "arguments").into());
+
+        // Second argument is the call to __instrumentModifyArgs
+
+        let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+        // Add the identifier to the arguments
+        instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+            SPAN,
+            allocator.alloc_str(identifier),
+            None,
+        )));
+
+        let mut array_from_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(1);
+        // Add the arguments object as the first argument to Array.from
+        array_from_args.push(builder.expression_identifier(SPAN, "arguments").into());
+
+        let array_from_call = builder.expression_call(
+            SPAN,
+            Expression::StaticMemberExpression(builder.alloc_static_member_expression(
+                SPAN,
+                builder.expression_identifier(SPAN, "Array"),
+                builder.identifier_name(SPAN, "from"),
+                false,
+            )),
+            NONE,
+            array_from_args,
+            false,
+        );
+
+        instrument_args.push(array_from_call.into());
+
+        let instrument_modify_args_call = builder.expression_call(
+            SPAN,
+            builder.expression_identifier(SPAN, "__instrumentModifyArgs"),
+            NONE,
+            instrument_args,
+            false,
+        );
+
+        obj_assign_args.push(instrument_modify_args_call.into());
+
+        let obj_assign_call_expr = builder.expression_call(
+            SPAN,
+            Expression::StaticMemberExpression(builder.alloc_static_member_expression(
+                SPAN,
+                builder.expression_identifier(SPAN, "Object"),
+                builder.identifier_name(SPAN, "assign"),
+                false,
+            )),
+            NONE,
+            obj_assign_args,
+            false,
+        );
+
+        let stmt_expression = builder.statement_expression(SPAN, obj_assign_call_expr);
+
+        body.statements.insert(0, stmt_expression);
+
+        return;
+    }
+
+    if arg_names.is_empty() {
+        // If there are no arguments to modify, we can skip the modification
+        return;
+    }
+
+    use oxc_ast::ast::AssignmentTargetMaybeDefault;
+
+    let mut array_assignment_target_identifiers: OxcVec<
+        'a,
+        Option<AssignmentTargetMaybeDefault<'a>>,
+    > = builder.vec_with_capacity(arg_names.len());
+
+    for name in arg_names {
+        array_assignment_target_identifiers.push(Some(
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(
+                builder.alloc_identifier_reference(SPAN, allocator.alloc_str(name)),
+            ),
         ));
-        insert_single_statement_into_func(allocator, body, 0, source_text);
-        return;
     }
 
-    if arg_names_str.is_empty() {
-        // If there are no arguments to modify, we can skip this step
-        return;
+    let mut instrument_modify_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+    // Add the identifier to the arguments
+    instrument_modify_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(identifier),
+        None,
+    )));
+
+    let mut instrument_modify_args_array_elements: OxcVec<'a, ArrayExpressionElement<'a>> =
+        builder.vec_with_capacity(arg_names.len());
+
+    for name in arg_names {
+        instrument_modify_args_array_elements.push(ArrayExpressionElement::Identifier(
+            builder.alloc_identifier_reference(SPAN, allocator.alloc_str(name)),
+        ));
     }
 
-    let source_text: &'a str = allocator.alloc_str(&format!(
-        "[{}] = __instrumentModifyArgs('{}', [{}]);",
-        arg_names_str, identifier, arg_names_str
+    instrument_modify_args.push(Argument::ArrayExpression(
+        builder.alloc_array_expression(SPAN, instrument_modify_args_array_elements),
     ));
 
-    insert_single_statement_into_func(allocator, body, 0, source_text);
+    let instrument_modify_args_call = builder.expression_call(
+        SPAN,
+        builder.expression_identifier(SPAN, "__instrumentModifyArgs"),
+        NONE,
+        instrument_modify_args,
+        false,
+    );
+
+    let arr_assignment_expr = builder.expression_assignment(
+        SPAN,
+        AssignmentOperator::Assign,
+        AssignmentTarget::ArrayAssignmentTarget(builder.alloc_array_assignment_target(
+            SPAN,
+            array_assignment_target_identifiers,
+            None,
+        )),
+        instrument_modify_args_call,
+    );
+
+    let stmt_expression = builder.statement_expression(SPAN, arr_assignment_expr);
+
+    body.statements.insert(0, stmt_expression);
 }
