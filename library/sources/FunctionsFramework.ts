@@ -53,7 +53,7 @@ export class FunctionsFramework implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/functions-framework")
-      .withVersion("^3.0.0")
+      .withVersion("^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapExport(exports, "http", pkgInfo, {
           kind: undefined,

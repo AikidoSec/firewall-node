@@ -9,7 +9,7 @@ function generateConfig(app) {
     endpoints: [],
     blockedUserIds: [],
     allowedIPAddresses: [],
-    receivedAnyStats: true,
+    receivedAnyStats: false,
   };
 }
 
