@@ -10,5 +10,5 @@ pub fn wasm_transform_code_str(
     instructions_json: &str,
     source_type: i32,
 ) -> String {
-    return transform_code_str(pkg_name, pkg_version, code, instructions_json, source_type);
+    transform_code_str(pkg_name, pkg_version, code, instructions_json, source_type)
 }

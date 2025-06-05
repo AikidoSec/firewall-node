@@ -28,16 +28,16 @@ pub fn transform_code_str(
 
     let source_type = select_sourcetype_based_on_enum(src_type);
 
-    let parser_result = Parser::new(&allocator, &code, source_type).parse();
+    let parser_result = Parser::new(&allocator, code, source_type).parse();
 
-    if parser_result.panicked || parser_result.errors.len() > 0 {
+    if parser_result.panicked || !parser_result.errors.is_empty() {
         return format!("#ERR: {:?}", parser_result.errors);
     }
 
     let program = allocator.alloc(parser_result.program);
 
     // 2 Semantic Analyze
-    let semantic = SemanticBuilder::new().build(&program);
+    let semantic = SemanticBuilder::new().build(program);
 
     if !semantic.errors.is_empty() {
         return format!("#ERR: {:?}", semantic.errors);
@@ -50,7 +50,7 @@ pub fn transform_code_str(
     let t = &mut Transformer {
         allocator: &allocator,
         file_instructions: &file_instructions,
-        pkg_version: &pkg_version,
+        pkg_version,
         ast_builder: &ast_builder,
     };
 
@@ -74,7 +74,7 @@ pub fn transform_code_str(
             // Todo add source map using source_map_path
             ..CodegenOptions::default()
         })
-        .build(&program);
+        .build(program);
 
     js.code
 }

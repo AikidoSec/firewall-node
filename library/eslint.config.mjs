@@ -59,11 +59,4 @@ export default defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
-  // New instrumentation system
-  {
-    files: ["**/agent/hooks/instrumentation/*.ts"],
-    rules: {
-      "no-warning-comments": "off",
-    },
-  },
 ]);

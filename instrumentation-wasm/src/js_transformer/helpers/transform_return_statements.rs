@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Box, Vec as OxcVec};
 use oxc_ast::{
-    ast::{Argument, FunctionBody, Statement},
     AstBuilder, NONE,
+    ast::{Argument, FunctionBody, Statement},
 };
 use oxc_span::SPAN;
 
@@ -15,7 +15,7 @@ pub fn transform_return_statements<'a>(
     for statement in &mut body.statements {
         match statement {
             Statement::ReturnStatement(return_stmt) => {
-                let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+                let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(3);
 
                 // Add the identifier to the arguments
                 instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
@@ -23,6 +23,10 @@ pub fn transform_return_statements<'a>(
                     allocator.alloc_str(identifier),
                     None,
                 )));
+
+                // Also pass the function arguments
+                instrument_args.push(builder.expression_identifier(SPAN, "arguments").into());
+
                 // Add original return value as the second argument
                 let arg_expr = return_stmt
                     .argument

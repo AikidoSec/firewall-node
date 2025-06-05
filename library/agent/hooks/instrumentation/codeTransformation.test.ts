@@ -957,7 +957,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arg1);
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, arg1);
         }
     }`
   );
@@ -975,7 +975,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", "test");
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments,"test");
         }
     }`
   );
@@ -993,7 +993,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", "test\\"");
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "test\\"");
         }
     }`
   );
@@ -1011,7 +1011,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", [1, 2]);
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, [1, 2]);
         }
     }`
   );
@@ -1029,7 +1029,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", function() { return 42; });
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, function() { return 42; });
         }
     }`
   );
@@ -1049,7 +1049,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", funcCall({foo: [1], test: Symbol("abc")}));
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, funcCall({foo: [1], test: Symbol("abc")}));
         }
     }`
   );
@@ -1194,7 +1194,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
     function test123(arg1, arg2 = "default") {
         __instrumentInspectArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "1.0.0", this);
         console.log("test123");
-        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionDeclaration.v1.0.0","abc");
+        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "abc");
     }
     const ignore = function test123() {
         console.log("ignore");

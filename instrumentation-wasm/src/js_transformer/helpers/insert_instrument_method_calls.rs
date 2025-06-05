@@ -22,7 +22,7 @@ pub fn insert_instrument_method_calls<'a>(
             allocator,
             builder,
             &instruction.identifier,
-            &arg_names,
+            arg_names,
             body,
             instruction.modify_arguments_object,
         );

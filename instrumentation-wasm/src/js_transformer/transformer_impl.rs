@@ -22,7 +22,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         node: &mut MethodDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        if !node.key.is_identifier() || !node.value.body.is_some() || !node.key.name().is_some() {
+        if !node.key.is_identifier() || node.value.body.is_none() || node.key.name().is_none() {
             return;
         }
 
@@ -135,7 +135,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
             return;
         }
 
-        if !node.id.is_some() || !node.body.is_some() {
+        if node.id.is_none() || node.body.is_none() {
             // No identifier or body, nothing to instrument
             return;
         }

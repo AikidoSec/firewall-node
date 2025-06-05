@@ -135,8 +135,6 @@ function patchBuiltin(
   builtinName: string,
   previousLoadResult: ReturnType<LoadFunction>
 ) {
-  // Todo test if used with import-in-the-middle at the same time
-
   const builtinNameWithoutPrefix = removeNodePrefix(builtinName);
 
   const builtin = shouldPatchBuiltin(builtinNameWithoutPrefix);

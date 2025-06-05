@@ -1,10 +1,10 @@
 use oxc_allocator::{Allocator, Box, Vec as OxcVec};
 use oxc_ast::{
+    AstBuilder, NONE,
     ast::{
         Argument, ArrayExpressionElement, AssignmentOperator, AssignmentTarget, Expression,
         FunctionBody,
     },
-    AstBuilder, NONE,
 };
 use oxc_span::SPAN;
 

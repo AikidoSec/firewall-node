@@ -1,12 +1,12 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
+    AstBuilder, NONE,
     ast::{
         Argument, BindingPatternKind, BindingProperty, ImportDeclarationSpecifier,
         ImportOrExportKind, Statement, VariableDeclarationKind,
     },
-    AstBuilder, NONE,
 };
-use oxc_span::{SourceType, SPAN};
+use oxc_span::{SPAN, SourceType};
 
 use crate::js_transformer::instructions::{FileInstructions, FunctionInstructions};
 
@@ -15,7 +15,9 @@ const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
 
-const IMPORT_METHODS: [(&str, fn(&FunctionInstructions) -> bool); 3] = [
+type ImportMethodPredicate = fn(&FunctionInstructions) -> bool;
+
+const IMPORT_METHODS: [(&str, ImportMethodPredicate); 3] = [
     (
         INSTRUMENT_INSPECT_ARGS_METHOD_NAME,
         |f: &FunctionInstructions| f.inspect_args,
@@ -51,7 +53,7 @@ pub fn insert_import_statement<'a>(
 
         for (method_name, predicate) in IMPORT_METHODS.iter() {
             // Only import the function if it is used in the file
-            if file_instructions.functions.iter().any(|f| predicate(f)) {
+            if file_instructions.functions.iter().any(predicate) {
                 binding_properties.push(builder.binding_property(
                     SPAN,
                     builder.property_key_static_identifier(SPAN, *method_name),
@@ -109,7 +111,7 @@ pub fn insert_import_statement<'a>(
 
     let mut specifiers: OxcVec<'a, ImportDeclarationSpecifier<'a>> = builder.vec_with_capacity(3);
     for (method_name, predicate) in IMPORT_METHODS.iter() {
-        if file_instructions.functions.iter().any(|f| predicate(f)) {
+        if file_instructions.functions.iter().any(predicate) {
             specifiers.push(builder.import_declaration_specifier_import_specifier(
                 SPAN,
                 builder.module_export_name_identifier_name(SPAN, *method_name),
