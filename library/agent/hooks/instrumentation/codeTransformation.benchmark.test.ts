@@ -89,7 +89,7 @@ t.test("Benchmark: Large code transformation", async (t) => {
           nodeType: "MethodDefinition",
           name: "addRoute",
           identifier: "hono.dist.hono-base.js.addRoute.MethodDefinition.v4.0.0",
-          inspectArgs: false,
+          inspectArgs: true,
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,

@@ -1149,3 +1149,107 @@ t.test(
     isSameCode(result, `test();`);
   }
 );
+
+t.test("Modify function declaration (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const x = 1;
+
+      function test123(arg1, arg2 = "default") {
+        console.log("test123");
+
+        return "abc";
+      }
+
+      const ignore = function test123() {
+        console.log("ignore");
+      };
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionDeclaration",
+          name: "test123",
+          identifier:
+            "testpkg.application.js.test123.FunctionDeclaration.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: true,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    const x = 1;
+    function test123(arg1, arg2 = "default") {
+        __instrumentInspectArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "1.0.0", this);
+        console.log("test123");
+        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionDeclaration.v1.0.0","abc");
+    }
+    const ignore = function test123() {
+        console.log("ignore");
+    };`
+  );
+});
+
+t.test("Modify function declaration (CJS)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const x = 1;
+
+      function test123(arg1, arg2 = "default") {
+        console.log("test123");
+
+        return "abc";
+      }
+
+      const ignore = function test123() {
+        console.log("ignore");
+      };
+    `,
+    "commonjs",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionDeclaration",
+          name: "test123",
+          identifier:
+            "testpkg.application.js.test123.FunctionDeclaration.v1.0.0",
+          inspectArgs: false,
+          modifyArgs: true,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
+    const x = 1;
+    function test123(arg1, arg2 = "default") {
+        [arg1, arg2] = __instrumentModifyArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", [arg1, arg2]);
+        console.log("test123");
+        return "abc";
+    }
+    const ignore = function test123() {
+        console.log("ignore");
+    };`
+  );
+});

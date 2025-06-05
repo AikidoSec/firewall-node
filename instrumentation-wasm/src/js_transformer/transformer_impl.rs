@@ -1,13 +1,11 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{AssignmentOperator, Expression, MethodDefinition};
+use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType, MethodDefinition};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::helpers::{
-    get_arg_names::get_function_arg_names,
-    get_arg_names::get_method_arg_names,
+    get_arg_names::get_function_arg_names, get_arg_names::get_method_arg_names,
     get_name_str_for_member_expr::get_name_str_for_member_expr,
-    insert_code::{insert_inspect_args, insert_modify_args},
-    transform_return_statements::transform_return_statements,
+    insert_instrument_method_calls::insert_instrument_method_calls,
 };
 use super::instructions::FileInstructions;
 
@@ -35,17 +33,17 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         let method_name = node.key.name().unwrap().to_string();
 
-        let found_instruction = self
+        let matching_instruction = self
             .file_instructions
             .functions
             .iter()
             .find(|f| f.node_type == "MethodDefinition" && f.name == method_name);
 
-        if found_instruction.is_none() {
+        if matching_instruction.is_none() {
             return;
         }
 
-        let instruction = found_instruction.unwrap();
+        let instruction = matching_instruction.unwrap();
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
@@ -56,35 +54,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         let body = node.value.body.as_mut().unwrap();
 
-        if instruction.modify_args && !arg_names.is_empty() {
-            insert_modify_args(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                &arg_names,
-                body,
-                instruction.modify_arguments_object,
-            );
-        }
-
-        if instruction.inspect_args {
-            insert_inspect_args(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                self.pkg_version,
-                body,
-            );
-        }
-
-        if instruction.modify_return_value {
-            transform_return_statements(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                body,
-            );
-        }
+        insert_instrument_method_calls(
+            self.allocator,
+            self.ast_builder,
+            instruction,
+            &arg_names,
+            self.pkg_version,
+            body,
+        );
     }
 
     fn enter_assignment_expression(
@@ -138,34 +115,63 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
         let body = function_expression.body.as_mut().unwrap();
 
-        if instruction.modify_args {
-            insert_modify_args(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                &arg_names,
-                body,
-                instruction.modify_arguments_object,
-            );
+        insert_instrument_method_calls(
+            self.allocator,
+            self.ast_builder,
+            instruction,
+            &arg_names,
+            self.pkg_version,
+            body,
+        );
+    }
+
+    fn enter_function(
+        &mut self,
+        node: &mut oxc_ast::ast::Function<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if node.r#type != FunctionType::FunctionDeclaration {
+            // Only instrument function declarations here
+            return;
         }
 
-        if instruction.inspect_args {
-            insert_inspect_args(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                self.pkg_version,
-                body,
-            );
+        if !node.id.is_some() || !node.body.is_some() {
+            // No identifier or body, nothing to instrument
+            return;
         }
 
-        if instruction.modify_return_value {
-            transform_return_statements(
-                self.allocator,
-                self.ast_builder,
-                &instruction.identifier,
-                body,
-            );
+        let function_id = node.id.as_ref().unwrap();
+
+        let function_name = function_id.name.to_string();
+
+        let matching_instruction = self
+            .file_instructions
+            .functions
+            .iter()
+            .find(|f| f.node_type == "FunctionDeclaration" && f.name == function_name);
+
+        if matching_instruction.is_none() {
+            return;
         }
+
+        let instruction = matching_instruction.unwrap();
+
+        // We need to collect the arg names before we make the body mutable
+        let arg_names = if instruction.modify_args {
+            get_function_arg_names(node)
+        } else {
+            Vec::new()
+        };
+
+        let body = node.body.as_mut().unwrap();
+
+        insert_instrument_method_calls(
+            self.allocator,
+            self.ast_builder,
+            instruction,
+            &arg_names,
+            self.pkg_version,
+            body,
+        );
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "node_code_instrumentation"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Aikido Security"]
 description = "Internal library for JS code transformation"
 
