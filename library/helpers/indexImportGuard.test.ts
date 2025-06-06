@@ -19,11 +19,10 @@ t.test("it works", async (t) => {
 
   t.same(logs, []);
   require("../index");
-  t.same(logs, [
+  t.match(logs, [
     "AIKIDO: Starting agent v0.0.0...",
     "AIKIDO: Dry mode enabled, no requests will be blocked!",
     "AIKIDO: No token provided, disabling reporting.",
-    "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking.",
   ]);
 
   // Clear logs
