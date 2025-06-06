@@ -8,15 +8,18 @@ import type { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
-type InspectArgsInterceptor = (
+export type InspectArgsInterceptor = (
   args: unknown[],
   agent: Agent,
   subject: unknown
 ) => InterceptorResult | void;
 
-type ModifyArgsInterceptor = (args: unknown[], agent: Agent) => unknown[];
+export type ModifyArgsInterceptor = (
+  args: unknown[],
+  agent: Agent
+) => unknown[];
 
-type ModifyReturnValueInterceptor = (
+export type ModifyReturnValueInterceptor = (
   args: unknown[],
   returnValue: unknown,
   agent: Agent
@@ -126,7 +129,7 @@ export function wrapExport(
   }
 }
 
-function inspectArgs(
+export function inspectArgs(
   args: unknown[],
   interceptor: InspectArgsInterceptor,
   context: ReturnType<typeof getContext>,

@@ -111,6 +111,23 @@ export class MySQL2 implements Wrapper {
       .withVersion("^3.11.5")
       .onFileRequire("promise.js", (exports, pkgInfo) => {
         return wrapConnection(exports, pkgInfo, true);
+      })
+      .addFileInstrumentation({
+        path: "lib/base/connection.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "query",
+            inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+            operationKind: "sql_op",
+          },
+          {
+            nodeType: "MethodDefinition",
+            name: "execute",
+            inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+            operationKind: "sql_op",
+          },
+        ],
       });
   }
 }
