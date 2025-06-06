@@ -357,3 +357,40 @@ t.test("all injected functions handle errors", async (t) => {
 
   t.equal(callbackCalledCount, 4);
 });
+
+t.test("add same instructions for multiple files", async (t) => {
+  let callbackCalledCount = 0;
+
+  const pkg = new Package("foo");
+  pkg.withVersion("^1.0.0").addMultiFileInstrumentation(
+    ["dist/test.mjs", "dist/test2.mjs"],
+    [
+      {
+        nodeType: "MethodDefinition",
+        name: "abc",
+        operationKind: "sql_op",
+        inspectArgs: () => {
+          ++callbackCalledCount;
+        },
+      },
+    ]
+  );
+
+  setPackagesToInstrument([pkg]);
+  createTestAgent();
+
+  __instrumentInspectArgs(
+    "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+    [],
+    "1.0.0",
+    this
+  );
+  __instrumentInspectArgs(
+    "foo.dist/test2.mjs.abc.MethodDefinition.^1.0.0",
+    [],
+    "1.0.0",
+    this
+  );
+
+  t.equal(callbackCalledCount, 2);
+});

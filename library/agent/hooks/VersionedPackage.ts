@@ -1,4 +1,7 @@
-import { PackageFileInstrumentationInstruction } from "./instrumentation/types";
+import type {
+  PackageFileInstrumentationInstruction,
+  PackageFunctionInstrumentationInstruction,
+} from "./instrumentation/types";
 import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
@@ -57,8 +60,33 @@ export class VersionedPackage {
     return this;
   }
 
+  /**
+   * Register instrumentation instructions for one or multiple functions in one file.
+   * The path is relative to the package root.
+   */
   addFileInstrumentation(instruction: PackageFileInstrumentationInstruction) {
     this.fileInstrumentationInstructions.push(instruction);
+
+    return this;
+  }
+
+  /**
+   * Register instrumentation instructions for one or multiple functions in multiple similar files.
+   * The paths are relative to the package root.
+   */
+  addMultiFileInstrumentation(
+    paths: string[] | string,
+    functions: PackageFunctionInstrumentationInstruction[]
+  ) {
+    if (!Array.isArray(paths)) {
+      paths = [paths];
+    }
+    for (const path of paths) {
+      this.fileInstrumentationInstructions.push({
+        path,
+        functions,
+      });
+    }
 
     return this;
   }
