@@ -1253,3 +1253,50 @@ t.test("Modify function declaration (CJS)", async (t) => {
     };`
   );
 });
+
+t.test(
+  "add inspectArgs to multi level function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        app.prototype.use = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app.prototype.use",
+            identifier:
+              "express.application.js.app.prototype.use.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        app.prototype.use = function (fn) {
+            __instrumentInspectArgs("express.application.js.app.prototype.use.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);

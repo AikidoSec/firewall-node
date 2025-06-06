@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::ast::{Expression, MemberExpression};
 
 pub fn get_name_str_for_member_expr<'a>(
@@ -26,6 +26,10 @@ pub fn get_name_str_for_member_expr<'a>(
 
     let obj_name_str = match member_expr.object() {
         Expression::Identifier(identifier_ref) => identifier_ref.name.as_str(),
+        Expression::StaticMemberExpression(static_member_expr) => get_name_str_for_member_expr(
+            allocator,
+            &MemberExpression::StaticMemberExpression(static_member_expr.clone_in(allocator)),
+        )?,
         _ => {
             // Unsupported AST type
             return None;

@@ -57,6 +57,17 @@ export class MySQL implements Wrapper {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/Connection.js",
+        functions: [
+          {
+            name: "Connection.prototype.query",
+            nodeType: "FunctionAssignment",
+            operationKind: "sql_op",
+            inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
       });
   }
 }
