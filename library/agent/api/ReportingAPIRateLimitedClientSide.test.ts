@@ -53,6 +53,7 @@ function generateAttackEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: ["sca_package_reporting"],
     },
   };
 }
@@ -111,6 +112,7 @@ function generateStartedEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: ["sca_package_reporting"],
     },
   };
 }
@@ -185,6 +187,7 @@ function generateHeartbeatEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: ["sca_package_reporting"],
     },
     hostnames: [],
     routes: [],
