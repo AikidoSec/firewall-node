@@ -277,11 +277,46 @@ t.test("it works", async (t) => {
     }
   );
 
+  // same as above but starts with dangerous path
+  runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {
+        q: "/etc\t/passwd",
+      },
+      headers: {},
+      body: {},
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    () => {
+      throws(
+        () => rename(new URL("file:///etc\t/passwd")),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from query.q"
+      );
+    }
+  );
+
   // Ignores malformed URLs
   runWithContext(
     { ...unsafeContext, body: { file: { matches: "../%" } } },
     () => {
       rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
+    }
+  );
+
+  // new URL("file://\\etc/passwd") becomes "file:///etc/passwd"
+  runWithContext(
+    { ...unsafeContext, body: { file: { matches: "\\etc/passwd" } } },
+    () => {
+      throws(
+        () => rename(new URL("file://\\etc/passwd")),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
     }
   );
 });
