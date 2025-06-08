@@ -124,7 +124,6 @@ type Heartbeat = {
       routes: {
         path: string;
         method: string;
-        requests: number;
         calls: number;
         tokens: {
           input: number;

@@ -26,6 +26,7 @@ import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
+import { AIStatistics } from "./AIStatistics";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -58,6 +59,7 @@ export class Agent {
     maxPerfSamplesInMemory: 5000,
     maxCompressedStatsInMemory: 20, // per operation
   });
+  private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
 
@@ -83,6 +85,10 @@ export class Agent {
 
   getInspectionStatistics() {
     return this.statistics;
+  }
+
+  getAIStatistics() {
+    return this.aiStatistics;
   }
 
   unableToPreventPrototypePollution(
@@ -295,12 +301,14 @@ export class Agent {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
+      const aiStats = this.aiStatistics.getStats();
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
       const packages = this.packages.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
+      this.aiStatistics.reset();
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
@@ -319,6 +327,7 @@ export class Agent {
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
             sqlTokenizationFailures: stats.sqlTokenizationFailures,
+            ai: aiStats,
           },
           packages,
           hostnames: outgoingDomains,
@@ -358,8 +367,10 @@ export class Agent {
       const now = performance.now();
       const diff = now - this.lastHeartbeat;
       const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
+      const hasStats =
+        !this.statistics.isEmpty() || !this.aiStatistics.isEmpty();
       const canSendInitialStats =
-        !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
+        !this.serviceConfig.hasReceivedAnyStats() && hasStats;
       const shouldReportInitialStats =
         !this.reportedInitialStats && canSendInitialStats;
 
