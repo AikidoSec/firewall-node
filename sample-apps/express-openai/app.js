@@ -1,8 +1,8 @@
-require('dotenv').config();
-require('@aikidosec/firewall');
+require("dotenv").config();
+require("@aikidosec/firewall");
 
-const express = require('express');
-const { OpenAI } = require('openai');
+const express = require("express");
+const { OpenAI } = require("openai");
 
 const app = express();
 const port = 3000;
@@ -30,7 +30,14 @@ function escapeHTML(string) {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const renderPage = (prompt = '', answer = '', model = 'gpt-4o') => {
+let defaultPrompt = `Write a one-sentence bedtime story about a unicorn.`;
+let defaultModel = "gpt-4o-mini-2024-07-18";
+
+const renderPage = (
+  prompt = defaultPrompt,
+  answer = "",
+  model = defaultModel
+) => {
   const safePrompt = escapeHTML(prompt);
   const safeAnswer = escapeHTML(answer);
 
@@ -55,49 +62,54 @@ const renderPage = (prompt = '', answer = '', model = 'gpt-4o') => {
             <div class="model-select">
               <label for="model">Model:</label>
               <select name="model" id="model">
-                <option value="gpt-4o" ${model === 'gpt-4o' ? 'selected' : ''}>GPT-4o</option>
-                <option value="gpt-4-turbo" ${model === 'gpt-4-turbo' ? 'selected' : ''}>GPT-4 Turbo</option>
-                <option value="gpt-3.5-turbo" ${model === 'gpt-3.5-turbo' ? 'selected' : ''}>GPT-3.5 Turbo</option>
+                <option value="gpt-4o-2024-08-06" ${model === "gpt-4o-2024-08-06" ? "selected" : ""}>4o</option>
+                <option value="gpt-4o-mini-2024-07-18" ${model === "gpt-4o-mini-2024-07-18" ? "selected" : ""}>4o-mini</option>
               </select>
             </div>
             <textarea name="prompt" placeholder="Enter your prompt here...">${safePrompt}</textarea>
             <button type="submit">Ask</button>
           </form>
-          
-          ${answer ? `
+
+          ${
+            answer
+              ? `
             <h2>Answer</h2>
             <pre>${safeAnswer}</pre>
-          ` : ''}
+          `
+              : ""
+          }
         </div>
       </body>
     </html>
   `;
 };
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.send(renderPage());
 });
 
-app.post('/ask', async (req, res) => {
+app.post("/ask", async (req, res) => {
   const { prompt, model } = req.body;
 
   if (!prompt) {
-    return res.status(400).send('Prompt is required.');
+    return res.status(400).send("Prompt is required.");
   }
 
   try {
     const completion = await openai.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
       model: model,
     });
     const answer = completion.choices[0].message.content;
     res.send(renderPage(prompt, answer, model));
   } catch (error) {
     console.error(error);
-    res.status(500).send(renderPage(prompt, 'Error communicating with OpenAI.', model));
+    res
+      .status(500)
+      .send(renderPage(prompt, "Error communicating with OpenAI.", model));
   }
 });
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
-}); 
+});
