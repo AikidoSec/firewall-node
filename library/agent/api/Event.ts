@@ -73,7 +73,8 @@ export type OperationKind =
   | "exec_op"
   | "deserialize_op"
   | "graphql_op"
-  | "eval_op";
+  | "eval_op"
+  | "llm_op";
 
 type OperationStats = {
   kind: OperationKind;

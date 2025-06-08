@@ -48,6 +48,7 @@ import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
+import { OpenAI } from "../sinks/OpenAI";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -126,6 +127,7 @@ export function getWrappers() {
     new HTTPServer(),
     new Hono(),
     new GraphQL(),
+    new OpenAI(),
     new Xml2js(),
     new FastXmlParser(),
     new SQLite3(),
