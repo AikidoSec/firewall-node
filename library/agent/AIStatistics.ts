@@ -108,10 +108,12 @@ export class AIStatistics {
   }: {
     provider: string;
     model: string;
-    route?: {
-      path: string;
-      method: string;
-    };
+    route:
+      | {
+          path: string;
+          method: string;
+        }
+      | undefined;
     inputTokens: number;
     outputTokens: number;
   }) {

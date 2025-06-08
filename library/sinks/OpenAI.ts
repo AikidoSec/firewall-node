@@ -1,129 +1,129 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { isPlainObject } from "../helpers/isPlainObject";
 
-type ChatCompletionCreateParams = {
+type CompletionResponse = {
   model: string;
-  messages: unknown[];
-  [key: string]: unknown;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+  };
 };
 
-type ChatCompletionResponse = {
+function isCompletionResponse(
+  response: unknown
+): response is CompletionResponse {
+  return (
+    isPlainObject(response) &&
+    "model" in response &&
+    typeof response.model === "string"
+  );
+}
+
+type Response = {
+  model: string;
   usage?: {
-    prompt_tokens?: number;
-    completion_tokens?: number;
-    total_tokens?: number;
+    input_tokens: number;
+    output_tokens: number;
   };
-  [key: string]: unknown;
 };
+
+function isResponse(response: unknown): response is Response {
+  return (
+    isPlainObject(response) &&
+    "model" in response &&
+    typeof response.model === "string"
+  );
+}
 
 export class OpenAI implements Wrapper {
-  private trackAICall(
-    args: unknown[],
-    returnValue: unknown,
-    agent: Agent
-  ): unknown {
-    const params = args[0] as ChatCompletionCreateParams;
-
-    if (!params || typeof params !== "object" || !params.model) {
-      return returnValue;
+  private inspectResponse(agent: Agent, response: unknown) {
+    if (!isResponse(response)) {
+      return;
     }
-
-    const model = params.model;
-    const context = getContext();
 
     let inputTokens = 0;
     let outputTokens = 0;
-
-    // Extract token counts from the response if available
-    if (returnValue && typeof returnValue === "object") {
-      // Handle both direct response and Promise
-      const processResponse = (response: any) => {
-        if (response && response.usage) {
-          const usage = response.usage as ChatCompletionResponse["usage"];
-          inputTokens = usage?.prompt_tokens || 0;
-          outputTokens = usage?.completion_tokens || 0;
-        }
-
-        // Call onAICall to track statistics
-        const aiStats = agent.getAIStatistics();
-        aiStats.onAICall({
-          provider: "openai",
-          model: model,
-          route:
-            context && context.method && context.route
-              ? {
-                  path: context.route,
-                  method: context.method,
-                }
-              : undefined,
-          inputTokens,
-          outputTokens,
-        });
-
-        return response;
-      };
-
-      // If it's a Promise (async response), handle it
-      if (returnValue instanceof Promise) {
-        return (returnValue as Promise<any>)
-          .then(processResponse)
-          .catch((error) => {
-            // Track failed calls with zero tokens
-            const aiStats = agent.getAIStatistics();
-            aiStats.onAICall({
-              provider: "openai",
-              model: model,
-              route:
-                context && context.method && context.route
-                  ? {
-                      path: context.route,
-                      method: context.method,
-                    }
-                  : undefined,
-              inputTokens: 0,
-              outputTokens: 0,
-            });
-            throw error;
-          });
-      } else {
-        // Handle synchronous response
-        return processResponse(returnValue);
+    if (response.usage) {
+      if (typeof response.usage.input_tokens === "number") {
+        inputTokens = response.usage.input_tokens;
+      }
+      if (typeof response.usage.output_tokens === "number") {
+        outputTokens = response.usage.output_tokens;
       }
     }
 
-    return returnValue;
+    const aiStats = agent.getAIStatistics();
+    aiStats.onAICall({
+      provider: "openai",
+      model: response.model ?? "",
+      route: this.getRoute(),
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+    });
+  }
+
+  private getRoute() {
+    const context = getContext();
+
+    if (context && context.route && context.method) {
+      return { path: context.route, method: context.method };
+    }
+
+    return undefined;
+  }
+
+  private inspectCompletionsResponse(agent: Agent, completion: unknown) {
+    if (!isCompletionResponse(completion)) {
+      return;
+    }
+
+    let inputTokens = 0;
+    let outputTokens = 0;
+    if (completion.usage) {
+      if (typeof completion.usage.prompt_tokens === "number") {
+        inputTokens = completion.usage.prompt_tokens;
+      }
+      if (typeof completion.usage.completion_tokens === "number") {
+        outputTokens = completion.usage.completion_tokens;
+      }
+    }
+
+    const aiStats = agent.getAIStatistics();
+    aiStats.onAICall({
+      provider: "openai",
+      model: completion.model ?? "",
+      route: this.getRoute(),
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+    });
   }
 
   wrap(hooks: Hooks) {
+    // Note: Streaming is not supported yet
+    // Note: Azure OpenAI is not supported yet
     hooks
       .addPackage("openai")
       .withVersion("^4.0.0")
-      .onRequire((exports, pkgInfo) => {
-        // Wrap Chat Completions API
-        if (
-          exports.chat &&
-          exports.chat.completions &&
-          exports.chat.completions.create
-        ) {
-          wrapExport(exports.chat.completions, "create", pkgInfo, {
+      .onFileRequire("resources/responses/responses.js", (exports, pkgInfo) => {
+        wrapNewInstance(exports, "Responses", pkgInfo, (instance) => {
+          wrapExport(instance, "create", pkgInfo, {
             kind: "llm_op",
-            modifyReturnValue: (args, returnValue, agent) =>
-              this.trackAICall(args, returnValue, agent),
-          });
-        }
+            modifyReturnValue: (args, returnValue, agent) => {
+              if (returnValue instanceof Promise) {
+                returnValue.then((response) => {
+                  this.inspectResponse(agent, response);
+                });
+              }
 
-        // Wrap Responses API (newer API)
-        if (exports.responses && exports.responses.create) {
-          wrapExport(exports.responses, "create", pkgInfo, {
-            kind: "llm_op",
-            modifyReturnValue: (args, returnValue, agent) =>
-              this.trackAICall(args, returnValue, agent),
+              return returnValue;
+            },
           });
-        }
+        });
       });
   }
 }

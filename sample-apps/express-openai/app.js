@@ -96,12 +96,12 @@ app.post("/ask", async (req, res) => {
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
+    const response = await openai.responses.create({
+      instructions: "You are a coding assistant that talks like a pirate",
       model: model,
+      input: prompt,
     });
-    const answer = completion.choices[0].message.content;
-    res.send(renderPage(prompt, answer, model));
+    res.send(renderPage(prompt, response.output_text, model));
   } catch (error) {
     console.error(error);
     res
