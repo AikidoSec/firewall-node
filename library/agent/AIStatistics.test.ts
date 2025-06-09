@@ -9,7 +9,7 @@ t.test("it initializes with empty state", async () => {
   t.equal(stats.hasStats(), false);
 });
 
-t.test("it tracks basic AI calls without routes", async () => {
+t.test("it tracks basic AI calls", async () => {
   const stats = new AIStatistics();
 
   stats.onAICall({
@@ -30,7 +30,6 @@ t.test("it tracks basic AI calls without routes", async () => {
       output: 50,
       total: 150,
     },
-    routes: [],
   });
 
   t.equal(stats.isEmpty(), false);
@@ -65,7 +64,6 @@ t.test("it tracks multiple calls to the same provider/model", async () => {
       output: 125,
       total: 425,
     },
-    routes: [],
   });
 });
 
@@ -112,7 +110,6 @@ t.test(
         output: 60,
         total: 180,
       },
-      routes: [],
     });
 
     t.same(result[1], {
@@ -124,7 +121,6 @@ t.test(
         output: 40,
         total: 120,
       },
-      routes: [],
     });
 
     t.same(result[2], {
@@ -136,7 +132,6 @@ t.test(
         output: 50,
         total: 150,
       },
-      routes: [],
     });
   }
 );
