@@ -65,40 +65,16 @@ export class OpenAI implements Wrapper {
     });
   }
 
-  private inspectCompletionsResponse(agent: Agent, completion: unknown) {
-    if (!isCompletionResponse(completion)) {
-      return;
-    }
-
-    let inputTokens = 0;
-    let outputTokens = 0;
-    if (completion.usage) {
-      if (typeof completion.usage.prompt_tokens === "number") {
-        inputTokens = completion.usage.prompt_tokens;
-      }
-      if (typeof completion.usage.completion_tokens === "number") {
-        outputTokens = completion.usage.completion_tokens;
-      }
-    }
-
-    const aiStats = agent.getAIStatistics();
-    aiStats.onAICall({
-      provider: "openai",
-      model: completion.model ?? "",
-      inputTokens: inputTokens,
-      outputTokens: outputTokens,
-    });
-  }
-
   wrap(hooks: Hooks) {
     // Note: Streaming is not supported yet
     // Note: Azure OpenAI is not supported yet
+    // Note: Old completion API is not supported yet
     hooks
       .addPackage("openai")
       .withVersion("^4.0.0")
-      .onFileRequire("resources/responses/responses.js", (exports, pkgInfo) => {
-        wrapNewInstance(exports, "Responses", pkgInfo, (instance) => {
-          wrapExport(instance, "create", pkgInfo, {
+      .onRequire((exports, pkgInfo) => {
+        if (exports.Responses) {
+          wrapExport(exports.Responses.prototype, "create", pkgInfo, {
             kind: "ai_op",
             modifyReturnValue: (args, returnValue, agent) => {
               if (returnValue instanceof Promise) {
@@ -110,7 +86,7 @@ export class OpenAI implements Wrapper {
               return returnValue;
             },
           });
-        });
+        }
       });
   }
 }
