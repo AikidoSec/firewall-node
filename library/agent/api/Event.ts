@@ -113,17 +113,17 @@ type Heartbeat = {
     ipAddresses: {
       breakdown: Record<string, number>;
     };
-    ai: {
-      provider: string;
-      model: string;
-      calls: number;
-      tokens: {
-        input: number;
-        output: number;
-        total: number;
-      };
-    }[];
   };
+  ai: {
+    provider: string;
+    model: string;
+    calls: number;
+    tokens: {
+      input: number;
+      output: number;
+      total: number;
+    };
+  }[];
   packages: {
     name: string;
     version: string;
