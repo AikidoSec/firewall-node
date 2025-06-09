@@ -101,6 +101,7 @@ See list above for supported database drivers.
 ### AI SDKs
 
 * ✅ [`openai`](https://www.npmjs.com/package/openai) 4.x
+* ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
 
 ## Installation
 
