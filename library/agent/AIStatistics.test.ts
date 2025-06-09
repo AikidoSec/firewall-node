@@ -6,7 +6,6 @@ t.test("it initializes with empty state", async () => {
 
   t.same(stats.getStats(), []);
   t.equal(stats.isEmpty(), true);
-  t.equal(stats.hasStats(), false);
 });
 
 t.test("it tracks basic AI calls", async () => {
@@ -33,7 +32,6 @@ t.test("it tracks basic AI calls", async () => {
   });
 
   t.equal(stats.isEmpty(), false);
-  t.equal(stats.hasStats(), true);
 });
 
 t.test("it tracks multiple calls to the same provider/model", async () => {
@@ -154,13 +152,11 @@ t.test("it resets all statistics", async () => {
   });
 
   t.equal(stats.isEmpty(), false);
-  t.equal(stats.hasStats(), true);
   t.equal(stats.getStats().length, 2);
 
   stats.reset();
 
   t.equal(stats.isEmpty(), true);
-  t.equal(stats.hasStats(), false);
   t.same(stats.getStats(), []);
 });
 

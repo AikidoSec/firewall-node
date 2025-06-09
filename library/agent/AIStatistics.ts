@@ -86,8 +86,4 @@ export class AIStatistics {
   isEmpty(): boolean {
     return this.calls.size === 0;
   }
-
-  hasStats(): boolean {
-    return !this.isEmpty();
-  }
 }
