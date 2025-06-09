@@ -1,5 +1,4 @@
 import { Agent } from "../agent/Agent";
-import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
@@ -61,20 +60,9 @@ export class OpenAI implements Wrapper {
     aiStats.onAICall({
       provider: "openai",
       model: response.model ?? "",
-      route: this.getRoute(),
       inputTokens: inputTokens,
       outputTokens: outputTokens,
     });
-  }
-
-  private getRoute() {
-    const context = getContext();
-
-    if (context && context.route && context.method) {
-      return { path: context.route, method: context.method };
-    }
-
-    return undefined;
   }
 
   private inspectCompletionsResponse(agent: Agent, completion: unknown) {
@@ -97,7 +85,6 @@ export class OpenAI implements Wrapper {
     aiStats.onAICall({
       provider: "openai",
       model: completion.model ?? "",
-      route: this.getRoute(),
       inputTokens: inputTokens,
       outputTokens: outputTokens,
     });
