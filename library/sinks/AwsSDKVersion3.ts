@@ -60,6 +60,7 @@ export class AwsSDKVersion3 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
+    // Note: Converse command is not supported yet
     hooks
       .addPackage("@aws-sdk/client-bedrock-runtime")
       .withVersion("^3.0.0")
