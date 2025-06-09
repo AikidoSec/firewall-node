@@ -99,7 +99,7 @@ export class OpenAI implements Wrapper {
       .onFileRequire("resources/responses/responses.js", (exports, pkgInfo) => {
         wrapNewInstance(exports, "Responses", pkgInfo, (instance) => {
           wrapExport(instance, "create", pkgInfo, {
-            kind: "llm_op",
+            kind: "ai_op",
             modifyReturnValue: (args, returnValue, agent) => {
               if (returnValue instanceof Promise) {
                 returnValue.then((response) => {
