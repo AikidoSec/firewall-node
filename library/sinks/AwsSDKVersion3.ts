@@ -65,25 +65,25 @@ export class AwsSDKVersion3 implements Wrapper {
       .addPackage("@aws-sdk/client-bedrock-runtime")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        const InvokeModelCommand = exports.InvokeModelCommand;
-
-        wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
-          kind: "ai_op",
-          modifyReturnValue: (args, returnValue, agent) => {
-            if (args.length > 0) {
-              if (
-                returnValue instanceof Promise &&
-                args[0] instanceof InvokeModelCommand
-              ) {
-                returnValue.then((response) => {
-                  this.processResponse(response, agent);
-                });
+        if (exports.BedrockRuntimeClient && exports.InvokeModelCommand) {
+          wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
+            kind: "ai_op",
+            modifyReturnValue: (args, returnValue, agent) => {
+              if (args.length > 0) {
+                if (
+                  returnValue instanceof Promise &&
+                  args[0] instanceof exports.InvokeModelCommand
+                ) {
+                  returnValue.then((response) => {
+                    this.processResponse(response, agent);
+                  });
+                }
               }
-            }
 
-            return returnValue;
-          },
-        });
+              return returnValue;
+            },
+          });
+        }
       });
   }
 }
