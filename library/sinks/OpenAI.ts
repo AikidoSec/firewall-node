@@ -1,27 +1,8 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
-import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
-
-type CompletionResponse = {
-  model: string;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-  };
-};
-
-function isCompletionResponse(
-  response: unknown
-): response is CompletionResponse {
-  return (
-    isPlainObject(response) &&
-    "model" in response &&
-    typeof response.model === "string"
-  );
-}
 
 type Response = {
   model: string;
