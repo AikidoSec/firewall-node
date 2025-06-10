@@ -59,8 +59,13 @@ export class OpenAI implements Wrapper {
             kind: "ai_op",
             modifyReturnValue: (args, returnValue, agent) => {
               if (returnValue instanceof Promise) {
+                // Inspect the response after the promise resolves, it won't change the original promise
                 returnValue.then((response) => {
-                  this.inspectResponse(agent, response);
+                  try {
+                    this.inspectResponse(agent, response);
+                  } catch {
+                    // If we don't catch these errors, it will result in an unhandled promise rejection!
+                  }
                 });
               }
 

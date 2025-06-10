@@ -76,8 +76,13 @@ export class AwsSDKVersion3 implements Wrapper {
                   returnValue instanceof Promise &&
                   args[0] instanceof exports.InvokeModelCommand
                 ) {
+                  // Inspect the response after the promise resolves, it won't change the original promise
                   returnValue.then((response) => {
-                    this.processResponse(response, agent);
+                    try {
+                      this.processResponse(response, agent);
+                    } catch {
+                      // If we don't catch these errors, it will result in an unhandled promise rejection!
+                    }
                   });
                 }
               }
