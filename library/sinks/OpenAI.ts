@@ -39,8 +39,10 @@ function isCompletionResponse(
   );
 }
 
+type Provider = "openai" | "azure";
+
 export class OpenAI implements Wrapper {
-  private inspectResponse(agent: Agent, response: unknown) {
+  private inspectResponse(agent: Agent, response: unknown, provider: Provider) {
     if (!isResponse(response)) {
       return;
     }
@@ -58,14 +60,18 @@ export class OpenAI implements Wrapper {
 
     const aiStats = agent.getAIStatistics();
     aiStats.onAICall({
-      provider: "openai",
+      provider: provider,
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
     });
   }
 
-  private inspectCompletionResponse(agent: Agent, response: unknown) {
+  private inspectCompletionResponse(
+    agent: Agent,
+    response: unknown,
+    provider: Provider
+  ) {
     if (!isCompletionResponse(response)) {
       return;
     }
@@ -83,11 +89,26 @@ export class OpenAI implements Wrapper {
 
     const aiStats = agent.getAIStatistics();
     aiStats.onAICall({
-      provider: "openai",
+      provider: provider,
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
     });
+  }
+
+  getProvider(exports: unknown, subject: unknown): Provider {
+    if (
+      // @ts-expect-error We don't know the type of exports
+      exports.AzureOpenAI &&
+      // @ts-expect-error We don't know the type of subject
+      subject._client &&
+      // @ts-expect-error We don't know the type of subject
+      subject._client instanceof exports.AzureOpenAI
+    ) {
+      return "azure";
+    }
+
+    return "openai";
   }
 
   wrap(hooks: Hooks) {
@@ -99,12 +120,16 @@ export class OpenAI implements Wrapper {
         if (exports.Responses) {
           wrapExport(exports.Responses.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (args, returnValue, agent) => {
+            modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
                 // Inspect the response after the promise resolves, it won't change the original promise
                 returnValue.then((response) => {
                   try {
-                    this.inspectResponse(agent, response);
+                    this.inspectResponse(
+                      agent,
+                      response,
+                      this.getProvider(exports, subject)
+                    );
                   } catch {
                     // If we don't catch these errors, it will result in an unhandled promise rejection!
                   }
@@ -116,15 +141,19 @@ export class OpenAI implements Wrapper {
           });
         }
 
-        if (exports.Completions) {
-          wrapExport(exports.Completions.prototype, "create", pkgInfo, {
+        if (exports.Chat.Completions) {
+          wrapExport(exports.Chat.Completions.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (args, returnValue, agent) => {
+            modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
                 // Inspect the response after the promise resolves, it won't change the original promise
                 returnValue.then((response) => {
                   try {
-                    this.inspectCompletionResponse(agent, response);
+                    this.inspectCompletionResponse(
+                      agent,
+                      response,
+                      this.getProvider(exports, subject)
+                    );
                   } catch {
                     // If we don't catch these errors, it will result in an unhandled promise rejection!
                   }
