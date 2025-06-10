@@ -8,6 +8,7 @@ const checkToken = require("./src/middleware/checkToken");
 const updateConfig = require("./src/handlers/updateConfig");
 const lists = require("./src/handlers/lists");
 const updateLists = require("./src/handlers/updateLists");
+const realtimeConfig = require("./src/handlers/realtimeConfig");
 
 const app = express();
 
@@ -17,6 +18,9 @@ app.use(express.json());
 
 app.get("/api/runtime/config", checkToken, config);
 app.post("/api/runtime/config", checkToken, updateConfig);
+
+// Realtime polling endpoint
+app.get("/config", checkToken, realtimeConfig);
 
 app.get("/api/runtime/events", checkToken, listEvents);
 app.post("/api/runtime/events", checkToken, captureEvent);

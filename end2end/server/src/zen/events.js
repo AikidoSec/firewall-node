@@ -1,11 +1,6 @@
 const events = new Map();
 
 function captureEvent(event, app) {
-  if (event.type === "heartbeat") {
-    // Ignore heartbeats
-    return;
-  }
-
   if (!events.has(app.id)) {
     events.set(app.id, []);
   }

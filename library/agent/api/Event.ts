@@ -97,6 +97,7 @@ type Heartbeat = {
     operations: Record<string, OperationStats>;
     startedAt: number;
     endedAt: number;
+    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
