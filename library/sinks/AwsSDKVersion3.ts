@@ -53,7 +53,7 @@ export class AwsSDKVersion3 implements Wrapper {
 
       const aiStats = agent.getAIStatistics();
       aiStats.onAICall({
-        provider: "aws-bedrock",
+        provider: "bedrock",
         model: body.model,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
