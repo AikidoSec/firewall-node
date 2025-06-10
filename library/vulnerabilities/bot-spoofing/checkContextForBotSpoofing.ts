@@ -11,21 +11,23 @@ import { verifyBotAuthenticity } from "./verifyBotAuthenticity";
 export async function checkContextForBotSpoofing(
   context: Context,
   agent: Agent
-) {
+): Promise<
+  { isSpoofing: false; key?: string } | { isSpoofing: true; key: string }
+> {
   const botSpoofingData = agent.getConfig().getBotSpoofingData();
 
   if (!botSpoofingData || botSpoofingData.length === 0) {
-    return false;
+    return { isSpoofing: false };
   }
 
   const userAgent = context.headers["user-agent"];
   if (typeof userAgent !== "string" || userAgent.length === 0) {
-    return false;
+    return { isSpoofing: false };
   }
 
   const ip = context.remoteAddress;
   if (!ip || isPrivateIP(ip)) {
-    return false;
+    return { isSpoofing: false };
   }
 
   // Check if the user agent matches any of the bot spoofing patterns
@@ -35,10 +37,13 @@ export async function checkContextForBotSpoofing(
 
   if (!matchingBot) {
     // The request is not from a protected bot
-    return false;
+    return { isSpoofing: false };
   }
 
   const isAuthentic = await verifyBotAuthenticity(ip, matchingBot);
 
-  return !isAuthentic; // If the bot is not authentic, it is considered as bot spoofing
+  return {
+    isSpoofing: !isAuthentic,
+    key: matchingBot.key,
+  };
 }

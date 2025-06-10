@@ -148,8 +148,10 @@ export async function checkIfRequestIsBlocked(
     return true;
   }
 
-  const isBotSpoofing = await checkContextForBotSpoofing(context, agent);
-  if (isBotSpoofing) {
+  const botSpoofingResult = await checkContextForBotSpoofing(context, agent);
+  if (botSpoofingResult.isSpoofing) {
+    agent.getInspectionStatistics().onBotSpoofingMatch(botSpoofingResult.key);
+
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");
 

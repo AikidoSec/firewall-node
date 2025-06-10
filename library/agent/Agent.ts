@@ -319,6 +319,7 @@ export class Agent {
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
             sqlTokenizationFailures: stats.sqlTokenizationFailures,
+            botSpoofing: stats.botSpoofing,
           },
           packages,
           hostnames: outgoingDomains,

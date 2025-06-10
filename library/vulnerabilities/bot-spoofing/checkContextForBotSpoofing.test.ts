@@ -32,7 +32,9 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // No bot spoofing data set
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([]);
@@ -41,7 +43,9 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // No bot spoofing data set
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -58,7 +62,9 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // Regex not matching
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -75,7 +81,9 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // Not blocked because ip and hostname are empty
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -92,7 +100,10 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // Blocked because ip is not matching
       agent
     ),
-    true
+    {
+      isSpoofing: true,
+      key: "google_test",
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -109,7 +120,10 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"), // Blocked because Hostname is not matching
       agent
     ),
-    true
+    {
+      isSpoofing: true,
+      key: "google_test",
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -126,7 +140,10 @@ t.test("it works", async (t) => {
       getTestContext("1.2.3.4", "Googlebot"), // Allowed because ip is matching
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+      key: "google_test",
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -149,70 +166,95 @@ t.test("it works", async (t) => {
       getTestContext("66.249.90.77", "Googlebot"), // Allowed because Hostname is matching
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+      key: "google_test",
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("1.2.3.4", "Googlebot"), // Allowed because ip is matching
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+      key: "google_test",
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("1.1.1.1", "Googlebot"), // Blocked because ip and hostname are not matching
       agent
     ),
-    true
+    {
+      isSpoofing: true,
+      key: "google_test",
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("1.1.1.1", "Test"), // Allowed because user agent is not matching
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("", "Googlebot"), // Allowed because ip is empty
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("1.1.1.1", ""), // Empty user agent
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("127.0.0.1", "Googlebot"), // Allowed because ip is private
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("::1", "Googlebot"), // Allowed because ip is private
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("1.1.1.1", "Bingbot"), // Is bot spoofing
       agent
     ),
-    true
+    {
+      isSpoofing: true,
+      key: "bing_test",
+    }
   );
   t.same(
     await checkContextForBotSpoofing(
       getTestContext("207.46.13.14", "Bingbot"), // Real bing ip
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+      key: "bing_test",
+    }
   );
 
   agent.getConfig().updateBotSpoofingData([
@@ -230,6 +272,8 @@ t.test("it works", async (t) => {
       getTestContext("1.1.1.1", "Googlebot"),
       agent
     ),
-    false
+    {
+      isSpoofing: false,
+    }
   );
 });

@@ -112,6 +112,9 @@ type Heartbeat = {
     ipAddresses: {
       breakdown: Record<string, number>;
     };
+    botSpoofing: {
+      breakdown: Record<string, number>;
+    };
   };
   packages: {
     name: string;

@@ -30,7 +30,14 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
     return {
       allowedIPAddresses: [],
       blockedIPAddresses: [],
-      botSpoofingProtection: [],
+      botSpoofingProtection: [
+        {
+          key: "google_test",
+          uaPattern: "Googlebot|GoogleStoreBot",
+          ips: ["4.3.2.1"],
+          hostnames: ["google.com", "googlebot.com"],
+        },
+      ],
       monitoredIPAddresses: [
         {
           key: "known_threat_actors/public_scanners",
@@ -211,6 +218,58 @@ t.test("it only counts once if multiple listeners", async () => {
         t.same(ipAddresses, {
           breakdown: {
             "known_threat_actors/public_scanners": 2,
+          },
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it tracks spoofed bots", async () => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3330, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3330/test"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "1.2.3.4",
+            "user-agent": "Googlebot/2.1 (+http://www.google.com/bot.html)",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3330/test"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "5.6.7.8",
+            "user-agent": "GoogleBot/2.1 (+http://www.google.com/bot.html)",
+          },
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2]) => {
+        t.equal(response1.statusCode, 403);
+        t.equal(response2.statusCode, 403);
+        const stats = agent.getInspectionStatistics().getStats();
+        t.same(stats.userAgents, {
+          breakdown: {},
+        });
+        t.same(stats.ipAddresses, {
+          breakdown: {
+            "known_threat_actors/public_scanners": 1,
+          },
+        });
+        t.same(stats.botSpoofing, {
+          breakdown: {
+            // eslint-disable-next-line camelcase
+            google_test: 2,
           },
         });
         server.close();
