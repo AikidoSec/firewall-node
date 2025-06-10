@@ -96,6 +96,8 @@ export class OpenAI implements Wrapper {
     });
   }
 
+  // The _client property is used to determine if the OpenAI client is an Azure OpenAI client or not.
+  // See https://github.com/openai/openai-node/blob/master/src/core/resource.ts
   getProvider(exports: unknown, subject: unknown): Provider {
     if (
       // @ts-expect-error We don't know the type of exports
