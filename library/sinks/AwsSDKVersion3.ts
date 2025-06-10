@@ -33,7 +33,9 @@ export class AwsSDKVersion3 implements Wrapper {
 
     let body;
     try {
-      const json = new TextDecoder().decode(response.body);
+      const json = new TextDecoder("utf-8", {
+        fatal: true,
+      }).decode(response.body);
       body = JSON.parse(json);
     } catch {
       // Ignore errors when parsing the response body
