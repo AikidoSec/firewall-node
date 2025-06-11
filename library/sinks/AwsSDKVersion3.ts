@@ -97,7 +97,7 @@ export class AwsSDKVersion3 implements Wrapper {
     }
 
     // @ts-expect-error We don't know the type of command
-    const modalId: string = command.input.modelId;
+    const modelId: string = command.input.modelId;
 
     let inputTokens = 0;
     let outputTokens = 0;
@@ -110,7 +110,7 @@ export class AwsSDKVersion3 implements Wrapper {
     const aiStats = agent.getAIStatistics();
     aiStats.onAICall({
       provider: "bedrock",
-      model: modalId,
+      model: modelId,
       inputTokens: inputTokens,
       outputTokens: outputTokens,
     });
