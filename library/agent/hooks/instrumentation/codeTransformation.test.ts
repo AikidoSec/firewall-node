@@ -355,7 +355,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
               this.testFunction(testValue);
           }
           testFunction(arg1) {
-              [arg1] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [arg1]);
+              [arg1] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [arg1], this);
               console.log("test");
           }
       }`
@@ -414,7 +414,7 @@ t.test(
             }
             testFunction2(arg1) {
                 __instrumentInspectArgs("testpkg.test.js.testFunction2.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
-                [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.MethodDefinition.v1.0.0", [arg1]);
+                [arg1] = __instrumentModifyArgs("testpkg.test.js.testFunction2.MethodDefinition.v1.0.0", [arg1], this);
                 console.log("test");
             }
         }`
@@ -507,7 +507,7 @@ t.test("modify rest parameter args", async (t) => {
                 this.testFunction(testValue);
             }
             testFunction(abc, ...args) {
-                [abc] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [abc]);
+                [abc] = __instrumentModifyArgs("testmodule.test.js.testFunction.MethodDefinition.v1.0.0", [abc], this);
                 console.log("test");
             }
         }`
@@ -707,7 +707,7 @@ t.test(
         `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
         app.use = function (fn, arg2, arg3) {
-            [fn, arg2, arg3] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn, arg2, arg3]);
+            [fn, arg2, arg3] = __instrumentModifyArgs("express.application.js.app.use.MethodDefinition.v1.0.0", [fn, arg2, arg3], this);
             console.log("test");
         };`
       ),
@@ -805,7 +805,7 @@ t.test(
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
-          [fn] = __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", [fn]);
+          [fn] = __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", [fn], this);
           console.log("test");
         };`
       ),
@@ -854,7 +854,7 @@ t.test(
         const app = require("example");
         const key = "get";
         app[key] = function (fn) {
-          Object.assign(arguments, __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", Array.from(arguments)));
+          Object.assign(arguments, __instrumentModifyArgs("express.application.js.app[key].MethodDefinition.v1.0.0", Array.from(arguments), this));
           console.log("test");
         };`
       ),
@@ -957,7 +957,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, arg1);
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, arg1, this);
         }
     }`
   );
@@ -975,7 +975,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments,"test");
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments,"test", this);
         }
     }`
   );
@@ -993,7 +993,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "test\\"");
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "test\\"", this);
         }
     }`
   );
@@ -1011,7 +1011,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, [1, 2]);
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, [1, 2], this);
         }
     }`
   );
@@ -1029,7 +1029,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, function() { return 42; });
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, function() { return 42; }, this);
         }
     }`
   );
@@ -1049,7 +1049,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         testFunction(arg1) {
             console.log("test");
 
-            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, funcCall({foo: [1], test: Symbol("abc")}));
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, funcCall({foo: [1], test: Symbol("abc")}), this);
         }
     }`
   );
@@ -1194,7 +1194,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
     function test123(arg1, arg2 = "default") {
         __instrumentInspectArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "1.0.0", this);
         console.log("test123");
-        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "abc");
+        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", arguments, "abc", this);
     }
     const ignore = function test123() {
         console.log("ignore");
@@ -1244,7 +1244,7 @@ t.test("Modify function declaration (CJS)", async (t) => {
     `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
     const x = 1;
     function test123(arg1, arg2 = "default") {
-        [arg1, arg2] = __instrumentModifyArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", [arg1, arg2]);
+        [arg1, arg2] = __instrumentModifyArgs("testpkg.application.js.test123.FunctionDeclaration.v1.0.0", [arg1, arg2], this);
         console.log("test123");
         return "abc";
     }

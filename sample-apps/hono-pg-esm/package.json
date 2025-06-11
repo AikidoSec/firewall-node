@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --import @aikidosec/firewall/instrument ./app.js"
+    "start": "node --require @aikidosec/firewall/instrument ./app.js"
   },
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",

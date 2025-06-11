@@ -16,7 +16,8 @@ export type InspectArgsInterceptor = (
 
 export type ModifyArgsInterceptor = (
   args: unknown[],
-  agent: Agent
+  agent: Agent,
+  subject: unknown
 ) => unknown[];
 
 export type ModifyReturnValueInterceptor = (
@@ -86,7 +87,12 @@ export function wrapExport(
           // Run modifyArgs interceptor if provided
           if (typeof interceptors.modifyArgs === "function") {
             try {
-              args = interceptors.modifyArgs(args, agent);
+              args = interceptors.modifyArgs(
+                args,
+                agent,
+                // @ts-expect-error We don't now the type of
+                this
+              );
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,

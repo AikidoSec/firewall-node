@@ -18,6 +18,7 @@ import {
 } from "./injectedFunctions";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
+import { Agent } from "../../Agent";
 
 t.test("it works", async (t) => {
   let pkgInspectArgsCalled = false;
@@ -145,8 +146,10 @@ t.test("it works using injected functions", async (t) => {
           pkgModifyArgsCalled = true;
           return [42];
         },
-        modifyReturnValue: (args, returnValue) => {
+        modifyReturnValue: (args, returnValue, agent, subject) => {
           t.same(args, [1, 2, 3]);
+          t.ok(agent instanceof Agent);
+          t.same(subject, {});
           pkgModifyReturnValueCalled = true;
           return "test";
         },
@@ -170,7 +173,11 @@ t.test("it works using injected functions", async (t) => {
     "1.0.0",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
+  __instrumentModifyArgs(
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
+    [],
+    this
+  );
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   t.equal(pkgModifyReturnValueCalled, false);
@@ -180,7 +187,7 @@ t.test("it works using injected functions", async (t) => {
     "1.0.0",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", []);
+  __instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", [], this);
   // No agent yet
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
@@ -197,7 +204,11 @@ t.test("it works using injected functions", async (t) => {
     "1.0.0",
     this
   );
-  __instrumentModifyArgs("foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0", []);
+  __instrumentModifyArgs(
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
+    [],
+    this
+  );
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   t.equal(pkgModifyReturnValueCalled, false);
@@ -209,9 +220,10 @@ t.test("it works using injected functions", async (t) => {
     this
   );
   t.equal(pkgInspectArgsCalled, true);
-  t.same(__instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", []), [
-    42,
-  ]);
+  t.same(
+    __instrumentModifyArgs("foo.bar.js.baz.MethodDefinition.^1.0.0", [], this),
+    [42]
+  );
   t.equal(pkgModifyArgsCalled, true);
 
   t.equal(pkgModifyReturnValueCalled, false);
@@ -219,7 +231,8 @@ t.test("it works using injected functions", async (t) => {
     __instrumentModifyReturnValue(
       "foo.bar.js.baz.MethodDefinition.^1.0.0",
       [1, 2, 3],
-      "42"
+      "42",
+      this
     ),
     "test"
   );
@@ -259,25 +272,41 @@ t.test("modifyArgs always returns a array", async (t) => {
   createTestAgent();
 
   t.same(
-    __instrumentModifyArgs("foo.xyz.js.abc.MethodDefinition.^1.0.0", [1, 2, 3]),
+    __instrumentModifyArgs(
+      "foo.xyz.js.abc.MethodDefinition.^1.0.0",
+      [1, 2, 3],
+      this
+    ),
     [1, 2, 3]
   );
   t.same(
-    // @ts-expect-error Testing invalid input
-    __instrumentModifyArgs("foo.xyz.js.abc.MethodDefinition.^1.0.0", undefined),
+    __instrumentModifyArgs(
+      "foo.xyz.js.abc.MethodDefinition.^1.0.0",
+      // @ts-expect-error Testing invalid input
+      undefined,
+      this
+    ),
     []
   );
   t.same(
-    __instrumentModifyArgs("foo.xyz.js.doesnotexist", [1, 2, 3]),
+    __instrumentModifyArgs("foo.xyz.js.doesnotexist", [1, 2, 3], this),
     [1, 2, 3]
   );
   t.same(
-    __instrumentModifyArgs("foo.xyz.js.xyz.MethodDefinition.^1.0.0", [1, 2, 3]),
+    __instrumentModifyArgs(
+      "foo.xyz.js.xyz.MethodDefinition.^1.0.0",
+      [1, 2, 3],
+      this
+    ),
     [1, 2, 3]
   );
   t.same(
-    // @ts-expect-error Testing invalid input
-    __instrumentModifyArgs("foo.xyz.js.xyz.MethodDefinition.^1.0.0", undefined),
+    __instrumentModifyArgs(
+      "foo.xyz.js.xyz.MethodDefinition.^1.0.0",
+      // @ts-expect-error Testing invalid input
+      undefined,
+      this
+    ),
     []
   );
 
@@ -341,16 +370,25 @@ t.test("all injected functions handle errors", async (t) => {
     "1.0.0",
     this
   );
-  __instrumentModifyArgs("foo.dist/test.mjs.abc.MethodDefinition.^1.0.0", []);
+  __instrumentModifyArgs(
+    "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+    [],
+    this
+  );
   t.same(
-    __instrumentModifyArgs("foo.dist/test.mjs.abc.MethodDefinition.^1.0.0", []),
+    __instrumentModifyArgs(
+      "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+      [],
+      this
+    ),
     []
   );
   t.same(
     __instrumentModifyReturnValue(
       "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
       [],
-      42
+      42,
+      this
     ),
     42
   );

@@ -17,7 +17,7 @@ if (shouldEnable && isSupported) {
   } else {
     // eslint-disable-next-line no-console
     console.warn(
-      "AIKIDO: New instrumentation with ESM support is still under active development and not suitable for production use."
+      "AIKIDO: The new instrumentation system with ESM support is still under active development and not suitable for production use."
     );
     protectWithNewInstrumentation();
   }

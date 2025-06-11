@@ -101,6 +101,9 @@ pub fn insert_modify_args<'a>(
 
         instrument_args.push(array_from_call.into());
 
+        // Add the `this` context as argument
+        instrument_args.push(builder.expression_identifier(SPAN, "this").into());
+
         let instrument_modify_args_call = builder.expression_call(
             SPAN,
             builder.expression_identifier(SPAN, "__instrumentModifyArgs"),
@@ -171,6 +174,9 @@ pub fn insert_modify_args<'a>(
     instrument_modify_args.push(Argument::ArrayExpression(
         builder.alloc_array_expression(SPAN, instrument_modify_args_array_elements),
     ));
+
+    // Add the `this` context as argument
+    instrument_modify_args.push(builder.expression_identifier(SPAN, "this").into());
 
     let instrument_modify_args_call = builder.expression_call(
         SPAN,

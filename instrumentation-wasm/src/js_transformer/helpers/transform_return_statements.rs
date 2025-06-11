@@ -12,6 +12,8 @@ pub fn transform_return_statements<'a>(
     body: &mut Box<'a, FunctionBody<'a>>,
 ) {
     // Iterate through the statements in the function body
+
+    // Todo fix subfunctions
     for statement in &mut body.statements {
         match statement {
             Statement::ReturnStatement(return_stmt) => {
@@ -33,6 +35,9 @@ pub fn transform_return_statements<'a>(
                     .take()
                     .unwrap_or_else(|| builder.expression_identifier(SPAN, "undefined"));
                 instrument_args.push(arg_expr.into());
+
+                // Add the `this` context as argument
+                instrument_args.push(builder.expression_identifier(SPAN, "this").into());
 
                 let new_call_expr = builder.expression_call(
                     SPAN,

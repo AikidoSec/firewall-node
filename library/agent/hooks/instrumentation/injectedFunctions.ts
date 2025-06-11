@@ -40,7 +40,11 @@ export function __instrumentInspectArgs(
   }
 }
 
-export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
+export function __instrumentModifyArgs(
+  id: string,
+  args: unknown[],
+  subject: unknown // "This" of the method being called
+): unknown[] {
   if (!Array.isArray(args)) {
     return [];
   }
@@ -61,7 +65,7 @@ export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
   }
 
   try {
-    const newArgs = cbInfo.funcs.modifyArgs(args, agent);
+    const newArgs = cbInfo.funcs.modifyArgs(args, agent, subject);
     // Only return the new arguments if they are an array
     if (Array.isArray(newArgs)) {
       return newArgs;
@@ -82,7 +86,8 @@ export function __instrumentModifyArgs(id: string, args: unknown[]): unknown[] {
 export function __instrumentModifyReturnValue(
   id: string,
   args: unknown[],
-  returnValue: unknown
+  returnValue: unknown,
+  subject: unknown // "This" of the method being called
 ): unknown {
   const agent = getInstance();
   if (!agent) {
@@ -100,7 +105,7 @@ export function __instrumentModifyReturnValue(
   }
 
   try {
-    return cbInfo.funcs.modifyReturnValue(args, returnValue, agent);
+    return cbInfo.funcs.modifyReturnValue(args, returnValue, agent, subject);
   } catch (error) {
     if (error instanceof Error) {
       getInstance()?.onFailedToWrapMethod(
