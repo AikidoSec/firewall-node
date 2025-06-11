@@ -49,6 +49,8 @@ import { Koa } from "../sources/Koa";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
+import { OpenAI } from "../sinks/OpenAI";
+import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -134,6 +136,7 @@ export function getWrappers() {
     new HTTPServer(),
     new Hono(),
     new GraphQL(),
+    new OpenAI(),
     new Xml2js(),
     new FastXmlParser(),
     new SQLite3(),
@@ -148,6 +151,7 @@ export function getWrappers() {
     new Koa(),
     new ClickHouse(),
     new Prisma(),
+    new AwsSDKVersion3(),
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
   ];

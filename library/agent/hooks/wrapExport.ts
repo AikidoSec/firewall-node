@@ -22,7 +22,8 @@ export type ModifyArgsInterceptor = (
 export type ModifyReturnValueInterceptor = (
   args: unknown[],
   returnValue: unknown,
-  agent: Agent
+  agent: Agent,
+  subject: unknown
 ) => unknown;
 
 export type InterceptorObject = {
@@ -104,7 +105,13 @@ export function wrapExport(
           // Run modifyReturnValue interceptor if provided
           if (typeof interceptors.modifyReturnValue === "function") {
             try {
-              return interceptors.modifyReturnValue(args, returnVal, agent);
+              return interceptors.modifyReturnValue(
+                args,
+                returnVal,
+                agent,
+                // @ts-expect-error We don't now the type of
+                this
+              );
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
