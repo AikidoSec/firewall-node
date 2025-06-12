@@ -36,6 +36,6 @@ t.test("it works", async (t) => {
   require("../index");
 
   t.same(logs, [
-    "AIKIDO: Zen has already been initialized. Please ensure that Zen is imported only once in your application, as importing it multiple times can lead to unexpected behavior.",
+    "AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time.",
   ]);
 });
