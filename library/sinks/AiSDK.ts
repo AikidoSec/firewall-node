@@ -57,7 +57,7 @@ export class AiSDK implements Wrapper {
     return false;
   }
 
-  private getProviderFromArgs(args: unknown): string | undefined {
+  private getProviderFromArgs(args: unknown[]): string | undefined {
     if (!Array.isArray(args) || args.length === 0) {
       return undefined;
     }
