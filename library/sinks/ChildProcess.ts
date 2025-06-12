@@ -38,7 +38,7 @@ export class ChildProcess implements Wrapper {
         },
       });
       wrapExport(exports, "execFile", pkgInfo, {
-        // Also protects exec
+        // Also protects exec, see https://github.com/nodejs/node/blob/main/lib/child_process.js
         kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExecFile(args, "execFile");
