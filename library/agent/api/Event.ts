@@ -73,7 +73,8 @@ export type OperationKind =
   | "exec_op"
   | "deserialize_op"
   | "graphql_op"
-  | "eval_op";
+  | "eval_op"
+  | "ai_op";
 
 type OperationStats = {
   kind: OperationKind;
@@ -113,6 +114,16 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  ai: {
+    provider: string;
+    model: string;
+    calls: number;
+    tokens: {
+      input: number;
+      output: number;
+      total: number;
+    };
+  }[];
   packages: {
     name: string;
     version: string;
