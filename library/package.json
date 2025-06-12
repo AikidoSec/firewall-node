@@ -7,6 +7,16 @@
     "url": "git+https://github.com/AikidoSec/firewall-node.git"
   },
   "type": "commonjs",
+  "exports": {
+    ".": "./index.js",
+    "./instrument": "./instrument/index.js",
+    "./instrument/internals": "./instrument/internals.js",
+    "./context": "./context/index.js",
+    "./lambda": "./lambda/index.js",
+    "./nopp": "./nopp/index.js",
+    "./cloud-function": "./cloud-function/index.js",
+    "./bundler": "./bundler/index.js"
+  },
   "homepage": "https://aikido.dev/zen",
   "author": "Aikido Security",
   "bugs": {
@@ -125,6 +135,7 @@
   "scripts": {
     "test": "node ../scripts/run-tap.js",
     "test:ci": "CI=true node ../scripts/run-tap.js",
+    "test:new": "node ../scripts/run-tap.js --test-new-instrumentation",
     "build": "tsc -p tsconfig.build.json",
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "npm run lint-eslint && npm run lint-tsc && npm run check-format",

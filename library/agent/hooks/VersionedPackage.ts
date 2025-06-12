@@ -1,8 +1,14 @@
+import type {
+  PackageFileInstrumentationInstruction,
+  PackageFunctionInstrumentationInstruction,
+} from "./instrumentation/types";
 import { RequireInterceptor } from "./RequireInterceptor";
 
 export class VersionedPackage {
   private requireInterceptors: RequireInterceptor[] = [];
   private requireFileInterceptors = new Map<string, RequireInterceptor>();
+  private fileInstrumentationInstructions: PackageFileInstrumentationInstruction[] =
+    [];
 
   constructor(private readonly range: string) {
     if (!this.range) {
@@ -54,11 +60,46 @@ export class VersionedPackage {
     return this;
   }
 
+  /**
+   * Register instrumentation instructions for one or multiple functions in one file.
+   * The path is relative to the package root.
+   */
+  addFileInstrumentation(instruction: PackageFileInstrumentationInstruction) {
+    this.fileInstrumentationInstructions.push(instruction);
+
+    return this;
+  }
+
+  /**
+   * Register instrumentation instructions for one or multiple functions in multiple similar files.
+   * The paths are relative to the package root.
+   */
+  addMultiFileInstrumentation(
+    paths: string[] | string,
+    functions: PackageFunctionInstrumentationInstruction[]
+  ) {
+    if (!Array.isArray(paths)) {
+      paths = [paths];
+    }
+    for (const path of paths) {
+      this.fileInstrumentationInstructions.push({
+        path,
+        functions,
+      });
+    }
+
+    return this;
+  }
+
   getRequireInterceptors() {
     return this.requireInterceptors;
   }
 
   getRequireFileInterceptor(relativePath: string) {
     return this.requireFileInterceptors.get(relativePath);
+  }
+
+  getFileInstrumentationInstructions() {
+    return this.fileInstrumentationInstructions;
   }
 }

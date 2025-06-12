@@ -50,6 +50,25 @@ export class Express implements Wrapper {
           kind: undefined,
           modifyArgs: (args) => this.wrapArgs(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/application.js",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app.use",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+          {
+            nodeType: "FunctionAssignment",
+            name: "app[method]",
+            modifyArgumentsObject: true,
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+        ],
       });
   }
 }
