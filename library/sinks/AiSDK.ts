@@ -16,7 +16,7 @@ type PartialAiResponse = {
 };
 
 export class AiSDK implements Wrapper {
-  private inspectAiCall(agent: Agent, args: unknown, response: unknown) {
+  private inspectAiCall(agent: Agent, args: unknown[], response: unknown) {
     if (!this.isResult(response)) {
       return;
     }
