@@ -2,6 +2,7 @@ const {
   getBlockedIPAddresses,
   getBlockedUserAgents,
   getAllowedIPAddresses,
+  getBotSpoofingData,
   getMonitoredUserAgents,
   getMonitoredIPAddresses,
   getUserAgentDetails,
@@ -15,6 +16,7 @@ module.exports = function lists(req, res) {
   const blockedIps = getBlockedIPAddresses(req.app);
   const blockedUserAgents = getBlockedUserAgents(req.app);
   const allowedIps = getAllowedIPAddresses(req.app);
+  const botSpoofingData = getBotSpoofingData(req.app);
   const monitoredUserAgents = getMonitoredUserAgents(req.app);
   const monitoredIps = getMonitoredIPAddresses(req.app);
   const userAgentDetails = getUserAgentDetails(req.app);
@@ -47,6 +49,7 @@ module.exports = function lists(req, res) {
             },
           ]
         : [],
+    botSpoofingProtection: botSpoofingData,
     monitoredIPAddresses:
       monitoredIps.length > 0
         ? monitoredIps
