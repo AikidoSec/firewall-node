@@ -455,7 +455,7 @@ export class Agent {
         version: getSemverNodeVersion(),
         arch: process.arch,
       },
-      supportedFeatures: ["sca_package_reporting"],
+      supportedFeatures: ["sca_package_reporting", "ai_stats"],
     };
   }
 

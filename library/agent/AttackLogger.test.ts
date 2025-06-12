@@ -97,7 +97,7 @@ function generateAttackEvent(): DetectedAttack {
         version: "version",
         arch: "arch",
       },
-      supportedFeatures: ["sca_package_reporting"],
+      supportedFeatures: ["sca_package_reporting", "ai_stats"],
     },
   };
 }
