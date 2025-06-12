@@ -193,6 +193,7 @@ function generateHeartbeatEvent(): Event {
     routes: [],
     users: [],
     packages: [],
+    ai: [],
   };
 }
 

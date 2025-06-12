@@ -108,99 +108,103 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         Agent: UndiciAgent,
       } = require(undiciPkgName) as typeof import("undici-v6");
 
-      await request("https://app.aikido.dev");
+      await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await fetch("https://app.aikido.dev");
+      await fetch("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "http:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 80, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 80, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await request(new URL("https://app.aikido.dev"));
+      await request(new URL("https://ssrf-redirects.testssandbox.com"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await request(require("url").parse("https://app.aikido.dev"));
+      await request(
+        require("url").parse("https://ssrf-redirects.testssandbox.com")
+      );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
-      ]);
-      agent.getHostnames().clear();
-
-      await request({
-        origin: "https://app.aikido.dev",
-      } as URL);
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
-      ]);
-      agent.getHostnames().clear();
-
-      await request(require("url").parse("https://app.aikido.dev"));
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
-        origin: "https://app.aikido.dev",
+        origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+      ]);
+      agent.getHostnames().clear();
+
+      await request(
+        require("url").parse("https://ssrf-redirects.testssandbox.com")
+      );
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+      ]);
+      agent.getHostnames().clear();
+
+      await request({
+        origin: "https://ssrf-redirects.testssandbox.com",
+      } as URL);
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
