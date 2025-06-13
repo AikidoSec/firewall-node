@@ -39,6 +39,11 @@ pub fn insert_instrument_method_calls<'a>(
     }
 
     if instruction.modify_return_value {
-        transform_return_statements(allocator, builder, &instruction.identifier, body);
+        transform_return_statements(
+            allocator,
+            builder,
+            &instruction.identifier,
+            &mut body.statements,
+        );
     }
 }

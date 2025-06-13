@@ -1053,6 +1053,271 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
         }
     }`
   );
+
+  isSameCode(
+    testWithReturnStatement("return function() { return 42; };"),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+
+            return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, function() { return 42; }, this);
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+    {
+      return 42;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            {
+                return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      if(true) {
+        return 42;
+      } else {
+        return false;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            if(true) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            } else {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, false, this);
+          }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      do {
+        return 42;
+      } while (true);
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            do {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            } while (true);
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      while (true) {
+        return 42;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            while (true) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      for (const key in obj) {
+        return 42;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            for (const key in obj) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      for (const value of iterable) {
+        return 42;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+
+            console.log("test");
+            for (const value of iterable) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      for (let i = 0; i < 10; i++) {
+        return i;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+
+            console.log("test");
+            for (let i = 0; i < 10; i++) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, i, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      switch (value) {
+        case 1:
+          return 42;
+        case 2:
+          return 24;
+        default:
+          return 0;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            switch (value) {
+              case 1:
+                return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+              case 2:
+                return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 24, this);
+              default:
+                return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 0, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      try {
+        return 42;
+      } catch (error) {
+        console.error(error);
+        return 0;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            try {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            } catch (error) {
+              console.error(error);
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 0, this);
+            }
+        }
+    }`
+  );
+
+  isSameCode(
+    testWithReturnStatement(`
+      x: while (true) {
+        return 42;
+      }
+    `),
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    import { test } from "test";
+    class Test {
+        private testValue = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            console.log("test");
+            x: while (true) {
+              return __instrumentModifyReturnValue("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, 42, this);
+            }
+        }
+    }`
+  );
 });
 
 t.test("it adds all imports if necessary (CJS)", async (t) => {
