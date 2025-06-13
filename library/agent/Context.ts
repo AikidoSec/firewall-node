@@ -4,7 +4,7 @@ import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
 import { Source, SOURCES } from "./Source";
 
-export type User = { id: string; name?: string };
+export type User = { id: string; name?: string; rateLimitGroup?: string };
 
 export type Context = {
   url: string | undefined;
@@ -17,7 +17,7 @@ export type Context = {
   cookies: Record<string, string>;
   attackDetected?: boolean;
   consumedRateLimit?: boolean;
-  user?: { id: string; name?: string };
+  user?: User;
   source: string;
   route: string | undefined;
   graphql?: string[];

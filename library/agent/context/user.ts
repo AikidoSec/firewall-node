@@ -1,9 +1,14 @@
+/* eslint-disable max-lines-per-function */
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getInstance } from "../AgentSingleton";
 import type { User } from "../Context";
 import { ContextStorage } from "./ContextStorage";
 
-export function setUser(u: { id: string | number; name?: string }) {
+export function setUser(u: {
+  id: string | number;
+  name?: string;
+  rateLimitGroup?: string | number;
+}) {
   const agent = getInstance();
 
   if (!agent) {
@@ -50,6 +55,15 @@ export function setUser(u: { id: string | number; name?: string }) {
     validatedUser.name = user.name;
   }
 
+  if (
+    typeof user.rateLimitGroup === "string" &&
+    user.rateLimitGroup.length > 0
+  ) {
+    validatedUser.rateLimitGroup = user.rateLimitGroup;
+  } else if (typeof user.rateLimitGroup === "number") {
+    validatedUser.rateLimitGroup = user.rateLimitGroup.toString();
+  }
+
   if (context.executedMiddleware) {
     logWarningSetUserCalledAfterMiddleware();
   }
@@ -61,6 +75,7 @@ export function setUser(u: { id: string | number; name?: string }) {
   agent.getUsers().addUser({
     id: validatedUser.id,
     name: validatedUser.name,
+    rateLimitGroup: validatedUser.rateLimitGroup,
     lastIpAddress: ipAddress,
   });
 }

@@ -2,6 +2,7 @@ type User = {
   id: string;
   name: string | undefined;
   lastIpAddress: string | undefined;
+  rateLimitGroup: string | undefined;
 };
 
 export class Users {
@@ -10,6 +11,7 @@ export class Users {
     {
       id: string;
       name: string | undefined;
+      rateLimitGroup: string | undefined;
       lastIpAddress: string | undefined;
       firstSeenAt: number;
       lastSeenAt: number;
@@ -22,6 +24,7 @@ export class Users {
     const existing = this.users.get(user.id);
     if (existing) {
       existing.name = user.name;
+      existing.rateLimitGroup = user.rateLimitGroup;
       existing.lastIpAddress = user.lastIpAddress;
       existing.lastSeenAt = Date.now();
       return;
@@ -40,6 +43,7 @@ export class Users {
       lastIpAddress: user.lastIpAddress,
       firstSeenAt: Date.now(),
       lastSeenAt: Date.now(),
+      rateLimitGroup: user.rateLimitGroup,
     });
   }
 
@@ -48,6 +52,7 @@ export class Users {
       return {
         id: user.id,
         name: user.name,
+        rateLimitGroup: user.rateLimitGroup,
         lastIpAddress: user.lastIpAddress,
         firstSeenAt: user.firstSeenAt,
         lastSeenAt: user.lastSeenAt,

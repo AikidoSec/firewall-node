@@ -114,10 +114,14 @@ function shouldRateLimitField(
   }
 
   if (context.user) {
+    let key = `${context.method}:${context.route}:user:${context.user.id}:${operationType}:${field.name.value}`;
+    if (context.user.rateLimitGroup) {
+      key = `${context.method}:${context.route}:group:${context.user.rateLimitGroup}:${operationType}:${field.name.value}`;
+    }
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        `${context.method}:${context.route}:user:${context.user.id}:${operationType}:${field.name.value}`,
+        key,
         rateLimitedField.rateLimiting.windowSizeInMS,
         rateLimitedField.rateLimiting.maxRequests
       );

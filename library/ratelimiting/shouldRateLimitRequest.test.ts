@@ -11,7 +11,8 @@ function createContext(
   remoteAddress: string | undefined = undefined,
   userId: string | undefined = undefined,
   route: string = "/login",
-  method: string = "POST"
+  method: string = "POST",
+  rateLimitGroup: string | undefined = undefined
 ): Context {
   return {
     remoteAddress: remoteAddress,
@@ -24,7 +25,7 @@ function createContext(
     routeParams: {},
     source: "express",
     route: route,
-    user: userId ? { id: userId } : undefined,
+    user: userId ? { id: userId, rateLimitGroup } : undefined,
   };
 }
 
@@ -503,5 +504,196 @@ t.test(
     });
 
     t.same(logs, []);
+  }
+);
+
+t.test("it rate limits by user with different ips", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", "123", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", "123", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", "123", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", "123", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "user",
+    }
+  );
+});
+
+t.test("it rate limits different users in same group", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", "123", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", "456", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", "789", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", "101112", "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "user",
+    }
+  );
+});
+
+t.test(
+  "it works with multiple rate limit groups and different users",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 2,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    t.same(
+      shouldRateLimitRequest(
+        createContext("1.2.3.4", "123", "/login", "POST", "group1"),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("1.2.3.4", "789", "/login", "POST", "group1"),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("4.3.2.1", "101112", "/login", "POST", "group2"),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("1.2.3.4", "789", "/login", "POST", "group1"),
+        agent
+      ),
+      {
+        block: true,
+        trigger: "user",
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("1.2.3.4", "4321", "/login", "POST", "group1"),
+        agent
+      ),
+      {
+        block: true,
+        trigger: "user",
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("4.3.2.1", "953", "/login", "POST", "group2"),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+    t.same(
+      shouldRateLimitRequest(
+        createContext("4.3.2.1", "1563", "/login", "POST", "group2"),
+        agent
+      ),
+      {
+        block: true,
+        trigger: "user",
+      }
+    );
   }
 );

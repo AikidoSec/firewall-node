@@ -57,13 +57,14 @@ export function shouldRateLimitRequest(
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (context.user) {
+    let key = `${endpoint.method}:${endpoint.route}:user:${context.user.id}`;
+    if (context.user.rateLimitGroup) {
+      key = `${endpoint.method}:${endpoint.route}:group:${context.user.rateLimitGroup}`;
+    }
+
     const allowed = agent
       .getRateLimiter()
-      .isAllowed(
-        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
-        windowSizeInMS,
-        maxRequests
-      );
+      .isAllowed(key, windowSizeInMS, maxRequests);
 
     if (!allowed) {
       return { block: true, trigger: "user" };
