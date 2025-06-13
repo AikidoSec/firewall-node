@@ -75,7 +75,6 @@ export function setUser(u: {
   agent.getUsers().addUser({
     id: validatedUser.id,
     name: validatedUser.name,
-    rateLimitGroup: validatedUser.rateLimitGroup,
     lastIpAddress: ipAddress,
   });
 }
