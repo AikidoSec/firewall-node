@@ -188,3 +188,16 @@ t.test("it sets user with rateLimitGroup", async (t) => {
     });
   });
 });
+
+t.test("it sets user with rateLimitGroup (number)", async (t) => {
+  const context = createContext();
+
+  runWithContext(context, () => {
+    setUser({ id: "id", name: "name", rateLimitGroup: 1 });
+    t.same(getContext()?.user, {
+      id: "id",
+      name: "name",
+      rateLimitGroup: "1",
+    });
+  });
+});
