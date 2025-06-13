@@ -25,7 +25,8 @@ function createContext(
     routeParams: {},
     source: "express",
     route: route,
-    user: userId ? { id: userId, rateLimitGroup } : undefined,
+    user: userId ? { id: userId } : undefined,
+    rateLimitGroup,
   };
 }
 
@@ -555,7 +556,7 @@ t.test("it rate limits by user with different ips", async (t) => {
     ),
     {
       block: true,
-      trigger: "user",
+      trigger: "group",
     }
   );
 });
@@ -608,7 +609,7 @@ t.test("it rate limits different users in same group", async (t) => {
     ),
     {
       block: true,
-      trigger: "user",
+      trigger: "group",
     }
   );
 });
@@ -663,7 +664,7 @@ t.test(
       ),
       {
         block: true,
-        trigger: "user",
+        trigger: "group",
       }
     );
     t.same(
@@ -673,7 +674,7 @@ t.test(
       ),
       {
         block: true,
-        trigger: "user",
+        trigger: "group",
       }
     );
     t.same(
@@ -692,7 +693,7 @@ t.test(
       ),
       {
         block: true,
-        trigger: "user",
+        trigger: "group",
       }
     );
   }

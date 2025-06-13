@@ -231,8 +231,8 @@ t.test("it rate limits user groups", async () => {
     route: "/graphql",
     user: {
       id: userId,
-      rateLimitGroup: groupId,
     },
+    rateLimitGroup: groupId,
   });
 
   for (let i = 0; i < 3; i++) {
@@ -256,6 +256,7 @@ t.test("it rate limits user groups", async () => {
     ),
     {
       block: true,
+      source: "group",
     }
   );
   t.match(

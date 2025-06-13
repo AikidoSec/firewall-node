@@ -13,6 +13,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
+import { setRateLimitGroup } from "../ratelimiting/group";
 
 wrap(fetch, "fetch", function mock(original) {
   return async function mock(this: typeof fetch) {
@@ -112,7 +113,7 @@ function getApp() {
     } else if (c.req.path.startsWith("/rate-limited-group")) {
       const userId = c.req.header("X-User-Id") || "123";
       const rateLimitGroup = c.req.header("X-Rate-Limit-Group") || "default";
-      setUser({ id: userId, rateLimitGroup });
+      setRateLimitGroup({ id: rateLimitGroup });
     }
     await next();
   });

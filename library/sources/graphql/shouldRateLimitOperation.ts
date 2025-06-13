@@ -20,6 +20,12 @@ type Result =
       field: FieldNode;
       source: "user";
       userId: string;
+    }
+  | {
+      block: true;
+      field: FieldNode;
+      source: "group";
+      groupId: string;
     };
 
 export function shouldRateLimitOperation(
@@ -113,15 +119,30 @@ function shouldRateLimitField(
     }
   }
 
-  if (context.user) {
-    let key = `${context.method}:${context.route}:user:${context.user.id}:${operationType}:${field.name.value}`;
-    if (context.user.rateLimitGroup) {
-      key = `${context.method}:${context.route}:group:${context.user.rateLimitGroup}:${operationType}:${field.name.value}`;
-    }
+  if (context.rateLimitGroup) {
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
-        key,
+        `${context.method}:${context.route}:group:${context.rateLimitGroup}:${operationType}:${field.name.value}`,
+        rateLimitedField.rateLimiting.windowSizeInMS,
+        rateLimitedField.rateLimiting.maxRequests
+      );
+
+    if (!allowed) {
+      return {
+        block: true,
+        field: field,
+        source: "group",
+        groupId: context.rateLimitGroup,
+      };
+    }
+  }
+
+  if (context.user) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${context.method}:${context.route}:user:${context.user.id}:${operationType}:${field.name.value}`,
         rateLimitedField.rateLimiting.windowSizeInMS,
         rateLimitedField.rateLimiting.maxRequests
       );

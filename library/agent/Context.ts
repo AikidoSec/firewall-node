@@ -4,7 +4,7 @@ import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
 import { Source, SOURCES } from "./Source";
 
-export type User = { id: string; name?: string; rateLimitGroup?: string };
+export type User = { id: string; name?: string };
 
 export type Context = {
   url: string | undefined;
@@ -30,6 +30,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  rateLimitGroup?: string; // Used to apply rate limits to a group of users
 };
 
 /**

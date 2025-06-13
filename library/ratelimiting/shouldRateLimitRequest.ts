@@ -14,6 +14,10 @@ type Result =
   | {
       block: true;
       trigger: "user";
+    }
+  | {
+      block: true;
+      trigger: "group";
     };
 
 // eslint-disable-next-line max-lines-per-function
@@ -56,15 +60,31 @@ export function shouldRateLimitRequest(
 
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
-  if (context.user) {
-    let key = `${endpoint.method}:${endpoint.route}:user:${context.user.id}`;
-    if (context.user.rateLimitGroup) {
-      key = `${endpoint.method}:${endpoint.route}:group:${context.user.rateLimitGroup}`;
-    }
-
+  if (context.rateLimitGroup) {
     const allowed = agent
       .getRateLimiter()
-      .isAllowed(key, windowSizeInMS, maxRequests);
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:group:${context.rateLimitGroup}`,
+        windowSizeInMS,
+        maxRequests
+      );
+
+    if (!allowed) {
+      return { block: true, trigger: "group" };
+    }
+
+    // Do not check IP rate limit if user is set
+    return { block: false };
+  }
+
+  if (context.user) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
+        windowSizeInMS,
+        maxRequests
+      );
 
     if (!allowed) {
       return { block: true, trigger: "user" };
