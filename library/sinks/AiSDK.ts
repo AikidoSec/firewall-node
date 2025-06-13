@@ -111,8 +111,8 @@ export class AiSDK implements Wrapper {
     return modelName;
   }
 
-  wrap(hooks: Hooks) {
-    const interceptors: InterceptorObject = {
+  private getInterceptors(): InterceptorObject {
+    return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
         if (returnValue instanceof Promise) {
@@ -128,7 +128,42 @@ export class AiSDK implements Wrapper {
         return returnValue;
       },
     };
+  }
 
+  private getStreamInterceptors(): InterceptorObject {
+    return {
+      kind: "ai_op",
+      modifyReturnValue: (args, returnValue, agent) => {
+        if (
+          !returnValue ||
+          typeof returnValue !== "object" ||
+          !("response" in returnValue) ||
+          !(returnValue.response instanceof Promise) ||
+          !("usage" in returnValue) ||
+          !(returnValue.usage instanceof Promise)
+        ) {
+          return returnValue;
+        }
+
+        Promise.all([returnValue.response, returnValue.usage]).then(
+          ([response, usage]) => {
+            try {
+              this.inspectAiCall(agent, args, {
+                response,
+                usage,
+              });
+            } catch {
+              // If we don't catch these errors, it will result in an unhandled promise rejection!
+            }
+          }
+        );
+
+        return returnValue;
+      },
+    };
+  }
+
+  wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
       .withVersion("^4.0.0")
@@ -136,6 +171,11 @@ export class AiSDK implements Wrapper {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;
         const generateObjectFunc = exports.generateObject;
+        const streamTextFunc = exports.streamText;
+        const streamObjectFunc = exports.streamObject;
+
+        const interceptors = this.getInterceptors();
+        const streamInterceptors = this.getStreamInterceptors();
 
         return {
           ...exports,
@@ -150,6 +190,18 @@ export class AiSDK implements Wrapper {
             undefined,
             pkgInfo,
             interceptors
+          ),
+          streamText: wrapExport(
+            streamTextFunc,
+            undefined,
+            pkgInfo,
+            streamInterceptors
+          ),
+          streamObject: wrapExport(
+            streamObjectFunc,
+            undefined,
+            pkgInfo,
+            streamInterceptors
           ),
         };
       });
