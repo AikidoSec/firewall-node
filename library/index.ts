@@ -11,6 +11,7 @@ import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
+import { setRateLimitGroup } from "./ratelimiting/group";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -35,6 +36,7 @@ export {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  setRateLimitGroup,
 };
 
 // Required for ESM / TypeScript default export support
@@ -48,4 +50,5 @@ export default {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  setRateLimitGroup,
 };
