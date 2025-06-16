@@ -573,6 +573,15 @@ export class Agent {
     });
   }
 
+  onGraphQLFieldRateLimited(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    field: string
+  ) {
+    this.routes.countGraphQLFieldRateLimited(method, path, type, field);
+  }
+
   getRoutes() {
     return this.routes;
   }

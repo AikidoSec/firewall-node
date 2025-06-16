@@ -66,7 +66,7 @@ t.test("it works", async () => {
     method: "POST",
     url: "http://localhost:4000/graphql",
     query: {},
-    headers: {},
+    headers: { "content-type": "application/json" },
     body: { query: '{ getFile(path: "/etc/bashrc") }' },
     cookies: {},
     routeParams: {},
@@ -85,9 +85,27 @@ t.test("it works", async () => {
   await runWithContext(context, async () => {
     const success = await query("/etc/bashrc");
     t.same(success.data.getFile, "file content");
+
     await query("/etc/bashrc");
-    await query("/etc/bashrc");
+
     const result = await query("/etc/bashrc");
     t.same(result.errors[0].message, "You are rate limited by Zen.");
+
+    await query("/etc/bashrc");
+
+    t.same(agent.getRoutes().asArray(), [
+      {
+        method: "POST",
+        path: "/graphql",
+        hits: 5,
+        rateLimitedCount: 2,
+        graphql: {
+          type: "query",
+          name: "getFile",
+        },
+        apispec: {},
+        graphQLSchema: undefined,
+      },
+    ]);
   });
 });

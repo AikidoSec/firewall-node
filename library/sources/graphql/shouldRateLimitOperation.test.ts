@@ -105,6 +105,9 @@ t.test("it rate limits query", async () => {
 
   t.match(shouldRateLimitOperation(agent, context, args), {
     block: true,
+    operationType: "query",
+    source: "ip",
+    remoteAddress: "1.2.3.4",
   });
 });
 
@@ -170,5 +173,8 @@ t.test("it rate limits mutation", async () => {
 
   t.match(shouldRateLimitOperation(agent, context, args), {
     block: true,
+    operationType: "mutation",
+    source: "ip",
+    remoteAddress: "1.2.3.4",
   });
 });

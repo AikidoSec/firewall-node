@@ -14,12 +14,14 @@ type Result =
       field: FieldNode;
       source: "ip";
       remoteAddress: string;
+      operationType: "query" | "mutation";
     }
   | {
       block: true;
       field: FieldNode;
       source: "user";
       userId: string;
+      operationType: "query" | "mutation";
     };
 
 export function shouldRateLimitOperation(
@@ -109,6 +111,7 @@ function shouldRateLimitField(
         field: field,
         source: "ip",
         remoteAddress: context.remoteAddress,
+        operationType: operationType,
       };
     }
   }
@@ -128,6 +131,7 @@ function shouldRateLimitField(
         field: field,
         source: "user",
         userId: context.user.id,
+        operationType: operationType,
       };
     }
   }

@@ -140,6 +140,21 @@ export class Routes {
     }
   }
 
+  countGraphQLFieldRateLimited(
+    method: string,
+    path: string,
+    type: "query" | "mutation",
+    name: string
+  ) {
+    const key = this.getGraphQLKey(method, path, type, name);
+    const existing = this.routes.get(key);
+
+    if (existing) {
+      existing.rateLimitedCount++;
+      return;
+    }
+  }
+
   clear() {
     this.routes.clear();
   }

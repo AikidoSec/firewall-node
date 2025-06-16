@@ -980,3 +980,56 @@ t.test("it counts rate limited requests", async (t) => {
     },
   ]);
 });
+
+t.test("it counts rate limited GraphQL fields", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute(getContext("POST", "/graphql"));
+  routes.addGraphQLField("POST", "/graphql", "query", "user");
+
+  routes.countGraphQLFieldRateLimited("POST", "/graphql", "query", "user");
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      rateLimitedCount: 0,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      rateLimitedCount: 1,
+      graphql: { type: "query", name: "user" },
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.addGraphQLField("POST", "/graphql", "query", "user");
+  routes.countGraphQLFieldRateLimited("POST", "/graphql", "query", "user");
+
+  t.same(routes.asArray(), [
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      rateLimitedCount: 0,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 2,
+      rateLimitedCount: 2,
+      graphql: { type: "query", name: "user" },
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+});
