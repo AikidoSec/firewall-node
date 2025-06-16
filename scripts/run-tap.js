@@ -24,9 +24,16 @@ if (process.argv.includes("--test-new-instrumentation")) {
     process.exit(1);
   }
 
+  // This list excludes test files of sinks and sources that are not yet ported to the new instrumentation
   const excludedTestFilesForNewInstrumentation = [
     "**/sinks/**",
-    "**/sources/**",
+    "**/sources/PubSub.test.ts",
+    "**/sources/Lambda.test.ts",
+    "**/sources/FunctionsFramework.test.ts",
+    "**/sources/GraphQL.test.ts",
+    "**/sources/GraphQL.schema.test.ts",
+    "**/sources/GraphQL.tools.test.ts",
+    "**/sources/Fastify.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {

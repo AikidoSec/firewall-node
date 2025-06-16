@@ -56,6 +56,17 @@ export class Xml2js implements Wrapper {
           kind: "deserialize_op",
           modifyArgs: (args) => this.modifyArgs(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/parser.js",
+        functions: [
+          {
+            name: "Parser.prototype.parseString",
+            nodeType: "FunctionAssignment",
+            operationKind: "deserialize_op",
+            modifyArgs: (args) => this.modifyArgs(args),
+          },
+        ],
       });
   }
 }
