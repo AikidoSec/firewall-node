@@ -73,7 +73,7 @@ export function shouldRateLimitRequest(
       return { block: true, trigger: "group" };
     }
 
-    // Do not check IP rate limit if user is set
+    // Do not check IP rate limit if rateLimitGroup is set
     return { block: false };
   }
 
