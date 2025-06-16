@@ -8,7 +8,20 @@ const {
   verifyFileHash,
   extractTar,
 } = require("./helpers/internals");
-const execAsync = promisify(exec);
+
+// Helper to run exec async and pipe stdout/stderr
+async function execAsyncWithPipe(command, options) {
+  const child = exec(command, options);
+  child.stdout && child.stdout.pipe(process.stdout);
+  child.stderr && child.stderr.pipe(process.stderr);
+  return new Promise((resolve, reject) => {
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Command failed: ${command} (exit code ${code})`));
+    });
+    child.on("error", reject);
+  });
+}
 
 // Zen Internals configuration
 const INTERNALS_VERSION = "v0.1.41";
@@ -37,7 +50,7 @@ async function main() {
   await dlZenInternals();
   await buildInstrumentationWasm();
 
-  await execAsync(`npm run build`, {
+  await execAsyncWithPipe(`npm run build`, {
     cwd: libDir,
   });
 
@@ -134,7 +147,7 @@ async function modifyDtsFilesAfterBuild() {
 
 async function buildInstrumentationWasm() {
   // Build Instrumentation WASM
-  await execAsync(
+  await execAsyncWithPipe(
     `wasm-pack build --release --target nodejs --out-dir ${instrumentationWasmOutDir}`,
     {
       cwd: instrumentationWasmDir,

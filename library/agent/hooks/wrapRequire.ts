@@ -287,7 +287,7 @@ function executeInterceptors(
     try {
       const returnVal = interceptor(exports, wrapPackageInfo);
       // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
+      if (returnVal !== undefined) {
         exports = returnVal;
       }
     } catch (error) {
