@@ -136,6 +136,7 @@
     "test": "node ../scripts/run-tap.js",
     "test:ci": "CI=true node ../scripts/run-tap.js",
     "test:new": "node ../scripts/run-tap.js --test-new-instrumentation",
+    "test:ci:new": "node ../scripts/run-tap.js --ci --test-new-instrumentation",
     "build": "tsc -p tsconfig.build.json",
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "npm run lint-eslint && npm run lint-tsc && npm run check-format",

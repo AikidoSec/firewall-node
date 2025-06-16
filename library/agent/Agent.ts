@@ -25,9 +25,9 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
-import { envToBool } from "../helpers/envToBool";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -76,7 +76,7 @@ export class Agent {
       throw new Error("Serverless cannot be an empty string");
     }
 
-    if (envToBool(process.env.AIKIDO_TEST_NEW_INSTRUMENTATION)) {
+    if (isNewInstrumentationUnitTest()) {
       this.newInstrumentation = true;
     }
   }

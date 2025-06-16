@@ -14,6 +14,7 @@
     "test": "cd library && npm run test",
     "test:ci": "cd library && npm run test:ci",
     "test:new": "cd library && npm run test:new",
+    "test:ci:new": "cd library && npm run test:ci:new",
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
     "format": "prettier --write .",
