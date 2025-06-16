@@ -71,10 +71,12 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
       }
       propertiesCount++;
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        schema.properties![key] = getDataSchema(
-          (data as { [index: string]: unknown })[key],
-          depth + 1
-        );
+        if (!["__proto__", "constructor", "prototype"].includes(key)) {
+          schema.properties![key] = getDataSchema(
+            (data as { [index: string]: unknown })[key],
+            depth + 1
+          );
+        }
       }
     }
   }
