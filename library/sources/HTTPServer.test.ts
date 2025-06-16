@@ -215,6 +215,7 @@ t.test("it discovers routes", async () => {
             path: "/foo/bar",
             method: "GET",
             hits: 1,
+            rateLimitedCount: 0,
             graphql: undefined,
             apispec: {},
             graphQLSchema: undefined,

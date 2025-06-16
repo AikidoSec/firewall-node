@@ -56,17 +56,19 @@ function discoverRouteFromStream(
   if (context && context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
-    if (
-      !isNaN(statusCode) &&
-      shouldDiscoverRoute({
-        statusCode: statusCode,
-        route: context.route,
-        method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
-      // Only count the request if the route is discovered
-      agent.getInspectionStatistics().onRequest();
+    if (!isNaN(statusCode)) {
+      if (
+        shouldDiscoverRoute({
+          statusCode: statusCode,
+          route: context.route,
+          method: context.method,
+        }) ||
+        context.rateLimited // Also discover routes for rate-limited requests
+      ) {
+        agent.onRouteExecute(context);
+        // Only count the request if the route is discovered
+        agent.getInspectionStatistics().onRequest();
+      }
     }
   }
 }

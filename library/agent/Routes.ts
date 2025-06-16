@@ -8,6 +8,7 @@ export type Route = {
   method: string;
   path: string;
   hits: number;
+  rateLimitedCount: number;
   graphql?: { type: "query" | "mutation"; name: string };
   apispec: APISpec;
 };
@@ -40,6 +41,10 @@ export class Routes {
       updateApiInfo(context, existing, maxSamples);
 
       existing.hits++;
+
+      if (context.rateLimited) {
+        existing.rateLimitedCount++;
+      }
       return;
     }
 
@@ -55,6 +60,7 @@ export class Routes {
       path,
       hits: 1,
       apispec,
+      rateLimitedCount: context.rateLimited ? 1 : 0,
     });
   }
 
@@ -114,6 +120,7 @@ export class Routes {
       hits: 1,
       graphql: { type, name },
       apispec: {},
+      rateLimitedCount: 0,
     });
   }
 
@@ -143,6 +150,7 @@ export class Routes {
         method: route.method,
         path: route.path,
         hits: route.hits,
+        rateLimitedCount: route.rateLimitedCount,
         graphql: route.graphql,
         apispec: route.apispec,
         graphQLSchema: this.graphQLSchemas.get(key),

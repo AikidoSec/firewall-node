@@ -38,6 +38,7 @@ t.test("it works", async (t) => {
       method: "GET",
       path: "/users",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -52,6 +53,7 @@ t.test("it works", async (t) => {
       method: "GET",
       path: "/users",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -66,6 +68,7 @@ t.test("it works", async (t) => {
         method: "GET",
         path: "/users",
         hits: 2,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {},
         graphQLSchema: undefined,
@@ -74,6 +77,7 @@ t.test("it works", async (t) => {
         method: "POST",
         path: "/users",
         hits: 1,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {},
         graphQLSchema: undefined,
@@ -88,6 +92,7 @@ t.test("it works", async (t) => {
       method: "GET",
       path: "/users",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -96,6 +101,7 @@ t.test("it works", async (t) => {
       method: "POST",
       path: "/users",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -104,6 +110,7 @@ t.test("it works", async (t) => {
       method: "PUT",
       path: "/users/1",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -116,6 +123,7 @@ t.test("it works", async (t) => {
       method: "GET",
       path: "/users",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -124,6 +132,7 @@ t.test("it works", async (t) => {
       method: "PUT",
       path: "/users/1",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -132,6 +141,7 @@ t.test("it works", async (t) => {
       method: "DELETE",
       path: "/users/1",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -151,6 +161,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -159,6 +170,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: { type: "query", name: "user" },
       apispec: {},
       graphQLSchema: undefined,
@@ -171,6 +183,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -179,6 +192,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: { type: "query", name: "user" },
       apispec: {},
       graphQLSchema: undefined,
@@ -191,6 +205,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -199,6 +214,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: { type: "query", name: "user" },
       apispec: {},
       graphQLSchema: undefined,
@@ -207,6 +223,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: {
         type: "query",
         name: "post",
@@ -222,6 +239,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -230,6 +248,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: { type: "query", name: "user" },
       apispec: {},
       graphQLSchema: undefined,
@@ -238,6 +257,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: {
         type: "query",
         name: "post",
@@ -249,6 +269,7 @@ t.test("it adds GraphQL fields", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: {
         type: "mutation",
         name: "post",
@@ -275,6 +296,7 @@ t.test("it adds body schema", async (t) => {
       method: "POST",
       path: "/body",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: {
@@ -319,6 +341,7 @@ t.test("it merges body schema", async (t) => {
       method: "POST",
       path: "/body",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -338,6 +361,7 @@ t.test("it merges body schema", async (t) => {
       method: "POST",
       path: "/body",
       hits: 2,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: {
@@ -385,6 +409,7 @@ t.test("it merges body schema", async (t) => {
       method: "POST",
       path: "/body",
       hits: 4,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: {
@@ -439,6 +464,7 @@ t.test("it adds query schema", async (t) => {
       method: "GET",
       path: "/query",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: undefined,
@@ -469,6 +495,7 @@ t.test("it merges query schema", async (t) => {
       method: "GET",
       path: "/query",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -484,6 +511,7 @@ t.test("it merges query schema", async (t) => {
       method: "GET",
       path: "/query",
       hits: 4,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         query: {
@@ -521,6 +549,7 @@ t.test("it adds auth schema", async (t) => {
       method: "GET",
       path: "/auth",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: undefined,
@@ -533,6 +562,7 @@ t.test("it adds auth schema", async (t) => {
       method: "GET",
       path: "/auth2",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: undefined,
@@ -545,6 +575,7 @@ t.test("it adds auth schema", async (t) => {
       method: "GET",
       path: "/auth3",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: undefined,
@@ -572,6 +603,7 @@ t.test("it merges auth schema", async (t) => {
       method: "GET",
       path: "/auth",
       hits: 5,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         auth: [
@@ -593,6 +625,7 @@ t.test("it ignores empty body objects", async (t) => {
       method: "GET",
       path: "/empty",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
@@ -625,6 +658,7 @@ t.test("it ignores body of graphql queries", async (t) => {
       method: "POST",
       path: "/graphql",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: undefined,
@@ -658,6 +692,7 @@ t.test("it respects max samples", async (t) => {
       method: "POST",
       path: "/add",
       hits: 12,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: {
@@ -745,6 +780,7 @@ t.test(
         method: "POST",
         path: "/add",
         hits: 12,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {},
         graphQLSchema: undefined,
@@ -769,6 +805,7 @@ t.test("with string format", async (t) => {
       method: "POST",
       path: "/body",
       hits: 1,
+      rateLimitedCount: 0,
       graphql: undefined,
       apispec: {
         body: {
@@ -819,6 +856,7 @@ t.test(
         method: "POST",
         path: "/body",
         hits: 1,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {
           body: {
@@ -852,6 +890,7 @@ t.test(
         method: "POST",
         path: "/body",
         hits: 2,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {
           body: {
@@ -873,3 +912,71 @@ t.test(
     ]);
   }
 );
+
+t.test("it counts rate limited requests", async (t) => {
+  const routes = new Routes(200);
+  routes.addRoute(getContext("GET", "/api/foo"));
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 1,
+      rateLimitedCount: 0,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.addRoute({ ...getContext("GET", "/api/foo"), rateLimited: true });
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 2,
+      rateLimitedCount: 1,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.addRoute({ ...getContext("GET", "/api/foo"), rateLimited: true });
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 3,
+      rateLimitedCount: 2,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.addRoute({ ...getContext("GET", "/api/bar"), rateLimited: true });
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 3,
+      rateLimitedCount: 2,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+    {
+      method: "GET",
+      path: "/api/bar",
+      hits: 1,
+      rateLimitedCount: 1,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+});

@@ -91,19 +91,19 @@ function createOnFinishRequestHandler(
 
     const context = getContext();
 
-    if (
-      context &&
-      context.route &&
-      context.method &&
-      shouldDiscoverRoute({
-        statusCode: res.statusCode,
-        route: context.route,
-        method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
-      // Only count the request if the route is discovered
-      agent.getInspectionStatistics().onRequest();
+    if (context && context.route && context.method) {
+      if (
+        shouldDiscoverRoute({
+          statusCode: res.statusCode,
+          route: context.route,
+          method: context.method,
+        }) ||
+        context.rateLimited // Also discover routes for rate-limited requests
+      ) {
+        agent.onRouteExecute(context);
+        // Only count the request if the route is discovered
+        agent.getInspectionStatistics().onRequest();
+      }
     }
   };
 }
