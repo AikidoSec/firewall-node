@@ -29,6 +29,7 @@ Using `setUser` has the following benefits:
 # Rate limiting groups
 
 To limit the number of requests for a group of users, you can use the `setRateLimitGroup` function. For example, this is useful if you want to limit the number of requests per team or company.
+Please note that if a rate limit group is set, the configured rate limits are only applied to the group and not to individual users or IP addresses.
 
 ```js
 Zen.setRateLimitGroup({
