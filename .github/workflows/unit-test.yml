@@ -66,17 +66,17 @@ jobs:
       matrix:
         include:
           - node-version: 16.x
-            new-instrumentation: false
+            instrumentation: "current"
           - node-version: 18.x
-            new-instrumentation: false
+            new-instrumentation: "current"
           - node-version: 20.x
-            new-instrumentation: false
+            new-instrumentation: "current"
           - node-version: 22.x
-            new-instrumentation: false
+            new-instrumentation: "current"
           - node-version: 24.x
-            new-instrumentation: false
+            new-instrumentation: "current"
           - node-version: 24.x
-            new-instrumentation: true
+            new-instrumentation: "new"
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -105,9 +105,9 @@ jobs:
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run test:ci
-        if: ${{ matrix.new-instrumentation == 'false' }}
+        if: ${{ matrix.new-instrumentation == 'current' }}
       - run: npm run test:ci:new
-        if: ${{ matrix.new-instrumentation == 'true' }}
+        if: ${{ matrix.new-instrumentation == 'new' }}
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
