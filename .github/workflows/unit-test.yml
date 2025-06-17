@@ -95,3 +95,29 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: Add local.aikido.io to hosts file
+        run: |
+          Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 local.aikido.io"
+      - run: npm run install-lib-only
+      - run: npm run build
+      - run: npm run test:ci
+      - name: Upload coverage
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
+        with:
+          files: ./library/.tap/report/lcov.info
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          slug: AikidoSec/firewall-node
