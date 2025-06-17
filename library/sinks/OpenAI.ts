@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { getContext } from "../agent/Context";
 
 type Response = {
   model: string;
@@ -64,6 +65,7 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      route: this.getRoute(),
     });
   }
 
@@ -93,6 +95,7 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      route: this.getRoute(),
     });
   }
 
@@ -111,6 +114,16 @@ export class OpenAI implements Wrapper {
     }
 
     return "openai";
+  }
+
+  private getRoute() {
+    const context = getContext();
+
+    if (context && context.route && context.method) {
+      return { path: context.route, method: context.method };
+    }
+
+    return undefined;
   }
 
   wrap(hooks: Hooks) {
