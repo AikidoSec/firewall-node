@@ -185,3 +185,25 @@ t.test("test max properties", async (t) => {
   const schema2 = getDataSchema(obj2);
   t.same(Object.keys(schema2.properties!).length, 100);
 });
+
+t.test("it ignores __proto__ property", async (t) => {
+  const data = {
+    __proto__: { malicious: "data" },
+    test: "value",
+    0: "zero",
+    [Symbol("sym")]: "symbolValue",
+  };
+
+  const schema = getDataSchema(data);
+  t.same(schema, {
+    type: "object",
+    properties: {
+      test: {
+        type: "string",
+      },
+      0: {
+        type: "string",
+      },
+    },
+  });
+});

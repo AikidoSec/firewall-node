@@ -65,17 +65,15 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
   // If the depth is less than the maximum depth, get the schema for each property
   if (depth < maxDepth) {
     let propertiesCount = 0;
-    for (const key in data) {
+    for (const key of Object.keys(data)) {
       if (propertiesCount >= maxProperties) {
         break;
       }
       propertiesCount++;
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        schema.properties![key] = getDataSchema(
-          (data as { [index: string]: unknown })[key],
-          depth + 1
-        );
-      }
+      schema.properties![key] = getDataSchema(
+        (data as { [index: string]: unknown })[key],
+        depth + 1
+      );
     }
   }
 
