@@ -315,6 +315,7 @@ export function createExpressTests(expressPackageName: string) {
         method: "POST",
         path: "/",
         hits: 1,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {
           body: {
@@ -375,6 +376,8 @@ export function createExpressTests(expressPackageName: string) {
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
         total: 2,
+        aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -411,6 +414,8 @@ export function createExpressTests(expressPackageName: string) {
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
         total: 0, // Errors are not counted
+        aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -763,5 +768,53 @@ export function createExpressTests(expressPackageName: string) {
       blockedResponse.text,
       /Error: Zen has blocked a path traversal attack: fs.readFile\(\.\.\.\) originating from query/
     );
+  });
+
+  t.test("it counts rate limited requests", async (t) => {
+    agent.getRoutes().clear();
+    agent.getInspectionStatistics().reset();
+
+    const resp1 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp1.statusCode, 200);
+
+    const resp2 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp2.statusCode, 200);
+
+    const resp3 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp3.statusCode, 200);
+
+    const resp4 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp4.statusCode, 429);
+
+    t.same(agent.getRoutes().asArray(), [
+      {
+        method: "GET",
+        path: "/rate-limited",
+        hits: 4,
+        rateLimitedCount: 1,
+        graphql: undefined,
+        apispec: {},
+        graphQLSchema: undefined,
+      },
+    ]);
+    t.match(agent.getInspectionStatistics().getStats(), {
+      requests: {
+        total: 4,
+        aborted: 0,
+        rateLimited: 1,
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+      },
+    });
   });
 }

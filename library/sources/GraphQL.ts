@@ -139,6 +139,18 @@ export class GraphQL implements Wrapper {
     );
 
     if (result.block) {
+      agent.getInspectionStatistics().onRateLimitedRequest();
+      updateContext(context, "rateLimited", true);
+
+      if (context && context.method && context.route) {
+        agent.onGraphQLFieldRateLimited(
+          context.method,
+          context.route,
+          result.operationType,
+          result.field.name.value
+        );
+      }
+
       return {
         errors: [
           new this.graphqlModule.GraphQLError("You are rate limited by Zen.", {
