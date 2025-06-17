@@ -21,10 +21,12 @@ export function mergeDataSchemas(first: DataSchema, second: DataSchema) {
 
     for (const key in second.properties) {
       if (result.properties[key]) {
-        result.properties[key] = mergeDataSchemas(
-          result.properties[key],
-          second.properties[key]
-        );
+        if (!["__proto__", "constructor", "prototype"].includes(key)) {
+          result.properties[key] = mergeDataSchemas(
+            result.properties[key],
+            second.properties[key]
+          );
+        }
       } else {
         result.properties[key] = second.properties[key];
         // If a property is not in the first schema, we can assume it is optional
