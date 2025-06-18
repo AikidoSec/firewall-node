@@ -3,7 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
-import { getRouteForAiStats } from "../helpers/getRouteForAIStats";
+import { getRouteForAiStats } from "../helpers/getRouteForAiStats";
 
 type Response = {
   model: string;
