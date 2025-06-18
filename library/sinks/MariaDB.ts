@@ -50,7 +50,7 @@ export class MariaDB implements Wrapper {
   }
 
   private wrapConnection(exports: any, pkgInfo: WrapPackageInfo) {
-    const functions = ["query", "execute", "prepare", "batch"];
+    const functions = ["query", "execute", "prepare", "batch", "queryStream"];
 
     for (const fn of functions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
