@@ -26,7 +26,15 @@ if (process.argv.includes("--test-new-instrumentation")) {
 
   // This list excludes test files of sinks and sources that are not yet ported to the new instrumentation
   const excludedTestFilesForNewInstrumentation = [
-    "**/sinks/**",
+    "**/sinks/Undici*",
+    "**/sinks/SQLite3.test.ts",
+    "**/sinks/Prisma.test.ts",
+    "**/sinks/MongoDB.*",
+    "**/sinks/AwsSDK*",
+    "**/sinks/Postgres.test.ts", // Bind context
+    "**/sinks/MySQL.test.ts", // Bind context
+    "**/sinks/MySQL2.v3.10.test.ts",
+
     "**/sources/PubSub.test.ts",
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",

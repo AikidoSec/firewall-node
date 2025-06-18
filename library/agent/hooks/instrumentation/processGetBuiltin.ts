@@ -31,7 +31,10 @@ function patchedGetBuiltinModule(this: NodeJS.Process, id: string) {
  */
 export function getBuiltinModuleWithoutPatching(id: string) {
   if (originalProcessGetBuiltinModule) {
-    return originalProcessGetBuiltinModule(id);
+    return (
+      originalProcessGetBuiltinModule(id) ||
+      originalProcessGetBuiltinModule(`node:${id}`) // Some builtins are only available with the "node:" prefix, e.g. "node:sqlite3"
+    );
   }
 
   // Fallback
