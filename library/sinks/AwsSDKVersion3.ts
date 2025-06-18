@@ -1,8 +1,8 @@
 import { Agent } from "../agent/Agent";
-import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { getRouteForAiStats } from "../helpers/getRouteForAIStats";
 import { isPlainObject } from "../helpers/isPlainObject";
 
 type InvokeUsage = {
@@ -79,7 +79,7 @@ export class AwsSDKVersion3 implements Wrapper {
         model: body.model,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
-        route: this.getRoute(),
+        route: getRouteForAiStats(),
       });
     }
   }
@@ -115,18 +115,8 @@ export class AwsSDKVersion3 implements Wrapper {
       model: modelId,
       inputTokens: inputTokens,
       outputTokens: outputTokens,
-      route: this.getRoute(),
+      route: getRouteForAiStats(),
     });
-  }
-
-  private getRoute() {
-    const context = getContext();
-
-    if (context && context.route && context.method) {
-      return { path: context.route, method: context.method };
-    }
-
-    return undefined;
   }
 
   wrap(hooks: Hooks) {
