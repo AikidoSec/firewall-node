@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { getRouteForAiStats } from "./getRouteForAIStats";
+import { getRouteForAiStats } from "./getRouteForAiStats";
 import { runWithContext } from "../agent/Context";
 
 const getTestContext = () => ({
