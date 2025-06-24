@@ -6,6 +6,7 @@ import {
   patchProcessGetBuiltinModule,
 } from "./processGetBuiltin";
 import { setBuiltinsToInstrument } from "./instructions";
+import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
 
 t.test(
   "it works",
@@ -57,6 +58,8 @@ t.test(
       getBuiltinModuleWithoutPatching(undefined);
     });
 
-    t.same(getBuiltinModuleWithoutPatching("sqlite"), require("node:sqlite"));
+    if (getMajorNodeVersion() >= 22) {
+      t.same(getBuiltinModuleWithoutPatching("sqlite"), require("node:sqlite"));
+    }
   }
 );
