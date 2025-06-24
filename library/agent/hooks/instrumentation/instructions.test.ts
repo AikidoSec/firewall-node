@@ -178,6 +178,12 @@ t.test("it works using injected functions", async (t) => {
     [],
     this
   );
+  __instrumentModifyReturnValue(
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
+    [1, 2, 3],
+    "42",
+    this
+  );
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   t.equal(pkgModifyReturnValueCalled, false);
@@ -207,6 +213,12 @@ t.test("it works using injected functions", async (t) => {
   __instrumentModifyArgs(
     "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
     [],
+    this
+  );
+  __instrumentModifyReturnValue(
+    "foo.bar.js.bazABCDEF.MethodDefinition.^1.0.0",
+    [1, 2, 3],
+    "42",
     this
   );
   t.equal(pkgInspectArgsCalled, false);

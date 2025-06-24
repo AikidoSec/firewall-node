@@ -17,7 +17,6 @@ export function createTestAgent(opts?: {
   token?: Token;
   serverless?: string;
   suppressConsoleLog?: boolean;
-  newInstrumentation?: boolean;
 }) {
   if (opts?.suppressConsoleLog ?? true) {
     wrap(console, "log", function log() {
@@ -30,8 +29,7 @@ export function createTestAgent(opts?: {
     opts?.logger ?? new LoggerNoop(),
     opts?.api ?? new ReportingAPIForTesting(),
     opts?.token, // Defaults to undefined
-    opts?.serverless, // Defaults to undefined
-    opts?.newInstrumentation ?? false
+    opts?.serverless // Defaults to undefined
   );
 
   setInstance(agent);

@@ -2,7 +2,6 @@ import { getInstance } from "../../AgentSingleton";
 import { getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
 import { getPackageCallbackInfo } from "./instructions";
-import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 
 export function __instrumentInspectArgs(
   id: string,
@@ -117,8 +116,4 @@ export function __instrumentModifyReturnValue(
   }
 
   return returnValue;
-}
-
-export function __getBuiltinModuleWithoutPatching(id: string) {
-  return getBuiltinModuleWithoutPatching(id);
 }
