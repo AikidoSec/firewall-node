@@ -5,7 +5,7 @@ import { getPackageCallbackInfo } from "./instructions";
 
 export function __instrumentInspectArgs(
   id: string,
-  args: unknown[],
+  args: IArguments,
   pkgVersion: string,
   subject: unknown // "This" of the method being called
 ) {
@@ -24,7 +24,7 @@ export function __instrumentInspectArgs(
   if (typeof cbInfo.funcs.inspectArgs === "function") {
     inspectArgs.call(
       subject,
-      args,
+      Array.from(args),
       cbInfo.funcs.inspectArgs,
       context,
       agent,

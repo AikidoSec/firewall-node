@@ -29,7 +29,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/Undici*",
     "**/sinks/SQLite3.test.ts",
     "**/sinks/Prisma.test.ts",
-    "**/sinks/MongoDB.*",
     "**/sinks/AwsSDK*",
     "**/sinks/Postgres.test.ts", // Bind context
     "**/sinks/MySQL.test.ts", // Bind context

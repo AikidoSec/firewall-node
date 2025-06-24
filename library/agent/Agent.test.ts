@@ -19,7 +19,6 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import type { Response } from "./api/fetchBlockedLists";
-import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 
 let shouldOnlyAllowSomeIPAddresses = false;
 
@@ -124,18 +123,11 @@ t.test("it sends started event", async (t) => {
     },
   ]);
 
-  if (!isNewInstrumentationUnitTest()) {
-    t.same(logger.getMessages(), [
-      "Starting agent v0.0.0...",
-      "Found token, reporting enabled!",
-      "mongodb@6.16.0 is supported!",
-    ]);
-  } else {
-    t.same(logger.getMessages(), [
-      "Starting agent v0.0.0...",
-      "Found token, reporting enabled!",
-    ]);
-  }
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    "mongodb@6.16.0 is supported!",
+  ]);
 });
 
 t.test("it throws error if already started", async () => {
