@@ -1,39 +1,32 @@
 export type PackageLoadFormat = "commonjs" | "module" | "unambiguous";
 
-/*
-    0 -> JS, auto-detect CJS or ESM
-    1 -> TypeScript (ESM)
-    2 -> CJS
-    3 -> MJS (ESM)
-    4 -> TSX
-*/
+type SourceType = "unambiguous" | "ts" | "cjs" | "mjs" | "tsx" | "jsx";
+
+/**
+ * Get the source type based on the file extension and package load format.
+ */
 export function getSourceType(
   path: string,
   loadFormat: PackageLoadFormat
-): number {
+): SourceType {
   const extension = path.split(".").pop();
 
   switch (extension) {
     case "js": {
       if (loadFormat === "commonjs") {
-        return 2;
+        return "cjs";
       }
       if (loadFormat === "module") {
-        return 3;
+        return "mjs";
       }
-      return 0; // JS, auto-detect CJS or ESM (unambiguous)
+      return "unambiguous"; // JS, auto-detect CJS or ESM
     }
-    case "ts": {
-      return 1;
-    }
-    case "cjs": {
-      return 2;
-    }
-    case "mjs": {
-      return 3;
-    }
-    case "tsx": {
-      return 4;
+    case "ts": // Parsed as ESM module system
+    case "cjs":
+    case "mjs":
+    case "tsx":
+    case "jsx": {
+      return extension;
     }
 
     default: {

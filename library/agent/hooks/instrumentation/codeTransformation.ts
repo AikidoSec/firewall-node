@@ -13,25 +13,29 @@ export function transformCode(
   pkgLoadFormat: PackageLoadFormat,
   fileInstructions: PackageFileInstrumentationInstructionJSON
 ): string {
-  const result = wasm_transform_code_str(
-    pkgName,
-    pkgVersion,
-    code,
-    JSON.stringify(fileInstructions),
-    getSourceType(path, pkgLoadFormat)
-  );
-
-  if (result.startsWith("#ERR:")) {
-    throw new Error(`Error transforming code: ${result}`);
-  }
-
-  // Rewrite import path for unit tests if environment variable is set to true
-  if (isNewInstrumentationUnitTest()) {
-    return result.replace(
-      "@aikidosec/firewall/instrument/internals",
-      join(__dirname, "injectedFunctions.ts")
+  try {
+    const result = wasm_transform_code_str(
+      pkgName,
+      pkgVersion,
+      code,
+      JSON.stringify(fileInstructions),
+      getSourceType(path, pkgLoadFormat)
     );
-  }
 
-  return result;
+    // Rewrite import path for unit tests if environment variable is set to true
+    if (isNewInstrumentationUnitTest()) {
+      return result.replace(
+        "@aikidosec/firewall/instrument/internals",
+        join(__dirname, "injectedFunctions.ts")
+      );
+    }
+
+    return result;
+  } catch (error) {
+    // Convert string errors to Error objects
+    if (typeof error === "string") {
+      throw new Error(`Error transforming code: ${error}`);
+    }
+    throw error;
+  }
 }

@@ -278,7 +278,10 @@ t.test("typescript code in a js file", async (t) => {
   } catch (error) {
     t.ok(error instanceof Error);
     if (error instanceof Error) {
-      t.match(error.message, "Error transforming code: #ERR:");
+      t.match(
+        error.message,
+        "Error transforming code: Error while parsing code:"
+      );
       t.match(error.message, 'Expected `;` but found `:`"');
     }
   }

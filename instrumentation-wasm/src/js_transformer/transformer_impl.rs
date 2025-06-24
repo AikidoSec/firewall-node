@@ -16,11 +16,13 @@ pub struct Transformer<'a> {
     pub ast_builder: &'a oxc_ast::AstBuilder<'a>,
 }
 
-impl<'a> Traverse<'a> for Transformer<'a> {
+pub struct TraverseState {}
+
+impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
     fn enter_method_definition(
         &mut self,
         node: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if !node.key.is_identifier() || node.value.body.is_none() || node.key.name().is_none() {
             return;
@@ -67,7 +69,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_assignment_expression(
         &mut self,
         node: &mut oxc_ast::ast::AssignmentExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if node.operator != AssignmentOperator::Assign {
             // Return if operator is not =
@@ -128,7 +130,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_function(
         &mut self,
         node: &mut oxc_ast::ast::Function<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if node.r#type != FunctionType::FunctionDeclaration {
             // Only instrument function declarations here

@@ -32,6 +32,16 @@ const IMPORT_METHODS: [(&str, ImportMethodPredicate); 3] = [
     ),
 ];
 
+fn is_common_js(source_type: &SourceType, has_module_syntax: bool) -> bool {
+    if source_type.is_script() {
+        return true;
+    }
+    if source_type.is_unambiguous() && !has_module_syntax {
+        return true; // Unambiguous mode without module syntax
+    }
+    false // Otherwise, it's ESM
+}
+
 pub fn insert_import_statement<'a>(
     source_type: &SourceType,
     has_module_syntax: bool,
@@ -41,7 +51,7 @@ pub fn insert_import_statement<'a>(
     file_instructions: &FileInstructions,
 ) {
     // Common JS require() statement
-    if source_type.is_script() || source_type.is_unambiguous() && !has_module_syntax {
+    if is_common_js(source_type, has_module_syntax) {
         let mut require_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(1);
         require_args.push(Argument::StringLiteral(builder.alloc_string_literal(
             SPAN,

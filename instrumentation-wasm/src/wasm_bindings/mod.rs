@@ -8,7 +8,7 @@ pub fn wasm_transform_code_str(
     pkg_version: &str,
     code: &str,
     instructions_json: &str,
-    source_type: i32,
-) -> String {
+    source_type: &str,
+) -> Result<String, String> {
     transform_code_str(pkg_name, pkg_version, code, instructions_json, source_type)
 }

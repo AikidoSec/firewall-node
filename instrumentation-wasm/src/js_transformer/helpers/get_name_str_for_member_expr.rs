@@ -1,6 +1,13 @@
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::ast::{Expression, MemberExpression};
 
+/**
+ * This funcion tries to get the name of a member expression in the form of a string.
+ * Examples:
+ * - `app.get = () => {}` will return `app.get`
+ * - `app.prototype.get = () => {}` will return `app.prototype.get`
+ * - `app[method] = () => {}` will return `app[method]`
+ */
 pub fn get_name_str_for_member_expr<'a>(
     allocator: &'a Allocator,
     member_expr: &MemberExpression,

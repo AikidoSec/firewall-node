@@ -11,7 +11,7 @@ use super::{
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
     instructions::FileInstructions,
-    transformer_impl::Transformer,
+    transformer_impl::{Transformer, TraverseState},
 };
 
 pub fn transform_code_str(
@@ -19,8 +19,8 @@ pub fn transform_code_str(
     pkg_version: &str,
     code: &str,
     instructions_json: &str,
-    src_type: i32,
-) -> String {
+    src_type: &str,
+) -> Result<String, String> {
     let allocator = Allocator::default();
 
     let file_instructions: FileInstructions =
@@ -31,7 +31,10 @@ pub fn transform_code_str(
     let parser_result = Parser::new(&allocator, code, source_type).parse();
 
     if parser_result.panicked || !parser_result.errors.is_empty() {
-        return format!("#ERR: {:?}", parser_result.errors);
+        return Err(format!(
+            "Error while parsing code: {:?}",
+            parser_result.errors
+        ));
     }
 
     let program = allocator.alloc(parser_result.program);
@@ -40,7 +43,10 @@ pub fn transform_code_str(
     let semantic = SemanticBuilder::new().build(program);
 
     if !semantic.errors.is_empty() {
-        return format!("#ERR: {:?}", semantic.errors);
+        return Err(format!(
+            "Error during semantic analysis: {:?}",
+            semantic.errors
+        ));
     }
 
     let (scopes, _nodes) = semantic.semantic.into_scoping_and_nodes();
@@ -54,7 +60,9 @@ pub fn transform_code_str(
         ast_builder: &ast_builder,
     };
 
-    traverse_mut(t, &allocator, program, scopes);
+    let state = TraverseState {};
+
+    traverse_mut(t, &allocator, program, scopes, state);
 
     // Add import / require statement
     insert_import_statement(
@@ -76,5 +84,5 @@ pub fn transform_code_str(
         })
         .build(program);
 
-    js.code
+    Ok(js.code)
 }

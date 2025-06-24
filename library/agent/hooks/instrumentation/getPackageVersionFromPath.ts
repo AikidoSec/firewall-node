@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 
-const cache = new Map<string, string>();
+const cache = new Map<string, string | undefined>();
 
 /**
  * Get the installed version of a package
@@ -21,5 +21,6 @@ export function getPackageVersionFromPath(
     return version;
   } catch {
     // Return undefined if the package is not found
+    cache.set(basePath, undefined);
   }
 }
