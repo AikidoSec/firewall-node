@@ -17,6 +17,9 @@ t.test(
   async (t) => {
     createTestAgent();
 
+    // Before patched
+    t.same(getBuiltinModuleWithoutPatching("http"), require("http"));
+
     patchProcessGetBuiltinModule();
 
     const hooks = new Hooks();
@@ -53,5 +56,7 @@ t.test(
       // @ts-expect-error Ignore original types
       getBuiltinModuleWithoutPatching(undefined);
     });
+
+    t.same(getBuiltinModuleWithoutPatching("sqlite"), require("node:sqlite"));
   }
 );

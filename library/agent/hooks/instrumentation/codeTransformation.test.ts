@@ -449,7 +449,7 @@ t.test("modify rest parameter args", async (t) => {
         {
           nodeType: "MethodDefinition",
           name: "testFunction",
-          identifier: "testmodule.test.js.testFunction.MethodDefinition.v1.0.0",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
           inspectArgs: false,
           modifyArgs: true,
           modifyReturnValue: false,

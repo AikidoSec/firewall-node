@@ -5,6 +5,7 @@ import { Hooks } from "../Hooks";
 import * as mod from "node:module";
 import { registerNodeHooks } from ".";
 import { Agent } from "../../Agent";
+import { onModuleLoad } from "./loadHook";
 
 t.test(
   "it throws an error if Node.js version is not supported",
@@ -190,3 +191,10 @@ t.test(
     t.equal(typeof fastify, "function");
   }
 );
+
+t.test("call with invalid args", async (t) => {
+  // @ts-expect-error Invalid args
+  t.same(onModuleLoad("test", undefined, "test"), "test");
+  // @ts-expect-error Invalid args
+  t.same(onModuleLoad("test", undefined, undefined), undefined);
+});
