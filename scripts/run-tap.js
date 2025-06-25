@@ -40,7 +40,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sources/GraphQL.test.ts",
     "**/sources/GraphQL.schema.test.ts",
     "**/sources/GraphQL.tools.test.ts",
-    "**/sources/Fastify.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {
