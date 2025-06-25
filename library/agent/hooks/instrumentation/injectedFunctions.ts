@@ -5,7 +5,7 @@ import { getPackageCallbackInfo } from "./instructions";
 
 export function __instrumentInspectArgs(
   id: string,
-  args: IArguments,
+  args: IArguments | unknown[],
   pkgVersion: string,
   subject: unknown // "This" of the method being called
 ) {
