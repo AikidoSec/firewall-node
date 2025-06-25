@@ -28,8 +28,8 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             return;
         }
 
-        if !node.kind.is_method() {
-            // Ignore constructor, getters and setters for now
+        if !node.kind.is_method() && !node.kind.is_constructor() {
+            // Ignore getters and setters for now
             return;
         }
 
@@ -63,6 +63,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             &arg_names,
             self.pkg_version,
             body,
+            node.kind.is_constructor(),
         );
     }
 
@@ -124,6 +125,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             &arg_names,
             self.pkg_version,
             body,
+            false,
         );
     }
 
@@ -178,6 +180,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             &arg_names,
             self.pkg_version,
             body,
+            false,
         );
     }
 }

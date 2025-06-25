@@ -16,6 +16,7 @@ pub fn insert_instrument_method_calls<'a>(
     arg_names: &Vec<String>,
     pkg_version: &'a str,
     body: &mut Box<'a, FunctionBody<'a>>,
+    is_constructor: bool,
 ) {
     if instruction.modify_args && !arg_names.is_empty() {
         insert_modify_args(
@@ -25,6 +26,7 @@ pub fn insert_instrument_method_calls<'a>(
             arg_names,
             body,
             instruction.modify_arguments_object,
+            is_constructor,
         );
     }
 
@@ -35,10 +37,11 @@ pub fn insert_instrument_method_calls<'a>(
             &instruction.identifier,
             pkg_version,
             body,
+            is_constructor,
         );
     }
 
-    if instruction.modify_return_value {
+    if instruction.modify_return_value && !is_constructor {
         transform_return_statements(
             allocator,
             builder,

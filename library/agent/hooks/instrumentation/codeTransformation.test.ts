@@ -1622,3 +1622,144 @@ t.test("Modify function expression (ESM)", async (t) => {
     }`
   );
 });
+
+t.test("Modify constructor (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      class Test {
+        constructor() {
+          console.log("ignore");
+          const x = 1;
+        }
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "constructor",
+          identifier:
+            "testpkg.application.js.constructor.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+     class Test {
+        constructor() {
+        __instrumentInspectArgs("testpkg.application.js.constructor.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+          console.log("ignore");
+          const x = 1;
+        }
+      }
+    `
+  );
+});
+
+t.test("Modify constructor with super (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      class Test {
+        constructor() {
+          super();
+          console.log("ignore");
+        }
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "constructor",
+          identifier:
+            "testpkg.application.js.constructor.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+     class Test {
+        constructor() {
+          super();
+          __instrumentInspectArgs("testpkg.application.js.constructor.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+          console.log("ignore");
+        }
+      }
+    `
+  );
+});
+
+t.test("Modify constructor with super (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      class Test {
+        constructor(arg1) {
+          test();
+          super();
+          console.log("ignore");
+        }
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "constructor",
+          identifier:
+            "testpkg.application.js.constructor.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: true,
+          modifyReturnValue: true,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+     class Test {
+        constructor(arg1) {
+          test();
+          super();
+          __instrumentInspectArgs("testpkg.application.js.constructor.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+          [arg1] = __instrumentModifyArgs("testpkg.application.js.constructor.MethodDefinition.v1.0.0", [arg1], this);
+          console.log("ignore");
+        }
+      }
+    `
+  );
+});

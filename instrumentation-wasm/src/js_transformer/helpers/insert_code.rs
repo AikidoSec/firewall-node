@@ -3,7 +3,7 @@ use oxc_ast::{
     AstBuilder, NONE,
     ast::{
         Argument, ArrayExpressionElement, AssignmentOperator, AssignmentTarget, Expression,
-        FunctionBody,
+        FunctionBody, Statement,
     },
 };
 use oxc_span::SPAN;
@@ -15,6 +15,7 @@ pub fn insert_inspect_args<'a>(
     identifier: &str,
     pkg_version: &'a str,
     body: &mut Box<'a, FunctionBody<'a>>,
+    is_constructor: bool,
 ) {
     let mut inspect_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(4);
 
@@ -49,7 +50,8 @@ pub fn insert_inspect_args<'a>(
 
     let stmt_expression = builder.statement_expression(SPAN, call_expr);
 
-    body.statements.insert(0, stmt_expression);
+    let insert_pos = get_insert_pos(body, is_constructor);
+    body.statements.insert(insert_pos, stmt_expression);
 }
 
 // Modify the arguments by adding a statement to the beginning of the function
@@ -61,6 +63,7 @@ pub fn insert_modify_args<'a>(
     arg_names: &Vec<String>,
     body: &mut Box<'a, FunctionBody<'a>>,
     modify_arguments_object: bool,
+    is_constructor: bool,
 ) {
     if modify_arguments_object {
         // If we are modifying the arguments object, we need to use the arguments object directly
@@ -129,8 +132,8 @@ pub fn insert_modify_args<'a>(
 
         let stmt_expression = builder.statement_expression(SPAN, obj_assign_call_expr);
 
-        body.statements.insert(0, stmt_expression);
-
+        let insert_pos = get_insert_pos(body, is_constructor);
+        body.statements.insert(insert_pos, stmt_expression);
         return;
     }
 
@@ -199,5 +202,31 @@ pub fn insert_modify_args<'a>(
 
     let stmt_expression = builder.statement_expression(SPAN, arr_assignment_expr);
 
-    body.statements.insert(0, stmt_expression);
+    let insert_pos = get_insert_pos(body, is_constructor);
+    body.statements.insert(insert_pos, stmt_expression);
+}
+
+// Determine the position to insert the code in the function body.
+// If it's a constructor, we look for the first super call and insert after it.
+fn get_insert_pos(body: &FunctionBody, is_constructor: bool) -> usize {
+    if !is_constructor || body.statements.is_empty() {
+        0
+    } else {
+        let mut index = 0;
+        for statement in &body.statements {
+            match statement {
+                Statement::ExpressionStatement(expr_stmt) => {
+                    if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                        if let Expression::Super(_) = &call_expr.callee {
+                            // Found a super call, insert after this statement
+                            return index + 1; // Insert after the super call
+                        }
+                    }
+                }
+                _ => {}
+            };
+            index += 1;
+        }
+        0 // No super call found, insert at the beginning
+    }
 }

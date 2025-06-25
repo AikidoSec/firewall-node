@@ -1,5 +1,6 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
@@ -72,6 +73,23 @@ export class MySQL2 implements Wrapper {
     return connectionPrototype;
   }
 
+  private getFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
+    return [
+      {
+        nodeType: "MethodDefinition",
+        name: "query",
+        inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+        operationKind: "sql_op",
+      },
+      {
+        nodeType: "MethodDefinition",
+        name: "execute",
+        inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+        operationKind: "sql_op",
+      },
+    ];
+  }
+
   wrap(hooks: Hooks) {
     const wrapConnection = (
       exports: any,
@@ -103,7 +121,11 @@ export class MySQL2 implements Wrapper {
     // For all versions of mysql2 newer than 3.0.0
     pkg
       .withVersion("^3.0.0")
-      .onRequire((exports, pkgInfo) => wrapConnection(exports, pkgInfo, false));
+      .onRequire((exports, pkgInfo) => wrapConnection(exports, pkgInfo, false))
+      .addFileInstrumentation({
+        path: "lib/connection.js",
+        functions: this.getFunctionInstructions(),
+      });
 
     // For all versions of mysql2 newer than / equal 3.11.5
     // Reason: https://github.com/sidorares/node-mysql2/pull/3081
@@ -114,20 +136,7 @@ export class MySQL2 implements Wrapper {
       })
       .addFileInstrumentation({
         path: "lib/base/connection.js",
-        functions: [
-          {
-            nodeType: "MethodDefinition",
-            name: "query",
-            inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
-            operationKind: "sql_op",
-          },
-          {
-            nodeType: "MethodDefinition",
-            name: "execute",
-            inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
-            operationKind: "sql_op",
-          },
-        ],
+        functions: this.getFunctionInstructions(),
       });
   }
 }
