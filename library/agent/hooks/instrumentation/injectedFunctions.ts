@@ -1,5 +1,5 @@
 import { getInstance } from "../../AgentSingleton";
-import { getContext } from "../../Context";
+import { bindContext, getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
 import { getPackageCallbackInfo } from "./instructions";
 
@@ -67,7 +67,17 @@ export function __instrumentModifyArgs(
     const newArgs = cbInfo.funcs.modifyArgs(args, agent, subject);
     // Only return the new arguments if they are an array
     if (Array.isArray(newArgs)) {
-      return newArgs;
+      if (!cbInfo.funcs.bindContext) {
+        return newArgs;
+      }
+
+      // Ensure that all functions in the new arguments are bound to the current execution context (only if bindContext is true)
+      return newArgs.map((arg) => {
+        if (typeof arg === "function") {
+          return bindContext(arg as () => unknown);
+        }
+        return arg;
+      });
     }
   } catch (error) {
     if (error instanceof Error) {

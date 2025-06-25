@@ -65,6 +65,7 @@ export class MySQL implements Wrapper {
             name: "Connection.prototype.query",
             nodeType: "FunctionAssignment",
             operationKind: "sql_op",
+            bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
           },
         ],

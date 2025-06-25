@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
 import type {
@@ -45,6 +46,12 @@ export function setPackagesToInstrument(_packages: Package[]) {
               functions: file.functions.map((func) => {
                 const identifier = `${pkg.getName()}.${file.path}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
 
+                // If bindContext is set to true, but no modifyArgs is defined, modifyArgs will be set to a stub function
+                // The reason for this is that the bindContext logic needs to modify the arguments
+                if (func.bindContext && !func.modifyArgs) {
+                  func.modifyArgs = (args) => args;
+                }
+
                 packageCallbackInfo.set(identifier, {
                   pkgName: pkg.getName(),
                   methodName: func.name,
@@ -53,6 +60,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                     inspectArgs: func.inspectArgs,
                     modifyArgs: func.modifyArgs,
                     modifyReturnValue: func.modifyReturnValue,
+                    bindContext: func.bindContext ?? false,
                   },
                 });
 

@@ -30,8 +30,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/SQLite3.test.ts",
     "**/sinks/Prisma.test.ts",
     "**/sinks/AwsSDK*",
-    "**/sinks/Postgres.test.ts", // Bind context
-    "**/sinks/MySQL.test.ts", // Bind context
     "**/sinks/MySQL2.v3.10.test.ts",
 
     "**/sources/PubSub.test.ts",

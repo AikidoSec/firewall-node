@@ -58,6 +58,7 @@ export type IntereptorFunctionsObj = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
+  bindContext: boolean;
 };
 
 export type IntereptorCallbackInfoObj = {
@@ -92,6 +93,11 @@ export type PackageFunctionInstrumentationInstruction = {
    * In strict mode, the arguments object and the named arguments are not synced, so changing the arguments object will not change the named arguments and vice versa.
    */
   modifyArgumentsObject?: boolean;
+  /**
+   * Binds the given function to the current execution context to prevent that the Zen context using the async local storage is lost.
+   * If enabled, the bindContext function will be called for all callbacks that are passed to the function.
+   */
+  bindContext?: boolean;
 };
 
 export type PackageFileInstrumentationInstruction = {
