@@ -68,7 +68,11 @@ export type IntereptorCallbackInfoObj = {
 };
 
 export type PackageFunctionInstrumentationInstruction = {
-  nodeType: "MethodDefinition" | "FunctionAssignment" | "FunctionDeclaration";
+  nodeType:
+    | "MethodDefinition"
+    | "FunctionAssignment"
+    | "FunctionDeclaration"
+    | "FunctionExpression";
   name: string;
   /**
    * Used for stats reporting to core, e.g. sql_op

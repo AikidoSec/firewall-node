@@ -1568,3 +1568,57 @@ t.test(
     );
   }
 );
+
+t.test("Modify function expression (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const x = 1;
+
+      const y = function test123(arg1, arg2 = "default") {
+        console.log("test123");
+
+        return "abc";
+      }
+
+      function test123() {
+        console.log("ignore");
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionExpression",
+          name: "test123",
+          identifier:
+            "testpkg.application.js.test123.FunctionExpression.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: true,
+          modifyArgumentsObject: false,
+        },
+      ],
+    }
+  );
+
+  isSameCode(
+    result,
+    `import { __instrumentInspectArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+    const x = 1;
+    
+    const y = function test123(arg1, arg2 = "default") {
+        __instrumentInspectArgs("testpkg.application.js.test123.FunctionExpression.v1.0.0", arguments, "1.0.0", this);
+        console.log("test123");
+        return __instrumentModifyReturnValue("testpkg.application.js.test123.FunctionExpression.v1.0.0", arguments, "abc", this);
+    };
+    
+    function test123() {
+        console.log("ignore");
+    }`
+  );
+});

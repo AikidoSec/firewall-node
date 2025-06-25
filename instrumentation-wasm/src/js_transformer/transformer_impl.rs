@@ -132,10 +132,14 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
         node: &mut oxc_ast::ast::Function<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
-        if node.r#type != FunctionType::FunctionDeclaration {
-            // Only instrument function declarations here
-            return;
-        }
+        let node_type = match node.r#type {
+            FunctionType::FunctionDeclaration => "FunctionDeclaration",
+            FunctionType::FunctionExpression => "FunctionExpression",
+            _ => {
+                // Ignore unknown function types
+                return;
+            }
+        };
 
         if node.id.is_none() || node.body.is_none() {
             // No identifier or body, nothing to instrument
@@ -150,7 +154,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             .file_instructions
             .functions
             .iter()
-            .find(|f| f.node_type == "FunctionDeclaration" && f.name == function_name);
+            .find(|f| f.node_type == node_type && f.name == function_name);
 
         if matching_instruction.is_none() {
             return;
