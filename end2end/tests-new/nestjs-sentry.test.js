@@ -1,26 +1,33 @@
-const { spawn } = require("child_process");
+const { spawnSync, spawn } = require("child_process");
 const { resolve } = require("path");
 const timeout = require("../timeout");
-const { test } = require("node:test");
+const { test, before } = require("node:test");
 const { equal, fail, match, doesNotMatch } = require("node:assert");
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/hono-mysql2-new");
-const port = "4008";
-const port2 = "4009";
+const pathToAppDir = resolve(__dirname, "../../sample-apps/nestjs-sentry");
+const port = "4006";
+const port2 = "4007";
+
+before(() => {
+  const { stderr } = spawnSync(`npm`, ["run", "build"], {
+    cwd: pathToAppDir,
+  });
+
+  if (stderr && stderr.toString().length > 0) {
+    throw new Error(`Failed to build: ${stderr.toString()}`);
+  }
+});
 
 test("it blocks request in blocking mode", async () => {
-  const server = spawn(
-    `node`,
-    ["--require", "@aikidosec/firewall/instrument", "./app.js", port],
-    {
-      cwd: pathToAppDir,
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "true",
-      },
-    }
-  );
+  const server = spawn(`node`, ["./dist/main.js"], {
+    cwd: pathToAppDir,
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      PORT: port,
+    },
+  });
 
   try {
     server.on("error", (err) => {
@@ -40,16 +47,16 @@ test("it blocks request in blocking mode", async () => {
     // Wait for the server to start
     await timeout(2000);
 
-    const [sqlInjection, normalAdd] = await Promise.all([
-      fetch(`http://127.0.0.1:${port}/add`, {
+    const [sqlInjection, normalAdd, outgoingReq] = await Promise.all([
+      fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ name: "Test'), ('Test2');--" }),
         signal: AbortSignal.timeout(5000),
       }),
-      fetch(`http://127.0.0.1:${port}/add`, {
+      fetch(`http://127.0.0.1:${port}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Miau" }),
         headers: {
@@ -57,10 +64,15 @@ test("it blocks request in blocking mode", async () => {
         },
         signal: AbortSignal.timeout(5000),
       }),
+      fetch(`http://127.0.0.1:${port}/releases`, {
+        method: "GET",
+        signal: AbortSignal.timeout(5000),
+      }),
     ]);
 
     equal(sqlInjection.status, 500);
-    equal(normalAdd.status, 200);
+    equal(normalAdd.status, 201);
+    equal(outgoingReq.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
   } catch (err) {
@@ -70,19 +82,16 @@ test("it blocks request in blocking mode", async () => {
   }
 });
 
-test("it does not block request in monitoring mode", async () => {
-  const server = spawn(
-    `node`,
-    ["--require", "@aikidosec/firewall/instrument", "./app.js", port2],
-    {
-      cwd: pathToAppDir,
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "false",
-      },
-    }
-  );
+test("it blocks request in blocking mode", async () => {
+  const server = spawn(`node`, ["./dist/main.js"], {
+    cwd: pathToAppDir,
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "false",
+      PORT: port2,
+    },
+  });
 
   try {
     server.on("error", (err) => {
@@ -102,16 +111,16 @@ test("it does not block request in monitoring mode", async () => {
     // Wait for the server to start
     await timeout(2000);
 
-    const [sqlInjection, normalAdd] = await Promise.all([
-      fetch(`http://127.0.0.1:${port2}/add`, {
+    const [sqlInjection, normalAdd, outgoingReq] = await Promise.all([
+      fetch(`http://127.0.0.1:${port2}/cats`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ name: "Test'), ('Test2');--" }),
         signal: AbortSignal.timeout(5000),
       }),
-      fetch(`http://127.0.0.1:${port2}/add`, {
+      fetch(`http://127.0.0.1:${port2}/cats`, {
         method: "POST",
         body: JSON.stringify({ name: "Miau" }),
         headers: {
@@ -119,10 +128,15 @@ test("it does not block request in monitoring mode", async () => {
         },
         signal: AbortSignal.timeout(5000),
       }),
+      fetch(`http://127.0.0.1:${port2}/releases`, {
+        method: "GET",
+        signal: AbortSignal.timeout(5000),
+      }),
     ]);
 
-    equal(sqlInjection.status, 200);
-    equal(normalAdd.status, 200);
+    equal(sqlInjection.status, 201);
+    equal(normalAdd.status, 201);
+    equal(outgoingReq.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
   } catch (err) {

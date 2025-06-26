@@ -12,6 +12,7 @@ import {
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
 import {
+  __instrumentAccessLocalVariables,
   __instrumentInspectArgs,
   __instrumentModifyArgs,
   __instrumentModifyReturnValue,
@@ -52,6 +53,7 @@ t.test("it works", async (t) => {
   t.equal(shouldPatchPackage("bar"), false);
   t.same(getPackageFileInstrumentationInstructions("foo", "1.1.2", "bar.js"), {
     path: "bar.js",
+    identifier: "foo.bar.js.^1.0.0",
     versionRange: "^1.0.0",
     functions: [
       {
@@ -64,6 +66,7 @@ t.test("it works", async (t) => {
         modifyArgumentsObject: false,
       },
     ],
+    accessLocalVariables: [],
   });
   t.equal(
     getPackageFileInstrumentationInstructions("foo", "2.0.0", "bar.js"),
@@ -441,6 +444,52 @@ t.test("add same instructions for multiple files", async (t) => {
     "1.0.0",
     this
   );
+
+  t.equal(callbackCalledCount, 2);
+});
+
+t.test("test local variable access", async (t) => {
+  let callbackCalledCount = 0;
+
+  const pkg = new Package("foo");
+  pkg.withVersion("^1.0.0").addFileInstrumentation({
+    path: "dist/test.mjs",
+    functions: [],
+    accessLocalVariables: {
+      names: ["testVar", "testVar2"],
+      cb: (vars) => {
+        ++callbackCalledCount;
+        t.same(vars, [42, "hello"]);
+      },
+    },
+  });
+
+  setPackagesToInstrument([pkg]);
+
+  __instrumentAccessLocalVariables(
+    "foo.dist/test.mjs.^1.0.0--does-not-exist",
+    []
+  );
+  __instrumentAccessLocalVariables("foo.dist/test.mjs.^1.0.0", [42, "hello"]);
+
+  t.equal(callbackCalledCount, 1);
+
+  const pkg2 = new Package("foo");
+  pkg2.withVersion("^2.0.0").addFileInstrumentation({
+    path: "dist/test.mjs",
+    functions: [],
+    accessLocalVariables: {
+      names: ["testVar", "testVar2"],
+      cb: (vars) => {
+        ++callbackCalledCount;
+        throw new Error("Error should be caught");
+      },
+    },
+  });
+
+  setPackagesToInstrument([pkg2]);
+
+  __instrumentAccessLocalVariables("foo.dist/test.mjs.^2.0.0", []);
 
   t.equal(callbackCalledCount, 2);
 });
