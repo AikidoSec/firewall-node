@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct FileInstructions {
     pub path: String,
+    pub identifier: String,
     pub version_range: String,
     pub functions: Vec<FunctionInstructions>,
+    pub access_local_variables: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]

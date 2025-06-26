@@ -230,3 +230,47 @@ fn get_insert_pos(body: &FunctionBody, is_constructor: bool) -> usize {
         0 // No super call found, insert at the beginning
     }
 }
+
+// Add a statement to the end of the body: __instrumentAccessLocalVariables('identifier', [var1, var2]);
+pub fn insert_access_local_var<'a>(
+    allocator: &'a Allocator,
+    builder: &'a AstBuilder,
+    identifier: &str,
+    var_names: &Vec<String>,
+    body: &mut OxcVec<'a, Statement<'a>>,
+) {
+    let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+
+    // Add the identifier to the arguments
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(identifier),
+        None,
+    )));
+
+    // [var1, var2]
+    let mut array_elements: OxcVec<'a, ArrayExpressionElement<'a>> =
+        builder.vec_with_capacity(var_names.len());
+    for name in var_names {
+        array_elements.push(ArrayExpressionElement::Identifier(
+            builder.alloc_identifier_reference(SPAN, allocator.alloc_str(name)),
+        ));
+    }
+
+    instrument_args.push(Argument::ArrayExpression(
+        builder.alloc_array_expression(SPAN, array_elements),
+    ));
+
+    // Build and add a call expression
+    let call_expr = builder.expression_call(
+        SPAN,
+        builder.expression_identifier(SPAN, "__instrumentAccessLocalVariables"),
+        NONE,
+        instrument_args,
+        false,
+    );
+
+    let stmt_expression = builder.statement_expression(SPAN, call_expr);
+
+    body.push(stmt_expression);
+}

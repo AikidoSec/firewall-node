@@ -1,7 +1,7 @@
 import * as t from "tap";
 import {
   getBuiltinInterceptors,
-  getPackageCallbackInfo,
+  getFunctionCallbackInfo,
   getPackageFileInstrumentationInstructions,
   setBuiltinsToInstrument,
   setPackagesToInstrument,
@@ -82,7 +82,7 @@ t.test("it works", async (t) => {
     undefined
   );
 
-  t.match(getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0"), {
+  t.match(getFunctionCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0"), {
     pkgName: "foo",
     methodName: "baz",
     operationKind: "sql_op",
@@ -92,15 +92,15 @@ t.test("it works", async (t) => {
     },
   });
   t.equal(
-    typeof getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!
+    typeof getFunctionCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!
       .funcs.inspectArgs,
     "function"
   );
-  t.same(getPackageCallbackInfo("foo.bar.js.baz.^1.0.1"), undefined);
-  t.same(getPackageCallbackInfo(""), undefined);
+  t.same(getFunctionCallbackInfo("foo.bar.js.baz.^1.0.1"), undefined);
+  t.same(getFunctionCallbackInfo(""), undefined);
 
   t.equal(pkgInspectArgsCalled, false);
-  getPackageCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!.funcs
+  getFunctionCallbackInfo("foo.bar.js.baz.MethodDefinition.^1.0.0")!.funcs
     .inspectArgs!([], undefined as any, undefined);
   t.equal(pkgInspectArgsCalled, true);
 
@@ -115,7 +115,7 @@ t.test("it works", async (t) => {
   setPackagesToInstrument([]);
   setBuiltinsToInstrument([]);
 
-  t.same(getPackageCallbackInfo("foo.bar.js.baz.^1.0.0"), undefined);
+  t.same(getFunctionCallbackInfo("foo.bar.js.baz.^1.0.0"), undefined);
   t.equal(
     getPackageFileInstrumentationInstructions("foo", "1.1.2", "bar.js"),
     undefined

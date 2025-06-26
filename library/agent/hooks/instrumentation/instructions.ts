@@ -2,6 +2,7 @@
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
 import type {
+  FileCallbackInfoObj,
   IntereptorCallbackInfoObj,
   PackageFileInstrumentationInstructionJSON,
 } from "./types";
@@ -16,7 +17,9 @@ let packages = new Map<string, PackageFileInstrumentationInstructionJSON[]>();
 let builtinRequireInterceptors = new Map<string, RequireInterceptor[]>();
 // Stores the callback functions and necessary information for the instrumented functions of instrumented function
 // Identifier for the function is: packageName.relativePath.functionName.nodeType.matchingVersion
-let packageCallbackInfo = new Map<string, IntereptorCallbackInfoObj>();
+let functionCallbackInfo = new Map<string, IntereptorCallbackInfoObj>();
+// Callback functions on file level
+let fileCallbackInfo = new Map<string, FileCallbackInfoObj>();
 
 // In order to support multiple versions of the same package in unit tests, we need to rewrite the package name
 // e.g. In our sources and sinks, we use the real package name `hooks.addPackage("undici")`
@@ -26,7 +29,8 @@ let __packageNamesToRewrite: Record<string, string> = {};
 export function setPackagesToInstrument(_packages: Package[]) {
   // Clear the previous packages
   packages = new Map();
-  packageCallbackInfo = new Map();
+  functionCallbackInfo = new Map();
+  fileCallbackInfo = new Map();
 
   for (const pkg of _packages) {
     if (pkg.getName() in __packageNamesToRewrite) {
@@ -40,9 +44,18 @@ export function setPackagesToInstrument(_packages: Package[]) {
         return versionedPackage
           .getFileInstrumentationInstructions()
           .map((file) => {
+            const fileIdentifier = `${pkg.getName()}.${file.path}.${versionedPackage.getRange()}`;
+            if (file.accessLocalVariables?.cb) {
+              fileCallbackInfo.set(fileIdentifier, {
+                pkgName: pkg.getName(),
+                localVariableAccessCb: file.accessLocalVariables.cb,
+              });
+            }
+
             return {
               path: file.path,
               versionRange: versionedPackage.getRange(),
+              identifier: fileIdentifier,
               functions: file.functions.map((func) => {
                 const identifier = `${pkg.getName()}.${file.path}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
 
@@ -52,7 +65,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   func.modifyArgs = (args) => args;
                 }
 
-                packageCallbackInfo.set(identifier, {
+                functionCallbackInfo.set(identifier, {
                   pkgName: pkg.getName(),
                   methodName: func.name,
                   operationKind: func.operationKind,
@@ -74,6 +87,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   modifyArgumentsObject: func.modifyArgumentsObject ?? false,
                 };
               }),
+              accessLocalVariables: file.accessLocalVariables?.names ?? [],
             };
           })
           .flat();
@@ -130,10 +144,10 @@ export function shouldPatchFile(
   return instructions.some((f) => f.path === filePath);
 }
 
-export function getPackageCallbackInfo(
+export function getFunctionCallbackInfo(
   identifier: string
 ): IntereptorCallbackInfoObj | undefined {
-  return packageCallbackInfo.get(identifier);
+  return functionCallbackInfo.get(identifier);
 }
 
 export function getBuiltinInterceptors(name: string): RequireInterceptor[] {
@@ -142,6 +156,12 @@ export function getBuiltinInterceptors(name: string): RequireInterceptor[] {
 
 export function shouldPatchBuiltin(name: string): boolean {
   return builtinRequireInterceptors.has(name);
+}
+
+export function getFileCallbackInfo(
+  identifier: string
+): FileCallbackInfoObj | undefined {
+  return fileCallbackInfo.get(identifier);
 }
 
 export function __internalRewritePackageNamesForTesting(

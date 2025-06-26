@@ -1,7 +1,7 @@
 import { getInstance } from "../../AgentSingleton";
 import { bindContext, getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
-import { getPackageCallbackInfo } from "./instructions";
+import { getFileCallbackInfo, getFunctionCallbackInfo } from "./instructions";
 
 export function __instrumentInspectArgs(
   id: string,
@@ -16,7 +16,7 @@ export function __instrumentInspectArgs(
 
   const context = getContext();
 
-  const cbInfo = getPackageCallbackInfo(id);
+  const cbInfo = getFunctionCallbackInfo(id);
   if (!cbInfo) {
     return;
   }
@@ -53,7 +53,7 @@ export function __instrumentModifyArgs(
     return args;
   }
 
-  const cbInfo = getPackageCallbackInfo(id);
+  const cbInfo = getFunctionCallbackInfo(id);
 
   if (
     !cbInfo ||
@@ -103,7 +103,7 @@ export function __instrumentModifyReturnValue(
     return args;
   }
 
-  const cbInfo = getPackageCallbackInfo(id);
+  const cbInfo = getFunctionCallbackInfo(id);
 
   if (
     !cbInfo ||
@@ -126,4 +126,23 @@ export function __instrumentModifyReturnValue(
   }
 
   return returnValue;
+}
+
+export function __instrumentAccessLocalVariables(
+  id: string,
+  vars: unknown[]
+): void {
+  const cbInfo = getFileCallbackInfo(id);
+
+  if (!cbInfo || typeof cbInfo.localVariableAccessCb !== "function") {
+    return;
+  }
+
+  try {
+    cbInfo.localVariableAccessCb(vars);
+  } catch (error) {
+    if (error instanceof Error) {
+      getInstance()?.onFailedToWrapModule(cbInfo.pkgName, error);
+    }
+  }
 }

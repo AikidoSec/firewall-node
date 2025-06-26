@@ -68,6 +68,22 @@ export type IntereptorCallbackInfoObj = {
   funcs: IntereptorFunctionsObj;
 };
 
+export type LocalVariableAccessConfig = {
+  /**
+   * Names of local variables that should be accessed
+   */
+  names: string[];
+  /**
+   * Callback function to be called with the accessed variable values.
+   */
+  cb: (vars: any[]) => void;
+};
+
+export type FileCallbackInfoObj = {
+  pkgName: string;
+  localVariableAccessCb: LocalVariableAccessConfig["cb"];
+};
+
 export type PackageFunctionInstrumentationInstruction = {
   nodeType:
     | "MethodDefinition"
@@ -103,11 +119,21 @@ export type PackageFunctionInstrumentationInstruction = {
 export type PackageFileInstrumentationInstruction = {
   path: string; // Relative path to required file inside the package folder
   functions: PackageFunctionInstrumentationInstruction[];
+  /**
+   * Access module local variables
+   * Use cases:
+   *  - Call functions without importing them
+   *  - Monkey patch exports of native Node.js addons
+   * Please prefer using the normal function instrumentation instead of this, if possible.
+   */
+  accessLocalVariables?: LocalVariableAccessConfig;
 };
 
 export type PackageFileInstrumentationInstructionJSON = {
   path: string; // Relative path to required file inside the package folder
   versionRange: string;
+  identifier: string;
+  accessLocalVariables: string[];
   functions: {
     nodeType: PackageFunctionInstrumentationInstruction["nodeType"];
     name: string;

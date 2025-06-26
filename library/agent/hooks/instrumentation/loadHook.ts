@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { LoadFunction } from "./types";
 import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
@@ -92,14 +91,11 @@ function patchPackage(
     moduleInfo.path
   );
 
-  const agent = getInstance();
-  if (agent) {
-    // Report to the agent that the package was wrapped or not if it's version is not supported
-    agent.onPackageWrapped(moduleInfo.name, {
-      version: pkgVersion,
-      supported: !!matchingInstructions,
-    });
-  }
+  // Report to the agent that the package was wrapped or not if it's version is not supported
+  getInstance()?.onPackageWrapped(moduleInfo.name, {
+    version: pkgVersion,
+    supported: !!matchingInstructions,
+  });
 
   if (!matchingInstructions) {
     // We don't want to patch this package version or file

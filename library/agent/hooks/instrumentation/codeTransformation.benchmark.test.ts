@@ -41,6 +41,7 @@ t.test("Benchmark: Small code transformation", async (t) => {
       {
         path: "test.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "MethodDefinition",
@@ -52,6 +53,7 @@ t.test("Benchmark: Small code transformation", async (t) => {
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
   }
@@ -82,7 +84,8 @@ t.test("Benchmark: Large code transformation", async (t) => {
 
   for (let i = 0; i < iterations; i++) {
     transformCode("hono", "4.0.0", "dist/hono-base.js", honoSrc, "module", {
-      path: "dist/hono-base.js-----",
+      path: "dist/hono-base.js",
+      identifier: "hono.dist.hono-base.js.v4.0.0",
       versionRange: "^4.0.0",
       functions: [
         {
@@ -95,6 +98,7 @@ t.test("Benchmark: Large code transformation", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     });
   }
 

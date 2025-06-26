@@ -2,6 +2,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -61,7 +62,7 @@ export class SQLite3 implements Wrapper {
     return undefined;
   }
 
-  wrap(hooks: Hooks) {
+  private wrapDatabasePrototype(db: any, pkgInfo: WrapPackageInfo) {
     const sqlFunctions = [
       "run",
       "get",
@@ -72,27 +73,43 @@ export class SQLite3 implements Wrapper {
       "map",
     ];
 
+    for (const func of sqlFunctions) {
+      wrapExport(db, func, pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => {
+          return this.inspectQuery(`sqlite3.${func}`, args);
+        },
+      });
+    }
+
+    wrapExport(db, "backup", pkgInfo, {
+      kind: "fs_op",
+      inspectArgs: (args) => {
+        return this.inspectPath(`sqlite3.backup`, args);
+      },
+    });
+  }
+
+  wrap(hooks: Hooks) {
     hooks
       .addPackage("sqlite3")
       .withVersion("^5.0.0")
       .onRequire((exports, pkgInfo) => {
         const db = exports.Database.prototype;
-
-        for (const func of sqlFunctions) {
-          wrapExport(db, func, pkgInfo, {
-            kind: "sql_op",
-            inspectArgs: (args) => {
-              return this.inspectQuery(`sqlite3.${func}`, args);
-            },
-          });
-        }
-
-        wrapExport(db, "backup", pkgInfo, {
-          kind: "fs_op",
-          inspectArgs: (args) => {
-            return this.inspectPath(`sqlite3.backup`, args);
+        this.wrapDatabasePrototype(db, pkgInfo);
+      })
+      .addFileInstrumentation({
+        path: "lib/sqlite3.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["sqlite3"],
+          cb: (vars) => {
+            this.wrapDatabasePrototype(vars[0].Database.prototype, {
+              name: "sqlite3",
+              type: "external",
+            });
           },
-        });
+        },
       });
   }
 }

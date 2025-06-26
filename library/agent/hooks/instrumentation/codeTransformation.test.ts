@@ -41,6 +41,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -52,6 +53,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -96,6 +98,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -107,6 +110,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -151,6 +155,7 @@ t.test("wrong function name", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -162,6 +167,7 @@ t.test("wrong function name", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -205,6 +211,7 @@ t.test("typescript code", async (t) => {
     {
       path: "test.ts",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -216,6 +223,7 @@ t.test("typescript code", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -260,6 +268,7 @@ t.test("typescript code in a js file", async (t) => {
       {
         path: "test.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "MethodDefinition",
@@ -272,6 +281,7 @@ t.test("typescript code in a js file", async (t) => {
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
     t.fail("Should throw an error");
@@ -291,6 +301,7 @@ t.test("empty code", async (t) => {
   const result = transformCode("testpkg", "1.0.0", "test.mjs", "", "commonjs", {
     path: "test.mjs",
     versionRange: "^1.0.0",
+    identifier: "testpkg.test.mjs.^1.0.0",
     functions: [
       {
         nodeType: "MethodDefinition",
@@ -302,6 +313,7 @@ t.test("empty code", async (t) => {
         modifyArgumentsObject: false,
       },
     ],
+    accessLocalVariables: [],
   });
 
   isSameCode(
@@ -333,6 +345,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -344,6 +357,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -390,6 +404,7 @@ t.test(
       {
         path: "test.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "MethodDefinition",
@@ -401,6 +416,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -445,6 +461,7 @@ t.test("modify rest parameter args", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -456,6 +473,7 @@ t.test("modify rest parameter args", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -488,6 +506,7 @@ t.test("modify rest parameter args", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -499,6 +518,7 @@ t.test("modify rest parameter args", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -540,6 +560,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -551,6 +572,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -593,6 +615,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
     {
       path: "test.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -604,6 +627,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -642,6 +666,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -654,6 +679,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -689,6 +715,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -701,6 +728,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -737,6 +765,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -749,6 +778,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -786,6 +816,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -798,6 +829,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -835,6 +867,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -847,6 +880,7 @@ t.test(
             modifyArgumentsObject: true,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -882,6 +916,7 @@ t.test("does not modify code if function name is not found", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "FunctionAssignment",
@@ -893,6 +928,7 @@ t.test("does not modify code if function name is not found", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -933,6 +969,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
       {
         path: "test.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "MethodDefinition",
@@ -944,6 +981,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -1335,6 +1373,7 @@ t.test("it adds all imports if necessary (CJS)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "FunctionAssignment",
@@ -1346,6 +1385,7 @@ t.test("it adds all imports if necessary (CJS)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1368,6 +1408,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -1380,6 +1421,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -1399,6 +1441,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -1411,6 +1454,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -1440,6 +1484,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "FunctionDeclaration",
@@ -1452,6 +1497,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1492,6 +1538,7 @@ t.test("Modify function declaration (CJS)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "FunctionDeclaration",
@@ -1504,6 +1551,7 @@ t.test("Modify function declaration (CJS)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1539,6 +1587,7 @@ t.test(
       {
         path: "application.js",
         versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
         functions: [
           {
             nodeType: "FunctionAssignment",
@@ -1551,6 +1600,7 @@ t.test(
             modifyArgumentsObject: false,
           },
         ],
+        accessLocalVariables: [],
       }
     );
 
@@ -1591,6 +1641,7 @@ t.test("Modify function expression (ESM)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "FunctionExpression",
@@ -1603,6 +1654,7 @@ t.test("Modify function expression (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1640,6 +1692,7 @@ t.test("Modify constructor (ESM)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -1652,6 +1705,7 @@ t.test("Modify constructor (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1686,6 +1740,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -1698,6 +1753,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1733,6 +1789,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
     {
       path: "application.js",
       versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
       functions: [
         {
           nodeType: "MethodDefinition",
@@ -1745,6 +1802,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
           modifyArgumentsObject: false,
         },
       ],
+      accessLocalVariables: [],
     }
   );
 
@@ -1760,6 +1818,76 @@ t.test("Modify constructor with super (ESM)", async (t) => {
           console.log("ignore");
         }
       }
+    `
+  );
+});
+
+t.test("Access local variables (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [],
+      accessLocalVariables: ["test"],
+    }
+  );
+
+  isSameCode(
+    result,
+    `
+    import { __instrumentAccessLocalVariables } from "@aikidosec/firewall/instrument/internals";
+    const test = 1;
+    function stub(x) {
+            return x++;
+    }
+    __instrumentAccessLocalVariables("testpkg.test.js.^1.0.0", [test]);
+    `
+  );
+});
+
+t.test("Access local variables (CJS)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+    `,
+    "commonjs",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [],
+      accessLocalVariables: ["test", "stub"],
+    }
+  );
+
+  isSameCode(
+    result,
+    `
+    const { __instrumentAccessLocalVariables } = require("@aikidosec/firewall/instrument/internals");
+    const test = 1;
+    function stub(x) {
+            return x++;
+    }
+    __instrumentAccessLocalVariables("testpkg.test.js.^1.0.0", [test, stub]);
     `
   );
 });

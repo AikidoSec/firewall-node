@@ -7,7 +7,7 @@ use oxc_traverse::traverse_mut;
 
 use super::{
     helpers::{
-        insert_import_statement::insert_import_statement,
+        insert_code::insert_access_local_var, insert_import_statement::insert_import_statement,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
     instructions::FileInstructions,
@@ -73,6 +73,16 @@ pub fn transform_code_str(
         &mut program.body,
         &file_instructions,
     );
+
+    if !file_instructions.access_local_variables.is_empty() {
+        insert_access_local_var(
+            &allocator,
+            &ast_builder,
+            &file_instructions.identifier,
+            &file_instructions.access_local_variables,
+            &mut program.body,
+        );
+    }
 
     // Todo: Update source map?
     let js = Codegen::new()

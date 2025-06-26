@@ -14,6 +14,7 @@ const INSTRUMENT_IMPORT_SOURCE: &str = "@aikidosec/firewall/instrument/internals
 const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
+const INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME: &str = "__instrumentAccessLocalVariables";
 
 type ImportMethodPredicate = fn(&FunctionInstructions) -> bool;
 
@@ -78,6 +79,28 @@ pub fn insert_import_statement<'a>(
             }
         }
 
+        if !file_instructions.access_local_variables.is_empty() {
+            binding_properties.push(
+                builder.binding_property(
+                    SPAN,
+                    builder.property_key_static_identifier(
+                        SPAN,
+                        INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                    ),
+                    builder.binding_pattern(
+                        builder.binding_pattern_kind_binding_identifier(
+                            SPAN,
+                            INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                        ),
+                        NONE,
+                        false,
+                    ),
+                    true,
+                    false,
+                ),
+            );
+        }
+
         if binding_properties.is_empty() {
             // If there are no methods to import, we can skip the require statement
             return;
@@ -129,6 +152,20 @@ pub fn insert_import_statement<'a>(
                 ImportOrExportKind::Value,
             ));
         }
+    }
+
+    if !file_instructions.access_local_variables.is_empty() {
+        specifiers.push(
+            builder.import_declaration_specifier_import_specifier(
+                SPAN,
+                builder.module_export_name_identifier_name(
+                    SPAN,
+                    INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME,
+                ),
+                builder.binding_identifier(SPAN, INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME),
+                ImportOrExportKind::Value,
+            ),
+        );
     }
 
     if specifiers.is_empty() {
