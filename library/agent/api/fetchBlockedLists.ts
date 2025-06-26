@@ -25,6 +25,12 @@ export type Response = {
   // If we want to collect stats about the individual user agents,
   // we can loop through the userAgentDetails and match each pattern.
   userAgentDetails: UserAgentDetails[];
+  domains: Domain[];
+};
+
+export type Domain = {
+  hostname: string;
+  mode: "allow" | "block";
 };
 
 export async function fetchBlockedLists(token: Token): Promise<Response> {
@@ -56,6 +62,7 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     blockedUserAgents: string;
     monitoredUserAgents: string;
     userAgentDetails: UserAgentDetails[];
+    domains: Domain[];
   } = JSON.parse(body);
 
   return {
@@ -85,5 +92,6 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
       result && Array.isArray(result.userAgentDetails)
         ? result.userAgentDetails
         : [],
+    domains: result && Array.isArray(result.domains) ? result.domains : [],
   };
 }
