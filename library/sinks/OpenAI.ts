@@ -113,14 +113,37 @@ export class OpenAI implements Wrapper {
     return "openai";
   }
 
+  private getResponsesClass(exports: any) {
+    if (exports.Responses) {
+      return exports.Responses;
+    }
+    if (exports.OpenAI && exports.OpenAI.Responses) {
+      return exports.OpenAI.Responses;
+    }
+  }
+
+  private getCompletionsClass(exports: any) {
+    if (exports.Chat && exports.Chat.Completions) {
+      return exports.Chat.Completions;
+    }
+    if (
+      exports.OpenAI &&
+      exports.OpenAI.Chat &&
+      exports.OpenAI.Chat.Completions
+    ) {
+      return exports.OpenAI.Chat.Completions;
+    }
+  }
+
   wrap(hooks: Hooks) {
     // Note: Streaming is not supported yet
     hooks
       .addPackage("openai")
-      .withVersion("^4.0.0")
+      .withVersion("^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
-        if (exports.Responses) {
-          wrapExport(exports.Responses.prototype, "create", pkgInfo, {
+        const responsesClass = this.getResponsesClass(exports);
+        if (responsesClass) {
+          wrapExport(responsesClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
             modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
@@ -143,8 +166,9 @@ export class OpenAI implements Wrapper {
           });
         }
 
-        if (exports.Chat.Completions) {
-          wrapExport(exports.Chat.Completions.prototype, "create", pkgInfo, {
+        const completionsClass = this.getCompletionsClass(exports);
+        if (completionsClass) {
+          wrapExport(completionsClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
             modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
