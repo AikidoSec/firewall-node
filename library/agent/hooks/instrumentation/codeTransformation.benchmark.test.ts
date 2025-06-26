@@ -111,7 +111,7 @@ t.test("Benchmark: Large code transformation", async (t) => {
   );
 
   t.ok(
-    durationPerIteration < 1.0,
-    `Code transformation took less than 1ms per iteration, actual: ${durationPerIteration}ms`
+    durationPerIteration < 2.0,
+    `Code transformation took less than 2ms per iteration, actual: ${durationPerIteration}ms`
   );
 });

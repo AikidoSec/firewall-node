@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { LoadFunction } from "./types";
 import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
@@ -106,11 +107,16 @@ function patchPackage(
     (previousLoadResult.format as "commonjs" | "module" | undefined) ??
     "unambiguous";
 
+  const sourceString =
+    typeof previousLoadResult.source === "string"
+      ? previousLoadResult.source
+      : new TextDecoder("utf-8").decode(previousLoadResult.source);
+
   const newSource = transformCode(
     moduleInfo.name,
     pkgVersion,
     path,
-    previousLoadResult.source.toString(),
+    sourceString,
     pkgLoadFormat,
     matchingInstructions
   );
