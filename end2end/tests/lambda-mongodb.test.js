@@ -4,6 +4,15 @@ const { promisify } = require("util");
 const { exec } = require("child_process");
 const execAsync = promisify(exec);
 
+const getJsonFromLogs = (logs) => {
+  const lines = logs.split("\n");
+  const startIndex = lines.findIndex((line) => line.trim().startsWith("{"));
+  if (startIndex === -1) {
+    throw new Error("No JSON object found in logs");
+  }
+  return JSON.parse(lines.slice(startIndex).join("\n"));
+};
+
 const directory = resolve(__dirname, "../../sample-apps/lambda-mongodb");
 
 // Invoking serverless functions can be slow
@@ -25,30 +34,16 @@ t.test("it does not block by default", async (t) => {
   );
 
   t.same(stderr, "");
-  t.same(
-    JSON.parse(
-      stdout
-        .toString()
-        .split("\n")
-        .slice(
-          stdout
-            .toString()
-            .split("\n")
-            .findIndex((line) => line.trim().startsWith("{"))
-        )
-        .join("\n")
-    ),
-    {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: {
-        token: "123",
-        success: true,
-      },
-    }
-  );
+  t.same(getJsonFromLogs(stdout.toString()), {
+    statusCode: 200,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: {
+      token: "123",
+      success: true,
+    },
+  });
 });
 
 t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
@@ -77,7 +72,7 @@ t.test(
     );
 
     t.same(stderr, "");
-    t.same(JSON.parse(stdout.toString()), {
+    t.same(getJsonFromLogs(stdout.toString()), {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
