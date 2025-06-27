@@ -65,6 +65,22 @@ export class VersionedPackage {
    * The path is relative to the package root.
    */
   addFileInstrumentation(instruction: PackageFileInstrumentationInstruction) {
+    if (instruction.path.length === 0) {
+      throw new Error("Path must not be empty");
+    }
+
+    if (instruction.path.startsWith("/")) {
+      throw new Error("Absolute paths are not allowed");
+    }
+
+    if (instruction.path.includes("..")) {
+      throw new Error("Relative paths with '..' are not allowed");
+    }
+
+    if (instruction.path.startsWith("./")) {
+      instruction.path = instruction.path.slice(2);
+    }
+
     this.fileInstrumentationInstructions.push(instruction);
 
     return this;

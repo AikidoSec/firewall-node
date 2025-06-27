@@ -493,3 +493,40 @@ t.test("test local variable access", async (t) => {
 
   t.equal(callbackCalledCount, 2);
 });
+
+t.test("addFileInstrumentation checks path", async (t) => {
+  const pkg = new Package("foo").withVersion("^1.0.0");
+
+  const error1 = t.throws(() => {
+    pkg.addFileInstrumentation({
+      path: "",
+      functions: [],
+    });
+  });
+  t.ok(error1 instanceof Error);
+  if (error1 instanceof Error) {
+    t.same(error1.message, "Path must not be empty");
+  }
+
+  const error2 = t.throws(() => {
+    pkg.addFileInstrumentation({
+      path: "/test",
+      functions: [],
+    });
+  });
+  t.ok(error2 instanceof Error);
+  if (error2 instanceof Error) {
+    t.same(error2.message, "Absolute paths are not allowed");
+  }
+
+  const error3 = t.throws(() => {
+    pkg.addFileInstrumentation({
+      path: "../test",
+      functions: [],
+    });
+  });
+  t.ok(error3 instanceof Error);
+  if (error3 instanceof Error) {
+    t.same(error3.message, "Relative paths with '..' are not allowed");
+  }
+});

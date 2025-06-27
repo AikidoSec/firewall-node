@@ -139,7 +139,10 @@ export function __instrumentAccessLocalVariables(
   }
 
   try {
-    cbInfo.localVariableAccessCb(vars);
+    cbInfo.localVariableAccessCb(vars, {
+      name: cbInfo.pkgName,
+      type: "external",
+    });
   } catch (error) {
     if (error instanceof Error) {
       getInstance()?.onFailedToWrapModule(cbInfo.pkgName, error);

@@ -2,11 +2,11 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import type { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
-import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
+import type { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
 
 export class SQLite3 implements Wrapper {
@@ -103,11 +103,8 @@ export class SQLite3 implements Wrapper {
         functions: [],
         accessLocalVariables: {
           names: ["sqlite3"],
-          cb: (vars) => {
-            this.wrapDatabasePrototype(vars[0].Database.prototype, {
-              name: "sqlite3",
-              type: "external",
-            });
+          cb: (vars, pkgInfo) => {
+            this.wrapDatabasePrototype(vars[0].Database.prototype, pkgInfo);
           },
         },
       });
