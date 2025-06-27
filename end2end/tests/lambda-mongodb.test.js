@@ -25,16 +25,30 @@ t.test("it does not block by default", async (t) => {
   );
 
   t.same(stderr, "");
-  t.same(JSON.parse(stdout.toString().split("\n").slice(2).join("\n")), {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: {
-      token: "123",
-      success: true,
-    },
-  });
+  t.same(
+    JSON.parse(
+      stdout
+        .toString()
+        .split("\n")
+        .slice(
+          stdout
+            .toString()
+            .split("\n")
+            .findIndex((line) => line.trim().startsWith("{"))
+        )
+        .join("\n")
+    ),
+    {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: {
+        token: "123",
+        success: true,
+      },
+    }
+  );
 });
 
 t.test("it blocks when AIKIDO_BLOCKING is true", async (t) => {
