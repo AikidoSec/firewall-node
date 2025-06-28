@@ -28,7 +28,7 @@ pub fn transform_code_str(
 
     let source_type = select_sourcetype_based_on_enum(src_type);
 
-    let parser_result = Parser::new(&allocator, code, source_type).parse();
+    let mut parser_result = Parser::new(&allocator, code, source_type).parse();
 
     if parser_result.panicked || !parser_result.errors.is_empty() {
         return Err(format!(
@@ -37,7 +37,7 @@ pub fn transform_code_str(
         ));
     }
 
-    let program = allocator.alloc(parser_result.program);
+    let program = &mut parser_result.program;
 
     // 2 Semantic Analyze
     let semantic = SemanticBuilder::new().build(program);
