@@ -103,7 +103,7 @@
     "needle": "^3.3.1",
     "node-fetch": "^2",
     "openai-v4": "npm:openai@^4.104.0",
-    "openai-v5": "npm:openai@^5.7.0",
+    "openai-v5": "npm:openai@^5.8.2",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
