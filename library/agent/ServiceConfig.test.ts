@@ -406,3 +406,34 @@ t.test(
     t.same(config.getMatchingUserAgentKeys("googlebot"), []);
   }
 );
+
+t.test("outbound request blocking", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], false, [], []);
+
+  t.same(config.shouldBlockOutgoingRequest("example.com"), false);
+
+  config.setBlockNewOutgoingRequests(true);
+  t.same(config.shouldBlockOutgoingRequest("example.com"), true);
+
+  config.updateDomains([
+    { hostname: "example.com", mode: "allow" },
+    { hostname: "aikido.dev", mode: "block" },
+  ]);
+  t.same(config.shouldBlockOutgoingRequest("example.com"), false);
+  t.same(config.shouldBlockOutgoingRequest("aikido.dev"), true);
+  t.same(config.shouldBlockOutgoingRequest("unknown.com"), true);
+
+  config.updateDomains([
+    { hostname: "example.com", mode: "block" },
+    { hostname: "aikido.dev", mode: "allow" },
+  ]);
+  t.same(config.shouldBlockOutgoingRequest("example.com"), true);
+  t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
+  t.same(config.shouldBlockOutgoingRequest("unknown.com"), true);
+
+  config.setBlockNewOutgoingRequests(false);
+
+  t.same(config.shouldBlockOutgoingRequest("example.com"), true);
+  t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
+  t.same(config.shouldBlockOutgoingRequest("unknown.com"), false);
+});
