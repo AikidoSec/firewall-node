@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -38,6 +39,14 @@ export function onInspectionInterceptorResult(
     context &&
     context.remoteAddress &&
     agent.getConfig().isBypassedIP(context.remoteAddress);
+
+  if (result && !isBypassedIP && result.kind === "blocked_outgoing_request") {
+    throw cleanError(
+      new Error(
+        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) to ${escapeHTML(result.payload as string)}`
+      )
+    );
+  }
 
   if (result && context && !isBypassedIP) {
     // Flag request as having an attack detected

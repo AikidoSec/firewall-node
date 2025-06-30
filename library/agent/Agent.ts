@@ -554,8 +554,8 @@ export class Agent {
     }
   }
 
-  onConnectHostname(hostname: string, port: number) {
-    this.hostnames.add(hostname, port);
+  onConnectHostname(hostname: string, port: number, blocked = false) {
+    this.hostnames.add(hostname, port, blocked);
   }
 
   onRouteExecute(context: Context) {

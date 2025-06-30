@@ -21,6 +21,21 @@ export class HTTPRequest implements Wrapper {
     port: number | undefined,
     module: "http" | "https"
   ): InterceptorResult {
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
+      if (typeof port === "number" && port > 0) {
+        agent.onConnectHostname(url.hostname, port, true);
+      }
+
+      return {
+        operation: `${module}.request`,
+        kind: "blocked_outgoing_request",
+        source: "url",
+        pathsToPayload: [],
+        metadata: {},
+        payload: url.href,
+      };
+    }
+
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
