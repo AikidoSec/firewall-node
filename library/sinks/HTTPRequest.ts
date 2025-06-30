@@ -28,7 +28,7 @@ export class HTTPRequest implements Wrapper {
 
       return {
         operation: `${module}.request`,
-        kind: "blocked_outgoing_request",
+        kind: "blocked_outbound_connection",
         source: "url",
         pathsToPayload: [],
         metadata: {},

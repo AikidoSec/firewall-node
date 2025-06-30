@@ -432,7 +432,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       if (blockedError1 instanceof Error) {
         t.same(
           blockedError1.message,
-          "Zen has blocked an outgoing request: undici.request(...) to aikido.dev"
+          "Zen has blocked an outbound connection: undici.request(...) to aikido.dev"
         );
       }
 
@@ -457,7 +457,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       if (blockedError2 instanceof Error) {
         t.same(
           blockedError2.message,
-          "Zen has blocked an outgoing request: undici.request(...) to example.com"
+          "Zen has blocked an outbound connection: undici.request(...) to example.com"
         );
       }
 

@@ -36,7 +36,7 @@ export class Undici implements Wrapper {
 
       return {
         operation: `undici.${method}`,
-        kind: "blocked_outgoing_request",
+        kind: "blocked_outbound_connection",
         source: "url",
         pathsToPayload: [],
         metadata: {},

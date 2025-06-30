@@ -40,7 +40,11 @@ export function onInspectionInterceptorResult(
     context.remoteAddress &&
     agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (result && !isBypassedIP && result.kind === "blocked_outgoing_request") {
+  if (
+    result &&
+    !isBypassedIP &&
+    result.kind === "blocked_outbound_connection"
+  ) {
     throw cleanError(
       new Error(
         `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) to ${escapeHTML(result.payload as string)}`

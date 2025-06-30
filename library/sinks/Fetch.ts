@@ -25,7 +25,7 @@ export class Fetch implements Wrapper {
 
       return {
         operation: "fetch",
-        kind: "blocked_outgoing_request",
+        kind: "blocked_outbound_connection",
         source: "url",
         pathsToPayload: [],
         metadata: {},
