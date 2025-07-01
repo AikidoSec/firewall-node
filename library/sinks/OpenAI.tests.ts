@@ -73,7 +73,7 @@ export function createOpenAITests(openAiPkgName: string) {
 
       // Test streaming responses work (we don't count the tokens atm)
       const stream = await client.responses.create({
-        model: 'gpt-4o',
+        model: "gpt-4o",
         input: 'Say "Sheep sleep deep" ten times fast!',
         stream: true,
       });
