@@ -115,23 +115,23 @@ export class OpenAI implements Wrapper {
 
   private getResponsesClass(exports: any) {
     if (exports.Responses) {
-      return exports.Responses;
+      return exports.Responses; // v4
     }
     if (exports.OpenAI && exports.OpenAI.Responses) {
-      return exports.OpenAI.Responses;
+      return exports.OpenAI.Responses; // v5
     }
   }
 
   private getCompletionsClass(exports: any) {
     if (exports.Chat && exports.Chat.Completions) {
-      return exports.Chat.Completions;
+      return exports.Chat.Completions; // v4
     }
     if (
       exports.OpenAI &&
       exports.OpenAI.Chat &&
       exports.OpenAI.Chat.Completions
     ) {
-      return exports.OpenAI.Chat.Completions;
+      return exports.OpenAI.Chat.Completions; // v5
     }
   }
 
