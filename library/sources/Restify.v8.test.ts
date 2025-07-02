@@ -6,7 +6,9 @@ t.test(
   "Koa",
   {
     skip:
-      getMajorNodeVersion() > 16 ? "Restify v8 only supports node v16" : undefined,
+      getMajorNodeVersion() > 16
+        ? "Restify v8 only supports node v16"
+        : undefined,
   },
   async (t) => {
     createRestifyTests("restify");
