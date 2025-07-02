@@ -3,7 +3,7 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createRestifyTests } from "./Restify.tests";
 
 t.test(
-  "Koa",
+  "Restify",
   {
     skip:
       getMajorNodeVersion() > 16
