@@ -57,59 +57,85 @@ async function main(port) {
   server.use(restify.plugins.bodyParser());
   server.use(restify.plugins.gzipResponse());
 
-  server.get("/", async (req, res) => {
-    try {
-      if (req.query["petname"]) {
-        await cats.add(req.query["petname"]);
-      }
+  server.get("/", (req, res, next) => {
+    let promise = Promise.resolve();
 
-      res.writeHead(200, {
-        "Content-Type": "text/html",
+    if (req.query["petname"]) {
+      promise = cats.add(req.query["petname"]);
+    }
+
+    promise
+      .then(() => {
+        return cats.getAll();
+      })
+      .then((allCats) => {
+        res.writeHead(200, {
+          "Content-Type": "text/html",
+        });
+        res.end(getHTMLBody(allCats));
+        return next();
+      })
+      .catch((err) => {
+        res.send(500, err.message);
+        return next();
       });
-      res.end(getHTMLBody(await cats.getAll()));
-    } catch (err) {
-      res.send(500, err.message);
-    }
   });
 
-  server.post("/string-concat", async (req, res) => {
-    try {
-      if (!req.body.petname) {
-        res.send(400, "Missing petname");
-        return;
-      }
-      await db.query(
-        `INSERT INTO cats_2 (petname, comment) VALUES ('${req.body.petname}');`
-      );
-      res.send(await cats.getAll());
-    } catch (err) {
-      res.send(500, err.message);
+  server.post("/string-concat", (req, res, next) => {
+    if (!req.body.petname) {
+      res.send(400, "Missing petname");
+      return next();
     }
+
+    db.query(
+      `INSERT INTO cats_2 (petname, comment) VALUES ('${req.body.petname}');`
+    )
+      .then(() => {
+        return cats.getAll();
+      })
+      .then((allCats) => {
+        res.send(allCats);
+        return next();
+      })
+      .catch((err) => {
+        res.send(500, err.message);
+        return next();
+      });
   });
 
-  server.get("/string-concat", async (req, res) => {
-    try {
-      if (!req.query.petname) {
-        res.send(400, "Missing petname");
-        return;
-      }
-      await db.query(
-        `INSERT INTO cats_2 (petname, comment) VALUES ('${req.query.petname}');`
-      );
-      res.send(await cats.getAll());
-    } catch (err) {
-      res.send(500, err.message);
+  server.get("/string-concat", (req, res, next) => {
+    if (!req.query.petname) {
+      res.send(400, "Missing petname");
+      return next();
     }
+
+    db.query(
+      `INSERT INTO cats_2 (petname, comment) VALUES ('${req.query.petname}');`
+    )
+      .then(() => {
+        return cats.getAll();
+      })
+      .then((allCats) => {
+        res.send(allCats);
+        return next();
+      })
+      .catch((err) => {
+        res.send(500, err.message);
+        return next();
+      });
   });
 
-  server.get("/clear", async (req, res) => {
-    try {
-      await db.query("DELETE FROM cats_2;");
-      res.header("Location", "/");
-      res.send(302);
-    } catch (err) {
-      res.send(500, "Error clearing table");
-    }
+  server.get("/clear", (req, res, next) => {
+    db.query("DELETE FROM cats_2;")
+      .then(() => {
+        res.header("Location", "/");
+        res.send(302);
+        return next();
+      })
+      .catch((err) => {
+        res.send(500, "Error clearing table");
+        return next();
+      });
   });
 
   return new Promise((resolve, reject) => {
