@@ -15,4 +15,4 @@ class Cats {
   }
 }
 
-module.exports = Cats; 
+module.exports = Cats;
