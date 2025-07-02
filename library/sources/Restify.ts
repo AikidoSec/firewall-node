@@ -11,11 +11,6 @@ export class Restify implements Wrapper {
         return arg;
       }
 
-      // Ignore error handlers (functions with more than 3 parameters)
-      if (arg.length > 3) {
-        return arg;
-      }
-
       return wrapRequestHandler(arg as Function);
     });
   }
