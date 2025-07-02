@@ -2,55 +2,62 @@ import * as t from "tap";
 import { Context, getContext } from "../agent/Context";
 import { PubSub as PubSubWrapper } from "./PubSub";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isWindowsCi } from "../helpers/isWindowsCi";
 
-t.test("it works", async () => {
-  const agent = createTestAgent();
-  agent.start([new PubSubWrapper()]);
+t.test(
+  "it works",
+  {
+    skip: isWindowsCi ? "PubSub emulator does not work on Windows CI" : false,
+  },
+  async () => {
+    const agent = createTestAgent();
+    agent.start([new PubSubWrapper()]);
 
-  process.env.PUBSUB_EMULATOR_HOST = "127.0.0.1:8085";
+    process.env.PUBSUB_EMULATOR_HOST = "127.0.0.1:8085";
 
-  const projectId = "sample-project";
-  const topicName = "test-topic";
-  const subscriptionName = "test-subscription";
+    const projectId = "sample-project";
+    const topicName = "test-topic";
+    const subscriptionName = "test-subscription";
 
-  const { PubSub } =
-    require("@google-cloud/pubsub") as typeof import("@google-cloud/pubsub");
+    const { PubSub } =
+      require("@google-cloud/pubsub") as typeof import("@google-cloud/pubsub");
 
-  const pubsub = new PubSub({
-    projectId: projectId,
-    emulatorMode: true,
-  });
+    const pubsub = new PubSub({
+      projectId: projectId,
+      emulatorMode: true,
+    });
 
-  const [topic] = await pubsub.topic(topicName).get({ autoCreate: true });
+    const [topic] = await pubsub.topic(topicName).get({ autoCreate: true });
 
-  const [subscription] = await topic
-    .subscription(subscriptionName)
-    .get({ autoCreate: true });
+    const [subscription] = await topic
+      .subscription(subscriptionName)
+      .get({ autoCreate: true });
 
-  let lastContextInMessageHandler: Context | undefined;
+    let lastContextInMessageHandler: Context | undefined;
 
-  subscription.on("message", (message) => {
-    lastContextInMessageHandler = getContext();
-  });
+    subscription.on("message", (message) => {
+      lastContextInMessageHandler = getContext();
+    });
 
-  await topic.publishMessage({
-    data: Buffer.from(JSON.stringify({ key: "value", arr: [1, 2] })),
-  });
+    await topic.publishMessage({
+      data: Buffer.from(JSON.stringify({ key: "value", arr: [1, 2] })),
+    });
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  t.match(lastContextInMessageHandler, {
-    headers: {},
-    cookies: {},
-    query: {},
-    routeParams: {},
-    source: "pubsub",
-    body: {
-      key: "value",
-      arr: [1, 2],
-    },
-  });
+    t.match(lastContextInMessageHandler, {
+      headers: {},
+      cookies: {},
+      query: {},
+      routeParams: {},
+      source: "pubsub",
+      body: {
+        key: "value",
+        arr: [1, 2],
+      },
+    });
 
-  await subscription.close();
-  await pubsub.close();
-});
+    await subscription.close();
+    await pubsub.close();
+  }
+);

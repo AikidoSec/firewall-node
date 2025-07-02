@@ -7,7 +7,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 
 t.test(
   "it works",
-  { skip: isWindows() ? "path is not the same as path/posix" : false },
+  { skip: isWindows ? "path is not the same as path/posix" : false },
   async (t) => {
     const agent = createTestAgent();
 
@@ -29,7 +29,7 @@ t.test(
 
 t.test(
   "it works",
-  { skip: !isWindows() ? "path is not the same as path/win32" : false },
+  { skip: !isWindows ? "path is not the same as path/win32" : false },
   async (t) => {
     const agent = createTestAgent();
 

@@ -4,6 +4,7 @@ import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isWindows } from "../helpers/isWindows";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -139,22 +140,26 @@ t.test("it detects async shell injections", async (t) => {
   }
 });
 
-t.test("it prevents path injections using ls", async (t) => {
-  const shelljs = require("shelljs");
+t.test(
+  "it prevents path injections using ls",
+  { skip: isWindows ? "Skip on Windows" : undefined },
+  async (t) => {
+    const shelljs = require("shelljs");
 
-  const error = await t.rejects(async () => {
-    runWithContext(dangerousPathContext, () => {
-      return shelljs.ls("/etc/ssh");
+    const error = await t.rejects(async () => {
+      runWithContext(dangerousPathContext, () => {
+        return shelljs.ls("/etc/ssh");
+      });
     });
-  });
-  t.ok(error instanceof Error);
-  if (error instanceof Error) {
-    t.same(
-      error.message,
-      "Zen has blocked a path traversal attack: fs.readdirSync(...) originating from body.myTitle"
-    );
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(
+        error.message,
+        "Zen has blocked a path traversal attack: fs.readdirSync(...) originating from body.myTitle"
+      );
+    }
   }
-});
+);
 
 t.test("it prevents path injections using cat", async (t) => {
   const shelljs = require("shelljs");

@@ -1,5 +1,8 @@
 import * as t from "tap";
 import { detectPathTraversal } from "./detectPathTraversal";
+import { isWindows } from "../../helpers/isWindows";
+
+const skipOnPosix = { skip: !isWindows ? "Windows only" : false };
 
 t.test("empty user input", async () => {
   t.same(detectPathTraversal("test.txt", ""), false);
@@ -122,13 +125,14 @@ t.test("disable checkPathStart", async () => {
   t.same(detectPathTraversal("/etc/passwd", "/etc/passwd", false), false);
 });
 
-t.test(
-  "windows drive letter",
-  { skip: process.platform !== "win32" ? "Windows only" : false },
-  async () => {
-    t.same(detectPathTraversal("C:\\file.txt", "C:\\"), true);
-  }
-);
+t.test("windows drive letter", skipOnPosix, async () => {
+  t.same(detectPathTraversal("C:\\Windows\\file.txt", "C:\\Windows"), true);
+  t.same(detectPathTraversal("C:\\Windows\\file.txt", "C:\\Windows\\"), true);
+  t.same(detectPathTraversal("C:\\", "C:\\"), false);
+  t.same(detectPathTraversal("C:\\", "C:"), false);
+  t.same(detectPathTraversal("D:\\", "D:\\"), false);
+  t.same(detectPathTraversal("D:\\Windows\\file.txt", "D:\\Windows"), true);
+});
 
 t.test(
   "does not detect if user input path contains no filename or subfolder",
