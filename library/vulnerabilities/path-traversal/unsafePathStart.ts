@@ -1,5 +1,6 @@
 import { isAbsolute, resolve } from "path";
 import { isWrapped } from "../../helpers/wrap";
+import { normalizeLikeURLConstructor } from "./normalizeLikeURLConstructor";
 
 const linuxRootFolders = [
   "/bin/",
@@ -56,4 +57,8 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
     }
   }
   return false;
+}
+
+export function startsWithUnsafePathUrl(filePath: string, userInput: string) {
+  return startsWithUnsafePath(filePath, normalizeLikeURLConstructor(userInput));
 }
