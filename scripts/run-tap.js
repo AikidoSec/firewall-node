@@ -29,6 +29,7 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/Undici*",
     "**/sinks/Prisma.test.ts",
     "**/sinks/AwsSDK*",
+    // Todo OpenAI, AWS Bedrock
 
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",
