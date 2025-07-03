@@ -245,6 +245,15 @@ export function createExpressTests(expressPackageName: string) {
       res.send({ hello: "world" });
     });
 
+    app.param("file", (req, res, next, path) => {
+      // Simulate a vulnerable parameter handler that uses fs operations
+      require("fs").readdir(path, next);
+    });
+
+    app.get("/param/:file", (req, res) => {
+      res.send({ success: true });
+    });
+
     if (expressPackageName.endsWith("v4")) {
       app.get("/white-listed-ip-address", (req, res, next) => {
         res.send({ hello: "world" });
@@ -481,6 +490,16 @@ export function createExpressTests(expressPackageName: string) {
     const response = await request(getApp())
       .get("/files-subdomains")
       .set("Host", "/etc/passwd.127.0.0.1");
+
+    t.same(response.statusCode, 500);
+    t.match(
+      response.text,
+      /Zen has blocked a path traversal attack: fs.readdir(...)/
+    );
+  });
+
+  t.test("it detects attacks in app.param() handlers", async (t) => {
+    const response = await request(getApp()).get(`/param/${encodeURIComponent("../../")}`);
 
     t.same(response.statusCode, 500);
     t.match(
