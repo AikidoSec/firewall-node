@@ -207,3 +207,30 @@ t.test("it ignores __proto__ property", async (t) => {
     },
   });
 });
+
+t.test("it ignores too long property keys", async (t) => {
+  const key = "a".repeat(101); // 101 characters long
+  const shorterKey = "b".repeat(99); // 99 characters long
+
+  const data = {
+    [key]: "value",
+    test: [1, 2, 3],
+    [shorterKey]: "shorterValue",
+  };
+
+  const schema = getDataSchema(data);
+  t.same(schema, {
+    type: "object",
+    properties: {
+      test: {
+        type: "array",
+        items: {
+          type: "number",
+        },
+      },
+      [shorterKey]: {
+        type: "string",
+      },
+    },
+  });
+});
