@@ -122,7 +122,8 @@
     "undici-v6": "npm:undici@^6.0.0",
     "undici-v7": "npm:undici@^7.0.0",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "restify": "^8.6.0"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
