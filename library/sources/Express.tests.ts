@@ -499,7 +499,9 @@ export function createExpressTests(expressPackageName: string) {
   });
 
   t.test("it detects attacks in app.param() handlers", async (t) => {
-    const response = await request(getApp()).get(`/param/${encodeURIComponent("../../")}`);
+    const response = await request(getApp()).get(
+      `/param/${encodeURIComponent("../../")}`
+    );
 
     t.same(response.statusCode, 500);
     t.match(
