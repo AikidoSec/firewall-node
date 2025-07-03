@@ -10,6 +10,7 @@ import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
+import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 
@@ -38,6 +39,7 @@ export {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
 };
 
 // Required for ESM / TypeScript default export support
@@ -51,4 +53,5 @@ export default {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
 };
