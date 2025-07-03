@@ -23,6 +23,8 @@ export class Express implements Wrapper {
   }
 
   private wrapParamArgs(args: unknown[]) {
+    // Don't check the length of the arguments here
+    // app.param(name, (req, res, next, value, name) => {...})
     return args.map((arg) => {
       // Ignore non-function arguments
       if (typeof arg !== "function") {
