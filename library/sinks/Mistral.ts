@@ -55,8 +55,6 @@ export class Mistral implements Wrapper {
       .addPackage("@mistralai/mistralai")
       .withVersion("^1.0.0")
       .onRequire((exports, pkgInfo) => {
-        // We need to wrap the chat.complete method
-        // Based on the usage: mistral.chat.complete()
         if (
           exports.Mistral &&
           exports.Mistral.prototype &&
