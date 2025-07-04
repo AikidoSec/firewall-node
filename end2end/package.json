@@ -7,5 +7,8 @@
   },
   "scripts": {
     "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1"
+  },
+  "overrides": {
+    "brace-expansion@<=2.0.2": "2.0.2"
   }
 }
