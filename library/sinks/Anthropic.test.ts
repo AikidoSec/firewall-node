@@ -45,5 +45,29 @@ t.test(
         },
       },
     ]);
+
+    // We don't track the token usage of streaming calls yet.
+    // Verify the agent doesn't crash and can track the call
+    const stream = await client.messages.create({
+      // eslint-disable-next-line camelcase
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content:
+            "What is the capital of France? Answer with just the city name, no punctuation.",
+        },
+      ],
+      model: "claude-3-haiku-20240307",
+      stream: true,
+    });
+
+    let eventCount = 0;
+    for await (const messageStreamEvent of stream) {
+      t.ok(messageStreamEvent.type, "Event should have a type");
+      eventCount++;
+    }
+
+    t.ok(eventCount > 0, "Should receive at least one stream event");
   }
 );
