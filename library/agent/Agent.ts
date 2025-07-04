@@ -327,6 +327,7 @@ export class Agent {
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
             sqlTokenizationFailures: stats.sqlTokenizationFailures,
+            botSpoofing: stats.botSpoofing,
           },
           ai: aiStats,
           packages,
@@ -399,6 +400,7 @@ export class Agent {
         blockedIPAddresses,
         blockedUserAgents,
         allowedIPAddresses,
+        botSpoofingProtection,
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
@@ -406,6 +408,7 @@ export class Agent {
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
+      this.serviceConfig.updateBotSpoofingData(botSpoofingProtection);
       this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
