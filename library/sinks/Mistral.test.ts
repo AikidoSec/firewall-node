@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { startTestAgent } from "../helpers/startTestAgent";
+import { createTestAgent } from "../helpers/createTestAgent";
 import { Mistral as MistralSink } from "./Mistral";
 
 t.test(
@@ -8,10 +8,8 @@ t.test(
     skip: !process.env.MISTRAL_API_KEY ? "MISTRAL_API_KEY not set" : undefined,
   },
   async (t) => {
-    const agent = startTestAgent({
-      wrappers: [new MistralSink()],
-      rewrite: {},
-    });
+    const agent = createTestAgent();
+    agent.start([new MistralSink()]);
 
     const { Mistral } = require("@mistralai/mistralai");
 
