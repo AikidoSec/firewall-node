@@ -47,7 +47,7 @@ t.test(
     ]);
 
     // We don't track the token usage of streaming calls yet.
-    // Verify the agent doesn't crash and can track the call
+    // Verify that we don't break user's code
     const stream = await client.messages.create({
       // eslint-disable-next-line camelcase
       max_tokens: 1024,
