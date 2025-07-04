@@ -124,6 +124,7 @@
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
     "restify": "^8.6.0",
+    "@mistralai/mistralai": "^1.0.0",
     "@anthropic-ai/sdk": "^0.20.0"
   },
   "scripts": {

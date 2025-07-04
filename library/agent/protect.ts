@@ -52,6 +52,7 @@ import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
 import { OpenAI } from "../sinks/OpenAI";
 import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
+import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
 
 function getLogger(): Logger {
@@ -132,6 +133,7 @@ export function getWrappers() {
     new Hono(),
     new GraphQL(),
     new OpenAI(),
+    new Mistral(),
     new Anthropic(),
     new Xml2js(),
     new FastXmlParser(),
