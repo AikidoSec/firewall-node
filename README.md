@@ -105,6 +105,7 @@ Zen instruments the following AI SDKs to track which models are used and how man
 
 * ✅ [`openai`](https://www.npmjs.com/package/openai) 5.x, 4.x
 * ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x
+* ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.20
 * ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
 
 _Note: Prompt injection attacks are currently not covered by Zen._
