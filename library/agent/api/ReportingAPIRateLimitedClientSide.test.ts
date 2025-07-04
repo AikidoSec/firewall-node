@@ -150,6 +150,7 @@ function generateHeartbeatEvent(): Event {
       requests: {
         total: 0,
         aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           blocked: 0,
           total: 0,
