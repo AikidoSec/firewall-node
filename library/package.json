@@ -123,7 +123,8 @@
     "undici-v7": "npm:undici@^7.0.0",
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
-    "restify": "^8.6.0"
+    "restify": "^8.6.0",
+    "@anthropic-ai/sdk": "^0.20.0"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
