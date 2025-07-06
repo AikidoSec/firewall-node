@@ -13,6 +13,7 @@ pub fn transform_return_statements<'a>(
 ) {
     transform_statements(allocator, builder, identifier, statements);
 }
+
 fn transform_statements<'a>(
     allocator: &'a Allocator,
     builder: &AstBuilder<'a>,

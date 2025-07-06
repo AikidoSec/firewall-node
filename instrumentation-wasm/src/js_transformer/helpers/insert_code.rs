@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_span::SPAN;
 
-// Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments);
+// Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this);
 pub fn insert_inspect_args<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
@@ -55,7 +55,7 @@ pub fn insert_inspect_args<'a>(
 }
 
 // Modify the arguments by adding a statement to the beginning of the function
-// [arg1, arg2, ...] = __instrumentModifyArgs('function_identifier', [arg1, arg2, ...]);
+// [arg1, arg2, ...] = __instrumentModifyArgs('function_identifier', [arg1, arg2, ...], this);
 pub fn insert_modify_args<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
