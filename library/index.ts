@@ -9,8 +9,10 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
+import { setRateLimitGroup } from "./ratelimiting/group";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -35,6 +37,8 @@ export {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
+  setRateLimitGroup,
 };
 
 // Required for ESM / TypeScript default export support
@@ -48,4 +52,6 @@ export default {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
+  setRateLimitGroup,
 };

@@ -17,7 +17,7 @@ export type Context = {
   cookies: Record<string, string>;
   attackDetected?: boolean;
   consumedRateLimit?: boolean;
-  user?: { id: string; name?: string };
+  user?: User;
   source: string;
   route: string | undefined;
   graphql?: string[];
@@ -30,6 +30,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  rateLimitGroup?: string; // Used to apply rate limits to a group of users
   rateLimited?: boolean; // Set to true if the request was rate limited
 };
 

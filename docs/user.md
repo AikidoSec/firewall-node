@@ -25,3 +25,14 @@ Using `setUser` has the following benefits:
 - Whenever attacks are detected, the user will be included in the report to Aikido.
 - The dashboard will show all your users, where you can also block them.
 - Passing the user's name is optional, but it can help you identify the user in the dashboard. You will be required to list Aikido Security as a subprocessor if you choose to share personal identifiable information (PII).
+
+# Rate limiting groups
+
+To limit the number of requests for a group of users, you can use the `setRateLimitGroup` function. For example, this is useful if you want to limit the number of requests per team or company.
+Please note that if a rate limit group is set, the configured rate limits are only applied to the group and not to individual users or IP addresses.
+
+```js
+Zen.setRateLimitGroup({
+  id: "123",
+});
+```

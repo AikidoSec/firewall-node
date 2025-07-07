@@ -5,7 +5,7 @@ import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 type Result = {
   block: boolean;
   type?: "ratelimited" | "blocked";
-  trigger?: "ip" | "user";
+  trigger?: "ip" | "user" | "group";
   ip?: string;
 };
 
