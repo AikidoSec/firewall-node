@@ -19,7 +19,7 @@ export function setRateLimitGroup(g: { id: string | number }) {
 
   if (!isPlainObject(group)) {
     agent.log(
-      `setRateLimitGroup(...) expects an object with 'id' properties, found ${typeof group} instead.`
+      `setRateLimitGroup(...) expects an object with 'id' property, found ${typeof group} instead.`
     );
     return;
   }
