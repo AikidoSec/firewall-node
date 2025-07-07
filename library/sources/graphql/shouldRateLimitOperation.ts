@@ -20,6 +20,12 @@ type Result =
       field: FieldNode;
       source: "user";
       userId: string;
+    }
+  | {
+      block: true;
+      field: FieldNode;
+      source: "group";
+      groupId: string;
     };
 
 export function shouldRateLimitOperation(
@@ -109,6 +115,25 @@ function shouldRateLimitField(
         field: field,
         source: "ip",
         remoteAddress: context.remoteAddress,
+      };
+    }
+  }
+
+  if (context.rateLimitGroup) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${context.method}:${context.route}:group:${context.rateLimitGroup}:${operationType}:${field.name.value}`,
+        rateLimitedField.rateLimiting.windowSizeInMS,
+        rateLimitedField.rateLimiting.maxRequests
+      );
+
+    if (!allowed) {
+      return {
+        block: true,
+        field: field,
+        source: "group",
+        groupId: context.rateLimitGroup,
       };
     }
   }
