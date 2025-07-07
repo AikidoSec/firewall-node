@@ -111,7 +111,6 @@ function getApp() {
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
     } else if (c.req.path.startsWith("/rate-limited-group")) {
-      const userId = c.req.header("X-User-Id") || "123";
       const rateLimitGroup = c.req.header("X-Rate-Limit-Group") || "default";
       setRateLimitGroup({ id: rateLimitGroup });
     }

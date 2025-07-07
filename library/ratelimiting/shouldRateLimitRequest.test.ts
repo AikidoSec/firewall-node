@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { Endpoint, EndpointConfig } from "../agent/Config";
+import { EndpointConfig } from "../agent/Config";
 import type { Context } from "../agent/Context";
 import { shouldRateLimitRequest } from "./shouldRateLimitRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -698,3 +698,56 @@ t.test(
     );
   }
 );
+
+t.test("it rate limits by group if user is not set", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", undefined, "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("1.2.3.4", undefined, "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: false,
+    }
+  );
+  t.same(
+    shouldRateLimitRequest(
+      createContext("4.3.2.1", undefined, "/login", "POST", "group1"),
+      agent
+    ),
+    {
+      block: true,
+      trigger: "group",
+    }
+  );
+});
