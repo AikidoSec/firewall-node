@@ -92,7 +92,7 @@ t.test("it logs when setRateLimitGroup has invalid input", async () => {
     // @ts-expect-error Group should be an object
     setRateLimitGroup(1);
     t.same(logger.getMessages(), [
-      "setRateLimitGroup(...) expects an object with 'id' properties, found number instead.",
+      "setRateLimitGroup(...) expects an object with 'id' property, found number instead.",
     ]);
     logger.clear();
 
