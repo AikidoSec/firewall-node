@@ -65,8 +65,8 @@ export class Anthropic implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@anthropic-ai/sdk")
-      .withVersion("^0.20.0")
-      .onRequire((exports, pkgInfo) => {
+      .withVersion("^0.40.0")
+      .onFileRequire("resources/messages/messages.js", (exports, pkgInfo) => {
         if (
           exports.Messages &&
           exports.Messages.prototype &&
