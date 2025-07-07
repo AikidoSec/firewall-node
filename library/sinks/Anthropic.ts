@@ -1,6 +1,5 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
