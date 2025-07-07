@@ -2,12 +2,18 @@ import { escapeStringRegexp } from "./escapeStringRegexp";
 
 export function cleanupStackTrace(stack: string, libraryRoot: string): string {
   try {
-    return stack
+    const newStackLines = stack
       .split("\n")
       .filter(createLineFilter(libraryRoot))
-      .map(createLineMapper(libraryRoot))
-      .join("\n")
-      .trim();
+      .map(createLineMapper(libraryRoot));
+
+    // If the stack only has one line (the error message), we return the original stack trace.
+    // This could happen if the detected library root is wrong
+    if (newStackLines.length <= 1) {
+      return stack;
+    }
+
+    return newStackLines.join("\n").trim();
   } catch {
     // Safer to return the original stack trace in case of an error
     // than to crash the application
