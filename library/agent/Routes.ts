@@ -41,10 +41,6 @@ export class Routes {
       updateApiInfo(context, existing, maxSamples);
 
       existing.hits++;
-
-      if (context.rateLimited) {
-        existing.rateLimitedCount++;
-      }
       return;
     }
 
@@ -60,7 +56,7 @@ export class Routes {
       path,
       hits: 1,
       apispec,
-      rateLimitedCount: context.rateLimited ? 1 : 0,
+      rateLimitedCount: 0,
     });
   }
 
@@ -153,6 +149,25 @@ export class Routes {
       existing.rateLimitedCount++;
       return;
     }
+  }
+
+  countRouteRateLimited(method: string, path: string) {
+    const key = this.getKey(method, path);
+    let existing = this.routes.get(key);
+
+    if (!existing) {
+      this.evictLeastUsedRouteIfNecessary();
+      existing = {
+        method,
+        path,
+        hits: 0,
+        apispec: {},
+        rateLimitedCount: 0,
+      };
+      this.routes.set(key, existing);
+    }
+
+    existing.rateLimitedCount++;
   }
 
   clear() {

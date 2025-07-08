@@ -915,6 +915,11 @@ t.test(
 
 t.test("it counts rate limited requests", async (t) => {
   const routes = new Routes(200);
+
+  routes.countRouteRateLimited("GET", "/api/foo");
+
+  t.same(routes.asArray(), []);
+
   routes.addRoute(getContext("GET", "/api/foo"));
 
   t.same(routes.asArray(), [
@@ -929,51 +934,42 @@ t.test("it counts rate limited requests", async (t) => {
     },
   ]);
 
-  routes.addRoute({ ...getContext("GET", "/api/foo"), rateLimited: true });
+  routes.countRouteRateLimited("GET", "/api/foo");
 
   t.same(routes.asArray(), [
     {
       method: "GET",
       path: "/api/foo",
-      hits: 2,
-      rateLimitedCount: 1,
-      graphql: undefined,
-      apispec: {},
-      graphQLSchema: undefined,
-    },
-  ]);
-
-  routes.addRoute({ ...getContext("GET", "/api/foo"), rateLimited: true });
-
-  t.same(routes.asArray(), [
-    {
-      method: "GET",
-      path: "/api/foo",
-      hits: 3,
-      rateLimitedCount: 2,
-      graphql: undefined,
-      apispec: {},
-      graphQLSchema: undefined,
-    },
-  ]);
-
-  routes.addRoute({ ...getContext("GET", "/api/bar"), rateLimited: true });
-
-  t.same(routes.asArray(), [
-    {
-      method: "GET",
-      path: "/api/foo",
-      hits: 3,
-      rateLimitedCount: 2,
-      graphql: undefined,
-      apispec: {},
-      graphQLSchema: undefined,
-    },
-    {
-      method: "GET",
-      path: "/api/bar",
       hits: 1,
       rateLimitedCount: 1,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.countRouteRateLimited("GET", "/api/foo");
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 1,
+      rateLimitedCount: 2,
+      graphql: undefined,
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
+
+  routes.countRouteRateLimited("POST", "/api/bar");
+
+  t.same(routes.asArray(), [
+    {
+      method: "GET",
+      path: "/api/foo",
+      hits: 1,
+      rateLimitedCount: 2,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,

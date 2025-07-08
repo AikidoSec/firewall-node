@@ -819,7 +819,7 @@ export function createExpressTests(expressPackageName: string) {
       {
         method: "GET",
         path: "/rate-limited",
-        hits: 4,
+        hits: 3, // Only the first 3 requests are counted as hits
         rateLimitedCount: 1,
         graphql: undefined,
         apispec: {},
