@@ -140,7 +140,7 @@ export class GraphQL implements Wrapper {
 
     if (result.block) {
       agent.getInspectionStatistics().onRateLimitedRequest();
-      updateContext(context, "rateLimited", true);
+      updateContext(context, "rateLimitedEndpoint", result.endpoint);
 
       if (context && context.method && context.route) {
         agent.onGraphQLFieldRateLimited(

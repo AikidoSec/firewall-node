@@ -12,6 +12,7 @@ import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import { AgentInfo, DetectedAttack } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { Endpoint } from "./Config";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -27,7 +28,6 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
-import { getRateLimitedEndpoint } from "../ratelimiting/getRateLimitedEndpoint";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -583,20 +583,10 @@ export class Agent {
     this.routes.countGraphQLFieldRateLimited(method, path, type, field);
   }
 
-  onRouteRateLimited(context: Context) {
-    const rateLimitedEndpoint = getRateLimitedEndpoint(
-      context,
-      this.getConfig()
-    );
-
-    if (rateLimitedEndpoint) {
-      // The count will be incremented for the rate-limited route, not for the exact route
-      // So if it's a wildcard route, the count will be incremented for the wildcard route
-      this.routes.countRouteRateLimited(
-        rateLimitedEndpoint.method,
-        rateLimitedEndpoint.route
-      );
-    }
+  onRouteRateLimited(match: Endpoint) {
+    // The count will be incremented for the rate-limited route, not for the exact route
+    // So if it's a wildcard route, the count will be incremented for the wildcard route
+    this.routes.countRouteRateLimited(match.method, match.route);
   }
 
   getRoutes() {

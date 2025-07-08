@@ -102,12 +102,12 @@ function createOnFinishRequestHandler(
         agent.onRouteExecute(context);
       }
 
-      if (shouldDiscover || context.rateLimited) {
+      if (shouldDiscover || context.rateLimitedEndpoint) {
         agent.getInspectionStatistics().onRequest();
       }
 
-      if (context.rateLimited) {
-        agent.onRouteRateLimited(context);
+      if (context.rateLimitedEndpoint) {
+        agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
     }
   };

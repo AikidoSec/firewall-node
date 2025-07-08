@@ -4,6 +4,7 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import { extractTopLevelFieldsFromDocument } from "./extractTopLevelFieldsFromDocument";
+import type { Endpoint } from "../../agent/Config";
 
 type Result =
   | {
@@ -15,6 +16,7 @@ type Result =
       source: "ip";
       remoteAddress: string;
       operationType: "query" | "mutation";
+      endpoint: Endpoint;
     }
   | {
       block: true;
@@ -22,6 +24,7 @@ type Result =
       source: "user";
       userId: string;
       operationType: "query" | "mutation";
+      endpoint: Endpoint;
     }
   | {
       block: true;
@@ -29,6 +32,7 @@ type Result =
       source: "group";
       groupId: string;
       operationType: "query" | "mutation";
+      endpoint: Endpoint;
     };
 
 export function shouldRateLimitOperation(
@@ -119,6 +123,7 @@ function shouldRateLimitField(
         source: "ip",
         remoteAddress: context.remoteAddress,
         operationType: operationType,
+        endpoint: match,
       };
     }
   }
@@ -139,6 +144,7 @@ function shouldRateLimitField(
         source: "group",
         groupId: context.rateLimitGroup,
         operationType: operationType,
+        endpoint: match,
       };
     }
   }
@@ -159,6 +165,7 @@ function shouldRateLimitField(
         source: "user",
         userId: context.user.id,
         operationType: operationType,
+        endpoint: match,
       };
     }
   }

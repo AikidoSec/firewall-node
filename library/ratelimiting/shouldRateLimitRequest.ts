@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { Endpoint } from "../agent/Config";
 import { Context, updateContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { getRateLimitedEndpoint } from "./getRateLimitedEndpoint";
@@ -10,14 +11,17 @@ type Result =
   | {
       block: true;
       trigger: "ip";
+      endpoint: Endpoint;
     }
   | {
       block: true;
       trigger: "user";
+      endpoint: Endpoint;
     }
   | {
       block: true;
       trigger: "group";
+      endpoint: Endpoint;
     };
 
 // eslint-disable-next-line max-lines-per-function
@@ -70,7 +74,7 @@ export function shouldRateLimitRequest(
       );
 
     if (!allowed) {
-      return { block: true, trigger: "group" };
+      return { block: true, trigger: "group", endpoint };
     }
 
     // Do not check IP or User rate limit if rateLimitGroup is set
@@ -87,7 +91,7 @@ export function shouldRateLimitRequest(
       );
 
     if (!allowed) {
-      return { block: true, trigger: "user" };
+      return { block: true, trigger: "user", endpoint };
     }
 
     // Do not check IP rate limit if user is set
@@ -104,7 +108,7 @@ export function shouldRateLimitRequest(
       );
 
     if (!allowed) {
-      return { block: true, trigger: "ip" };
+      return { block: true, trigger: "ip", endpoint };
     }
   }
 
