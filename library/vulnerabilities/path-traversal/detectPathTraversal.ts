@@ -61,8 +61,8 @@ export function detectPathTraversal(
  * Another sample: new URL("file:///./test.txt") => /test.txt
  */
 function parseAsFileUrl(path: string) {
-  let url = path.toLowerCase();
-  if (!url.startsWith("file:")) {
+  let url = path;
+  if (!url.toLowerCase().startsWith("file:")) {
     if (!url.startsWith("/")) {
       url = `/${url}`;
     }

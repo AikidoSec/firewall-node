@@ -269,4 +269,34 @@ t.test("it detects path traversal with non lowercase URL scheme", async () => {
       payload: "filE:///test/../file/test.txt",
     }
   );
+  t.same(
+    checkContextForPathTraversal({
+      filename: new URL("filE:///test/../file/Test.txt"),
+      operation: "operation",
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {
+          file: "filE:///test/../file/Test.txt",
+        },
+        body: {},
+        routeParams: {},
+        source: "express",
+        route: undefined,
+      },
+    }),
+    {
+      operation: "operation",
+      kind: "path_traversal",
+      source: "query",
+      pathsToPayload: [".file"],
+      metadata: {
+        filename: "/file/Test.txt",
+      },
+      payload: "filE:///test/../file/Test.txt",
+    }
+  );
 });
