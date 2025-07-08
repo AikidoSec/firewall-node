@@ -918,29 +918,11 @@ t.test("it counts rate limited requests", async (t) => {
 
   routes.countRouteRateLimited("GET", "/api/foo");
 
-  t.same(routes.asArray(), []);
-
-  routes.addRoute(getContext("GET", "/api/foo"));
-
   t.same(routes.asArray(), [
     {
       method: "GET",
       path: "/api/foo",
-      hits: 1,
-      rateLimitedCount: 0,
-      graphql: undefined,
-      apispec: {},
-      graphQLSchema: undefined,
-    },
-  ]);
-
-  routes.countRouteRateLimited("GET", "/api/foo");
-
-  t.same(routes.asArray(), [
-    {
-      method: "GET",
-      path: "/api/foo",
-      hits: 1,
+      hits: 0,
       rateLimitedCount: 1,
       graphql: undefined,
       apispec: {},
@@ -948,28 +930,25 @@ t.test("it counts rate limited requests", async (t) => {
     },
   ]);
 
-  routes.countRouteRateLimited("GET", "/api/foo");
+  routes.addRoute(getContext("POST", "/api/foo"));
+
+  routes.countRouteRateLimited("POST", "/api/foo");
 
   t.same(routes.asArray(), [
     {
       method: "GET",
       path: "/api/foo",
-      hits: 1,
-      rateLimitedCount: 2,
+      hits: 0,
+      rateLimitedCount: 1,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
     },
-  ]);
-
-  routes.countRouteRateLimited("POST", "/api/bar");
-
-  t.same(routes.asArray(), [
     {
-      method: "GET",
+      method: "POST",
       path: "/api/foo",
       hits: 1,
-      rateLimitedCount: 2,
+      rateLimitedCount: 1,
       graphql: undefined,
       apispec: {},
       graphQLSchema: undefined,
