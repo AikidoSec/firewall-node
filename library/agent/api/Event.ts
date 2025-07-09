@@ -102,6 +102,7 @@ type Heartbeat = {
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
         total: number;
         blocked: number;

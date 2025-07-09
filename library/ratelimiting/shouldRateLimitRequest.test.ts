@@ -88,7 +88,7 @@ t.test("it rate limits by IP", async (t) => {
   t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
+  t.match(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
     block: true,
     trigger: "ip",
   });
@@ -147,7 +147,7 @@ t.test("it rate limits localhost when not in production mode", async (t) => {
   t.same(shouldRateLimitRequest(createContext("::1"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext("::1"), agent), {
+  t.match(shouldRateLimitRequest(createContext("::1"), agent), {
     block: true,
     trigger: "ip",
   });
@@ -176,7 +176,7 @@ t.test("it rate limits localhost when not in production mode", async (t) => {
   t.same(shouldRateLimitRequest(createContext("::1"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext("::1"), agent), {
+  t.match(shouldRateLimitRequest(createContext("::1"), agent), {
     block: true,
     trigger: "ip",
   });
@@ -236,7 +236,7 @@ t.test("it rate limits by user", async (t) => {
   t.same(shouldRateLimitRequest(createContext(undefined, "123"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext(undefined, "123"), agent), {
+  t.match(shouldRateLimitRequest(createContext(undefined, "123"), agent), {
     block: true,
     trigger: "user",
   });
@@ -283,7 +283,7 @@ t.test("it rate limits with wildcard", async () => {
       block: false,
     }
   );
-  t.same(
+  t.match(
     shouldRateLimitRequest(
       createContext("1.2.3.4", undefined, "/api/login"),
       agent
@@ -336,7 +336,7 @@ t.test("it rate limits with wildcard", async () => {
       block: false,
     }
   );
-  t.same(
+  t.match(
     shouldRateLimitRequest(
       createContext("1.2.3.4", undefined, "/api/login", "GET"),
       agent
@@ -371,7 +371,7 @@ t.test("it rate limits by user also if ip is set", async (t) => {
   t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
+  t.match(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
     block: true,
     trigger: "user",
   });
@@ -400,7 +400,7 @@ t.test("it rate limits by user with different ips", async (t) => {
   t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
     block: false,
   });
-  t.same(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
+  t.match(shouldRateLimitRequest(createContext("4.3.2.1", "123"), agent), {
     block: true,
     trigger: "user",
   });
@@ -549,7 +549,7 @@ t.test("it rate limits by user with different ips", async (t) => {
       block: false,
     }
   );
-  t.same(
+  t.match(
     shouldRateLimitRequest(
       createContext("4.3.2.1", "123", "/login", "POST", "group1"),
       agent
@@ -602,7 +602,7 @@ t.test("it rate limits different users in same group", async (t) => {
       block: false,
     }
   );
-  t.same(
+  t.match(
     shouldRateLimitRequest(
       createContext("4.3.2.1", "101112", "/login", "POST", "group1"),
       agent
@@ -657,7 +657,7 @@ t.test(
         block: false,
       }
     );
-    t.same(
+    t.match(
       shouldRateLimitRequest(
         createContext("1.2.3.4", "789", "/login", "POST", "group1"),
         agent
@@ -667,7 +667,7 @@ t.test(
         trigger: "group",
       }
     );
-    t.same(
+    t.match(
       shouldRateLimitRequest(
         createContext("1.2.3.4", "4321", "/login", "POST", "group1"),
         agent
@@ -686,7 +686,7 @@ t.test(
         block: false,
       }
     );
-    t.same(
+    t.match(
       shouldRateLimitRequest(
         createContext("4.3.2.1", "1563", "/login", "POST", "group2"),
         agent
@@ -740,7 +740,7 @@ t.test("it rate limits by group if user is not set", async (t) => {
       block: false,
     }
   );
-  t.same(
+  t.match(
     shouldRateLimitRequest(
       createContext("4.3.2.1", undefined, "/login", "POST", "group1"),
       agent

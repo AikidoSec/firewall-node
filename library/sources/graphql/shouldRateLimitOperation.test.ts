@@ -105,6 +105,9 @@ t.test("it rate limits query", async () => {
 
   t.match(shouldRateLimitOperation(agent, context, args), {
     block: true,
+    operationType: "query",
+    source: "ip",
+    remoteAddress: "1.2.3.4",
   });
 });
 
@@ -170,6 +173,80 @@ t.test("it rate limits mutation", async () => {
 
   t.match(shouldRateLimitOperation(agent, context, args), {
     block: true,
+    operationType: "mutation",
+    source: "ip",
+    remoteAddress: "1.2.3.4",
+  });
+});
+
+t.test("it rate limits by user", async () => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api: new ReportingAPIForTesting({
+      success: true,
+      endpoints: [
+        {
+          method: "POST",
+          route: "/graphql",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 3,
+            windowSizeInMS: 60 * 1000,
+          },
+          graphql: {
+            name: "user",
+            type: "query",
+          },
+        },
+      ],
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+    }),
+  });
+
+  agent.start([]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const args: Args = {
+    document: parse(`
+      query getUser {
+        user {
+          id
+        }
+      }
+    `),
+  };
+
+  const getContext = (ip: string): Context => ({
+    remoteAddress: ip,
+    method: "POST",
+    url: "http://localhost:4000",
+    query: {},
+    headers: {},
+    body: undefined,
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/graphql",
+    user: {
+      id: "user123",
+    },
+  });
+
+  for (let i = 0; i < 3; i++) {
+    t.same(shouldRateLimitOperation(agent, getContext(`1.2.3.${i}`), args), {
+      block: false,
+    });
+  }
+
+  t.match(shouldRateLimitOperation(agent, getContext(`1.2.3.4`), args), {
+    block: true,
+    operationType: "query",
+    source: "user",
+    userId: "user123",
   });
 });
 

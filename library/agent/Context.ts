@@ -3,6 +3,7 @@ import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserIn
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
 import { Source, SOURCES } from "./Source";
+import type { Endpoint } from "./Config";
 
 export type User = { id: string; name?: string };
 
@@ -31,6 +32,7 @@ export type Context = {
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
   rateLimitGroup?: string; // Used to apply rate limits to a group of users
+  rateLimitedEndpoint?: Endpoint; // The route that was rate limited
 };
 
 /**

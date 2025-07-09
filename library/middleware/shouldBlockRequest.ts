@@ -34,6 +34,9 @@ export function shouldBlockRequest(): Result {
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);
   if (rateLimitResult.block) {
+    // Mark the request as rate limited in the context
+    updateContext(context, "rateLimitedEndpoint", rateLimitResult.endpoint);
+
     return {
       block: true,
       type: "ratelimited",
