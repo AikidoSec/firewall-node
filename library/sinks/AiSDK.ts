@@ -145,8 +145,21 @@ export class AiSDK implements Wrapper {
           return returnValue;
         }
 
-        Promise.all([returnValue.response, returnValue.usage]).then(
-          ([response, usage]) => {
+        Promise.allSettled([returnValue.response, returnValue.usage]).then(
+          (promiseResults) => {
+            const response =
+              promiseResults[0].status === "fulfilled"
+                ? promiseResults[0].value
+                : undefined;
+            const usage =
+              promiseResults[1].status === "fulfilled"
+                ? promiseResults[1].value
+                : undefined;
+
+            if (!response || !usage) {
+              return;
+            }
+
             try {
               this.inspectAiCall(agent, args, {
                 response,
