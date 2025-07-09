@@ -574,19 +574,10 @@ export class Agent {
     });
   }
 
-  onGraphQLFieldRateLimited(
-    method: string,
-    path: string,
-    type: "query" | "mutation",
-    field: string
-  ) {
-    this.routes.countGraphQLFieldRateLimited(method, path, type, field);
-  }
-
   onRouteRateLimited(match: Endpoint) {
     // The count will be incremented for the rate-limited route, not for the exact route
     // So if it's a wildcard route, the count will be incremented for the wildcard route
-    this.routes.countRouteRateLimited(match.method, match.route);
+    this.routes.countRouteRateLimited(match);
   }
 
   getRoutes() {

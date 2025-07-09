@@ -139,17 +139,10 @@ export class GraphQL implements Wrapper {
     );
 
     if (result.block) {
+      // Increase global rate limit counter
       agent.getInspectionStatistics().onRateLimitedRequest();
+      // Mark the request as rate limited in the context
       updateContext(context, "rateLimitedEndpoint", result.endpoint);
-
-      if (context && context.method && context.route) {
-        agent.onGraphQLFieldRateLimited(
-          context.method,
-          context.route,
-          result.operationType,
-          result.field.name.value
-        );
-      }
 
       return {
         errors: [

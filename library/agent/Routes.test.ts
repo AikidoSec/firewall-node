@@ -916,7 +916,17 @@ t.test(
 t.test("it counts rate limited requests", async (t) => {
   const routes = new Routes(200);
 
-  routes.countRouteRateLimited("GET", "/api/foo");
+  routes.countRouteRateLimited({
+    method: "GET",
+    route: "/api/foo",
+    forceProtectionOff: false,
+    allowedIPAddresses: undefined,
+    rateLimiting: {
+      enabled: false,
+      maxRequests: 0,
+      windowSizeInMS: 0,
+    },
+  });
 
   t.same(routes.asArray(), [
     {
@@ -932,7 +942,17 @@ t.test("it counts rate limited requests", async (t) => {
 
   routes.addRoute(getContext("POST", "/api/foo"));
 
-  routes.countRouteRateLimited("POST", "/api/foo");
+  routes.countRouteRateLimited({
+    method: "POST",
+    route: "/api/foo",
+    forceProtectionOff: false,
+    allowedIPAddresses: undefined,
+    rateLimiting: {
+      enabled: false,
+      maxRequests: 0,
+      windowSizeInMS: 0,
+    },
+  });
 
   t.same(routes.asArray(), [
     {
@@ -961,7 +981,18 @@ t.test("it counts rate limited GraphQL fields", async (t) => {
   routes.addRoute(getContext("POST", "/graphql"));
   routes.addGraphQLField("POST", "/graphql", "query", "user");
 
-  routes.countGraphQLFieldRateLimited("POST", "/graphql", "query", "user");
+  routes.countRouteRateLimited({
+    method: "POST",
+    route: "/graphql",
+    graphql: { type: "query", name: "user" },
+    forceProtectionOff: false,
+    allowedIPAddresses: undefined,
+    rateLimiting: {
+      enabled: false,
+      maxRequests: 0,
+      windowSizeInMS: 0,
+    },
+  });
 
   t.same(routes.asArray(), [
     {
@@ -985,7 +1016,18 @@ t.test("it counts rate limited GraphQL fields", async (t) => {
   ]);
 
   routes.addGraphQLField("POST", "/graphql", "query", "user");
-  routes.countGraphQLFieldRateLimited("POST", "/graphql", "query", "user");
+  routes.countRouteRateLimited({
+    method: "POST",
+    route: "/graphql",
+    graphql: { type: "query", name: "user" },
+    forceProtectionOff: false,
+    allowedIPAddresses: undefined,
+    rateLimiting: {
+      enabled: true,
+      maxRequests: 2,
+      windowSizeInMS: 1000,
+    },
+  });
 
   t.same(routes.asArray(), [
     {

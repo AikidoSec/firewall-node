@@ -2,6 +2,7 @@ import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples"
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import { isAikidoDASTRequest } from "./AikidoDAST";
+import { Endpoint } from "./Config";
 import type { Context } from "./Context";
 
 export type Route = {
@@ -136,30 +137,26 @@ export class Routes {
     }
   }
 
-  countGraphQLFieldRateLimited(
-    method: string,
-    path: string,
-    type: "query" | "mutation",
-    name: string
-  ) {
-    const key = this.getGraphQLKey(method, path, type, name);
-    const existing = this.routes.get(key);
-
-    if (existing) {
-      existing.rateLimitedCount++;
-      return;
+  countRouteRateLimited(route: Endpoint) {
+    let key = this.getKey(route.method, route.route);
+    if (route.graphql) {
+      key = this.getGraphQLKey(
+        route.method,
+        route.route,
+        route.graphql.type,
+        route.graphql.name
+      );
     }
-  }
-
-  countRouteRateLimited(method: string, path: string) {
-    const key = this.getKey(method, path);
     let existing = this.routes.get(key);
 
     if (!existing) {
       this.evictLeastUsedRouteIfNecessary();
       existing = {
-        method,
-        path,
+        method: route.method,
+        path: route.route,
+        graphql: route.graphql
+          ? { type: route.graphql.type, name: route.graphql.name }
+          : undefined,
         hits: 0,
         apispec: {},
         rateLimitedCount: 0,
