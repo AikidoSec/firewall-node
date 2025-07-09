@@ -135,6 +135,7 @@ type Heartbeat = {
     path: string;
     method: string;
     hits: number;
+    rateLimitedCount: number;
     graphql?: { type: "query" | "mutation"; name: string };
     apispec: APISpec;
   }[];
