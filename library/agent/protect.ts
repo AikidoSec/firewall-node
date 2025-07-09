@@ -52,6 +52,7 @@ import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
 import { OpenAI } from "../sinks/OpenAI";
 import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
+import { AiSDK } from "../sinks/AiSDK";
 import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
 
@@ -153,6 +154,7 @@ export function getWrappers() {
     new AwsSDKVersion3(),
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
+    new AiSDK(),
   ];
 }
 

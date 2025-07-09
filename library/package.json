@@ -42,6 +42,7 @@
   },
   "sideEffects": true,
   "devDependencies": {
+    "@ai-sdk/google": "^1.2.19",
     "@clickhouse/client": "^1.7.0",
     "@eslint/js": "^9.23.0",
     "@fastify/cookie": "^11.0.2",
@@ -70,6 +71,7 @@
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/supertest": "^6.0.2",
     "@types/xml2js": "^0.4.14",
+    "ai": "^4.3.16",
     "aws-sdk": "^2.1595.0",
     "axios": "^1.8.4",
     "better-sqlite3": "^11.9.1",
@@ -123,6 +125,7 @@
     "undici-v7": "npm:undici@^7.0.0",
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
+    "zod": "^3.25.63",
     "restify": "^8.6.0",
     "@mistralai/mistralai": "^1.0.0",
     "@anthropic-ai/sdk": "^0.56.0"
