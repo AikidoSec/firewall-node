@@ -133,7 +133,7 @@ t.test("it works", async () => {
       method: "POST",
       path: "/graphql",
       hits: 6,
-      rateLimitedCount: 3,
+      rateLimitedCount: 0, // Counted in finish event of the incoming http request
       graphql: {
         type: "query",
         name: "getFile",
