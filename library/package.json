@@ -104,6 +104,8 @@
     "mysql2-v3.12": "npm:mysql2@3.12",
     "needle": "^3.3.1",
     "node-fetch": "^2",
+    "openai-v4": "npm:openai@^4.104.0",
+    "openai-v5": "npm:openai@^5.8.2",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
@@ -123,7 +125,10 @@
     "undici-v7": "npm:undici@^7.0.0",
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
-    "zod": "^3.25.63"
+    "zod": "^3.25.63",
+    "restify": "^8.6.0",
+    "@mistralai/mistralai": "^1.0.0",
+    "@anthropic-ai/sdk": "^0.56.0"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",

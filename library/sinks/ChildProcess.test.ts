@@ -95,7 +95,7 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     throws(
       () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
-      "Zen has blocked a shell injection: child_process.exec(...) originating from body.file.matches"
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
     );
 
     throws(
