@@ -56,6 +56,7 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
   return async function fetchBlockedLists(): Promise<Response> {
     return {
       allowedIPAddresses: [],
+      botSpoofingProtection: [],
       blockedIPAddresses: [
         {
           key: "geoip/Belgium;BE",

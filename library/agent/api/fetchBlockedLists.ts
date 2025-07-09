@@ -10,6 +10,13 @@ export type IPList = {
   ips: string[];
 };
 
+export type BotSpoofingData = {
+  key: string;
+  uaPattern: string;
+  ips: string[];
+  hostnames: string[];
+};
+
 export type UserAgentDetails = {
   key: string; // e.g. "claudebot"
   pattern: string; // e.g. "ClaudeBot" (the regex pattern)
@@ -20,6 +27,7 @@ export type Response = {
   allowedIPAddresses: IPList[];
   monitoredIPAddresses: IPList[];
   blockedUserAgents: string;
+  botSpoofingProtection: BotSpoofingData[];
   monitoredUserAgents: string;
   // `monitoredUserAgents` and `blockedUserAgents` are one big regex pattern
   // If we want to collect stats about the individual user agents,
@@ -54,6 +62,7 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     allowedIPAddresses: IPList[];
     monitoredIPAddresses: IPList[];
     blockedUserAgents: string;
+    botSpoofingProtection: BotSpoofingData[];
     monitoredUserAgents: string;
     userAgentDetails: UserAgentDetails[];
   } = JSON.parse(body);
@@ -76,6 +85,10 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
       result && typeof result.blockedUserAgents === "string"
         ? result.blockedUserAgents
         : "",
+    botSpoofingProtection:
+      result && Array.isArray(result.botSpoofingProtection)
+        ? result.botSpoofingProtection
+        : [],
     // Monitored user agents are stored as a string pattern for usage in a regex (e.g. "ClaudeBot|ChatGPTBot")
     monitoredUserAgents:
       result && typeof result.monitoredUserAgents === "string"
