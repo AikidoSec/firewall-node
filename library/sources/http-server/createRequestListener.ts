@@ -107,6 +107,7 @@ function createOnFinishRequestHandler(
       }
 
       if (context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
     }

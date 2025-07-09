@@ -34,8 +34,6 @@ export function shouldBlockRequest(): Result {
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);
   if (rateLimitResult.block) {
-    // Increase global rate limit counter
-    agent.getInspectionStatistics().onRateLimitedRequest();
     // Mark the request as rate limited in the context
     updateContext(context, "rateLimitedEndpoint", rateLimitResult.endpoint);
 

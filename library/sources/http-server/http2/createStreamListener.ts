@@ -72,6 +72,7 @@ function discoverRouteFromStream(
       }
 
       if (context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
     }
