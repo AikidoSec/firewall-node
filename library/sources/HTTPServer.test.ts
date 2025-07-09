@@ -403,7 +403,7 @@ async function sendUsingCurl({
   return stdout;
 }
 
-t.only("it sends 413 when body is larger than 20 Mb", async (t) => {
+t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
 
