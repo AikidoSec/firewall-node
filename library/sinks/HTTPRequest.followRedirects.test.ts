@@ -1,3 +1,4 @@
+import type { IncomingMessage } from "http";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -22,6 +23,16 @@ const context: Context = {
 let server: import("http").Server;
 const port = 3000;
 
+function consumeBody(res: IncomingMessage) {
+  // We need to consume the body
+  // From Node.19+ this would otherwise hang the test
+  res.on("readable", () => {
+    while (res.read() !== null) {
+      // Keep reading until the stream is empty
+    }
+  });
+}
+
 t.before(async () => {
   const { createServer } = require("http") as typeof import("http");
 
@@ -39,7 +50,7 @@ t.before(async () => {
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
-t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
+t.test("it works", (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
   });
@@ -120,9 +131,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     },
     () => {
       const response = http.request(`http://[::]:${port}`, (res) => {
-        while (res.read()) {
-          // consume body
-        }
+        consumeBody(res);
 
         t.same(res.statusCode, 200);
       });
