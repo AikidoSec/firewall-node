@@ -124,6 +124,11 @@ type Heartbeat = {
       output: number;
       total: number;
     };
+    callDetails: {
+      timeStartMS: number;
+      timeEndMS: number;
+      identifier: string;
+    }[];
   }[];
   packages: {
     name: string;

@@ -75,10 +75,7 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
-    if (callDetails) {
-      agent?.log(JSON.stringify(callDetails))
-      providerStats.callDetails.push(callDetails)
-    }
+    providerStats.callDetails.push(callDetails)
   }
 
   getStats() {
@@ -93,6 +90,7 @@ export class AIStatistics {
           total: stats.tokens.total,
         },
         callDetails: stats.callDetails,
+        testProperty: "test"
       };
     });
   }
