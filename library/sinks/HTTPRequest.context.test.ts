@@ -1,10 +1,6 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, getContext, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 

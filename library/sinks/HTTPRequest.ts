@@ -15,7 +15,7 @@ import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPriva
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
-import { onHTTPResponse } from "./http-request/onHTTPResponse";
+import { onHTTPResponse } from "./http-request/wrapResponseHandler";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
