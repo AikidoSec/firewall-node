@@ -16,7 +16,7 @@ type PartialAiResponse = {
 };
 
 export class AiSDK implements Wrapper {
-  private inspectAiCall(agent: Agent, args: unknown[], response: unknown) {
+  private inspectAiCall(agent: Agent, args: unknown[], response: unknown, timeStart: number) {
     if (!this.isResult(response)) {
       return;
     }
@@ -34,6 +34,11 @@ export class AiSDK implements Wrapper {
       model: modelName,
       inputTokens: response.usage.promptTokens,
       outputTokens: response.usage.completionTokens,
+      callDetails: {
+        timeStartMS: timeStart,
+        timeEndMS: Date.now(),
+        identifier: `${modelName} - not unique`
+      }
     });
   }
 
@@ -114,12 +119,12 @@ export class AiSDK implements Wrapper {
   private getInterceptors(): InterceptorObject {
     return {
       kind: "ai_op",
-      modifyReturnValue: (args, returnValue, agent) => {
+      modifyReturnValue: (args, returnValue, agent, interceptor, timeStart) => {
         if (returnValue instanceof Promise) {
           // Inspect the response after the promise resolves, it won't change the original promise
           returnValue.then((response) => {
             try {
-              this.inspectAiCall(agent, args, response);
+              this.inspectAiCall(agent, args, response, timeStart);
             } catch {
               // If we don't catch these errors, it will result in an unhandled promise rejection!
             }
@@ -133,7 +138,7 @@ export class AiSDK implements Wrapper {
   private getStreamInterceptors(): InterceptorObject {
     return {
       kind: "ai_op",
-      modifyReturnValue: (args, returnValue, agent) => {
+      modifyReturnValue: (args, returnValue, agent, interceptor, timeStart) => {
         if (
           !returnValue ||
           typeof returnValue !== "object" ||
@@ -164,7 +169,7 @@ export class AiSDK implements Wrapper {
               this.inspectAiCall(agent, args, {
                 response,
                 usage,
-              });
+              }, timeStart);
             } catch {
               // If we don't catch these errors, it will result in an unhandled promise rejection!
             }
