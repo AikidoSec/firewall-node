@@ -10,7 +10,7 @@ const pathToApp = resolve(
 );
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4002"], {
+  const server = spawn(`node`, [pathToApp, "4002"], {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
@@ -59,6 +59,10 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked an SQL injection/);
+      t.notMatch(
+        stderr,
+        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
+      );
     })
     .catch((error) => {
       t.fail(error.message);
@@ -69,7 +73,7 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4003"], {
+  const server = spawn(`node`, [pathToApp, "4003"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
   });
 
@@ -114,6 +118,10 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
+      t.notMatch(
+        stderr,
+        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
+      );
     })
     .catch((error) => {
       t.fail(error.message);

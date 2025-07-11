@@ -138,7 +138,7 @@ t.test("it ignores iss value of jwt", async () => {
 t.test("it also adds the JWT itself as string", async () => {
   t.same(
     extractStringsFromUserInput({ header: "/;ping%20localhost;.e30=." }),
-    fromArr(["header", "/;ping%20localhost;.e30=."])
+    fromArr(["header", "/;ping%20localhost;.e30=.", "/;ping localhost;.e30=."])
   );
 });
 
@@ -167,6 +167,25 @@ t.test("it concatenates array values", async () => {
       "test345",
       "test123,test345",
       "1,2,true,,,[object Object]",
+    ])
+  );
+});
+
+t.test("it decodes uri encoded strings", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      arr: ["1", "2", "3"],
+      encoded: "%2E%2E/%2E%2Fetc%2Fpasswd",
+    }),
+    fromArr([
+      "arr",
+      "1",
+      "2",
+      "3",
+      "1,2,3",
+      "encoded",
+      "%2E%2E/%2E%2Fetc%2Fpasswd",
+      ".././etc/passwd",
     ])
   );
 });

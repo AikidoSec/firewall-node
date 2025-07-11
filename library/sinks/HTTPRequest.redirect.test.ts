@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { type IncomingMessage } from "http";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
@@ -161,17 +160,17 @@ t.test("it works", (t) => {
       },
     }),
     () => {
-      const req1 = http.request(
+      const response1 = http.request(
         `${redirectTestUrl2}/ssrf-test-absolute-domain`
       );
-      req1.on("response", (res) => {
+      response1.on("response", (res) => {
         t.same(res.statusCode, 302);
         t.same(res.headers.location, `${redirectTestUrl2}/ssrf-test-domain`);
 
         consumeBody(res);
 
-        const req2 = http.request(`${redirectTestUrl2}/ssrf-test-domain`);
-        req2.prependOnceListener("response", (res) => {
+        const response2 = http.request(`${redirectTestUrl2}/ssrf-test-domain`);
+        response2.prependOnceListener("response", (res) => {
           consumeBody(res);
 
           http
@@ -184,9 +183,9 @@ t.test("it works", (t) => {
             })
             .end();
         });
-        req2.end();
+        response2.end();
       });
-      req1.end();
+      response1.end();
     }
   );
 

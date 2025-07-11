@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": false,
+    "esModuleInterop": true
+  },
+  "include": ["**/*.ts"]
+}

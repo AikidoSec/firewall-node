@@ -51,13 +51,14 @@ t.beforeEach(async () => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4000"], {
+  const server = spawn(`node`, [pathToApp, "4000"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -66,7 +67,7 @@ t.test("it blocks in blocking mode", (t) => {
   });
 
   server.on("error", (err) => {
-    t.fail(err.message);
+    t.fail(err);
   });
 
   let stdout = "";
@@ -92,13 +93,34 @@ t.test("it blocks in blocking mode", (t) => {
             signal: AbortSignal.timeout(5000),
           }
         ),
+        fetch(
+          `http://local.aikido.io:4000/images/${encodeURIComponent("http://local.aikido.io:4000")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+            headers: {
+              Origin: "http://local.aikido.io:4000",
+              Referer: "http://local.aikido.io:4000",
+            },
+          }
+        ),
+        fetch(
+          `http://local.aikido.io:4000/images/${encodeURIComponent("http://local.aikido.io:5875")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+          }
+        ),
       ]);
     })
-    .then(([safeRequest, ssrfRequest]) => {
+    .then(([safeRequest, ssrfRequest, requestToItself, differentPort]) => {
       t.equal(safeRequest.status, 200);
       t.equal(ssrfRequest.status, 500);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked a server-side request forgery/);
+
+      // Requests to same hostname as the server should be allowed
+      t.equal(requestToItself.status, 200);
+      // If the port is different, it should be blocked
+      t.equal(differentPort.status, 500);
 
       return fetch(`${testServerUrl}/api/runtime/events`, {
         method: "GET",
@@ -114,14 +136,14 @@ t.test("it blocks in blocking mode", (t) => {
       const attacks = events.filter(
         (event) => event.type === "detected_attack"
       );
-      t.same(attacks.length, 1);
+      t.same(attacks.length, 2);
       const [attack] = attacks;
       t.match(attack.attack.stack, /app\.js/);
       t.match(attack.attack.stack, /fetchImage\.js/);
       t.match(attack.attack.stack, /express-async-handler/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
     })
     .finally(() => {
       server.kill();
@@ -129,17 +151,22 @@ t.test("it blocks in blocking mode", (t) => {
 });
 
 t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["--preserve-symlinks", pathToApp, "4001"], {
+  const server = spawn(`node`, [pathToApp, "4001"], {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
       AIKIDO_TOKEN: token,
-      AIKIDO_URL: testServerUrl,
+      AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
   server.on("close", () => {
     t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err);
   });
 
   let stdout = "";
@@ -174,7 +201,59 @@ t.test("it does not block in dry mode", (t) => {
       t.notMatch(stderr, /Zen has blocked a server-side request forgery/);
     })
     .catch((error) => {
-      t.fail(error.message);
+      t.fail(error);
+    })
+    .finally(() => {
+      server.kill();
+    });
+});
+
+t.test("it blocks request to base URL if proxy is not trusted", (t) => {
+  const server = spawn(`node`, [pathToApp, "4002"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCKING: "true",
+      AIKIDO_TOKEN: token,
+      AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
+      AIKIDO_TRUST_PROXY: "false",
+    },
+  });
+
+  server.on("close", () => {
+    t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err);
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  // Wait for the server to start
+  timeout(2000)
+    .then(() => {
+      return fetch(
+        `http://local.aikido.io:4002/images/${encodeURIComponent("http://local.aikido.io:4002")}`,
+        {
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+    })
+    .then((requestToItself) => {
+      t.equal(requestToItself.status, 500);
+    })
+    .catch((error) => {
+      t.fail(error);
     })
     .finally(() => {
       server.kill();

@@ -16,7 +16,7 @@ t.test(
       }),
       {
         success: false,
-        incompatiblePackages: { "shell-quote": "1.8.1" },
+        incompatiblePackages: { "shell-quote": "1.8.3" },
       }
     );
   }

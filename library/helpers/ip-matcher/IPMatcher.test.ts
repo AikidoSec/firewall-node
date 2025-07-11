@@ -192,3 +192,15 @@ t.test("Different cidr ranges", async (t) => {
   t.same(new IPMatcher(["123.2.0.2/31"]).has("123.2.0.1"), false);
   t.same(new IPMatcher(["123.2.0.2/32"]).has("123.2.0.2"), true);
 });
+
+t.test("allow all ips", async (t) => {
+  const matcher = new IPMatcher(["0.0.0.0/0", "::/0"]);
+  t.same(matcher.has("1.2.3.4"), true);
+  t.same(matcher.has("::1"), true);
+  t.same(matcher.has("::ffff:1234"), true);
+  t.same(matcher.has("1.1.1.1"), true);
+  t.same(matcher.has("2002:db8::1"), true);
+  t.same(matcher.has("10.0.0.1"), true);
+  t.same(matcher.has("10.0.0.255"), true);
+  t.same(matcher.has("192.168.1.1"), true);
+});

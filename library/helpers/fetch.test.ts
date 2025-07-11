@@ -2,6 +2,7 @@ import * as t from "tap";
 import { createServer, Server } from "http";
 import { fetch } from "./fetch";
 import { gzip } from "zlib";
+import { getMajorNodeVersion } from "./getNodeVersion";
 
 let server: Server;
 
@@ -13,6 +14,7 @@ t.beforeEach(async () => {
     req.on("end", () => {
       const body = JSON.stringify({
         method: req.method,
+        headers: req.headers,
         body: Buffer.concat(chunks).toString(),
       });
       if (req.headers["accept-encoding"] === "gzip") {
@@ -50,7 +52,14 @@ t.test("should make a GET request", async (t) => {
   const response = await fetch({ url });
 
   t.equal(response.statusCode, 200);
-  t.same(JSON.parse(response.body), { method: "GET", body: "" });
+  t.same(JSON.parse(response.body), {
+    method: "GET",
+    body: "",
+    headers: {
+      host: `localhost:${(server.address() as any).port}`,
+      connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
+    },
+  });
 });
 
 t.test("should make a GET request with gzip", async (t) => {
@@ -63,7 +72,15 @@ t.test("should make a GET request with gzip", async (t) => {
   });
 
   t.equal(response.statusCode, 200);
-  t.same(JSON.parse(response.body), { method: "GET", body: "" });
+  t.same(JSON.parse(response.body), {
+    method: "GET",
+    body: "",
+    headers: {
+      host: `localhost:${(server.address() as any).port}`,
+      connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
+      "accept-encoding": "gzip",
+    },
+  });
 });
 
 t.test("should make a POST request with body", async (t) => {
@@ -79,6 +96,12 @@ t.test("should make a POST request with body", async (t) => {
   t.same(JSON.parse(response.body), {
     method: "POST",
     body: '{"key":"value"}',
+    headers: {
+      host: `localhost:${(server.address() as any).port}`,
+      connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
+      "content-type": "application/json",
+      "content-length": "15",
+    },
   });
 });
 
@@ -98,5 +121,12 @@ t.test("should make a POST request with body and gzip", async (t) => {
   t.same(JSON.parse(response.body), {
     method: "POST",
     body: '{"key":"value"}',
+    headers: {
+      host: `localhost:${(server.address() as any).port}`,
+      connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
+      "content-type": "application/json",
+      "content-length": "15",
+      "accept-encoding": "gzip",
+    },
   });
 });

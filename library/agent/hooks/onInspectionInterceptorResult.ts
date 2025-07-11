@@ -2,10 +2,12 @@ import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import type { Agent } from "../Agent";
+import { OperationKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
 import type { WrapPackageInfo } from "./WrapPackageInfo";
+import { cleanError } from "../../helpers/cleanError";
 
 // Used for cleaning up the stack trace
 const libraryRoot = resolve(__dirname, "../..");
@@ -15,23 +17,29 @@ export function onInspectionInterceptorResult(
   agent: Agent,
   result: InterceptorResult,
   pkgInfo: WrapPackageInfo,
-  start: number
+  start: number,
+  operation: string,
+  kind: OperationKind | undefined
 ) {
   const end = performance.now();
-  agent.getInspectionStatistics().onInspectedCall({
-    sink: pkgInfo.name,
-    attackDetected: !!result,
-    blocked: agent.shouldBlock(),
-    durationInMs: end - start,
-    withoutContext: !context,
-  });
 
-  const isAllowedIP =
+  if (kind) {
+    agent.getInspectionStatistics().onInspectedCall({
+      operation: operation,
+      kind: kind,
+      attackDetected: !!result,
+      blocked: agent.shouldBlock(),
+      durationInMs: end - start,
+      withoutContext: !context,
+    });
+  }
+
+  const isBypassedIP =
     context &&
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (result && context && !isAllowedIP) {
+  if (result && context && !isBypassedIP) {
     // Flag request as having an attack detected
     updateContext(context, "attackDetected", true);
 
@@ -49,8 +57,10 @@ export function onInspectionInterceptorResult(
     });
 
     if (agent.shouldBlock()) {
-      throw new Error(
-        `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+      throw cleanError(
+        new Error(
+          `Zen has blocked ${attackKindHumanName(result.kind)}: ${result.operation}(...) originating from ${result.source}${escapeHTML((result.pathsToPayload || []).join())}`
+        )
       );
     }
   }

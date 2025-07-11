@@ -1,9 +1,9 @@
-name: End to end tests
+name: 🕵️ End to end tests
 on:
   push: {}
   workflow_call: {}
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     services:
       mongodb:
@@ -45,22 +45,24 @@ jobs:
           "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
         ports:
           - "27019:8123"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [18.x]
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
       - name: Build and run server
         run: |
           cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
-      - run: make install
-      - run: make build
-      - run: make end2end
+      - run: npm install
+      - run: npm run build
+      - run: npm run end2end

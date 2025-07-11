@@ -1,4 +1,5 @@
 import { Agent } from "../agent/Agent";
+import { Endpoint } from "../agent/Config";
 import { Context, updateContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { getRateLimitedEndpoint } from "./getRateLimitedEndpoint";
@@ -10,10 +11,17 @@ type Result =
   | {
       block: true;
       trigger: "ip";
+      endpoint: Endpoint;
     }
   | {
       block: true;
       trigger: "user";
+      endpoint: Endpoint;
+    }
+  | {
+      block: true;
+      trigger: "group";
+      endpoint: Endpoint;
     };
 
 // eslint-disable-next-line max-lines-per-function
@@ -24,7 +32,6 @@ export function shouldRateLimitRequest(
   // Do not consume rate limit for the same request a second time
   // (Might happen if the user adds the middleware multiple times)
   if (context.consumedRateLimit) {
-    logWarningIfMiddlewareExecutedTwice();
     return { block: false };
   }
 
@@ -47,15 +54,32 @@ export function shouldRateLimitRequest(
     isProduction;
 
   // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isAllowedIP =
+  const isBypassedIP =
     context.remoteAddress &&
-    agent.getConfig().isAllowedIP(context.remoteAddress);
+    agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isFromLocalhostInProduction || isAllowedIP) {
+  if (isFromLocalhostInProduction || isBypassedIP) {
     return { block: false };
   }
 
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
+
+  if (context.rateLimitGroup) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:group:${context.rateLimitGroup}`,
+        windowSizeInMS,
+        maxRequests
+      );
+
+    if (!allowed) {
+      return { block: true, trigger: "group", endpoint };
+    }
+
+    // Do not check IP or User rate limit if rateLimitGroup is set
+    return { block: false };
+  }
 
   if (context.user) {
     const allowed = agent
@@ -67,7 +91,7 @@ export function shouldRateLimitRequest(
       );
 
     if (!allowed) {
-      return { block: true, trigger: "user" };
+      return { block: true, trigger: "user", endpoint };
     }
 
     // Do not check IP rate limit if user is set
@@ -84,22 +108,9 @@ export function shouldRateLimitRequest(
       );
 
     if (!allowed) {
-      return { block: true, trigger: "ip" };
+      return { block: true, trigger: "ip", endpoint };
     }
   }
 
   return { block: false };
-}
-
-let loggedWarningIfMiddlewareExecutedTwice = false;
-
-function logWarningIfMiddlewareExecutedTwice(): void {
-  if (loggedWarningIfMiddlewareExecutedTwice) {
-    return;
-  }
-
-  // eslint-disable-next-line no-console
-  console.warn(`Zen.addMiddleware(...) should be called only once.`);
-
-  loggedWarningIfMiddlewareExecutedTwice = true;
 }

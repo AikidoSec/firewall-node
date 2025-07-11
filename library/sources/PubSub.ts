@@ -8,9 +8,10 @@ export class PubSub implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/pubsub")
-      .withVersion("^4.0.0")
+      .withVersion("^5.0.0 || ^4.0.0")
       .onFileRequire("build/src/subscription.js", (exports, pkgInfo) => {
         wrapExport(exports.Subscription.prototype, "on", pkgInfo, {
+          kind: undefined,
           modifyArgs: (args) => {
             if (
               args.length > 0 &&
@@ -63,7 +64,7 @@ function handleMessage(handler: Function) {
 function tryParseJSON(jsonString: string) {
   try {
     return JSON.parse(jsonString);
-  } catch (e) {
+  } catch {
     return undefined;
   }
 }

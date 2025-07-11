@@ -26,7 +26,9 @@ export class HTTPRequest implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(url.hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(url.hostname, port);
+    }
     const context = getContext();
 
     if (!context) {
@@ -60,7 +62,6 @@ export class HTTPRequest implements Wrapper {
     return undefined;
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspectHttpRequest(
     args: unknown[],
     agent: Agent,
@@ -185,6 +186,7 @@ export class HTTPRequest implements Wrapper {
 
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
+            kind: "outgoing_http_op",
             // Whenever a request is made, we'll check the hostname whether it's a private IP
             inspectArgs: (args, agent) =>
               this.inspectHttpRequest(args, agent, module),

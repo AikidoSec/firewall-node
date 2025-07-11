@@ -19,7 +19,7 @@ t.before(() => {
 
 entrypoints.forEach((entrypoint) => {
   t.test(`it blocks in blocking mode (${entrypoint})`, (t) => {
-    const server = spawn(`node`, ["--preserve-symlinks", entrypoint, "4000"], {
+    const server = spawn(`node`, [entrypoint, "4000"], {
       env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
       cwd: directory,
     });
@@ -88,7 +88,7 @@ entrypoints.forEach((entrypoint) => {
   });
 
   t.test(`it does not block in dry mode (${entrypoint})`, (t) => {
-    const server = spawn(`node`, ["--preserve-symlinks", entrypoint, "4001"], {
+    const server = spawn(`node`, [entrypoint, "4001"], {
       env: { ...process.env, AIKIDO_DEBUG: "true" },
       cwd: directory,
     });
@@ -160,7 +160,7 @@ entrypoints.forEach((entrypoint) => {
 t.test("it blocks in blocking mode (with dd-trace)", (t) => {
   const server = spawn(
     `node`,
-    ["--preserve-symlinks", "--require", "dd-trace/init", "app.js", "4002"],
+    ["--require", "dd-trace/init", "app.js", "4002"],
     {
       env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
       cwd: directory,

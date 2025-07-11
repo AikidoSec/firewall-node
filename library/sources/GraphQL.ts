@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import { Agent } from "../agent/Agent";
 import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -36,7 +35,7 @@ export class GraphQL implements Wrapper {
       try {
         const schema = this.graphqlModule.printSchema(executeArgs.schema);
         agent.onGraphQLSchema(context.method, context.route, schema);
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     }
@@ -140,6 +139,9 @@ export class GraphQL implements Wrapper {
     );
 
     if (result.block) {
+      // Mark the request as rate limited in the context
+      updateContext(context, "rateLimitedEndpoint", result.endpoint);
+
       return {
         errors: [
           new this.graphqlModule.GraphQLError("You are rate limited by Zen.", {
@@ -161,6 +163,7 @@ export class GraphQL implements Wrapper {
 
     for (const method of methods) {
       wrapExport(exports, method, pkgInfo, {
+        kind: "graphql_op",
         modifyReturnValue: (args, returnValue, agent) =>
           this.handleRateLimiting(args, returnValue, agent),
         inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
@@ -175,7 +178,7 @@ export class GraphQL implements Wrapper {
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
       })
-      .onRequire((exports, pkgInfo) => {
+      .onRequire((exports) => {
         this.graphqlModule = exports;
       });
 

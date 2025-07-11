@@ -2,13 +2,19 @@ import { escapeStringRegexp } from "./escapeStringRegexp";
 
 export function cleanupStackTrace(stack: string, libraryRoot: string): string {
   try {
-    return stack
+    const newStackLines = stack
       .split("\n")
       .filter(createLineFilter(libraryRoot))
-      .map(createLineMapper(libraryRoot))
-      .join("\n")
-      .trim();
-  } catch (error) {
+      .map(createLineMapper(libraryRoot));
+
+    // If the stack only has one line (the error message), we return the original stack trace.
+    // This could happen if the detected library root is wrong
+    if (newStackLines.length <= 1) {
+      return stack;
+    }
+
+    return newStackLines.join("\n").trim();
+  } catch {
     // Safer to return the original stack trace in case of an error
     // than to crash the application
     return stack;
@@ -71,7 +77,6 @@ function createLineMapper(libraryRoot: string) {
     if (line.trimStart().startsWith("at ")) {
       const parts = line.trimStart().split(" ");
       if (parts.length === 4) {
-        const lastPart = parts[parts.length - 1];
         // Cleanup our own stack traces
         // Examples
         // at Object.unifiedUsers (/Users/hansott/Code/my-project/server/src/GraphQL/Mutation.ts:4491:31) /Users/hansott/Code/my-project/server/node_modules/@aikidosec/firewall

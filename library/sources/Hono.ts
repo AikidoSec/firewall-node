@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import type { MiddlewareHandler } from "hono";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -47,6 +46,7 @@ export class Hono implements Wrapper {
         wrapNewInstance(newExports, "Hono", pkgInfo, (instance) => {
           METHODS.forEach((method) => {
             wrapExport(instance, method, pkgInfo, {
+              kind: undefined,
               modifyArgs: this.wrapArgs,
             });
           });

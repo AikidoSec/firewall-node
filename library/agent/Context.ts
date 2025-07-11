@@ -3,6 +3,7 @@ import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserIn
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
 import { Source, SOURCES } from "./Source";
+import type { Endpoint } from "./Config";
 
 export type User = { id: string; name?: string };
 
@@ -17,18 +18,21 @@ export type Context = {
   cookies: Record<string, string>;
   attackDetected?: boolean;
   consumedRateLimit?: boolean;
-  user?: { id: string; name?: string };
+  user?: User;
   source: string;
   route: string | undefined;
   graphql?: string[];
-  xml?: unknown;
+  xml?: unknown[];
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
+  markUnsafe?: unknown[];
   cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
   /**
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  rateLimitGroup?: string; // Used to apply rate limits to a group of users
+  rateLimitedEndpoint?: Endpoint; // The route that was rate limited
 };
 
 /**
@@ -84,6 +88,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.xml = context.xml;
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
+    current.markUnsafe = context.markUnsafe;
 
     // Clear all the cached user input strings
     delete current.cache;

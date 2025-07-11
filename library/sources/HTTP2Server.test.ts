@@ -178,7 +178,7 @@ t.test("it discovers routes", async () => {
   await new Promise<void>((resolve) => {
     server.listen(3417, () => {
       http2Request(new URL("http://localhost:3417/foo/bar"), "GET", {}).then(
-        ({}) => {
+        () => {
           t.same(
             agent
               .getRoutes()
@@ -188,6 +188,7 @@ t.test("it discovers routes", async () => {
               path: "/foo/bar",
               method: "GET",
               hits: 1,
+              rateLimitedCount: 0,
               graphql: undefined,
               apispec: {},
               graphQLSchema: undefined,
@@ -210,7 +211,7 @@ t.test("it does not discover routes with 404 status code", async () => {
   await new Promise<void>((resolve) => {
     server.listen(3418, () => {
       http2Request(new URL("http://localhost:3418/not-found"), "GET", {}).then(
-        ({}) => {
+        () => {
           t.same(
             agent
               .getRoutes()
@@ -374,7 +375,7 @@ t.test("it discovers routes using stream event", async () => {
         new URL("http://localhost:3425/foo/bar/stream"),
         "GET",
         {}
-      ).then(({}) => {
+      ).then(() => {
         t.same(
           agent
             .getRoutes()
@@ -384,6 +385,7 @@ t.test("it discovers routes using stream event", async () => {
             path: "/foo/bar/stream",
             method: "GET",
             hits: 1,
+            rateLimitedCount: 0,
             graphql: undefined,
             apispec: {},
             graphQLSchema: undefined,
@@ -409,7 +411,7 @@ t.test("it does not discover routes with 404 status code", async () => {
         new URL("http://localhost:3426/not-found-stream"),
         "GET",
         {}
-      ).then(({}) => {
+      ).then(() => {
         t.same(
           agent
             .getRoutes()

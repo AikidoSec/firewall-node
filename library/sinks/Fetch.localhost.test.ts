@@ -1,11 +1,7 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
 import { createServer, Server } from "http";
-import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Fetch } from "./Fetch";
 

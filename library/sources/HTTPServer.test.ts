@@ -1,12 +1,22 @@
 import { Token } from "../agent/api/Token";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
+import { wrap } from "../helpers/wrap";
+import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
 import { HTTPServer } from "./HTTPServer";
+import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
+import type { Response } from "../agent/api/fetchBlockedLists";
+import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
+import { mkdtemp, writeFile, unlink } from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
+import { FileSystem } from "../sinks/FileSystem";
+import { Path } from "../sinks/Path";
+const execAsync = promisify(exec);
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -34,6 +44,17 @@ const api = new ReportingAPIForTesting({
       // @ts-expect-error Testing
       rateLimiting: undefined,
     },
+    {
+      route: "/routes/*",
+      method: "*",
+      forceProtectionOff: false,
+      allowedIPAddresses: [],
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 2,
+        windowSizeInMS: 60 * 60 * 1000,
+      },
+    },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
@@ -41,7 +62,27 @@ const agent = createTestAgent({
   token: new Token("123"),
   api,
 });
-agent.start([new HTTPServer()]);
+agent.start([new HTTPServer(), new FileSystem(), new Path()]);
+
+wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
+  return async function fetchBlockedLists(): Promise<Response> {
+    return {
+      allowedIPAddresses: [],
+      blockedIPAddresses: [
+        {
+          key: "geoip/Belgium;BE",
+          source: "geoip",
+          ips: ["9.9.9.9"],
+          description: "geo restrictions",
+        },
+      ],
+      blockedUserAgents: "",
+      monitoredUserAgents: "",
+      monitoredIPAddresses: [],
+      userAgentDetails: [],
+    } satisfies Response;
+  };
+});
 
 t.setTimeout(30 * 1000);
 
@@ -53,6 +94,8 @@ t.beforeEach(() => {
 
 const http = require("http") as typeof import("http");
 const https = require("https") as typeof import("https");
+const { readFileSync } = require("fs") as typeof import("fs");
+const path = require("path") as typeof import("path");
 
 t.test("it wraps the createServer function of http module", async () => {
   const server = http.createServer((req, res) => {
@@ -184,6 +227,7 @@ t.test("it discovers routes", async () => {
             path: "/foo/bar",
             method: "GET",
             hits: 1,
+            rateLimitedCount: 0,
             graphql: undefined,
             apispec: {},
             graphQLSchema: undefined,
@@ -265,12 +309,12 @@ t.test("it parses x-forwarded-for header with proxy", async (t) => {
         method: "GET",
         headers: {
           "x-forwarded-for":
-            "203.0.113.195,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
+            "1.2.3.4,2001:db8:85a3:8d3:1319:8a2e:370:7348,198.51.100.178",
         },
         timeoutInMS: 500,
       }).then(({ body }) => {
         const context = JSON.parse(body);
-        t.same(context.remoteAddress, "203.0.113.195");
+        t.same(context.remoteAddress, "1.2.3.4");
         server.close();
         resolve();
       });
@@ -290,12 +334,12 @@ t.test("it uses x-forwarded-for header", async (t) => {
         url: new URL("http://localhost:3350"),
         method: "GET",
         headers: {
-          "x-forwarded-for": "203.0.113.195",
+          "x-forwarded-for": "1.2.3.4,",
         },
         timeoutInMS: 500,
       }).then(({ body }) => {
         const context = JSON.parse(body);
-        t.same(context.remoteAddress, "203.0.113.195");
+        t.same(context.remoteAddress, "1.2.3.4");
         server.close();
         resolve();
       });
@@ -339,17 +383,51 @@ function generateJsonPayload(sizeInMb: number) {
   return JSON.stringify("a".repeat(sizeInBytes));
 }
 
+// Send request using curl
+// Returns the response message + status code in stdout
+// We need this because http.request throws EPIPE write error when the server closes the connection abruptly
+// We cannot read the status code or the response message when that happens
+async function sendUsingCurl({
+  url,
+  method,
+  headers,
+  body,
+  timeoutInMS,
+}: {
+  url: URL;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  timeoutInMS: number;
+}) {
+  const headersString = Object.entries(headers)
+    .map(([key, value]) => `-H "${key}: ${value}"`)
+    .join(" ");
+
+  const tmpDir = await mkdtemp("/tmp/aikido-");
+  const tmpFile = join(tmpDir, "/body.json");
+  await writeFile(tmpFile, body, { encoding: "utf-8" });
+
+  const { stdout } = await execAsync(
+    `curl -X ${method} ${headersString} -d @${tmpFile} ${url} --max-time ${timeoutInMS / 1000} --write-out "%{http_code}"`
+  );
+  await unlink(tmpFile);
+
+  return stdout;
+}
+
 t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
 
   const server = http.createServer((req, res) => {
     t.fail();
+    res.end();
   });
 
   await new Promise<void>((resolve) => {
     server.listen(3320, () => {
-      fetch({
+      sendUsingCurl({
         url: new URL("http://localhost:3320"),
         method: "POST",
         headers: {
@@ -357,15 +435,20 @@ t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
         },
         body: generateJsonPayload(21),
         timeoutInMS: 2000,
-      }).then(({ body, statusCode }) => {
-        t.equal(
-          body,
-          "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit."
-        );
-        t.equal(statusCode, 413);
-        server.close();
-        resolve();
-      });
+      })
+        .then((stdout) => {
+          t.equal(
+            stdout,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
+        })
+        .catch((error) => {
+          t.fail(error);
+        })
+        .finally(() => {
+          server.close();
+          resolve();
+        });
     });
   });
 });
@@ -411,7 +494,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
     server.listen(3322, () => {
       process.env.AIKIDO_MAX_BODY_SIZE_MB = "1";
       Promise.all([
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -420,7 +503,7 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
           body: generateJsonPayload(1),
           timeoutInMS: 2000,
         }),
-        fetch({
+        sendUsingCurl({
           url: new URL("http://localhost:3322"),
           method: "POST",
           headers: {
@@ -431,11 +514,14 @@ t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
         }),
       ])
         .then(([response1, response2]) => {
-          t.equal(response1.statusCode, 200);
-          t.equal(response2.statusCode, 413);
+          t.equal(response1, "200");
+          t.same(
+            response2,
+            "This request was aborted by Aikido firewall because the body size exceeded the maximum allowed size. Use AIKIDO_MAX_BODY_SIZE_MB to increase the limit.413"
+          );
         })
         .catch((error) => {
-          t.fail(`Unexpected error: ${error.message} ${error.stack}`);
+          t.fail(error);
         })
         .finally(() => {
           server.close();
@@ -483,9 +569,6 @@ t.test("it wraps on request event of http", async () => {
 });
 
 t.test("it wraps on request event of https", async () => {
-  const { readFileSync } = require("fs");
-  const path = require("path");
-
   // Otherwise, the self-signed certificate will be rejected
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -576,3 +659,268 @@ t.test("it checks if IP can access route", async (t) => {
     });
   });
 });
+
+t.test("it blocks IP address", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3325, () => {
+      Promise.all([
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }),
+        fetch({
+          url: new URL("http://localhost:3325"),
+          method: "GET",
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2]) => {
+        t.equal(response1.statusCode, 403);
+        t.equal(
+          response1.body,
+          "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+        );
+        t.equal(response2.statusCode, 200);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "it blocks IP address when there are multiple request handlers on server",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    server.on("request", (req, res) => {
+      if (res.headersSent) {
+        return;
+      }
+
+      res.setHeader("Content-Type", "text/plain");
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3326, () => {
+        fetch({
+          url: new URL("http://localhost:3326"),
+          method: "GET",
+          headers: {
+            "x-forwarded-for": "9.9.9.9",
+          },
+          timeoutInMS: 500,
+        }).then(({ statusCode, body }) => {
+          t.equal(statusCode, 403);
+          t.equal(
+            body,
+            "Your IP address is blocked due to geo restrictions. (Your IP: 9.9.9.9)"
+          );
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+/**
+ * Explanation:
+ * - Makes a request to the server with a path traversal attack inside the pathname
+ * - The /../ is not removed from the path during the request because path normalization is not applied (by default many http libraries do this, e.g. if new URL(...) is used)
+ * - The server gets the raw string path from the HTTP header that is not normalized and passes it to path.join
+ */
+t.test("it blocks path traversal in path", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      // req.url contains only the path and query string, not the full URL
+      // e.g. "/foo/bar?baz=qux"
+      // req.url is not sanitized, it's a raw string, thats why /../ is not removed
+      const path = req.url || "/";
+      const file = readFileSync(join(__dirname, path));
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      const response = await new Promise((resolve, reject) => {
+        // Directly using http.request with a url-like object to prevent path normalization that would remove /../
+        const req = http.request(
+          {
+            hostname: "localhost",
+            port: 3327,
+            path: "/../package.json", // Path traversal attempt
+            method: "GET",
+          },
+          (res) => {
+            let data = "";
+
+            res.on("data", (chunk) => {
+              data += chunk;
+            });
+
+            res.on("end", () => {
+              resolve(data);
+            });
+          }
+        );
+
+        req.on("error", (err) => {
+          reject(err);
+        });
+
+        req.end();
+      });
+
+      t.equal(
+        response,
+        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+      );
+      server.close();
+      resolve();
+    });
+  });
+});
+
+t.test("it blocks double encoded path traversal", async (t) => {
+  const server = http.createServer((req, res) => {
+    try {
+      const url = new URL(req.url!, `http://${req.headers.host}`);
+      const filePath = url.searchParams.get("path");
+      const fileUrl = new URL(`file:///public/${filePath}`);
+      const file = readFileSync(fileUrl);
+
+      res.statusCode = 200;
+      res.end(file);
+    } catch (error) {
+      res.statusCode = 500;
+      if (error instanceof Error) {
+        res.end(error.message);
+        return;
+      }
+      res.end("Internal server error");
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3327, async () => {
+      fetch({
+        url: new URL("http://localhost:3327/?path=.%252E/etc/passwd"),
+        method: "GET",
+        headers: {
+          "x-forwarded-for": "1.2.3.4",
+        },
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.equal(statusCode, 500);
+        t.equal(
+          body,
+          "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query"
+        );
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test(
+  "attackers should not be able to discover routes through rate limiting",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      const result = shouldBlockRequest();
+      if (result.block) {
+        if (result.type === "ratelimited") {
+          res.statusCode = 429;
+          res.end("You are rate limited by Zen.");
+          return;
+        }
+        if (result.type === "blocked") {
+          res.statusCode = 403;
+          res.end("You are blocked by Zen.");
+          return;
+        }
+      }
+      res.statusCode = 200;
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3328, async () => {
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          200
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          200
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          429
+        );
+
+        // static files like "abc.js" should NOT be discovered
+        // even if they are rate limited, because shouldDiscoverRoute() would reject them due to the .js extension
+        const discoveredRoute = agent
+          .getRoutes()
+          .asArray()
+          .find((route) => route.path === "/routes/abc.js");
+
+        t.equal(
+          discoveredRoute,
+          undefined,
+          "Static files should not be discovered even when rate limited"
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  }
+);

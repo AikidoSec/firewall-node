@@ -69,6 +69,11 @@ services:
       - "27020:27017"
     volumes:
       - "mongodb-replica:/bitnami/mongodb"
+  google-pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:11e9b10b6d61177b0046fcb5f1e9479f567a5dacbf66d194baf5a8872653c857
+    command: gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085'
+    ports:
+      - "8085:8085"
   server:
     build:
       context: ../end2end/server

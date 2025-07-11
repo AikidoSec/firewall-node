@@ -1,9 +1,13 @@
+import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
-import { detectSQLInjection } from "./detectSQLInjection";
+import {
+  detectSQLInjection,
+  SQLInjectionDetectionResult,
+} from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
 
 /**
@@ -28,7 +32,9 @@ export function checkContextForSqlInjection({
     }
 
     for (const str of userInput) {
-      if (detectSQLInjection(sql, str, dialect)) {
+      const result = detectSQLInjection(sql, str, dialect);
+
+      if (result === SQLInjectionDetectionResult.INJECTION_DETECTED) {
         return {
           operation: operation,
           kind: "sql_injection",
@@ -36,9 +42,16 @@ export function checkContextForSqlInjection({
           pathsToPayload: getPathsToPayload(str, context[source]),
           metadata: {
             sql: sql,
+            dialect: dialect.getHumanReadableName(),
           },
           payload: str,
         };
+      }
+
+      if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
+        // We don't want to block queries that fail to tokenize.
+        // This counter helps us monitor how often our SQL tokenizer fails.
+        getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
       }
     }
   }

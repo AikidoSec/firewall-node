@@ -39,16 +39,22 @@ import { SQLite3 } from "../sinks/SQLite3";
 import { XmlMinusJs } from "../sources/XmlMinusJs";
 import { Hapi } from "../sources/Hapi";
 import { Shelljs } from "../sinks/Shelljs";
-import { NodeSQLite } from "../sinks/NodeSqlite";
+import { NodeSQLite } from "../sinks/NodeSQLite";
 import { BetterSQLite3 } from "../sinks/BetterSQLite3";
 import { isDebugging } from "../helpers/isDebugging";
 import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
+import { Restify } from "../sources/Restify";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
-import { Function } from "../sinks/Function";
+import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
+import { OpenAI } from "../sinks/OpenAI";
+import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
+import { AiSDK } from "../sinks/AiSDK";
+import { Mistral } from "../sinks/Mistral";
+import { Anthropic } from "../sinks/Anthropic";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -87,7 +93,7 @@ function getTokenFromEnv(): Token | undefined {
     : undefined;
 }
 
-function getAgent({ serverless }: { serverless: string | undefined }) {
+function startAgent({ serverless }: { serverless: string | undefined }) {
   const current = getInstance();
 
   if (current) {
@@ -103,6 +109,8 @@ function getAgent({ serverless }: { serverless: string | undefined }) {
   );
 
   setInstance(agent);
+
+  agent.start(getWrappers());
 
   return agent;
 }
@@ -125,6 +133,9 @@ export function getWrappers() {
     new HTTPServer(),
     new Hono(),
     new GraphQL(),
+    new OpenAI(),
+    new Mistral(),
+    new Anthropic(),
     new Xml2js(),
     new FastXmlParser(),
     new SQLite3(),
@@ -137,37 +148,34 @@ export function getWrappers() {
     new Postgresjs(),
     new Fastify(),
     new Koa(),
+    new Restify(),
     new ClickHouse(),
     new Prisma(),
-    new Function(),
+    new AwsSDKVersion3(),
+    // new Function(), Disabled because functionName.constructor === Function is false after patching global
+    new AwsSDKVersion2(),
+    new AiSDK(),
   ];
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export function protect() {
-  const agent = getAgent({
+  startAgent({
     serverless: undefined,
   });
-
-  agent.start(getWrappers());
 }
 
 export function lambda(): (handler: Handler) => Handler {
-  const agent = getAgent({
+  startAgent({
     serverless: "lambda",
   });
-
-  agent.start(getWrappers());
 
   return createLambdaWrapper;
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
-  const agent = getAgent({
+  startAgent({
     serverless: "gcp",
   });
-
-  agent.start(getWrappers());
 
   return createCloudFunctionWrapper;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -75,6 +74,7 @@ export function createExpressTests(expressPackageName: string) {
   });
 
   const express = require(expressPackageName) as typeof import("express");
+  const { readFile } = require("fs") as typeof import("fs");
 
   function getApp(userMiddleware = true) {
     const app = express();
@@ -245,6 +245,15 @@ export function createExpressTests(expressPackageName: string) {
       res.send({ hello: "world" });
     });
 
+    app.param("file", (req, res, next, path) => {
+      // Simulate a vulnerable parameter handler that uses fs operations
+      require("fs").readdir(path, next);
+    });
+
+    app.get("/param/:file", (req, res) => {
+      res.send({ success: true });
+    });
+
     if (expressPackageName.endsWith("v4")) {
       app.get("/white-listed-ip-address", (req, res, next) => {
         res.send({ hello: "world" });
@@ -258,7 +267,6 @@ export function createExpressTests(expressPackageName: string) {
         res.send({ hello: "world" });
       });
 
-      // @ts-expect-error Not types for express 5 available yet
       app.router.use("/middleware-rate-limited", (req, res, next) => {
         res.send({ hello: "world" });
       });
@@ -316,6 +324,7 @@ export function createExpressTests(expressPackageName: string) {
         method: "POST",
         path: "/",
         hits: 1,
+        rateLimitedCount: 0,
         graphql: undefined,
         apispec: {
           body: {
@@ -376,6 +385,8 @@ export function createExpressTests(expressPackageName: string) {
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
         total: 2,
+        aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -395,7 +406,7 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.statusCode, 500);
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0,
         attacksDetected: {
           total: 1,
           blocked: 1,
@@ -411,7 +422,9 @@ export function createExpressTests(expressPackageName: string) {
     t.same(response.body, { error: "test" });
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
-        total: 1,
+        total: 0, // Errors are not counted
+        aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           total: 0,
           blocked: 0,
@@ -482,6 +495,18 @@ export function createExpressTests(expressPackageName: string) {
     const response = await request(getApp())
       .get("/files-subdomains")
       .set("Host", "/etc/passwd.127.0.0.1");
+
+    t.same(response.statusCode, 500);
+    t.match(
+      response.text,
+      /Zen has blocked a path traversal attack: fs.readdir(...)/
+    );
+  });
+
+  t.test("it detects attacks in app.param() handlers", async (t) => {
+    const response = await request(getApp()).get(
+      `/param/${encodeURIComponent("../../")}`
+    );
 
     t.same(response.statusCode, 500);
     t.match(
@@ -600,7 +625,6 @@ export function createExpressTests(expressPackageName: string) {
       stack = app._router.stack;
     } else {
       // On express v5, the router is available as `app.router`
-      // @ts-expect-error stack is private
       stack = app.router.stack;
     }
 
@@ -673,11 +697,10 @@ export function createExpressTests(expressPackageName: string) {
           stack = req.app._router.stack as any[];
         } else {
           // On express v5, the router is available as `app.router`
-          // @ts-expect-error stack is private
           stack = req.app.router.stack as any[];
         }
         routerLayer = stack.find((router) => router.name === "CustomRouter");
-        return res.status(200).send("bar");
+        res.status(200).send("bar");
       });
 
       // The patched router now has express router's own properties in its prototype so
@@ -719,4 +742,100 @@ export function createExpressTests(expressPackageName: string) {
       );
     }
   );
+
+  t.test("it supports adding middleware to a Router instance", async (t) => {
+    const app = express();
+    const router = express.Router();
+
+    router.use((req, res, next) => {
+      setUser({ id: "567" });
+      next();
+    });
+
+    // Add Zen middleware to router instead of app
+    addExpressMiddleware(router);
+
+    router.get("/router-block-user", (req, res) => {
+      res.send({ willNotBeSent: true });
+    });
+
+    app.use(router);
+
+    const blockedResponse = await request(app).get("/router-block-user");
+    t.same(blockedResponse.statusCode, 403);
+    t.same(blockedResponse.text, "You are blocked by Zen.");
+  });
+
+  t.test("it detects path traversal with double encoding", async (t) => {
+    const app = express();
+
+    app.get("/search", (req, res) => {
+      const searchTerm = req.query.q;
+      const fileUrl = new URL(`file:///public/${searchTerm}`);
+
+      readFile(fileUrl, "utf-8", (err, data) => {
+        if (err) {
+          return res.status(500).send("Error reading file");
+        }
+        res.send(`File content of /public/${searchTerm} : ${data}`);
+      });
+    });
+
+    const blockedResponse = await request(app).get(
+      "/search?q=.%252E/etc/passwd"
+    );
+    t.same(blockedResponse.statusCode, 500);
+    t.match(
+      blockedResponse.text,
+      /Error: Zen has blocked a path traversal attack: fs.readFile\(\.\.\.\) originating from query/
+    );
+  });
+
+  t.test("it counts rate limited requests", async (t) => {
+    agent.getRoutes().clear();
+    agent.getInspectionStatistics().reset();
+
+    const resp1 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp1.statusCode, 200);
+
+    const resp2 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp2.statusCode, 200);
+
+    const resp3 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp3.statusCode, 200);
+
+    const resp4 = await request(getApp(false))
+      .get("/rate-limited")
+      .set("x-forwarded-for", "123.123.123.123");
+    t.same(resp4.statusCode, 429);
+
+    t.same(agent.getRoutes().asArray(), [
+      {
+        method: "GET",
+        path: "/rate-limited",
+        hits: 3, // Only the first 3 requests are counted as hits
+        rateLimitedCount: 1,
+        graphql: undefined,
+        apispec: {},
+        graphQLSchema: undefined,
+      },
+    ]);
+    t.match(agent.getInspectionStatistics().getStats(), {
+      requests: {
+        total: 4,
+        aborted: 0,
+        rateLimited: 1,
+        attacksDetected: {
+          total: 0,
+          blocked: 0,
+        },
+      },
+    });
+  });
 }

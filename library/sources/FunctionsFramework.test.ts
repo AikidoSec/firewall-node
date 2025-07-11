@@ -10,6 +10,8 @@ import {
 import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
+import { getInstance } from "../agent/AgentSingleton";
+import { isWrapped } from "../helpers/wrap";
 
 function getExpressApp() {
   const app = express();
@@ -51,10 +53,39 @@ function getExpressApp() {
     asyncHandler(
       // @ts-expect-error Test using cloud function wrapper in an express app
       createCloudFunctionWrapper((req, res) => {
-        const context = getContext();
-        if (context) {
-          updateContext(context, "attackDetected", true);
+        const agent = getInstance();
+        if (!agent) {
+          throw new Error("Agent not found");
         }
+        agent.onDetectedAttack({
+          module: "mongodb",
+          kind: "nosql_injection",
+          blocked: true,
+          source: "body",
+          request: {
+            method: "POST",
+            cookies: {},
+            query: {},
+            headers: {
+              "user-agent": "agent",
+            },
+            body: {},
+            url: "http://localhost:4000",
+            remoteAddress: "::1",
+            source: "express",
+            route: "/posts/:id",
+            routeParams: {},
+          },
+          operation: "operation",
+          payload: "payload",
+          stack: "stack",
+          paths: [".nested"],
+          metadata: {
+            db: "app",
+          },
+        });
+
+        const context = getContext();
         res.send(context);
       })
     )
@@ -90,6 +121,7 @@ t.test("it counts requests", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -106,6 +138,7 @@ t.test("it counts attacks", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 1, blocked: 1 },
   });
 });
@@ -122,6 +155,7 @@ t.test("it counts request if error", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -159,4 +193,6 @@ t.test("it hooks into functions framework", async () => {
   framework.http("hello", (req, res) => {
     res.send("Hello, Functions Framework!");
   });
+
+  t.same(isWrapped(framework.http), true);
 });

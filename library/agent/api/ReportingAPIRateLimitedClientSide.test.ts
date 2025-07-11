@@ -146,15 +146,23 @@ function generateHeartbeatEvent(): Event {
     stats: {
       endedAt: 0,
       startedAt: 0,
-      sinks: {},
+      operations: {},
       requests: {
         total: 0,
         aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           blocked: 0,
           total: 0,
         },
       },
+      userAgents: {
+        breakdown: {},
+      },
+      ipAddresses: {
+        breakdown: {},
+      },
+      sqlTokenizationFailures: 0,
     },
     agent: {
       version: "1.0.0",
@@ -182,6 +190,8 @@ function generateHeartbeatEvent(): Event {
     hostnames: [],
     routes: [],
     users: [],
+    packages: [],
+    ai: [],
   };
 }
 

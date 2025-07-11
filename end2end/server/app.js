@@ -6,8 +6,9 @@ const listEvents = require("./src/handlers/listEvents");
 const createApp = require("./src/handlers/createApp");
 const checkToken = require("./src/middleware/checkToken");
 const updateConfig = require("./src/handlers/updateConfig");
-const ipLists = require("./src/handlers/ipLists");
-const updateIPLists = require("./src/handlers/updateIPLists");
+const lists = require("./src/handlers/lists");
+const updateLists = require("./src/handlers/updateLists");
+const realtimeConfig = require("./src/handlers/realtimeConfig");
 
 const app = express();
 
@@ -18,11 +19,14 @@ app.use(express.json());
 app.get("/api/runtime/config", checkToken, config);
 app.post("/api/runtime/config", checkToken, updateConfig);
 
+// Realtime polling endpoint
+app.get("/config", checkToken, realtimeConfig);
+
 app.get("/api/runtime/events", checkToken, listEvents);
 app.post("/api/runtime/events", checkToken, captureEvent);
 
-app.get("/api/runtime/firewall/lists", checkToken, ipLists);
-app.post("/api/runtime/firewall/lists", checkToken, updateIPLists);
+app.get("/api/runtime/firewall/lists", checkToken, lists);
+app.post("/api/runtime/firewall/lists", checkToken, updateLists);
 
 app.post("/api/runtime/apps", createApp);
 

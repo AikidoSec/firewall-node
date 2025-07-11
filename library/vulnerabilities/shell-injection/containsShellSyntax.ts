@@ -132,7 +132,6 @@ function matchAll(str: string, regex: RegExp) {
   return matches;
 }
 
-// eslint-disable-next-line max-lines-per-function
 export function containsShellSyntax(
   command: string,
   userInput: string

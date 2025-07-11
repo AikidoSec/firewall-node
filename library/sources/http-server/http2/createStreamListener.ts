@@ -33,13 +33,6 @@ export function createStreamListener(
           const context = getContext();
 
           discoverRouteFromStream(context, stream, agent);
-
-          agent.getInspectionStatistics().onRequest();
-          if (context && context.attackDetected) {
-            agent.getInspectionStatistics().onDetectedAttack({
-              blocked: agent.shouldBlock(),
-            });
-          }
         })
       );
 
@@ -63,15 +56,25 @@ function discoverRouteFromStream(
   if (context && context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
-    if (
-      !isNaN(statusCode) &&
-      shouldDiscoverRoute({
+    if (!isNaN(statusCode)) {
+      const shouldDiscover = shouldDiscoverRoute({
         statusCode: statusCode,
         route: context.route,
         method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
+      });
+
+      if (shouldDiscover) {
+        agent.onRouteExecute(context);
+      }
+
+      if (shouldDiscover || context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRequest();
+      }
+
+      if (context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRateLimitedRequest();
+        agent.onRouteRateLimited(context.rateLimitedEndpoint);
+      }
     }
   }
 }

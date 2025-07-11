@@ -31,7 +31,9 @@ export class Undici implements Wrapper {
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
-    agent.onConnectHostname(hostname, port);
+    if (typeof port === "number" && port > 0) {
+      agent.onConnectHostname(hostname, port);
+    }
     const context = getContext();
 
     if (!context) {
@@ -46,7 +48,6 @@ export class Undici implements Wrapper {
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inspect(
     args: unknown[],
     agent: Agent,
@@ -115,7 +116,8 @@ export class Undici implements Wrapper {
 
         // Print a warning that we can't provide protection if setGlobalDispatcher is called
         wrapExport(exports, "setGlobalDispatcher", pkgInfo, {
-          inspectArgs: (args, agent) => {
+          kind: undefined,
+          inspectArgs: (_, agent) => {
             agent.log(
               `undici.setGlobalDispatcher(..) was called, we can't guarantee protection!`
             );
@@ -125,8 +127,8 @@ export class Undici implements Wrapper {
         // Wrap all methods that can make requests
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
+            kind: "outgoing_http_op",
             // Whenever a request is made, we'll check the hostname whether it's a private IP
-            // If global dispatcher is not patched, we'll patch it
             inspectArgs: (args, agent) => {
               return this.inspect(args, agent, method);
             },

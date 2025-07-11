@@ -93,6 +93,21 @@ async function main(port) {
     })
   );
 
+  app.post("/invalid-query", async (req, res) => {
+    // Simulate an invalid query to test handling
+    await new Promise((resolve, reject) => {
+      db.query(`SELECT ' ${req.query.sql}`, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    res.status(200).send("Done");
+  });
+
   app.use(Sentry.Handlers.errorHandler());
 
   return new Promise((resolve, reject) => {
