@@ -1,3 +1,5 @@
+import { getInstance } from "./AgentSingleton";
+
 type AIProviderStats = {
   provider: string;
   model: string;
@@ -62,6 +64,8 @@ export class AIStatistics {
     outputTokens: number;
     callDetails?: AICallDetail;
   }) {
+    const agent = getInstance();
+    agent?.log(`OnAICall - ${model} - ${provider} - ${inputTokens}`)
     if (!provider || !model) {
       return;
     }
@@ -72,7 +76,7 @@ export class AIStatistics {
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
     if (callDetails) {
-      console.error(callDetails)
+      agent?.log(JSON.stringify(callDetails))
       providerStats.callDetails.push(callDetails)
     }
   }
