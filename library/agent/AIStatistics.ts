@@ -75,7 +75,9 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
-    providerStats.callDetails.push(callDetails)
+    if (callDetails) {
+      providerStats.callDetails.push(callDetails)
+    }
   }
 
   getStats() {
