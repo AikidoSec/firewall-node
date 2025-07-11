@@ -1,5 +1,5 @@
 import { IncomingMessage } from "http";
-import { Context, getContext, updateContext } from "../../agent/Context";
+import { Context, updateContext } from "../../agent/Context";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
