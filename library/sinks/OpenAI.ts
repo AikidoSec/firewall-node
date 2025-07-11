@@ -170,23 +170,13 @@ export class OpenAI implements Wrapper {
         if (completionsClass) {
           wrapExport(completionsClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (_, returnValue, agent, subject) => {
-              if (returnValue instanceof Promise) {
-                // Inspect the response after the promise resolves, it won't change the original promise
-                returnValue.then((response) => {
-                  try {
-                    this.inspectCompletionResponse(
-                      agent,
-                      response,
-                      this.getProvider(exports, subject)
-                    );
-                  } catch {
-                    // If we don't catch these errors, it will result in an unhandled promise rejection!
-                  }
-                });
-              }
-
-              return returnValue;
+            inspectPromise: (response, diffInMS, agent, subject) => {
+              // Use diffInMS here
+              this.inspectCompletionResponse(
+                agent,
+                response,
+                this.getProvider(exports, subject)
+              );
             },
           });
         }

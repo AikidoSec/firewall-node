@@ -23,6 +23,13 @@ type ModifyReturnValueInterceptor = (
   subject: unknown
 ) => unknown;
 
+type PromiseInterceptor = (
+  promiseResult: unknown,
+  timeInMS: number,
+  agent: Agent,
+  subject: unknown
+) => void;
+
 export type InterceptorObject = {
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
@@ -31,6 +38,7 @@ export type InterceptorObject = {
   // This will be used to collect stats
   // For sources, this will often be undefined
   kind: OperationKind | undefined;
+  inspectPromise?: PromiseInterceptor;
 };
 
 /**
@@ -93,11 +101,32 @@ export function wrapExport(
             }
           }
 
+          const promiseStart = performance.now();
           const returnVal = original.apply(
             // @ts-expect-error We don't now the type of this
             this,
             args
           );
+
+          if (interceptors.inspectPromise && returnVal instanceof Promise) {
+            // Inspect the response after the promise resolves, it won't change the original promise
+            returnVal.then((result) => {
+              const promiseEnd = performance.now();
+              if (interceptors.inspectPromise) {
+                try {
+                  interceptors.inspectPromise(
+                    result,
+                    promiseEnd - promiseStart,
+                    agent,
+                    // @ts-expect-error We don't now the type of this
+                    this
+                  );
+                } catch {
+                  // If we don't catch these errors, it will result in an unhandled promise rejection!
+                }
+              }
+            });
+          }
 
           // Run modifyReturnValue interceptor if provided
           if (typeof interceptors.modifyReturnValue === "function") {
