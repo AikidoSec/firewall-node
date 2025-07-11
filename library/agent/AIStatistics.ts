@@ -76,6 +76,7 @@ export class AIStatistics {
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
     if (callDetails) {
+      agent?.log("Call details: " + JSON.stringify(callDetails))
       providerStats.callDetails.push(callDetails)
     }
   }
