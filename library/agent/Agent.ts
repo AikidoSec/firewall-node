@@ -548,6 +548,7 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number) {
+    this.logger.log(`Connection made to ${hostname}:${port}`)
     this.hostnames.add(hostname, port);
   }
 
