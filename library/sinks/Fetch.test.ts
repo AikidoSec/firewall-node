@@ -63,6 +63,7 @@ function createContext(): Context {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+const redirectTestUrl3 = "https://ssrf-rédirects.testssandbox.com";
 
 const redirectUrl = {
   ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
@@ -241,10 +242,48 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
+        ...{ body: { image: `${redirectTestUrl3}/ssrf-test` } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
         ...{ body: { image: redirectUrl.domain } },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.domain));
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain` } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-domain`)
+        );
         if (error instanceof Error) {
           t.same(
             // @ts-expect-error Type is not defined
@@ -275,11 +314,49 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
+        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-twice` } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-twice`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
         ...{ body: { image: redirectUrl.domainTwice } },
       },
       async () => {
         const error = await t.rejects(() =>
           fetch(new Request(redirectUrl.domainTwice))
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-domain-twice`)
         );
         if (error instanceof Error) {
           t.same(
@@ -337,6 +414,29 @@ t.test(
       async () => {
         const error = await t.rejects(() =>
           fetch(`${redirecTestUrl2}/ssrf-test-absolute-domain`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        ...{
+          body: {
+            image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
+          },
+        },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-absolute-domain`)
         );
         if (error instanceof Error) {
           t.same(
