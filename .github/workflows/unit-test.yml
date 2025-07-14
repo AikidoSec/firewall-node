@@ -106,8 +106,12 @@ jobs:
       - run: npm run build
       - run: npm run test:ci
         if: ${{ matrix.new-instrumentation == 'current' }}
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
       - run: npm run test:ci:new
         if: ${{ matrix.new-instrumentation == 'new' }}
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:

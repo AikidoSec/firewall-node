@@ -28,6 +28,8 @@ export type DataSchema = {
 const maxDepth = 20;
 // Maximum number of properties per level
 const maxProperties = 100;
+// Maximum property key length
+const maxPropertyKeyLength = 100;
 
 /**
  * Get the schema of the data (for example http json body) as a schema.
@@ -69,6 +71,11 @@ export function getDataSchema(data: unknown, depth = 0): DataSchema {
       if (propertiesCount >= maxProperties) {
         break;
       }
+
+      if (key.length > maxPropertyKeyLength) {
+        continue; // Skip keys that are too long
+      }
+
       propertiesCount++;
       schema.properties![key] = getDataSchema(
         (data as { [index: string]: unknown })[key],

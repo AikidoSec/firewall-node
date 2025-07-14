@@ -52,6 +52,9 @@ import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
 import { OpenAI } from "../sinks/OpenAI";
 import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
+import { AiSDK } from "../sinks/AiSDK";
+import { Mistral } from "../sinks/Mistral";
+import { Anthropic } from "../sinks/Anthropic";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -138,6 +141,8 @@ export function getWrappers() {
     new Hono(),
     new GraphQL(),
     new OpenAI(),
+    new Mistral(),
+    new Anthropic(),
     new Xml2js(),
     new FastXmlParser(),
     new SQLite3(),
@@ -156,6 +161,7 @@ export function getWrappers() {
     new AwsSDKVersion3(),
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
+    new AiSDK(),
   ];
 }
 

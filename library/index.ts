@@ -13,6 +13,7 @@ import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
+import { setRateLimitGroup } from "./ratelimiting/group";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -40,6 +41,7 @@ export {
   addFastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  setRateLimitGroup,
 };
 
 // Required for ESM / TypeScript default export support
@@ -54,4 +56,5 @@ export default {
   addFastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  setRateLimitGroup,
 };
