@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_traverse::traverse_mut;
@@ -87,7 +87,12 @@ pub fn transform_code_str(
     // Todo: Update source map?
     let js = Codegen::new()
         .with_options(CodegenOptions {
-            comments: true,
+            comments: CommentOptions {
+                normal: true,
+                jsdoc: true,
+                annotation: true,
+                legal: oxc_codegen::LegalComment::Inline,
+            },
             minify: false,
             // Todo add source map using source_map_path
             ..CodegenOptions::default()
