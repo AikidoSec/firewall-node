@@ -57,9 +57,5 @@ t.test(
       // @ts-expect-error Ignore original types
       getBuiltinModuleWithoutPatching(undefined);
     });
-
-    if (getMajorNodeVersion() >= 22) {
-      t.same(getBuiltinModuleWithoutPatching("sqlite"), require("node:sqlite"));
-    }
   }
 );

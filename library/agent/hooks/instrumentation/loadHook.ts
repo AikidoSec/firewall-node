@@ -144,7 +144,7 @@ function patchBuiltin(
     return previousLoadResult;
   }
 
-  let orig = getBuiltinModuleWithoutPatching(builtinNameWithoutPrefix) as
+  let orig = getBuiltinModuleWithoutPatching(builtinName) as
     | (object & { [builtinPatchedSymbol]?: boolean })
     | undefined;
   if (!orig) {
