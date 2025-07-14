@@ -18,6 +18,11 @@ export function shouldReturnEarly(query: string, userInput: string) {
     return true;
   }
 
+  // Short operator-ending patterns are safe (e.g., "e=")
+  if (userInputLowercase.length <= 2 && /^[a-z=]+$/i.test(userInputLowercase)) {
+    return true;
+  }
+
   // Check if user input is a valid comma-separated list of numbers
   const cleanedInputForList = userInputLowercase
     .replace(/ /g, "")

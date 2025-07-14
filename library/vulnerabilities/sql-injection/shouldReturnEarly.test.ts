@@ -57,4 +57,13 @@ t.test("should return early - false cases", async (t) => {
     shouldReturnEarly("SELECT * FROM users; DROP TABLE", "users; DROP TABLE"),
     false
   );
+
+  // Specific test for the "e=" false positive case
+  t.equal(
+    shouldReturnEarly(
+      "select column form table where table.a = 1 AND table.active= 1",
+      "e="
+    ),
+    true
+  );
 });
