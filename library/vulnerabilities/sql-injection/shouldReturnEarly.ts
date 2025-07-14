@@ -19,7 +19,7 @@ export function shouldReturnEarly(query: string, userInput: string) {
   }
 
   // Short operator-ending patterns are safe (e.g., "e=")
-  if (userInputLowercase.length <= 2 && /^[a-z=]+$/i.test(userInputLowercase)) {
+  if (userInputLowercase.length == 2 && /^[a-z]=$/i.test(userInputLowercase)) {
     return true;
   }
 
