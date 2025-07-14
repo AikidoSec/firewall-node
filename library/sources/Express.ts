@@ -91,7 +91,7 @@ export class Express implements Wrapper {
           {
             nodeType: "FunctionAssignment",
             name: "app.param",
-            modifyArgumentsObject: true,
+            modifyArgumentsObject: false,
             operationKind: undefined,
             modifyArgs: (args) => this.wrapParamArgs(args),
           },
