@@ -6,6 +6,18 @@ import { wrapHandler } from "./fastify/wrapHandler";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
+
+const requestFunctions = [
+  "get",
+  "head",
+  "post",
+  "put",
+  "delete",
+  "options",
+  "patch",
+  "all",
+];
 
 export class Fastify implements Wrapper {
   private wrapRequestArgs(args: unknown[]) {
@@ -103,17 +115,6 @@ export class Fastify implements Wrapper {
   }
 
   private wrapFastifyInstance(instance: any, pkgInfo: WrapPackageInfo) {
-    const requestFunctions = [
-      "get",
-      "head",
-      "post",
-      "put",
-      "delete",
-      "options",
-      "patch",
-      "all",
-    ];
-
     for (const func of requestFunctions) {
       // Check if the function exists - new functions in Fastify 5
       if (typeof instance[func] === "function") {
@@ -144,6 +145,42 @@ export class Fastify implements Wrapper {
     }
   }
 
+  private getFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
+    return [
+      {
+        name: "addHook",
+        nodeType: "FunctionDeclaration",
+        operationKind: undefined,
+        modifyArgs: this.wrapAddHookArgs,
+      },
+      {
+        name: "addHttpMethod",
+        nodeType: "FunctionDeclaration",
+        operationKind: undefined,
+        modifyReturnValue: (args, returnValue) =>
+          this.wrapNewRouteMethod(args, returnValue, {
+            name: "fastify",
+            type: "external",
+          }),
+      },
+      {
+        name: "_route",
+        nodeType: "FunctionExpression",
+        operationKind: undefined,
+        modifyArgs: this.wrapRouteMethod,
+      },
+      ...requestFunctions.map(
+        (func) =>
+          ({
+            name: `_${func}`,
+            nodeType: "FunctionExpression",
+            operationKind: undefined,
+            modifyArgs: this.wrapRequestArgs,
+          }) as PackageFunctionInstrumentationInstruction
+      ),
+    ];
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("fastify")
@@ -161,6 +198,10 @@ export class Fastify implements Wrapper {
         return wrapNewInstance(exports, undefined, pkgInfo, (exports) =>
           this.wrapFastifyInstance(exports, pkgInfo)
         );
+      })
+      .addFileInstrumentation({
+        path: "fastify.js",
+        functions: this.getFunctionInstructions(),
       });
   }
 }

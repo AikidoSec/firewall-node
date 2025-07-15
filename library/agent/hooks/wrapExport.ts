@@ -8,15 +8,19 @@ import type { WrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
-type InspectArgsInterceptor = (
+export type InspectArgsInterceptor = (
   args: unknown[],
   agent: Agent,
   subject: unknown
 ) => InterceptorResult | void;
 
-type ModifyArgsInterceptor = (args: unknown[], agent: Agent) => unknown[];
+export type ModifyArgsInterceptor = (
+  args: unknown[],
+  agent: Agent,
+  subject: unknown
+) => unknown[];
 
-type ModifyReturnValueInterceptor = (
+export type ModifyReturnValueInterceptor = (
   args: unknown[],
   returnValue: unknown,
   agent: Agent,
@@ -83,7 +87,12 @@ export function wrapExport(
           // Run modifyArgs interceptor if provided
           if (typeof interceptors.modifyArgs === "function") {
             try {
-              args = interceptors.modifyArgs(args, agent);
+              args = interceptors.modifyArgs(
+                args,
+                agent,
+                // @ts-expect-error We don't now the type of
+                this
+              );
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
@@ -133,7 +142,7 @@ export function wrapExport(
   }
 }
 
-function inspectArgs(
+export function inspectArgs(
   args: unknown[],
   interceptor: InspectArgsInterceptor,
   context: ReturnType<typeof getContext>,
