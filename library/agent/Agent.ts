@@ -34,9 +34,9 @@ type WrappedPackage = { version: string | null; supported: boolean };
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 30 * 1000;
   private lastHeartbeat = performance.now();
-  private reportedInitialStats = false;
+  private sentHeartbeatCounter = 0;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
@@ -242,9 +242,13 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.log("Failed to do heartbeat");
-    });
+    this.sendHeartbeat(timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to do heartbeat");
+      })
+      .then(() => {
+        this.sentHeartbeatCounter++;
+      });
   }
 
   getUsers() {
@@ -365,20 +369,11 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = performance.now();
-      const diff = now - this.lastHeartbeat;
-      const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
-      const hasStats =
-        !this.statistics.isEmpty() || !this.aiStatistics.isEmpty();
-      const canSendInitialStats =
-        !this.serviceConfig.hasReceivedAnyStats() && hasStats;
-      const shouldReportInitialStats =
-        !this.reportedInitialStats && canSendInitialStats;
+      const timeSinceLastHeartbeat = performance.now() - this.lastHeartbeat;
 
-      if (shouldSendHeartbeat || shouldReportInitialStats) {
+      if (timeSinceLastHeartbeat > this.getHeartbeatInterval()) {
         this.heartbeat();
-        this.lastHeartbeat = now;
-        this.reportedInitialStats = true;
+        this.lastHeartbeat = performance.now();
       }
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
@@ -599,5 +594,19 @@ export class Agent {
 
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
+  }
+
+  private getHeartbeatInterval(): number {
+    switch (this.sentHeartbeatCounter) {
+      case 0:
+        // The first heartbeat should be sent after 30 seconds
+        return 1000 * 30;
+      case 1:
+        // The second heartbeat should be sent after 2 minutes
+        return 1000 * 60 * 2;
+      default:
+        // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
+        return this.sendHeartbeatEveryMS;
+    }
   }
 }
