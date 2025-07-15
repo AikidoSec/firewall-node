@@ -89,7 +89,7 @@ function getAPI(): ReportingAPI {
 
 function getTokenFromEnv(): Token | undefined {
   return process.env.AIKIDO_TOKEN
-    ? new Token(process.env.AIKIDO_TOKEN)
+    ? new Token(process.env.AIKIDO_TOKEN.trim())
     : undefined;
 }
 
