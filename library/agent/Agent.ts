@@ -299,6 +299,12 @@ export class Agent {
       ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
       }
+
+      if (typeof response.blockNewOutgoingRequests === "boolean") {
+        this.serviceConfig.setBlockNewOutgoingRequests(
+          response.blockNewOutgoingRequests
+        );
+      }
     }
   }
 
@@ -398,6 +404,7 @@ export class Agent {
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
+        domains,
       } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
@@ -405,6 +412,7 @@ export class Agent {
       this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
+      this.serviceConfig.updateDomains(domains);
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
@@ -542,8 +550,8 @@ export class Agent {
     }
   }
 
-  onConnectHostname(hostname: string, port: number) {
-    this.hostnames.add(hostname, port);
+  onConnectHostname(hostname: string, port: number, blocked = false) {
+    this.hostnames.add(hostname, port, blocked);
   }
 
   onRouteExecute(context: Context) {
