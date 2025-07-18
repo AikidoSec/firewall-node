@@ -47,7 +47,7 @@ function isConverseResponse(response: unknown): response is ConverseResponse {
 }
 
 export class AwsSDKVersion3 implements Wrapper {
-  private processInvokeModelResponse(response: unknown, agent: Agent) {
+  private processInvokeModelResponse(response: unknown, agent: Agent, timeStart: number) {
     if (!isInvokeResponse(response)) {
       return;
     }
@@ -78,6 +78,11 @@ export class AwsSDKVersion3 implements Wrapper {
         model: body.model,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
+        callDetails: {
+          timeEndMS: Date.now(),
+          timeStartMS: timeStart,
+          identifier: `${body.model} - not unique`
+        }
       });
     }
   }
@@ -85,7 +90,8 @@ export class AwsSDKVersion3 implements Wrapper {
   private processConverseResponse(
     response: unknown,
     command: unknown,
-    agent: Agent
+    agent: Agent,
+    timeStart: number
   ) {
     // @ts-expect-error We don't know the type of command
     if (!command || !command.input || !command.input.modelId) {
@@ -113,6 +119,11 @@ export class AwsSDKVersion3 implements Wrapper {
       model: modelId,
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      callDetails: {
+        timeStartMS: timeStart,
+        timeEndMS: Date.now(),
+        identifier: `${modelId} - not unique id`
+      }
     });
   }
 
@@ -124,7 +135,7 @@ export class AwsSDKVersion3 implements Wrapper {
         if (exports.BedrockRuntimeClient) {
           wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (args, returnValue, agent) => {
+            modifyReturnValue: (args, returnValue, agent, interceptor, timeStart) => {
               if (args.length > 0) {
                 const command = args[0];
                 if (returnValue instanceof Promise) {
@@ -135,12 +146,12 @@ export class AwsSDKVersion3 implements Wrapper {
                         exports.InvokeModelCommand &&
                         command instanceof exports.InvokeModelCommand
                       ) {
-                        this.processInvokeModelResponse(response, agent);
+                        this.processInvokeModelResponse(response, agent, timeStart);
                       } else if (
                         exports.ConverseCommand &&
                         command instanceof exports.ConverseCommand
                       ) {
-                        this.processConverseResponse(response, command, agent);
+                        this.processConverseResponse(response, command, agent, timeStart);
                       }
                     } catch {
                       // If we don't catch these errors, it will result in an unhandled promise rejection!

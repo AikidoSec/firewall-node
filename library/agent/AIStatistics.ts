@@ -1,3 +1,5 @@
+import { getInstance } from "./AgentSingleton";
+
 type AIProviderStats = {
   provider: string;
   model: string;
@@ -7,6 +9,12 @@ type AIProviderStats = {
     output: number;
     total: number;
   };
+  callDetails: AICallDetail[]
+};
+type AICallDetail = {
+  timeStartMS: number;
+  timeEndMS: number;
+  identifier: string;
 };
 
 export class AIStatistics {
@@ -30,12 +38,13 @@ export class AIStatistics {
       this.calls.set(key, {
         provider,
         model,
+        callDetails: [],
         calls: 0,
         tokens: {
           input: 0,
           output: 0,
           total: 0,
-        },
+        }
       });
     }
 
@@ -47,12 +56,16 @@ export class AIStatistics {
     model,
     inputTokens,
     outputTokens,
+    callDetails
   }: {
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
+    callDetails?: AICallDetail;
   }) {
+    const agent = getInstance();
+    agent?.log(`OnAICall - ${model} - ${provider} - ${inputTokens}`)
     if (!provider || !model) {
       return;
     }
@@ -62,6 +75,10 @@ export class AIStatistics {
     providerStats.tokens.input += inputTokens;
     providerStats.tokens.output += outputTokens;
     providerStats.tokens.total += inputTokens + outputTokens;
+    if (callDetails) {
+      agent?.log("Call details: " + JSON.stringify(callDetails))
+      providerStats.callDetails.push(callDetails)
+    }
   }
 
   getStats() {
@@ -75,6 +92,8 @@ export class AIStatistics {
           output: stats.tokens.output,
           total: stats.tokens.total,
         },
+        callDetails: stats.callDetails,
+        testProperty: "test"
       };
     });
   }

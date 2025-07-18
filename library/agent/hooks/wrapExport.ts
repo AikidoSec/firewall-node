@@ -20,7 +20,9 @@ type ModifyReturnValueInterceptor = (
   args: unknown[],
   returnValue: unknown,
   agent: Agent,
-  subject: unknown
+  subject: unknown,
+  timeStart: number,
+  timeEnd: number
 ) => unknown;
 
 export type InterceptorObject = {
@@ -92,12 +94,14 @@ export function wrapExport(
               });
             }
           }
-
+          let totalTimeStart = Date.now();
           const returnVal = original.apply(
             // @ts-expect-error We don't now the type of this
             this,
             args
           );
+          let totalTimeEnd = Date.now();
+
 
           // Run modifyReturnValue interceptor if provided
           if (typeof interceptors.modifyReturnValue === "function") {
@@ -107,7 +111,9 @@ export function wrapExport(
                 returnVal,
                 agent,
                 // @ts-expect-error We don't now the type of
-                this
+                this,
+                totalTimeStart,
+                totalTimeEnd
               );
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({

@@ -472,7 +472,7 @@ export class Agent {
 
     this.started = true;
 
-    this.logger.log(`Starting agent v${getAgentVersion()}...`);
+    this.logger.log(`Starting COOL ASS agent v${getAgentVersion()}...`);
 
     if (!this.block) {
       this.logger.log("Dry mode enabled, no requests will be blocked!");
@@ -543,6 +543,7 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number) {
+    this.logger.log(`Connection made to ${hostname}:${port}`)
     this.hostnames.add(hostname, port);
   }
 
