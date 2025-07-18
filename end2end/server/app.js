@@ -1,5 +1,7 @@
 // This is an insecure mock server for testing purposes
 const express = require("express");
+const compression = require("compression");
+
 const config = require("./src/handlers/getConfig");
 const captureEvent = require("./src/handlers/captureEvent");
 const listEvents = require("./src/handlers/listEvents");
@@ -14,6 +16,7 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 
+app.use(compression());
 app.use(express.json());
 
 app.get("/api/runtime/config", checkToken, config);

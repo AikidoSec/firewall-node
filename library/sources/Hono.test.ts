@@ -485,6 +485,7 @@ t.test("Proxy request", opts, async (t) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ a: 1 }),
+    compressBody: false,
   });
   t.equal(response.statusCode, 200);
   t.equal(response.body, JSON.stringify({ a: 1 }));

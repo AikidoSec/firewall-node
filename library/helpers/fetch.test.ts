@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { createServer, Server } from "http";
 import { fetch } from "./fetch";
-import { gzip } from "zlib";
+import { createGunzip, gzip } from "zlib";
 import { getMajorNodeVersion } from "./getNodeVersion";
 
 let server: Server;
@@ -9,17 +9,33 @@ let server: Server;
 // Start an HTTP server before running tests
 t.beforeEach(async () => {
   server = createServer((req, res) => {
-    const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
-    req.on("end", () => {
+    let bodyStr = "";
+    let stream: NodeJS.ReadableStream = req;
+    if (req.headers["content-encoding"] === "gzip") {
+      const gunzip = createGunzip();
+      req.pipe(gunzip);
+      stream = gunzip;
+      stream.on("error", () => {
+        res.writeHead(400);
+        res.end("Invalid gzip body");
+      });
+    }
+    stream.on("data", (chunk: Buffer) => {
+      bodyStr += chunk.toString();
+    });
+    stream.on("end", () => {
+      sendResponse(bodyStr);
+    });
+
+    function sendResponse(bodyStr: string) {
       const body = JSON.stringify({
         method: req.method,
         headers: req.headers,
-        body: Buffer.concat(chunks).toString(),
+        body: bodyStr,
       });
       if (req.headers["accept-encoding"] === "gzip") {
         res.setHeader("Content-Encoding", "gzip");
-        gzip(body, (err, result) => {
+        gzip(body, (err: Error | null, result: Buffer) => {
           if (err) {
             res.writeHead(500);
             res.end(err.message);
@@ -32,7 +48,7 @@ t.beforeEach(async () => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(body);
       }
-    });
+    }
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));
 });
@@ -58,6 +74,7 @@ t.test("should make a GET request", async (t) => {
     headers: {
       host: `localhost:${(server.address() as any).port}`,
       connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
+      "accept-encoding": "gzip",
     },
   });
 });
@@ -100,7 +117,9 @@ t.test("should make a POST request with body", async (t) => {
       host: `localhost:${(server.address() as any).port}`,
       connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
       "content-type": "application/json",
-      "content-length": "15",
+      "content-length": "35",
+      "accept-encoding": "gzip",
+      "content-encoding": "gzip",
     },
   });
 });
@@ -125,8 +144,9 @@ t.test("should make a POST request with body and gzip", async (t) => {
       host: `localhost:${(server.address() as any).port}`,
       connection: getMajorNodeVersion() >= 19 ? "keep-alive" : "close",
       "content-type": "application/json",
-      "content-length": "15",
+      "content-length": "35",
       "accept-encoding": "gzip",
+      "content-encoding": "gzip",
     },
   });
 });
