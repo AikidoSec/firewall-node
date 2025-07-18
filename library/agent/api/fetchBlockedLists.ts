@@ -33,8 +33,6 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     url: new URL(`${baseUrl.toString()}api/runtime/firewall/lists`),
     method: "GET",
     headers: {
-      // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
-      "Accept-Encoding": "gzip",
       Authorization: token.asString(),
     },
     timeoutInMS: 60 * 1000,

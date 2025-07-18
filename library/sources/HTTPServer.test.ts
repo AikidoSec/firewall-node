@@ -117,7 +117,11 @@ t.test("it wraps the createServer function of http module", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3314", connection: "close" },
+          headers: {
+            host: "localhost:3314",
+            connection: "close",
+            "accept-encoding": "gzip",
+          },
           query: {},
           route: "/",
           source: "http.createServer",
@@ -165,7 +169,11 @@ t.test("it wraps the createServer function of https module", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3315", connection: "close" },
+          headers: {
+            host: "localhost:3315",
+            connection: "close",
+            "accept-encoding": "gzip",
+          },
           query: {},
           route: "/",
           source: "https.createServer",
@@ -366,6 +374,7 @@ t.test("it sets body in context", async (t) => {
         },
         body: JSON.stringify({ foo: "bar" }),
         timeoutInMS: 500,
+        compressBody: false,
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.body, { foo: "bar" });
@@ -552,7 +561,11 @@ t.test("it wraps on request event of http", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3367", connection: "close" },
+          headers: {
+            host: "localhost:3367",
+            connection: "close",
+            "accept-encoding": "gzip",
+          },
           query: {},
           route: "/",
           source: "http.createServer",
@@ -596,7 +609,11 @@ t.test("it wraps on request event of https", async () => {
         t.same(context, {
           url: "/",
           method: "GET",
-          headers: { host: "localhost:3361", connection: "close" },
+          headers: {
+            host: "localhost:3361",
+            connection: "close",
+            "accept-encoding": "gzip",
+          },
           query: {},
           route: "/",
           source: "https.createServer",

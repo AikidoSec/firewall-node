@@ -1,7 +1,12 @@
+/* eslint-disable max-lines-per-function */
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
+import { gzip } from "zlib";
+import { promisify } from "util";
+
+const gzipAsync = promisify(gzip);
 
 async function request({
   url,
@@ -9,14 +14,25 @@ async function request({
   body,
   headers,
   signal,
+  compressBody,
 }: {
   url: URL;
   method: string;
   headers: Record<string, string>;
   signal: AbortSignal;
   body: string;
+  compressBody: boolean;
 }): Promise<{ body: string; statusCode: number }> {
   const request = url.protocol === "https:" ? requestHttps : requestHttp;
+
+  // We need to set the Accept-Encoding header to "gzip" to receive the response in gzip format
+  headers["Accept-Encoding"] = "gzip";
+
+  const compressedBody = await handleRequestCompression(
+    body,
+    headers,
+    compressBody
+  );
 
   return new Promise((resolve, reject) => {
     const req = request(
@@ -54,7 +70,7 @@ async function request({
       reject(error);
     });
 
-    req.end(body);
+    req.end(compressedBody);
   });
 }
 
@@ -64,12 +80,14 @@ export async function fetch({
   headers = {},
   body = "",
   timeoutInMS = 5000,
+  compressBody = true,
 }: {
   url: URL;
   method?: string;
   headers?: Record<string, string>;
   body?: string;
   timeoutInMS?: number;
+  compressBody?: boolean;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();
 
@@ -80,6 +98,7 @@ export async function fetch({
       headers,
       signal: abort.signal,
       body,
+      compressBody,
     }),
     new Promise<{
       body: string;
@@ -98,4 +117,27 @@ export async function fetch({
       timeout.unref();
     }),
   ]);
+}
+
+async function handleRequestCompression(
+  body: string,
+  headers: Record<string, string>,
+  compressBody: boolean
+): Promise<Buffer | string | undefined> {
+  if (!body) {
+    // Dont try to compress an empty string
+    return;
+  }
+
+  if (!compressBody) {
+    return body;
+  }
+
+  const compressed = await gzipAsync(body);
+
+  // Add required headers for gzip compression
+  headers["Content-Encoding"] = "gzip";
+  headers["Content-Length"] = compressed.length.toString();
+
+  return compressed;
 }
