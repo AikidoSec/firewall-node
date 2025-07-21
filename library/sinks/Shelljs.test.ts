@@ -106,7 +106,7 @@ t.test("it detects async shell injections", async (t) => {
   if (error instanceof Error) {
     t.same(
       error.message,
-      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.myTitle"
     );
   }
 
@@ -120,7 +120,7 @@ t.test("it detects async shell injections", async (t) => {
   if (error2 instanceof Error) {
     t.same(
       error2.message,
-      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.myTitle"
     );
   }
 
@@ -134,7 +134,7 @@ t.test("it detects async shell injections", async (t) => {
   if (error3 instanceof Error) {
     t.same(
       error3.message,
-      "Zen has blocked a shell injection: child_process.exec(...) originating from body.myTitle"
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.myTitle"
     );
   }
 });

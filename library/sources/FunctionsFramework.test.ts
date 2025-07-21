@@ -11,6 +11,7 @@ import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";
+import { isWrapped } from "../helpers/wrap";
 
 function getExpressApp() {
   const app = express();
@@ -120,6 +121,7 @@ t.test("it counts requests", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -136,6 +138,7 @@ t.test("it counts attacks", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 1, blocked: 1 },
   });
 });
@@ -152,6 +155,7 @@ t.test("it counts request if error", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
   });
 });
@@ -189,4 +193,6 @@ t.test("it hooks into functions framework", async () => {
   framework.http("hello", (req, res) => {
     res.send("Hello, Functions Framework!");
   });
+
+  t.same(isWrapped(framework.http), true);
 });

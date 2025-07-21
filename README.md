@@ -47,6 +47,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 3.x and 2.x
 * ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
+* ✅ [Restify](docs/restify.md) 8.x
 
 ### Database drivers
 
@@ -65,8 +66,8 @@ Zen for Node.js 16+ is compatible with:
 
 ### Cloud providers
 
-* ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 3.x
-* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 4.x
+* ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 4.x, 3.x
+* ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
 * ✅ Google Cloud Functions
 * ✅ AWS Lambda
 
@@ -98,6 +99,17 @@ See list above for supported database drivers.
 
 * ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
 
+### AI SDKs
+
+Zen instruments the following AI SDKs to track which models are used and how many tokens are consumed, allowing you to monitor your AI usage and costs:
+
+* ✅ [`openai`](https://www.npmjs.com/package/openai) 5.x, 4.x
+* ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x
+* ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
+* ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
+* ✅ [`ai`](https://www.npmjs.com/package/ai) 4.x
+
+_Note: Prompt injection attacks are currently not covered by Zen._
 
 ## Installation
 
@@ -121,6 +133,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [NestJS](docs/nestjs.md)
 - [micro](docs/micro.md)
 - [Next.js](docs/next.md)
+- [Restify](docs/restify.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)

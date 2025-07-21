@@ -61,6 +61,8 @@ const HEX = {
  * Decodes a URI component, returning undefined if the URI is invalid.
  * This function is a safe alternative to `decodeURIComponent`, which throws
  * an error if the URI is malformed.
+ *
+ * We use this for performance reasons (throwing errors is very slow).
  */
 export function safeDecodeURIComponent(uri: string): string | undefined {
   let percentPosition = uri.indexOf("%");

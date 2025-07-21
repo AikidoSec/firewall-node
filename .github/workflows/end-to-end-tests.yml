@@ -1,4 +1,4 @@
-name: End to end tests
+name: 🕵️ End to end tests
 on:
   push: {}
   workflow_call: {}
@@ -45,7 +45,7 @@ jobs:
           "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
         ports:
           - "27019:8123"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [18.x]
