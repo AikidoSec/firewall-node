@@ -79,6 +79,7 @@ function parseAsFileUrl(path: string) {
 /**
  * Checks if a string starts with "file:" to determine if it is a file URL.
  * Removes control characters at the start of the path and checks lowercase.
+ * See https://url.spec.whatwg.org/#url-parsing
  */
 function isFileUrlString(path: string): boolean {
   // Remove control characters at the start of the path
