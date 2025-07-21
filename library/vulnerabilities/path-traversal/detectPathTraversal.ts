@@ -84,9 +84,8 @@ function parseAsFileUrl(path: string) {
 function isFileUrlString(path: string): boolean {
   return (
     path
-      .trimStart()
       // oxlint-disable-next-line no-control-regex
-      .replace(/^[\u0000-\u001F]+/, "")
+      .replace(/^[\u0000-\u0020]+/, "")
       .toLowerCase()
       .startsWith("file:")
   );
