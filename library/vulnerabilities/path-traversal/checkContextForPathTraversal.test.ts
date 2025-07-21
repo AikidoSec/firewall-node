@@ -300,3 +300,111 @@ t.test("it detects path traversal with non lowercase URL scheme", async () => {
     }
   );
 });
+
+t.test(
+  "it detects path traversal with URL with non printable characters",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL("\x14file:///test/../file/test.txt"),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "\x14file:///test/../file/test.txt",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".file"],
+        metadata: {
+          filename: "/file/test.txt",
+        },
+        payload: "\x14file:///test/../file/test.txt",
+      }
+    );
+  }
+);
+
+t.test(
+  "it detects path traversal with URL with non printable characters",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL("\x15\x15file:///test/../file/test.txt"),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "\x15\x15file:///test/../file/test.txt",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".file"],
+        metadata: {
+          filename: "/file/test.txt",
+        },
+        payload: "\x15\x15file:///test/../file/test.txt",
+      }
+    );
+  }
+);
+
+t.test(
+  "it detects path traversal with URL with non printable characters",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL("\0file:///test/../file/test.txt"),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "\0file:///test/../file/test.txt",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".file"],
+        metadata: {
+          filename: "/file/test.txt",
+        },
+        payload: "\0file:///test/../file/test.txt",
+      }
+    );
+  }
+);

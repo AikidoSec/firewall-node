@@ -62,7 +62,7 @@ export function detectPathTraversal(
  */
 function parseAsFileUrl(path: string) {
   let url = path;
-  if (!url.toLowerCase().startsWith("file:")) {
+  if (!isFileUrlString(url)) {
     if (!url.startsWith("/")) {
       url = `/${url}`;
     }
@@ -74,4 +74,19 @@ function parseAsFileUrl(path: string) {
     //
   }
   return undefined;
+}
+
+/**
+ * Checks if a string starts with "file:" to determine if it is a file URL.
+ * Removes control characters at the start of the path and checks lowercase.
+ */
+function isFileUrlString(path: string): boolean {
+  // Remove control characters at the start of the path
+  return (
+    path
+      // oxlint-disable-next-line no-control-regex
+      .replace(/^[\x00-\x1F\x7F]+/, "")
+      .toLowerCase()
+      .startsWith("file:")
+  );
 }
