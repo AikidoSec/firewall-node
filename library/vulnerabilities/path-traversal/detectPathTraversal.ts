@@ -71,7 +71,7 @@ export function detectPathTraversal(
  */
 function parseAsFileUrl(path: string) {
   let url = path;
-  if (!url.startsWith("file:")) {
+  if (!url.toLowerCase().startsWith("file:")) {
     if (!url.startsWith("/") && !url.startsWith("\\")) {
       url = `/${url}`; //                       ^^^^ URL constructor will convert backslashes to forward slashes
     }

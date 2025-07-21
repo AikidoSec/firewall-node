@@ -50,6 +50,7 @@ t.test("it rate limits requests", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -110,6 +111,7 @@ t.test("user rate limiting works", (t) => {
       AIKIDO_BLOCKING: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 

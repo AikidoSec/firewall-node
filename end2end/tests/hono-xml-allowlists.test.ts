@@ -32,6 +32,24 @@ t.beforeEach(async () => {
             enabled: false,
           },
         },
+        {
+          route: "/admin/*",
+          method: "GET",
+          forceProtectionOff: false,
+          allowedIPAddresses: ["10.0.0.1/16"],
+          rateLimiting: {
+            enabled: false,
+          },
+        },
+        {
+          route: "/admin/public",
+          method: "GET",
+          forceProtectionOff: false,
+          allowedIPAddresses: ["0.0.0.0/0", "::/0"],
+          rateLimiting: {
+            enabled: false,
+          },
+        },
       ],
     }),
   });
@@ -60,6 +78,7 @@ t.test("it blocks non-allowed IP addresses", (t) => {
       AIKIDO_BLOCK: "true",
       AIKIDO_TOKEN: token,
       AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
     },
   });
 
@@ -150,6 +169,22 @@ t.test("it blocks non-allowed IP addresses", (t) => {
         signal: AbortSignal.timeout(5000),
       });
       t.same(resp6.status, 403);
+
+      const resp7 = await fetch("http://127.0.0.1:4002/admin/public", {
+        headers: {
+          "X-Forwarded-For": "5.6.7.8",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp7.status, 200);
+
+      const resp8 = await fetch("http://127.0.0.1:4002/admin/private", {
+        headers: {
+          "X-Forwarded-For": "5.6.7.8",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp8.status, 403);
     })
     .catch((error) => {
       t.fail(error);

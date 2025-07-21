@@ -9,12 +9,16 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
+import { checkIndexImportGuard } from "./helpers/indexImportGuard";
+import { setRateLimitGroup } from "./ratelimiting/group";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
+const notAlreadyImported = checkIndexImportGuard();
 
-if (supported && shouldEnable) {
+if (supported && shouldEnable && notAlreadyImported) {
   if (isESM()) {
     console.warn(
       "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
@@ -33,6 +37,8 @@ export {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
+  setRateLimitGroup,
 };
 
 // Required for ESM / TypeScript default export support
@@ -46,4 +52,6 @@ export default {
   addHapiMiddleware,
   addFastifyHook,
   addKoaMiddleware,
+  addRestifyMiddleware,
+  setRateLimitGroup,
 };

@@ -91,13 +91,35 @@ t.test(
               signal: AbortSignal.timeout(5000),
             }
           ),
+          fetch(
+            `https://localhost/request?url=${encodeURIComponent("https://ssrf-redirects.testssandbox.com/ssrf-test")}`,
+            {
+              signal: AbortSignal.timeout(5000),
+            }
+          ),
+          fetch(
+            `https://localhost/request?url=${encodeURIComponent("https://xn--ssrf-rdirects-ghb.testssandbox.com/ssrf-test")}`,
+            {
+              signal: AbortSignal.timeout(5000),
+            }
+          ),
+          fetch(
+            `https://localhost/request?url=${encodeURIComponent("https://ssrf-rédirects.testssandbox.com/ssrf-test")}`,
+            {
+              signal: AbortSignal.timeout(5000),
+            }
+          ),
         ]);
       })
-      .then(([safe1, safe2, unsafe1, unsafe2]) => {
+      .then(([safe1, safe2, unsafe1, unsafe2, unsafe3, unsafe4, unsafe5]) => {
         t.equal(safe1.status, 200);
         t.equal(safe2.status, 200);
         t.equal(unsafe1.status, 500);
         t.equal(unsafe2.status, 500);
+        t.equal(unsafe3.status, 500);
+        t.equal(unsafe4.status, 500);
+        t.equal(unsafe5.status, 500);
+        t.equal(unsafe4.status, 500);
         t.match(stdout, /Starting agent/);
       })
       .catch((error) => {

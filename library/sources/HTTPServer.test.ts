@@ -5,10 +5,11 @@ import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
 import { wrap } from "../helpers/wrap";
+import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
 import { HTTPServer } from "./HTTPServer";
 import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { IPList } from "../agent/api/fetchBlockedLists";
+import type { Response } from "../agent/api/fetchBlockedLists";
 import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
@@ -43,6 +44,17 @@ const api = new ReportingAPIForTesting({
       // @ts-expect-error Testing
       rateLimiting: undefined,
     },
+    {
+      route: "/routes/*",
+      method: "*",
+      forceProtectionOff: false,
+      allowedIPAddresses: [],
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 2,
+        windowSizeInMS: 60 * 60 * 1000,
+      },
+    },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
@@ -53,20 +65,22 @@ const agent = createTestAgent({
 agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
-  return async function fetchBlockedLists(): Promise<{
-    blockedIPAddresses: IPList[];
-    blockedUserAgents: string;
-  }> {
+  return async function fetchBlockedLists(): Promise<Response> {
     return {
+      allowedIPAddresses: [],
       blockedIPAddresses: [
         {
+          key: "geoip/Belgium;BE",
           source: "geoip",
           ips: ["9.9.9.9"],
           description: "geo restrictions",
         },
       ],
       blockedUserAgents: "",
-    };
+      monitoredUserAgents: "",
+      monitoredIPAddresses: [],
+      userAgentDetails: [],
+    } satisfies Response;
   };
 });
 
@@ -213,6 +227,7 @@ t.test("it discovers routes", async () => {
             path: "/foo/bar",
             method: "GET",
             hits: 1,
+            rateLimitedCount: 0,
             graphql: undefined,
             apispec: {},
             graphQLSchema: undefined,
@@ -401,7 +416,7 @@ async function sendUsingCurl({
   return stdout;
 }
 
-t.only("it sends 413 when body is larger than 20 Mb", async (t) => {
+t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
 
@@ -868,12 +883,92 @@ t.test("it blocks absolute path traversal with tab inside", async (t) => {
           body,
           "Zen has blocked a path traversal attack: fs.readFileSync(...) originating from query.path"
         );
+
         server.close();
         resolve();
       });
     });
   });
 });
+
+t.test(
+  "attackers should not be able to discover routes through rate limiting",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      const result = shouldBlockRequest();
+      if (result.block) {
+        if (result.type === "ratelimited") {
+          res.statusCode = 429;
+          res.end("You are rate limited by Zen.");
+          return;
+        }
+        if (result.type === "blocked") {
+          res.statusCode = 403;
+          res.end("You are blocked by Zen.");
+          return;
+        }
+      }
+      res.statusCode = 200;
+      res.end("OK");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3328, async () => {
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          200
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          200
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3328/routes/abc.js"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          429
+        );
+
+        // static files like "abc.js" should NOT be discovered
+        // even if they are rate limited, because shouldDiscoverRoute() would reject them due to the .js extension
+        const discoveredRoute = agent
+          .getRoutes()
+          .asArray()
+          .find((route) => route.path === "/routes/abc.js");
+
+        t.equal(
+          discoveredRoute,
+          undefined,
+          "Static files should not be discovered even when rate limited"
+        );
+
+        server.close();
+        resolve();
+      });
+    });
+  }
+);
 
 t.test("it blocks backslash path traversal", async (t) => {
   const server = http.createServer((req, res) => {

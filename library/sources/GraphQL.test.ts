@@ -11,7 +11,9 @@ function getTestContext() {
     method: "POST",
     url: "http://localhost:4000/graphql",
     query: {},
-    headers: {},
+    headers: {
+      "content-type": "application/json",
+    },
     body: { query: '{ getFile(path: "/etc/bashrc") }' },
     cookies: {},
     routeParams: {},
@@ -96,10 +98,12 @@ t.test("it works", async () => {
   await runWithContext(getTestContext(), async () => {
     const success = await query("/etc/bashrc");
     t.same(success.data!.getFile, "file content");
-    await query("/etc/bashrc");
-    await query("/etc/bashrc");
+
     const result = await query("/etc/bashrc");
     t.same(result.errors![0].message, "You are rate limited by Zen.");
+
+    await query("/etc/bashrc");
+    await query("/etc/bashrc");
 
     // With operation name
     t.same(
@@ -123,6 +127,33 @@ t.test("it works", async () => {
       }
     );
   });
+
+  t.same(agent.getRoutes().asArray(), [
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 6,
+      rateLimitedCount: 0, // Counted in finish event of the incoming http request
+      graphql: {
+        type: "query",
+        name: "getFile",
+      },
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+    {
+      method: "POST",
+      path: "/graphql",
+      hits: 1,
+      rateLimitedCount: 0,
+      graphql: {
+        type: "query",
+        name: "anotherQuery",
+      },
+      apispec: {},
+      graphQLSchema: undefined,
+    },
+  ]);
 
   // Empty context
   await runWithContext({} as Context, async () => {

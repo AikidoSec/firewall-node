@@ -2,7 +2,10 @@ import { basename, join } from "path";
 import * as t from "tap";
 import { readFileSync } from "fs";
 import { escapeStringRegexp } from "../../helpers/escapeStringRegexp";
-import { detectSQLInjection } from "./detectSQLInjection";
+import {
+  detectSQLInjection,
+  SQLInjectionDetectionResult,
+} from "./detectSQLInjection";
 import { SQLDialectClickHouse } from "./dialects/SQLDialectClickHouse";
 import { SQLDialectGeneric } from "./dialects/SQLDialectGeneric";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
@@ -10,7 +13,10 @@ import { SQLDialectPostgres } from "./dialects/SQLDialectPostgres";
 import { SQLDialectSQLite } from "./dialects/SQLDialectSQLite";
 
 t.test("It ignores invalid queries", async () => {
-  isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\'", "users\\");
+  isTokenizeError("SELECT * FROM users WHERE id = 'users\\'", "users\\", [
+    new SQLDialectMySQL(),
+    // Postgres and others treat the backslash as a normal character
+  ]);
 });
 
 t.test("It ignores safely escaped backslash", async () => {
@@ -41,11 +47,11 @@ t.test("user input inside IN (...)", async () => {
 });
 
 t.test("It checks whether the string is safely escaped", async () => {
-  isNotSqlInjection(
+  isTokenizeError(
     `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
     "I'm writting you"
   );
-  isNotSqlInjection(
+  isTokenizeError(
     `SELECT * FROM comments WHERE comment = "I"m writting you"`,
     'I"m writting you'
   );
@@ -259,6 +265,40 @@ t.test("It does not match GROUP keyword", async () => {
   isNotSqlInjection(query, "ASC");
 });
 
+t.test("It works with non-UTF-8 characters and emojis", async () => {
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a \udce9'\nOR 1=1 --'",
+    "a \udce9'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a \uD800'\nOR 1=1 --'",
+    "a \uD800'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a \uDFFF'\nOR 1=1 --'",
+    "a \uDFFF'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a \uDFFF\uDFFF'\nOR 1=1 --'",
+    "a \uDFFF\uDFFF'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a \uDFAB'\nOR 1=1 --'",
+    "a \uDFAB'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a 😀'\nOR 1=1 --'",
+    "a 😀'\nOR 1=1 --"
+  );
+  isSqlInjection(
+    "SELECT * FROM users WHERE id = 'a 🛡️'\nOR 1=1 --'",
+    "a 🛡️'\nOR 1=1 --"
+  );
+
+  isNotSqlInjection("SELECT * FROM users WHERE id = 'a \uD800'", "a \uD800");
+  isNotSqlInjection("SELECT * FROM users WHERE id = 'a 🛡️'", "a 🛡️");
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
@@ -336,7 +376,7 @@ function isSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      true,
+      SQLInjectionDetectionResult.INJECTION_DETECTED,
       `${sql} (${dialect.constructor.name})`
     );
   }
@@ -356,8 +396,36 @@ function isNotSqlInjection(
   for (const dialect of dialects) {
     t.same(
       detectSQLInjection(sql, input, dialect),
-      false,
+      SQLInjectionDetectionResult.SAFE,
       `${sql} (${dialect.constructor.name})`
     );
   }
 }
+
+function isTokenizeError(
+  sql: string,
+  input: string,
+  dialects = [
+    new SQLDialectGeneric(),
+    new SQLDialectMySQL(),
+    new SQLDialectPostgres(),
+    new SQLDialectSQLite(),
+    new SQLDialectClickHouse(),
+  ]
+) {
+  for (const dialect of dialects) {
+    t.same(
+      detectSQLInjection(sql, input, dialect),
+      SQLInjectionDetectionResult.FAILED_TO_TOKENIZE,
+      `${sql} (${dialect.constructor.name})`
+    );
+  }
+}
+
+t.test("get human readable name", async () => {
+  t.same(new SQLDialectGeneric().getHumanReadableName(), "Generic");
+  t.same(new SQLDialectMySQL().getHumanReadableName(), "MySQL");
+  t.same(new SQLDialectPostgres().getHumanReadableName(), "PostgreSQL");
+  t.same(new SQLDialectSQLite().getHumanReadableName(), "SQLite");
+  t.same(new SQLDialectClickHouse().getHumanReadableName(), "ClickHouse");
+});

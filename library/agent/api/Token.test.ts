@@ -13,3 +13,8 @@ t.test("it returns the token as string", async (t) => {
 t.test("it throws error if toString() is called", async (t) => {
   t.throws(() => `${new Token("token")}`);
 });
+
+t.test("it trims the token", async (t) => {
+  const token = new Token("  token  ");
+  t.same(token.asString(), "token");
+});

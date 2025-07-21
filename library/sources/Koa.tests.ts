@@ -162,6 +162,8 @@ export function createKoaTests(koaPackageName: string) {
     t.match(agent.getInspectionStatistics().getStats(), {
       requests: {
         total: 2,
+        aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           total: 0,
           blocked: 0,

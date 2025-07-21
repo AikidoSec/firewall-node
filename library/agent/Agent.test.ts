@@ -18,6 +18,7 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
+import type { Response } from "./api/fetchBlockedLists";
 
 let shouldOnlyAllowSomeIPAddresses = false;
 
@@ -28,6 +29,7 @@ wrap(fetch, "fetch", function mock() {
       body: JSON.stringify({
         blockedIPAddresses: [
           {
+            key: "some/key",
             source: "name",
             description: "Description",
             ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
@@ -37,13 +39,26 @@ wrap(fetch, "fetch", function mock() {
         allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
           ? [
               {
+                key: "some/key",
                 source: "name",
                 description: "Description",
                 ips: ["4.3.2.1"],
               },
             ]
           : [],
-      }),
+        monitoredIPAddresses: [],
+        monitoredUserAgents: "",
+        userAgentDetails: [
+          {
+            key: "AI2Bot",
+            pattern: "AI2Bot",
+          },
+          {
+            key: "Bytespider",
+            pattern: "Bytespider",
+          },
+        ],
+      } satisfies Response),
     };
   };
 });
@@ -111,7 +126,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.9.0 is supported!",
+    "mongodb@6.16.0 is supported!",
   ]);
 });
 
@@ -549,7 +564,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   agent.start([]);
   for (let i = 0; i < 1000; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -563,7 +579,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
   for (let i = 0; i < 4001; i++) {
     agent.getInspectionStatistics().onInspectedCall({
-      sink: "mongodb",
+      operation: "MongoDB.query",
+      kind: "nosql_op",
       blocked: false,
       durationInMs: 0.1,
       attackDetected: false,
@@ -580,9 +597,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After 10 minutes, we'll see that the required amount of performance samples has been reached
-  // And then send a heartbeat
-  clock.tick(10 * 60 * 1000);
+  // After 30 seconds, the first heartbeat should be sent
+  clock.tick(30 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -594,7 +610,23 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After another 10 minutes, we'll see that we already sent the initial stats
+  // After another 2 minutes, another heartbeat should be sent
+  clock.tick(2 * 60 * 1000);
+  await clock.nextAsync();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  // Every 10 minutes, another heartbeat should be sent
   clock.tick(10 * 60 * 1000);
   await clock.nextAsync();
 
@@ -605,15 +637,27 @@ t.test("it sends heartbeat when reached max timings", async () => {
     {
       type: "heartbeat",
     },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
   ]);
 
-  // Every 30 minutes we'll send a heartbeat
-  clock.tick(30 * 60 * 1000);
+  // Every 10 minutes, another heartbeat should be sent
+  clock.tick(10 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
       type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
     },
     {
       type: "heartbeat",
@@ -1152,4 +1196,37 @@ t.test("it only allows some IP addresses", async () => {
   t.same(agent.getConfig().isAllowedIPAddress("4.3.2.1"), {
     allowed: true,
   });
+});
+
+t.test("it includes agent's own package in heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      packages: [
+        {
+          name: "@aikidosec/firewall",
+          version: "0.0.0",
+          requiredAt: 0,
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
 });

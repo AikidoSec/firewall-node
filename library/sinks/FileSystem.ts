@@ -107,6 +107,7 @@ export class FileSystem implements Wrapper {
 
       if (promise) {
         wrapExport(exports, name, pkgInfo, {
+          kind: "fs_op",
           inspectArgs: (args) => this.inspectPath(args, name, pathsArgs),
         });
       }
@@ -123,6 +124,7 @@ export class FileSystem implements Wrapper {
         const { pathsArgs, sync } = functions[name];
 
         wrapExport(exports, name, pkgInfo, {
+          kind: "fs_op",
           inspectArgs: (args) => {
             return this.inspectPath(args, name, pathsArgs);
           },
@@ -130,6 +132,7 @@ export class FileSystem implements Wrapper {
 
         if (sync) {
           wrapExport(exports, `${name}Sync`, pkgInfo, {
+            kind: "fs_op",
             inspectArgs: (args) => {
               return this.inspectPath(args, `${name}Sync`, pathsArgs);
             },
@@ -139,12 +142,14 @@ export class FileSystem implements Wrapper {
 
       // Wrap realpath.native
       wrapExport(exports.realpath, "native", pkgInfo, {
+        kind: "fs_op",
         inspectArgs: (args) => {
           return this.inspectPath(args, "realpath.native", 1);
         },
       });
 
       wrapExport(exports.realpathSync, "native", pkgInfo, {
+        kind: "fs_op",
         inspectArgs: (args) => {
           return this.inspectPath(args, "realpathSync.native", 1);
         },

@@ -39,6 +39,31 @@ t.beforeEach(async () => {
           allowedIPAddresses: ["1.2.3.4", "192.168.2.0/24"],
           forceProtectionOff: false,
         },
+
+        {
+          route: "/private/public",
+          // @ts-expect-error Test
+          rateLimiting: undefined,
+          method: "GET",
+          allowedIPAddresses: ["0.0.0.0/0", "::/0"],
+          forceProtectionOff: false,
+        },
+        {
+          route: "/private/public/*",
+          // @ts-expect-error Test
+          rateLimiting: undefined,
+          method: "GET",
+          allowedIPAddresses: ["0.0.0.0/0", "::/0"],
+          forceProtectionOff: false,
+        },
+        {
+          route: "/private/*",
+          // @ts-expect-error Test
+          rateLimiting: undefined,
+          method: "GET",
+          allowedIPAddresses: ["127.0.0.1", "::1"],
+          forceProtectionOff: false,
+        },
       ],
       block: true,
     }),
@@ -84,6 +109,50 @@ t.test("it always allows request if localhost", async () => {
 t.test("it blocks request if no IP address", async () => {
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: undefined }, agent),
+    false
+  );
+});
+
+t.test("public subroute of private route", async () => {
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
+        url: "/private/test",
+        route: "/private/test",
+        method: "GET",
+        remoteAddress: "1.1.1.1",
+      },
+      agent
+    ),
+    false
+  );
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
+        url: "/private/public",
+        route: "/private/public",
+        method: "GET",
+        remoteAddress: "1.1.1.1",
+      },
+      agent
+    ),
+    true
+  );
+
+  // No exact match and not all matching endpoints allow the IP address
+  t.same(
+    ipAllowedToAccessRoute(
+      {
+        ...context,
+        url: "/private/public/test",
+        route: "/private/public/test",
+        method: "GET",
+        remoteAddress: "1.1.1.1",
+      },
+      agent
+    ),
     false
   );
 });
@@ -203,7 +272,7 @@ t.test("it checks every matching endpoint", async () => {
 
   t.same(
     ipAllowedToAccessRoute({ ...context, remoteAddress: "3.4.5.6" }, agent),
-    false
+    true // Because exact match allows the IP address
   );
 });
 
@@ -269,6 +338,87 @@ t.test(
         {
           ...context,
           remoteAddress: "3.4.5.6",
+        },
+        agent
+      ),
+      false
+    );
+  }
+);
+
+t.test(
+  "allows all IPs for /api/routes/authorize but restricts /api/routes/* to 1.1.1.1",
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+      api: new ReportingAPIForTesting({
+        success: true,
+        allowedIPAddresses: [],
+        configUpdatedAt: 0,
+        blockedUserIds: [],
+        heartbeatIntervalInMS: 10 * 1000,
+        endpoints: [
+          {
+            route: "/api/routes/*",
+            // @ts-expect-error Test
+            rateLimiting: undefined,
+            method: "GET",
+            allowedIPAddresses: ["1.1.1.1"],
+            forceProtectionOff: false,
+          },
+          {
+            route: "/api/routes/authorize",
+            // @ts-expect-error Test
+            rateLimiting: undefined,
+            method: "GET",
+            allowedIPAddresses: ["0.0.0.0/0", "::/0"],
+            forceProtectionOff: false,
+          },
+        ],
+        block: true,
+      }),
+    });
+
+    agent.start([]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // /api/routes/authorize allowed from any IP
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/authorize",
+          route: "/api/routes/authorize",
+          method: "GET",
+          remoteAddress: "8.8.8.8",
+        },
+        agent
+      ),
+      true
+    );
+
+    // /api/routes/foo only allowed from 1.1.1.1
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/foo",
+          route: "/api/routes/foo",
+          method: "GET",
+          remoteAddress: "1.1.1.1",
+        },
+        agent
+      ),
+      true
+    );
+    t.same(
+      ipAllowedToAccessRoute(
+        {
+          ...context,
+          url: "/api/routes/foo",
+          route: "/api/routes/foo",
+          method: "GET",
+          remoteAddress: "8.8.8.8",
         },
         agent
       ),
