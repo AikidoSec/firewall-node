@@ -306,7 +306,7 @@ t.test(
   async () => {
     t.same(
       checkContextForPathTraversal({
-        filename: new URL("\x14file:///test/../file/test.txt"),
+        filename: new URL("\u0014file:///test/../file/test.txt"),
         operation: "operation",
         context: {
           cookies: {},
@@ -315,7 +315,7 @@ t.test(
           method: "POST",
           url: "url",
           query: {
-            file: "\x14file:///test/../file/test.txt",
+            file: "\u0014file:///test/../file/test.txt",
           },
           body: {},
           routeParams: {},
@@ -331,13 +331,13 @@ t.test(
         metadata: {
           filename: "/file/test.txt",
         },
-        payload: "\x14file:///test/../file/test.txt",
+        payload: "\u0014file:///test/../file/test.txt",
       }
     );
 
     t.same(
       checkContextForPathTraversal({
-        filename: new URL("\x15\x15file:///test/../file/test.txt"),
+        filename: new URL("\u0015\u0015file:///test/../file/test.txt"),
         operation: "operation",
         context: {
           cookies: {},
@@ -346,7 +346,7 @@ t.test(
           method: "POST",
           url: "url",
           query: {
-            file: "\x15\x15file:///test/../file/test.txt",
+            file: "\u0015\u0015file:///test/../file/test.txt",
           },
           body: {},
           routeParams: {},
@@ -362,7 +362,7 @@ t.test(
         metadata: {
           filename: "/file/test.txt",
         },
-        payload: "\x15\x15file:///test/../file/test.txt",
+        payload: "\u0015\u0015file:///test/../file/test.txt",
       }
     );
 
@@ -425,6 +425,37 @@ t.test(
           filename: "/file/test.txt",
         },
         payload: " file:///test/../file/test.txt",
+      }
+    );
+
+    t.same(
+      checkContextForPathTraversal({
+        filename: new URL("\tfile:///test/../file/test.txt"),
+        operation: "operation",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {
+            file: "\tfile:///test/../file/test.txt",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "operation",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".file"],
+        metadata: {
+          filename: "/file/test.txt",
+        },
+        payload: "\tfile:///test/../file/test.txt",
       }
     );
   }
