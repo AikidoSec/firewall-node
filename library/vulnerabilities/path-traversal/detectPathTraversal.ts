@@ -85,7 +85,7 @@ function isFileUrlString(path: string): boolean {
   return (
     path
       // oxlint-disable-next-line no-control-regex
-      .replace(/^[\x00-\x1F\x7F]+/, "")
+      .replace(/^[\x00-\x1F\x7F\x20]+/, "")
       .toLowerCase()
       .startsWith("file:")
   );
