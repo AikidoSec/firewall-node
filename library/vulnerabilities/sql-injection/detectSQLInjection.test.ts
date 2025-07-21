@@ -29,6 +29,13 @@ t.test("It allows escape sequences", async (t) => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\tusers'", "\tusers");
 });
 
+t.test("It does not flag short operator patterns as injections", async () => {
+  isNotSqlInjection(
+    "select column form table where table.a = 1 AND table.active= 1",
+    "e="
+  );
+});
+
 t.test("user input inside IN (...)", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id IN ('123')", "'123'");
   isNotSqlInjection("SELECT * FROM users WHERE id IN (123)", "123");
