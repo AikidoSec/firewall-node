@@ -71,7 +71,7 @@ export function detectPathTraversal(
  */
 function parseAsFileUrl(path: string) {
   let url = path;
-  if (!url.toLowerCase().startsWith("file:")) {
+  if (!isFileUrlString(url)) {
     if (!url.startsWith("/") && !url.startsWith("\\")) {
       url = `/${url}`; //                       ^^^^ URL constructor will convert backslashes to forward slashes
     }
@@ -83,4 +83,19 @@ function parseAsFileUrl(path: string) {
     //
   }
   return undefined;
+}
+
+/**
+ * Checks if a string starts with "file:" to determine if it is a file URL.
+ * Removes control characters and spaces at the start of the path and checks lowercase.
+ * See https://url.spec.whatwg.org/#url-parsing
+ */
+function isFileUrlString(path: string): boolean {
+  return (
+    path
+      // oxlint-disable-next-line no-control-regex
+      .replace(/^[\u0000-\u0020]+/, "")
+      .toLowerCase()
+      .startsWith("file:")
+  );
 }
