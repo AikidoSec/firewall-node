@@ -7,6 +7,7 @@ import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -165,7 +166,7 @@ t.test("it works", (t) => {
               metadata: {
                 hostname: "thisdomainpointstointernalip.com",
                 port: "443",
-                privateIP: "::1",
+                privateIP: getMajorNodeVersion() >= 18 ? "::1" : "127.0.0.1",
               },
             },
           });
