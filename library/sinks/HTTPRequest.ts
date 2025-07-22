@@ -1,18 +1,21 @@
+import { subscribe } from "diagnostics_channel";
 import { lookup } from "dns";
-import { type RequestOptions } from "http";
+import { type RequestOptions, ClientRequest, IncomingMessage } from "http";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
+import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { getPortFromURL } from "../helpers/getPortFromURL";
+import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
-import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isOptionsObject } from "./http-request/isOptionsObject";
+import { onHTTPResponse } from "./http-request/wrapResponseHandler";
 
 export class HTTPRequest implements Wrapper {
   private inspectHostname(
@@ -145,18 +148,26 @@ export class HTTPRequest implements Wrapper {
     return args;
   }
 
-  wrapResponseHandler(args: unknown[], module: "http" | "https") {
-    if (args.find((arg) => typeof arg === "function")) {
-      return args.map((arg) => {
-        if (typeof arg === "function") {
-          return wrapResponseHandler(args, module, arg);
-        }
+  handleResponseFinish({
+    request,
+    response,
+  }: {
+    request: ClientRequest;
+    response: IncomingMessage;
+  }) {
+    const context = getContext();
 
-        return arg;
-      });
+    if (!context) {
+      return;
     }
 
-    return args.concat([wrapResponseHandler(args, module, () => {})]);
+    try {
+      const source =
+        request.protocol + request.getHeader("host") + request.path;
+      onHTTPResponse(new URL(source), response, context);
+    } catch {
+      // Ignore errors
+    }
   }
 
   wrap(hooks: Hooks) {
@@ -165,6 +176,14 @@ export class HTTPRequest implements Wrapper {
 
     for (const module of modules) {
       hooks.addBuiltinModule(module).onRequire((exports, pkgInfo) => {
+        if (isVersionGreaterOrEqual("16.17.0", getSemverNodeVersion())) {
+          subscribe("http.client.response.finish", (message) =>
+            this.handleResponseFinish(
+              message as { request: ClientRequest; response: IncomingMessage }
+            )
+          );
+        }
+
         for (const method of methods) {
           wrapExport(exports, method, pkgInfo, {
             kind: "outgoing_http_op",
