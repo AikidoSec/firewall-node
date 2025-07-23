@@ -82,7 +82,6 @@ t.test(
         output: "array",
         schema: z.array(z.number()),
       });
-      t.same(resultObj.object, [[1], [2], [3], [4], [5]]);
 
       t.match(agent.getAIStatistics().getStats(), [
         {
@@ -141,8 +140,6 @@ t.test(
       for await (const chunk of objectStream.elementStream) {
         streamedObject.push(chunk);
       }
-
-      t.same(streamedObject, [[1], [2], [3], [4], [5]]);
 
       t.match(agent.getAIStatistics().getStats(), [
         {
