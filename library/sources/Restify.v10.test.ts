@@ -6,11 +6,11 @@ t.test(
   "Restify",
   {
     skip:
-      getMajorNodeVersion() > 16
-        ? "Restify v8 only supports node v16"
+      getMajorNodeVersion() > 18
+        ? "Restify v10 only supports node v18 and lower"
         : undefined,
   },
   async () => {
-    createRestifyTests("restify-v8");
+    createRestifyTests("restify-v10");
   }
 );

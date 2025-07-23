@@ -47,7 +47,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 3.x and 2.x
 * ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
-* ✅ [Restify](docs/restify.md) 8.x
+* ✅ [Restify](docs/restify.md) 11.x, 10.x, 9.x and 8.x
 
 ### Database drivers
 
