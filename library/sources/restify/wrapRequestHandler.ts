@@ -1,17 +1,11 @@
 /* eslint-disable prefer-rest-params */
 import { runWithContext } from "../../agent/Context";
-import { contextFromRequest, RestifyRequest } from "./contextFromRequest";
+import { contextFromRequest, type RestifyRequest } from "./contextFromRequest";
 
 export function wrapRequestHandler(handler: Function): Function {
-  return function wrapped() {
-    if (arguments.length === 0) {
-      return handler.apply(
-        // @ts-expect-error We don't know the type of this
-        this
-      );
-    }
-
-    const req: RestifyRequest = arguments[0];
+  // Restify v9 and higher is checking that the request handler or middleware has the correct signature.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return function wrapped(req: RestifyRequest, res: any, next: any) {
     const context = contextFromRequest(req);
 
     return runWithContext(context, () => {

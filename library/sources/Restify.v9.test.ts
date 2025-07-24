@@ -11,6 +11,6 @@ t.test(
         : undefined,
   },
   async () => {
-    createRestifyTests("restify-v8");
+    createRestifyTests("restify-v9");
   }
 );
