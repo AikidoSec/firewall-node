@@ -1,7 +1,7 @@
 {
   "name": "@aikidosec/firewall",
   "version": "0.0.0",
-  "description": "Zen by Aikido is an embedded Web Application Firewall that autonomously protects Node.js apps against common and critical attacks",
+  "description": "Zen by Aikido is an embedded Application Firewall that autonomously protects Node.js apps against common and critical attacks, provides rate limiting, detects malicious traffic (including bots), and more.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AikidoSec/firewall-node.git"
