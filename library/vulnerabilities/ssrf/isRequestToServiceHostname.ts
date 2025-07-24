@@ -1,4 +1,4 @@
-// e.g. "discord-bot" or "my_service" or "backend"
+// e.g. "discord-bot" or "my_service" or "BACKEND"
 const SERVICE_HOSTNAME_PATTERN = /^[a-z-_]+$/;
 
 const SPECIAL_EXCEPTIONS = [
