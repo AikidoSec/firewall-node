@@ -63,6 +63,7 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private shutdownEventCalled = false;
 
   constructor(
     private block: boolean,
@@ -506,6 +507,8 @@ export class Agent {
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       });
+
+    this.registerShutdownHandler();
   }
 
   onFailedToWrapMethod(module: string, name: string, error: Error) {
@@ -608,5 +611,28 @@ export class Agent {
         // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
         return this.sendHeartbeatEveryMS;
     }
+  }
+
+  private registerShutdownHandler() {
+    const shutdownEvents = ["SIGTERM", "SIGINT", "SIGBREAK", "SIGHUP"];
+
+    shutdownEvents.forEach((event) => {
+      process.on(event, () => {
+        if (this.shutdownEventCalled) {
+          return;
+        }
+        this.shutdownEventCalled = true;
+        this.onShutdown();
+      });
+    });
+  }
+
+  private async onShutdown() {
+    this.logger.log("Shutting down agent...");
+    if (performance.now() - this.lastHeartbeat > 30000) {
+      // If the last heartbeat was sent less than 30 seconds ago, we don't need to send another one
+      await this.flushStats(1000);
+    }
+    process.exit(process.exitCode || 0);
   }
 }
