@@ -46,6 +46,20 @@ export class Postgresjs implements Wrapper {
             return returnValue;
           },
         });
-      });
+      })
+      .addMultiFileInstrumentation(
+        [
+          "src/index.js", // ESM
+          "cjs/src/index.js", // CJS
+        ],
+        [
+          {
+            name: "unsafe",
+            nodeType: "FunctionDeclaration",
+            operationKind: "sql_op",
+            inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ]
+      );
   }
 }

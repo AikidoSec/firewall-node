@@ -15,6 +15,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          rustup component add rustfmt clippy
+          cargo install wasm-pack
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run lint
+      - name: Check Rust formatting
+        run: cd instrumentation-wasm && cargo fmt --check
+      - name: Run Rust Linter
+        run: cd instrumentation-wasm && cargo clippy
