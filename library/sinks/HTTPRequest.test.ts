@@ -6,6 +6,8 @@ import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -57,8 +59,10 @@ function createContext(): Context {
 t.setTimeout(60 * 1000);
 
 t.test("it works", (t) => {
+  const api = new ReportingAPIForTesting();
   const agent = createTestAgent({
     token: new Token("123"),
+    api,
   });
   agent.start([new HTTPRequest()]);
 
@@ -153,6 +157,19 @@ t.test("it works", (t) => {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+
+          t.match(api.getEvents()[api.getEvents().length - 1], {
+            type: "detected_attack",
+            attack: {
+              kind: "ssrf",
+              payload: "thisdomainpointstointernalip.com",
+              metadata: {
+                hostname: "thisdomainpointstointernalip.com",
+                port: "443",
+                privateIP: getMajorNodeVersion() >= 18 ? "::1" : "127.0.0.1",
+              },
+            },
+          });
         })
         .on("finish", () => {
           t.fail("should not finish");

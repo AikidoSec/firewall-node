@@ -202,7 +202,7 @@ function wrapDNSLookupCallback(
       blocked: agent.shouldBlock(),
       stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
       paths: found.pathsToPayload,
-      metadata: getMetadataForSSRFAttack({ hostname, port }),
+      metadata: getMetadataForSSRFAttack({ hostname, port, privateIP }),
       request: context,
       payload: found.payload,
     });

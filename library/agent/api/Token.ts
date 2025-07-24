@@ -1,8 +1,11 @@
 export class Token {
-  constructor(private readonly token: string) {
-    if (!this.token) {
+  #token: string;
+
+  constructor(token: string) {
+    if (!token) {
       throw new Error("Token cannot be empty");
     }
+    this.#token = token.trim();
   }
 
   toString() {
@@ -10,6 +13,6 @@ export class Token {
   }
 
   asString() {
-    return this.token;
+    return this.#token;
   }
 }

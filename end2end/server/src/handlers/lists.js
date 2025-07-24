@@ -12,6 +12,16 @@ module.exports = function lists(req, res) {
     throw new Error("App is missing");
   }
 
+  // Check if Accept-Encoding header contains 'gzip'
+  const acceptEncoding = req.get("accept-encoding") || "";
+  if (!acceptEncoding.toLowerCase().includes("gzip")) {
+    return res.status(400).json({
+      success: false,
+      error:
+        "Accept-Encoding header must include 'gzip' for firewall lists endpoint",
+    });
+  }
+
   const blockedIps = getBlockedIPAddresses(req.app);
   const blockedUserAgents = getBlockedUserAgents(req.app);
   const allowedIps = getAllowedIPAddresses(req.app);
