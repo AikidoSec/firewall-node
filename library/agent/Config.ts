@@ -28,4 +28,5 @@ export type Config = {
   allowedIPAddresses: string[];
   block?: boolean;
   receivedAnyStats?: boolean;
+  blockNewOutgoingRequests?: boolean;
 };
