@@ -629,8 +629,8 @@ export class Agent {
 
   private async onShutdown() {
     this.logger.log("Shutting down agent...");
-    if (performance.now() - this.lastHeartbeat > 30000) {
-      // If the last heartbeat was sent less than 30 seconds ago, we don't need to send another one
+    if (performance.now() > 30000) {
+      // Only send heartbeat if we are running for more than 30 seconds
       await this.flushStats(1000);
     }
     process.exit(process.exitCode || 0);
