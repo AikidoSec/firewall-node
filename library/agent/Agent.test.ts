@@ -1230,3 +1230,55 @@ t.test("it includes agent's own package in heartbeat", async () => {
 
   clock.uninstall();
 });
+
+t.test("it sends heartbeat when onShutdown handler is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  // After 5 seconds, nothing should happen
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  clock.tick(1 * 90 * 1000);
+  await clock.nextAsync();
+
+  const origExit = process.exit;
+
+  let procExitCalled = false;
+  // @ts-expect-error Override process.exit
+  process.exit = function exit() {
+    procExitCalled = true;
+  };
+
+  // @ts-expect-error Private TS method
+  await agent.onShutdown();
+
+  t.same(procExitCalled, true);
+
+  process.exit = origExit;
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  clock.uninstall();
+});
