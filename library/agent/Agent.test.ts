@@ -1266,6 +1266,7 @@ t.test("it sends heartbeat when onShutdown handler is called", async () => {
 
   // @ts-expect-error Private TS method
   await agent.onShutdown();
+  // It is not possible to use process.emit("SIGTERM") as we have multiple agent instances, some with ReportingAPIThatThrows
 
   t.same(procExitCalled, true);
 
