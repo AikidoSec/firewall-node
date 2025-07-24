@@ -1,7 +1,7 @@
 // e.g. "discord-bot" or "my_service" or "BACKEND"
 const SERVICE_HOSTNAME_PATTERN = /^[a-z-_]+$/;
 
-const SPECIAL_EXCEPTIONS = [
+const NOT_SERVICE_HOSTNAMES = [
   "localhost",
   "localdomain",
 
@@ -14,7 +14,7 @@ const SPECIAL_EXCEPTIONS = [
 export function isRequestToServiceHostname(hostname: string): boolean {
   const lowerHostname = hostname.toLowerCase();
 
-  if (SPECIAL_EXCEPTIONS.includes(lowerHostname)) {
+  if (NOT_SERVICE_HOSTNAMES.includes(lowerHostname)) {
     return false;
   }
 
