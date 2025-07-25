@@ -63,6 +63,7 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private shutdownEventCalled = false;
 
   constructor(
     private block: boolean,
@@ -607,6 +608,14 @@ export class Agent {
       default:
         // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
         return this.sendHeartbeatEveryMS;
+    }
+  }
+
+  public async shutdown() {
+    this.logger.log("Shutting down agent...");
+    if (performance.now() > 30000) {
+      // Only send heartbeat if we are running for more than 30 seconds
+      await this.flushStats(1000);
     }
   }
 }
