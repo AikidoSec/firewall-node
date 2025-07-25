@@ -19,6 +19,7 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import type { Response } from "./api/fetchBlockedLists";
+import { shutdown } from "./shutdown";
 
 let shouldOnlyAllowSomeIPAddresses = false;
 
@@ -1256,21 +1257,7 @@ t.test("it sends heartbeat when onShutdown handler is called", async () => {
   clock.tick(1 * 90 * 1000);
   await clock.nextAsync();
 
-  const origExit = process.exit;
-
-  let procExitCalled = false;
-  // @ts-expect-error Override process.exit
-  process.exit = function exit() {
-    procExitCalled = true;
-  };
-
-  // @ts-expect-error Private TS method
-  await agent.onShutdown();
-  // It is not possible to use process.emit("SIGTERM") as we have multiple agent instances, some with ReportingAPIThatThrows
-
-  t.same(procExitCalled, true);
-
-  process.exit = origExit;
+  await shutdown();
 
   t.match(api.getEvents(), [
     {

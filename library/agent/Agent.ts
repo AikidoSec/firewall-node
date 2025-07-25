@@ -507,8 +507,6 @@ export class Agent {
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       });
-
-    this.registerShutdownHandler();
   }
 
   onFailedToWrapMethod(module: string, name: string, error: Error) {
@@ -613,26 +611,11 @@ export class Agent {
     }
   }
 
-  private registerShutdownHandler() {
-    const shutdownEvents = ["SIGTERM", "SIGINT", "SIGBREAK", "SIGHUP"];
-
-    shutdownEvents.forEach((event) => {
-      process.on(event, () => {
-        if (this.shutdownEventCalled) {
-          return;
-        }
-        this.shutdownEventCalled = true;
-        this.onShutdown();
-      });
-    });
-  }
-
-  private async onShutdown() {
+  public async shutdown() {
     this.logger.log("Shutting down agent...");
     if (performance.now() > 30000) {
       // Only send heartbeat if we are running for more than 30 seconds
       await this.flushStats(1000);
     }
-    process.exit(process.exitCode || 0);
   }
 }
