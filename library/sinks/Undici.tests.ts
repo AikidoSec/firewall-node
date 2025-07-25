@@ -364,7 +364,16 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         },
         async () => {
           // This should NOT throw an error because my-service-hostname is a service hostname
-          await request("http://my-service-hostname");
+          const error = await t.rejects(() =>
+            request("http://my-service-hostname")
+          );
+          if (error instanceof Error) {
+            // @ts-expect-error Added in Node.js 16.9.0
+            t.same(error.code, "ECONNREFUSED");
+            // ^ means it tried to connect to the hostname
+          } else {
+            t.fail("Expected an error to be thrown");
+          }
         }
       );
 
