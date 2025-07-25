@@ -357,7 +357,6 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         }
       );
 
-      // Test service hostname - should NOT be blocked even if it appears in user input
       await runWithContext(
         {
           ...createContext(),
@@ -369,7 +368,6 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         }
       );
 
-      // Test metadata hostname - should be blocked if it appears in user input
       await runWithContext(
         {
           ...createContext(),
