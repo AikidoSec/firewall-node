@@ -365,14 +365,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         },
         async () => {
           // This should NOT throw an error because my-service-hostname is a service hostname
-          const error = await t.rejects(() =>
-            request("https://my-service-hostname:8080/health")
-          );
-          if (error instanceof Error) {
-            // Should get ECONNREFUSED (connection refused) not SSRF blocked
-            // @ts-expect-error Added in Node.js 16.9.0, but because this test is skipped in Node.js 16 because of the lack of fetch, it's fine
-            t.same(error.code, "ECONNREFUSED");
-          }
+          await request("http://my-service-hostname");
         }
       );
 
@@ -387,8 +380,10 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           if (error instanceof Error) {
             t.same(
               error.message,
-              "Zen has blocked a server-side request forgery: undici.request(...) originating from body.metadataHost"
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.metadataHost"
             );
+          } else {
+            t.fail("Expected an error to be thrown");
           }
         }
       );

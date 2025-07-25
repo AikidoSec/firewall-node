@@ -559,7 +559,7 @@ t.test(
             "Zen has blocked a server-side request forgery: fetch(...) originating from body.metadataHost"
           );
         } else {
-          t.fail("Expected an error");
+          t.fail("Expected an error to be thrown");
         }
       }
     );

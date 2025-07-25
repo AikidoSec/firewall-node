@@ -320,7 +320,6 @@ t.test("it works", (t) => {
     }
   });
 
-  // Test service hostname - should NOT be blocked even if it appears in user input
   runWithContext(
     {
       ...createContext(),
@@ -328,33 +327,33 @@ t.test("it works", (t) => {
     },
     () => {
       // This should NOT throw an error because my-service-hostname is a service hostname
-      const serviceRequest = http.request(
-        "http://my-service-hostname:8080/health"
-      );
+      const serviceRequest = http.request("http://my-service-hostname");
       serviceRequest.on("error", (e: NodeJS.ErrnoException) => {
-        // Should get ECONNREFUSED (connection refused) not SSRF blocked
-        t.same(e.code, "ECONNREFUSED");
+        t.fail();
       });
       serviceRequest.end();
     }
   );
 
-  // Test metadata hostname - should be blocked if it appears in user input
   runWithContext(
     {
       ...createContext(),
       ...{ body: { metadataHost: "metadata" } },
     },
     () => {
-      const error = t.throws(() =>
-        http.request("http://metadata/computeMetadata/v1/instance/")
+      const metadataRequest = http.request(
+        "http://metadata/computeMetadata/v1/instance/"
       );
-      if (error instanceof Error) {
+      metadataRequest.on("error", (e: NodeJS.ErrnoException) => {
         t.same(
-          error.message,
-          "Zen has blocked a server-side request forgery: https.request(...) originating from body.metadataHost"
+          e.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.metadataHost"
         );
-      }
+      });
+      metadataRequest.on("finish", () => {
+        t.fail("should not finish");
+      });
+      metadataRequest.end();
     }
   );
 
