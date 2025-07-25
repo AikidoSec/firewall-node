@@ -94,7 +94,7 @@ t.test("returns false for IP addresses", async (t) => {
   t.equal(isRequestToServiceHostname("0"), false);
 });
 
-t.test("returns false for metadata hostname (IMDS exception)", async (t) => {
+t.test("returns false for metadata hostname (IMDS)", async (t) => {
   t.equal(isRequestToServiceHostname("metadata"), false);
   t.equal(isRequestToServiceHostname("METADATA"), false);
   t.equal(isRequestToServiceHostname("Metadata"), false);

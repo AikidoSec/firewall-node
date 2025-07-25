@@ -22,7 +22,9 @@ wrap(dns, "lookup", function lookup(original) {
 
     if (
       hostname === "thisdomainpointstointernalip.com" ||
-      hostname === "thisdomainpointstointernalip2.com"
+      hostname === "thisdomainpointstointernalip2.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
     ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
@@ -317,6 +319,44 @@ t.test("it works", (t) => {
       );
     }
   });
+
+  // Test service hostname - should NOT be blocked even if it appears in user input
+  runWithContext(
+    {
+      ...createContext(),
+      ...{ body: { serviceHostname: "my-service-hostname" } },
+    },
+    () => {
+      // This should NOT throw an error because my-service-hostname is a service hostname
+      const serviceRequest = http.request(
+        "http://my-service-hostname:8080/health"
+      );
+      serviceRequest.on("error", (e: NodeJS.ErrnoException) => {
+        // Should get ECONNREFUSED (connection refused) not SSRF blocked
+        t.same(e.code, "ECONNREFUSED");
+      });
+      serviceRequest.end();
+    }
+  );
+
+  // Test metadata hostname - should be blocked if it appears in user input
+  runWithContext(
+    {
+      ...createContext(),
+      ...{ body: { metadataHost: "metadata" } },
+    },
+    () => {
+      const error = t.throws(() =>
+        http.request("http://metadata/computeMetadata/v1/instance/")
+      );
+      if (error instanceof Error) {
+        t.same(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.metadataHost"
+        );
+      }
+    }
+  );
 
   setTimeout(() => {
     t.end();

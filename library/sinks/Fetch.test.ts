@@ -19,7 +19,11 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
+    ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
@@ -524,6 +528,38 @@ t.test(
             error.cause.message,
             "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        ...{ body: { serviceHostname: "my-service-hostname" } },
+      },
+      async () => {
+        // This should NOT throw an error because my-service-hostname is a service hostname
+        await fetch("http://my-service-hostname");
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        ...{ body: { metadataHost: "metadata" } },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("http://metadata/computeMetadata/v1/instance/")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.metadataHost"
+          );
+        } else {
+          t.fail("Expected an error");
         }
       }
     );

@@ -22,7 +22,11 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
 
       calls[hostname]++;
 
-      if (hostname === "thisdomainpointstointernalip.com") {
+      if (
+        hostname === "thisdomainpointstointernalip.com" ||
+        hostname === "my-service-hostname" ||
+        hostname === "metadata"
+      ) {
         return original.apply(
           // @ts-expect-error We don't know the type of `this`
           this,
@@ -350,6 +354,42 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        }
+      );
+
+      // Test service hostname - should NOT be blocked even if it appears in user input
+      await runWithContext(
+        {
+          ...createContext(),
+          ...{ body: { serviceHostname: "my-service-hostname" } },
+        },
+        async () => {
+          // This should NOT throw an error because my-service-hostname is a service hostname
+          const error = await t.rejects(() =>
+            request("https://my-service-hostname:8080/health")
+          );
+          if (error instanceof Error) {
+            // Should get ECONNREFUSED (connection refused) not SSRF blocked
+            // @ts-expect-error Added in Node.js 16.9.0, but because this test is skipped in Node.js 16 because of the lack of fetch, it's fine
+            t.same(error.code, "ECONNREFUSED");
+          }
+        }
+      );
+
+      // Test metadata hostname - should be blocked if it appears in user input
+      await runWithContext(
+        {
+          ...createContext(),
+          ...{ body: { metadataHost: "metadata" } },
+        },
+        async () => {
+          const error = await t.rejects(() => request("http://metadata"));
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.request(...) originating from body.metadataHost"
+            );
+          }
         }
       );
 
