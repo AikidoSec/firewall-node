@@ -539,7 +539,16 @@ t.test(
       },
       async () => {
         // This should NOT throw an error because my-service-hostname is a service hostname
-        await fetch("http://my-service-hostname");
+        const error = await t.rejects(() =>
+          fetch("http://my-service-hostname")
+        );
+        if (error instanceof Error) {
+          // @ts-expect-error Type is not defined
+          t.same(error.cause.code, "ECONNREFUSED");
+          // ^ means it tried to connect to the hostname
+        } else {
+          t.fail("Expected an error to be thrown");
+        }
       }
     );
 
