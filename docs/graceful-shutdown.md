@@ -2,7 +2,7 @@
 
 If you already registered a shutdown handler, e.g. using `process.on('SIGTERM', ...)`, you can call `await Zen.shutdown()` to ensure the latest stats are sent before the process exits.
 See the example below for how to implement this, if you don't already have a shutdown handler in place.
-Please note that this might not work correctly in all environments, especially on Windows.
+Please note that this might not work correctly on Windows, due to [differences in how signals like SIGTERM and SIGINT are handled](https://nodejs.org/api/process.html#signal-events).
 
 ```js
 const Zen = require("@aikidosec/firewall");
