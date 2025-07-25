@@ -329,7 +329,8 @@ t.test("it works", (t) => {
       // This should NOT throw an error because my-service-hostname is a service hostname
       const serviceRequest = http.request("http://my-service-hostname");
       serviceRequest.on("error", (e: NodeJS.ErrnoException) => {
-        t.fail();
+        // ECONNREFUSED means that the request is not blocked
+        t.same(e.code, "ECONNREFUSED");
       });
       serviceRequest.end();
     }
