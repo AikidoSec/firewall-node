@@ -63,7 +63,6 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
-  private shutdownEventCalled = false;
 
   constructor(
     private block: boolean,
@@ -613,8 +612,11 @@ export class Agent {
 
   public async shutdown() {
     this.logger.log("Shutting down agent...");
-    if (performance.now() > 30000) {
-      // Only send heartbeat if we are running for more than 30 seconds
+    if (
+      performance.now() > 30000 &&
+      performance.now() - this.lastHeartbeat > 3
+    ) {
+      // Only send heartbeat if we are running for more than 30 seconds and haven't sent a heartbeat in the last 3 seconds
       await this.flushStats(1000);
     }
   }
