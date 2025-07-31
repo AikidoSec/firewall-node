@@ -19,6 +19,7 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import type { Response } from "./api/fetchBlockedLists";
+import { shutdown } from "./shutdown";
 
 let shouldOnlyAllowSomeIPAddresses = false;
 
@@ -1225,6 +1226,45 @@ t.test("it includes agent's own package in heartbeat", async () => {
           requiredAt: 0,
         },
       ],
+    },
+  ]);
+
+  clock.uninstall();
+});
+
+t.test("it sends heartbeat when onShutdown handler is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  // After 5 seconds, nothing should happen
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  clock.tick(1 * 90 * 1000);
+  await clock.nextAsync();
+
+  await shutdown();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
     },
   ]);
 

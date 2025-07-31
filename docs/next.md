@@ -71,3 +71,7 @@ AIKIDO_DEBUG=true node -r @aikidosec/firewall .next/standalone/server.js
 ```
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
+
+## Graceful shutdown
+
+It is recommended to add a shutdown handler to your app to ensure that no statistics are lost when the app is stopped. You can find more information [here](./graceful-shutdown.md).

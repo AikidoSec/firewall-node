@@ -14,10 +14,6 @@ t.test("it blocks in blocking mode", (t) => {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
-  server.on("close", () => {
-    t.end();
-  });
-
   server.on("error", (err) => {
     t.fail(err.message);
   });
@@ -30,6 +26,11 @@ t.test("it blocks in blocking mode", (t) => {
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
+  });
+
+  server.on("close", () => {
+    t.match(stdout, /AIKIDO: Shutting down agent.../);
+    t.end();
   });
 
   // Wait for the server to start
