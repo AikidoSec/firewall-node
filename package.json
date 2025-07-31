@@ -17,9 +17,9 @@
     "test:ci:new": "cd library && npm run test:ci:new",
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
+    "end2end:new": "cd end2end && npm run test:new",
     "format": "prettier --write .",
     "benchmark": "node scripts/benchmark.js",
-    "sample-app": "node scripts/run-sample-app.js",
-    "end2end:new": "cd end2end && npm run test:new"
+    "sample-app": "node scripts/run-sample-app.js"
   }
 }
