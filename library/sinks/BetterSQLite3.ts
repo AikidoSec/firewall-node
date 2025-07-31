@@ -69,7 +69,7 @@ export class BetterSQLite3 implements Wrapper {
 
     const pkg = hooks
       .addPackage("better-sqlite3")
-      .withVersion("^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0");
+      .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0");
 
     pkg.onRequire((exports, pkgInfo) => {
       for (const func of sqlFunctions) {
