@@ -3,7 +3,7 @@ import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
 
-async function request({
+function request({
   url,
   method,
   body,

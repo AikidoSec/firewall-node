@@ -121,7 +121,7 @@ export class Network {
     if (this.addr.bytes().length !== network.addr.bytes().length) return false;
 
     // handle edge cases
-    if (this.netbits === 0 || network.netbits == 0) return true;
+    if (this.netbits === 0 || network.netbits === 0) return true;
     const cmp = this.addr.compare(network.addr);
     if (cmp === EQUALS) return false;
 
