@@ -22,7 +22,11 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
 
       calls[hostname]++;
 
-      if (hostname === "thisdomainpointstointernalip.com") {
+      if (
+        hostname === "thisdomainpointstointernalip.com" ||
+        hostname === "my-service-hostname" ||
+        hostname === "metadata"
+      ) {
         return original.apply(
           // @ts-expect-error We don't know the type of `this`
           this,
@@ -350,6 +354,44 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          ...{ body: { serviceHostname: "my-service-hostname" } },
+        },
+        async () => {
+          // This should NOT throw an error because my-service-hostname is a service hostname
+          const error = await t.rejects(() =>
+            request("http://my-service-hostname")
+          );
+          if (error instanceof Error) {
+            // @ts-expect-error Added in Node.js 16.9.0
+            t.same(error.code, "ECONNREFUSED");
+            // ^ means it tried to connect to the hostname
+          } else {
+            t.fail("Expected an error to be thrown");
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          ...{ body: { metadataHost: "metadata" } },
+        },
+        async () => {
+          const error = await t.rejects(() => request("http://metadata"));
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.metadataHost"
+            );
+          } else {
+            t.fail("Expected an error to be thrown");
+          }
         }
       );
 
