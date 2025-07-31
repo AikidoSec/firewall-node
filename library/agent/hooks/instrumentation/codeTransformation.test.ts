@@ -1891,3 +1891,72 @@ t.test("Access local variables (CJS)", async (t) => {
     `
   );
 });
+
+t.test("Returns error if already instrumented (CJS)", async (t) => {
+  const error = t.throws(() => {
+    transformCode(
+      "testpkg",
+      "1.0.0",
+      "application.js",
+      `
+      const { __instrumentAccessLocalVariables } = require("@aikidosec/firewall/instrument/internals");
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+
+      __instrumentAccessLocalVariables("testpkg.test.js.^1.0.0", [test, stub]);
+    `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [],
+        accessLocalVariables: ["test", "stub"],
+      }
+    );
+  });
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.same(
+      error.message,
+      "Error transforming code: Code already contains instrument functions"
+    );
+  }
+});
+
+t.test("Invalid code throws error (CJS)", async (t) => {
+  const error = t.throws(() => {
+    transformCode(
+      "testpkg",
+      "1.0.0",
+      "application.js",
+      `
+      const {
+
+      function stub(x){
+        return x++;
+      }
+    `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [],
+        accessLocalVariables: ["test", "stub"],
+      }
+    );
+  });
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(
+      error.message,
+      /Error transforming code: Error while parsing code:/
+    );
+  }
+});

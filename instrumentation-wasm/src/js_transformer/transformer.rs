@@ -7,6 +7,7 @@ use oxc_traverse::traverse_mut;
 
 use super::{
     helpers::{
+        code_str_includes_instrument_funcs::code_str_includes_instrument_funcs,
         insert_code::insert_access_local_var, insert_import_statement::insert_import_statement,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
@@ -22,6 +23,10 @@ pub fn transform_code_str(
     src_type: &str,
 ) -> Result<String, String> {
     let allocator = Allocator::default();
+
+    if code_str_includes_instrument_funcs(code) {
+        return Err("Code already contains instrument functions".to_string());
+    }
 
     let file_instructions: FileInstructions =
         serde_json::from_str(instructions_json).expect("Invalid JSON");
