@@ -25,6 +25,8 @@ export type Response = {
   // If we want to collect stats about the individual user agents,
   // we can loop through the userAgentDetails and match each pattern.
   userAgentDetails: UserAgentDetails[];
+  blockedSignatureAgents: string;
+  monitoredSignatureAgents: string;
 };
 
 export async function fetchBlockedLists(token: Token): Promise<Response> {
@@ -56,6 +58,8 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
     blockedUserAgents: string;
     monitoredUserAgents: string;
     userAgentDetails: UserAgentDetails[];
+    blockedSignatureAgents: string;
+    monitoredSignatureAgents: string;
   } = JSON.parse(body);
 
   return {
@@ -85,5 +89,13 @@ export async function fetchBlockedLists(token: Token): Promise<Response> {
       result && Array.isArray(result.userAgentDetails)
         ? result.userAgentDetails
         : [],
+    blockedSignatureAgents:
+      result && typeof result.blockedSignatureAgents === "string"
+        ? result.blockedSignatureAgents
+        : "",
+    monitoredSignatureAgents:
+      result && typeof result.monitoredSignatureAgents === "string"
+        ? result.monitoredSignatureAgents
+        : "",
   };
 }
