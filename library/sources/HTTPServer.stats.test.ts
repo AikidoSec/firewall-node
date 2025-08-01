@@ -49,9 +49,13 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           key: "google_extended",
           pattern: "Google-Extended",
         },
+        {
+          key: "chatgpt_agent",
+          pattern: "chatgpt.com",
+        },
       ],
       blockedSignatureAgents: "",
-      monitoredSignatureAgents: "",
+      monitoredSignatureAgents: "chatgpt.com",
     } satisfies Response;
   };
 });
@@ -97,10 +101,19 @@ t.test("it tracks monitored user agents", async () => {
           },
           timeoutInMS: 500,
         }),
-      ]).then(([response1, response2, response3]) => {
+        fetch({
+          url: new URL("http://localhost:3327/test"),
+          method: "GET",
+          headers: {
+            "Signature-Agent": "chatgpt.com",
+          },
+          timeoutInMS: 500,
+        }),
+      ]).then(([response1, response2, response3, response4]) => {
         t.equal(response1.statusCode, 200);
         t.equal(response2.statusCode, 200);
         t.equal(response3.statusCode, 200);
+        t.equal(response4.statusCode, 200);
         const stats = agent.getInspectionStatistics().getStats();
         t.same(stats.userAgents, {
           breakdown: {
@@ -108,6 +121,8 @@ t.test("it tracks monitored user agents", async () => {
             ai_data_scrapers: 1,
             // eslint-disable-next-line camelcase
             google_extended: 1,
+            // eslint-disable-next-line camelcase
+            chatgpt_agent: 1,
           },
         });
         t.same(stats.ipAddresses, {

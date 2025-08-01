@@ -614,6 +614,16 @@ t.test("bypass list works", opts, async (t) => {
   });
   t.equal(response6.statusCode, 403);
 
+  // Not blocked signature agent
+  const response7 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "2.3.4.5",
+      "Signature-Agent": "some-other-agent",
+    },
+  });
+  t.equal(response7.statusCode, 200);
+
   // Cleanup server
   server.close();
 });
