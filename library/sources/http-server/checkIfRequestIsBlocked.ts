@@ -118,11 +118,9 @@ export function checkIfRequestIsBlocked(
       ? context.headers["user-agent"]
       : undefined;
 
-  const isUserAgentBlocked = userAgent
-    ? agent.getConfig().isUserAgentBlocked(userAgent)
-    : ({ blocked: false } as const);
-
   if (userAgent) {
+    const isUserAgentBlocked = agent.getConfig().isUserAgentBlocked(userAgent);
+
     const isMonitoredUserAgent = agent
       .getConfig()
       .isMonitoredUserAgent(userAgent);
@@ -134,17 +132,51 @@ export function checkIfRequestIsBlocked(
         .getMatchingUserAgentKeys(userAgent);
       agent.getInspectionStatistics().onUserAgentMatches(userAgentKeys);
     }
+
+    if (isUserAgentBlocked.blocked) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      res.end(
+        "You are not allowed to access this resource because you have been identified as a bot."
+      );
+
+      return true;
+    }
   }
 
-  if (isUserAgentBlocked.blocked) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
+  const signatureAgent =
+    context.headers && typeof context.headers["signature-agent"] === "string"
+      ? context.headers["signature-agent"]
+      : undefined;
 
-    res.end(
-      "You are not allowed to access this resource because you have been identified as a bot."
-    );
+  if (signatureAgent) {
+    const isSignatureAgentBlocked = agent
+      .getConfig()
+      .isSignatureAgentBlocked(signatureAgent);
 
-    return true;
+    const isMonitoredSignatureAgent = agent
+      .getConfig()
+      .isSignatureAgentMonitored(signatureAgent);
+
+    if (isSignatureAgentBlocked || isMonitoredSignatureAgent) {
+      // Find all the matching user agent keys when it's a blocked or monitored user agent
+      const userAgentKeys = agent
+        .getConfig()
+        .getMatchingUserAgentKeys(signatureAgent);
+      agent.getInspectionStatistics().onUserAgentMatches(userAgentKeys);
+    }
+
+    if (isSignatureAgentBlocked) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "text/plain");
+
+      res.end(
+        "You are not allowed to access this resource because you have been identified as a bot."
+      );
+
+      return true;
+    }
   }
 
   return false;

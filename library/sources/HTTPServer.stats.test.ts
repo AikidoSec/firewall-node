@@ -50,6 +50,8 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           pattern: "Google-Extended",
         },
       ],
+      blockedSignatureAgents: "",
+      monitoredSignatureAgents: "",
     } satisfies Response;
   };
 });

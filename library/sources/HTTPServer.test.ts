@@ -80,6 +80,8 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
       monitoredUserAgents: "",
       monitoredIPAddresses: [],
       userAgentDetails: [],
+      blockedSignatureAgents: "",
+      monitoredSignatureAgents: "",
     } satisfies Response;
   };
 });

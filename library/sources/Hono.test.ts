@@ -47,6 +47,8 @@ wrap(fetch, "fetch", function mock(original) {
               pattern: "attacker",
             },
           ],
+          blockedSignatureAgents: "chatgpt.com",
+          monitoredSignatureAgents: "",
         } satisfies Response),
       };
     }
@@ -591,6 +593,26 @@ t.test("bypass list works", opts, async (t) => {
     },
   });
   t.equal(response4.statusCode, 200);
+
+  // It does not block bypassed ip because of signature agent
+  const response5 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "123.1.2.254",
+      "Signature-Agent": "chatgpt.com",
+    },
+  });
+  t.equal(response5.statusCode, 200);
+
+  // It blocks non-bypassed ip because of signature agent
+  const response6 = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8769/"),
+    headers: {
+      "X-Forwarded-For": "2.3.4.5",
+      "Signature-Agent": "chatgpt.com",
+    },
+  });
+  t.equal(response6.statusCode, 403);
 
   // Cleanup server
   server.close();
