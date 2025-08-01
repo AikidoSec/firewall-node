@@ -32,6 +32,7 @@ export function createWrappedFunction(
   const wrapped = wrapper(original);
 
   defineProperty(wrapped, "__original", original);
+  defineProperty(wrapped, "__NR_original", original);
   defineProperty(wrapped, "__wrapped", true);
 
   // Copy over all properties from the original function to the wrapped one.
