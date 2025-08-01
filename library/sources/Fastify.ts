@@ -5,7 +5,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapHandler } from "./fastify/wrapHandler";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 
 const requestFunctions = [
@@ -89,7 +89,7 @@ export class Fastify implements Wrapper {
   private wrapNewRouteMethod(
     args: unknown[],
     appInstance: any,
-    pkgInfo: WrapPackageInfo
+    pkgInfo: PartialWrapPackageInfo
   ) {
     if (
       !args.length ||
@@ -114,7 +114,7 @@ export class Fastify implements Wrapper {
     return appInstance;
   }
 
-  private wrapFastifyInstance(instance: any, pkgInfo: WrapPackageInfo) {
+  private wrapFastifyInstance(instance: any, pkgInfo: PartialWrapPackageInfo) {
     for (const func of requestFunctions) {
       // Check if the function exists - new functions in Fastify 5
       if (typeof instance[func] === "function") {
@@ -170,13 +170,12 @@ export class Fastify implements Wrapper {
         modifyArgs: this.wrapRouteMethod,
       },
       ...requestFunctions.map(
-        (func) =>
-          ({
-            name: `_${func}`,
-            nodeType: "FunctionExpression",
-            operationKind: undefined,
-            modifyArgs: this.wrapRequestArgs,
-          }) as PackageFunctionInstrumentationInstruction
+        (func): PackageFunctionInstrumentationInstruction => ({
+          name: `_${func}`,
+          nodeType: "FunctionExpression",
+          operationKind: undefined,
+          modifyArgs: this.wrapRequestArgs,
+        })
       ),
     ];
   }

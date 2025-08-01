@@ -4,7 +4,7 @@ import type {
   ModifyArgsInterceptor,
   ModifyReturnValueInterceptor,
 } from "../wrapExport";
-import type { WrapPackageInfo } from "../WrapPackageInfo";
+import type { PartialWrapPackageInfo } from "../WrapPackageInfo";
 
 type TypedArray =
   | Int8Array
@@ -77,7 +77,7 @@ export type LocalVariableAccessConfig = {
   /**
    * Callback function to be called with the accessed variable values.
    */
-  cb: (vars: any[], pkgInfo: WrapPackageInfo) => void;
+  cb: (vars: any[], pkgInfo: PartialWrapPackageInfo) => void;
 };
 
 export type FileCallbackInfoObj = {

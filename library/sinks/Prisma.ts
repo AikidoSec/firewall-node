@@ -12,7 +12,7 @@ import { Context, getContext } from "../agent/Context";
 import { onInspectionInterceptorResult } from "../agent/hooks/onInspectionInterceptorResult";
 import { getInstance } from "../agent/AgentSingleton";
 import type { Agent } from "../agent/Agent";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import type { LocalVariableAccessConfig } from "../agent/hooks/instrumentation/types";
 
@@ -173,7 +173,7 @@ export class Prisma implements Wrapper {
     isNoSQLClient: boolean;
     sqlDialect?: SQLDialect;
     agent: Agent;
-    pkgInfo: WrapPackageInfo;
+    pkgInfo: PartialWrapPackageInfo;
   }) {
     let inspectionResult: InterceptorResult | undefined;
     const start = performance.now();
@@ -206,7 +206,10 @@ export class Prisma implements Wrapper {
     return query(args);
   }
 
-  private instrumentPrismaClient(instance: any, pkgInfo: WrapPackageInfo) {
+  private instrumentPrismaClient(
+    instance: any,
+    pkgInfo: PartialWrapPackageInfo
+  ) {
     const isNoSQLClient = this.isNoSQLClient(instance);
 
     const agent = getInstance();

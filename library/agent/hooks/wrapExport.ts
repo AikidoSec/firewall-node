@@ -4,7 +4,7 @@ import { getInstance } from "../AgentSingleton";
 import { OperationKind } from "../api/Event";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
-import type { WrapPackageInfo } from "./WrapPackageInfo";
+import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
@@ -44,7 +44,7 @@ export type InterceptorObject = {
 export function wrapExport(
   subject: unknown,
   methodName: string | undefined,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   interceptors: InterceptorObject
 ) {
   const agent = getInstance();
@@ -147,7 +147,7 @@ export function inspectArgs(
   interceptor: InspectArgsInterceptor,
   context: ReturnType<typeof getContext>,
   agent: Agent,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   methodName: string,
   kind: OperationKind | undefined
 ) {

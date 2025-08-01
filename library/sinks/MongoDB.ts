@@ -239,18 +239,17 @@ export class MongoDB implements Wrapper {
         path: "lib/collection.js",
         functions: [
           ...OPERATIONS_WITH_FILTER.map(
-            (operation) =>
-              ({
-                name: operation,
-                nodeType: "MethodDefinition",
-                operationKind: "nosql_op",
-                inspectArgs: (args, agent, collection) =>
-                  this.inspectOperation(
-                    operation,
-                    args,
-                    collection as Collection
-                  ),
-              }) as PackageFunctionInstrumentationInstruction
+            (operation): PackageFunctionInstrumentationInstruction => ({
+              name: operation,
+              nodeType: "MethodDefinition",
+              operationKind: "nosql_op",
+              inspectArgs: (args, agent, collection) =>
+                this.inspectOperation(
+                  operation,
+                  args,
+                  collection as Collection
+                ),
+            })
           ),
           {
             name: "bulkWrite",

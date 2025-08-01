@@ -2,7 +2,7 @@ import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import type { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -62,7 +62,7 @@ export class SQLite3 implements Wrapper {
     return undefined;
   }
 
-  private wrapDatabasePrototype(db: any, pkgInfo: WrapPackageInfo) {
+  private wrapDatabasePrototype(db: any, pkgInfo: PartialWrapPackageInfo) {
     const sqlFunctions = [
       "run",
       "get",

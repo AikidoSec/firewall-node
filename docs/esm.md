@@ -18,18 +18,6 @@ export NODE_OPTIONS='-r @aikidosec/firewall/instrument'
 > [!IMPORTANT]  
 > Please also check the documentation on how to integrate Zen with your used web framework.
 
-## Blocking mode
-
-By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido if the environment variable `AIKIDO_TOKEN` is set and continue executing the call.
-
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
-
-```sh
-AIKIDO_BLOCK=true node app.js
-```
-
-It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
-
 ## Known issues
 
 - The app might crash on startup if used together with some packages that use the Node.js Asynchronous Module Customization Hooks, like Sentry or OpenTelemetry, due to bugs in Node.js itself.
