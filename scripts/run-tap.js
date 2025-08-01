@@ -32,7 +32,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/AiSDK.test.ts",
     "**/sinks/Anthropic.test.ts",
     "**/sinks/OpenAI.test.ts",
-    // Todo support AWS Bedrock
 
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",
