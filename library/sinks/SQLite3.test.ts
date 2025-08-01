@@ -53,12 +53,14 @@ t.test("it detects SQL injections", async () => {
   });
   agent.start([new SQLite3()]);
 
-  const sqlite3 = require("sqlite3");
+  const sqlite3 = require("sqlite3") as typeof import("sqlite3");
 
   const db = new sqlite3.Database(":memory:");
   const run = promisify(db.run.bind(db));
   const all = promisify(db.all.bind(db));
+  // @ts-expect-error Wrong library types
   const backup = promisify(db.backup.bind(db));
+  const exec = promisify(db.exec.bind(db));
   const close = promisify(db.close.bind(db));
 
   try {
@@ -105,6 +107,18 @@ t.test("it detects SQL injections", async () => {
       t.same(
         error3.message,
         "Zen has blocked a path traversal attack: sqlite3.backup(...) originating from body.myTitle"
+      );
+    }
+
+    const error4 = await t.rejects(async () => {
+      await runWithContext(dangerousContext, () => {
+        return exec("SELECT 1;-- should be blocked");
+      });
+    });
+    if (error4 instanceof Error) {
+      t.same(
+        error4.message,
+        "Zen has blocked an SQL injection: sqlite3.exec(...) originating from body.myTitle"
       );
     }
 

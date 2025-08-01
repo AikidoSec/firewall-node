@@ -110,14 +110,16 @@ t.test("it detects SQL injections", async (t) => {
     });
 
     await runWithContext(dangerousPathContext, async () => {
-      const error = t.throws(() => db.backup("/tmp/insecure"));
-      t.ok(error instanceof Error);
-      if (error instanceof Error) {
+      try {
+        await db.backup("/tmp/insecure");
+        t.fail("Expected an error");
+      } catch (error: any) {
         t.same(
           error.message,
           "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
         );
       }
+
       await db.backup("/tmp/sqlite-test-secure");
     });
 
