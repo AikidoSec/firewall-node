@@ -11,7 +11,13 @@ const port2 = "4007";
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
     `node`,
-    ["--require", "@aikidosec/firewall/instrument", "--experimental-strip-types", "./app.ts", port],
+    [
+      "--require",
+      "@aikidosec/firewall/instrument",
+      "--experimental-strip-types",
+      "./app.ts",
+      port,
+    ],
     {
       cwd: pathToAppDir,
       env: {
@@ -73,7 +79,13 @@ test("it blocks request in blocking mode", async () => {
 test("it does not block request in monitoring mode", async () => {
   const server = spawn(
     `node`,
-    ["--require", "@aikidosec/firewall/instrument", "--experimental-strip-types", "./app.ts", port2],
+    [
+      "--require",
+      "@aikidosec/firewall/instrument",
+      "--experimental-strip-types",
+      "./app.ts",
+      port2,
+    ],
     {
       cwd: pathToAppDir,
       env: {
