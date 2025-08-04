@@ -316,14 +316,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await runWithContext(
         {
           ...createContext(),
-          ...{
-            body: {
-              image2: [
-                "http://example",
-                "prefix.thisdomainpointstointernalip.com",
-              ],
-              image: "http://thisdomainpointstointernalip.com/path",
-            },
+          body: {
+            image2: [
+              "http://example",
+              "prefix.thisdomainpointstointernalip.com",
+            ],
+            image: "http://thisdomainpointstointernalip.com/path",
           },
         },
         async () => {
@@ -360,7 +358,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await runWithContext(
         {
           ...createContext(),
-          ...{ body: { serviceHostname: "my-service-hostname" } },
+          body: { serviceHostname: "my-service-hostname" },
         },
         async () => {
           // This should NOT throw an error because my-service-hostname is a service hostname
@@ -380,7 +378,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await runWithContext(
         {
           ...createContext(),
-          ...{ body: { metadataHost: "metadata" } },
+          body: { metadataHost: "metadata" },
         },
         async () => {
           const error = await t.rejects(() => request("http://metadata"));

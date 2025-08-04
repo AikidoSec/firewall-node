@@ -186,14 +186,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image2: [
-              "http://example",
-              "prefix.thisdomainpointstointernalip.com",
-            ],
-            image: "http://thisdomainpointstointernalip.com/path",
-          },
+        body: {
+          image2: ["http://example", "prefix.thisdomainpointstointernalip.com"],
+          image: "http://thisdomainpointstointernalip.com/path",
         },
       },
       async () => {
@@ -229,7 +224,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ip));
@@ -246,7 +241,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -265,7 +260,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.domain));
@@ -282,7 +277,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -301,7 +296,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipTwice } },
+        body: { image: redirectUrl.ipTwice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
@@ -318,7 +313,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-twice` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-twice` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -337,7 +332,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domainTwice } },
+        body: { image: redirectUrl.domainTwice },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -356,7 +351,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -375,7 +370,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6 } },
+        body: { image: redirectUrl.ipv6 },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6));
@@ -392,7 +387,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6Twice } },
+        body: { image: redirectUrl.ipv6Twice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6Twice));
@@ -409,10 +404,8 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -432,10 +425,8 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
-          },
+        body: {
+          image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -456,7 +447,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const response = await fetch(redirectUrl.ip, {
@@ -480,7 +471,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const response = await fetch(redirectUrl.domain, {
@@ -505,10 +496,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -535,7 +525,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { serviceHostname: "my-service-hostname" } },
+        body: { serviceHostname: "my-service-hostname" },
       },
       async () => {
         // This should NOT throw an error because my-service-hostname is a service hostname
@@ -555,7 +545,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { metadataHost: "metadata" } },
+        body: { metadataHost: "metadata" },
       },
       async () => {
         const error = await t.rejects(() =>
