@@ -59,7 +59,7 @@ Zen.addFastifyHook(fastify);
 fastify.route(...);
 ```
 
-**Note:** The `addFastifyHook` function uses the `onRequest` hook stage, which runs early in the Fastify request lifecycle and is recommended when your authentication check uses request headers (like JWT tokens). The `onRequest` and `preParsing` stages do not parse the request body, unlike the `preHandler` stage. This avoids potential DoS attacks from parsing large request bodies for unauthorized requests.
+**Note:** The `addFastifyHook` function uses the `onRequest` hook stage, which runs early in the [Fastify request lifecycle](https://fastify.dev/docs/latest/Reference/Lifecycle/) and is recommended when your authentication check uses request headers (like JWT tokens). The `onRequest` and `preParsing` stages do not parse the request body, unlike the `preHandler` stage. This avoids potential DoS attacks from parsing large request bodies for unauthorized requests.
 
 ### Using `preHandler` for authentication
 
