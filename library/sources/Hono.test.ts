@@ -447,6 +447,7 @@ t.test("Proxy request", opts, async (t) => {
       new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
+        // oxlint-disable-next-line no-invalid-fetch-options
         body: c.req.raw.body,
         // @ts-expect-error wrong types
         duplex: "half",

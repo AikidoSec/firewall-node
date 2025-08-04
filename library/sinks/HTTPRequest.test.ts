@@ -145,7 +145,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip.com" } },
+      body: { image: "thisdomainpointstointernalip.com" },
     },
     () => {
       https
@@ -183,7 +183,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip2.com" } },
+      body: { image: "thisdomainpointstointernalip2.com" },
     },
     () => {
       https
@@ -323,7 +323,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { serviceHostname: "my-service-hostname" } },
+      body: { serviceHostname: "my-service-hostname" },
     },
     () => {
       // This should NOT throw an error because my-service-hostname is a service hostname
@@ -339,7 +339,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { metadataHost: "metadata" } },
+      body: { metadataHost: "metadata" },
     },
     () => {
       const metadataRequest = http.request(

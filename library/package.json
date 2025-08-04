@@ -141,7 +141,7 @@
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "npm run lint-oxc && npm run lint-eslint && npm run lint-tsc && npm run check-format",
     "lint-eslint": "eslint '**/*.ts'",
-    "lint-oxc": "oxlint .",
+    "lint-oxc": "oxlint --deny-warnings .",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
   }

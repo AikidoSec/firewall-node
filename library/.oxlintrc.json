@@ -15,5 +15,13 @@
     "no-prototype-builtins": "error",
     "require-await": "error"
   },
-  "ignorePatterns": ["**/*.test.ts", "**/*.tests.ts"]
+  "overrides": [
+    {
+      "files": ["**/*.ts"],
+      "rules": {
+        "require-await": "off",
+        "no-unused-vars": "off"
+      }
+    }
+  ]
 }
