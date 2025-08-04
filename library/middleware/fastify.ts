@@ -10,10 +10,15 @@ export type FastifyReply = {
 
 export type FastifyDone = () => void;
 
-// Can't use onRequestHookHandler type from fastify because it uses `import("fastify")` in the type,
+// Can't use `any` because it might cause issues with type checking
+// e.g. if `skipLibChecks` is false
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type FastifyRequest = {};
+
+// Can't use `onRequestHookHandler` type from fastify because it uses `import("fastify")` in the type,
 // replacing TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY isn't enough
 export type FastifyHookHandler = (
-  request: any,
+  request: FastifyRequest,
   reply: FastifyReply,
   done: FastifyDone
 ) => void | FastifyReply;
