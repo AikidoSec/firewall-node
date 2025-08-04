@@ -1,7 +1,12 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
 /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-import type { FastifyInstance } from "fastify";
+import type {
+  FastifyInstance,
+  FastifyRequest,
+  FastifyReply,
+  DoneFuncWithErrOrRes,
+} from "fastify";
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Fastify app by adding a onRequest hook.
@@ -9,23 +14,30 @@ import type { FastifyInstance } from "fastify";
  * Execute this function as early as possible in your Fastify app, but after the hook that sets the user.
  */
 export function addFastifyHook(app: FastifyInstance) {
-  app.addHook("onRequest", (request, reply, done) => {
-    const result = shouldBlockRequest();
+  app.addHook("onRequest", fastifyHook);
+}
 
-    if (result.block) {
-      if (result.type === "ratelimited") {
-        let message = "You are rate limited by Zen.";
-        if (result.trigger === "ip" && result.ip) {
-          message += ` (Your IP: ${escapeHTML(result.ip)})`;
-        }
+export function fastifyHook(
+  _: FastifyRequest,
+  reply: FastifyReply,
+  done: DoneFuncWithErrOrRes
+) {
+  const result = shouldBlockRequest();
 
-        return reply.status(429).send(message);
+  if (result.block) {
+    if (result.type === "ratelimited") {
+      let message = "You are rate limited by Zen.";
+      if (result.trigger === "ip" && result.ip) {
+        message += ` (Your IP: ${escapeHTML(result.ip)})`;
       }
 
-      if (result.type === "blocked") {
-        return reply.status(403).send("You are blocked by Aikido firewall.");
-      }
+      return reply.status(429).send(message);
     }
-    done();
-  });
+
+    if (result.type === "blocked") {
+      return reply.status(403).send("You are blocked by Aikido firewall.");
+    }
+  }
+
+  done();
 }

@@ -59,6 +59,37 @@ Zen.addFastifyHook(fastify);
 fastify.route(...);
 ```
 
+**Note:** The `addFastifyHook` function uses the `onRequest` hook stage, which runs early in the Fastify request lifecycle and is recommended when your authentication check uses request headers (like JWT tokens). The `onRequest` and `preParsing` stages do not parse the request body, unlike the `preHandler` stage. This avoids potential DoS attacks from parsing large request bodies for unauthorized requests.
+
+### Using `preHandler` for authentication
+
+If you need to authenticate using a preHandler (e.g., when your authentication logic needs access to the parsed request body), you can use the exported `fastifyHook` function directly:
+
+```js
+const Zen = require("@aikidosec/firewall");
+
+const fastify = Fastify();
+
+async function authenticate(request, reply) {
+  // Your authentication logic here
+  request.user = await getUserFromRequest(request, reply);
+
+  Zen.setUser({
+    id: request.user.id,
+    name: request.user.name, // Optional
+  });
+}
+
+fastify.get('/dashboard', {
+  preHandler: [authenticate, Zen.fastifyHook],
+                          // ^ Add the Zen hook after your authentication logic
+}, async (request, reply) => {
+  return { message: "Welcome to your dashboard!" };
+});
+```
+
+This approach allows user blocking and rate limiting to work properly when authentication runs in the `preHandler` stage where the request body is parsed.
+
 ## Debug mode
 
 If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
