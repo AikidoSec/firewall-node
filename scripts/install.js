@@ -43,7 +43,9 @@ async function main() {
 async function installDependencies(folder) {
   console.log(`Installing dependencies for ${folder}`);
 
-  const cmd = process.env.CI ? "npm ci" : "npm install";
+  // Don't run potentially unsafe scripts during installation
+  const flags = "--ignore-scripts";
+  const cmd = process.env.CI ? `npm ci ${flags}` : `npm install ${flags}`;
 
   try {
     await execAsync(cmd, {
@@ -53,11 +55,40 @@ async function installDependencies(folder) {
         AIKIDO_SKIP_INSTALL: "true",
       },
     });
+    await rebuildNativePackages(folder);
     console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
     console.error(`Failed to install dependencies for ${folder}`);
     console.error(error);
     process.exit(1);
+  }
+}
+
+/**
+ * We need to manually rebuild native packages (the ones we trust)
+ * Because we installed dependencies with --ignore-scripts flag
+ */
+async function rebuildNativePackages(folder) {
+  const packageJsonPath = join(projectRoot, folder, "package.json");
+
+  if (!(await fileExists(packageJsonPath))) {
+    return;
+  }
+
+  const pkg = require(packageJsonPath);
+  const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+  const nativePackages = ["sqlite3", "better-sqlite3"];
+  const packagesToRebuild = nativePackages.filter(
+    (pkgName) => allDeps[pkgName]
+  );
+
+  if (packagesToRebuild.length > 0) {
+    console.log(
+      `Rebuilding native packages for ${folder}: ${packagesToRebuild.join(", ")}`
+    );
+    await execAsync(`npm rebuild ${packagesToRebuild.join(" ")}`, {
+      cwd: join(projectRoot, folder),
+    });
   }
 }
 
