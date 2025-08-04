@@ -1,12 +1,7 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
 /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-import type {
-  FastifyInstance,
-  FastifyRequest,
-  FastifyReply,
-  DoneFuncWithErrOrRes,
-} from "fastify";
+import type { FastifyInstance, onRequestHookHandler } from "fastify";
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Fastify app by adding a onRequest hook.
@@ -17,11 +12,7 @@ export function addFastifyHook(app: FastifyInstance) {
   app.addHook("onRequest", fastifyHook);
 }
 
-export function fastifyHook(
-  _: FastifyRequest,
-  reply: FastifyReply,
-  done: DoneFuncWithErrOrRes
-) {
+export const fastifyHook: onRequestHookHandler = (_, reply, done) => {
   const result = shouldBlockRequest();
 
   if (result.block) {
@@ -40,4 +31,4 @@ export function fastifyHook(
   }
 
   done();
-}
+};
