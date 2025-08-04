@@ -86,9 +86,19 @@ async function rebuildNativePackages(folder) {
     console.log(
       `Rebuilding native packages for ${folder}: ${packagesToRebuild.join(", ")}`
     );
-    await execAsync(`npm rebuild ${packagesToRebuild.join(" ")}`, {
-      cwd: join(projectRoot, folder),
-    });
+
+    for (const pkgName of packagesToRebuild) {
+      const packagePath = join(projectRoot, folder, "node_modules", pkgName);
+      if (pkgName === "sqlite3") {
+        await execAsync("../../../.bin/prebuild-install -r napi", {
+          cwd: packagePath,
+        });
+      } else if (pkgName === "better-sqlite3") {
+        await execAsync("../../../.bin/prebuild-install", {
+          cwd: packagePath,
+        });
+      }
+    }
   }
 }
 
