@@ -1,7 +1,22 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
 /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-import type { FastifyInstance, onRequestHookHandler } from "fastify";
+import type { FastifyInstance } from "fastify";
+
+type FastifyReply = {
+  status(code: number): FastifyReply;
+  send(payload: string): FastifyReply;
+};
+
+type FastifyDone = () => void;
+
+// Can't use onRequestHookHandler type from fastify because it uses `import("fastify")` in the type,
+// replacing TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY isn't enough
+type FastifyHookHandler = (
+  request: any,
+  reply: FastifyReply,
+  done: FastifyDone
+) => void | FastifyReply;
 
 /**
  * Calling this function will setup rate limiting and user blocking for the provided Fastify app by adding a onRequest hook.
@@ -12,7 +27,7 @@ export function addFastifyHook(app: FastifyInstance) {
   app.addHook("onRequest", fastifyHook);
 }
 
-export const fastifyHook: onRequestHookHandler = (_, reply, done) => {
+export const fastifyHook: FastifyHookHandler = (_, reply, done) => {
   const result = shouldBlockRequest();
 
   if (result.block) {
