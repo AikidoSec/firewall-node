@@ -77,13 +77,13 @@ async function rebuildNativePackages(folder) {
 
   const buffer = await readFile(packageJsonPath, "utf-8");
   const pkg = JSON.parse(buffer);
-  const allDeps = {
-    ...(pkg.dependencies ?? {}),
-    ...(pkg.devDependencies ?? {}),
-  };
+  const allDeps = new Set([
+    ...Object.keys(pkg.dependencies ?? {}),
+    ...Object.keys(pkg.devDependencies ?? {}),
+  ]);
   const nativePackages = ["sqlite3", "better-sqlite3"];
   const packagesToRebuild = nativePackages.filter(
-    (pkgName) => allDeps[pkgName]
+    (pkgName) => allDeps.has(pkgName)
   );
 
   if (packagesToRebuild.length > 0) {
