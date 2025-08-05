@@ -25,7 +25,6 @@ const rootFolders = [
   // macOS specific
   "applications",
   "cores",
-  "dev",
   "library",
   "private",
   "users",
