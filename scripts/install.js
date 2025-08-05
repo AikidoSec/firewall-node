@@ -76,7 +76,7 @@ async function rebuildNativePackages(folder) {
   }
 
   const buffer = await readFile(packageJsonPath, "utf-8");
-  const pkg = JSON.parse(buffer.toString());
+  const pkg = JSON.parse(buffer);
   const allDeps = {
     ...(pkg.dependencies ?? {}),
     ...(pkg.devDependencies ?? {}),
