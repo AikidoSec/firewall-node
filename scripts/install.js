@@ -2,7 +2,7 @@ const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
-const { writeFile, mkdir } = require("fs/promises");
+const { writeFile, mkdir, readFile } = require("fs/promises");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
@@ -75,8 +75,12 @@ async function rebuildNativePackages(folder) {
     return;
   }
 
-  const pkg = require(packageJsonPath);
-  const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+  const buffer = await readFile(packageJsonPath, "utf-8");
+  const pkg = JSON.parse(buffer.toString());
+  const allDeps = {
+    ...(pkg.dependencies ?? {}),
+    ...(pkg.devDependencies ?? {}),
+  };
   const nativePackages = ["sqlite3", "better-sqlite3"];
   const packagesToRebuild = nativePackages.filter(
     (pkgName) => allDeps[pkgName]
@@ -89,12 +93,15 @@ async function rebuildNativePackages(folder) {
 
     for (const pkgName of packagesToRebuild) {
       const packagePath = join(projectRoot, folder, "node_modules", pkgName);
+
       if (pkgName === "sqlite3") {
-        await execAsync("../../../.bin/prebuild-install -r napi", {
+        await execAsync("../.bin/prebuild-install -r napi", {
           cwd: packagePath,
         });
-      } else if (pkgName === "better-sqlite3") {
-        await execAsync("../../../.bin/prebuild-install", {
+      }
+
+      if (pkgName === "better-sqlite3") {
+        await execAsync("../.bin/prebuild-install", {
           cwd: packagePath,
         });
       }
