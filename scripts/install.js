@@ -95,15 +95,33 @@ async function rebuildNativePackages(folder) {
       const packagePath = join(projectRoot, folder, "node_modules", pkgName);
 
       if (pkgName === "sqlite3") {
-        await execAsync("../.bin/prebuild-install -r napi", {
-          cwd: packagePath,
-        });
+        try {
+          await execAsync("../.bin/prebuild-install -r napi", {
+            cwd: packagePath,
+          });
+        } catch (error) {
+          console.log(
+            `prebuild-install failed for ${pkgName}, falling back to node-gyp rebuild`
+          );
+          await execAsync("../.bin/node-gyp rebuild", {
+            cwd: packagePath,
+          });
+        }
       }
 
       if (pkgName === "better-sqlite3") {
-        await execAsync("../.bin/prebuild-install", {
-          cwd: packagePath,
-        });
+        try {
+          await execAsync("../.bin/prebuild-install", {
+            cwd: packagePath,
+          });
+        } catch (error) {
+          console.log(
+            `prebuild-install failed for ${pkgName}, falling back to node-gyp rebuild`
+          );
+          await execAsync("../.bin/node-gyp rebuild", {
+            cwd: packagePath,
+          });
+        }
       }
     }
   }
