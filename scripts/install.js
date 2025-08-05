@@ -82,8 +82,8 @@ async function rebuildNativePackages(folder) {
     ...Object.keys(pkg.devDependencies ?? {}),
   ]);
   const nativePackages = ["sqlite3", "better-sqlite3"];
-  const packagesToRebuild = nativePackages.filter(
-    (pkgName) => allDeps.has(pkgName)
+  const packagesToRebuild = nativePackages.filter((pkgName) =>
+    allDeps.has(pkgName)
   );
 
   if (packagesToRebuild.length > 0) {
