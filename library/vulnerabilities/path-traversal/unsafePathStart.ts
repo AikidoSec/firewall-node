@@ -1,28 +1,39 @@
 import { isAbsolute, resolve } from "path";
 import { isWrapped } from "../../helpers/wrap";
 
-const linuxRootFolders = [
-  "/bin/",
-  "/boot/",
-  "/dev/",
-  "/etc/",
-  "/home/",
-  "/init/",
-  "/lib/",
-  "/media/",
-  "/mnt/",
-  "/opt/",
-  "/proc/",
-  "/root/",
-  "/run/",
-  "/sbin/",
-  "/srv/",
-  "/sys/",
-  "/tmp/",
-  "/usr/",
-  "/var/",
-];
-const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
+// All folder names in this array need to be lowercase
+const rootFolders = [
+  "bin",
+  "boot",
+  "dev",
+  "etc",
+  "home",
+  "init",
+  "lib",
+  "media",
+  "mnt",
+  "opt",
+  "proc",
+  "root",
+  "run",
+  "sbin",
+  "srv",
+  "sys",
+  "tmp",
+  "usr",
+  "var",
+  // macOS specific
+  "applications",
+  "cores",
+  "dev",
+  "library",
+  "private",
+  "users",
+  "system",
+  "volumes",
+].map((f) => `/${f}/`);
+
+const dangerousPathStarts = [...rootFolders, "c:/", "c:\\"];
 
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
@@ -38,6 +49,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
 
   const normalizedPath = origResolve(filePath).toLowerCase();
   const normalizedUserInput = origResolve(userInput).toLowerCase();
+
   for (const dangerousStart of dangerousPathStarts) {
     if (
       normalizedPath.startsWith(dangerousStart) &&

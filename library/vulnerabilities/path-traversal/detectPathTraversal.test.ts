@@ -159,3 +159,18 @@ t.test(
     t.same(detectPathTraversal("/var/a/b/test.txt", "/var/a"), true);
   }
 );
+
+t.test("absolute macOS path", async () => {
+  t.same(
+    detectPathTraversal("/Applications/Zen.app", "/Applications/Zen.app"),
+    true
+  );
+  t.same(detectPathTraversal("/Users/user/test.txt", "/Users/user/"), true);
+  t.same(
+    detectPathTraversal(
+      "/Volumes/ExternalDrive/test.txt",
+      "/Volumes/ExternalDrive/"
+    ),
+    true
+  );
+});
