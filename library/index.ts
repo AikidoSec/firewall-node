@@ -7,7 +7,7 @@ import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
-import { addFastifyHook } from "./middleware/fastify";
+import { addFastifyHook, fastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
@@ -36,6 +36,7 @@ export {
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
+  fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
@@ -51,6 +52,7 @@ export default {
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
+  fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,

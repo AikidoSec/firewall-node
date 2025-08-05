@@ -29,6 +29,7 @@ function isAsyncHandler<TEvent, TResult>(
 function convertToAsyncFunction<TEvent, TResult>(
   originalHandler: AsyncOrCallbackHandler<TEvent, TResult>
 ): AsyncHandler<TEvent, TResult> {
+  // oxlint-disable-next-line require-await
   return async (event: TEvent, context: Context): Promise<TResult> => {
     if (isAsyncHandler(originalHandler)) {
       return originalHandler(event, context);

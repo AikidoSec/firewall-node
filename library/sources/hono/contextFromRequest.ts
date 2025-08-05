@@ -5,7 +5,7 @@ import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 import { getRemoteAddress } from "./getRemoteAddress";
 
-export async function contextFromRequest(c: HonoContext): Promise<Context> {
+export function contextFromRequest(c: HonoContext): Context {
   const { req } = c;
 
   const cookieHeader = req.header("cookie");

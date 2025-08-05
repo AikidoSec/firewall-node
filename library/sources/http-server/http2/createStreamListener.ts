@@ -18,7 +18,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return async function requestListener(
+  return function requestListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,

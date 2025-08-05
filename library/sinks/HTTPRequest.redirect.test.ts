@@ -41,7 +41,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      ...{ body: { image: redirectUrl.ip } },
+      body: { image: redirectUrl.ip },
     },
     () => {
       const response1 = http.request(redirectUrl.ip, (res) => {
@@ -63,7 +63,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      ...{ body: { test: redirectUrl.domain } },
+      body: { test: redirectUrl.domain },
     },
     () => {
       const response1 = http.request(redirectUrl.domain, (res) => {
@@ -84,7 +84,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      ...{ body: { image: redirectUrl.ipTwice } },
+      body: { image: redirectUrl.ipTwice },
     },
     () => {
       const response1 = http.request(redirectUrl.ipTwice, (res) => {
@@ -109,7 +109,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      ...{ body: { image: redirectUrl.domainTwice } },
+      body: { image: redirectUrl.domainTwice },
     },
     () => {
       const response1 = http.request(redirectUrl.domainTwice, (res) => {
@@ -133,10 +133,8 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
   runWithContext(
     {
       ...context,
-      ...{
-        body: {
-          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-        },
+      body: {
+        image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
       },
     },
     () => {
