@@ -53,7 +53,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
   done();
 });
 
-// Call this as after your auth middleware, before other middleware
+// Call this as early as possible, before other middleware
 Zen.addFastifyHook(fastify);
 
 fastify.route(...);
