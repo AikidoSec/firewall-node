@@ -30,3 +30,43 @@ Relevant links:
 - [TypeError when json file is required in hook and in the imported file (#57358)](https://github.com/nodejs/node/issues/57358)
 - [ERR_INTERNAL_ASSERTION: Unexpected module status 3 (#58515)](https://github.com/nodejs/node/issues/58515)
 - [Adding an evaluation hook for v8::Module](https://issues.chromium.org/u/1/issues/384413088)
+
+### Example of unprotected ESM sub-dependency
+
+Consider this scenario where your application uses an ESM package that has ESM sub-dependencies:
+
+**Your app.js:**
+```js
+import { logUserAction } from 'analytics-client'; // ESM package
+app.post('/user/action', async (req, res) => {
+  await logUserAction(req.body.userId, req.body.action);
+  res.json({ success: true });
+});
+```
+
+**node_modules/analytics-client/index.js (dependency):**
+```js
+import { storeEvent } from 'analytics-db-helper';
+export async function logUserAction(userId, action) {
+  const eventData = `INSERT INTO user_events (user_id, action, timestamp) VALUES (${userId}, '${action}', NOW())`;
+  return await storeEvent(eventData);
+}
+```
+
+**node_modules/analytics-db-helper/index.js (another sub-dependency):**
+```js
+import mysql from 'mysql2/promise';
+export async function storeEvent(sql) {
+  // Zen CANNOT instrument this mysql.execute call!
+  // V8 doesn't allow Node.js to observe evaluation of this inner ESM module
+  const connection = await mysql.createConnection(config);
+  try {
+    const result = await connection.execute(sql);
+    return result;
+  } finally {
+    await connection.end();
+  }
+}
+```
+
+In this example, if `req.body` contained a SQL injection payload, Zen would miss detecting it at the actual `mysql.execute` level inside the ESM sub-dependency, since it cannot instrument third-party packages within ESM sub-dependencies.
