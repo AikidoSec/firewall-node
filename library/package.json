@@ -11,7 +11,6 @@
     ".": "./index.js",
     "./instrument": "./instrument/index.js",
     "./instrument/internals": "./instrument/internals.js",
-    "./context": "./context/index.js",
     "./lambda": "./lambda/index.js",
     "./nopp": "./nopp/index.js",
     "./cloud-function": "./cloud-function/index.js",

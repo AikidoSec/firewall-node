@@ -4,7 +4,6 @@ const Koa = require("koa");
 const Router = require("@koa/router");
 const { koaBody } = require("koa-body");
 const { getDB } = require("./db");
-const Aikido = require("@aikidosec/firewall/context");
 const Cats = require("./Cats");
 
 async function main() {
@@ -15,7 +14,7 @@ async function main() {
   app.use(koaBody());
 
   app.use(async (ctx, next) => {
-    Aikido.setUser({
+    Zen.setUser({
       id: "id",
       name: "Name",
     });
