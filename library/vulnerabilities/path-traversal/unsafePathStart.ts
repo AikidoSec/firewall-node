@@ -1,7 +1,6 @@
 import { isAbsolute, resolve } from "path";
 import { isWrapped } from "../../helpers/wrap";
 
-// All folder names in this array need to be lowercase
 const rootFolders = [
   "/bin/",
   "/boot/",
@@ -30,7 +29,7 @@ const rootFolders = [
   "/users/",
   "/system/",
   "/volumes/",
-].map(path => path.toLowerCase());
+].map((path) => path.toLowerCase());
 
 const dangerousPathStarts = [...rootFolders, "c:/", "c:\\"];
 
