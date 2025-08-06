@@ -53,7 +53,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
   done();
 });
 
-// Call this as early as possible, before other middleware
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addFastifyHook(fastify);
 
 fastify.route(...);
@@ -92,7 +92,7 @@ This approach allows user blocking and rate limiting to work properly when authe
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your Fastify app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js
