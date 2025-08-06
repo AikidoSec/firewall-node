@@ -21,7 +21,7 @@ export NODE_OPTIONS='-r @aikidosec/firewall/instrument'
 ## Known issues
 
 - The app might crash on startup if used together with some packages that use the Node.js Asynchronous Module Customization Hooks, like Sentry or OpenTelemetry, due to bugs in Node.js itself.
-- Zen can not protect ESM sub-dependencies of a ESM package. For example if a ESM package `foo` imports a sub-dependency `bar` that is also an ESM package, Zen will not be able to protect the code in `bar`. This is because the V8 engine does not allow Node.js to observe the evaluation of inner ESM packages (yet).
+- Zen can not protect ESM sub-dependencies of an ESM package. For example if an ESM package `foo` imports a sub-dependency `bar` that is also an ESM package, Zen will not be able to protect the code in `bar`. This is because the V8 engine does not allow Node.js to observe the evaluation of inner ESM packages (yet).
 
 Relevant links:
 
