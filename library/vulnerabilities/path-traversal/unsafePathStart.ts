@@ -30,7 +30,7 @@ const rootFolders = [
   "/users/",
   "/system/",
   "/volumes/",
-];
+].map(path => path.toLowerCase());
 
 const dangerousPathStarts = [...rootFolders, "c:/", "c:\\"];
 
