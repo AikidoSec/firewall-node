@@ -160,6 +160,9 @@ const privateIPs = [
   // AWS metadata
   "fd00:ec2::254",
   "169.254.169.254",
+
+  // Alibaba Cloud metadata
+  "100.100.100.200",
 ];
 
 const invalidIPs = [
