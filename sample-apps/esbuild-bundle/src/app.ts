@@ -1,3 +1,4 @@
+import "@aikidosec/firewall/instrument";
 import * as Zen from "@aikidosec/firewall";
 
 import { serve } from "@hono/node-server";
