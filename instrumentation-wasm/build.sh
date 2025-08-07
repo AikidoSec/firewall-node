@@ -60,7 +60,7 @@ download_binaryen() {
   tar -xzf "$FILE" -C "../$BINARYEN_EXTRACT_DIR" --strip-components=1
 
   cd ../..
-  rm -rf ./bin/tmp
+  rm -rf ./.bin/tmp
 }
 
 download_wasm_bindgen() {
@@ -69,18 +69,30 @@ download_wasm_bindgen() {
   WASM_BINDGEN_URL_BASE="https://github.com/wasm-bindgen/wasm-bindgen/releases/download/$WASM_BINDGEN_VERSION"
   WASM_BINDGEN_DIR="wasm-bindgen"
 
-  # Detect OS
+  # Detect OS and ARCH for wasm-bindgen
   case "$(uname -s)" in
-    Linux*)  OS="unknown-linux-gnu" ;;
-    Darwin*) OS="apple-darwin" ;;
+    Linux*)
+      case "$(uname -m)" in
+        x86_64)
+          OS="unknown-linux-musl"
+          ARCH="x86_64"
+          ;;
+        aarch64|arm64)
+          OS="unknown-linux-gnu"
+          ARCH="aarch64"
+          ;;
+        *) echo "Unsupported arch for Linux"; exit 1 ;;
+      esac
+      ;;
+    Darwin*)
+      OS="apple-darwin"
+      case "$(uname -m)" in
+        x86_64) ARCH="x86_64" ;;
+        aarch64|arm64) ARCH="aarch64" ;;
+        *) echo "Unsupported arch for Darwin"; exit 1 ;;
+      esac
+      ;;
     *) echo "Unsupported OS"; exit 1 ;;
-  esac
-
-  # Detect ARCH
-  case "$(uname -m)" in
-    x86_64) ARCH="x86_64" ;;
-    aarch64|arm64) ARCH="aarch64" ;;
-    *) echo "Unsupported arch"; exit 1 ;;
   esac
 
   FILE="wasm-bindgen-${WASM_BINDGEN_VERSION}-${ARCH}-${OS}.tar.gz"
@@ -96,7 +108,7 @@ download_wasm_bindgen() {
   tar -xzf "$FILE" -C "../$WASM_BINDGEN_DIR" --strip-components=1
 
   cd ../..
-  rm -rf ./bin/tmp
+  rm -rf ./.bin/tmp
 }
 
 # ------ Main Script ------
