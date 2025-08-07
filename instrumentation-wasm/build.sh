@@ -52,13 +52,15 @@ download_binaryen() {
   mkdir -p ./.bin/tmp
   cd ./.bin/tmp
 
+  echo "Downloading from $BINARYEN_BASE_URL/$FILE"
+
   curl -LO --fail "$BINARYEN_BASE_URL/$FILE"
 
   mkdir -p "../$BINARYEN_EXTRACT_DIR"
   tar -xzf "$FILE" -C "../$BINARYEN_EXTRACT_DIR" --strip-components=1
 
-  cd ..
-  rm -rf ./tmp
+  cd ../..
+  rm -rf ./bin/tmp
 }
 
 download_wasm_bindgen() {
@@ -86,13 +88,15 @@ download_wasm_bindgen() {
   mkdir -p ./.bin/tmp
   cd ./.bin/tmp
 
+  echo "Downloading from $WASM_BINDGEN_URL_BASE/$FILE"
+
   curl -LO --fail "$WASM_BINDGEN_URL_BASE/$FILE"
 
   mkdir -p "../$WASM_BINDGEN_DIR"
   tar -xzf "$FILE" -C "../$WASM_BINDGEN_DIR" --strip-components=1
 
-  cd ..
-  rm -rf ./tmp
+  cd ../..
+  rm -rf ./bin/tmp
 }
 
 # ------ Main Script ------
