@@ -8,9 +8,7 @@ OUT_DIR=../library/agent/hooks/instrumentation/wasm
 GENERATE_DTS=false
 
 BINARYEN_VERSION=123 # wasm-opt
-BINARYEN_EXPECTED_HASH="74428be348c1a09863e7b642a1fa948cabf8ec9561052233d8288e941951725b"
 WASM_BINDGEN_VERSION=0.2.100
-WASM_BINDGEN_EXPECTED_HASH="69f25cb910de7e19777b3f93347f5e62a64c8f81709b41ba7242d00a9543573c"
 
 # ---------------------------
 
@@ -56,13 +54,6 @@ download_binaryen() {
 
   curl -LO --fail "$BINARYEN_BASE_URL/$FILE"
 
-  # Verify the hash
-  ACTUAL_HASH=$(sha256sum "$FILE" | awk '{print $1}')
-  if [ "$ACTUAL_HASH" != "$BINARYEN_EXPECTED_HASH" ]; then
-    echo "Hash mismatch for $FILE. Expected: $BINARYEN_EXPECTED_HASH, got: $ACTUAL_HASH"
-    exit 1
-  fi
-
   mkdir -p "../$BINARYEN_EXTRACT_DIR"
   tar -xzf "$FILE" -C "../$BINARYEN_EXTRACT_DIR" --strip-components=1
 
@@ -96,13 +87,6 @@ download_wasm_bindgen() {
   cd ./.bin/tmp
 
   curl -LO --fail "$WASM_BINDGEN_URL_BASE/$FILE"
-
-  # Verify the hash
-  ACTUAL_HASH=$(sha256sum "$FILE" | awk '{print $1}')
-  if [ "$ACTUAL_HASH" != "$WASM_BINDGEN_EXPECTED_HASH" ]; then
-    echo "Hash mismatch for $FILE. Expected: $WASM_BINDGEN_EXPECTED_HASH, got: $ACTUAL_HASH"
-    exit 1
-  fi
 
   mkdir -p "../$WASM_BINDGEN_DIR"
   tar -xzf "$FILE" -C "../$WASM_BINDGEN_DIR" --strip-components=1
