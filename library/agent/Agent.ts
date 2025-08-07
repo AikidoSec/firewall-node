@@ -71,7 +71,8 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
-    private readonly newInstrumentation: boolean = false
+    private readonly newInstrumentation: boolean = false,
+    private readonly isBundlingProcess: boolean = false
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -480,19 +481,21 @@ export class Agent {
 
     this.logger.log(`Starting agent v${getAgentVersion()}...`);
 
-    if (!this.block) {
-      this.logger.log("Dry mode enabled, no requests will be blocked!");
-    }
+    if (!this.isBundlingProcess) {
+      if (!this.block) {
+        this.logger.log("Dry mode enabled, no requests will be blocked!");
+      }
 
-    if (this.token) {
-      this.logger.log("Found token, reporting enabled!");
-    } else {
-      this.logger.log("No token provided, disabling reporting.");
+      if (this.token) {
+        this.logger.log("Found token, reporting enabled!");
+      } else {
+        this.logger.log("No token provided, disabling reporting.");
 
-      if (!this.block && !isAikidoCI()) {
-        console.log(
-          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
-        );
+        if (!this.block && !isAikidoCI()) {
+          console.log(
+            "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+          );
+        }
       }
     }
 
@@ -500,7 +503,11 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
+    wrapInstalledPackages(wrappers, this.newInstrumentation, !this.serverless);
+
+    if (this.isBundlingProcess) {
+      return;
+    }
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
