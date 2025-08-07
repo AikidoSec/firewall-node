@@ -30,7 +30,6 @@ jobs:
         run: |
           rustup toolchain install stable
           rustup default stable
-          cargo install wasm-pack
       - name: Install dependencies
         run: npm run install-lib-only
       - name: Get the version

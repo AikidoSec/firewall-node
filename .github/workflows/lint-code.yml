@@ -20,7 +20,6 @@ jobs:
           rustup toolchain install stable
           rustup default stable
           rustup component add rustfmt clippy
-          cargo install wasm-pack
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run lint
