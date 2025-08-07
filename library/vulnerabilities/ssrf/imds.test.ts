@@ -16,10 +16,7 @@ t.test("it returns true for IMDS IP addresses", async (t) => {
     ),
     true
   );
-  t.same(
-    isIMDSIPAddress("100.100.100.200"),
-    true
-  );
+  t.same(isIMDSIPAddress("100.100.100.200"), true);
 });
 
 t.test("it returns false for non-IMDS IP addresses", async (t) => {
