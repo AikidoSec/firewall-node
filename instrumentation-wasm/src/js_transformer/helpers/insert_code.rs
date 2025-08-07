@@ -195,7 +195,7 @@ pub fn insert_modify_args<'a>(
         AssignmentTarget::ArrayAssignmentTarget(builder.alloc_array_assignment_target(
             SPAN,
             array_assignment_target_identifiers,
-            None,
+            NONE,
         )),
         instrument_modify_args_call,
     );
