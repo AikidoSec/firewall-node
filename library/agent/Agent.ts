@@ -398,6 +398,8 @@ export class Agent {
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
+        blockedSignatureAgents,
+        monitoredSignatureAgents,
       } = await fetchBlockedLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
@@ -405,6 +407,10 @@ export class Agent {
       this.serviceConfig.updateMonitoredIPAddresses(monitoredIPAddresses);
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
+      this.serviceConfig.updateBlockedSignatureAgents(blockedSignatureAgents);
+      this.serviceConfig.updateMonitoredSignatureAgents(
+        monitoredSignatureAgents
+      );
     } catch (error: any) {
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
