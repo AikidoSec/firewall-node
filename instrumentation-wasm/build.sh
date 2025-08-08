@@ -130,6 +130,13 @@ LIBDIR=$(rustc --target wasm32-unknown-unknown --print target-libdir)
 
 if [ ! -d "$LIBDIR" ]; then
   echo "Target wasm32-unknown-unknown not installed. Installing using rustup..."
+
+  # Check if rustup is installed
+  if ! command -v rustup &> /dev/null; then
+    echo "rustup is not installed. Please install the wasm32-unknown-unknown target manually or install rustup."
+    exit 1
+  fi
+
   rustup target add wasm32-unknown-unknown
 fi
 
@@ -167,6 +174,8 @@ fi
 # wasm-opt
 echo "Running wasm-opt..."
 ./.bin/binaryen/bin/wasm-opt -O3 --enable-bulk-memory --enable-nontrapping-float-to-int -o "$OUT_DIR/${CRATE_NAME}_bg.wasm" "$OUT_DIR/${CRATE_NAME}_bg.wasm"
+
+echo "Build completed successfully. Output is in $OUT_DIR"
 
 # Switch back to the original directory
 popd > /dev/null
