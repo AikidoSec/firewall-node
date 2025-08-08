@@ -1,4 +1,4 @@
-name: 🧪 QA Tests with Demo App
+name: 🧪 QA Tests
 on:
   push: {}
   pull_request: {}
@@ -36,7 +36,7 @@ jobs:
           npm pack
 
           # Move the packed tarball to zen-demo-nodejs directory
-          mv aikidosec-firewall-*.tgz ../zen-demo-nodejs/
+          mv aikidosec-firewall-*.tgz ../../zen-demo-nodejs/
 
       - name: Replace Dockerfile with QA version
         run: |
