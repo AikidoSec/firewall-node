@@ -1,4 +1,6 @@
 name: 🧪 QA Tests
+permissions:
+  contents: read
 on:
   push: {}
   pull_request: {}
