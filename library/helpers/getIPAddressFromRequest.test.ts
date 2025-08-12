@@ -3,6 +3,7 @@ import { getIPAddressFromRequest } from "./getIPAddressFromRequest";
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_TRUST_PROXY;
+  delete process.env.AIKIDO_CLIENT_IP_HEADER;
 });
 
 t.test("no headers and no remote address", async (t) => {
