@@ -21,7 +21,7 @@ function request({
   return new Promise((resolve, reject) => {
     // Convert URL object to string for compatibility with old https-proxy-agent versions
     // Old agent-base library (used by https-proxy-agent) only works with string URLs
-    // and fails when passed URL objects, causing requests to fallback to 127.0.0.1:443
+    // and fails when passed URL objects, causing communication with our dashboard to fail
     const req = request(
       url.toString(),
       {
