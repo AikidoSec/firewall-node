@@ -278,3 +278,56 @@ t.test("x-forwarded-for with trust proxy and many IPs", async (t) => {
     "9.9.9.9"
   );
 });
+
+t.test("get ip from different header", async (t) => {
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "127.0.0.1, 192.168.0.1",
+        "connecting-ip": "9.9.9.9",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+  process.env.AIKIDO_CLIENT_IP_HEADER = "connecting-ip";
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "127.0.0.1, 192.168.0.1",
+        "connecting-ip": "9.9.9.9",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "9.9.9.9"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "127.0.0.1, 192.168.0.1",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+  process.env.AIKIDO_CLIENT_IP_HEADER = "";
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "127.0.0.1, 192.168.0.1",
+        "connecting-ip": "9.9.9.9",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "127.0.0.1, 192.168.0.1, 5.6.7.8",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "5.6.7.8"
+  );
+});
