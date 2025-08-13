@@ -96,9 +96,11 @@ function getTokenFromEnv(): Token | undefined {
 function startAgent({
   serverless,
   newInstrumentation,
+  isBundlingProcess,
 }: {
   serverless: string | undefined;
   newInstrumentation: boolean;
+  isBundlingProcess: boolean;
 }) {
   const current = getInstance();
 
@@ -112,7 +114,8 @@ function startAgent({
     getAPI(),
     getTokenFromEnv(),
     serverless,
-    newInstrumentation
+    newInstrumentation,
+    isBundlingProcess
   );
 
   setInstance(agent);
@@ -169,6 +172,7 @@ export function protect() {
   startAgent({
     serverless: undefined,
     newInstrumentation: false,
+    isBundlingProcess: false,
   });
 }
 
@@ -176,6 +180,7 @@ export function lambda(): (handler: Handler) => Handler {
   startAgent({
     serverless: "lambda",
     newInstrumentation: false,
+    isBundlingProcess: false,
   });
 
   return createLambdaWrapper;
@@ -185,6 +190,7 @@ export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
   startAgent({
     serverless: "gcp",
     newInstrumentation: false,
+    isBundlingProcess: false,
   });
 
   return createCloudFunctionWrapper;
@@ -194,5 +200,14 @@ export function protectWithNewInstrumentation() {
   startAgent({
     serverless: undefined,
     newInstrumentation: true,
+    isBundlingProcess: false,
+  });
+}
+
+export function protectDuringBundling() {
+  startAgent({
+    serverless: undefined,
+    newInstrumentation: true,
+    isBundlingProcess: true,
   });
 }
