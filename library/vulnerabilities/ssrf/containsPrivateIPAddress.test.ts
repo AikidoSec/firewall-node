@@ -157,9 +157,12 @@ const privateIPs = [
   "2130706433",
   "0x7f000001",
 
-  // AWS metadata
+  // AWS, Azure, Google Cloud, Oracle Cloud, DigitalOcean, ... metadata service
   "fd00:ec2::254",
   "169.254.169.254",
+
+  // Alibaba Cloud metadata service
+  "100.100.100.200",
 ];
 
 const invalidIPs = [

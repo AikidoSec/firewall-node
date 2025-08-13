@@ -319,6 +319,22 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+
+  const response4 = await getApp().request("/%72ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response4.status, 429);
+
+  const response5 = await getApp().request("/%2572ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response5.status, 404);
 });
 
 t.test("it ignores invalid json body", opts, async (t) => {
@@ -447,6 +463,7 @@ t.test("Proxy request", opts, async (t) => {
       new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
+        // oxlint-disable-next-line no-invalid-fetch-options
         body: c.req.raw.body,
         // @ts-expect-error wrong types
         duplex: "half",

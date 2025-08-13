@@ -29,7 +29,7 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
     results.add(obj.join());
   }
 
-  if (typeof obj == "string") {
+  if (typeof obj === "string") {
     results.add(obj);
 
     if (obj.includes("%") && obj.length >= 3) {

@@ -21,6 +21,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
     this.result = result;
   }
 
+  // oxlint-disable-next-line require-await
   async report(
     token: Token,
     event: Event,

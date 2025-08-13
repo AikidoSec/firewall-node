@@ -199,7 +199,31 @@ t.test("it works", async (t) => {
         rename(new URL("file:///../etc/passwd"), "../test123.txt", () => {}),
       "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
     );
+
+    throws(
+      () => rename("/etc/passwd", "../test123.txt", () => {}),
+      "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+    );
   });
+
+  runWithContext(
+    {
+      ...unsafeContextAbsolute,
+      body: { file: { matches: "//etc/passwd" } },
+    },
+    () => {
+      throws(
+        () =>
+          rename(new URL("file:////etc/passwd"), "../test123.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+
+      throws(
+        () => rename("//etc/passwd", "../test123.txt", () => {}),
+        "Zen has blocked a path traversal attack: fs.rename(...) originating from body.file.matches"
+      );
+    }
+  );
 
   runWithContext(
     {

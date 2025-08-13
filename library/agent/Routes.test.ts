@@ -649,9 +649,7 @@ t.test("it ignores body of graphql queries", async (t) => {
       {},
       {}
     ),
-    ...{
-      graphql: ["name"],
-    },
+    graphql: ["name"],
   });
   t.same(routes.asArray(), [
     {

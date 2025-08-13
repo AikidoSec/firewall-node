@@ -57,7 +57,7 @@ server.ext('onRequest', function (request, h) {
   return h.continue;
 });
 
-// Call this as after your auth middleware, before other middleware
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addHapiMiddleware(app);
 
 server.route(...);
@@ -65,7 +65,7 @@ server.route(...);
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your hapi app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js

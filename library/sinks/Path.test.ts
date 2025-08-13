@@ -125,6 +125,27 @@ t.test("it works", async (t) => {
       error2 instanceof Error ? error2.message : null,
       "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
     );
+
+    const error3 = t.throws(() => resolve("/tmp", "/etc/some_directory"));
+    t.same(
+      error3 instanceof Error ? error3.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
+    );
+
+    const error4 = t.throws(() => resolve("/tmp", "//etc/some_directory"));
+    t.same(
+      error4 instanceof Error ? error4.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
+    );
+
+    const error5 = t.throws(() => resolve("//tmp/", "//etc/some_directory"));
+    t.same(
+      error5 instanceof Error ? error5.message : null,
+      "Zen has blocked a path traversal attack: path.resolve(...) originating from body.file.matches"
+    );
+
+    t.same(join("//tmp/", "//etc/some_directory"), "/tmp/etc/some_directory");
+    t.same(normalize("//tmp/", "//etc/some_directory"), "/tmp/");
   });
 
   runWithContext(safeAbsoluteContext, () => {

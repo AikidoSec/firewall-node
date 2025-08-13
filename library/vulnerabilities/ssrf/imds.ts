@@ -7,6 +7,7 @@ const IMDSAddresses = new IPMatcher();
 // This prevents STORED SSRF attacks that try to access the instance metadata service
 IMDSAddresses.add("169.254.169.254");
 IMDSAddresses.add("fd00:ec2::254");
+IMDSAddresses.add("100.100.100.200"); // Alibaba Cloud
 
 export function isIMDSIPAddress(ip: string): boolean {
   return IMDSAddresses.has(ip);
