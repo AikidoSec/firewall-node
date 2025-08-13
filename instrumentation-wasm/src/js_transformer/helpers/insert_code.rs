@@ -213,13 +213,12 @@ fn get_insert_pos(body: &FunctionBody, is_constructor: bool) -> usize {
         0
     } else {
         for (index, statement) in (&body.statements).into_iter().enumerate() {
-            if let Statement::ExpressionStatement(expr_stmt) = statement {
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                    if let Expression::Super(_) = &call_expr.callee {
-                        // Found a super call, insert after this statement
-                        return index + 1; // Insert after the super call
-                    }
-                }
+            if let Statement::ExpressionStatement(expr_stmt) = statement
+                && let Expression::CallExpression(call_expr) = &expr_stmt.expression
+                && let Expression::Super(_) = &call_expr.callee
+            {
+                // Found a super call, insert after this statement
+                return index + 1; // Insert after the super call
             }
         }
         0 // No super call found, insert at the beginning
