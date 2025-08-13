@@ -103,6 +103,29 @@ export class Hapi implements Wrapper {
         wrapNewInstance(exports, "server", pkgInfo, (server) => {
           this.wrapServer(server, pkgInfo);
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/server.js",
+        functions: [
+          {
+            name: "route",
+            nodeType: "MethodDefinition",
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapRouteHandler(args),
+          },
+          {
+            name: "ext",
+            nodeType: "MethodDefinition",
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapExtensionFunction(args),
+          },
+          {
+            name: "decorate",
+            nodeType: "MethodDefinition",
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapDecorateFunction(args),
+          },
+        ],
       });
   }
 }
