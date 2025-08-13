@@ -85,4 +85,8 @@ Zen can also protect your application against prototype pollution attacks.
 Read [Protect against prototype pollution](./prototype-pollution.md) to learn how to set it up.
 
 That's it! Your app is now protected by Zen.  
-If you want to see a full example, check our [Restify sample app](../sample-apps/restify-postgres). 
+If you want to see a full example, check our [Restify sample app](../sample-apps/restify-postgres).
+
+## Graceful shutdown
+
+It is recommended to add a shutdown handler to your app to ensure that no statistics are lost when the app is stopped. You can find more information [here](./graceful-shutdown.md).

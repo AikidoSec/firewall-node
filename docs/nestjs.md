@@ -92,3 +92,7 @@ Read [Protect against prototype pollution](./prototype-pollution.md) to learn ho
 
 That's it! Your app is now protected by Zen.  
 If you want to see a full example, check our [NestJS sample app](../sample-apps/nestjs-sentry).
+
+## Graceful shutdown
+
+It is recommended to add a shutdown handler to your app to ensure that no statistics are lost when the app is stopped. You can find more information [here](./graceful-shutdown.md).
