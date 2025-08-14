@@ -44,9 +44,15 @@ function getClientIpFromHeader(value: string) {
     // According to https://www.rfc-editor.org/rfc/rfc7239 (5.2) X-Forwarded-For
     // is allowed to include a port number, so we check this here :
     if (ip.includes(":")) {
-      const parts = ip.split(":");
+      // If the ip is an IPv6 in the format [ipv6]:port, we need to split it using ]:
+      const splitWith = ip.startsWith("[") ? "]:" : ":";
+      const parts = ip.split(splitWith);
 
       if (parts.length === 2) {
+        // Remove bracket for IPv6 with port
+        if (parts[0].startsWith("[")) {
+          return parts[0].slice(1);
+        }
         return parts[0];
       }
     }

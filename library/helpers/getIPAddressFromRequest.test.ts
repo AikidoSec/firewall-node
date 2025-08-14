@@ -93,6 +93,25 @@ t.test("x-forwarded-for with trust proxy and IP contains port", async (t) => {
     }),
     "9.9.9.9"
   );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "[a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880]:8080",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880"
+  );
+  // Invalid format
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880:8080",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
 });
 
 t.test("with trailing comma", async (t) => {
