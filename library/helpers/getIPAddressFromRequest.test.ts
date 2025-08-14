@@ -102,15 +102,24 @@ t.test("x-forwarded-for with trust proxy and IP contains port", async (t) => {
     }),
     "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880"
   );
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "[a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880]",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880"
+  );
   // Invalid format
   t.same(
     getIPAddressFromRequest({
       headers: {
         "x-forwarded-for": "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880:8080",
       },
-      remoteAddress: "1.2.3.4",
+      remoteAddress: "df89:84af:85e0:c55f:960c:341a:2cc6:734d",
     }),
-    "1.2.3.4"
+    "df89:84af:85e0:c55f:960c:341a:2cc6:734d"
   );
 });
 

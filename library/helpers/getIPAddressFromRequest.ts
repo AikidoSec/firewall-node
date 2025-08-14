@@ -57,6 +57,10 @@ function getClientIpFromHeader(value: string) {
       }
     }
 
+    if (ip.startsWith("[") && ip.endsWith("]")) {
+      return ip.slice(1, -1);
+    }
+
     return ip;
   });
 
