@@ -6,9 +6,12 @@ import { isPlainObject } from "../helpers/isPlainObject";
 
 type PartialAiResponse = {
   usage: {
-    completionTokens: number;
-    promptTokens: number;
-    totalTokens: number;
+    completionTokens?: number;
+    promptTokens?: number;
+    totalTokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+    reasoningTokens?: number;
   };
   response: {
     modelId: string;
@@ -28,12 +31,17 @@ export class AiSDK implements Wrapper {
 
     const modelName = this.getModelName(response);
 
+    const usage = this.getUsage(response.usage);
+    if (!usage) {
+      return;
+    }
+
     const aiStats = agent.getAIStatistics();
     aiStats.onAICall({
       provider: provider,
       model: modelName,
-      inputTokens: response.usage.promptTokens,
-      outputTokens: response.usage.completionTokens,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
     });
   }
 
@@ -44,9 +52,6 @@ export class AiSDK implements Wrapper {
       !Array.isArray(result) &&
       "usage" in result &&
       isPlainObject(result.usage) &&
-      typeof result.usage.completionTokens === "number" &&
-      typeof result.usage.promptTokens === "number" &&
-      typeof result.usage.totalTokens === "number" &&
       "response" in result &&
       result.response &&
       isPlainObject(result.response) &&
@@ -109,6 +114,30 @@ export class AiSDK implements Wrapper {
     }
 
     return modelName;
+  }
+
+  private getUsage(usage: PartialAiResponse["usage"]):
+    | {
+        inputTokens: number;
+        outputTokens: number;
+      }
+    | undefined {
+    const inputTokens =
+      (usage.inputTokens ?? 0) +
+      (usage.promptTokens ?? 0) +
+      (usage.reasoningTokens ?? 0);
+
+    const outputTokens =
+      (usage.outputTokens ?? 0) + (usage.completionTokens ?? 0);
+
+    if (inputTokens === 0 && outputTokens === 0) {
+      return undefined;
+    }
+
+    return {
+      inputTokens,
+      outputTokens,
+    };
   }
 
   private getInterceptors(): InterceptorObject {
@@ -179,7 +208,7 @@ export class AiSDK implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
-      .withVersion("^4.0.0")
+      .withVersion("^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;
