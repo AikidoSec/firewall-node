@@ -146,7 +146,12 @@ async function modifyDtsFilesAfterBuild() {
 
 async function buildInstrumentationWasm() {
   // Build Instrumentation WASM
-  await execAsyncWithPipe(join(instrumentationWasmDir, "./build.sh"), {
+  const isWindows = process.platform === "win32";
+  const buildScript = isWindows ? "./build.ps1" : "./build.sh";
+  const command = isWindows
+    ? `pwsh -File ${buildScript}`
+    : `bash ${buildScript}`;
+  await execAsyncWithPipe(command, {
     cwd: instrumentationWasmDir,
   });
 }
