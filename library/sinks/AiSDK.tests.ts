@@ -4,10 +4,13 @@ import { AiSDK } from "./AiSDK";
 import { runWithContext, type Context } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { getInstance } from "../agent/AgentSingleton";
-import { z } from "zod";
 import { setTimeout } from "timers/promises";
 
-export function createAiSdkTests(pkgName: string, googlePkgName: string) {
+export function createAiSdkTests(
+  pkgName: string,
+  googlePkgName: string,
+  zodPkgName: string
+) {
   t.test(
     "It works",
     {
@@ -45,8 +48,10 @@ export function createAiSdkTests(pkgName: string, googlePkgName: string) {
       const { generateText, generateObject, streamText, streamObject } =
         require(pkgName) as typeof import("ai-v5");
 
+      const { z } = require(zodPkgName) as typeof import("zod/v4");
+
       await runWithContext(getTestContext(), async () => {
-        const result = await generateText({
+        await generateText({
           model: google("models/gemini-2.0-flash-lite"),
           prompt: "What is Zen by Aikido Security? Return one sentence.",
         });
@@ -80,12 +85,12 @@ export function createAiSdkTests(pkgName: string, googlePkgName: string) {
 
         await setTimeout(400);
 
-        const resultObj = (await generateObject({
+        const resultObj = await generateObject({
           model: google("models/gemini-2.0-flash-lite"),
           prompt: "Return numbers one to five",
           output: "array",
           schema: z.array(z.number()),
-        })) as any;
+        });
         t.ok(resultObj.object);
 
         t.match(agent.getAIStatistics().getStats(), [
