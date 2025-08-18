@@ -32,7 +32,7 @@ const api = new ReportingAPIForTesting({
       allowedIPAddresses: [],
       rateLimiting: {
         enabled: true,
-        maxRequests: 3,
+        maxRequests: 2,
         windowSizeInMS: 60 * 60 * 1000,
       },
     },
@@ -924,3 +924,78 @@ t.test(
     });
   }
 );
+
+t.test("rate limiting works with url encoded paths", async (t) => {
+  const server = http.createServer((req, res) => {
+    const result = shouldBlockRequest();
+    if (result.block) {
+      if (result.type === "ratelimited") {
+        res.statusCode = 429;
+        res.end("You are rate limited by Zen.");
+        return;
+      }
+      if (result.type === "blocked") {
+        res.statusCode = 403;
+        res.end("You are blocked by Zen.");
+        return;
+      }
+    }
+    res.statusCode = 200;
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3328, async () => {
+      t.equal(
+        (
+          await fetch({
+            url: new URL("http://localhost:3328/rate-limited"),
+            method: "GET",
+            headers: {},
+            timeoutInMS: 500,
+          })
+        ).statusCode,
+        200
+      );
+
+      t.equal(
+        (
+          await fetch({
+            url: new URL("http://localhost:3328/rate-limited"),
+            method: "GET",
+            headers: {},
+            timeoutInMS: 500,
+          })
+        ).statusCode,
+        200
+      );
+
+      t.equal(
+        (
+          await fetch({
+            url: new URL("http://localhost:3328/rate-limited"),
+            method: "GET",
+            headers: {},
+            timeoutInMS: 500,
+          })
+        ).statusCode,
+        429
+      );
+
+      t.equal(
+        (
+          await fetch({
+            url: new URL("http://localhost:3328/%72ate-limited"),
+            method: "GET",
+            headers: {},
+            timeoutInMS: 500,
+          })
+        ).statusCode,
+        429
+      );
+
+      server.close();
+      resolve();
+    });
+  });
+});
