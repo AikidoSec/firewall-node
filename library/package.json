@@ -53,7 +53,7 @@
     "@hapi/hapi": "^21.3.10",
     "@hono/node-server": "^1.12.2",
     "@koa/bodyparser": "^6.0.0",
-    "@koa/router": "^13.0.0",
+    "@koa/router": "^14.0.0",
     "@mistralai/mistralai": "^1.0.0",
     "@prisma/client": "^5.22.0",
     "@sinonjs/fake-timers": "^11.2.2",
