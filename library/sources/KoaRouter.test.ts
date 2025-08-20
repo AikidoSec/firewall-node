@@ -10,6 +10,12 @@ import { HTTPServer } from "./HTTPServer";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+
+const options = {
+  skip:
+    getMajorNodeVersion() < 18 ? "Does not support Node.js < 18" : undefined,
+};
 
 const agent = new Agent(
   true,
@@ -96,7 +102,7 @@ function getApp(routerImport = 1) {
   return app;
 }
 
-t.test("it adds body to the context", async (t) => {
+t.test("it adds body to the context", options, async (t) => {
   const app = getApp();
   const response = await request(app.callback())
     .post("/context?title=test")
@@ -119,7 +125,7 @@ t.test("it adds body to the context", async (t) => {
   });
 });
 
-t.test("it sets the user", async (t) => {
+t.test("it sets the user", options, async (t) => {
   const app = getApp();
   const response = await request(app.callback()).get("/context/user");
 
@@ -136,7 +142,7 @@ t.test("it sets the user", async (t) => {
   });
 });
 
-t.test("it counts requests", async () => {
+t.test("it counts requests", options, async () => {
   const app = getApp();
   agent.getInspectionStatistics().reset();
   await request(app.callback()).get("/");
@@ -152,7 +158,7 @@ t.test("it counts requests", async () => {
   });
 });
 
-t.test("it blocks a user", async (t) => {
+t.test("it blocks a user", options, async (t) => {
   const app = getApp();
   const response = await request(app.callback()).get("/user/blocked");
 
@@ -160,7 +166,7 @@ t.test("it blocks a user", async (t) => {
   t.equal(response.text, "You are blocked by Zen.");
 });
 
-t.test("it rate limits a request", async (t) => {
+t.test("it rate limits a request", options, async (t) => {
   const app = getApp();
   await request(app.callback()).get("/rate-limited");
   await request(app.callback()).get("/rate-limited");
@@ -170,7 +176,7 @@ t.test("it rate limits a request", async (t) => {
   t.match(response.text, "You are rate limited by Zen.");
 });
 
-t.test("gets route params using koa router", async (t) => {
+t.test("gets route params using koa router", options, async (t) => {
   const app = getApp();
   const response = await request(app.callback()).post("/add/123");
 
@@ -188,7 +194,7 @@ t.test("gets route params using koa router", async (t) => {
   });
 });
 
-t.test("Works with different npm package name", async (t) => {
+t.test("Works with different npm package name", options, async (t) => {
   const app = getApp(2);
   const response = await request(app.callback()).post("/add/123");
 
