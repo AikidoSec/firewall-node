@@ -1,49 +1,25 @@
+import { directoryNames } from "./directoryNames";
+import { fileNames } from "./fileNames";
+
 const fileExtensions = new Set<string>([
   "env",
-  "bashrc",
   "bak",
   "sql",
   "sqlite",
+  "sqlite3",
   "db",
-  "npmrc",
-  "zshrc",
+  "old",
+  "save",
+  "orig",
 ]);
 
-const filenames = new Set<string>([
-  ".gitlab-ci.yml",
-  ".travis.yml",
-  ".config",
-  ".config.json",
-  ".config.yml",
-  ".config.yaml",
-  ".config.xml",
-  "Dockerfile",
-  "docker-compose.yml",
-  "docker-compose.yaml",
-  "package-lock.json",
-  "package.json",
-  "npm-shrinkwrap.json",
-  "yarn.lock",
-  "wp-config.php",
-  "aws-key.yaml",
-  "aws-key.yml",
-]);
-
-const directories = new Set<string>([
-  ".git",
-  ".aws",
-  ".ssh",
-  ".circleci",
-  ".github",
-  ".docker",
-  ".npm",
-  ".svn",
-  ".vscode",
-  ".idea",
-]);
+const filenames = new Set<string>(fileNames);
+const directories = new Set<string>(directoryNames);
 
 export function isWebScanPath(path: string): boolean {
-  const segments = path.split("/");
+  const normalized = path.toLowerCase();
+
+  const segments = normalized.split("/");
   const filename = segments.pop();
 
   if (filename) {
