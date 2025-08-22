@@ -115,4 +115,18 @@ t.test("should return early - false cases", async (t) => {
     ),
     false
   );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, 3.8..7);",
+      "1, 2, 3.8..7"
+    ),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT (ARRAY[10,20,30,40,50])[2..4] AS slice_dots;",
+      "2..4"
+    ),
+    false
+  );
 });
