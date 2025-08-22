@@ -33,16 +33,34 @@ t.test("should return early - true cases", async (t) => {
   );
 
   // User input is a valid comma-separated number list
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1,2,3"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1,2,3)", "1,2,3"),
+    true
+  );
 
   // User input is a valid number
-  t.equal(shouldReturnEarly("SELECT * FROM users", "123"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (123)", "123"),
+    true
+  );
 
   // User input is a valid number with spaces
-  t.equal(shouldReturnEarly("SELECT * FROM users", "  123  "), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (  123  )", "  123  "),
+    true
+  );
 
   // User input is a valid number with commas
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1, 2, 3"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1, 2, 3)", "1, 2, 3"),
+    true
+  );
+
+  // User input is a valid number with decimals
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (123.45)", "123.45"),
+    true
+  );
 });
 
 t.test("should return early - false cases", async (t) => {
@@ -55,6 +73,15 @@ t.test("should return early - false cases", async (t) => {
   // User input is a valid string in query with special characters
   t.equal(
     shouldReturnEarly("SELECT * FROM users; DROP TABLE", "users; DROP TABLE"),
+    false
+  );
+
+  // User input is a number with injection
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (123); DROP TABLE -- );",
+      "123); DROP TABLE -- "
+    ),
     false
   );
 });
