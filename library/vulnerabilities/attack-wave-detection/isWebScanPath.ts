@@ -1,5 +1,5 @@
-import { directoryNames } from "./directoryNames";
-import { fileNames } from "./fileNames";
+import { directoryNames } from "./paths/directoryNames";
+import { fileNames } from "./paths/fileNames";
 
 const fileExtensions = new Set<string>([
   "env",
@@ -11,6 +11,8 @@ const fileExtensions = new Set<string>([
   "old",
   "save",
   "orig",
+  "sqlitedb",
+  "sqlite3db",
 ]);
 
 const filenames = new Set<string>(fileNames);

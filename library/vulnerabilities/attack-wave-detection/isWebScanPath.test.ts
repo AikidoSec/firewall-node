@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { isWebScanPath } from "./isWebScanPath";
-import { fileNames } from "./fileNames";
-import { directoryNames } from "./directoryNames";
+import { fileNames } from "./paths/fileNames";
+import { directoryNames } from "./paths/directoryNames";
 
 t.test("isWebScanPath", async (t) => {
   t.ok(isWebScanPath("/.env"));

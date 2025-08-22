@@ -268,4 +268,6 @@ export const fileNames = [
   "error.log",
   "access.log",
   ".DS_Store",
+  "passwd",
+  "win.ini",
 ];
