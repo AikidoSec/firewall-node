@@ -33,16 +33,42 @@ t.test("should return early - true cases", async (t) => {
   );
 
   // User input is a valid comma-separated number list
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1,2,3"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1,2,3)", "1,2,3"),
+    true
+  );
 
   // User input is a valid number
-  t.equal(shouldReturnEarly("SELECT * FROM users", "123"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (123)", "123"),
+    true
+  );
 
   // User input is a valid number with spaces
-  t.equal(shouldReturnEarly("SELECT * FROM users", "  123  "), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (  123  )", "  123  "),
+    true
+  );
 
   // User input is a valid number with commas
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1, 2, 3"), true);
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1, 2, 3)", "1, 2, 3"),
+    true
+  );
+
+  // User input is a valid number with decimals
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (123.45)", "123.45"),
+    true
+  );
+  // Version number
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (123.45.56)",
+      "123.45.56"
+    ),
+    true
+  );
 });
 
 t.test("should return early - false cases", async (t) => {
@@ -55,6 +81,61 @@ t.test("should return early - false cases", async (t) => {
   // User input is a valid string in query with special characters
   t.equal(
     shouldReturnEarly("SELECT * FROM users; DROP TABLE", "users; DROP TABLE"),
+    false
+  );
+
+  // User input is a number with injection
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (123); DROP TABLE -- );",
+      "123); DROP TABLE -- "
+    ),
+    false
+  );
+
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (a.b);", "a.b"),
+    false
+  );
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1.b);", "1.b"),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, a);",
+      "1, 2, a"
+    ),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, 3..a);",
+      "1, 2, 3..a"
+    ),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, 3.8..7);",
+      "1, 2, 3.8..7"
+    ),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT (ARRAY[10,20,30,40,50])[2..4] AS slice_dots;",
+      "2..4"
+    ),
+    false
+  );
+
+  // Ignores really large input
+  t.equal(
+    shouldReturnEarly(
+      `SELECT * FROM users WHERE test IN (${"1,2,".repeat(10_000)}2);`,
+      `${"1,2,".repeat(10_000)}2`
+    ),
     false
   );
 });

@@ -1230,3 +1230,63 @@ t.test("it includes agent's own package in heartbeat", async () => {
 
   clock.uninstall();
 });
+
+t.test("it limits each metadata field to 4096 characters", async (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.onDetectedAttack({
+    module: "mysql",
+    kind: "sql_injection",
+    blocked: true,
+    source: "body",
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {},
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+      route: "/posts/:id",
+      routeParams: {},
+    },
+    payload: "payload",
+    operation: "operation",
+    stack: "stack",
+    paths: [".nested"],
+    metadata: {
+      sql: "a".repeat(5000),
+    },
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack",
+      attack: {
+        module: "mysql",
+        kind: "sql_injection",
+        blocked: true,
+        source: "body",
+        path: ".nested",
+        stack: "stack",
+        metadata: {
+          sql: "a".repeat(4096),
+        },
+      },
+      request: {
+        method: "POST",
+        ipAddress: "::1",
+        url: "http://localhost:4000",
+        headers: {},
+        body: "{}",
+      },
+    },
+  ]);
+});
