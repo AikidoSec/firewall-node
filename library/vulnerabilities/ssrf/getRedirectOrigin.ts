@@ -1,5 +1,9 @@
 import { Context } from "../../agent/Context";
 
+// Prevent excessive recursion
+// We expect the http client to have a much lower redirect limit
+const maxRecursionDepth = 100;
+
 /**
  * This function checks if the given URL is part of a redirect chain that is passed in the `redirects` parameter.
  * It returns the origin of a redirect chain if the URL is the result of a redirect.
@@ -28,9 +32,10 @@ export function getRedirectOrigin(
 function findOrigin(
   redirects: NonNullable<Context["outgoingRequestRedirects"]>,
   url: URL,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
+  depth: number = 0
 ): URL {
-  if (visited.has(url.href)) {
+  if (visited.has(url.href) || depth > maxRecursionDepth) {
     // To avoid infinite loops in case of cyclic redirects
     return url;
   }
@@ -42,7 +47,7 @@ function findOrigin(
 
   if (redirect) {
     // Recursively find the origin starting from the source URL
-    return findOrigin(redirects, redirect.source, visited);
+    return findOrigin(redirects, redirect.source, visited, depth + 1);
   }
 
   // If no redirect leads to this URL, return the URL itself

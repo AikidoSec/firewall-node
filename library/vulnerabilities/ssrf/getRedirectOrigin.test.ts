@@ -419,3 +419,18 @@ t.test("it handles redirects with different query parameters", async (t) => {
     new URL("https://example.com").href
   );
 });
+
+t.test("it has a max recursion depth", async (t) => {
+  const redirects = [];
+  for (let i = 0; i < 200; i++) {
+    redirects.push({
+      source: new URL(`https://example.com/${i}`),
+      destination: new URL(`https://example.com/${i + 1}`),
+    });
+  }
+
+  t.equal(
+    getRedirectOrigin(redirects, new URL("https://example.com/200"))?.href,
+    new URL("https://example.com/99").href
+  );
+});
