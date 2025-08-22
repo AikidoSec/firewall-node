@@ -61,6 +61,14 @@ t.test("should return early - true cases", async (t) => {
     shouldReturnEarly("SELECT * FROM users WHERE test IN (123.45)", "123.45"),
     true
   );
+  // Version number
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (123.45.56)",
+      "123.45.56"
+    ),
+    true
+  );
 });
 
 t.test("should return early - false cases", async (t) => {
@@ -81,6 +89,29 @@ t.test("should return early - false cases", async (t) => {
     shouldReturnEarly(
       "SELECT * FROM users WHERE test IN (123); DROP TABLE -- );",
       "123); DROP TABLE -- "
+    ),
+    false
+  );
+
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (a.b);", "a.b"),
+    false
+  );
+  t.equal(
+    shouldReturnEarly("SELECT * FROM users WHERE test IN (1.b);", "1.b"),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, a);",
+      "1, 2, a"
+    ),
+    false
+  );
+  t.equal(
+    shouldReturnEarly(
+      "SELECT * FROM users WHERE test IN (1, 2, 3..a);",
+      "1, 2, 3..a"
     ),
     false
   );
