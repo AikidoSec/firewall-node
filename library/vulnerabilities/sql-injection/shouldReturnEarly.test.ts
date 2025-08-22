@@ -129,4 +129,13 @@ t.test("should return early - false cases", async (t) => {
     ),
     false
   );
+
+  // Ignores really large input
+  t.equal(
+    shouldReturnEarly(
+      `SELECT * FROM users WHERE test IN (${"1,2,".repeat(10_000)}2);`,
+      `${"1,2,".repeat(10_000)}2`
+    ),
+    false
+  );
 });

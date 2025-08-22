@@ -18,6 +18,11 @@ export function shouldReturnEarly(query: string, userInput: string) {
     return true;
   }
 
+  // Don't run the following checks on large inputs
+  if (userInput.length > 10_000) {
+    return false;
+  }
+
   // Check if user input is a valid comma-separated list of numbers
   const cleanedInputForList = userInputLowercase
     .replace(/ /g, "")
