@@ -63,6 +63,17 @@ export class Shelljs implements Wrapper {
             return args;
           },
         });
+      })
+      .addFileInstrumentation({
+        path: "src/exec.js",
+        functions: [
+          {
+            name: "execSync",
+            nodeType: "FunctionDeclaration",
+            operationKind: "exec_op",
+            inspectArgs: (args) => this.inspectExec("exec", args),
+          },
+        ],
       });
   }
 }
