@@ -43,4 +43,6 @@ export const directoryNames = [
   "System32",
   "tmp",
   "xampp",
+  "cgi-bin",
+  "%systemroot%",
 ];
