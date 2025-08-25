@@ -23,6 +23,7 @@ export const fileNames = [
   ".hgignore",
   ".htaccess",
   ".htpasswd",
+  ".htdigest",
   ".ksh_history",
   ".lesshst",
   ".lhistory",
