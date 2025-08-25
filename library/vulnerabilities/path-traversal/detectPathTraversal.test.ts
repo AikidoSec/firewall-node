@@ -174,3 +174,13 @@ t.test("absolute macOS path", async () => {
     true
   );
 });
+
+t.test("AWS credentials protection", async () => {
+  t.same(
+    detectPathTraversal(
+      "/home/user/.aws/credentials",
+      "/home/user/.aws/credentials"
+    ),
+    true
+  );
+});

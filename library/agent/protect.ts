@@ -55,6 +55,7 @@ import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
 import { AiSDK } from "../sinks/AiSDK";
 import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
+import { GoogleGenAi } from "../sinks/GoogleGenAi";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -162,6 +163,7 @@ export function getWrappers() {
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
     new AiSDK(),
+    new GoogleGenAi(),
   ];
 }
 
