@@ -1002,7 +1002,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
 
 t.test("it reports attack waves", async (t) => {
   const server = http.createServer((req, res) => {
-    res.statusCode = 200;
+    res.statusCode = 404;
     res.end("OK");
   });
 
@@ -1019,7 +1019,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1031,7 +1031,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1043,7 +1043,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1055,7 +1055,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1067,7 +1067,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1079,7 +1079,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1091,7 +1091,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.equal(
@@ -1103,7 +1103,7 @@ t.test("it reports attack waves", async (t) => {
             timeoutInMS: 500,
           })
         ).statusCode,
-        200
+        404
       );
 
       t.match(api.getEvents(), [
