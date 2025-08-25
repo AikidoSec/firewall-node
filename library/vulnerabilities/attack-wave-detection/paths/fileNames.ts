@@ -270,4 +270,7 @@ export const fileNames = [
   ".DS_Store",
   "passwd",
   "win.ini",
+  "cmd.exe",
+  "my.cnf",
+  ".bash_history",
 ];
