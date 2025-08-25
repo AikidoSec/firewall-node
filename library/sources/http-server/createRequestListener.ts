@@ -110,6 +110,15 @@ function createOnFinishRequestHandler(
         agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
+
+      // Ignore successful status codes except redirects
+      // as some sites may redirect non existing pages to a different location
+      if (
+        res.statusCode > 299 &&
+        agent.getAttackWaveDetector().check(context)
+      ) {
+        agent.onDetectedAttackWave({ request: context, metadata: {} });
+      }
     }
   };
 }

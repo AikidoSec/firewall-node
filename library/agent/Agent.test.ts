@@ -1230,3 +1230,51 @@ t.test("it includes agent's own package in heartbeat", async () => {
 
   clock.uninstall();
 });
+
+t.test("attack wave detected event", async (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+    block: true,
+  });
+
+  agent.onDetectedAttackWave({
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+      route: "/posts/:id",
+      routeParams: {},
+    },
+    metadata: {
+      x: "test",
+    },
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack_wave",
+      attack: {
+        metadata: {
+          x: "test",
+        },
+      },
+      request: {
+        ipAddress: "::1",
+        userAgent: "agent",
+        source: "express",
+      },
+    },
+  ]);
+});
