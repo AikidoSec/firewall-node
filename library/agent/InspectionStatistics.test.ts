@@ -1005,6 +1005,9 @@ t.test("it handles empty operation strings", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -1039,6 +1042,9 @@ t.test("it increments rateLimited requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -1062,6 +1068,7 @@ t.test("it keeps track of bot spoofing matches", async () => {
     requests: {
       total: 0,
       aborted: 0,
+      rateLimited: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
@@ -1094,6 +1101,7 @@ t.test("it keeps track of bot spoofing matches", async () => {
     requests: {
       total: 0,
       aborted: 0,
+      rateLimited: 0,
       attacksDetected: {
         total: 0,
         blocked: 0,
