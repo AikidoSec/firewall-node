@@ -2,12 +2,12 @@ import * as t from "tap";
 import { isWebScanner } from "./isWebScanner";
 import { type Context } from "../../agent/Context";
 
-function getTestContext(path: string, method: string): Context {
+function getTestContext(path: string, method: string, query = {}): Context {
   return {
     remoteAddress: "::1",
     method: method,
     url: `http://localhost:4000${path}`,
-    query: {},
+    query: query,
     headers: {
       "content-type": "application/json",
     },
@@ -27,6 +27,11 @@ t.test("is a web scanner", async (t) => {
   t.ok(isWebScanner(getTestContext("/.aws/config", "GET")));
   t.ok(isWebScanner(getTestContext("/../secret", "GET")));
   t.ok(isWebScanner(getTestContext("/", "BADMETHOD")));
+  t.ok(
+    isWebScanner(
+      getTestContext("/", "GET", { test: "1'; DROP TABLE users; --" })
+    )
+  );
 });
 
 t.test("is not a web scanner", async (t) => {
@@ -35,4 +40,5 @@ t.test("is not a web scanner", async (t) => {
   t.notOk(isWebScanner(getTestContext("/public/index.html", "GET")));
   t.notOk(isWebScanner(getTestContext("/static/js/app.js", "GET")));
   t.notOk(isWebScanner(getTestContext("/uploads/image.png", "GET")));
+  t.notOk(isWebScanner(getTestContext("/", "GET", { test: "1'" })));
 });
