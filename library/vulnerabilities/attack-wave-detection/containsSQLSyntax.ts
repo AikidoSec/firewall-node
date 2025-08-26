@@ -2,7 +2,7 @@ import type { Context } from "../../agent/Context";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 
 // Match spaces, tabs inline comments like /* test */ and +
-const sqlSpace = "(\\s|\\/\\*.*\\*\\/|\\+)";
+const sqlSpace = "(\\s|\\/\\*.{1,50}\\*\\/|\\+)";
 
 const forbiddenKeywords = [
   "@@innodb_version",
@@ -11,7 +11,7 @@ const forbiddenKeywords = [
   "pg_client_encoding",
   "pg_shadow",
   "pg_group",
-  "sleep\\(.*\\)",
+  "sleep\\(.{1,50}\\)",
 ].join("|");
 
 const builtinDbTables = [
