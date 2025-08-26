@@ -33,7 +33,7 @@ async function main() {
     installDirs.push(...subDirs);
   }
 
-  await asyncPool(availableParallelism(), installDirs, installDependencies);
+  await asyncPool(getParallelism(), installDirs, installDependencies);
 
   console.log("Successfully installed all dependencies");
   process.exit(0);
@@ -104,3 +104,11 @@ async function prepareBuildDir() {
     console.error(error);
   }
 })();
+
+function getParallelism() {
+  // Function not available in Node.js v16
+  if (typeof availableParallelism !== "function") {
+    return 4;
+  }
+  return availableParallelism();
+}
