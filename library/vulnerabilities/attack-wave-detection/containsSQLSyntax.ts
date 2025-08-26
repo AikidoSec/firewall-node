@@ -43,21 +43,34 @@ const sqlPathRegex = new RegExp(
 
 export function containsSQLSyntax(context: Context): boolean {
   if (context.query) {
-    const queryStrings = extractStringsFromUserInputCached(context, "query");
-    if (queryStrings) {
-      for (const str of queryStrings) {
-        if (sqlPathRegex.test(str)) {
-          return true;
-        }
-      }
+    if (queryContainsSQLSyntax(context)) {
+      return true;
     }
   }
 
-  if (context.route) {
+  if (context.route && context.route.length > 5) {
     if (sqlPathRegex.test(context.route)) {
       return true;
     }
   }
 
+  return false;
+}
+
+function queryContainsSQLSyntax(context: Context): boolean {
+  const queryStrings = extractStringsFromUserInputCached(context, "query");
+  if (!queryStrings) {
+    return false;
+  }
+  for (const str of queryStrings) {
+    // Performance optimization
+    if (str.length < 5) {
+      continue;
+    }
+
+    if (sqlPathRegex.test(str)) {
+      return true;
+    }
+  }
   return false;
 }
