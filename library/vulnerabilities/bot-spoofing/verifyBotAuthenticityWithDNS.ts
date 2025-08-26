@@ -4,7 +4,7 @@ import { getInstance } from "../../agent/AgentSingleton";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 
 // Cache results to avoid repeated DNS lookups for the same IP address and bot combination
-const cache = new LRUMap<string, boolean>(1000, 5 * 60 * 1000);
+const cache = new LRUMap<string, boolean>(1000, 10 * 60 * 1000);
 
 const dnsResolver = new Resolver({
   timeout: 50, // ms
@@ -63,7 +63,7 @@ export async function verifyBotAuthenticityWithDNS(
         continue;
       }
       if (addresses.some((address) => address === requestIp)) {
-        // The IP address matches the A or AAAA record for the
+        // At least one IP address of the A or AAAA dns record matches the request IP
         cache.set(cacheKey, true);
         return true;
       }
