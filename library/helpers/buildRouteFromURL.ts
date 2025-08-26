@@ -1,4 +1,5 @@
 import { looksLikeASecret } from "./looksLikeASecret";
+import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryParseURLPath } from "./tryParseURLPath";
 import { isIP } from "net";
 
@@ -9,15 +10,22 @@ const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 const NUMBER = /^\d+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}$/;
 const EMAIL =
-  /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 const HASH_LENGTHS = [32, 40, 64, 128];
 
 export function buildRouteFromURL(url: string) {
-  const path = tryParseURLPath(url);
+  let path = tryParseURLPath(url);
 
   if (!path) {
     return undefined;
+  }
+
+  if (path.includes("%") && path.length >= 3) {
+    const decoded = safeDecodeURIComponent(path);
+    if (decoded) {
+      path = decoded;
+    }
   }
 
   const route = path.split("/").map(replaceURLSegmentWithParam).join("/");

@@ -54,10 +54,10 @@ Note: Including `@aikidosec/firewall` in `middleware.js` or `instrumentation.js`
 
 By default, Zen will run in detection only mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
 
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`:
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
 
 ```sh
-AIKIDO_BLOCKING=true node -r @aikidosec/firewall .next/standalone/server.js
+AIKIDO_BLOCK=true node -r @aikidosec/firewall .next/standalone/server.js
 ```
 
 It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).

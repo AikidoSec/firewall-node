@@ -273,6 +273,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
       routes: [],
       users: [],
       packages: [],
+      ai: [],
       stats: {
         operations: {
           "mongodb.query": {
@@ -304,6 +305,7 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
         requests: {
           total: 100,
           aborted: 0,
+          rateLimited: 0,
           attacksDetected: {
             total: 0,
             blocked: 0,

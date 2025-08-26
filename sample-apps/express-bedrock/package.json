@@ -1,0 +1,16 @@
+{
+  "name": "express-bedrock",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2"
+  }
+}

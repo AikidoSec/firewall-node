@@ -19,7 +19,11 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
+    ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
@@ -63,6 +67,7 @@ function createContext(): Context {
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 const redirecTestUrl2 =
   "http://firewallssrfredirects-env-2.eba-7ifve22q.eu-north-1.elasticbeanstalk.com";
+const redirectTestUrl3 = "https://ssrf-rédirects.testssandbox.com";
 
 const redirectUrl = {
   ip: `${redirectTestUrl}/ssrf-test`, // Redirects to http://127.0.0.1/test
@@ -181,14 +186,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image2: [
-              "http://example",
-              "prefix.thisdomainpointstointernalip.com",
-            ],
-            image: "http://thisdomainpointstointernalip.com/path",
-          },
+        body: {
+          image2: ["http://example", "prefix.thisdomainpointstointernalip.com"],
+          image: "http://thisdomainpointstointernalip.com/path",
         },
       },
       async () => {
@@ -224,7 +224,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ip));
@@ -241,7 +241,26 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: `${redirectTestUrl3}/ssrf-test` },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.domain));
@@ -258,7 +277,26 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipTwice } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain` },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-domain`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.ipTwice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
@@ -275,7 +313,26 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domainTwice } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-twice` },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-twice`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.domainTwice },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -294,7 +351,26 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6 } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-domain-twice`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { image: redirectUrl.ipv6 },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6));
@@ -311,7 +387,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6Twice } },
+        body: { image: redirectUrl.ipv6Twice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6Twice));
@@ -328,10 +404,8 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -348,11 +422,32 @@ t.test(
       }
     );
 
+    await runWithContext(
+      {
+        ...createContext(),
+        body: {
+          image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
+        },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch(`${redirectTestUrl3}/ssrf-test-absolute-domain`)
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
+          );
+        }
+      }
+    );
+
     // Manual redirect
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const response = await fetch(redirectUrl.ip, {
@@ -376,7 +471,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const response = await fetch(redirectUrl.domain, {
@@ -401,10 +496,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -424,6 +518,47 @@ t.test(
             error.cause.message,
             "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
           );
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { serviceHostname: "my-service-hostname" },
+      },
+      async () => {
+        // This should NOT throw an error because my-service-hostname is a service hostname
+        const error = await t.rejects(() =>
+          fetch("http://my-service-hostname")
+        );
+        if (error instanceof Error) {
+          // @ts-expect-error Type is not defined
+          t.same(error.cause.code, "ECONNREFUSED");
+          // ^ means it tried to connect to the hostname
+        } else {
+          t.fail("Expected an error to be thrown");
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { metadataHost: "metadata" },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("http://metadata/computeMetadata/v1/instance/")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.metadataHost"
+          );
+        } else {
+          t.fail("Expected an error to be thrown");
         }
       }
     );

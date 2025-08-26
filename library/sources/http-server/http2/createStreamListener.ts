@@ -18,7 +18,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return async function requestListener(
+  return function requestListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,
@@ -56,17 +56,25 @@ function discoverRouteFromStream(
   if (context && context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
-    if (
-      !isNaN(statusCode) &&
-      shouldDiscoverRoute({
+    if (!isNaN(statusCode)) {
+      const shouldDiscover = shouldDiscoverRoute({
         statusCode: statusCode,
         route: context.route,
         method: context.method,
-      })
-    ) {
-      agent.onRouteExecute(context);
-      // Only count the request if the route is discovered
-      agent.getInspectionStatistics().onRequest();
+      });
+
+      if (shouldDiscover) {
+        agent.onRouteExecute(context);
+      }
+
+      if (shouldDiscover || context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRequest();
+      }
+
+      if (context.rateLimitedEndpoint) {
+        agent.getInspectionStatistics().onRateLimitedRequest();
+        agent.onRouteRateLimited(context.rateLimitedEndpoint);
+      }
     }
   }
 }

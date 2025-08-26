@@ -127,7 +127,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.16.0 is supported!",
+    "mongodb@6.18.0 is supported!",
   ]);
 });
 
@@ -598,9 +598,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After 10 minutes, we'll see that the required amount of performance samples has been reached
-  // And then send a heartbeat
-  clock.tick(10 * 60 * 1000);
+  // After 30 seconds, the first heartbeat should be sent
+  clock.tick(30 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -612,7 +611,23 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After another 10 minutes, we'll see that we already sent the initial stats
+  // After another 2 minutes, another heartbeat should be sent
+  clock.tick(2 * 60 * 1000);
+  await clock.nextAsync();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  // Every 10 minutes, another heartbeat should be sent
   clock.tick(10 * 60 * 1000);
   await clock.nextAsync();
 
@@ -623,15 +638,27 @@ t.test("it sends heartbeat when reached max timings", async () => {
     {
       type: "heartbeat",
     },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
   ]);
 
-  // Every 30 minutes we'll send a heartbeat
-  clock.tick(30 * 60 * 1000);
+  // Every 10 minutes, another heartbeat should be sent
+  clock.tick(10 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
       type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
     },
     {
       type: "heartbeat",

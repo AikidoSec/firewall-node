@@ -5,6 +5,7 @@ import { contextFromRequest } from "./contextFromRequest";
 export function wrapRequestHandler(
   handler: Lifecycle.Method
 ): Lifecycle.Method {
+  // oxlint-disable-next-line require-await
   return async (request, h) => {
     const context = contextFromRequest(request);
 

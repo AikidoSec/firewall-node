@@ -47,6 +47,7 @@ export class InspectionStatistics {
   private requests: {
     total: number;
     aborted: number;
+    rateLimited: number;
     attacksDetected: {
       total: number;
       blocked: number;
@@ -54,6 +55,7 @@ export class InspectionStatistics {
   } = {
     total: 0,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
   };
   private userAgents: UserAgentStats = {
@@ -96,6 +98,7 @@ export class InspectionStatistics {
     this.requests = {
       total: 0,
       aborted: 0,
+      rateLimited: 0,
       attacksDetected: { total: 0, blocked: 0 },
     };
     this.userAgents = {
@@ -115,6 +118,7 @@ export class InspectionStatistics {
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
         total: number;
         blocked: number;
@@ -271,6 +275,10 @@ export class InspectionStatistics {
 
   onRequest() {
     this.requests.total += 1;
+  }
+
+  onRateLimitedRequest() {
+    this.requests.rateLimited += 1;
   }
 
   onInspectedCall({

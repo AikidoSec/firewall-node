@@ -1,0 +1,16 @@
+{
+  "name": "express-openai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "dotenv": "^16.4.1",
+    "express": "^4.19.2",
+    "openai": "^4.0.0"
+  }
+}

@@ -4,11 +4,10 @@ Note: Zen runs only on the server side, it does not run in the browser.
 
 Note: If `bundle` is set to `false` in the esbuild configuration, Zen will work without any additional configuration.
 
-Modify your esbuild configuration to include the external option using this utility:
+Modify your esbuild configuration to set the `packages` option to `external`:
 
 ```js
 const { build } = require("esbuild");
-const { externals } = require("@aikidosec/firewall/bundler"); // <-- Add this line
 
 build({
   entryPoints: ["./app.js"],
@@ -16,13 +15,13 @@ build({
   platform: "node",
   target: "node18",
   outfile: "./dist/app.js",
-  external: externals(), // <-- Add this line
+  packages: "external", // <-- Add this line
 });
 ```
 
-This tells esbuild to exclude @aikidosec/firewall and any packages that Zen hooks into from the bundle.
+This tells esbuild to load packages (including @aikidosec/firewall and any packages that Zen hooks into) from the `node_modules` directory, while still bundling your application code.
 
-⚠️ Don't forget to copy the node_modules directory to the output directory.
+⚠️ Don't forget to copy the node_modules directory to the output directory (only `dependencies`, not `devDependencies`).
 
 ## Why do I need to do this?
 

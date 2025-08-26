@@ -13,6 +13,7 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
+import { setRateLimitGroup } from "../ratelimiting/group";
 
 wrap(fetch, "fetch", function mock(original) {
   return async function mock(this: typeof fetch) {
@@ -70,6 +71,16 @@ const agent = createTestAgent({
           enabled: true,
         },
       },
+      {
+        method: "GET",
+        route: "/rate-limited-group",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 2,
+          enabled: true,
+        },
+      },
     ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
@@ -100,6 +111,9 @@ function getApp() {
       setUser({ id: "567" });
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
+    } else if (c.req.path.startsWith("/rate-limited-group")) {
+      const rateLimitGroup = c.req.header("X-Rate-Limit-Group") || "default";
+      setRateLimitGroup({ id: rateLimitGroup });
     }
     await next();
   });
@@ -137,6 +151,10 @@ function getApp() {
   });
 
   app.get("/rate-limited", (c) => {
+    return c.text("OK");
+  });
+
+  app.get("/rate-limited-group", (c) => {
     return c.text("OK");
   });
 
@@ -302,6 +320,22 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+
+  const response4 = await getApp().request("/%72ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response4.status, 429);
+
+  const response5 = await getApp().request("/%2572ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response5.status, 404);
 });
 
 t.test("it ignores invalid json body", opts, async (t) => {
@@ -430,6 +464,7 @@ t.test("Proxy request", opts, async (t) => {
       new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
+        // oxlint-disable-next-line no-invalid-fetch-options
         body: c.req.raw.body,
         // @ts-expect-error wrong types
         duplex: "half",
@@ -577,4 +612,38 @@ t.test("bypass list works", opts, async (t) => {
 
   // Cleanup server
   server.close();
+});
+
+t.test("it rate limits based on group", opts, async (t) => {
+  const response = await getApp().request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.1",
+      "X-User-Id": "123",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+  t.match(response.status, 200);
+
+  const response2 = await getApp().request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.2",
+      "X-User-Id": "234",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+  t.match(response2.status, 200);
+
+  const response3 = await getApp().request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.3",
+      "X-User-Id": "456",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+
+  t.match(response3.status, 429);
+  t.match(await response3.text(), "You are rate limited by Zen.");
 });
