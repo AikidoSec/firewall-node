@@ -1,3 +1,6 @@
+import type { Context } from "../../agent/Context";
+import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+
 // Match spaces, tabs inline comments like /* test */ and +
 const sqlSpace = "(\\s|\\/\\*.*\\*\\/|\\+)";
 
@@ -33,7 +36,28 @@ const queryParts = [
   `("|')${sqlSpace}?(or|and|where|having|&{2}|\\|{2}|<|=)${sqlSpace}?("|')`,
 ].join("|");
 
-export const sqlPathRegex = new RegExp(
+const sqlPathRegex = new RegExp(
   `(${forbiddenKeywords}|${queries}|${builtinDbTables}|${queryParts})`,
   "i"
 );
+
+export function containsSQLSyntax(context: Context): boolean {
+  if (context.query) {
+    const queryStrings = extractStringsFromUserInputCached(context, "query");
+    if (queryStrings) {
+      for (const str of queryStrings) {
+        if (sqlPathRegex.test(str)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  if (context.route) {
+    if (sqlPathRegex.test(context.route)) {
+      return true;
+    }
+  }
+
+  return false;
+}
