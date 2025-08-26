@@ -3,6 +3,8 @@ const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const { writeFile, mkdir } = require("fs/promises");
+const { availableParallelism } = require("os");
+const asyncPool = require("./helpers/asyncPool");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
@@ -31,7 +33,7 @@ async function main() {
     installDirs.push(...subDirs);
   }
 
-  await Promise.all(installDirs.map(installDependencies));
+  await asyncPool(getParallelism(), installDirs, installDependencies);
 
   console.log("Successfully installed all dependencies");
   process.exit(0);
@@ -102,3 +104,11 @@ async function prepareBuildDir() {
     console.error(error);
   }
 })();
+
+function getParallelism() {
+  // Function not available in Node.js v16
+  if (typeof availableParallelism !== "function") {
+    return 4;
+  }
+  return availableParallelism();
+}
