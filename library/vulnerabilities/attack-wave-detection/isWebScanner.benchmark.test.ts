@@ -22,7 +22,7 @@ function getTestContext(path: string, method: string, query = {}): Context {
 t.test("it does take less than 0.1ms", async (t) => {
   const start = performance.now();
 
-  const iterations = 1000;
+  const iterations = 25_000;
   for (let i = 0; i < iterations; i++) {
     isWebScanner(getTestContext("/wp-config.php", "GET", { test: "1" }));
     isWebScanner(
