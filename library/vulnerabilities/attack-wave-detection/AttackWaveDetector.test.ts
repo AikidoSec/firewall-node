@@ -25,7 +25,12 @@ function getTestContext(
 }
 
 function newAttackWaveDetector() {
-  return new AttackWaveDetector(6, 60 * 1000, 60 * 60 * 1000, 10_000);
+  return new AttackWaveDetector({
+    attackWaveThreshold: 6,
+    attackWaveTimeFrame: 60 * 1000,
+    minTimeBetweenEvents: 60 * 60 * 1000,
+    maxLRUEntries: 10_000,
+  });
 }
 
 t.test("no ip address", async (t) => {

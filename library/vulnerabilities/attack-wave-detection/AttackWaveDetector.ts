@@ -6,16 +6,28 @@ export class AttackWaveDetector {
   private suspiciousRequestsMap: LRUMap<string, number>;
   private sentEventsMap: LRUMap<string, number>;
 
+  // How many suspicious requests are allowed before triggering an alert
+  private readonly attackWaveThreshold: number;
+  // In what time frame must these requests occur
+  private readonly attackWaveTimeFrame: number;
+  // Minimum time before reporting a new event for the same ip
+  private readonly minTimeBetweenEvents: number;
+  // Maximum number of entries in the LRU cache
+  private readonly maxLRUEntries: number;
+
   constructor(
-    // How many suspicious requests are allowed before triggering an alert
-    private readonly attackWaveThreshold = 6,
-    // In what time frame must these requests occur
-    private readonly attackWaveTimeFrame = 60 * 1000, // 60 seconds
-    // Minimum time before reporting a new event for the same ip
-    private readonly minTimeBetweenEvents = 60 * 60 * 1000, // 1 hour
-    // Maximum number of entries in the LRU cache
-    private readonly maxLRUEntries = 10_000
+    options: {
+      attackWaveThreshold?: number;
+      attackWaveTimeFrame?: number;
+      minTimeBetweenEvents?: number;
+      maxLRUEntries?: number;
+    } = {}
   ) {
+    this.attackWaveThreshold = options.attackWaveThreshold ?? 6; // Default: 6 requests
+    this.attackWaveTimeFrame = options.attackWaveTimeFrame ?? 60 * 1000; // Default: 1 minute
+    this.minTimeBetweenEvents = options.minTimeBetweenEvents ?? 60 * 60 * 1000; // Default: 1 hour
+    this.maxLRUEntries = options.maxLRUEntries ?? 10_000; // Default: 10,000 entries
+
     this.suspiciousRequestsMap = new LRUMap(
       this.maxLRUEntries,
       this.attackWaveTimeFrame
