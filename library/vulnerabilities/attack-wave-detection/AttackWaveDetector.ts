@@ -3,26 +3,26 @@ import type { Context } from "../../agent/Context";
 import { isWebScanner } from "./isWebScanner";
 
 export class AttackWaveDetector {
-  // How many suspicious requests are allowed before triggering an alert
-  private static readonly ATTACK_WAVE_THRESHOLD = 6;
-  // In what time frame must these requests occur
-  private static readonly ATTACK_WAVE_TIME_FRAME = 60 * 1000; // 60 seconds
-  // Minimum time before reporting a new event for the same ip
-  private static readonly MIN_TIME_BETWEEN_EVENTS = 60 * 60 * 1000; // 1 hour
-  // Maximum number of entries in the LRU cache
-  private static readonly MAX_LRU_ENTRIES = 10_000;
-
   private suspiciousRequestsMap: LRUMap<string, number>;
   private sentEventsMap: LRUMap<string, number>;
 
-  constructor() {
+  constructor(
+    // How many suspicious requests are allowed before triggering an alert
+    private readonly ATTACK_WAVE_THRESHOLD = 6,
+    // In what time frame must these requests occur
+    private readonly ATTACK_WAVE_TIME_FRAME = 60 * 1000, // 60 seconds
+    // Minimum time before reporting a new event for the same ip
+    private readonly MIN_TIME_BETWEEN_EVENTS = 60 * 60 * 1000, // 1 hour
+    // Maximum number of entries in the LRU cache
+    private readonly MAX_LRU_ENTRIES = 10_000
+  ) {
     this.suspiciousRequestsMap = new LRUMap(
-      AttackWaveDetector.MAX_LRU_ENTRIES,
-      AttackWaveDetector.ATTACK_WAVE_TIME_FRAME
+      this.MAX_LRU_ENTRIES,
+      this.ATTACK_WAVE_TIME_FRAME
     );
     this.sentEventsMap = new LRUMap(
-      AttackWaveDetector.MAX_LRU_ENTRIES,
-      AttackWaveDetector.MIN_TIME_BETWEEN_EVENTS
+      this.MAX_LRU_ENTRIES,
+      this.MIN_TIME_BETWEEN_EVENTS
     );
   }
 
@@ -52,7 +52,7 @@ export class AttackWaveDetector {
     const suspiciousRequests = (this.suspiciousRequestsMap.get(ip) || 0) + 1;
     this.suspiciousRequestsMap.set(ip, suspiciousRequests);
 
-    if (suspiciousRequests < AttackWaveDetector.ATTACK_WAVE_THRESHOLD) {
+    if (suspiciousRequests < this.ATTACK_WAVE_THRESHOLD) {
       return false;
     }
 

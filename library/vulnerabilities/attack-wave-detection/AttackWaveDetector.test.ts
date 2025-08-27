@@ -24,13 +24,17 @@ function getTestContext(
   };
 }
 
+function newAttackWaveDetector() {
+  return new AttackWaveDetector(6, 60 * 1000, 60 * 60 * 1000, 10_000);
+}
+
 t.test("no ip address", async (t) => {
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext(undefined, "/wp-config.php", "GET")));
 });
 
 t.test("not a web scanner", async (t) => {
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext("::1", "/", "OPTIONS")));
   t.notOk(detector.check(getTestContext("::1", "/", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/login", "GET")));
@@ -42,7 +46,7 @@ t.test("not a web scanner", async (t) => {
 });
 
 t.test("a web scanner", async (t) => {
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php.bak", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/.git/config", "GET")));
@@ -56,7 +60,7 @@ t.test("a web scanner", async (t) => {
 
 t.test("a web scanner with delays", async (t) => {
   const clock = FakeTimers.install();
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php.bak", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/.git/config", "GET")));
@@ -95,7 +99,7 @@ t.test("a web scanner with delays", async (t) => {
 
 t.test("a slow web scanner that triggers in the second interval", async (t) => {
   const clock = FakeTimers.install();
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php.bak", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/.git/config", "GET")));
@@ -115,7 +119,7 @@ t.test("a slow web scanner that triggers in the second interval", async (t) => {
 
 t.test("a slow web scanner that triggers in the third interval", async (t) => {
   const clock = FakeTimers.install();
-  const detector = new AttackWaveDetector();
+  const detector = newAttackWaveDetector();
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/wp-config.php.bak", "GET")));
   t.notOk(detector.check(getTestContext("::1", "/.git/config", "GET")));
