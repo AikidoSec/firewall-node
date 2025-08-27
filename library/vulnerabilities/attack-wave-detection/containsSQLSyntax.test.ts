@@ -74,3 +74,25 @@ t.test("it does not detect", async (t) => {
     );
   }
 });
+
+t.test("it handles empty query object", async (t) => {
+  const contextWithEmptyQuery: Context = {
+    remoteAddress: "::1",
+    method: "GET",
+    url: "http://localhost:4000/test",
+    query: {},
+    headers: {
+      "content-type": "application/json",
+    },
+    body: {},
+    cookies: {},
+    routeParams: {},
+    source: "express",
+    route: "/test",
+  };
+
+  t.notOk(
+    containsSQLSyntax(contextWithEmptyQuery),
+    "Expected empty query to NOT match SQL injection patterns"
+  );
+});

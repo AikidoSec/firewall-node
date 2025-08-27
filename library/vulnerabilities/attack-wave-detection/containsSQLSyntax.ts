@@ -42,10 +42,8 @@ const sqlPathRegex = new RegExp(
 );
 
 export function containsSQLSyntax(context: Context): boolean {
-  if (context.query) {
-    if (queryContainsSQLSyntax(context)) {
-      return true;
-    }
+  if (queryContainsSQLSyntax(context)) {
+    return true;
   }
 
   if (context.route && context.route.length > 5) {
