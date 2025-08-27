@@ -13,6 +13,7 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -40,6 +41,7 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
 };
 
 // Required for ESM / TypeScript default export support
@@ -56,4 +58,5 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
 };

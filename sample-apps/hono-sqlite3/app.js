@@ -115,3 +115,9 @@ main().then((app) => {
     console.log(`Server is running on port ${port}`);
   });
 });
+
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, shutting down gracefully...");
+  await Zen.shutdown();
+  process.exit(process.exitCode || 0);
+});
