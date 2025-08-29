@@ -26,6 +26,8 @@ export class ServiceConfig {
   private monitoredIPAddresses: { list: IPMatcher; key: string }[] = [];
   private monitoredUserAgentRegex: RegExp | undefined;
   private userAgentDetails: { pattern: RegExp; key: string }[] = [];
+  private blockedSignatureAgentRegex: RegExp | undefined;
+  private monitoredSignatureAgentRegex: RegExp | undefined;
 
   constructor(
     endpoints: EndpointConfig[],
@@ -277,5 +279,46 @@ export class ServiceConfig {
 
   hasReceivedAnyStats() {
     return this.receivedAnyStats;
+  }
+
+  updateBlockedSignatureAgents(blockedSignatureAgents: string) {
+    if (!blockedSignatureAgents) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
+      this.blockedSignatureAgentRegex = undefined;
+      return;
+    }
+    this.blockedSignatureAgentRegex = safeCreateRegExp(
+      blockedSignatureAgents,
+      "i"
+    );
+  }
+
+  updateMonitoredSignatureAgents(monitoredSignatureAgents: string) {
+    if (!monitoredSignatureAgents) {
+      // If an empty string is passed, we want to set the regex to undefined
+      // e.g. new RegExp("").test("abc") == true
+      this.monitoredSignatureAgentRegex = undefined;
+      return;
+    }
+
+    this.monitoredSignatureAgentRegex = safeCreateRegExp(
+      monitoredSignatureAgents,
+      "i"
+    );
+  }
+
+  isSignatureAgentBlocked(ua: string): boolean {
+    if (this.blockedSignatureAgentRegex) {
+      return this.blockedSignatureAgentRegex.test(ua);
+    }
+    return false;
+  }
+
+  isSignatureAgentMonitored(ua: string): boolean {
+    if (this.monitoredSignatureAgentRegex) {
+      return this.monitoredSignatureAgentRegex.test(ua);
+    }
+    return false;
   }
 }
