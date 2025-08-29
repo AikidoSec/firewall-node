@@ -30,7 +30,7 @@ export function checkQuery(context: Context): boolean {
   }
   for (const str of queryStrings) {
     // Performance optimization
-    if (str.length < 5) {
+    if (str.length < 5 || str.length > 1_000) {
       continue;
     }
 

@@ -25,8 +25,8 @@ const indicationChars = new Set<string>(["-", ":", "@", ".", "://"]);
  * https://swagger.io/docs/specification/v3_0/data-models/data-types/#strings
  */
 export function getStringFormat(str: string): StringFormat | undefined {
-  // Skip if too short or very long
-  if (str.length < 5 || str.length > 1_000) {
+  // Skip if too short
+  if (str.length < 5) {
     return undefined;
   }
 
