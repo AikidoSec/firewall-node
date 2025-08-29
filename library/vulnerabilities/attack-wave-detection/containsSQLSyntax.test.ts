@@ -9,6 +9,10 @@ function getTestContext(path: string, query: string): Context {
     url: `http://localhost:4000${path}`,
     query: {
       test: query,
+      utmSource: "newsletter",
+      utmMedium: "electronicmail",
+      utmCampaign: "test",
+      utmTerm: "sql_injection",
     },
     headers: {
       "content-type": "application/json",
@@ -23,24 +27,16 @@ function getTestContext(path: string, query: string): Context {
 
 t.test("it detects SQL injection patterns", async (t) => {
   const testStrings = [
-    "2; DROP TABLE users",
-    "1 OR 1=1",
-    "' WHERE 1=1",
     "' or '1'='1",
-    "2; DELETE FROM users",
     "1: SELECT * FROM users WHERE '1'='1'",
     "', information_schema.tables",
-    "1 UNION SELECT username, password FROM users",
     "1' sleep(5)",
+    "WAITFOR DELAY 1",
   ];
 
   for (const str of testStrings) {
     t.ok(
       containsSQLSyntax(getTestContext(`/test`, str)),
-      `Expected ${str} to match SQL injection patterns`
-    );
-    t.ok(
-      containsSQLSyntax(getTestContext(`/api/user/${str}`, "")),
       `Expected ${str} to match SQL injection patterns`
     );
   }

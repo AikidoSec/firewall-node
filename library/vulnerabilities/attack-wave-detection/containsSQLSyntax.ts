@@ -8,10 +8,15 @@ const keywords = [
   "WAITFOR DELAY",
   "SELECT LIKE(CHAR(",
   "INFORMATION_SCHEMA.COLUMNS",
+  "INFORMATION_SCHEMA.TABLES",
   ",MD5(",
   "DBMS_PIPE.RECEIVE_MESSAGE",
   "SYSIBM.SYSTABLES",
   "RANDOMBLOB(",
+  "SELECT * FROM",
+  "1'='1",
+  "PG_SLEEP(",
+  "UNION ALL SELECT",
 ];
 
 export function containsSQLSyntax(context: Context): boolean {
