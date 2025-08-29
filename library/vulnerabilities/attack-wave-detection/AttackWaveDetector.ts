@@ -23,9 +23,9 @@ export class AttackWaveDetector {
       maxLRUEntries?: number;
     } = {}
   ) {
-    this.attackWaveThreshold = options.attackWaveThreshold ?? 6; // Default: 6 requests
+    this.attackWaveThreshold = options.attackWaveThreshold ?? 15; // Default: 15 requests
     this.attackWaveTimeFrame = options.attackWaveTimeFrame ?? 60 * 1000; // Default: 1 minute
-    this.minTimeBetweenEvents = options.minTimeBetweenEvents ?? 60 * 60 * 1000; // Default: 1 hour
+    this.minTimeBetweenEvents = options.minTimeBetweenEvents ?? 20 * 60 * 1000; // Default: 20 minutes
     this.maxLRUEntries = options.maxLRUEntries ?? 10_000; // Default: 10,000 entries
 
     this.suspiciousRequestsMap = new LRUMap(
