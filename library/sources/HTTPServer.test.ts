@@ -1010,101 +1010,80 @@ t.test("it reports attack waves", async (t) => {
 
   await new Promise<void>((resolve) => {
     server.listen(3229, async () => {
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/.env"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
+      for (let i = 0; i < 3; i++) {
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/.env"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
 
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/wp-config.php"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/wp-config.php"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
 
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/../test"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/../test"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
 
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/etc/passwd"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/etc/passwd"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/.git/config"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
 
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/etc/passwd"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
-
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/etc/passwd"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
-
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/.git/config"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
-
-      t.equal(
-        (
-          await fetch({
-            url: new URL("http://localhost:3229/%systemroot%/system32/cmd.exe"),
-            method: "GET",
-            headers: {},
-            timeoutInMS: 500,
-          })
-        ).statusCode,
-        404
-      );
+        t.equal(
+          (
+            await fetch({
+              url: new URL(
+                "http://localhost:3229/%systemroot%/system32/cmd.exe"
+              ),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+      }
 
       t.match(api.getEvents(), [
         {
