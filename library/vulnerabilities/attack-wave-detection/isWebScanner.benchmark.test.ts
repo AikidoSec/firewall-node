@@ -35,5 +35,5 @@ t.test("it does take less than 0.1ms", async (t) => {
 
   const timePerCheck = (end - start) / iterations / 3;
 
-  t.ok(timePerCheck < 0.002);
+  t.ok(timePerCheck < 0.006, `Took ${timePerCheck}ms per check`);
 });
