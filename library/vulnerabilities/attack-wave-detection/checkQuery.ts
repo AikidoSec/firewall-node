@@ -9,7 +9,7 @@ const keywords = [
   "SELECT LIKE(CHAR(",
   "INFORMATION_SCHEMA.COLUMNS",
   "INFORMATION_SCHEMA.TABLES",
-  ",MD5(",
+  "MD5(",
   "DBMS_PIPE.RECEIVE_MESSAGE",
   "SYSIBM.SYSTABLES",
   "RANDOMBLOB(",
@@ -17,9 +17,13 @@ const keywords = [
   "1'='1",
   "PG_SLEEP(",
   "UNION ALL SELECT",
+  "../",
 ];
 
-export function containsSQLSyntax(context: Context): boolean {
+/**
+ * Check the query for some common SQL or path traversal patterns.
+ */
+export function checkQuery(context: Context): boolean {
   const queryStrings = extractStringsFromUserInputCached(context, "query");
   if (!queryStrings) {
     return false;

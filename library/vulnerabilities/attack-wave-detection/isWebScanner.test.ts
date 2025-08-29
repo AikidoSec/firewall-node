@@ -28,10 +28,9 @@ t.test("is a web scanner", async (t) => {
   t.ok(isWebScanner(getTestContext("/../secret", "GET")));
   t.ok(isWebScanner(getTestContext("/", "BADMETHOD")));
   t.ok(
-    isWebScanner(
-      getTestContext("/", "GET", { test: "1'; DROP TABLE users; --" })
-    )
+    isWebScanner(getTestContext("/", "GET", { test: "SELECT * FROM admin" }))
   );
+  t.ok(isWebScanner(getTestContext("/", "GET", { test: "../etc/passwd" })));
 });
 
 t.test("is not a web scanner", async (t) => {
@@ -41,4 +40,5 @@ t.test("is not a web scanner", async (t) => {
   t.notOk(isWebScanner(getTestContext("/static/js/app.js", "GET")));
   t.notOk(isWebScanner(getTestContext("/uploads/image.png", "GET")));
   t.notOk(isWebScanner(getTestContext("/", "GET", { test: "1'" })));
+  t.notOk(isWebScanner(getTestContext("/", "GET", { test: "abcd" })));
 });

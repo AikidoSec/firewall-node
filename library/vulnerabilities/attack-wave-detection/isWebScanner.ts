@@ -1,5 +1,5 @@
 import { type Context } from "../../agent/Context";
-import { containsSQLSyntax } from "./containsSQLSyntax";
+import { checkQuery } from "./checkQuery";
 import { isWebScanMethod } from "./isWebScanMethod";
 import { isWebScanPath } from "./isWebScanPath";
 
@@ -12,7 +12,7 @@ export function isWebScanner(context: Context): boolean {
     return true;
   }
 
-  if (containsSQLSyntax(context)) {
+  if (checkQuery(context)) {
     return true;
   }
 
