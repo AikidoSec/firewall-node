@@ -58,6 +58,7 @@ wrap(fetch, "fetch", function mock() {
             pattern: "Bytespider",
           },
         ],
+        botSpoofingProtection: [],
       } satisfies Response),
     };
   };
