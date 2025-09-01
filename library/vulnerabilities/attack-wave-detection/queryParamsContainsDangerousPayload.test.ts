@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { checkQuery } from "./checkQuery";
+import { queryParamsContainsDangerousPayload } from "./queryParamsContainsDangerousPayload";
 import type { Context } from "../../agent/Context";
 
 function getTestContext(query: string): Context {
@@ -36,7 +36,10 @@ t.test("it detects injection patterns", async (t) => {
   ];
 
   for (const str of testStrings) {
-    t.ok(checkQuery(getTestContext(str)), `Expected ${str} to match patterns`);
+    t.ok(
+      queryParamsContainsDangerousPayload(getTestContext(str)),
+      `Expected ${str} to match patterns`
+    );
   }
 });
 
@@ -45,7 +48,7 @@ t.test("it does not detect", async (t) => {
 
   for (const str of nonMatchingQueryElements) {
     t.notOk(
-      checkQuery(getTestContext(str)),
+      queryParamsContainsDangerousPayload(getTestContext(str)),
       `Expected ${str} to NOT match patterns`
     );
   }
@@ -68,7 +71,7 @@ t.test("it handles empty query object", async (t) => {
   };
 
   t.notOk(
-    checkQuery(contextWithEmptyQuery),
+    queryParamsContainsDangerousPayload(contextWithEmptyQuery),
     "Expected empty query to NOT match injection patterns"
   );
 });

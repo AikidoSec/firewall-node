@@ -1,5 +1,5 @@
 import { type Context } from "../../agent/Context";
-import { checkQuery } from "./checkQuery";
+import { queryParamsContainsDangerousPayload } from "./queryParamsContainsDangerousPayload";
 import { isWebScanMethod } from "./isWebScanMethod";
 import { isWebScanPath } from "./isWebScanPath";
 
@@ -12,7 +12,7 @@ export function isWebScanner(context: Context): boolean {
     return true;
   }
 
-  if (checkQuery(context)) {
+  if (queryParamsContainsDangerousPayload(context)) {
     return true;
   }
 
