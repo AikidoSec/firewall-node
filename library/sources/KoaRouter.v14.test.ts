@@ -1,3 +1,3 @@
 import { createKoaRouterTests } from "./KoaRouter.tests";
 
-createKoaRouterTests("@koa/router-v14");
+createKoaRouterTests("@koa/router");
