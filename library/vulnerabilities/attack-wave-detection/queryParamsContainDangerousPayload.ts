@@ -23,7 +23,7 @@ const keywords = [
 /**
  * Check the query for some common SQL or path traversal patterns.
  */
-export function checkQuery(context: Context): boolean {
+export function queryParamsContainDangerousPayload(context: Context): boolean {
   const queryStrings = extractStringsFromUserInputCached(context, "query");
   if (!queryStrings) {
     return false;
