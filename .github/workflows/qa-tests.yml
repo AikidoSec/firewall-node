@@ -27,6 +27,12 @@ jobs:
         with:
           node-version: "18.x"
 
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
+
       - name: Build firewall-node dev package
         run: |
           cd firewall-node
