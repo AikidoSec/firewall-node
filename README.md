@@ -98,7 +98,7 @@ See list above for supported database drivers.
 
 ### Routers
 
-* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
+* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 14.x, 13.x, 12.x, 11.x and 10.x
 
 ### AI SDKs
 
