@@ -9,7 +9,11 @@ import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo, DetectedAttack } from "./api/Event";
+import type {
+  AgentInfo,
+  DetectedAttack,
+  DetectedAttackWave,
+} from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
@@ -29,6 +33,7 @@ import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
+import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -64,6 +69,7 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private attackWaveDetector = new AttackWaveDetector();
 
   constructor(
     private block: boolean,
@@ -617,6 +623,45 @@ export class Agent {
       default:
         // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
         return this.sendHeartbeatEveryMS;
+    }
+  }
+
+  getAttackWaveDetector(): AttackWaveDetector {
+    return this.attackWaveDetector;
+  }
+
+  /**
+   * This function gets called when an attack wave is detected, it reports this attack wave to the API
+   */
+  onDetectedAttackWave({
+    request,
+    metadata,
+  }: {
+    request: Context;
+    metadata: Record<string, string>;
+  }) {
+    const attack: DetectedAttackWave = {
+      type: "detected_attack_wave",
+      time: Date.now(),
+      attack: {
+        metadata: limitLengthMetadata(metadata, 4096),
+        user: request.user,
+      },
+      request: {
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        source: request.source,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    if (this.token) {
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+        this.logger.log("Failed to report attack wave");
+      });
     }
   }
 }

@@ -19,21 +19,23 @@ class Posts {
   }
 
   async add(title, text, authors) {
-    // This is unsafe! This is for demo purposes only, you should use parameterized queries.
     const articleRes = await this.db.query(
-      `INSERT INTO posts (title, text) VALUES ('${title}', '${text}') RETURNING id;`
+      'INSERT INTO posts (title, text) VALUES ($1, $2) RETURNING id',
+      [title, text]
     );
 
     const articleId = articleRes.rows[0].id;
 
     for (const author of authors) {
       const authorExists = await this.db.query(
-        `SELECT id FROM authors WHERE name = '${author}';`
+        'SELECT id FROM authors WHERE name = $1',
+        [author]
       );
       let authorId;
       if (authorExists.rows.length === 0) {
         const authorRes = await this.db.query(
-          `INSERT INTO authors (name) VALUES ('${author}') RETURNING id;`
+          'INSERT INTO authors (name) VALUES ($1) RETURNING id',
+          [author]
         );
         authorId = authorRes.rows[0].id;
       } else {
@@ -41,14 +43,16 @@ class Posts {
       }
 
       await this.db.query(
-        `INSERT INTO post_authors (post_id, author_id) VALUES (${articleId}, ${authorId});`
+        'INSERT INTO post_authors (post_id, author_id) VALUES ($1, $2)',
+        [articleId, authorId]
       );
     }
   }
 
   async find(title) {
     const post = await this.db.query(
-      `SELECT title, text FROM posts WHERE title = '${title}';`
+      'SELECT title, text FROM posts WHERE title = $1',
+      [title]
     );
 
     return post.rows.length > 0 ? post.rows[0] : null;

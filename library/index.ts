@@ -14,6 +14,7 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { isLibBundled } from "./helpers/isLibBundled";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -27,6 +28,13 @@ if (!isNewHookSystemUsed()) {
         "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
       );
     }
+
+    if (isLibBundled()) {
+      console.warn(
+        "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+      );
+    }
+
     require("./agent/protect").protect();
   }
 }
