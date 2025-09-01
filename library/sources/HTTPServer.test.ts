@@ -999,3 +999,112 @@ t.test("rate limiting works with url encoded paths", async (t) => {
     });
   });
 });
+
+t.test("it reports attack waves", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.statusCode = 404;
+    res.end("OK");
+  });
+
+  api.clear();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3229, async () => {
+      for (let i = 0; i < 3; i++) {
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/.env"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/wp-config.php"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/../test"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/etc/passwd"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+        t.equal(
+          (
+            await fetch({
+              url: new URL("http://localhost:3229/.git/config"),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+
+        t.equal(
+          (
+            await fetch({
+              url: new URL(
+                "http://localhost:3229/%systemroot%/system32/cmd.exe"
+              ),
+              method: "GET",
+              headers: {},
+              timeoutInMS: 500,
+            })
+          ).statusCode,
+          404
+        );
+      }
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            ipAddress:
+              getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
+            source: "http.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+      ]);
+
+      server.close();
+      resolve();
+    });
+  });
+});
