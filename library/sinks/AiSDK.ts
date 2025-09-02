@@ -111,26 +111,30 @@ export class AiSDK implements Wrapper {
     return modelName;
   }
 
-  private getInterceptors(): InterceptorObject {
+  private getInterceptors(methodName: string): InterceptorObject {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
         if (returnValue instanceof Promise) {
           // Inspect the response after the promise resolves, it won't change the original promise
-          returnValue.then((response) => {
-            try {
+          returnValue
+            .then((response) => {
               this.inspectAiCall(agent, args, response);
-            } catch {
-              // If we don't catch these errors, it will result in an unhandled promise rejection!
-            }
-          });
+            })
+            .catch((error) => {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: `${methodName}.<promise>`,
+                module: "ai",
+              });
+            });
         }
         return returnValue;
       },
     };
   }
 
-  private getStreamInterceptors(): InterceptorObject {
+  private getStreamInterceptors(methodName: string): InterceptorObject {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
@@ -145,8 +149,8 @@ export class AiSDK implements Wrapper {
           return returnValue;
         }
 
-        Promise.allSettled([returnValue.response, returnValue.usage]).then(
-          (promiseResults) => {
+        Promise.allSettled([returnValue.response, returnValue.usage])
+          .then((promiseResults) => {
             const response =
               promiseResults[0].status === "fulfilled"
                 ? promiseResults[0].value
@@ -160,16 +164,18 @@ export class AiSDK implements Wrapper {
               return;
             }
 
-            try {
-              this.inspectAiCall(agent, args, {
-                response,
-                usage,
-              });
-            } catch {
-              // If we don't catch these errors, it will result in an unhandled promise rejection!
-            }
-          }
-        );
+            this.inspectAiCall(agent, args, {
+              response,
+              usage,
+            });
+          })
+          .catch((error) => {
+            agent.onErrorThrownByInterceptor({
+              error: error,
+              method: `${methodName}.<promise>`,
+              module: "ai",
+            });
+          });
 
         return returnValue;
       },
@@ -187,34 +193,31 @@ export class AiSDK implements Wrapper {
         const streamTextFunc = exports.streamText;
         const streamObjectFunc = exports.streamObject;
 
-        const interceptors = this.getInterceptors();
-        const streamInterceptors = this.getStreamInterceptors();
-
         return {
           ...exports,
           generateText: wrapExport(
             generateTextFunc,
             undefined,
             pkgInfo,
-            interceptors
+            this.getInterceptors("generateText")
           ),
           generateObject: wrapExport(
             generateObjectFunc,
             undefined,
             pkgInfo,
-            interceptors
+            this.getInterceptors("generateObject")
           ),
           streamText: wrapExport(
             streamTextFunc,
             undefined,
             pkgInfo,
-            streamInterceptors
+            this.getStreamInterceptors("streamText")
           ),
           streamObject: wrapExport(
             streamObjectFunc,
             undefined,
             pkgInfo,
-            streamInterceptors
+            this.getStreamInterceptors("streamObject")
           ),
         };
       });
