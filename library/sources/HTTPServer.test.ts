@@ -1125,7 +1125,10 @@ t.test("it reports attack waves", async (t) => {
           type: "heartbeat",
           stats: {
             requests: {
-              attackWavesDetected: 1,
+              attackWaves: {
+                total: 1,
+                blocked: 0,
+              },
             },
           },
         },

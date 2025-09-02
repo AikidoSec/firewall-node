@@ -42,7 +42,10 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -66,7 +69,10 @@ t.test("it resets stats", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -101,7 +107,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -144,7 +153,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -187,7 +199,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -223,7 +238,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -266,7 +284,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -309,7 +330,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -371,7 +395,10 @@ t.test("it keeps track of amount of calls", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -430,7 +457,10 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -454,7 +484,10 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -479,7 +512,10 @@ t.test("it keeps track of requests", async () => {
         total: 1,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -504,7 +540,10 @@ t.test("it keeps track of requests", async () => {
         total: 2,
         blocked: 1,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -530,7 +569,10 @@ t.test("it keeps track of requests", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -563,7 +605,10 @@ t.test("it force compresses stats", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -615,7 +660,10 @@ t.test("it keeps track of aborted requests", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -651,7 +699,10 @@ t.test("it keeps track of matched IPs and user agents", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {
@@ -682,7 +733,10 @@ t.test("it keeps track of matched IPs and user agents", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {
@@ -761,7 +815,10 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -825,7 +882,10 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -872,7 +932,10 @@ t.test("it handles empty operation strings", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -907,7 +970,10 @@ t.test("it increments sqlTokenizationFailures", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -954,7 +1020,10 @@ t.test("it handles empty operation strings", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -989,7 +1058,10 @@ t.test("it increments rateLimited requests", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -1003,7 +1075,7 @@ t.test("it increments rateLimited requests", async () => {
   clock.uninstall();
 });
 
-t.test("it increments attackWavesDetected", async () => {
+t.test("it increments attack wave stats", async () => {
   const clock = FakeTimers.install();
 
   const stats = new InspectionStatistics({
@@ -1024,7 +1096,10 @@ t.test("it increments attackWavesDetected", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 1,
+      attackWaves: {
+        total: 1,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -1048,7 +1123,10 @@ t.test("it increments attackWavesDetected", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 2,
+      attackWaves: {
+        total: 2,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},
@@ -1072,7 +1150,10 @@ t.test("it increments attackWavesDetected", async () => {
         total: 0,
         blocked: 0,
       },
-      attackWavesDetected: 0,
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     },
     userAgents: {
       breakdown: {},

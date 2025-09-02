@@ -123,7 +123,10 @@ t.test("it counts requests", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
-    attackWavesDetected: 0,
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 
@@ -141,7 +144,10 @@ t.test("it counts attacks", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 1, blocked: 1 },
-    attackWavesDetected: 0,
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 
@@ -159,7 +165,10 @@ t.test("it counts request if error", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
-    attackWavesDetected: 0,
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 
