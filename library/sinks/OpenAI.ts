@@ -148,17 +148,21 @@ export class OpenAI implements Wrapper {
             modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
                 // Inspect the response after the promise resolves, it won't change the original promise
-                returnValue.then((response) => {
-                  try {
+                returnValue
+                  .then((response) => {
                     this.inspectResponse(
                       agent,
                       response,
                       this.getProvider(exports, subject)
                     );
-                  } catch {
-                    // If we don't catch these errors, it will result in an unhandled promise rejection!
-                  }
-                });
+                  })
+                  .catch((error) => {
+                    agent.onErrorThrownByInterceptor({
+                      error: error,
+                      method: "create.<promise>",
+                      module: "openai",
+                    });
+                  });
               }
 
               return returnValue;
@@ -173,17 +177,21 @@ export class OpenAI implements Wrapper {
             modifyReturnValue: (_, returnValue, agent, subject) => {
               if (returnValue instanceof Promise) {
                 // Inspect the response after the promise resolves, it won't change the original promise
-                returnValue.then((response) => {
-                  try {
+                returnValue
+                  .then((response) => {
                     this.inspectCompletionResponse(
                       agent,
                       response,
                       this.getProvider(exports, subject)
                     );
-                  } catch {
-                    // If we don't catch these errors, it will result in an unhandled promise rejection!
-                  }
-                });
+                  })
+                  .catch((error) => {
+                    agent.onErrorThrownByInterceptor({
+                      error: error,
+                      method: "create.<promise>",
+                      module: "openai",
+                    });
+                  });
               }
 
               return returnValue;

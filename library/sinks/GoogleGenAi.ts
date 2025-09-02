@@ -59,13 +59,17 @@ export class GoogleGenAi implements Wrapper {
   private inspectReturnValue(agent: Agent, returnValue: any) {
     if (returnValue instanceof Promise) {
       // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue.then((response) => {
-        try {
+      returnValue
+        .then((response) => {
           this.inspectResponse(agent, response);
-        } catch {
-          // If we don't catch these errors, it will result in an unhandled promise rejection!
-        }
-      });
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "generateContent.<promise>",
+            module: "@google/genai",
+          });
+        });
     }
   }
 

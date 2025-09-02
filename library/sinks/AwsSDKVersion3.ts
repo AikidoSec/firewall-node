@@ -129,8 +129,8 @@ export class AwsSDKVersion3 implements Wrapper {
                 const command = args[0];
                 if (returnValue instanceof Promise) {
                   // Inspect the response after the promise resolves, it won't change the original promise
-                  returnValue.then((response) => {
-                    try {
+                  returnValue
+                    .then((response) => {
                       if (
                         exports.InvokeModelCommand &&
                         command instanceof exports.InvokeModelCommand
@@ -142,10 +142,14 @@ export class AwsSDKVersion3 implements Wrapper {
                       ) {
                         this.processConverseResponse(response, command, agent);
                       }
-                    } catch {
-                      // If we don't catch these errors, it will result in an unhandled promise rejection!
-                    }
-                  });
+                    })
+                    .catch((error) => {
+                      agent.onErrorThrownByInterceptor({
+                        error: error,
+                        method: "send.<promise>",
+                        module: "@aws-sdk/client-bedrock-runtime",
+                      });
+                    });
                 }
               }
 
