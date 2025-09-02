@@ -18,7 +18,7 @@ t.test(
     });
 
     const result = await mistral.chat.complete({
-      model: "mistral-small-latest",
+      model: "mistral-medium",
       messages: [
         {
           content:
