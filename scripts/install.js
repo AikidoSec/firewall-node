@@ -2,7 +2,9 @@ const { fileExists, scanForSubDirsWithPackageJson } = require("./helpers/fs");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { promisify } = require("util");
-const { writeFile, mkdir } = require("fs/promises");
+const { writeFile, mkdir, readFile } = require("fs/promises");
+const { availableParallelism } = require("os");
+const asyncPool = require("./helpers/asyncPool");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
@@ -31,7 +33,7 @@ async function main() {
     installDirs.push(...subDirs);
   }
 
-  await Promise.all(installDirs.map(installDependencies));
+  await asyncPool(getParallelism(), installDirs, installDependencies);
 
   console.log("Successfully installed all dependencies");
   process.exit(0);
@@ -43,7 +45,9 @@ async function main() {
 async function installDependencies(folder) {
   console.log(`Installing dependencies for ${folder}`);
 
-  const cmd = process.env.CI ? "npm ci" : "npm install";
+  // Don't run potentially unsafe scripts during installation
+  const flags = "--ignore-scripts";
+  const cmd = process.env.CI ? `npm ci ${flags}` : `npm install ${flags}`;
 
   try {
     await execAsync(cmd, {
@@ -53,11 +57,87 @@ async function installDependencies(folder) {
         AIKIDO_SKIP_INSTALL: "true",
       },
     });
+    await rebuildNativePackages(folder);
     console.log(`Installed dependencies for ${folder}`);
   } catch (error) {
     console.error(`Failed to install dependencies for ${folder}`);
     console.error(error);
     process.exit(1);
+  }
+}
+
+/**
+ * We need to manually rebuild native packages (the ones we trust)
+ * Because we installed dependencies with --ignore-scripts flag
+ */
+async function rebuildNativePackages(folder) {
+  const packageJsonPath = join(projectRoot, folder, "package.json");
+
+  if (!(await fileExists(packageJsonPath))) {
+    return;
+  }
+
+  const buffer = await readFile(packageJsonPath, "utf-8");
+  const pkg = JSON.parse(buffer);
+  const allDeps = new Set([
+    ...Object.keys(pkg.dependencies ?? {}),
+    ...Object.keys(pkg.devDependencies ?? {}),
+  ]);
+  const nativePackages = ["sqlite3", "better-sqlite3"];
+  const packagesToRebuild = nativePackages.filter((pkgName) =>
+    allDeps.has(pkgName)
+  );
+
+  if (packagesToRebuild.length > 0) {
+    console.log(
+      `Rebuilding native packages for ${folder}: ${packagesToRebuild.join(", ")}`
+    );
+
+    for (const pkgName of packagesToRebuild) {
+      const packagePath = join(projectRoot, folder, "node_modules", pkgName);
+
+      if (pkgName === "sqlite3") {
+        try {
+          await execAsync("../.bin/prebuild-install -r napi", {
+            cwd: packagePath,
+          });
+        } catch (error) {
+          console.error(
+            `❌ prebuild-install failed for ${pkgName} in ${folder}: ${error.message}`
+          );
+          try {
+            await execAsync("node-gyp rebuild", {
+              cwd: packagePath,
+            });
+          } catch (error) {
+            console.error(
+              `❌ node-gyp rebuild failed for ${pkgName} in ${folder}: ${error.message}`
+            );
+          }
+        }
+      }
+
+      if (pkgName === "better-sqlite3") {
+        try {
+          await execAsync("../.bin/prebuild-install", {
+            cwd: packagePath,
+          });
+        } catch (error) {
+          console.error(
+            `❌ prebuild-install failed for ${pkgName} in ${folder}: ${error.message}`
+          );
+          try {
+            await execAsync("node-gyp rebuild --release", {
+              cwd: packagePath,
+            });
+          } catch (error) {
+            console.error(
+              `❌ node-gyp rebuild failed for ${pkgName} in ${folder}: ${error.message}`
+            );
+          }
+        }
+      }
+    }
   }
 }
 
@@ -102,3 +182,11 @@ async function prepareBuildDir() {
     console.error(error);
   }
 })();
+
+function getParallelism() {
+  // Function not available in Node.js v16
+  if (typeof availableParallelism !== "function") {
+    return 4;
+  }
+  return availableParallelism();
+}

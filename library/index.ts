@@ -13,6 +13,7 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { isLibBundled } from "./helpers/isLibBundled";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -22,6 +23,12 @@ if (supported && shouldEnable && notAlreadyImported) {
   if (isESM()) {
     console.warn(
       "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
+    );
+  }
+
+  if (isLibBundled()) {
+    console.warn(
+      "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
     );
   }
 

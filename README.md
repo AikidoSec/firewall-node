@@ -26,6 +26,7 @@ Zen will autonomously protect your Node.js applications against:
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 * 🛡️ JS injection
+* 🛡️ Attack wave detection (vulnerability scanners)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -97,7 +98,7 @@ See list above for supported database drivers.
 
 ### Routers
 
-* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
+* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 14.x, 13.x, 12.x, 11.x and 10.x
 
 ### AI SDKs
 
@@ -108,6 +109,7 @@ Zen instruments the following AI SDKs to track which models are used and how man
 * ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 * ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
 * ✅ [`ai`](https://www.npmjs.com/package/ai) 5.x, 4.x
+* ✅ [`@google/genai`](https://www.npmjs.com/package/@google/genai) ^1.6.0
 
 _Note: Prompt injection attacks are currently not covered by Zen._
 
