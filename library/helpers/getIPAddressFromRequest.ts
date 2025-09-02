@@ -41,29 +41,27 @@ function getClientIpFromHeader(value: string) {
       return ip;
     }
 
-    // According to https://www.rfc-editor.org/rfc/rfc7239 (5.2) X-Forwarded-For
-    // is allowed to include a port number, so we check this here :
-    if (ip.includes(":")) {
-      // Split the IP to remove the port
-      // IPv4: Split using :
-      // IPv6: Split using ]: because the IP address itself contains colons
-      const splitWith = ip.startsWith("[") ? "]:" : ":";
-      const parts = ip.split(splitWith);
+    // Normalize IPv6 without port by removing brackets
+    if (ip.startsWith("[") && ip.endsWith("]")) {
+      return ip.slice(1, -1);
+    }
 
-      // If the part count is not 2, something went wrong
-      // e.g. a invalid IPv6 without port
-      if (parts.length === 2) {
-        // Remove opening bracket for IPv6 with port, the closing bracket will be removed by the split
-        if (parts[0].startsWith("[")) {
-          return parts[0].slice(1);
-        }
-        return parts[0];
+    // According to https://www.rfc-editor.org/rfc/rfc7239 (5.2) X-Forwarded-For
+    // is allowed to include a port number, so we check this here, first for IPv6
+    if (ip.startsWith("[")) {
+      // IPv6 with port: [ip]:port
+      const closingBracket = ip.indexOf("]:");
+      if (closingBracket > 0) {
+        return ip.slice(1, closingBracket);
       }
     }
 
-    // Normalize IPv6 by removing brackets
-    if (ip.startsWith("[") && ip.endsWith("]")) {
-      return ip.slice(1, -1);
+    // Handle IPv4 with port: ip:port
+    if (ip.includes(":")) {
+      const parts = ip.split(":");
+      if (parts.length === 2) {
+        return parts[0];
+      }
     }
 
     return ip;
