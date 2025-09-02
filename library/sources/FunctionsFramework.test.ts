@@ -157,6 +157,7 @@ t.test("it counts request if error", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWavesDetected: 0,
   });
 });
 

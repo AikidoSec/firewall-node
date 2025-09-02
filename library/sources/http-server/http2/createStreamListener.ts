@@ -75,6 +75,11 @@ function discoverRouteFromStream(
         agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
+
+      if (agent.getAttackWaveDetector().check(context)) {
+        agent.onDetectedAttackWave({ request: context, metadata: {} });
+        agent.getInspectionStatistics().onAttackWaveDetected();
+      }
     }
   }
 }

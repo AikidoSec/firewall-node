@@ -1103,6 +1103,34 @@ t.test("it reports attack waves", async (t) => {
         },
       ]);
 
+      await agent.flushStats(1000);
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            ipAddress:
+              getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
+            source: "http.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+        {
+          type: "heartbeat",
+          stats: {
+            requests: {
+              attackWavesDetected: 1,
+            },
+          },
+        },
+      ]);
+
       server.close();
       resolve();
     });

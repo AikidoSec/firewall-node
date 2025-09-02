@@ -661,3 +661,71 @@ t.test("it works then using the on stream end event", async () => {
     });
   });
 });
+
+t.test("it reports attack waves", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 404 });
+    stream.end("Not found");
+  });
+
+  api.clear();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3434, async () => {
+      for (let i = 0; i < 16; i++) {
+        const result = await http2Request(
+          new URL("http://localhost:3434/.env"),
+          "GET",
+          {}
+        );
+        t.same(result.headers[":status"], 404);
+      }
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            source: "http2.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+      ]);
+
+      await agent.flushStats(1000);
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            source: "http2.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+        {
+          type: "heartbeat",
+          stats: {
+            requests: {
+              attackWavesDetected: 1,
+            },
+          },
+        },
+      ]);
+
+      server.close();
+      resolve();
+    });
+  });
+});
