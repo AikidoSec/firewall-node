@@ -41,11 +41,24 @@ function getClientIpFromHeader(value: string) {
       return ip;
     }
 
+    // Normalize IPv6 without port by removing brackets
+    if (ip.startsWith("[") && ip.endsWith("]")) {
+      return ip.slice(1, -1);
+    }
+
     // According to https://www.rfc-editor.org/rfc/rfc7239 (5.2) X-Forwarded-For
-    // is allowed to include a port number, so we check this here :
+    // is allowed to include a port number, so we check this here, first for IPv6
+    if (ip.startsWith("[")) {
+      // IPv6 with port: [ip]:port
+      const closingBracket = ip.indexOf("]:");
+      if (closingBracket > 0) {
+        return ip.slice(1, closingBracket);
+      }
+    }
+
+    // Handle IPv4 with port: ip:port
     if (ip.includes(":")) {
       const parts = ip.split(":");
-
       if (parts.length === 2) {
         return parts[0];
       }
