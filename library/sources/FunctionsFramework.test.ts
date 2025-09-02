@@ -2,7 +2,7 @@ import * as t from "tap";
 import * as express from "express";
 import * as request from "supertest";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, updateContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
@@ -123,6 +123,7 @@ t.test("it counts requests", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWavesDetected: 0,
   });
 });
 
@@ -140,6 +141,7 @@ t.test("it counts attacks", async (t) => {
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 1, blocked: 1 },
+    attackWavesDetected: 0,
   });
 });
 
