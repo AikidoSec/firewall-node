@@ -174,7 +174,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return await asyncHandler(event, context);
     }
 
-    let result: any;
+    let result: unknown;
     try {
       result = await runWithContext(agentContext, async () => {
         return await asyncHandler(event, context);
