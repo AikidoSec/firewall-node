@@ -1,0 +1,11 @@
+{
+  "name": "hybrid-lambda-express",
+  "version": "1.0.0",
+  "description": "Hybrid Express app that works both as AWS Lambda and on-premises server",
+  "main": "server.js",
+  "dependencies": {
+    "@aikidosec/firewall": "latest",
+    "express": "^4.19.2",
+    "serverless-http": "^3.2.0"
+  }
+}

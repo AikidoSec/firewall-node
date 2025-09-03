@@ -4,6 +4,7 @@ import { runWithContext, Context as AgentContext } from "../agent/Context";
 import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
+import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 
 type CallbackHandler<TEvent, TResult> = (
   event: TEvent,
@@ -96,6 +97,18 @@ function isGatewayEvent(event: unknown): event is APIGatewayProxyEvent {
   return isPlainObject(event) && "httpMethod" in event && "headers" in event;
 }
 
+type GatewayResponse = {
+  statusCode: number;
+};
+
+function isGatewayResponse(event: unknown): event is GatewayResponse {
+  return (
+    isPlainObject(event) &&
+    "statusCode" in event &&
+    typeof event.statusCode === "number"
+  );
+}
+
 export type SQSEvent = {
   Records: Array<{
     body: string;
@@ -161,12 +174,32 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return await asyncHandler(event, context);
     }
 
+    let result: any;
     try {
-      return await runWithContext(agentContext, async () => {
+      result = await runWithContext(agentContext, async () => {
         return await asyncHandler(event, context);
       });
+
+      return result;
     } finally {
       if (agent) {
+        if (
+          isGatewayEvent(event) &&
+          isGatewayResponse(result) &&
+          agentContext.route &&
+          agentContext.method
+        ) {
+          const shouldDiscover = shouldDiscoverRoute({
+            statusCode: result.statusCode,
+            method: agentContext.method,
+            route: agentContext.route,
+          });
+
+          if (shouldDiscover) {
+            agent.onRouteExecute(agentContext);
+          }
+        }
+
         const stats = agent.getInspectionStatistics();
         stats.onRequest();
 
