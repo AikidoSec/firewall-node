@@ -21,6 +21,11 @@ export function shouldBlockRequest(): Result {
     return { block: false };
   }
 
+  if (agent.isServerless()) {
+    logWarningServerlessNotSupported();
+    return { block: false };
+  }
+
   if (context.executedMiddleware) {
     logWarningAlreadyExecutedMiddleware();
   }
@@ -76,4 +81,19 @@ function logWarningAlreadyExecutedMiddleware() {
   );
 
   loggedWarningAlreadyExecutedMiddleware = true;
+}
+
+let loggedWarningServerlessMiddleware = false;
+
+function logWarningServerlessNotSupported() {
+  if (loggedWarningServerlessMiddleware) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Zen.shouldBlockRequest() was called within a serverless function. Rate limiting and user blocking are only supported for traditional/long running apps due to the constraints of serverless environments."
+  );
+
+  loggedWarningServerlessMiddleware = true;
 }
