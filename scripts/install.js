@@ -103,7 +103,7 @@ async function rebuildNativePackages(folder) {
           });
         } catch (error) {
           console.error(
-            `❌ prebuild-install failed for ${pkgName} in ${folder}: ${error.message}`
+            `prebuild-install failed for ${pkgName} in ${folder}: ${error.message}, falling back to node-gyp rebuild`
           );
           try {
             await execAsync("node-gyp rebuild", {
@@ -124,7 +124,7 @@ async function rebuildNativePackages(folder) {
           });
         } catch (error) {
           console.error(
-            `❌ prebuild-install failed for ${pkgName} in ${folder}: ${error.message}`
+            `prebuild-install failed for ${pkgName} in ${folder}: ${error.message}, falling back to node-gyp rebuild`
           );
           try {
             await execAsync("node-gyp rebuild --release", {

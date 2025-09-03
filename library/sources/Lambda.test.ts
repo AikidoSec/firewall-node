@@ -310,6 +310,10 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
             total: 0,
             blocked: 0,
           },
+          attackWaves: {
+            total: 0,
+            blocked: 0,
+          },
         },
         userAgents: {
           breakdown: {},
