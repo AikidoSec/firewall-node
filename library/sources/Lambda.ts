@@ -158,6 +158,8 @@ export function createLambdaWrapper(handler: Handler): Handler {
       // We don't know what the type of the event is
       // We can't provide any context for the underlying sinks
       // So we just run the handler without any context
+      logWarningUnsupportedTrigger();
+
       return await asyncHandler(event, context);
     }
 
@@ -180,4 +182,19 @@ export function createLambdaWrapper(handler: Handler): Handler {
       }
     }
   };
+}
+
+let loggedWarningUnsupportedTrigger = false;
+
+function logWarningUnsupportedTrigger() {
+  if (loggedWarningUnsupportedTrigger) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Zen detected a lambda function call with an unsupported trigger. Only API Gateway and SQS triggers are currently supported."
+  );
+
+  loggedWarningUnsupportedTrigger = true;
 }

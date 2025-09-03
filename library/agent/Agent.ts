@@ -86,6 +86,11 @@ export class Agent {
     return this.block;
   }
 
+  isServerless() {
+    // e.g. "lambda" or "gcp"
+    return typeof this.serverless === "string" && this.serverless.length > 0;
+  }
+
   getHostnames() {
     return this.hostnames;
   }
