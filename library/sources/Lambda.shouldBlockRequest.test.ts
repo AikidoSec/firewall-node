@@ -1,5 +1,4 @@
-// Separate test file for shouldBlockRequest warning in lambda context
-// Because the boolean flags for warnings can't be reset
+// Separate test file because the boolean flags for warnings can't be reset
 import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
