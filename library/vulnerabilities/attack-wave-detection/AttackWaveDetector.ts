@@ -40,30 +40,37 @@ export class AttackWaveDetector {
 
   /**
    * Checks if the request is part of an attack wave
-   * Will report to core once in a defined time frame when the threshold is exceeded
-   * @returns true if an attack wave is detected and should be reported
+   * If yes, it will increase the count of suspicious requests
    */
-  check(context: Context): boolean {
+  check(context: Context): void {
     if (!context.remoteAddress) {
-      return false;
+      return;
     }
 
-    const ip = context.remoteAddress;
+    if (this.sentEventsMap.get(context.remoteAddress)) {
+      // The last event was sent recently
+      return;
+    }
 
+    if (!isWebScanner(context)) {
+      return;
+    }
+
+    this.increaseSuspiciousCount(context.remoteAddress);
+  }
+
+  /**
+   * Checks if a new detected attack wave should be reported
+   * @returns True if a event should be sent to core, false otherwise
+   */
+  shouldReport(ip: string): boolean {
     const sentEventTime = this.sentEventsMap.get(ip);
-
     if (sentEventTime) {
       // The last event was sent recently
       return false;
     }
 
-    if (!isWebScanner(context)) {
-      return false;
-    }
-
-    const suspiciousRequests = (this.suspiciousRequestsMap.get(ip) || 0) + 1;
-    this.suspiciousRequestsMap.set(ip, suspiciousRequests);
-
+    const suspiciousRequests = this.getSuspiciousCount(ip);
     if (suspiciousRequests < this.attackWaveThreshold) {
       return false;
     }
@@ -71,5 +78,14 @@ export class AttackWaveDetector {
     this.sentEventsMap.set(ip, performance.now());
 
     return true;
+  }
+
+  increaseSuspiciousCount(ip: string) {
+    const suspiciousRequests = (this.suspiciousRequestsMap.get(ip) || 0) + 1;
+    this.suspiciousRequestsMap.set(ip, suspiciousRequests);
+  }
+
+  getSuspiciousCount(ip: string) {
+    return this.suspiciousRequestsMap.get(ip) || 0;
   }
 }

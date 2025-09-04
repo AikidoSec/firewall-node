@@ -240,6 +240,10 @@ export class Agent {
       blocked,
     });
 
+    if (request.remoteAddress) {
+      this.attackWaveDetector.increaseSuspiciousCount(request.remoteAddress);
+    }
+
     this.attackLogger.log(attack);
 
     if (this.token) {
