@@ -1278,3 +1278,49 @@ t.test("attack wave detected event", async (t) => {
     },
   ]);
 });
+
+t.test(
+  "attack reported by sink increases attack wave suspicious count",
+  async (t) => {
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+    });
+
+    t.same(agent.getAttackWaveDetector().getSuspiciousCount("::1"), 0);
+
+    agent.onDetectedAttack({
+      module: "mongodb",
+      kind: "nosql_injection",
+      blocked: true,
+      source: "body",
+      request: {
+        method: "POST",
+        cookies: {},
+        query: {},
+        headers: {
+          "user-agent": "agent",
+        },
+        body: "payload",
+        url: "http://localhost:4000",
+        remoteAddress: "::1",
+        source: "express",
+        route: "/posts/:id",
+        routeParams: {},
+      },
+      operation: "operation",
+      payload: { $gt: "" },
+      stack: "stack",
+      paths: [".nested"],
+      metadata: {
+        db: "app",
+      },
+    });
+
+    t.same(agent.getAttackWaveDetector().getSuspiciousCount("::1"), 1);
+    t.same(agent.getAttackWaveDetector().getSuspiciousCount("::2"), 0);
+  }
+);
