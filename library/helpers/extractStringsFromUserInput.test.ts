@@ -189,3 +189,43 @@ t.test("it decodes uri encoded strings", async () => {
     ])
   );
 });
+
+function buildNestedDictIterative(depth: number): Record<string, unknown> {
+  let result: Record<string, unknown> = { a: "b" };
+  for (let i = 1; i <= depth; i++) {
+    const newLevel: Record<string, unknown> = {};
+    newLevel[`key${i}`] = result;
+    result = newLevel;
+  }
+
+  return result;
+}
+
+t.test("it handles deeply nested objects without stack overflow", async () => {
+  const body = buildNestedDictIterative(10_000);
+  body.name = "Test'), ('Test2');--";
+
+  const result = extractStringsFromUserInput(body);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it handles deeply nested JWT without stack overflow", async () => {
+  // Create deeply nested data for JWT payload - JSON.stringify would fail on this depth
+  let nestedJson = '{"a":"b"}';
+  for (let i = 1; i <= 10_000; i++) {
+    nestedJson = `{"key${i}":${nestedJson}}`;
+  }
+
+  const payload = Buffer.from(nestedJson).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    a: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  const result = extractStringsFromUserInput(input);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+});
