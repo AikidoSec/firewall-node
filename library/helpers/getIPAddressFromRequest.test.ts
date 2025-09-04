@@ -371,3 +371,64 @@ t.test("get ip from different header", async (t) => {
     "5.6.7.8"
   );
 });
+
+t.test("trust specific proxy networks with CIDR ranges", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "10.0.0.0/8,172.16.0.0/12";
+
+  // Client -> untrusted proxy -> trusted proxy -> server
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "203.0.113.1, 10.1.2.3",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "203.0.113.1"
+  );
+
+  // Client -> trusted proxy -> trusted proxy -> server
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "203.0.113.1, 10.1.2.3, 172.16.1.1",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "203.0.113.1"
+  );
+
+  // All IPs are trusted proxies
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "10.1.2.3, 172.16.1.1",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    null
+  );
+});
+
+t.test("trust specific proxy with single IP", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "10.1.2.3";
+
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "203.0.113.1, 10.1.2.3",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "203.0.113.1"
+  );
+
+  t.same(
+    getIPAddressFromRequest({
+      headers: {
+        "x-forwarded-for": "203.0.113.1, 10.1.2.4",
+      },
+      remoteAddress: "1.2.3.4",
+    }),
+    "1.2.3.4"
+  );
+});
