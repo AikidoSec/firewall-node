@@ -114,13 +114,23 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
 
       await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
       await fetch("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -130,7 +140,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -140,7 +155,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -150,7 +170,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -160,7 +185,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 80, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 80,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -170,13 +200,23 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
       await request(new URL("https://ssrf-redirects.testssandbox.com"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -184,7 +224,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         require("url").parse("https://ssrf-redirects.testssandbox.com")
       );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -192,7 +237,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -200,7 +250,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         require("url").parse("https://ssrf-redirects.testssandbox.com")
       );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -208,7 +263,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: "443",
+          hits: 1,
+          blockedHits: 0,
+        },
       ]);
       agent.getHostnames().clear();
 
@@ -397,6 +457,61 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       setGlobalDispatcher(new UndiciAgent({}));
       t.same(logger.getMessages(), [
         "undici.setGlobalDispatcher(..) was called, we can't guarantee protection!",
+      ]);
+
+      agent.getHostnames().clear();
+      agent.getConfig().updateDomains([
+        { hostname: "aikido.dev", mode: "block" },
+        { hostname: "ssrf-redirects.testssandbox.com", mode: "allow" },
+      ]);
+
+      const blockedError1 = await t.rejects(() =>
+        request("https://aikido.dev/block")
+      );
+      t.ok(blockedError1 instanceof Error);
+      if (blockedError1 instanceof Error) {
+        t.same(
+          blockedError1.message,
+          "Zen has blocked an outbound connection: undici.request(...) to aikido.dev"
+        );
+      }
+
+      await request("https://ssrf-redirects.testssandbox.com");
+
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "aikido.dev", port: 443, hits: 1, blockedHits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+          blockedHits: 0,
+        },
+      ]);
+
+      agent.getConfig().setBlockNewOutgoingRequests(true);
+
+      const blockedError2 = await t.rejects(() =>
+        request("https://example.com")
+      );
+      t.ok(blockedError2 instanceof Error);
+      if (blockedError2 instanceof Error) {
+        t.same(
+          blockedError2.message,
+          "Zen has blocked an outbound connection: undici.request(...) to example.com"
+        );
+      }
+
+      await request("https://ssrf-redirects.testssandbox.com");
+
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "aikido.dev", port: 443, hits: 1, blockedHits: 1 },
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 2,
+          blockedHits: 0,
+        },
+        { hostname: "example.com", port: 443, hits: 1, blockedHits: 1 },
       ]);
     }
   );
