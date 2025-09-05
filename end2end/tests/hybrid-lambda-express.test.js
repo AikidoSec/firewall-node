@@ -82,8 +82,14 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
     }
   );
 
+  console.log("Response status:", response.status);
+  console.log("Response text:", await response.text());
+
   t.equal(response.status, 200);
   const result = await response.json();
+
+  console.log("Lambda response:", JSON.stringify(result, null, 2));
+
   t.equal(result.statusCode, 200);
   const body = JSON.parse(result.body);
   t.same(body, { message: "Hello World!" });
