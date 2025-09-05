@@ -49,7 +49,9 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
   });
 
   // Start the Lambda container in background
+  // Use --add-host to make host.docker.internal work on Linux (GitHub Actions)
   await execAsync(`docker run -d --name hybrid-lambda-test-container -p 9000:8080 \
+    --add-host host.docker.internal:host-gateway \
     -e AIKIDO_TOKEN=${token} \
     -e AIKIDO_ENDPOINT=http://host.docker.internal:5874 \
     -e AIKIDO_REALTIME_ENDPOINT=http://host.docker.internal:5874 \
@@ -82,14 +84,8 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
     }
   );
 
-  console.log("Response status:", response.status);
-  console.log("Response text:", await response.text());
-
   t.equal(response.status, 200);
   const result = await response.json();
-
-  console.log("Lambda response:", JSON.stringify(result, null, 2));
-
   t.equal(result.statusCode, 200);
   const body = JSON.parse(result.body);
   t.same(body, { message: "Hello World!" });
