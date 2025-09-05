@@ -32,6 +32,7 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 
 type WrappedPackage = { version: string | null; supported: boolean };
@@ -75,10 +76,15 @@ export class Agent {
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined
+    private readonly serverless: string | undefined,
+    private readonly newInstrumentation: boolean = false
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
+    }
+
+    if (isNewInstrumentationUnitTest()) {
+      this.newInstrumentation = true;
     }
   }
 
@@ -505,7 +511,7 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.serverless);
+    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
@@ -605,6 +611,10 @@ export class Agent {
 
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
+  }
+
+  isUsingNewInstrumentation() {
+    return this.newInstrumentation;
   }
 
   private getHeartbeatInterval(): number {
