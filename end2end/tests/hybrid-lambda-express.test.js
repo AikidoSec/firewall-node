@@ -1,5 +1,6 @@
 const t = require("tap");
-const { execSync } = require("child_process");
+const { exec } = require("child_process");
+const execAsync = require("util").promisify(exec);
 const { resolve } = require("path");
 const timeout = require("../timeout");
 
@@ -23,19 +24,19 @@ t.setTimeout(120000);
 t.test("lambda mode sends routes in heartbeat", async (t) => {
   // Remove existing container if running
   try {
-    execSync("docker stop hybrid-lambda-test-container");
-    execSync("docker rm hybrid-lambda-test-container");
+    await execAsync("docker stop hybrid-lambda-test-container");
+    await execAsync("docker rm hybrid-lambda-test-container");
   } catch (e) {
     // Container not running, ignore
   }
 
   // Pack the firewall library and copy to sample app directory
   const buildPath = resolve(__dirname, "../../build");
-  execSync("npm pack", {
+  await execAsync("npm pack", {
     cwd: buildPath,
   });
 
-  execSync(
+  await execAsync(
     "cp aikidosec-firewall-*.tgz ../sample-apps/hybrid-lambda-express/",
     {
       cwd: buildPath,
@@ -43,19 +44,19 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
   );
 
   // Build the Docker image
-  execSync("docker build -t hybrid-lambda-test .", {
+  await execAsync("docker build -t hybrid-lambda-test .", {
     cwd: pathToSampleApp,
   });
 
   // Start the Lambda container in background
-  execSync(`docker run -d --name hybrid-lambda-test-container -p 9000:8080 \
+  await execAsync(`docker run -d --name hybrid-lambda-test-container -p 9000:8080 \
     -e AIKIDO_TOKEN=${token} \
     -e AIKIDO_ENDPOINT=http://host.docker.internal:5874 \
     -e AIKIDO_REALTIME_ENDPOINT=http://host.docker.internal:5874 \
     hybrid-lambda-test`);
 
   // Wait for the Lambda container to start
-  await timeout(5000);
+  await timeout(15000);
 
   // Create a Gateway API event
   const event = {
@@ -97,7 +98,6 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
 
   const events = await eventsResponse.json();
   const heartbeats = events.filter((event) => event.type === "heartbeat");
-  console.log(heartbeats);
   t.ok(heartbeats.length > 0, "At least one heartbeat should be sent");
 
   const heartbeatWithRoutes = heartbeats.find(
@@ -113,8 +113,8 @@ t.test("lambda mode sends routes in heartbeat", async (t) => {
 
   // Cleanup
   try {
-    execSync("docker stop hybrid-lambda-test-container");
-    execSync("docker rm hybrid-lambda-test-container");
+    await execAsync("docker stop hybrid-lambda-test-container");
+    await execAsync("docker rm hybrid-lambda-test-container");
   } catch (e) {
     // Already stopped/removed
   }
