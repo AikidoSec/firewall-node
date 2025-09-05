@@ -107,8 +107,8 @@ function isSQSEvent(event: unknown): event is SQSEvent {
 }
 
 function getFlushEveryMS(): number {
-  if (process.env.AIKIDO_LAMBDA_FLUSH_TIMEOUT_MS) {
-    const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_TIMEOUT_MS, 10);
+  if (process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS) {
+    const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS, 10);
     // Minimum is 1 minute
     if (!isNaN(parsed) && parsed >= 60 * 1000) {
       return parsed;
