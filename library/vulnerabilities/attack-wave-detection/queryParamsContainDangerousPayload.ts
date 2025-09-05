@@ -30,6 +30,9 @@ export function queryParamsContainDangerousPayload(context: Context): boolean {
   }
   for (const str of queryStrings) {
     // Performance optimization
+    // Some keywords like ../ are shorter than this min length check
+    // However, they are part of a larger string in the most cases
+    // e.g. ../etc/passwd or MD5(something)
     if (str.length < 5 || str.length > 1_000) {
       continue;
     }
