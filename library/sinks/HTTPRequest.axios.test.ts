@@ -46,7 +46,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
       {
         ...context,
         // Redirects to http://127.0.0.1/test
-        ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
+        body: { image: `${redirectTestUrl}/ssrf-test` },
       },
       async () => {
         await axios.request(`${redirectTestUrl}/ssrf-test`);
@@ -67,7 +67,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
       {
         ...context,
         // Redirects to http://[::1]/test
-        ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
+        body: { image: `${redirectTestUrl}/ssrf-test-ipv6` },
       },
       async () => {
         await axios.request(`${redirectTestUrl}/ssrf-test-ipv6`);

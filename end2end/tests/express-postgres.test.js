@@ -15,6 +15,14 @@ t.before(() => {
   if (stderr && stderr.toString().length > 0) {
     throw new Error(`Failed to build: ${stderr.toString()}`);
   }
+
+  const { stderr2 } = spawnSync("node", ["esbuild-wrong.js"], {
+    cwd: directory,
+  });
+
+  if (stderr2 && stderr2.toString().length > 0) {
+    throw new Error(`Failed to build: ${stderr2.toString()}`);
+  }
 });
 
 entrypoints.forEach((entrypoint) => {
@@ -77,6 +85,10 @@ entrypoints.forEach((entrypoint) => {
           t.equal(normalSearch.status, 200);
           t.match(stdout, /Starting agent/);
           t.match(stderr, /Zen has blocked an SQL injection/);
+          t.notMatch(
+            stderr,
+            /Your application seems to be using a bundler without externalizing Zen/
+          );
         }
       )
       .catch((error) => {
@@ -228,4 +240,35 @@ t.test("it blocks in blocking mode (with dd-trace)", (t) => {
     .finally(() => {
       server.kill();
     });
+});
+
+t.test("it prints warning before crashing if bundled", (t) => {
+  const server = spawn(`node`, ["compiled-bundled.js", "4003"], {
+    env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
+    cwd: directory,
+  });
+
+  server.on("close", () => {
+    t.match(
+      stderr,
+      /Your application seems to be using a bundler without externalizing Zen/
+    );
+    t.match(stderr, /ENOENT: no such file or directory/); // Can't load wasm
+
+    t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err.message);
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
 });

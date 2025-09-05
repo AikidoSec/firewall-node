@@ -9,9 +9,14 @@ import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo, DetectedAttack } from "./api/Event";
+import type {
+  AgentInfo,
+  DetectedAttack,
+  DetectedAttackWave,
+} from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { Endpoint } from "./Config";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -27,15 +32,16 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 30 * 1000;
   private lastHeartbeat = performance.now();
-  private reportedInitialStats = false;
+  private sentHeartbeatCounter = 0;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
@@ -62,6 +68,7 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private attackWaveDetector = new AttackWaveDetector();
 
   constructor(
     private block: boolean,
@@ -77,6 +84,11 @@ export class Agent {
 
   shouldBlock() {
     return this.block;
+  }
+
+  isServerless() {
+    // e.g. "lambda" or "gcp"
+    return typeof this.serverless === "string" && this.serverless.length > 0;
   }
 
   getHostnames() {
@@ -241,9 +253,13 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.log("Failed to do heartbeat");
-    });
+    this.sendHeartbeat(timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to do heartbeat");
+      })
+      .then(() => {
+        this.sentHeartbeatCounter++;
+      });
   }
 
   getUsers() {
@@ -370,20 +386,11 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = performance.now();
-      const diff = now - this.lastHeartbeat;
-      const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
-      const hasStats =
-        !this.statistics.isEmpty() || !this.aiStatistics.isEmpty();
-      const canSendInitialStats =
-        !this.serviceConfig.hasReceivedAnyStats() && hasStats;
-      const shouldReportInitialStats =
-        !this.reportedInitialStats && canSendInitialStats;
+      const timeSinceLastHeartbeat = performance.now() - this.lastHeartbeat;
 
-      if (shouldSendHeartbeat || shouldReportInitialStats) {
+      if (timeSinceLastHeartbeat > this.getHeartbeatInterval()) {
         this.heartbeat();
-        this.lastHeartbeat = now;
-        this.reportedInitialStats = true;
+        this.lastHeartbeat = performance.now();
       }
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
@@ -581,6 +588,12 @@ export class Agent {
     });
   }
 
+  onRouteRateLimited(match: Endpoint) {
+    // The count will be incremented for the rate-limited route, not for the exact route
+    // So if it's a wildcard route, the count will be incremented for the wildcard route
+    this.routes.countRouteRateLimited(match);
+  }
+
   getRoutes() {
     return this.routes;
   }
@@ -600,5 +613,58 @@ export class Agent {
 
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
+  }
+
+  private getHeartbeatInterval(): number {
+    switch (this.sentHeartbeatCounter) {
+      case 0:
+        // The first heartbeat should be sent after 30 seconds
+        return 1000 * 30;
+      case 1:
+        // The second heartbeat should be sent after 2 minutes
+        return 1000 * 60 * 2;
+      default:
+        // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
+        return this.sendHeartbeatEveryMS;
+    }
+  }
+
+  getAttackWaveDetector(): AttackWaveDetector {
+    return this.attackWaveDetector;
+  }
+
+  /**
+   * This function gets called when an attack wave is detected, it reports this attack wave to the API
+   */
+  onDetectedAttackWave({
+    request,
+    metadata,
+  }: {
+    request: Context;
+    metadata: Record<string, string>;
+  }) {
+    const attack: DetectedAttackWave = {
+      type: "detected_attack_wave",
+      time: Date.now(),
+      attack: {
+        metadata: limitLengthMetadata(metadata, 4096),
+        user: request.user,
+      },
+      request: {
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        source: request.source,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    if (this.token) {
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+        this.logger.log("Failed to report attack wave");
+      });
+    }
   }
 }

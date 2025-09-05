@@ -25,6 +25,7 @@ Zen will autonomously protect your Node.js applications against:
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 * 🛡️ JS injection
 
 Zen operates autonomously on the same server as your Node.js app to:
@@ -47,6 +48,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 * ✅ [Koa](docs/koa.md) 3.x and 2.x
 * ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
+* ✅ [Restify](docs/restify.md) 11.x, 10.x, 9.x and 8.x
 
 ### Database drivers
 
@@ -58,7 +60,7 @@ Zen for Node.js 16+ is compatible with:
 * ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x
 * ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
 * ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
-* ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 11.x, 10.x, 9.x and 8.x
+* ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
 * ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 * ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 * ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
@@ -96,14 +98,18 @@ See list above for supported database drivers.
 
 ### Routers
 
-* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 13.x, 12.x, 11.x and 10.x
+* ✅ [`@koa/router`](https://www.npmjs.com/package/@koa/router) 14.x, 13.x, 12.x, 11.x and 10.x
 
 ### AI SDKs
 
 Zen instruments the following AI SDKs to track which models are used and how many tokens are consumed, allowing you to monitor your AI usage and costs:
 
-* ✅ [`openai`](https://www.npmjs.com/package/openai) 4.x
+* ✅ [`openai`](https://www.npmjs.com/package/openai) 5.x, 4.x
+* ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x
+* ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 * ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
+* ✅ [`ai`](https://www.npmjs.com/package/ai) 5.x, 4.x
+* ✅ [`@google/genai`](https://www.npmjs.com/package/@google/genai) ^1.6.0
 
 _Note: Prompt injection attacks are currently not covered by Zen._
 
@@ -129,6 +135,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [NestJS](docs/nestjs.md)
 - [micro](docs/micro.md)
 - [Next.js](docs/next.md)
+- [Restify](docs/restify.md)
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)

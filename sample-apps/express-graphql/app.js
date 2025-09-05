@@ -106,6 +106,17 @@ function getRootPage() {
   </html>`;
 }
 
+function getPort() {
+  const port = parseInt(process.argv[2], 10) || 4000;
+
+  if (isNaN(port)) {
+    console.error("Invalid port");
+    process.exit(1);
+  }
+
+  return port;
+}
+
 async function main() {
   dbConnection = await createConnection();
   const app = express();
@@ -120,7 +131,7 @@ async function main() {
 
   app.all("/graphql", createHandler({ schema }));
 
-  app.listen(4000, () => {
+  app.listen(getPort(), () => {
     console.log("Listening on port 4000");
   });
 }

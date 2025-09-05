@@ -3,7 +3,7 @@ import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
 
-async function request({
+function request({
   url,
   method,
   body,
@@ -19,8 +19,11 @@ async function request({
   const request = url.protocol === "https:" ? requestHttps : requestHttp;
 
   return new Promise((resolve, reject) => {
+    // Convert URL object to string for compatibility with old https-proxy-agent versions
+    // Old agent-base library (used by https-proxy-agent) only works with string URLs
+    // and fails when passed URL objects, causing communication with our dashboard to fail
     const req = request(
-      url,
+      url.toString(),
       {
         method,
         headers,

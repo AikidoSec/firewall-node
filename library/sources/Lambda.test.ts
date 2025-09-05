@@ -3,9 +3,9 @@ import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { getContext, updateContext } from "../agent/Context";
-import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
+import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { APIGatewayProxyEvent, createLambdaWrapper, SQSEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
   resource: "/dev/{proxy+}",
@@ -305,7 +305,12 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
         requests: {
           total: 100,
           aborted: 0,
+          rateLimited: 0,
           attacksDetected: {
+            total: 0,
+            blocked: 0,
+          },
+          attackWaves: {
             total: 0,
             blocked: 0,
           },

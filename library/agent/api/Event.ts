@@ -102,6 +102,7 @@ type Heartbeat = {
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
         total: number;
         blocked: number;
@@ -134,6 +135,7 @@ type Heartbeat = {
     path: string;
     method: string;
     hits: number;
+    rateLimitedCount: number;
     graphql?: { type: "query" | "mutation"; name: string };
     apispec: APISpec;
   }[];
@@ -149,4 +151,19 @@ type Heartbeat = {
   middlewareInstalled?: boolean;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat;
+export type DetectedAttackWave = {
+  type: "detected_attack_wave";
+  request: {
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    source: string;
+  };
+  attack: {
+    metadata: Record<string, string>;
+    user: User | undefined;
+  };
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;

@@ -4,6 +4,7 @@ import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isRequestToItself } from "./isRequestToItself";
+import { isRequestToServiceHostname } from "./isRequestToServiceHostname";
 
 type HostnameLocation = {
   source: Source;
@@ -18,6 +19,13 @@ export function findHostnameInContext(
   context: Context,
   port: number | undefined
 ): HostnameLocation | undefined {
+  if (isRequestToServiceHostname(hostname)) {
+    // We don't want to block outgoing requests to service hostnames
+    // e.g. "discord-bot" or "my_service" or "BACKEND"
+    // These might occur ^ easily in the user input
+    return undefined;
+  }
+
   if (
     context.url &&
     isRequestToItself({

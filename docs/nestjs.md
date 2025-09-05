@@ -76,7 +76,7 @@ app.useGlobalGuards(new ZenGuard());
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your NestJS app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true npm start

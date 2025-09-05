@@ -2,7 +2,7 @@ import * as t from "tap";
 import * as express from "express";
 import * as request from "supertest";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { getContext, updateContext } from "../agent/Context";
+import { getContext } from "../agent/Context";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
@@ -121,7 +121,12 @@ t.test("it counts requests", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 
@@ -137,7 +142,12 @@ t.test("it counts attacks", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 1, blocked: 1 },
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 
@@ -153,7 +163,12 @@ t.test("it counts request if error", async (t) => {
   t.same(agent.getInspectionStatistics().getStats().requests, {
     total: 1,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   });
 });
 

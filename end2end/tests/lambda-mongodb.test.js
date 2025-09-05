@@ -4,6 +4,15 @@ const { promisify } = require("util");
 const { exec } = require("child_process");
 const execAsync = promisify(exec);
 
+function getJsonFromLogs(logs) {
+  const lines = logs.split("\n");
+  const startIndex = lines.findIndex((line) => line.trim().startsWith("{"));
+  if (startIndex === -1) {
+    throw new Error("No JSON object found in logs");
+  }
+  return JSON.parse(lines.slice(startIndex).join("\n"));
+}
+
 const directory = resolve(__dirname, "../../sample-apps/lambda-mongodb");
 
 // Invoking serverless functions can be slow
@@ -25,7 +34,7 @@ t.test("it does not block by default", async (t) => {
   );
 
   t.same(stderr, "");
-  t.same(JSON.parse(stdout.toString().split("\n").slice(2).join("\n")), {
+  t.same(getJsonFromLogs(stdout.toString()), {
     statusCode: 200,
     headers: {
       "Content-Type": "application/json",
@@ -63,7 +72,7 @@ t.test(
     );
 
     t.same(stderr, "");
-    t.same(JSON.parse(stdout.toString()), {
+    t.same(getJsonFromLogs(stdout.toString()), {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",

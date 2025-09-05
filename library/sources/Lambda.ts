@@ -29,6 +29,7 @@ function isAsyncHandler<TEvent, TResult>(
 function convertToAsyncFunction<TEvent, TResult>(
   originalHandler: AsyncOrCallbackHandler<TEvent, TResult>
 ): AsyncHandler<TEvent, TResult> {
+  // oxlint-disable-next-line require-await
   return async (event: TEvent, context: Context): Promise<TResult> => {
     if (isAsyncHandler(originalHandler)) {
       return originalHandler(event, context);
@@ -105,13 +106,24 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
+function getFlushEveryMS(): number {
+  if (process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS) {
+    const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS, 10);
+    // Minimum is 1 minute
+    if (!isNaN(parsed) && parsed >= 60 * 1000) {
+      return parsed;
+    }
+  }
+
+  return 10 * 60 * 1000; // 10 minutes
+}
+
 // eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
   let lastFlushStatsAt: number | undefined = undefined;
-  const flushEveryMS = 10 * 60 * 1000;
 
   // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
@@ -157,6 +169,8 @@ export function createLambdaWrapper(handler: Handler): Handler {
       // We don't know what the type of the event is
       // We can't provide any context for the underlying sinks
       // So we just run the handler without any context
+      logWarningUnsupportedTrigger();
+
       return await asyncHandler(event, context);
     }
 
@@ -171,7 +185,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
 
         if (
           lastFlushStatsAt === undefined ||
-          lastFlushStatsAt + flushEveryMS < performance.now()
+          lastFlushStatsAt + getFlushEveryMS() < performance.now()
         ) {
           await agent.flushStats(1000);
           lastFlushStatsAt = performance.now();
@@ -179,4 +193,19 @@ export function createLambdaWrapper(handler: Handler): Handler {
       }
     }
   };
+}
+
+let loggedWarningUnsupportedTrigger = false;
+
+function logWarningUnsupportedTrigger() {
+  if (loggedWarningUnsupportedTrigger) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Zen detected a lambda function call with an unsupported trigger. Only API Gateway and SQS triggers are currently supported."
+  );
+
+  loggedWarningUnsupportedTrigger = true;
 }
