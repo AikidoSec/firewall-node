@@ -106,13 +106,24 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
+function getFlushEveryMS(): number {
+  if (process.env.AIKIDO_LAMBDA_FLUSH_TIMEOUT_MS) {
+    const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_TIMEOUT_MS, 10);
+    // Minimum is 1 minute
+    if (!isNaN(parsed) && parsed >= 60 * 1000) {
+      return parsed;
+    }
+  }
+
+  return 10 * 60 * 1000; // 10 minutes
+}
+
 // eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
   let lastFlushStatsAt: number | undefined = undefined;
-  const flushEveryMS = 10 * 60 * 1000;
 
   // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
@@ -174,7 +185,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
 
         if (
           lastFlushStatsAt === undefined ||
-          lastFlushStatsAt + flushEveryMS < performance.now()
+          lastFlushStatsAt + getFlushEveryMS() < performance.now()
         ) {
           await agent.flushStats(1000);
           lastFlushStatsAt = performance.now();
