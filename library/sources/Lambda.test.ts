@@ -3,9 +3,9 @@ import type { Context } from "aws-lambda";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { getContext, updateContext } from "../agent/Context";
-import { createLambdaWrapper, SQSEvent, APIGatewayProxyEvent } from "./Lambda";
+import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { APIGatewayProxyEvent, createLambdaWrapper, SQSEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
   resource: "/dev/{proxy+}",

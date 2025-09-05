@@ -25,8 +25,8 @@ Zen will autonomously protect your Node.js applications against:
 * 🛡️ [Prototype pollution](./docs/prototype-pollution.md)
 * 🛡️ [Path traversal attacks](https://owasp.org/www-community/attacks/Path_Traversal)
 * 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
+* 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 * 🛡️ JS injection
-* 🛡️ Attack wave detection (vulnerability scanners)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
