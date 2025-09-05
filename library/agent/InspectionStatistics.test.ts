@@ -53,6 +53,9 @@ t.test("it resets stats", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -78,6 +81,9 @@ t.test("it resets stats", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -116,6 +122,9 @@ t.test("it keeps track of amount of calls", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -164,6 +173,9 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -210,6 +222,9 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -247,6 +262,9 @@ t.test("it keeps track of amount of calls", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -295,6 +313,9 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -339,6 +360,9 @@ t.test("it keeps track of amount of calls", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -406,6 +430,9 @@ t.test("it keeps track of amount of calls", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -468,6 +495,9 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -493,6 +523,9 @@ t.test("it keeps track of requests", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -523,6 +556,9 @@ t.test("it keeps track of requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -549,6 +585,9 @@ t.test("it keeps track of requests", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -578,6 +617,9 @@ t.test("it keeps track of requests", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -614,6 +656,9 @@ t.test("it force compresses stats", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -671,6 +716,9 @@ t.test("it keeps track of aborted requests", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -715,6 +763,9 @@ t.test("it keeps track of matched IPs and user agents", async () => {
         "known_threat_actors/public_scanners": 1,
       },
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -748,6 +799,9 @@ t.test("it keeps track of matched IPs and user agents", async () => {
       breakdown: {
         "known_threat_actors/public_scanners": 2,
       },
+    },
+    botSpoofing: {
+      breakdown: {},
     },
     sqlTokenizationFailures: 0,
   });
@@ -826,6 +880,9 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -893,6 +950,9 @@ t.test("it keeps track of multiple operations of the same kind", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -943,6 +1003,9 @@ t.test("it handles empty operation strings", async () => {
     ipAddresses: {
       breakdown: {},
     },
+    botSpoofing: {
+      breakdown: {},
+    },
     sqlTokenizationFailures: 0,
   });
 
@@ -979,6 +1042,9 @@ t.test("it increments sqlTokenizationFailures", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 1,
@@ -1029,6 +1095,9 @@ t.test("it handles empty operation strings", async () => {
       breakdown: {},
     },
     ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
       breakdown: {},
     },
     sqlTokenizationFailures: 0,
@@ -1160,6 +1229,85 @@ t.test("it increments attack wave stats", async () => {
     },
     ipAddresses: {
       breakdown: {},
+    },
+    botSpoofing: {
+      breakdown: {},
+    },
+    sqlTokenizationFailures: 0,
+  });
+
+  clock.uninstall();
+});
+
+t.test("it keeps track of bot spoofing matches", async () => {
+  const clock = FakeTimers.install();
+
+  const stats = new InspectionStatistics({
+    maxPerfSamplesInMemory: 50,
+    maxCompressedStatsInMemory: 5,
+  });
+
+  stats.onBotSpoofingMatch("google_test");
+  stats.onBotSpoofingMatch("bing_test");
+
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      rateLimited: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
+      breakdown: {
+        // eslint-disable-next-line camelcase
+        google_test: 1,
+        // eslint-disable-next-line camelcase
+        bing_test: 1,
+      },
+    },
+    sqlTokenizationFailures: 0,
+  });
+
+  // Test multiple occurrences
+  stats.onBotSpoofingMatch("google_test");
+  stats.onBotSpoofingMatch("bing_test");
+
+  t.same(stats.getStats(), {
+    operations: {},
+    startedAt: 0,
+    requests: {
+      total: 0,
+      aborted: 0,
+      rateLimited: 0,
+      attacksDetected: {
+        total: 0,
+        blocked: 0,
+      },
+    },
+    userAgents: {
+      breakdown: {},
+    },
+    ipAddresses: {
+      breakdown: {},
+    },
+    botSpoofing: {
+      breakdown: {
+        // eslint-disable-next-line camelcase
+        google_test: 2,
+        // eslint-disable-next-line camelcase
+        bing_test: 2,
+      },
     },
     sqlTokenizationFailures: 0,
   });

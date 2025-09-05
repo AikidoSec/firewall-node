@@ -40,6 +40,7 @@ function updateAppConfig(app, newConfig) {
 const blockedIPAddresses = [];
 const blockedUserAgents = [];
 const allowedIPAddresses = [];
+const botSpoofingData = [];
 const monitoredUserAgents = [];
 const monitoredIPAddresses = [];
 const userAgentDetails = [];
@@ -116,6 +117,20 @@ function getBlockedUserAgents(app) {
   return "";
 }
 
+function updateBotSpoofingData(app, data) {
+  let entry = botSpoofingData.find((d) => d.serviceId === app.serviceId);
+
+  if (entry) {
+    entry.data = data;
+  } else {
+    entry = { serviceId: app.serviceId, data: data };
+    botSpoofingData.push(entry);
+  }
+
+  // Bump lastUpdatedAt
+  updateAppConfig(app, {});
+}
+
 function updateMonitoredUserAgents(app, uas) {
   let entry = monitoredUserAgents.find((e) => e.serviceId === app.serviceId);
 
@@ -128,6 +143,16 @@ function updateMonitoredUserAgents(app, uas) {
 
   // Bump lastUpdatedAt
   updateAppConfig(app, {});
+}
+
+function getBotSpoofingData(app) {
+  const entry = botSpoofingData.find((d) => d.serviceId === app.serviceId);
+
+  if (entry) {
+    return entry.data;
+  }
+
+  return [];
 }
 
 function getMonitoredUserAgents(app) {
@@ -197,6 +222,8 @@ module.exports = {
   getBlockedUserAgents,
   getAllowedIPAddresses,
   updateAllowedIPAddresses,
+  updateBotSpoofingData,
+  getBotSpoofingData,
   updateMonitoredUserAgents,
   getMonitoredUserAgents,
   updateMonitoredIPAddresses,

@@ -4,6 +4,7 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import { checkContextForBotSpoofing } from "../../vulnerabilities/bot-spoofing/checkContextForBotSpoofing";
 
 const checkedBlocks = Symbol("__zen_checked_blocks__");
 
@@ -13,13 +14,13 @@ const checkedBlocks = Symbol("__zen_checked_blocks__");
  * - Whether the IP address is allowed to access the current route (e.g. Admin panel)
  * - Whether the user agent is blocked by a user agent blocklist
  */
-export function checkIfRequestIsBlocked(
+export async function checkIfRequestIsBlocked(
   // This flag is used to determine whether the request has already been checked
   // We use a Symbol so that we don't accidentally overwrite any other properties on the response object
   // and that we're the only ones that can access it
   res: ServerResponse & { [checkedBlocks]?: boolean },
   agent: Agent
-): boolean {
+): Promise<boolean> {
   if (res.headersSent) {
     // The headers have already been sent, so we can't block the request
     // This might happen if the server has multiple listeners
@@ -144,6 +145,17 @@ export function checkIfRequestIsBlocked(
       "You are not allowed to access this resource because you have been identified as a bot."
     );
 
+    return true;
+  }
+
+  const botSpoofingResult = await checkContextForBotSpoofing(context, agent);
+  if (botSpoofingResult.isSpoofing) {
+    agent.getInspectionStatistics().onBotSpoofingMatch(botSpoofingResult.key);
+
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "text/plain");
+
+    res.end("You are not allowed to access this resource.");
     return true;
   }
 

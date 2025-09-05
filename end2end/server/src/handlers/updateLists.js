@@ -2,6 +2,7 @@ const {
   updateBlockedIPAddresses,
   updateBlockedUserAgents,
   updateAllowedIPAddresses,
+  updateBotSpoofingData,
   updateMonitoredUserAgents,
   updateMonitoredIPAddresses,
   updateUserAgentDetails,
@@ -50,6 +51,12 @@ module.exports = function updateIPLists(req, res) {
   }
 
   if (
+    req.body.botSpoofingProtection &&
+    Array.isArray(req.body.botSpoofingProtection)
+  ) {
+    updateBotSpoofingData(req.app, req.body.botSpoofingProtection);
+  }
+  if (
     req.body.monitoredUserAgents &&
     typeof req.body.monitoredUserAgents === "string"
   ) {
@@ -63,10 +70,7 @@ module.exports = function updateIPLists(req, res) {
     updateMonitoredIPAddresses(req.app, req.body.monitoredIPAddresses);
   }
 
-  if (
-    req.body.userAgentDetails &&
-    Array.isArray(req.body.userAgentDetails)
-  ) {
+  if (req.body.userAgentDetails && Array.isArray(req.body.userAgentDetails)) {
     updateUserAgentDetails(req.app, req.body.userAgentDetails);
   }
 

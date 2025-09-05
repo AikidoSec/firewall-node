@@ -34,6 +34,10 @@ type IPAddressStats = {
   breakdown: Record<IPListKey, number>;
 };
 
+type BotSpoofingStats = {
+  breakdown: Record<string, number>;
+};
+
 export class InspectionStatistics {
   private startedAt = Date.now();
   private operations: Record<string, OperationStats> = {};
@@ -66,6 +70,9 @@ export class InspectionStatistics {
     breakdown: {},
   };
   private ipAddresses: IPAddressStats = {
+    breakdown: {},
+  };
+  private botSpoofing: BotSpoofingStats = {
     breakdown: {},
   };
 
@@ -139,6 +146,9 @@ export class InspectionStatistics {
     ipAddresses: {
       breakdown: Record<string, number>;
     };
+    botSpoofing: {
+      breakdown: Record<string, number>;
+    };
   } {
     const operations: Record<string, OperationStatsWithoutTimings> = {};
     for (const operation in this.operations) {
@@ -163,6 +173,7 @@ export class InspectionStatistics {
       requests: this.requests,
       userAgents: this.userAgents,
       ipAddresses: this.ipAddresses,
+      botSpoofing: this.botSpoofing,
     };
   }
 
@@ -264,6 +275,14 @@ export class InspectionStatistics {
 
       this.userAgents.breakdown[key] += 1;
     });
+  }
+
+  onBotSpoofingMatch(key: string) {
+    if (!this.botSpoofing.breakdown[key]) {
+      this.botSpoofing.breakdown[key] = 0;
+    }
+
+    this.botSpoofing.breakdown[key] += 1;
   }
 
   onAbortedRequest() {
