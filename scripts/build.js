@@ -103,6 +103,7 @@ async function dlZenInternals() {
     console.log("Zen Internals already installed. Skipping download.");
     return;
   }
+  console.log("Downloading Zen Internals...");
 
   await downloadFile(
     `${INTERNALS_URL}/${tarballFile}`,
@@ -118,6 +119,8 @@ async function dlZenInternals() {
   await rm(join(internalsDir, tarballFile));
   await rm(join(internalsDir, checksumFile));
   await rm(join(internalsDir, "zen_internals.d.ts"));
+
+  await writeFile(versionCacheFile, INTERNALS_VERSION);
 }
 
 async function modifyDtsFilesAfterBuild() {

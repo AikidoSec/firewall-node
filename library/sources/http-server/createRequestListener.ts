@@ -113,6 +113,7 @@ function createOnFinishRequestHandler(
 
       if (agent.getAttackWaveDetector().check(context)) {
         agent.onDetectedAttackWave({ request: context, metadata: {} });
+        agent.getInspectionStatistics().onAttackWaveDetected();
       }
     }
   };

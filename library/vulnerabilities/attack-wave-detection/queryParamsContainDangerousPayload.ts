@@ -23,13 +23,16 @@ const keywords = [
 /**
  * Check the query for some common SQL or path traversal patterns.
  */
-export function checkQuery(context: Context): boolean {
+export function queryParamsContainDangerousPayload(context: Context): boolean {
   const queryStrings = extractStringsFromUserInputCached(context, "query");
   if (!queryStrings) {
     return false;
   }
   for (const str of queryStrings) {
     // Performance optimization
+    // Some keywords like ../ are shorter than this min length check
+    // However, they are part of a larger string in the most cases
+    // e.g. ../etc/passwd or MD5(something)
     if (str.length < 5 || str.length > 1_000) {
       continue;
     }
