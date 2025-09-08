@@ -1,6 +1,6 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { bindContext, getContext, runWithContext } from "../../agent/Context";
+import { type Context, getContext, runWithContext } from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
 import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
@@ -58,46 +58,14 @@ function callListenerWithContext(
 
   return runWithContext(context, () => {
     // This method is called when the response is finished and discovers the routes for display in the dashboard
-    // The bindContext function is used to ensure that the context is available in the callback
     // If using http2, the context is not available in the callback without this
     const context = getContext();
 
-    res.on("finish", () => {
-      if (req[countedRequest]) {
-        // The request has already been counted
-        // This might happen if the server has multiple listeners
-        return;
-      }
-
-      // Mark the request as counted
-      req[countedRequest] = true;
-
-      if (context && context.route && context.method) {
-        const shouldDiscover = shouldDiscoverRoute({
-          statusCode: res.statusCode,
-          route: context.route,
-          method: context.method,
-        });
-
-        if (shouldDiscover) {
-          agent.onRouteExecute(context);
-        }
-
-        if (shouldDiscover || context.rateLimitedEndpoint) {
-          agent.getInspectionStatistics().onRequest();
-        }
-
-        if (context.rateLimitedEndpoint) {
-          agent.getInspectionStatistics().onRateLimitedRequest();
-          agent.onRouteRateLimited(context.rateLimitedEndpoint);
-        }
-
-        if (agent.getAttackWaveDetector().check(context)) {
-          agent.onDetectedAttackWave({ request: context, metadata: {} });
-          agent.getInspectionStatistics().onAttackWaveDetected();
-        }
-      }
-    });
+    if (context) {
+      res.on("finish", () => {
+        onFinishRequestHandler(req, res, agent, context);
+      });
+    }
 
     if (checkIfRequestIsBlocked(res, agent)) {
       // The return is necessary to prevent the listener from being called
@@ -106,4 +74,46 @@ function callListenerWithContext(
 
     return listener(req, res);
   });
+}
+
+function onFinishRequestHandler(
+  req: IncomingMessage & { [countedRequest]?: boolean },
+  res: ServerResponse,
+  agent: Agent,
+  context: Context
+) {
+  if (req[countedRequest]) {
+    // The request has already been counted
+    // This might happen if the server has multiple listeners
+    return;
+  }
+
+  // Mark the request as counted
+  req[countedRequest] = true;
+
+  if (context.route && context.method) {
+    const shouldDiscover = shouldDiscoverRoute({
+      statusCode: res.statusCode,
+      route: context.route,
+      method: context.method,
+    });
+
+    if (shouldDiscover) {
+      agent.onRouteExecute(context);
+    }
+
+    if (shouldDiscover || context.rateLimitedEndpoint) {
+      agent.getInspectionStatistics().onRequest();
+    }
+
+    if (context.rateLimitedEndpoint) {
+      agent.getInspectionStatistics().onRateLimitedRequest();
+      agent.onRouteRateLimited(context.rateLimitedEndpoint);
+    }
+
+    if (agent.getAttackWaveDetector().check(context)) {
+      agent.onDetectedAttackWave({ request: context, metadata: {} });
+      agent.getInspectionStatistics().onAttackWaveDetected();
+    }
+  }
 }
