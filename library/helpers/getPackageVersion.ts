@@ -1,31 +1,20 @@
-import { sep } from "path";
-import { getOriginalRequire } from "../agent/hooks/wrapRequire";
+import { getPackageVersionFromPath } from "../agent/hooks/instrumentation/getPackageVersionFromPath";
+import { getModuleInfoFromPath } from "../agent/hooks/getModuleInfoFromPath";
 
 /**
  * Get the installed version of a package
  */
-export function getPackageVersion(pkg: string): string | null {
+export function getPackageVersion(pkg: string): string | undefined {
   try {
-    const path = require.resolve(pkg);
-    const parts = path.split(sep);
+    const entrypoint = require.resolve(pkg);
 
-    // e.g. @google-cloud/functions-framework
-    const pkgParts = pkg.split("/");
-    let lookup = pkgParts[0];
-    if (pkgParts.length > 1) {
-      lookup = pkgParts[1];
+    const moduleInfo = getModuleInfoFromPath(entrypoint);
+    if (!moduleInfo) {
+      return undefined;
     }
 
-    // Normally we can just require(`${pkg}/package.json`)
-    // but @google-cloud/functions-framework is a special case
-    // the package.json contains "exports" which results in the following error:
-    // Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './package.json' is not defined by "exports"
-    // Thus we manually build the path to the package.json
-    const index = parts.indexOf(lookup);
-    const root = parts.slice(0, index + 1).join(sep);
-
-    return getOriginalRequire()(`${root}/package.json`).version;
+    return getPackageVersionFromPath(moduleInfo.base);
   } catch {
-    return null;
+    return undefined;
   }
 }
