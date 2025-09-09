@@ -57,12 +57,14 @@ function callListenerWithContext(
   const context = contextFromRequest(req, body, module);
 
   return runWithContext(context, () => {
-    // This method is called when the response is finished and discovers the routes for display in the dashboard
-    // If using http2, the context is not available in the callback without this
     const context = getContext();
 
     if (context) {
       res.on("finish", () => {
+        // Don't use `getContext()` in this callback
+        // The context won't be available when using http2
+        // We want the latest context (`runWithContext` updates context if there is already one)
+        // Since context is an object, the reference will point to the latest one
         onFinishRequestHandler(req, res, agent, context);
       });
     }
