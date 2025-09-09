@@ -25,7 +25,7 @@ agent.start([new HTTPServer()]);
 const http = require("http") as typeof import("http");
 
 t.test(
-  "nested runWithContext updates source in attack wave reports",
+  "onFinishRequestHandler sees latest context values (nested runWithContext)",
   async (t) => {
     const server = http.createServer((req, res) => {
       runWithContext(
