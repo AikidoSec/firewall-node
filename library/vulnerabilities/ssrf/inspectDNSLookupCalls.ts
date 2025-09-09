@@ -120,7 +120,7 @@ function wrapDNSLookupCallback(
       if (agent.shouldBlock()) {
         return callback(
           new Error(
-            `Zen has blocked ${attackKindHumanName("stored-ssrf")}: ${operation}(...) originating from unknown source`
+            `Zen has blocked ${attackKindHumanName("stored_ssrf")}: ${operation}(...) originating from unknown source`
           )
         );
       }
@@ -200,7 +200,7 @@ function wrapDNSLookupCallback(
         if (agent.shouldBlock()) {
           return callback(
             new Error(
-              `Zen has blocked ${attackKindHumanName("stored-ssrf")}: ${operation}(...) originating from unknown source`
+              `Zen has blocked ${attackKindHumanName("stored_ssrf")}: ${operation}(...) originating from unknown source`
             )
           );
         }
@@ -315,7 +315,7 @@ function reportStoredImdsIpSSRF({
   agent.onDetectedAttack({
     module: module,
     operation: operation,
-    kind: "stored-ssrf",
+    kind: "stored_ssrf",
     source: undefined,
     blocked: agent.shouldBlock(),
     stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),

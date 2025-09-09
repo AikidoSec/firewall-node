@@ -561,7 +561,7 @@ t.test("Reports stored SSRF without context", async (t) => {
     {
       type: "detected_attack",
       attack: {
-        kind: "stored-ssrf",
+        kind: "stored_ssrf",
         operation: "request",
         module: "http",
         blocked: true,
@@ -633,7 +633,7 @@ t.test("Reports stored SSRF with context set", async (t) => {
     {
       type: "detected_attack",
       attack: {
-        kind: "stored-ssrf",
+        kind: "stored_ssrf",
         operation: "request",
         module: "http",
         blocked: true,
