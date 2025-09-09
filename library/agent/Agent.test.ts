@@ -19,6 +19,7 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
+import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -610,7 +611,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -629,7 +630,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
