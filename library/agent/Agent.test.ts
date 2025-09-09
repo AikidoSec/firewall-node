@@ -18,49 +18,31 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
-import type { Response } from "./api/fetchBlockedLists";
+import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 
-let shouldOnlyAllowSomeIPAddresses = false;
-
-wrap(fetch, "fetch", function mock() {
-  return async function mock() {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        blockedIPAddresses: [
-          {
-            key: "some/key",
-            source: "name",
-            description: "Description",
-            ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-          },
-        ],
-        blockedUserAgents: "AI2Bot|Bytespider",
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
-          ? [
-              {
-                key: "some/key",
-                source: "name",
-                description: "Description",
-                ips: ["4.3.2.1"],
-              },
-            ]
-          : [],
-        monitoredIPAddresses: [],
-        monitoredUserAgents: "",
-        userAgentDetails: [
-          {
-            key: "AI2Bot",
-            pattern: "AI2Bot",
-          },
-          {
-            key: "Bytespider",
-            pattern: "Bytespider",
-          },
-        ],
-      } satisfies Response),
-    };
-  };
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  blockedIPAddresses: [
+    {
+      key: "some/key",
+      source: "name",
+      description: "Description",
+      ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+    },
+  ],
+  blockedUserAgents: "AI2Bot|Bytespider",
+  allowedIPAddresses: [],
+  monitoredIPAddresses: [],
+  monitoredUserAgents: "",
+  userAgentDetails: [
+    {
+      key: "AI2Bot",
+      pattern: "AI2Bot",
+    },
+    {
+      key: "Bytespider",
+      pattern: "Bytespider",
+    },
+  ],
 });
 
 let logs: string[] = [];
@@ -78,7 +60,8 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        ""
+        "",
+        new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
   );
@@ -1101,6 +1084,7 @@ t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: mockedFetchListAPI,
   });
 
   agent.start([]);
@@ -1171,10 +1155,40 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 });
 
 t.test("it only allows some IP addresses", async () => {
-  shouldOnlyAllowSomeIPAddresses = true;
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: new FetchListsAPIForTesting({
+      blockedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+        },
+      ],
+      blockedUserAgents: "AI2Bot|Bytespider",
+      allowedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["4.3.2.1"],
+        },
+      ],
+      monitoredIPAddresses: [],
+      monitoredUserAgents: "",
+      userAgentDetails: [
+        {
+          key: "AI2Bot",
+          pattern: "AI2Bot",
+        },
+        {
+          key: "Bytespider",
+          pattern: "Bytespider",
+        },
+      ],
+    }),
   });
 
   agent.start([]);
