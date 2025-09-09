@@ -103,7 +103,26 @@ function wrapDNSLookupCallback(
 
     const resolvedIPAddresses = getResolvedIPAddresses(addresses);
 
-    if (resolvesToIMDSIP(resolvedIPAddresses, hostname)) {
+    const imdsIpResult = resolvesToIMDSIP(resolvedIPAddresses, hostname);
+    if (imdsIpResult.isIMDS) {
+      const stackTraceError = callingLocationStackTrace || new Error();
+      agent.onDetectedAttack({
+        module: module,
+        operation: operation,
+        kind: "ssrf",
+        source: undefined,
+        blocked: agent.shouldBlock(),
+        stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+        paths: [],
+        metadata: getMetadataForSSRFAttack({
+          hostname,
+          port: undefined,
+          privateIP: imdsIpResult.ip,
+        }),
+        request: undefined,
+        payload: undefined,
+      });
+
       // Block stored SSRF attack that target IMDS IP addresses
       // An attacker could have stored a hostname in a database that points to an IMDS IP address
       // We don't check if the user input contains the hostname because there's no context
@@ -242,12 +261,24 @@ function getResolvedIPAddresses(addresses: string | LookupAddress[]): string[] {
 function resolvesToIMDSIP(
   resolvedIPAddresses: string[],
   hostname: string
-): boolean {
+): { isIMDS: false } | { isIMDS: true; ip: string } {
   // Allow access to Google Cloud metadata service as you need to set specific headers to access it
   // We don't want to block legitimate requests
   if (isTrustedHostname(hostname)) {
-    return false;
+    return {
+      isIMDS: false,
+    };
   }
 
-  return resolvedIPAddresses.some((ip) => isIMDSIPAddress(ip));
+  const matchingIp = resolvedIPAddresses.find((ip) => isIMDSIPAddress(ip));
+  if (matchingIp) {
+    return {
+      isIMDS: true,
+      ip: matchingIp,
+    };
+  }
+
+  return {
+    isIMDS: false,
+  };
 }

@@ -8,6 +8,7 @@ import { wrap } from "../../helpers/wrap";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { createTestAgent } from "../../helpers/createTestAgent";
+import { ReportingAPINodeHTTP } from "../../agent/api/ReportingAPINodeHTTP";
 
 wrap(console, "log", function log() {
   return function log() {
@@ -522,5 +523,59 @@ t.test("it ignores when the argument is an IP address", async (t) => {
         }
       );
     }),
+  ]);
+});
+
+t.test("Reports stored SSRF", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    token: new Token("123"),
+    api,
+  });
+  agent.start([]);
+
+  const wrappedLookup = inspectDNSLookupCalls(
+    imdsMockLookup,
+    agent,
+    "http",
+    "request"
+  );
+
+  await new Promise<void>((resolve) => {
+    wrappedLookup("imds.test.com", { family: 4 }, (err, address) => {
+      t.same(err instanceof Error, true);
+      if (err instanceof Error) {
+        t.same(
+          err.message,
+          "Zen has blocked a server-side request forgery: request(...) originating from unknown source"
+        );
+      }
+      t.same(address, undefined);
+      resolve();
+    });
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "detected_attack",
+      attack: {
+        kind: "ssrf",
+        operation: "request",
+        module: "http",
+        blocked: true,
+        source: undefined,
+        path: "",
+        payload: undefined,
+        metadata: {
+          hostname: "imds.test.com",
+          privateIP: "169.254.169.254",
+        },
+        user: undefined,
+      },
+      request: undefined,
+    },
   ]);
 });
