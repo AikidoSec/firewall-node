@@ -107,7 +107,7 @@ async function run() {
   );
 
   if (otelDifference < -5) {
-    console.error(`Zen performance is significantly worse than OpenTelemetry`);
+    console.error(`Zen performance is worse than OpenTelemetry`);
     process.exit(1);
   }
 }
