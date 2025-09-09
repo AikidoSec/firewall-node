@@ -8,7 +8,6 @@ import { wrap } from "../../helpers/wrap";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { createTestAgent } from "../../helpers/createTestAgent";
-import { ReportingAPINodeHTTP } from "../../agent/api/ReportingAPINodeHTTP";
 
 wrap(console, "log", function log() {
   return function log() {
