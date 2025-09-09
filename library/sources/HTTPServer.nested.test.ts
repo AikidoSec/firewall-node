@@ -13,38 +13,7 @@ const api = new ReportingAPIForTesting({
   configUpdatedAt: 0,
   allowedIPAddresses: [],
   blockedUserIds: [],
-  endpoints: [
-    {
-      route: "/rate-limited",
-      method: "GET",
-      forceProtectionOff: false,
-      allowedIPAddresses: [],
-      rateLimiting: {
-        enabled: true,
-        maxRequests: 2,
-        windowSizeInMS: 60 * 60 * 1000,
-      },
-    },
-    {
-      route: "/ip-allowed",
-      method: "GET",
-      forceProtectionOff: false,
-      allowedIPAddresses: ["8.8.8.8"],
-      // @ts-expect-error Testing
-      rateLimiting: undefined,
-    },
-    {
-      route: "/routes/*",
-      method: "*",
-      forceProtectionOff: false,
-      allowedIPAddresses: [],
-      rateLimiting: {
-        enabled: true,
-        maxRequests: 2,
-        windowSizeInMS: 60 * 60 * 1000,
-      },
-    },
-  ],
+  endpoints: [],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
 const agent = createTestAgent({
