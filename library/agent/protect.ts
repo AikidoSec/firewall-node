@@ -56,6 +56,8 @@ import { AiSDK } from "../sinks/AiSDK";
 import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
 import { GoogleGenAi } from "../sinks/GoogleGenAi";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -88,6 +90,10 @@ function getAPI(): ReportingAPI {
   );
 }
 
+function getFetchListsAPI(): FetchListsAPI {
+  return new FetchListsAPINodeHTTP();
+}
+
 function getTokenFromEnv(): Token | undefined {
   return process.env.AIKIDO_TOKEN
     ? new Token(process.env.AIKIDO_TOKEN)
@@ -106,7 +112,8 @@ function startAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    getFetchListsAPI()
   );
 
   setInstance(agent);
