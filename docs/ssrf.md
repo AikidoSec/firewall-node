@@ -25,7 +25,9 @@ We don't protect against stored SSRF attacks, where an attacker injects a malici
 ## Which built-in modules are protected?
 
 Firewall protects against SSRF attacks in the following built-in modules:
-* `http`
-* `https`
+* `node:http`
+* `node:https`
 * `undici`
 * `globalThis.fetch` (Node.js 18+)
+
+Note: Any HTTP client that uses `node:http` or `node:https` under the hood is also supported!
