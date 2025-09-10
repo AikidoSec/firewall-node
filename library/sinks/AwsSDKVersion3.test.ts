@@ -1,5 +1,7 @@
 import * as t from "tap";
+import { Token } from "../agent/api/Token";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { AwsSDKVersion3 as AwsSDKVersion3Sink } from "./AwsSDKVersion3";
 
 t.test(
@@ -11,24 +13,33 @@ t.test(
         : undefined,
   },
   async (t) => {
-    const agent = createTestAgent();
+    const reportingAPI = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api: reportingAPI,
+      token: new Token("123"),
+    });
     agent.start([new AwsSDKVersion3Sink()]);
 
     const {
       BedrockRuntimeClient,
       InvokeModelCommand,
+      ConverseCommand,
     } = require("@aws-sdk/client-bedrock-runtime");
 
+    const region = process.env.AWS_REGION || "us-east-1";
+    const geography = region.split("-")[0];
+    const expectedModelId = `${geography}.anthropic.claude-3-5-sonnet-20240620-v1:0`;
+
     const client = new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
+      region,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
     });
 
-    const command = new InvokeModelCommand({
-      modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    const invokeCommand = new InvokeModelCommand({
+      modelId: expectedModelId,
       contentType: "application/json",
       body: JSON.stringify({
         // eslint-disable-next-line camelcase
@@ -45,22 +56,36 @@ t.test(
       }),
     });
 
-    const response = await client.send(command);
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    await client.send(invokeCommand);
 
-    t.same(responseBody.content[0].text.trim(), "Paris");
-    t.match(agent.getAIStatistics().getStats(), [
-      {
-        provider: "bedrock",
-        calls: 1,
-        model: responseBody.model,
-        tokens: {
-          input: responseBody.usage.input_tokens,
-          output: responseBody.usage.output_tokens,
-          total:
-            responseBody.usage.input_tokens + responseBody.usage.output_tokens,
+    const converseCommand = new ConverseCommand({
+      modelId: expectedModelId,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              text: "What is the capital of France? Answer with just the city name, no punctuation.",
+            },
+          ],
         },
+      ],
+      inferenceConfig: {
+        maxTokens: 100,
       },
-    ]);
+    });
+
+    await client.send(converseCommand);
+
+    await agent.flushStats(1000);
+
+    const events = reportingAPI.getEvents();
+    const heartbeat = events.find((event) => event.type === "heartbeat");
+    t.ok(heartbeat);
+    t.same(heartbeat!.ai.length, 1);
+    t.match(heartbeat!.ai[0], {
+      model: expectedModelId,
+      calls: 2,
+    });
   }
 );
