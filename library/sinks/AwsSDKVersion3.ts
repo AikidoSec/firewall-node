@@ -47,7 +47,11 @@ function isConverseResponse(response: unknown): response is ConverseResponse {
 }
 
 export class AwsSDKVersion3 implements Wrapper {
-  private processInvokeModelResponse(response: unknown, command: unknown, agent: Agent) {
+  private processInvokeModelResponse(
+    response: unknown,
+    command: unknown,
+    agent: Agent
+  ) {
     if (!isInvokeResponse(response)) {
       return;
     }
@@ -137,7 +141,11 @@ export class AwsSDKVersion3 implements Wrapper {
                         exports.InvokeModelCommand &&
                         command instanceof exports.InvokeModelCommand
                       ) {
-                        this.processInvokeModelResponse(response, command, agent);
+                        this.processInvokeModelResponse(
+                          response,
+                          command,
+                          agent
+                        );
                       } else if (
                         exports.ConverseCommand &&
                         command instanceof exports.ConverseCommand
