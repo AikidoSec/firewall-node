@@ -50,6 +50,7 @@ wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
           pattern: "Google-Extended",
         },
       ],
+      domains: [],
     } satisfies Response;
   };
 });
