@@ -58,6 +58,8 @@ wrap(fetch, "fetch", function mock() {
             pattern: "Bytespider",
           },
         ],
+        blockedSignatureAgents: "chatgpt.com",
+        monitoredSignatureAgents: "",
       } satisfies Response),
     };
   };

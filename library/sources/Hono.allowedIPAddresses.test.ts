@@ -49,6 +49,8 @@ wrap(fetch, "fetch", function mock(original) {
           ],
           monitoredIPAddresses: [],
           monitoredUserAgents: "",
+          blockedSignatureAgents: "",
+          monitoredSignatureAgents: "",
         } satisfies Response),
       };
     }
