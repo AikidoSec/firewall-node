@@ -11,7 +11,6 @@ type OperationStats = {
   };
 };
 
-type OperationStatsWithoutTimings = OperationStats;
 type UserAgentBotKey = string;
 type IPListKey = string;
 
@@ -87,7 +86,7 @@ export class InspectionStatistics {
   }
 
   getStats(): {
-    operations: Record<string, OperationStatsWithoutTimings>;
+    operations: Record<string, OperationStats>;
     startedAt: number;
     sqlTokenizationFailures: number;
     requests: {
@@ -110,7 +109,7 @@ export class InspectionStatistics {
       breakdown: Record<string, number>;
     };
   } {
-    const operations: Record<string, OperationStatsWithoutTimings> = {};
+    const operations: Record<string, OperationStats> = {};
     for (const operation in this.operations) {
       const operationStats = this.operations[operation];
       operations[operation] = {
