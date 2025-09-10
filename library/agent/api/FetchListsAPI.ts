@@ -25,5 +25,5 @@ export type FetchListsAPIResponse = {
 };
 
 export interface FetchListsAPI {
-  fetch(token: Token): Promise<FetchListsAPIResponse>;
+  getLists(token: Token): Promise<FetchListsAPIResponse>;
 }
