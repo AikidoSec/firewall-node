@@ -77,11 +77,24 @@ export class AwsSDKVersion3 implements Wrapper {
         outputTokens = body.usage.output_tokens;
       }
 
+      // @ts-expect-error We don't know the type of command
+      let modelId = command.input.modelId.startsWith("arn:")
+        ? undefined
+        : // @ts-expect-error We don't know the type of command
+          command.input.modelId;
+
+      if (!modelId && typeof body.model === "string") {
+        modelId = body.model;
+      }
+
+      if (!modelId) {
+        return;
+      }
+
       const aiStats = agent.getAIStatistics();
       aiStats.onAICall({
         provider: "bedrock",
-        // @ts-expect-error We don't know the type of command
-        model: command.input.modelId,
+        model: modelId,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
       });
@@ -104,6 +117,12 @@ export class AwsSDKVersion3 implements Wrapper {
 
     // @ts-expect-error We don't know the type of command
     const modelId: string = command.input.modelId;
+
+    // Don't report if modelId is an ARN
+    // There's no way to get the actual model name like we can with InvokeModel
+    if (modelId.startsWith("arn:")) {
+      return;
+    }
 
     let inputTokens = 0;
     let outputTokens = 0;
