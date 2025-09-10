@@ -47,7 +47,7 @@ function isConverseResponse(response: unknown): response is ConverseResponse {
 }
 
 export class AwsSDKVersion3 implements Wrapper {
-  private processInvokeModelResponse(response: unknown, agent: Agent) {
+  private processInvokeModelResponse(response: unknown, command: unknown, agent: Agent) {
     if (!isInvokeResponse(response)) {
       return;
     }
@@ -63,7 +63,8 @@ export class AwsSDKVersion3 implements Wrapper {
       return;
     }
 
-    if (typeof body.model === "string") {
+    // @ts-expect-error We don't know the type of command
+    if (command && command.input && typeof command.input.modelId === "string") {
       let inputTokens = 0;
       let outputTokens = 0;
 
@@ -75,7 +76,8 @@ export class AwsSDKVersion3 implements Wrapper {
       const aiStats = agent.getAIStatistics();
       aiStats.onAICall({
         provider: "bedrock",
-        model: body.model,
+        // @ts-expect-error We don't know the type of command
+        model: command.input.modelId,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
       });
@@ -135,7 +137,7 @@ export class AwsSDKVersion3 implements Wrapper {
                         exports.InvokeModelCommand &&
                         command instanceof exports.InvokeModelCommand
                       ) {
-                        this.processInvokeModelResponse(response, agent);
+                        this.processInvokeModelResponse(response, command, agent);
                       } else if (
                         exports.ConverseCommand &&
                         command instanceof exports.ConverseCommand
