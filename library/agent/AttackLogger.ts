@@ -28,7 +28,7 @@ export class AttackLogger {
     this.logCount++; // Increment the log counter
 
     const { blocked, kind, operation, source, path } = event.attack;
-    const { ipAddress } = event.request;
+    const ipAddress = event.request?.ipAddress;
 
     const message = `Zen has ${blocked ? "blocked" : "detected"} ${attackKindHumanName(kind)}: kind="${escapeLog(kind)}" operation="${escapeLog(operation)}(...)" source="${escapeLog(source)}${escapeLog(path)}" ip="${escapeLog(ipAddress)}"`;
 
