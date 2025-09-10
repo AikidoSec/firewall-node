@@ -1,6 +1,6 @@
 # Server-side request forgery (SSRF)
 
-Zen for Node.js 16+ secures your app against server-side request forgery (SSRF) attacks. SSRF vulnerabilities allow attackers to send crafted requests to internal services, bypassing firewalls and security controls. Runtime blocks SSRF attacks by intercepting and validating requests to internal services.
+Zen for Node.js 16+ secures your app against server-side request forgery (SSRF) attacks. SSRF vulnerabilities allow attackers to send crafted requests to internal services, bypassing firewalls and security controls. Zen blocks SSRF attacks by intercepting and validating requests to internal services.
 
 ## Example
 
@@ -25,7 +25,9 @@ We don't protect against stored SSRF attacks, where an attacker injects a malici
 ## Which built-in modules are protected?
 
 Firewall protects against SSRF attacks in the following built-in modules:
-* `http`
-* `https`
+* `node:http`
+* `node:https`
 * `undici`
 * `globalThis.fetch` (Node.js 18+)
+
+Note: Any HTTP client that uses `node:http` or `node:https` under the hood is also supported, such as `axios`, `node-fetch`, or `follow-redirects`.
