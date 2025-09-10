@@ -77,12 +77,12 @@ export class AwsSDKVersion3 implements Wrapper {
         outputTokens = body.usage.output_tokens;
       }
 
+      let modelId: string | undefined = undefined;
       // @ts-expect-error We don't know the type of command
-      let modelId = command.input.modelId.startsWith("arn:")
-        ? undefined
-        : // @ts-expect-error We don't know the type of command
-          command.input.modelId;
-
+      if (!command.input.modelId.startsWith("arn:")) {
+        // @ts-expect-error We don't know the type of command
+        modelId = command.input.modelId;
+      }
       if (!modelId && typeof body.model === "string") {
         modelId = body.model;
       }
