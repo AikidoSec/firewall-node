@@ -13,7 +13,7 @@ export class FetchListsAPIForTesting implements FetchListsAPI {
     }
   ) {}
 
-  async fetch(_token: Token): Promise<FetchListsAPIResponse> {
+  async getLists(_token: Token): Promise<FetchListsAPIResponse> {
     return this.response;
   }
 }

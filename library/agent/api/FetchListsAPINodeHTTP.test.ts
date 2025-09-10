@@ -64,7 +64,7 @@ function createTestEndpoint({
 t.test("it fetches the lists", async (t) => {
   const stop = await createTestEndpoint({ port: 9000 });
   const api = new FetchListsAPINodeHTTP(new URL("http://localhost:9000"));
-  t.same(await api.fetch(new Token("123")), {
+  t.same(await api.getLists(new Token("123")), {
     blockedIPAddresses: [
       {
         key: "test",
@@ -86,7 +86,7 @@ t.test("it fetches the lists", async (t) => {
 t.test("invalid token", async (t) => {
   const stop = await createTestEndpoint({ port: 9001, statusCode: 401 });
   const api = new FetchListsAPINodeHTTP(new URL("http://localhost:9001"));
-  await t.rejects(api.fetch(new Token("123---")), {
+  await t.rejects(api.getLists(new Token("123---")), {
     message: "Unable to access the Aikido platform, please check your token.",
   });
 
@@ -96,7 +96,7 @@ t.test("invalid token", async (t) => {
 t.test("server error", async (t) => {
   const stop = await createTestEndpoint({ port: 9002, statusCode: 500 });
   const api = new FetchListsAPINodeHTTP(new URL("http://localhost:9002"));
-  await t.rejects(api.fetch(new Token("123")), {
+  await t.rejects(api.getLists(new Token("123")), {
     message: "Failed to fetch blocked lists: 500",
   });
 
@@ -123,7 +123,7 @@ t.test("invalid response", async (t) => {
   });
   const api = new FetchListsAPINodeHTTP(new URL("http://localhost:9003"));
 
-  t.same(await api.fetch(new Token("123")), {
+  t.same(await api.getLists(new Token("123")), {
     blockedIPAddresses: [],
     allowedIPAddresses: [],
     monitoredIPAddresses: [],

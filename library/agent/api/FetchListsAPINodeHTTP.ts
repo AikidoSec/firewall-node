@@ -6,7 +6,7 @@ import type { Token } from "./Token";
 export class FetchListsAPINodeHTTP implements FetchListsAPI {
   constructor(private baseUrl = getAPIURL()) {}
 
-  async fetch(token: Token): Promise<FetchListsAPIResponse> {
+  async getLists(token: Token): Promise<FetchListsAPIResponse> {
     const { body, statusCode } = await fetch({
       url: new URL(`${this.baseUrl.toString()}api/runtime/firewall/lists`),
       method: "GET",
