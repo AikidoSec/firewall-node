@@ -57,6 +57,45 @@ function generateAttackEvent(): Event {
   };
 }
 
+function generateAttackWaveEvent(): Event {
+  return {
+    type: "detected_attack_wave",
+    time: Date.now(),
+    request: {
+      ipAddress: undefined,
+      userAgent: undefined,
+      source: "express",
+    },
+    attack: {
+      metadata: {},
+      user: undefined,
+    },
+    agent: {
+      version: "1.0.0",
+      library: "firewall-node",
+      dryMode: false,
+      hostname: "hostname",
+      packages: {},
+      ipAddress: "ipAddress",
+      preventedPrototypePollution: false,
+      nodeEnv: "",
+      os: {
+        name: "os",
+        version: "version",
+      },
+      serverless: false,
+      incompatiblePackages: {
+        prototypePollution: {},
+      },
+      stack: [],
+      platform: {
+        version: "version",
+        arch: "arch",
+      },
+    },
+  };
+}
+
 t.test("it throttles attack events", async () => {
   const api = new ReportingAPIForTesting();
   const token = new Token("123");
@@ -150,6 +189,7 @@ function generateHeartbeatEvent(): Event {
       requests: {
         total: 0,
         aborted: 0,
+        rateLimited: 0,
         attacksDetected: {
           blocked: 0,
           total: 0,
@@ -190,6 +230,7 @@ function generateHeartbeatEvent(): Event {
     routes: [],
     users: [],
     packages: [],
+    ai: [],
   };
 }
 
@@ -247,4 +288,60 @@ t.test("it does not blow memory", async () => {
 
   // @ts-expect-error Private field but we need to check the length
   t.same(throttled.events.length, 10);
+});
+
+t.test("it throttles attack wave events", async () => {
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+
+  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+    maxEventsPerInterval: 5,
+    intervalInMs: 1000,
+  });
+
+  t.same(api.getEvents().length, 0);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 1);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 2);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 3);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 4);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 5);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 5);
+
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 6);
+});
+
+t.test("it throttles both event types at the same time", async () => {
+  const api = new ReportingAPIForTesting();
+  const token = new Token("123");
+
+  const throttled = new ReportingAPIRateLimitedClientSide(api, {
+    maxEventsPerInterval: 5,
+    intervalInMs: 1000,
+  });
+
+  t.same(api.getEvents().length, 0);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 1);
+  await throttled.report(token, generateAttackEvent(), 5000);
+  t.same(api.getEvents().length, 2);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 3);
+  await throttled.report(token, generateAttackEvent(), 5000);
+  t.same(api.getEvents().length, 4);
+  await throttled.report(token, generateAttackWaveEvent(), 5000);
+  t.same(api.getEvents().length, 5);
+  await throttled.report(token, generateAttackEvent(), 5000);
+  t.same(api.getEvents().length, 5);
+
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await throttled.report(token, generateAttackEvent(), 5000);
+  t.same(api.getEvents().length, 6);
 });

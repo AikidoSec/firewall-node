@@ -22,7 +22,11 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
 
       calls[hostname]++;
 
-      if (hostname === "thisdomainpointstointernalip.com") {
+      if (
+        hostname === "thisdomainpointstointernalip.com" ||
+        hostname === "my-service-hostname" ||
+        hostname === "metadata"
+      ) {
         return original.apply(
           // @ts-expect-error We don't know the type of `this`
           this,
@@ -108,99 +112,103 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         Agent: UndiciAgent,
       } = require(undiciPkgName) as typeof import("undici-v6");
 
-      await request("https://app.aikido.dev");
+      await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await fetch("https://app.aikido.dev");
+      await fetch("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "http:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 80, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 80, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
         protocol: "https:",
-        hostname: "app.aikido.dev",
+        hostname: "ssrf-redirects.testssandbox.com",
         port: "443",
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await request(new URL("https://app.aikido.dev"));
+      await request(new URL("https://ssrf-redirects.testssandbox.com"));
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: 443, hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
-      await request(require("url").parse("https://app.aikido.dev"));
+      await request(
+        require("url").parse("https://ssrf-redirects.testssandbox.com")
+      );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
-      ]);
-      agent.getHostnames().clear();
-
-      await request({
-        origin: "https://app.aikido.dev",
-      } as URL);
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
-      ]);
-      agent.getHostnames().clear();
-
-      await request(require("url").parse("https://app.aikido.dev"));
-      t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
       await request({
-        origin: "https://app.aikido.dev",
+        origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "app.aikido.dev", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+      ]);
+      agent.getHostnames().clear();
+
+      await request(
+        require("url").parse("https://ssrf-redirects.testssandbox.com")
+      );
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+      ]);
+      agent.getHostnames().clear();
+
+      await request({
+        origin: "https://ssrf-redirects.testssandbox.com",
+      } as URL);
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -308,14 +316,12 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await runWithContext(
         {
           ...createContext(),
-          ...{
-            body: {
-              image2: [
-                "http://example",
-                "prefix.thisdomainpointstointernalip.com",
-              ],
-              image: "http://thisdomainpointstointernalip.com/path",
-            },
+          body: {
+            image2: [
+              "http://example",
+              "prefix.thisdomainpointstointernalip.com",
+            ],
+            image: "http://thisdomainpointstointernalip.com/path",
           },
         },
         async () => {
@@ -346,6 +352,44 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { serviceHostname: "my-service-hostname" },
+        },
+        async () => {
+          // This should NOT throw an error because my-service-hostname is a service hostname
+          const error = await t.rejects(() =>
+            request("http://my-service-hostname")
+          );
+          if (error instanceof Error) {
+            // @ts-expect-error Added in Node.js 16.9.0
+            t.same(error.code, "ECONNREFUSED");
+            // ^ means it tried to connect to the hostname
+          } else {
+            t.fail("Expected an error to be thrown");
+          }
+        }
+      );
+
+      await runWithContext(
+        {
+          ...createContext(),
+          body: { metadataHost: "metadata" },
+        },
+        async () => {
+          const error = await t.rejects(() => request("http://metadata"));
+          if (error instanceof Error) {
+            t.same(
+              error.message,
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.metadataHost"
+            );
+          } else {
+            t.fail("Expected an error to be thrown");
+          }
         }
       );
 

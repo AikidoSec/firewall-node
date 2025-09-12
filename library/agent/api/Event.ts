@@ -73,7 +73,8 @@ export type OperationKind =
   | "exec_op"
   | "deserialize_op"
   | "graphql_op"
-  | "eval_op";
+  | "eval_op"
+  | "ai_op";
 
 type OperationStats = {
   kind: OperationKind;
@@ -101,6 +102,7 @@ type Heartbeat = {
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
         total: number;
         blocked: number;
@@ -113,6 +115,16 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  ai: {
+    provider: string;
+    model: string;
+    calls: number;
+    tokens: {
+      input: number;
+      output: number;
+      total: number;
+    };
+  }[];
   packages: {
     name: string;
     version: string;
@@ -123,6 +135,7 @@ type Heartbeat = {
     path: string;
     method: string;
     hits: number;
+    rateLimitedCount: number;
     graphql?: { type: "query" | "mutation"; name: string };
     apispec: APISpec;
   }[];
@@ -138,4 +151,19 @@ type Heartbeat = {
   middlewareInstalled?: boolean;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat;
+export type DetectedAttackWave = {
+  type: "detected_attack_wave";
+  request: {
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    source: string;
+  };
+  attack: {
+    metadata: Record<string, string>;
+    user: User | undefined;
+  };
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;

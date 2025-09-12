@@ -1,61 +1,12 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
-import { wrap } from "../helpers/wrap";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { createTestAgent } from "../helpers/createTestAgent";
 import * as fetch from "../helpers/fetch";
-import { Response } from "../agent/api/fetchBlockedLists";
-
-wrap(fetch, "fetch", function mock(original) {
-  return async function mock(this: typeof fetch) {
-    if (
-      arguments.length > 0 &&
-      arguments[0] &&
-      arguments[0].url.toString().includes("firewall")
-    ) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          blockedIPAddresses: [
-            {
-              key: "geoip/Belgium;BE",
-              source: "geoip",
-              description: "geo restrictions",
-              ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-            },
-          ],
-          blockedUserAgents: "hacker|attacker",
-          userAgentDetails: [
-            {
-              key: "hacker",
-              pattern: "hacker",
-            },
-            {
-              key: "attacker",
-              pattern: "attacker",
-            },
-          ],
-          allowedIPAddresses: [
-            {
-              key: "geoip/Belgium;BE",
-              source: "geoip",
-              description: "geo restrictions",
-              ips: ["4.3.2.1"],
-            },
-          ],
-          monitoredIPAddresses: [],
-          monitoredUserAgents: "",
-        } satisfies Response),
-      };
-    }
-
-    return await original.apply(this, arguments);
-  };
-});
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -77,6 +28,37 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["5.6.7.8"],
+  }),
+  fetchListsAPI: new FetchListsAPIForTesting({
+    blockedIPAddresses: [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "geo restrictions",
+        ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+      },
+    ],
+    blockedUserAgents: "hacker|attacker",
+    userAgentDetails: [
+      {
+        key: "hacker",
+        pattern: "hacker",
+      },
+      {
+        key: "attacker",
+        pattern: "attacker",
+      },
+    ],
+    allowedIPAddresses: [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "geo restrictions",
+        ips: ["4.3.2.1"],
+      },
+    ],
+    monitoredIPAddresses: [],
+    monitoredUserAgents: "",
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);

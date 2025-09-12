@@ -6,6 +6,8 @@ import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -20,7 +22,9 @@ wrap(dns, "lookup", function lookup(original) {
 
     if (
       hostname === "thisdomainpointstointernalip.com" ||
-      hostname === "thisdomainpointstointernalip2.com"
+      hostname === "thisdomainpointstointernalip2.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
     ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
@@ -57,8 +61,10 @@ function createContext(): Context {
 t.setTimeout(60 * 1000);
 
 t.test("it works", (t) => {
+  const api = new ReportingAPIForTesting();
   const agent = createTestAgent({
     token: new Token("123"),
+    api,
   });
   agent.start([new HTTPRequest()]);
 
@@ -139,7 +145,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip.com" } },
+      body: { image: "thisdomainpointstointernalip.com" },
     },
     () => {
       https
@@ -153,6 +159,19 @@ t.test("it works", (t) => {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+
+          t.match(api.getEvents()[api.getEvents().length - 1], {
+            type: "detected_attack",
+            attack: {
+              kind: "ssrf",
+              payload: "thisdomainpointstointernalip.com",
+              metadata: {
+                hostname: "thisdomainpointstointernalip.com",
+                port: "443",
+                privateIP: getMajorNodeVersion() >= 18 ? "::1" : "127.0.0.1",
+              },
+            },
+          });
         })
         .on("finish", () => {
           t.fail("should not finish");
@@ -164,7 +183,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip2.com" } },
+      body: { image: "thisdomainpointstointernalip2.com" },
     },
     () => {
       https
@@ -300,6 +319,44 @@ t.test("it works", (t) => {
       );
     }
   });
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { serviceHostname: "my-service-hostname" },
+    },
+    () => {
+      // This should NOT throw an error because my-service-hostname is a service hostname
+      const serviceRequest = http.request("http://my-service-hostname");
+      serviceRequest.on("error", (e: NodeJS.ErrnoException) => {
+        // ECONNREFUSED means that the request is not blocked
+        t.same(e.code, "ECONNREFUSED");
+      });
+      serviceRequest.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { metadataHost: "metadata" },
+    },
+    () => {
+      const metadataRequest = http.request(
+        "http://metadata/computeMetadata/v1/instance/"
+      );
+      metadataRequest.on("error", (e: NodeJS.ErrnoException) => {
+        t.same(
+          e.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.metadataHost"
+        );
+      });
+      metadataRequest.on("finish", () => {
+        t.fail("should not finish");
+      });
+      metadataRequest.end();
+    }
+  );
 
   setTimeout(() => {
     t.end();

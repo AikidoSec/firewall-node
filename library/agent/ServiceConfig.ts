@@ -3,7 +3,7 @@ import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import { Context, updateContext } from "./Context";
 import type { Endpoint, EndpointConfig } from "./Config";
-import { IPList, UserAgentDetails } from "./api/fetchBlockedLists";
+import { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 
 export class ServiceConfig {

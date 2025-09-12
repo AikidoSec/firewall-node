@@ -51,3 +51,18 @@ t.test("port is 0", async () => {
     }
   );
 });
+
+t.test("it adds private IP", async () => {
+  t.same(
+    getMetadataForSSRFAttack({
+      hostname: "example.com",
+      port: 80,
+      privateIP: "127.0.0.1",
+    }),
+    {
+      hostname: "example.com",
+      port: "80",
+      privateIP: "127.0.0.1",
+    }
+  );
+});

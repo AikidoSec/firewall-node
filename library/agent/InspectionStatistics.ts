@@ -43,14 +43,24 @@ export class InspectionStatistics {
   private requests: {
     total: number;
     aborted: number;
+    rateLimited: number;
     attacksDetected: {
+      total: number;
+      blocked: number;
+    };
+    attackWaves: {
       total: number;
       blocked: number;
     };
   } = {
     total: 0,
     aborted: 0,
+    rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   };
   private userAgents: UserAgentStats = {
     breakdown: {},
@@ -89,7 +99,12 @@ export class InspectionStatistics {
     this.requests = {
       total: 0,
       aborted: 0,
+      rateLimited: 0,
       attacksDetected: { total: 0, blocked: 0 },
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     };
     this.userAgents = {
       breakdown: {},
@@ -108,7 +123,12 @@ export class InspectionStatistics {
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+      attackWaves: {
         total: number;
         blocked: number;
       };
@@ -252,6 +272,14 @@ export class InspectionStatistics {
 
   onRequest() {
     this.requests.total += 1;
+  }
+
+  onRateLimitedRequest() {
+    this.requests.rateLimited += 1;
+  }
+
+  onAttackWaveDetected() {
+    this.requests.attackWaves.total += 1;
   }
 
   onInspectedCall({
