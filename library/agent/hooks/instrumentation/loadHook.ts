@@ -28,7 +28,13 @@ export function onModuleLoad(
     if (
       // Sometimes the format is not set!
       previousLoadResult.format &&
-      !["builtin", "commonjs", "module"].includes(previousLoadResult.format)
+      ![
+        "builtin",
+        "commonjs",
+        "module",
+        "commonjs-typescript",
+        "module-typescript",
+      ].includes(previousLoadResult.format)
     ) {
       return previousLoadResult;
     }
@@ -42,6 +48,10 @@ export function onModuleLoad(
     // For Node.js builtin modules
     if (isBuiltin) {
       return patchBuiltin(path, previousLoadResult);
+    }
+
+    if (isSelfCheckImport(path)) {
+      return updateSelfCheckSource(previousLoadResult);
     }
 
     return patchPackage(path, previousLoadResult);
@@ -168,4 +178,23 @@ function patchBuiltin(
   orig[builtinPatchedSymbol] = true;
 
   return previousLoadResult;
+}
+
+function isSelfCheckImport(path: string) {
+  // We can't use getModuleInfoFromPath as it would not work in unit tests
+  return path
+    .replace(/\\/g, "/")
+    .includes("hooks/instrumentation/zenHooksCheckImport."); // .js or .ts
+}
+
+function updateSelfCheckSource(previousLoadResult: ReturnType<LoadFunction>) {
+  const sourceString =
+    typeof previousLoadResult.source === "string"
+      ? previousLoadResult.source
+      : new TextDecoder("utf-8").decode(previousLoadResult.source);
+
+  return {
+    ...previousLoadResult,
+    source: sourceString.replace("//SELF_CHECK_REPLACE", ":)"),
+  };
 }
