@@ -43,6 +43,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
     }),
     new Token("123"),
     undefined,
+    false,
     new FetchListsAPIForTesting()
   );
   agent.start([new Koa(), new HTTPServer()]);

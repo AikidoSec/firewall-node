@@ -1,7 +1,6 @@
 const { rm, copyFile, mkdir, readFile, writeFile } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
-const { promisify } = require("util");
 const { fileExists, findFilesWithExtension } = require("./helpers/fs");
 const {
   downloadFile,
