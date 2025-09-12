@@ -64,8 +64,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 24.x]
-    timeout-minutes: 10
+        include:
+          - node-version: 16.x
+            instrumentation: "current"
+          - node-version: 18.x
+            new-instrumentation: "current"
+          - node-version: 20.x
+            new-instrumentation: "current"
+          - node-version: 22.x
+            new-instrumentation: "current"
+          - node-version: 24.x
+            new-instrumentation: "current"
+          - node-version: 24.x
+            new-instrumentation: "new"
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -77,6 +89,11 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - name: "Install Google Cloud SDK"
         uses: google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a # v2
         with:
@@ -88,6 +105,11 @@ jobs:
       - run: npm run install-lib-only
       - run: npm run build
       - run: npm run test:ci
+        if: ${{ matrix.new-instrumentation == 'current' }}
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+      - run: npm run test:ci:new
+        if: ${{ matrix.new-instrumentation == 'new' }}
         env:
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
       - name: "Upload coverage"
