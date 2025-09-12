@@ -7,7 +7,6 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
-import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import type {
   AgentInfo,
@@ -34,6 +33,7 @@ import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -77,7 +77,8 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
-    private readonly newInstrumentation: boolean = false
+    private readonly newInstrumentation: boolean = false,
+    private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -415,7 +416,7 @@ export class Agent {
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
-      } = await fetchBlockedLists(this.token);
+      } = await this.fetchListsAPI.getLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);

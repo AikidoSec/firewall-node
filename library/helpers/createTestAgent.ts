@@ -1,5 +1,7 @@
 import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
+import type { FetchListsAPI } from "../agent/api/FetchListsAPI";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 import type { ReportingAPI } from "../agent/api/ReportingAPI";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import type { Token } from "../agent/api/Token";
@@ -17,6 +19,7 @@ export function createTestAgent(opts?: {
   token?: Token;
   serverless?: string;
   suppressConsoleLog?: boolean;
+  fetchListsAPI?: FetchListsAPI;
 }) {
   if (opts?.suppressConsoleLog ?? true) {
     wrap(console, "log", function log() {
@@ -29,7 +32,8 @@ export function createTestAgent(opts?: {
     opts?.logger ?? new LoggerNoop(),
     opts?.api ?? new ReportingAPIForTesting(),
     opts?.token, // Defaults to undefined
-    opts?.serverless // Defaults to undefined
+    opts?.serverless, // Defaults to undefined
+    opts?.fetchListsAPI ?? new FetchListsAPIForTesting()
   );
 
   setInstance(agent);
