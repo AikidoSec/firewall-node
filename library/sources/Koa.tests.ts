@@ -1,10 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Koa } from "./Koa";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";

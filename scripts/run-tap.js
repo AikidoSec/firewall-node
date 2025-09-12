@@ -19,7 +19,7 @@ if (process.argv.includes("--test-new-instrumentation")) {
 
   if (major < 22) {
     console.error(
-      "Error:: --test-new-instrumentation is not supported on Node.js versions below 22."
+      "Error: --test-new-instrumentation is not supported on Node.js versions below 22."
     );
     process.exit(1);
   }
@@ -32,6 +32,9 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/AiSDK.test.ts",
     "**/sinks/Anthropic.test.ts",
     "**/sinks/OpenAI.test.ts",
+    "**/sinks/GoogleGenAi.test.ts",
+    "**/sinks/AiSDK.v4.test.ts",
+    "**/sinks/AiSDK.v5.test.ts",
 
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",

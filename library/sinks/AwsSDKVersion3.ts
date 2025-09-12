@@ -47,7 +47,11 @@ function isConverseResponse(response: unknown): response is ConverseResponse {
 }
 
 export class AwsSDKVersion3 implements Wrapper {
-  private processInvokeModelResponse(response: unknown, agent: Agent) {
+  private processInvokeModelResponse(
+    response: unknown,
+    command: unknown,
+    agent: Agent
+  ) {
     if (!isInvokeResponse(response)) {
       return;
     }
@@ -63,7 +67,8 @@ export class AwsSDKVersion3 implements Wrapper {
       return;
     }
 
-    if (typeof body.model === "string") {
+    // @ts-expect-error We don't know the type of command
+    if (command && command.input && typeof command.input.modelId === "string") {
       let inputTokens = 0;
       let outputTokens = 0;
 
@@ -72,10 +77,24 @@ export class AwsSDKVersion3 implements Wrapper {
         outputTokens = body.usage.output_tokens;
       }
 
+      let modelId: string | undefined = undefined;
+      // @ts-expect-error We don't know the type of command
+      if (!command.input.modelId.startsWith("arn:")) {
+        // @ts-expect-error We don't know the type of command
+        modelId = command.input.modelId;
+      }
+      if (!modelId && typeof body.model === "string") {
+        modelId = body.model;
+      }
+
+      if (!modelId) {
+        return;
+      }
+
       const aiStats = agent.getAIStatistics();
       aiStats.onAICall({
         provider: "bedrock",
-        model: body.model,
+        model: modelId,
         inputTokens: inputTokens,
         outputTokens: outputTokens,
       });
@@ -98,6 +117,12 @@ export class AwsSDKVersion3 implements Wrapper {
 
     // @ts-expect-error We don't know the type of command
     const modelId: string = command.input.modelId;
+
+    // Don't report if modelId is an ARN
+    // There's no way to get the actual model name like we can with InvokeModel
+    if (modelId.startsWith("arn:")) {
+      return;
+    }
 
     let inputTokens = 0;
     let outputTokens = 0;
@@ -129,23 +154,31 @@ export class AwsSDKVersion3 implements Wrapper {
                 const command = args[0];
                 if (returnValue instanceof Promise) {
                   // Inspect the response after the promise resolves, it won't change the original promise
-                  returnValue.then((response) => {
-                    try {
+                  returnValue
+                    .then((response) => {
                       if (
                         exports.InvokeModelCommand &&
                         command instanceof exports.InvokeModelCommand
                       ) {
-                        this.processInvokeModelResponse(response, agent);
+                        this.processInvokeModelResponse(
+                          response,
+                          command,
+                          agent
+                        );
                       } else if (
                         exports.ConverseCommand &&
                         command instanceof exports.ConverseCommand
                       ) {
                         this.processConverseResponse(response, command, agent);
                       }
-                    } catch {
-                      // If we don't catch these errors, it will result in an unhandled promise rejection!
-                    }
-                  });
+                    })
+                    .catch((error) => {
+                      agent.onErrorThrownByInterceptor({
+                        error: error,
+                        method: "send.<promise>",
+                        module: "@aws-sdk/client-bedrock-runtime",
+                      });
+                    });
                 }
               }
 

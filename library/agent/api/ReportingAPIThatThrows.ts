@@ -4,6 +4,7 @@ import { Token } from "./Token";
 import { Event } from "./Event";
 
 export class ReportingAPIThatThrows implements ReportingAPI {
+  // oxlint-disable-next-line require-await
   async report(
     token: Token,
     event: Event,

@@ -66,7 +66,6 @@ export function createExpressTests(expressPackageName: string) {
       allowedIPAddresses: ["4.3.2.1"],
     }),
     token: new Token("123"),
-    serverless: "lambda",
     wrappers: [new Express(), new FileSystem(), new HTTPServer()],
     rewrite: {
       express: expressPackageName,

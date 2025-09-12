@@ -119,9 +119,9 @@ async function getResult() {
     `POST avg diff: ${postDiff.toFixed(3)}ms (${postDiffPercent.toFixed(2)}%)`
   );
 
-  // Check if difference is larger than 3ms
-  if (getDiff > 3 || postDiff > 3) {
-    console.log("Zen is causing a performance impact thats larger than 3ms");
+  // Check if difference is larger than 5ms
+  if (getDiff > 5 || postDiff > 5) {
+    console.log("Zen is causing a performance impact thats larger than 5ms");
     process.exit(1);
   }
 

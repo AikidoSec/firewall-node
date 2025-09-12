@@ -55,6 +55,9 @@ import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
 import { AiSDK } from "../sinks/AiSDK";
 import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
+import { GoogleGenAi } from "../sinks/GoogleGenAi";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -87,6 +90,10 @@ function getAPI(): ReportingAPI {
   );
 }
 
+function getFetchListsAPI(): FetchListsAPI {
+  return new FetchListsAPINodeHTTP();
+}
+
 function getTokenFromEnv(): Token | undefined {
   return process.env.AIKIDO_TOKEN
     ? new Token(process.env.AIKIDO_TOKEN)
@@ -112,7 +119,8 @@ function startAgent({
     getAPI(),
     getTokenFromEnv(),
     serverless,
-    newInstrumentation
+    newInstrumentation,
+    getFetchListsAPI()
   );
 
   setInstance(agent);
@@ -162,6 +170,7 @@ export function getWrappers() {
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
     new AiSDK(),
+    new GoogleGenAi(),
   ];
 }
 
