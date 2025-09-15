@@ -172,6 +172,30 @@ t.test("With callback", async (t) => {
     { name: "test", type: "external" },
     {
       kind: "outgoing_http_op",
+      bindContext: false,
+      inspectArgs: (args) => {
+        t.same(args, ["input", () => {}]);
+      },
+    }
+  );
+
+  toWrap.test("input", () => {});
+});
+
+t.test("With callback with bindContext", async (t) => {
+  const toWrap = {
+    test(input: string, callback: (input: string) => void) {
+      callback(input);
+    },
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: "outgoing_http_op",
+      bindContext: true,
       inspectArgs: (args) => {
         t.same(args, ["input", bindContext(() => {})]);
       },

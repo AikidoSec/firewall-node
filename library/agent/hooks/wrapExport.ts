@@ -31,6 +31,12 @@ export type InterceptorObject = {
   // This will be used to collect stats
   // For sources, this will often be undefined
   kind: OperationKind | undefined;
+  // Whether to bind the async resource execution context to callback functions passed as arguments
+  // Only applies to inspectArgs right now
+  // If the called function uses code where the context would be lost, like calling the callback in a setTimeout
+  // or an event listener, this should be true
+  // In other cases this can be false to avoid unnecessary overhead
+  bindContext?: boolean;
 };
 
 /**
@@ -60,10 +66,12 @@ export function wrapExport(
 
           // Run inspectArgs interceptor if provided
           if (typeof interceptors.inspectArgs === "function") {
-            // Bind context to functions in arguments
-            for (let i = 0; i < args.length; i++) {
-              if (typeof args[i] === "function") {
-                args[i] = bindContext(args[i]);
+            if (interceptors.bindContext) {
+              // Bind context to functions in arguments
+              for (let i = 0; i < args.length; i++) {
+                if (typeof args[i] === "function") {
+                  args[i] = bindContext(args[i]);
+                }
               }
             }
 
