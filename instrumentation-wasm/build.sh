@@ -7,7 +7,7 @@ TARGET=nodejs
 OUT_DIR=../library/agent/hooks/instrumentation/wasm
 GENERATE_DTS=false
 
-BINARYEN_VERSION=123 # wasm-opt
+BINARYEN_VERSION=124 # wasm-opt
 WASM_BINDGEN_VERSION=0.2.101
 
 # ---------------------------

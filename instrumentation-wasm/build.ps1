@@ -6,7 +6,7 @@ $TARGET = "nodejs"
 $OUT_DIR = "..\library\agent\hooks\instrumentation\wasm"
 $GENERATE_DTS = $false
 
-$BINARYEN_VERSION = 123
+$BINARYEN_VERSION = 124
 $WASM_BINDGEN_VERSION = "0.2.101"
 
 # ---------------------------
