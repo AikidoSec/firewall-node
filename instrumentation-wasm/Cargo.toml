@@ -10,16 +10,16 @@ name = "node_code_instrumentation"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-oxc_allocator = "0.86.0"
-oxc_ast = "0.86.0"
-oxc_codegen = "0.86.0"
-oxc_parser = "0.86.0"
-oxc_semantic = "0.86.0"
-oxc_span = "0.86.0"
-oxc_traverse = "0.86.0"
+oxc_allocator = "0.87.0"
+oxc_ast = "0.87.0"
+oxc_codegen = "0.87.0"
+oxc_parser = "0.87.0"
+oxc_semantic = "0.87.0"
+oxc_span = "0.87.0"
+oxc_traverse = "0.87.0"
 serde = "1.0.219"
-serde_json = "1.0.142"
-wasm-bindgen = "0.2.100"
+serde_json = "1.0.143"
+wasm-bindgen = "0.2.101"
 
 [profile.release]
 strip = true
