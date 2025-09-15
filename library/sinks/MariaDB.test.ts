@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { MariaDB } from "./MariaDB";
 
@@ -267,9 +267,15 @@ t.test("it detects SQL injections using callbacks", (t) => {
             }
           }
 
-          connection.end();
-          pool.end();
-          t.end();
+          runWithContext(dangerousContext, () => {
+            connection.query("SELECT 1;", () => {
+              t.same(getContext(), dangerousContext);
+
+              connection.end();
+              pool.end();
+              t.end();
+            });
+          });
         }
       );
     } catch (error: any) {

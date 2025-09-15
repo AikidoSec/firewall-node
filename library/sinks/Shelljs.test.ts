@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
@@ -199,5 +199,18 @@ t.test("invalid arguments are passed to shelljs", async () => {
   runWithContext(safeContext, () => {
     const result = shelljs.exec(["ls", "-la", "/"], { silent: true });
     t.same(result.code, 1);
+  });
+});
+
+t.test("context is available in callbacks", async (t) => {
+  const shell = require("shelljs");
+
+  await new Promise<void>((resolve) => {
+    runWithContext(safeContext, () => {
+      shell.exec("ls", { silent: true }, () => {
+        t.match(getContext(), safeContext);
+        resolve();
+      });
+    });
   });
 });

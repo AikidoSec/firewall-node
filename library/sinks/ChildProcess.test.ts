@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { Context, runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { ChildProcess } from "./ChildProcess";
 import { execFile, execFileSync } from "child_process";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -219,4 +219,13 @@ t.test("it works", async (t) => {
       );
     }
   );
+
+  await new Promise<void>((resolve) => {
+    runWithContext(unsafeContext, () => {
+      exec("ls", () => {
+        t.same(getContext(), unsafeContext);
+        resolve();
+      }).unref();
+    });
+  });
 });

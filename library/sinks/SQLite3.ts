@@ -81,6 +81,7 @@ export class SQLite3 implements Wrapper {
         for (const func of sqlFunctions) {
           wrapExport(db, func, pkgInfo, {
             kind: "sql_op",
+            bindContext: true,
             inspectArgs: (args) => {
               return this.inspectQuery(`sqlite3.${func}`, args);
             },
