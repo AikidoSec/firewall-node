@@ -109,6 +109,10 @@ type Heartbeat = {
         total: number;
         blocked: number;
       };
+      attackWaves: {
+        total: number;
+        blocked: number;
+      };
     };
     userAgents: {
       breakdown: Record<string, number>;
