@@ -194,6 +194,10 @@ function generateHeartbeatEvent(): Event {
           blocked: 0,
           total: 0,
         },
+        attackWaves: {
+          blocked: 0,
+          total: 0,
+        },
       },
       userAgents: {
         breakdown: {},

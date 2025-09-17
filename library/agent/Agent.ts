@@ -205,13 +205,29 @@ export class Agent {
     operation: string;
     kind: Kind;
     blocked: boolean;
-    source: Source;
-    request: Context;
+    source: Source | undefined;
+    request: Context | undefined;
     stack: string;
     paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    const attackRequest: DetectedAttack["request"] = request
+      ? {
+          method: request.method,
+          url: request.url,
+          ipAddress: request.remoteAddress,
+          userAgent:
+            typeof request.headers["user-agent"] === "string"
+              ? request.headers["user-agent"]
+              : undefined,
+          body: convertRequestBodyToString(request.body),
+          headers: filterEmptyRequestHeaders(request.headers),
+          source: request.source,
+          route: request.route,
+        }
+      : undefined;
+
     const attack: DetectedAttack = {
       type: "detected_attack",
       time: Date.now(),
@@ -224,22 +240,13 @@ export class Agent {
         source: source,
         metadata: limitLengthMetadata(metadata, 4096),
         kind: kind,
-        payload: JSON.stringify(payload).substring(0, 4096),
-        user: request.user,
-      },
-      request: {
-        method: request.method,
-        url: request.url,
-        ipAddress: request.remoteAddress,
-        userAgent:
-          typeof request.headers["user-agent"] === "string"
-            ? request.headers["user-agent"]
+        payload:
+          payload !== undefined
+            ? JSON.stringify(payload).substring(0, 4096)
             : undefined,
-        body: convertRequestBodyToString(request.body),
-        headers: filterEmptyRequestHeaders(request.headers),
-        source: request.source,
-        route: request.route,
+        user: request?.user,
       },
+      request: attackRequest,
       agent: this.getAgentInfo(),
     };
 
