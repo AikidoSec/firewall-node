@@ -51,16 +51,6 @@ jobs:
           "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
         ports:
           - "27019:8123"
-      mongodb-replica:
-        image: bitnami/mongodb:4.4
-        env:
-          MONGODB_ADVERTISED_HOSTNAME: 127.0.0.1
-          MONGODB_REPLICA_SET_MODE: primary
-          MONGODB_ROOT_USER: root
-          MONGODB_ROOT_PASSWORD: password
-          MONGODB_REPLICA_SET_KEY: replicasetkey123
-        ports:
-          - "27020:27017"
     strategy:
       fail-fast: false
       matrix:
