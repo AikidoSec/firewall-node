@@ -70,6 +70,16 @@ export class GoogleGenAi implements Wrapper {
             module: "@google/genai",
           });
         });
+    } else {
+      try {
+        this.inspectResponse(agent, returnValue);
+      } catch (error) {
+        agent.onErrorThrownByInterceptor({
+          error: error instanceof Error ? error : new Error("Unknown error"),
+          method: "generateContent",
+          module: "@google/genai",
+        });
+      }
     }
   }
 
@@ -108,6 +118,20 @@ export class GoogleGenAi implements Wrapper {
         });
 
         return exports;
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["dist/node/index.cjs", "dist/node/index.mjs"],
+        [
+          {
+            name: "this.generateContent",
+            nodeType: "FunctionAssignment",
+            operationKind: undefined,
+            modifyReturnValue: (args, returnValue, agent) => {
+              this.inspectReturnValue(agent, returnValue);
+              return returnValue;
+            },
+          },
+        ]
+      );
   }
 }
