@@ -1960,3 +1960,102 @@ t.test("Invalid code throws error (CJS)", async (t) => {
     );
   }
 });
+
+t.test(
+  "add inspectArgs to this function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        this.test = function (fn) {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "this.test",
+            identifier:
+              "express.application.js.this.test.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        this.test = function (fn) {
+            __instrumentInspectArgs("express.application.js.this.test.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        };`
+      ),
+      true
+    );
+  }
+);
+
+t.test(
+  "add inspectArgs to this arrow function assignment expression (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+       this.test = (fn) => {
+            console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "this.test",
+            identifier:
+              "express.application.js.this.test.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    t.same(
+      compareCodeStrings(
+        result,
+        `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        const app = require("example");
+        this.test = (fn) => {
+            __instrumentInspectArgs("express.application.js.this.test.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        };`
+      ),
+      true,
+      result
+    );
+  }
+);
