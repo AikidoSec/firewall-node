@@ -99,6 +99,7 @@ export class MariaDB implements Wrapper {
           name: fn,
           nodeType: "MethodDefinition",
           operationKind: "sql_op",
+          bindContext: true,
           inspectArgs: (args) => this.inspectQuery(args, fn),
         }))
       )
@@ -108,6 +109,7 @@ export class MariaDB implements Wrapper {
           name: fn,
           nodeType: "MethodDefinition",
           operationKind: "sql_op",
+          bindContext: true,
           inspectArgs: (args) => this.inspectQuery(args, fn),
         }))
       );
