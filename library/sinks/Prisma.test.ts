@@ -238,7 +238,9 @@ t.test("it works with postgres", testOpts, async (t) => {
   await client.$disconnect();
 });
 
-t.test("it works with mongodb", testOpts, async (t) => {
+const skip = "mongodb container was removed from Docker Hub";
+
+t.test("it works with mongodb", { skip: skip }, async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
 
