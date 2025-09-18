@@ -125,7 +125,7 @@ export class GoogleGenAi implements Wrapper {
           {
             name: "this.generateContent",
             nodeType: "FunctionAssignment",
-            operationKind: undefined,
+            operationKind: "ai_op",
             modifyReturnValue: (args, returnValue, agent) => {
               this.inspectReturnValue(agent, returnValue);
               return returnValue;
