@@ -85,9 +85,12 @@ for await (const entry of testFiles) {
     return `from '${newPath}.js'`;
   });
 
+  // Replace import * as ... statements to use the default export
   content = content.replaceAll(
-    'import * as t from "tap";',
-    'import t from "tap";'
+    /import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?/g,
+    (match, p1, p2) => {
+      return `import ${p1} from '${p2}';`;
+    }
   );
 
   content = content.replaceAll("__dirname", "import.meta.dirname");
@@ -133,17 +136,14 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
   cwd: libOutDir,
 });
 
-await execAsyncWithPipe(
-  "npx tap --disable-coverage helpers/shouldEnableFirewall.test.ts",
-  {
-    env: {
-      CI: true,
-      AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
-      AIKIDO_CI: "true",
-      NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
-      IS_ESM_TEST: true,
-      ...process.env,
-    },
-    cwd: testsOutDir,
-  }
-);
+await execAsyncWithPipe("npx tap --disable-coverage helpers/", {
+  env: {
+    CI: true,
+    AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
+    AIKIDO_CI: "true",
+    NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
+    IS_ESM_TEST: true,
+    ...process.env,
+  },
+  cwd: testsOutDir,
+});

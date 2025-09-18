@@ -1,6 +1,7 @@
 import * as t from "tap";
 import { buildRouteFromURL } from "./buildRouteFromURL";
 import * as ObjectID from "bson-objectid";
+import { createHash } from "crypto";
 
 t.test("it returns undefined for invalid URLs", async () => {
   t.same(buildRouteFromURL(""), undefined);
@@ -125,7 +126,7 @@ t.test("it replaces IP addresses", async () => {
 });
 
 function generateHash(type: string) {
-  return require("crypto").createHash(type).update("test").digest("hex");
+  return createHash(type).update("test").digest("hex");
 }
 
 t.test("it replaces hashes", async () => {
