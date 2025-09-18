@@ -134,7 +134,9 @@ t.test("should make a POST request with body and gzip", async (t) => {
 t.test(
   "should convert URL object to string for http.request compatibility",
   {
-    skip: process.env.IS_ESM_TEST ? "Mocking not working in ESM tests" : false,
+    skip: process.env.AIKIDO_ESM_TEST
+      ? "Mocking not working in ESM tests"
+      : false,
   },
   async (t) => {
     const http = require("http");

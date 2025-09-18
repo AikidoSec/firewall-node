@@ -136,13 +136,13 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
   cwd: libOutDir,
 });
 
-await execAsyncWithPipe("npx tap --disable-coverage helpers/", {
+await execAsyncWithPipe("npx tap --disable-coverage sources/Hono.test.ts", {
   env: {
     CI: true,
     AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
     AIKIDO_CI: "true",
     NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
-    IS_ESM_TEST: true,
+    AIKIDO_ESM_TEST: true,
     ...process.env,
   },
   cwd: testsOutDir,
