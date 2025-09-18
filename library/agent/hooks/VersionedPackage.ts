@@ -98,7 +98,7 @@ export class VersionedPackage {
       paths = [paths];
     }
     for (const path of paths) {
-      this.fileInstrumentationInstructions.push({
+      this.addFileInstrumentation({
         path,
         functions,
       });

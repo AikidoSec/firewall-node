@@ -94,7 +94,7 @@ export function __instrumentModifyArgs(
 
 export function __instrumentModifyReturnValue(
   id: string,
-  args: unknown[],
+  args: IArguments | unknown[],
   returnValue: unknown,
   subject: unknown // "This" of the method being called
 ): unknown {
@@ -114,7 +114,12 @@ export function __instrumentModifyReturnValue(
   }
 
   try {
-    return cbInfo.funcs.modifyReturnValue(args, returnValue, agent, subject);
+    return cbInfo.funcs.modifyReturnValue(
+      Array.from(args),
+      returnValue,
+      agent,
+      subject
+    );
   } catch (error) {
     if (error instanceof Error) {
       getInstance()?.onFailedToWrapMethod(
