@@ -72,6 +72,8 @@ export class GoogleGenAi implements Wrapper {
         });
     } else {
       try {
+        // The new instrumentation wraps the return statements inside the async function
+        // Inside an async function you can just return normal values (it's not a promise yet)
         this.inspectResponse(agent, returnValue);
       } catch (error) {
         agent.onErrorThrownByInterceptor({
