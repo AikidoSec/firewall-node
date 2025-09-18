@@ -30,15 +30,11 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/AwsSDK*",
     "**/sinks/Anthropic.test.ts",
     "**/sinks/OpenAI.test.ts",
-    "**/sinks/GoogleGenAi.test.ts",
     "**/sinks/AiSDK.v4.test.ts",
     "**/sinks/AiSDK.v5.test.ts",
 
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",
-    "**/sources/GraphQL.test.ts",
-    "**/sources/GraphQL.schema.test.ts",
-    "**/sources/GraphQL.tools.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {
