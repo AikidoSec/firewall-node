@@ -3,7 +3,7 @@ use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType, MethodDefinitio
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::helpers::{
-    get_arg_names::get_function_arg_names, get_arg_names::get_method_arg_names,
+    get_arg_names::get_function_or_method_arg_names,
     get_name_str_for_member_expr::get_name_str_for_member_expr,
     insert_instrument_method_calls::insert_instrument_method_calls,
 };
@@ -49,7 +49,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_method_arg_names(node)
+            get_function_or_method_arg_names(&node.value.params)
         } else {
             Vec::new()
         };
@@ -111,7 +111,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_arg_names(&function_args)
+            get_function_or_method_arg_names(&function_args)
         } else {
             Vec::new()
         };
@@ -171,7 +171,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_arg_names(&node.params)
+            get_function_or_method_arg_names(&node.params)
         } else {
             Vec::new()
         };
