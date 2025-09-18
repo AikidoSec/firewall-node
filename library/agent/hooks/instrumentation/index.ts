@@ -2,6 +2,7 @@ import { onModuleLoad } from "./loadHook";
 import * as mod from "node:module";
 import type { RegisterHookFunction } from "./types";
 import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
+import { checkHooks } from "./checkHooks";
 
 let hooksRegistered = false;
 
@@ -26,4 +27,7 @@ export function registerNodeHooks() {
   });
 
   patchProcessGetBuiltinModule();
+
+  // Run a self-check that prints a warning on failure
+  checkHooks();
 }

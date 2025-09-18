@@ -39,25 +39,27 @@ export type User = {
 
 export type DetectedAttack = {
   type: "detected_attack";
-  request: {
-    method: string | undefined;
-    ipAddress: string | undefined;
-    userAgent: string | undefined;
-    url: string | undefined;
-    headers: Record<string, string | string[]>;
-    body: string | undefined;
-    source: string;
-    route: string | undefined;
-  };
+  request:
+    | {
+        method: string | undefined;
+        ipAddress: string | undefined;
+        userAgent: string | undefined;
+        url: string | undefined;
+        headers: Record<string, string | string[]>;
+        body: string | undefined;
+        source: string;
+        route: string | undefined;
+      }
+    | undefined;
   attack: {
     kind: Kind;
     operation: string;
     module: string;
     blocked: boolean;
-    source: Source;
+    source: Source | undefined;
     path: string;
     stack: string;
-    payload: string;
+    payload: string | undefined;
     metadata: Record<string, string>;
     user: User | undefined;
   };
@@ -104,6 +106,10 @@ type Heartbeat = {
       aborted: number;
       rateLimited: number;
       attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+      attackWaves: {
         total: number;
         blocked: number;
       };

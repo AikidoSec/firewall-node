@@ -36,10 +36,6 @@ t.test("it replaces dates", async () => {
   t.same(buildRouteFromURL("/posts/01-05-2023"), "/posts/:date");
 });
 
-t.test("it ignores comma numbers", async () => {
-  t.same(buildRouteFromURL("/posts/3,000"), "/posts/3,000");
-});
-
 t.test("it ignores API version numbers", async () => {
   t.same(buildRouteFromURL("/v1/posts/3"), "/v1/posts/:number");
 });
@@ -185,4 +181,19 @@ t.test("it does not detect static files as secrets", async () => {
   for (const file of files) {
     t.same(buildRouteFromURL(`/assets/${file}`), `/assets/${file}`);
   }
+});
+
+t.test("it detects numeric comma separated arrays", async (t) => {
+  t.same(buildRouteFromURL("/users/1,2"), "/users/:array(number)");
+  t.same(buildRouteFromURL("/users/1,2,3,4,5"), "/users/:array(number)");
+  t.same(
+    buildRouteFromURL("/users/100,200,3000000,40000000,500000000"),
+    "/users/:array(number)"
+  );
+
+  t.same(buildRouteFromURL("/users/1,2,3,4,"), "/users/1,2,3,4,");
+  t.same(buildRouteFromURL("/users/1,"), "/users/1,");
+  t.same(buildRouteFromURL("/users/,1,2"), "/users/,1,2");
+  t.same(buildRouteFromURL("/users/1,2,3_"), "/users/1,2,3_");
+  t.same(buildRouteFromURL("/users/1,2,3a"), "/users/1,2,3a");
 });

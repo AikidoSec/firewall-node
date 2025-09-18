@@ -11,6 +11,7 @@ import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 export function createKoaRouterTests(koaRouterPackageName: string) {
   const options = {
@@ -41,7 +42,9 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
       allowedIPAddresses: ["4.3.2.1"],
     }),
     new Token("123"),
-    undefined
+    undefined,
+    false,
+    new FetchListsAPIForTesting()
   );
   agent.start([new Koa(), new HTTPServer()]);
   setInstance(agent);

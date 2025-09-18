@@ -17,7 +17,7 @@ export function getIPAddressFromRequest(req: {
     }
   }
 
-  if (req.remoteAddress && isIP(req.remoteAddress)) {
+  if (req.remoteAddress) {
     return req.remoteAddress;
   }
 

@@ -99,6 +99,17 @@ async function run() {
     );
     process.exit(1);
   }
+
+  const otelDifference =
+    ((withOpenTelemetry - withFirewall) / withOpenTelemetry) * 100;
+  console.log(
+    `Performance difference between Zen and OpenTelemetry: ${otelDifference.toFixed(2)}%`
+  );
+
+  if (otelDifference < -5) {
+    console.error(`Zen performance is worse than OpenTelemetry`);
+    process.exit(1);
+  }
 }
 
 run();

@@ -238,7 +238,7 @@ t.test("it works with postgres", testOpts, async (t) => {
   await client.$disconnect();
 });
 
-t.test("it works with mongodb", testOpts, async (t) => {
+t.test("it works with mongodb", async (t) => {
   const agent = createTestAgent();
   agent.start([new Prisma()]);
 
