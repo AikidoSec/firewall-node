@@ -6,7 +6,7 @@ import { OperationKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
-import type { WrapPackageInfo } from "./WrapPackageInfo";
+import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
 
 // Used for cleaning up the stack trace
@@ -16,7 +16,7 @@ export function onInspectionInterceptorResult(
   context: ReturnType<typeof getContext>,
   agent: Agent,
   result: InterceptorResult,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   start: number,
   operation: string,
   kind: OperationKind | undefined

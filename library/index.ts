@@ -9,30 +9,34 @@ import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
 import { addFastifyHook, fastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
+import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { isLibBundled } from "./helpers/isLibBundled";
 
-const supported = isFirewallSupported();
-const shouldEnable = shouldEnableFirewall();
-const notAlreadyImported = checkIndexImportGuard();
+// Prevent logging twice / trying to start agent twice
+if (!isNewHookSystemUsed()) {
+  const supported = isFirewallSupported();
+  const shouldEnable = shouldEnableFirewall();
+  const notAlreadyImported = checkIndexImportGuard();
 
-if (supported && shouldEnable && notAlreadyImported) {
-  if (isESM()) {
-    console.warn(
-      "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
-    );
+  if (supported && shouldEnable && notAlreadyImported) {
+    if (isESM()) {
+      console.warn(
+        "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
+      );
+    }
+
+    if (isLibBundled()) {
+      console.warn(
+        "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+      );
+    }
+
+    require("./agent/protect").protect();
   }
-
-  if (isLibBundled()) {
-    console.warn(
-      "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
-    );
-  }
-
-  require("./agent/protect").protect();
 }
 
 export {

@@ -58,6 +58,7 @@ const agent = new Agent(
   }),
   new Token("123"),
   undefined,
+  false,
   new FetchListsAPIForTesting()
 );
 agent.start([new Fastify(), new HTTPServer(), new FileSystem()]);
