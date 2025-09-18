@@ -189,6 +189,18 @@ export class AwsSDKVersion3 implements Wrapper {
         this.onRequire(exports, pkgInfo);
       })
       .addFileInstrumentation({
+        path: "dist-es/BedrockRuntimeClient.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && isPlainObject(vars[0])) {
+              this.onRequire(vars[0], pkgInfo);
+            }
+          },
+        },
+      })
+      .addFileInstrumentation({
         path: "dist-cjs/index.js",
         functions: [],
         accessLocalVariables: {
