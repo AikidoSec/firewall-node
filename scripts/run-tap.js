@@ -30,7 +30,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/Prisma.test.ts",
     "**/sinks/AwsSDK*",
     "**/sinks/AiSDK.test.ts",
-    "**/sinks/Anthropic.test.ts",
     "**/sinks/OpenAI.test.ts",
     "**/sinks/GoogleGenAi.test.ts",
     "**/sinks/AiSDK.v4.test.ts",
