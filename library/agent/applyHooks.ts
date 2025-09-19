@@ -5,7 +5,7 @@ import {
   wrapRequire,
 } from "./hooks/wrapRequire";
 import { wrapExport } from "./hooks/wrapExport";
-import { registerNodeHooks } from "./hooks/instrumentation";
+import { registerNodeHooks } from "./hooks/instrumentation/index";
 import {
   setBuiltinsToInstrument,
   setPackagesToInstrument,

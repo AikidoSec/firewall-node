@@ -4,6 +4,8 @@ import { ip } from "./ipAddress";
 
 const os = require("os");
 
+// @esm-tests-skip - wrap of exports not possible
+
 wrap(os, "networkInterfaces", function wrap() {
   return function wrap() {
     return {
