@@ -10,6 +10,10 @@ import {
 import { dirname, join, resolve } from "path";
 import { exec } from "child_process";
 import { existsSync } from "fs";
+import { parseSync } from "oxc-parser";
+import { generate } from "astring";
+import { transform } from "oxc-transform";
+import { walk } from "oxc-walker";
 
 const version = process.versions.node.split(".");
 const major = parseInt(version[0], 10);
@@ -49,10 +53,10 @@ const testFiles = glob("**/*.{test.ts,txt}", {
   exclude: ["**/node_modules/**"],
 });
 
-// Copy all test files
+// Copy all test files and transform them
 for await (const entry of testFiles) {
   const src = join(libDir, entry);
-  let dest = join(testsOutDir, entry);
+  const dest = join(testsOutDir, entry.replace(/ts$/, "js"));
 
   await mkdir(dirname(dest), { recursive: true });
 
@@ -61,43 +65,83 @@ for await (const entry of testFiles) {
     continue;
   }
 
-  let content = await readFile(src, "utf8");
+  const sourceText = await readFile(src, "utf8");
 
-  if (content.includes("// @esm-tests-skip")) {
+  if (sourceText.includes("// @esm-tests-skip")) {
     continue;
   }
 
-  // Fix default imports
-  content = content.replace(
-    /import\s+(\w+)\s+from\s+['"](\.[^'"]*)['"];?/g,
-    (match, p1, p2) => {
-      return `import ____${p1} from '${p2}'; const ${p1} = ____${p1}.default;`;
-    }
-  );
+  const filename = entry.split("/").pop();
+  const newFilename = filename.replace(/ts$/, "js");
 
-  // Modify all relative imports
-  content = content.replace(/from\s+['"](\.[^'"]*)['"]/g, (match, p1) => {
-    const newPath = resolve(dirname(dest), p1).replace(
-      ".esm-tests/tests/",
-      ".esm-tests/library/"
-    );
-
-    return `from '${newPath}.js'`;
+  // --------------- Transform TS to JS and parse to AST ----------------
+  const { code, errors } = transform(filename, sourceText, {
+    target: "es2022",
+    typescript: {
+      rewriteImportExtensions: "rewrite",
+    },
   });
 
-  // Replace import * as ... statements to use the default export
-  content = content.replaceAll(
-    /import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?/g,
-    (match, p1, p2) => {
-      return `import ${p1} from '${p2}';`;
+  if (errors.length) {
+    console.error(`Errors in ${entry}:`);
+    for (const error of errors) {
+      console.error(error.message);
     }
-  );
+    process.exit(1);
+  }
 
-  content = content.replaceAll("__dirname", "import.meta.dirname");
+  const ast = parseSync(newFilename, code, {
+    preserveParens: false,
+  });
 
-  content = content.replaceAll("require(", "await import(");
+  // --------------- Traverse the AST ---------------
 
-  await writeFile(dest, content);
+  // https://www.npmjs.com/package/oxc-walker
+  walk(ast.program, {
+    enter(node) {
+      if (node.type === "ImportDeclaration") {
+        const importNode = node;
+        const source = importNode.source;
+
+        if (source.value === "tap") {
+          importNode.specifiers = [
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "test" },
+              local: { type: "Identifier", name: "test" },
+            },
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "describe" },
+              local: { type: "Identifier", name: "describe" },
+            },
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "before" },
+              local: { type: "Identifier", name: "before" },
+            },
+          ];
+
+          source.value = "node:test";
+          source.raw = `'node:test'`;
+        }
+
+        // Only modify relative imports (those starting with ".")
+        if (typeof source.value === "string" && source.value.startsWith(".")) {
+          const newPath = resolve(dirname(dest), source.value).replace(
+            ".esm-tests/tests/",
+            ".esm-tests/library/"
+          );
+
+          // Update import source
+          source.value = `${newPath}.js`;
+          source.raw = `'${newPath}.js'`;
+        }
+      }
+    },
+  });
+
+  await writeFile(dest, generate(ast.program));
 }
 
 // Create package.json with type module to run tap as ESM
@@ -112,22 +156,6 @@ await writeFile(
   )
 );
 
-await writeFile(
-  join(testsOutDir, "tsconfig.json"),
-  JSON.stringify(
-    {
-      compilerOptions: {
-        module: "es2015",
-        moduleResolution: "bundler",
-        esModuleInterop: true,
-        resolveJsonModule: true,
-      },
-    },
-    null,
-    2
-  )
-);
-
 await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
   cwd: testsOutDir,
 });
@@ -136,14 +164,17 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
   cwd: libOutDir,
 });
 
-await execAsyncWithPipe("npx tap --disable-coverage sources/Hono.test.ts", {
-  env: {
-    CI: true,
-    AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
-    AIKIDO_CI: "true",
-    NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
-    AIKIDO_ESM_TEST: true,
-    ...process.env,
-  },
-  cwd: testsOutDir,
-});
+await execAsyncWithPipe(
+  "node --test --test-concurrency 4 ./sources/Hono.test.js",
+  {
+    env: {
+      CI: true,
+      AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
+      AIKIDO_CI: "true",
+      NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
+      AIKIDO_ESM_TEST: true,
+      ...process.env,
+    },
+    cwd: testsOutDir,
+  }
+);
