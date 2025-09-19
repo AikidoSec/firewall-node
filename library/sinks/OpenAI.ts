@@ -4,6 +4,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { getRouteForAiStats } from "../helpers/getRouteForAiStats";
 
 type Response = {
   model: string;
@@ -65,6 +66,7 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      route: getRouteForAiStats(),
     });
   }
 
@@ -94,6 +96,7 @@ export class OpenAI implements Wrapper {
       model: response.model ?? "",
       inputTokens: inputTokens,
       outputTokens: outputTokens,
+      route: getRouteForAiStats(),
     });
   }
 
