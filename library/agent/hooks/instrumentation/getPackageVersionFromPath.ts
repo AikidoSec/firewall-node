@@ -8,7 +8,7 @@ const cache = new Map<string, string | undefined>();
 export function getPackageVersionFromPath(
   basePath: string
 ): string | undefined {
-  // This function is called for every file of a imported package, so we cache the result
+  // This function is called for every file of an imported package, so we cache the result
   if (cache.has(basePath)) {
     return cache.get(basePath);
   }

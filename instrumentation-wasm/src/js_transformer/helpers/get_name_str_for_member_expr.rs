@@ -37,6 +37,7 @@ pub fn get_name_str_for_member_expr<'a>(
             allocator,
             &MemberExpression::StaticMemberExpression(static_member_expr.clone_in(allocator)),
         )?,
+        Expression::ThisExpression(_) => "this",
         _ => {
             // Unsupported AST type
             return None;

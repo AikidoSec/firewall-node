@@ -26,21 +26,15 @@ if (process.argv.includes("--test-new-instrumentation")) {
 
   // This list excludes test files of sinks and sources that are not yet ported to the new instrumentation
   const excludedTestFilesForNewInstrumentation = [
-    "**/sinks/Undici*",
     "**/sinks/Prisma.test.ts",
     "**/sinks/AwsSDK*",
     "**/sinks/AiSDK.test.ts",
-    "**/sinks/Anthropic.test.ts",
     "**/sinks/OpenAI.test.ts",
-    "**/sinks/GoogleGenAi.test.ts",
     "**/sinks/AiSDK.v4.test.ts",
     "**/sinks/AiSDK.v5.test.ts",
 
     "**/sources/Lambda.test.ts",
     "**/sources/FunctionsFramework.test.ts",
-    "**/sources/GraphQL.test.ts",
-    "**/sources/GraphQL.schema.test.ts",
-    "**/sources/GraphQL.tools.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {

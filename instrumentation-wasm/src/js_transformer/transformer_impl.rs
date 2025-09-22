@@ -3,7 +3,7 @@ use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType, MethodDefinitio
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::helpers::{
-    get_arg_names::get_function_arg_names, get_arg_names::get_method_arg_names,
+    get_arg_names::get_function_or_method_arg_names,
     get_name_str_for_member_expr::get_name_str_for_member_expr,
     insert_instrument_method_calls::insert_instrument_method_calls,
 };
@@ -49,7 +49,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_method_arg_names(node)
+            get_function_or_method_arg_names(&node.value.params)
         } else {
             Vec::new()
         };
@@ -103,20 +103,25 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         let instruction = matching_instruction.unwrap();
 
-        // We need to modify the function expression
-        let function_expression = match &mut node.right {
-            Expression::FunctionExpression(func_expr) => func_expr,
+        let function_args = match &mut node.right {
+            Expression::FunctionExpression(func_expr) => &func_expr.params,
+            Expression::ArrowFunctionExpression(arrow_func_expr) => &arrow_func_expr.params,
             _ => return,
         };
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_arg_names(function_expression)
+            get_function_or_method_arg_names(&function_args)
         } else {
             Vec::new()
         };
 
-        let body = function_expression.body.as_mut().unwrap();
+        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> =
+            match &mut node.right {
+                Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
+                Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+                _ => return,
+            };
 
         insert_instrument_method_calls(
             self.allocator,
@@ -166,7 +171,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_arg_names(node)
+            get_function_or_method_arg_names(&node.params)
         } else {
             Vec::new()
         };
