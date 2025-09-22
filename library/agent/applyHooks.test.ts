@@ -64,7 +64,7 @@ t.test(
     const error = t.throws(() => hooks.addGlobal());
     t.ok(error instanceof Error);
     if (error instanceof Error) {
-      t.match(error.message, /Name is required/);
+      t.ok(/Name is required/.test(error.message));
     }
 
     // Without interceptor
@@ -72,7 +72,7 @@ t.test(
     const error2 = t.throws(() => hooks.addGlobal("setTimeout"));
     t.ok(error2 instanceof Error);
     if (error2 instanceof Error) {
-      t.match(error2.message, /Interceptors are required/);
+      t.ok(/Interceptors are required/.test(error2.message));
     }
 
     applyHooks(hooks);

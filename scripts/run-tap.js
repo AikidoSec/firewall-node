@@ -48,6 +48,8 @@ if (process.argv.includes("--test-new-instrumentation")) {
   }
 }
 
+process.env.AIKIDO_UNIT_TESTS = "1";
+
 execSync(`tap run ${args}`, {
   stdio: "inherit",
   env: {

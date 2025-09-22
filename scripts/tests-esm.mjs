@@ -75,7 +75,7 @@ for await (const entry of testFiles) {
   const newFilename = filename.replace(/ts$/, "js");
 
   // --------------- Transform TS to JS and parse to AST ----------------
-  const { code, errors } = transform(filename, sourceText, {
+  let { code, errors } = transform(filename, sourceText, {
     target: "es2022",
     typescript: {
       rewriteImportExtensions: "rewrite",
@@ -89,6 +89,24 @@ for await (const entry of testFiles) {
     }
     process.exit(1);
   }
+
+  // Fix imports
+  code = code.replace(
+    /import\s+(\w+)\s+from\s+['"](\.[^'"]*)['"];?/g,
+    (match, p1, p2) => {
+      return `import ____${p1} from '${p2}'; const ${p1} = ____${p1}.default;`;
+    }
+  );
+  code = code.replaceAll(
+    /import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?/g,
+    (match, p1, p2) => {
+      return `import ${p1} from '${p2}';`;
+    }
+  );
+
+  code =
+    `import * as _testHelpers from '${join(import.meta.dirname, "helpers", "test-helpers.mjs")}';\n` +
+    code;
 
   const ast = parseSync(newFilename, code, {
     preserveParens: false,
@@ -112,8 +130,8 @@ for await (const entry of testFiles) {
             },
             {
               type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "before" },
-              local: { type: "Identifier", name: "before" },
+              imported: { type: "Identifier", name: "beforeEach" },
+              local: { type: "Identifier", name: "beforeEach" },
             },
           ];
 
@@ -145,11 +163,58 @@ for await (const entry of testFiles) {
           switch (node.callee.property.name) {
             case "test":
               node.callee = { type: "Identifier", name: "test" };
+              const testCb = node.arguments.find(
+                (arg) =>
+                  arg.type === "FunctionExpression" ||
+                  arg.type === "ArrowFunctionExpression"
+              );
+              if (!testCb) {
+                console.error(
+                  `No callback function found in t.test() in ${entry}`
+                );
+                process.exit(1);
+              }
+              // Ensure the callback has a parameter named 't'
+              if (testCb.params.length === 0) {
+                testCb.params.push({ type: "Identifier", name: "t" });
+              }
               break;
+            case "beforeEach":
+              node.callee = { type: "Identifier", name: "beforeEach" };
+              break;
+            case "setTimeout":
+              node.callee = { type: "Identifier", name: "setTimeout" };
+              node.arguments[1] = node.arguments[0];
+              node.arguments[0] = {
+                type: "ArrowFunctionExpression",
+                params: [],
+                body: {
+                  type: "BlockStatement",
+                  body: [],
+                },
+                expression: false,
+              };
+              break;
+            case "comment":
+              node.callee = {
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "console" },
+                property: { type: "Identifier", name: "log" },
+              };
+              break;
+            case "throws":
+              node.callee = {
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "_testHelpers" },
+                property: { type: "Identifier", name: "throws" },
+              };
+              break;
+            case "pass":
             case "match":
             case "same":
             case "equal":
             case "ok":
+            case "notOk":
               node.callee.object = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "t" },
@@ -164,6 +229,25 @@ for await (const entry of testFiles) {
                   break;
                 case "equal":
                   node.callee.property.name = "strictEqual";
+                  break;
+                case "throws":
+                  node.callee.property.name = "throws";
+                  break;
+                case "notOk":
+                  node.callee.property.name = "ok";
+                  node.arguments[0] = {
+                    type: "UnaryExpression",
+                    operator: "!",
+                    prefix: true,
+                    argument: node.arguments[0],
+                  };
+                  break;
+                case "pass":
+                  node.callee.property.name = "ok";
+                  node.arguments = [
+                    { type: "Literal", value: true, raw: "true" },
+                    ...(node.arguments || []).slice(1),
+                  ];
                   break;
                 default:
                   break;
@@ -188,6 +272,19 @@ for await (const entry of testFiles) {
             },
           });
         }
+      }
+
+      // Replace __dirname with import.meta.dirname
+      if (node.type === "Identifier" && node.name === "__dirname") {
+        this.replace({
+          type: "MemberExpression",
+          object: {
+            type: "MemberExpression",
+            object: { type: "Identifier", name: "import" },
+            property: { type: "Identifier", name: "meta" },
+          },
+          property: { type: "Identifier", name: "dirname" },
+        });
       }
     },
   });
@@ -218,11 +315,12 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
 const timeout = 1000 * 60 * 5; // 5 minutes
 
 await execAsyncWithPipe(
-  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit ./sources/Hono.test.js`,
+  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit agent/**/**.test.js`,
   {
     env: {
       CI: true,
       AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
+      AIKIDO_UNIT_TESTS: "1",
       AIKIDO_CI: "true",
       NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
       AIKIDO_ESM_TEST: true,
