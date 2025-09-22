@@ -218,7 +218,6 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
       }
     }
 
-    // No package should have node: prefix
     for (const pkg of heartbeat.packages) {
       if (pkg.name.startsWith("node:")) {
         fail(`Did not expect package name to start with node: ${pkg.name}`);
