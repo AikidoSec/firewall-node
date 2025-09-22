@@ -18,7 +18,7 @@ import {
  * This method wraps the require function and sets up the hooks.
  * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks, newInstrumentation: boolean = false) {
+export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
   if (!newInstrumentation) {
     setPackagesToPatch(hooks.getPackages());
     setBuiltinModulesToPatch(hooks.getBuiltInModules());

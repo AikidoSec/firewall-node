@@ -52,7 +52,7 @@ const testFiles = glob("**/*.{test.ts,txt}", {
   cwd: libDir,
   exclude: [
     "**/node_modules/**",
-    "**/sinks/**",
+    "**/sinks/**", // Still need to be adjusted
     "**/sources/**",
     "**/vulnerabilities/**",
   ],
