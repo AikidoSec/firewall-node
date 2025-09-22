@@ -3,7 +3,7 @@ import { createTestAgent } from "../../../helpers/createTestAgent";
 import { applyHooks } from "../../applyHooks";
 import { Hooks } from "../Hooks";
 import * as mod from "node:module";
-import { registerNodeHooks } from ".";
+import { registerNodeHooks } from "./index";
 import { Agent } from "../../Agent";
 import { onModuleLoad } from "./loadHook";
 

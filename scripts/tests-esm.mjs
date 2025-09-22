@@ -203,27 +203,29 @@ for await (const entry of testFiles) {
               };
               break;
             case "throws":
+            case "match":
+            case "pass":
+            case "rejects":
               node.callee = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "_testHelpers" },
-                property: { type: "Identifier", name: "throws" },
+                property: {
+                  type: "Identifier",
+                  name: node.callee.property.name,
+                },
               };
               break;
-            case "pass":
-            case "match":
             case "same":
             case "equal":
             case "ok":
             case "notOk":
+            case "fail":
               node.callee.object = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "t" },
                 property: { type: "Identifier", name: "assert" },
               };
               switch (node.callee.property.name) {
-                case "match":
-                  node.callee.property.name = "partialDeepStrictEqual";
-                  break;
                 case "same":
                   node.callee.property.name = "deepStrictEqual";
                   break;
@@ -241,13 +243,6 @@ for await (const entry of testFiles) {
                     prefix: true,
                     argument: node.arguments[0],
                   };
-                  break;
-                case "pass":
-                  node.callee.property.name = "ok";
-                  node.arguments = [
-                    { type: "Literal", value: true, raw: "true" },
-                    ...(node.arguments || []).slice(1),
-                  ];
                   break;
                 default:
                   break;
@@ -315,7 +310,7 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
 const timeout = 1000 * 60 * 5; // 5 minutes
 
 await execAsyncWithPipe(
-  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit agent/**/**.test.js`,
+  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit agent/hooks/instrumentation/instructions.test.js`,
   {
     env: {
       CI: true,

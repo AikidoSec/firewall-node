@@ -1,4 +1,4 @@
-import { fail, match } from "node:assert";
+import assert from "node:assert";
 
 export function throws() {
   const args = Array.from(arguments);
@@ -16,7 +16,7 @@ export function throws() {
   } catch (err) {
     if (args.length === 2) {
       if (typeof args[1] === "string") {
-        match(
+        assert.match(
           err.message ?? err.toString(),
           new RegExp(RegExp.escape(args[1]))
         );
@@ -30,5 +30,62 @@ export function throws() {
     return err;
   }
 
-  fail("Missing expected exception");
+  assert.fail("Missing expected exception");
+}
+
+export function match(actual, expected, message) {
+  if (typeof expected === "string") {
+    expected = new RegExp(RegExp.escape(expected));
+  }
+
+  if (expected instanceof RegExp) {
+    if (typeof actual !== "string") {
+      actual = String(actual);
+    }
+
+    assert.match(actual, expected, message);
+    return;
+  }
+
+  assert.partialDeepStrictEqual(actual, expected, message);
+}
+
+export function pass(message) {
+  assert.ok(true, message);
+}
+
+export function rejects() {
+  const args = Array.from(arguments);
+
+  if (args.length === 0) {
+    throw new TypeError("rejects requires at least one argument");
+  }
+
+  if (!(args[0] instanceof Promise)) {
+    throw new TypeError("First argument to rejects must be a Promise");
+  }
+
+  return new Promise((resolve, reject) => {
+    args[0]
+      .then(() => {
+        reject(new Error("Missing expected rejection"));
+      })
+      .catch((err) => {
+        if (args.length === 1) {
+          return resolve(err);
+        }
+        if (
+          typeof args[1] === "object" &&
+          args[1] !== null &&
+          "message" in args[1]
+        ) {
+          match(err.message ?? err.toString(), args[1].message);
+          return resolve(err);
+        }
+
+        throw new TypeError(
+          `Second argument of rejects must be an object with a message property, got ${typeof args[1]}`
+        );
+      });
+  });
 }
