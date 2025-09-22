@@ -42,8 +42,7 @@ t.test(
         `Expected package ${pkg} to be in the list of loaded packages`
       );
     }
-    const shouldNotContain = ["fs", "http"];
-    for (const pkg of shouldNotContain) {
+    for (const pkg of mod.builtinModules) {
       t.notOk(
         event.packages.find((p) => p.name === pkg),
         `Did not expect package ${pkg} to be in the list of loaded packages`
