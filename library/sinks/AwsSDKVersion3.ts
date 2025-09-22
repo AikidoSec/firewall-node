@@ -188,18 +188,10 @@ export class AwsSDKVersion3 implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         this.onRequire(exports, pkgInfo);
       })
-      .addFileInstrumentation({
-        path: "dist-es/BedrockRuntimeClient.js",
-        functions: [],
-        accessLocalVariables: {
-          names: ["module.exports"],
-          cb: (vars, pkgInfo) => {
-            if (vars.length > 0 && isPlainObject(vars[0])) {
-              this.onRequire(vars[0], pkgInfo);
-            }
-          },
-        },
-      })
+      // ESM instrumentation not added yet
+      // because the package.json "main" field points to CJS build
+      // and "module" is not supported by Node.js:
+      // "module": "./dist-es/index.js",
       .addFileInstrumentation({
         path: "dist-cjs/index.js",
         functions: [],
