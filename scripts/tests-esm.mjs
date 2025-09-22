@@ -99,21 +99,16 @@ for await (const entry of testFiles) {
   // https://www.npmjs.com/package/oxc-walker
   walk(ast.program, {
     enter(node) {
+      // ImportDeclaration nodes
       if (node.type === "ImportDeclaration") {
-        const importNode = node;
-        const source = importNode.source;
+        const source = node.source;
 
         if (source.value === "tap") {
-          importNode.specifiers = [
+          node.specifiers = [
             {
               type: "ImportSpecifier",
               imported: { type: "Identifier", name: "test" },
               local: { type: "Identifier", name: "test" },
-            },
-            {
-              type: "ImportSpecifier",
-              imported: { type: "Identifier", name: "describe" },
-              local: { type: "Identifier", name: "describe" },
             },
             {
               type: "ImportSpecifier",
@@ -136,6 +131,62 @@ for await (const entry of testFiles) {
           // Update import source
           source.value = `${newPath}.js`;
           source.raw = `'${newPath}.js'`;
+        }
+      }
+      // CallExpression nodes
+      if (node.type === "CallExpression") {
+        // Replace t.test(...) and test assertions
+        if (
+          node.callee.type === "MemberExpression" &&
+          node.callee.object.type === "Identifier" &&
+          node.callee.object.name === "t" &&
+          node.callee.property.type === "Identifier"
+        ) {
+          switch (node.callee.property.name) {
+            case "test":
+              node.callee = { type: "Identifier", name: "test" };
+              break;
+            case "match":
+            case "same":
+            case "equal":
+            case "ok":
+              node.callee.object = {
+                type: "MemberExpression",
+                object: { type: "Identifier", name: "t" },
+                property: { type: "Identifier", name: "assert" },
+              };
+              switch (node.callee.property.name) {
+                case "match":
+                  node.callee.property.name = "partialDeepStrictEqual";
+                  break;
+                case "same":
+                  node.callee.property.name = "deepStrictEqual";
+                  break;
+                case "equal":
+                  node.callee.property.name = "strictEqual";
+                  break;
+                default:
+                  break;
+              }
+            default:
+              break;
+          }
+        }
+
+        // Replace require(...) with await import(...)
+        if (
+          node.callee.type === "Identifier" &&
+          node.callee.name === "require"
+        ) {
+          this.replace({
+            type: "AwaitExpression",
+            argument: {
+              type: "ImportExpression",
+              options: null,
+              phase: null,
+              source: node.arguments[0],
+            },
+          });
         }
       }
     },
@@ -164,8 +215,10 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
   cwd: libOutDir,
 });
 
+const timeout = 1000 * 60 * 5; // 5 minutes
+
 await execAsyncWithPipe(
-  "node --test --test-concurrency 4 ./sources/Hono.test.js",
+  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit ./sources/Hono.test.js`,
   {
     env: {
       CI: true,

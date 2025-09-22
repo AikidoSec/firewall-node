@@ -6,6 +6,8 @@ import { getMajorNodeVersion } from "./getNodeVersion";
 
 let server: Server;
 
+// @esm-tests-skip - Mocking not working as exports are immutable
+
 // Start an HTTP server before running tests
 t.beforeEach(async () => {
   server = createServer((req, res) => {
@@ -133,11 +135,6 @@ t.test("should make a POST request with body and gzip", async (t) => {
 
 t.test(
   "should convert URL object to string for http.request compatibility",
-  {
-    skip: process.env.AIKIDO_ESM_TEST
-      ? "Mocking not working in ESM tests"
-      : false,
-  },
   async (t) => {
     const http = require("http");
     const originalRequest = http.request;
