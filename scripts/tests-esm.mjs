@@ -50,7 +50,12 @@ await cp(libBuildDir, libOutDir, { recursive: true });
 
 const testFiles = glob("**/*.{test.ts,txt}", {
   cwd: libDir,
-  exclude: ["**/node_modules/**"],
+  exclude: [
+    "**/node_modules/**",
+    "**/sinks/**",
+    "**/sources/**",
+    "**/vulnerabilities/**",
+  ],
 });
 
 // Copy all test files and transform them
@@ -133,6 +138,16 @@ for await (const entry of testFiles) {
               imported: { type: "Identifier", name: "beforeEach" },
               local: { type: "Identifier", name: "beforeEach" },
             },
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "before" },
+              local: { type: "Identifier", name: "before" },
+            },
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "after" },
+              local: { type: "Identifier", name: "after" },
+            },
           ];
 
           source.value = "node:test";
@@ -180,7 +195,12 @@ for await (const entry of testFiles) {
               }
               break;
             case "beforeEach":
-              node.callee = { type: "Identifier", name: "beforeEach" };
+            case "before":
+            case "after":
+              node.callee = {
+                type: "Identifier",
+                name: node.callee.property.name,
+              };
               break;
             case "setTimeout":
               node.callee = { type: "Identifier", name: "setTimeout" };
@@ -310,7 +330,7 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
 const timeout = 1000 * 60 * 5; // 5 minutes
 
 await execAsyncWithPipe(
-  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit agent/hooks/instrumentation/instructions.test.js`,
+  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`,
   {
     env: {
       CI: true,

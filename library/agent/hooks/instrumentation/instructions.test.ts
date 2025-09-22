@@ -152,7 +152,7 @@ t.test("it works using injected functions", async (t) => {
         modifyReturnValue: (args, returnValue, agent, subject) => {
           t.same(args, [1, 2, 3]);
           t.ok(agent instanceof Agent);
-          t.same(subject, {});
+          t.same(subject, undefined);
           pkgModifyReturnValueCalled = true;
           return "test";
         },
@@ -247,7 +247,7 @@ t.test("it works using injected functions", async (t) => {
       "foo.bar.js.baz.MethodDefinition.^1.0.0",
       [1, 2, 3],
       "42",
-      this
+      undefined
     ),
     "test"
   );
