@@ -51,7 +51,7 @@ t.test(
     }
     for (const pkg of event.packages) {
       if (pkg.name.startsWith("node:")) {
-        t.fail("Did not expect package name to start with node:");
+        t.fail(`Did not expect package name to start with node: ${pkg.name}`);
       }
     }
   }

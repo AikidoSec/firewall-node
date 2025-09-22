@@ -195,11 +195,6 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
 
     const [heartbeat] = heartbeatEvents;
 
-    // Verify packages are reported
-    if (!heartbeat.packages || !Array.isArray(heartbeat.packages)) {
-      fail("Heartbeat should contain packages array");
-    }
-
     const expectedPackages = [
       "@aikidosec/firewall",
       "hono",
@@ -215,7 +210,6 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
       }
     }
 
-    // Verify no builtin modules are reported
     for (const builtinName of builtinModules) {
       if (packageNames.includes(builtinName)) {
         fail(
@@ -227,7 +221,7 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
     // No package should have node: prefix
     for (const pkg of heartbeat.packages) {
       if (pkg.name.startsWith("node:")) {
-        fail(`Package ${pkg.name} should not have node: prefix`);
+        fail(`Did not expect package name to start with node: ${pkg.name}`);
       }
     }
   } catch (err) {
