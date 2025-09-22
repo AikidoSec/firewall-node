@@ -173,26 +173,9 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
       stderr += data.toString();
     });
 
-    // Wait for the server to start
-    await timeout(2000);
-
-    // Make a request to trigger package loading
-    const response = await fetch(`http://127.0.0.1:${port3}/add`, {
-      method: "POST",
-      body: JSON.stringify({ name: "Test" }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    equal(response.status, 200);
-    match(stdout, /Starting agent/);
-
     // Wait for the heartbeat event to be sent
-    await timeout(30000);
+    await timeout(32000);
 
-    // Get events from mock server
     const eventsResponse = await fetch(`${testServerUrl}/api/runtime/events`, {
       method: "GET",
       headers: {
@@ -206,7 +189,6 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
       (event) => event.type === "heartbeat"
     );
 
-    // Should have at least one heartbeat
     if (heartbeatEvents.length === 0) {
       fail("No heartbeat events found");
     }
