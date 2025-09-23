@@ -148,7 +148,7 @@ t.test(
       t.same(events.length, 1);
       t.same(events[0].attack.metadata, {
         hostname: "localhost",
-        port: 4000,
+        port: "4000",
       });
 
       const error2 = await t.rejects(() =>

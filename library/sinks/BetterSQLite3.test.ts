@@ -2,6 +2,7 @@ import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { BetterSQLite3 } from "./BetterSQLite3";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -50,7 +51,10 @@ t.test("it detects SQL injections", async (t) => {
   const agent = createTestAgent();
   agent.start([new BetterSQLite3()]);
 
-  const betterSqlite3 = require("better-sqlite3");
+  let betterSqlite3 = require("better-sqlite3");
+  if (isEsmUnitTest()) {
+    betterSqlite3 = betterSqlite3.default;
+  }
   const db = new betterSqlite3(":memory:");
 
   try {

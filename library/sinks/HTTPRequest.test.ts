@@ -60,18 +60,19 @@ function createContext(): Context {
 
 t.setTimeout(60 * 1000);
 
+const api = new ReportingAPIForTesting();
+const agent = createTestAgent({
+  token: new Token("123"),
+  api,
+});
+agent.start([new HTTPRequest()]);
+
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+const oldUrl = require("url");
+
 t.test("it works", (t) => {
-  const api = new ReportingAPIForTesting();
-  const agent = createTestAgent({
-    token: new Token("123"),
-    api,
-  });
-  agent.start([new HTTPRequest()]);
-
   t.same(agent.getHostnames().asArray(), []);
-
-  const http = require("http") as typeof import("http");
-  const https = require("https") as typeof import("https");
 
   runWithContext(createContext(), () => {
     const aikido = http.request("http://aikido.dev");
@@ -133,7 +134,7 @@ t.test("it works", (t) => {
   t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: "443", hits: 1 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -308,7 +309,6 @@ t.test("it works", (t) => {
       );
     }
 
-    const oldUrl = require("url");
     const error6 = t.throws(() =>
       https.request(oldUrl.parse("https://localhost:4000/api/internal"))
     );

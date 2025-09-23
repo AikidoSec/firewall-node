@@ -39,15 +39,15 @@ t.before(async () => {
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
+const agent = createTestAgent({
+  token: new Token("123"),
+});
+agent.start([new HTTPRequest()]);
+
+const { http } =
+  require("follow-redirects") as typeof import("follow-redirects");
+
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
-  agent.start([new HTTPRequest()]);
-
-  const { http } =
-    require("follow-redirects") as typeof import("follow-redirects");
-
   runWithContext(
     {
       ...context,

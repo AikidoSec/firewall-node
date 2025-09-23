@@ -48,16 +48,19 @@ if (existsSync(outDir)) {
 
 await cp(libBuildDir, libOutDir, { recursive: true });
 
-const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml}", {
+await writeFile(join(outDir, "package.json"), "{}");
+
+const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml,js}", {
   cwd: libDir,
   exclude: [
     "**/node_modules/**",
-    "**/sinks/**", // Still need to be adjusted
 
     "**/Lambda.test.ts",
     "**/Lambda.*.test.ts",
     "**/FunctionsFramework.test.ts",
     "**/PubSub.test.ts",
+    "**/AiSdk.*.test.ts",
+    "**/AwsSDKVersion2.test.ts",
   ],
 });
 
@@ -68,7 +71,7 @@ for await (const entry of testFiles) {
 
   await mkdir(dirname(dest), { recursive: true });
 
-  if (["txt", "pem", "json", "xml"].includes(entry.split(".").pop())) {
+  if (["txt", "pem", "json", "xml", "js"].includes(entry.split(".").pop())) {
     await copyFile(src, dest);
     continue;
   }
@@ -246,6 +249,7 @@ for await (const entry of testFiles) {
             case "ok":
             case "notOk":
             case "fail":
+            case "error":
               node.callee.object = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "t" },
@@ -276,6 +280,9 @@ for await (const entry of testFiles) {
                       raw: "true",
                     },
                   ];
+                  break;
+                case "error":
+                  node.callee.property.name = "ifError";
                   break;
                 default:
                   break;

@@ -76,12 +76,27 @@ export function rejects() {
     throw new TypeError("rejects requires at least one argument");
   }
 
-  if (!(args[0] instanceof Promise)) {
-    throw new TypeError("First argument to rejects must be a Promise");
+  let promise;
+  if (args[0] instanceof Promise) {
+    promise = args[0];
+  } else if (typeof args[0] === "function") {
+    try {
+      promise = args[0]();
+    } catch (err) {
+      // If the function throws synchronously, treat as rejection
+      return Promise.resolve(err);
+    }
+    if (!(promise instanceof Promise)) {
+      throw new TypeError("Async function must return a Promise");
+    }
+  } else {
+    throw new TypeError(
+      "First argument to rejects must be a Promise or async function"
+    );
   }
 
   return new Promise((resolve, reject) => {
-    args[0]
+    promise
       .then(() => {
         reject(new Error("Missing expected rejection"));
       })
