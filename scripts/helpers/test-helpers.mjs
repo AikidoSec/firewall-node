@@ -1,8 +1,6 @@
 import assert from "node:assert";
 
-export function throws() {
-  const args = Array.from(arguments);
-
+export function throws(...args) {
   if (args.length === 0) {
     throw new TypeError("throws requires at least one argument");
   }
@@ -69,9 +67,7 @@ export function pass(message) {
   assert.ok(true, message);
 }
 
-export function rejects() {
-  const args = Array.from(arguments);
-
+export function rejects(...args) {
   if (args.length === 0) {
     throw new TypeError("rejects requires at least one argument");
   }
