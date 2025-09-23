@@ -359,7 +359,7 @@ command +=
   " --experimental-test-coverage --test-reporter spec --test-reporter lcov";
 command +=
   "  --test-reporter-destination=stdout --test-reporter-destination=lcov.info";
-command += " --test-coverage-exclude './*'"; // Exclude test files from coverage
+command += " --test-coverage-include='../library/**'"; // Exclude test files from coverage
 
 await execAsyncWithPipe(command, {
   env: {
