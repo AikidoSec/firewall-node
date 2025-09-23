@@ -53,7 +53,6 @@ const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml}", {
   exclude: [
     "**/node_modules/**",
     "**/sinks/**", // Still need to be adjusted
-    "**/vulnerabilities/**",
 
     "**/Lambda.test.ts",
     "**/Lambda.*.test.ts",
