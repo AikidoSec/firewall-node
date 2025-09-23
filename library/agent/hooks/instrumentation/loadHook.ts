@@ -77,15 +77,17 @@ function patchPackage(
     return previousLoadResult;
   }
 
-  if (!shouldPatchPackage(moduleInfo.name)) {
-    // We don't want to modify this module
-    return previousLoadResult;
-  }
-
   // Check if the version of the package is supported
   const pkgVersion = getPackageVersionFromPath(moduleInfo.base);
   if (!pkgVersion) {
     // We can't determine the version of the package
+    return previousLoadResult;
+  }
+
+  getInstance()?.onPackageRequired(moduleInfo.name, pkgVersion);
+
+  if (!shouldPatchPackage(moduleInfo.name)) {
+    // We don't want to modify this module
     return previousLoadResult;
   }
 
