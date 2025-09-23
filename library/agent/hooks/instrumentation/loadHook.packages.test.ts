@@ -27,6 +27,8 @@ t.test(
     require("fastify");
     require("node:fs");
     require("http");
+    await import("dns");
+    await import("express");
 
     await agent.flushStats(1000);
     const events = api.getEvents();
@@ -35,7 +37,12 @@ t.test(
     if (event.type !== "heartbeat") {
       throw new Error("Expected heartbeat");
     }
-    const expectedPackages = ["fastify", "@fastify/ajv-compiler", "semver"];
+    const expectedPackages = [
+      "fastify",
+      "@fastify/ajv-compiler",
+      "semver",
+      "express",
+    ];
     for (const pkg of expectedPackages) {
       t.ok(
         event.packages.find((p) => p.name === pkg),
