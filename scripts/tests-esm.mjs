@@ -18,8 +18,8 @@ import { walk } from "oxc-walker";
 const version = process.versions.node.split(".");
 const major = parseInt(version[0], 10);
 
-if (major !== 24) {
-  console.error("Node.js version 24 is required");
+if (major < 24) {
+  console.error("Node.js version 24 or higher is required to run this script.");
   process.exit(1);
 }
 
@@ -47,6 +47,10 @@ if (existsSync(outDir)) {
 }
 
 await cp(libBuildDir, libOutDir, { recursive: true });
+
+await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
+  cwd: libDir,
+});
 
 await writeFile(join(outDir, "package.json"), "{}");
 
@@ -348,7 +352,14 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
 
 const timeout = 1000 * 60 * 5; // 5 minutes
 
-const command = `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`;
+let command = `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`;
+
+// Coverage
+command +=
+  " --experimental-test-coverage --test-reporter spec --test-reporter lcov";
+command +=
+  "  --test-reporter-destination=stdout --test-reporter-destination=lcov.info";
+command += " --test-coverage-exclude './*'"; // Exclude test files from coverage
 
 await execAsyncWithPipe(command, {
   env: {

@@ -61,7 +61,7 @@ jobs:
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
-          files: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node
