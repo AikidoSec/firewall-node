@@ -7,8 +7,9 @@ import { registerNodeHooks } from "./index";
 import { Agent } from "../../Agent";
 import { onModuleLoad } from "./loadHook";
 import { envToBool } from "../../../helpers/envToBool";
+import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
-const isESMTest = envToBool(process.env.AIKIDO_ESM_TEST);
+const isESMTest = isEsmUnitTest();
 
 t.test(
   "it throws an error if Node.js version is not supported",

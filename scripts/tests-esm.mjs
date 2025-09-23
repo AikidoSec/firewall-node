@@ -48,13 +48,17 @@ if (existsSync(outDir)) {
 
 await cp(libBuildDir, libOutDir, { recursive: true });
 
-const testFiles = glob("**/*.{test.ts,txt}", {
+const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml}", {
   cwd: libDir,
   exclude: [
     "**/node_modules/**",
     "**/sinks/**", // Still need to be adjusted
-    "**/sources/**",
     "**/vulnerabilities/**",
+
+    "**/Lambda.test.ts",
+    "**/Lambda.*.test.ts",
+    "**/FunctionsFramework.test.ts",
+    "**/PubSub.test.ts",
   ],
 });
 
@@ -65,7 +69,7 @@ for await (const entry of testFiles) {
 
   await mkdir(dirname(dest), { recursive: true });
 
-  if (entry.endsWith(".txt")) {
+  if (["txt", "pem", "json", "xml"].includes(entry.split(".").pop())) {
     await copyFile(src, dest);
     continue;
   }
@@ -156,9 +160,10 @@ for await (const entry of testFiles) {
 
         // Only modify relative imports (those starting with ".")
         if (typeof source.value === "string" && source.value.startsWith(".")) {
+          const isTestFile = source.value.endsWith(".tests");
           const newPath = resolve(dirname(dest), source.value).replace(
             ".esm-tests/tests/",
-            ".esm-tests/library/"
+            isTestFile ? ".esm-tests/tests/" : ".esm-tests/library/"
           );
 
           // Update import source
@@ -226,6 +231,7 @@ for await (const entry of testFiles) {
             case "match":
             case "pass":
             case "rejects":
+            case "same":
               node.callee = {
                 type: "MemberExpression",
                 object: { type: "Identifier", name: "_testHelpers" },
@@ -235,6 +241,7 @@ for await (const entry of testFiles) {
                 },
               };
               break;
+            case "end":
             case "same":
             case "equal":
             case "ok":
@@ -246,9 +253,6 @@ for await (const entry of testFiles) {
                 property: { type: "Identifier", name: "assert" },
               };
               switch (node.callee.property.name) {
-                case "same":
-                  node.callee.property.name = "deepStrictEqual";
-                  break;
                 case "equal":
                   node.callee.property.name = "strictEqual";
                   break;
@@ -263,6 +267,16 @@ for await (const entry of testFiles) {
                     prefix: true,
                     argument: node.arguments[0],
                   };
+                  break;
+                case "end":
+                  node.callee.property.name = "ok";
+                  node.arguments = [
+                    {
+                      type: "Literal",
+                      value: true,
+                      raw: "true",
+                    },
+                  ];
                   break;
                 default:
                   break;
@@ -329,18 +343,17 @@ await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
 
 const timeout = 1000 * 60 * 5; // 5 minutes
 
-await execAsyncWithPipe(
-  `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`,
-  {
-    env: {
-      CI: true,
-      AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
-      AIKIDO_UNIT_TESTS: "1",
-      AIKIDO_CI: "true",
-      NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
-      AIKIDO_ESM_TEST: true,
-      ...process.env,
-    },
-    cwd: testsOutDir,
-  }
-);
+const command = `node --test --test-concurrency 4 --test-timeout ${timeout} --test-force-exit`;
+
+await execAsyncWithPipe(command, {
+  env: {
+    CI: true,
+    AIKIDO_TEST_NEW_INSTRUMENTATION: "true",
+    AIKIDO_UNIT_TESTS: "1",
+    AIKIDO_CI: "true",
+    NODE_OPTIONS: "--disable-warning=ExperimentalWarning",
+    AIKIDO_ESM_TEST: true,
+    ...process.env,
+  },
+  cwd: testsOutDir,
+});

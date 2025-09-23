@@ -6,7 +6,7 @@ import {
   patchProcessGetBuiltinModule,
 } from "./processGetBuiltin";
 import { setBuiltinsToInstrument } from "./instructions";
-import { envToBool } from "../../../helpers/envToBool";
+import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
 t.test(
   "it works",
@@ -18,7 +18,7 @@ t.test(
   async (t) => {
     createTestAgent();
 
-    if (!envToBool(process.env.AIKIDO_ESM_TEST)) {
+    if (!isEsmUnitTest()) {
       // Before patched
       t.same(getBuiltinModuleWithoutPatching("http"), require("http"));
     }

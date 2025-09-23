@@ -50,6 +50,21 @@ export function match(actual, expected, message) {
   assert.partialDeepStrictEqual(actual, expected, message);
 }
 
+function toPlainObject(value) {
+  if (value && typeof value === "object") {
+    return JSON.parse(JSON.stringify(value));
+  }
+  return value;
+}
+
+export function same(actual, expected, message) {
+  assert.deepStrictEqual(
+    toPlainObject(actual),
+    toPlainObject(expected),
+    message
+  );
+}
+
 export function pass(message) {
   assert.ok(true, message);
 }

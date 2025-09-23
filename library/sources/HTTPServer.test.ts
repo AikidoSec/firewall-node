@@ -6,7 +6,6 @@ import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
 import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
 import { HTTPServer } from "./HTTPServer";
-import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
@@ -82,6 +81,8 @@ agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 t.setTimeout(30 * 1000);
 
+const { join } = require("path");
+
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
   delete process.env.NODE_ENV;
@@ -99,8 +100,6 @@ t.test("it wraps the createServer function of http module", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  http.globalAgent = new http.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3314, () => {
       fetch({
@@ -108,6 +107,7 @@ t.test("it wraps the createServer function of http module", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new http.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -147,8 +147,6 @@ t.test("it wraps the createServer function of https module", async () => {
     }
   );
 
-  https.globalAgent = new https.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3315, () => {
       fetch({
@@ -156,6 +154,7 @@ t.test("it wraps the createServer function of https module", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new https.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -534,8 +533,6 @@ t.test("it wraps on request event of http", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  http.globalAgent = new http.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3367, () => {
       fetch({
@@ -543,6 +540,7 @@ t.test("it wraps on request event of http", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new http.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -578,8 +576,6 @@ t.test("it wraps on request event of https", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  https.globalAgent = new https.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3361, () => {
       fetch({
@@ -587,6 +583,7 @@ t.test("it wraps on request event of https", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new https.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -672,6 +669,7 @@ t.test("it blocks IP address", async (t) => {
             "x-forwarded-for": "9.9.9.9",
           },
           timeoutInMS: 500,
+          agent: new http.Agent({ keepAlive: false }),
         }),
         fetch({
           url: new URL("http://localhost:3325"),
@@ -821,9 +819,9 @@ t.test("it blocks double encoded path traversal", async (t) => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3327, async () => {
+    server.listen(3397, async () => {
       fetch({
-        url: new URL("http://localhost:3327/?path=.%252E/etc/passwd"),
+        url: new URL("http://localhost:3397/?path=.%252E/etc/passwd"),
         method: "GET",
         headers: {
           "x-forwarded-for": "1.2.3.4",
@@ -941,11 +939,11 @@ t.test("rate limiting works with url encoded paths", async (t) => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3328, async () => {
+    server.listen(3329, async () => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -957,7 +955,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -969,7 +967,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -981,7 +979,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/%72ate-limited"),
+            url: new URL("http://localhost:3329/%72ate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,

@@ -10,7 +10,7 @@ import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";
 
-export function createRestifyTests(restifyPackageName: string) {
+export async function createRestifyTests(restifyPackageName: string) {
   const agent = startTestAgent({
     block: true,
     api: new ReportingAPIForTesting({

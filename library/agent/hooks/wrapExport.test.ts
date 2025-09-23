@@ -39,7 +39,7 @@ t.test("Agent is not initialized", async (t) => {
 });
 
 t.test("Inspect args", async (t) => {
-  t.plan(2);
+  let executedCallback = false;
   const toWrap = {
     test(input: string) {
       return input;
@@ -53,12 +53,14 @@ t.test("Inspect args", async (t) => {
     {
       kind: "outgoing_http_op",
       inspectArgs: (args) => {
+        executedCallback = true;
         t.same(args, ["input"]);
       },
     }
   );
 
   t.same(toWrap.test("input"), "input");
+  t.ok(executedCallback);
 });
 
 t.test("Modify args", async (t) => {
@@ -208,7 +210,7 @@ t.test("Wrap non existing method", async (t) => {
 });
 
 t.test("Wrap default export", async (t) => {
-  t.plan(2);
+  let executedCallback = false;
   const toWrap = (input: string) => {
     return input;
   };
@@ -220,10 +222,12 @@ t.test("Wrap default export", async (t) => {
     {
       kind: "outgoing_http_op",
       inspectArgs: (args) => {
+        executedCallback = true;
         t.same(args, ["input"]);
       },
     }
   ) as Function;
 
   t.same(patched("input"), "input");
+  t.ok(executedCallback);
 });

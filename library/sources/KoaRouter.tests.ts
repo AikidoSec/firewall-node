@@ -12,8 +12,9 @@ import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
-export function createKoaRouterTests(koaRouterPackageName: string) {
+export async function createKoaRouterTests(koaRouterPackageName: string) {
   const options = {
     skip:
       getMajorNodeVersion() < 18 ? "Does not support Node.js < 18" : undefined,
@@ -49,17 +50,26 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   agent.start([new Koa(), new HTTPServer()]);
   setInstance(agent);
 
-  const koa = require("koa") as typeof import("koa");
+  let koa = require("koa") as typeof import("koa");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error default export missing types
+    koa = koa.default;
+  }
+
   const { bodyParser } =
     require("@koa/bodyparser") as typeof import("@koa/bodyparser");
 
-  function getApp() {
+  async function getApp() {
     const app = new koa();
     app.use(bodyParser());
 
-    const Router = require(
-      koaRouterPackageName
-    ) as typeof import("@koa/router");
+    let Router = require(koaRouterPackageName) as typeof import("@koa/router");
+
+    if (isEsmUnitTest()) {
+      // @ts-expect-error default export missing types
+      Router = Router.default;
+    }
 
     const router = new Router();
 
@@ -106,7 +116,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   }
 
   t.test("it adds body to the context", options, async (t) => {
-    const app = getApp();
+    const app = await getApp();
     const response = await request(app.callback())
       .post("/context?title=test")
       .set("Content-Type", "application/json")
@@ -129,7 +139,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   });
 
   t.test("it sets the user", options, async (t) => {
-    const app = getApp();
+    const app = await getApp();
     const response = await request(app.callback()).get("/context/user");
 
     t.equal(response.status, 200);
@@ -146,7 +156,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   });
 
   t.test("it counts requests", options, async () => {
-    const app = getApp();
+    const app = await getApp();
     agent.getInspectionStatistics().reset();
     await request(app.callback()).get("/");
     await request(app.callback()).post("/"); // It does not count 404
@@ -162,7 +172,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   });
 
   t.test("it blocks a user", options, async (t) => {
-    const app = getApp();
+    const app = await getApp();
     const response = await request(app.callback()).get("/user/blocked");
 
     t.equal(response.status, 403);
@@ -170,7 +180,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   });
 
   t.test("it rate limits a request", options, async (t) => {
-    const app = getApp();
+    const app = await getApp();
     await request(app.callback()).get("/rate-limited");
     await request(app.callback()).get("/rate-limited");
     const response = await request(app.callback()).get("/rate-limited");
@@ -180,7 +190,7 @@ export function createKoaRouterTests(koaRouterPackageName: string) {
   });
 
   t.test("gets route params using koa router", options, async (t) => {
-    const app = getApp();
+    const app = await getApp();
     const response = await request(app.callback()).post("/add/123");
 
     t.equal(response.status, 200);

@@ -4,7 +4,7 @@ import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
 import { getSourceType, PackageLoadFormat } from "./getSourceType";
 import { join } from "path";
 import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
-import { envToBool } from "../../../helpers/envToBool";
+import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
 export function transformCode(
   pkgName: string,
@@ -29,9 +29,7 @@ export function transformCode(
         "@aikidosec/firewall/instrument/internals",
         join(
           __dirname,
-          envToBool(process.env.AIKIDO_ESM_TEST)
-            ? "injectedFunctions.js"
-            : "injectedFunctions.ts"
+          isEsmUnitTest() ? "injectedFunctions.js" : "injectedFunctions.ts"
         )
       );
     }
