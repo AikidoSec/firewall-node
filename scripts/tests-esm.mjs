@@ -244,7 +244,6 @@ for await (const entry of testFiles) {
               };
               break;
             case "end":
-            case "same":
             case "equal":
             case "ok":
             case "notOk":
