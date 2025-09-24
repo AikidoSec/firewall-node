@@ -2096,3 +2096,45 @@ t.test(
     );
   }
 );
+
+t.test("Modify async return value (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      async function test(...args) {
+        console.log("test");
+        return await test2(...args);
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionDeclaration",
+          name: "test",
+          identifier: "testpkg.application.js.test.FunctionDeclaration.v1.0.0",
+          inspectArgs: false,
+          modifyArgs: false,
+          modifyReturnValue: true,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
+      async function test(...args) {
+        console.log("test");
+        return await __instrumentModifyReturnValue("testpkg.application.js.test.FunctionDeclaration.v1.0.0", arguments, await test2(...args), this);
+      }`
+  );
+});
