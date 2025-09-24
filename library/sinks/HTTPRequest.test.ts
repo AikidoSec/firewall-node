@@ -133,7 +133,7 @@ t.test("it works", (t) => {
   t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: "443", hits: 1 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 

@@ -54,6 +54,8 @@ const agent = createTestAgent({
 
 agent.start([new HTTPRequest()]);
 
+const http = require("http");
+
 const port = 1343;
 const serverUrl = `http://localhost:${port}`;
 const hostHeader = `localhost:${port}`;
@@ -72,8 +74,6 @@ t.before(async () => {
 });
 
 t.test("it does not block request to localhost with same port", (t) => {
-  const http = require("http");
-
   runWithContext(
     createContext({
       url: serverUrl,
@@ -107,8 +107,6 @@ t.test("it does not block request to localhost with same port", (t) => {
 });
 
 t.test("it blocks requests to other ports", (t) => {
-  const http = require("http");
-
   runWithContext(
     createContext({
       url: `http://localhost:${port + 1}`,
