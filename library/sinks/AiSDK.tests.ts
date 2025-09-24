@@ -52,7 +52,7 @@ export function createAiSdkTests(
 
       await runWithContext(getTestContext(), async () => {
         await generateText({
-          model: google("models/gemini-2.0-flash-lite"),
+          model: google("models/gemini-2.5-flash-lite"),
           prompt: "What is Zen by Aikido Security? Return one sentence.",
         });
 
@@ -64,13 +64,15 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.0-flash-lite",
+            model: "gemini-2.5-flash-lite",
             calls: 1,
-            tokens: {
-              input: 12,
-            },
           },
         ]);
+
+        t.ok(
+          agent.getAIStatistics().getStats()[0].tokens.input > 0,
+          "Input tokens should be greater than 0"
+        );
 
         t.ok(
           agent.getAIStatistics().getStats()[0].tokens.output > 0,
@@ -86,7 +88,7 @@ export function createAiSdkTests(
         await setTimeout(400);
 
         const resultObj = await generateObject({
-          model: google("models/gemini-2.0-flash-lite"),
+          model: google("models/gemini-2.5-flash-lite"),
           prompt: "Return numbers one to five",
           output: "array",
           schema: z.array(z.number()),
@@ -96,18 +98,15 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.0-flash-lite",
+            model: "gemini-2.5-flash-lite",
             calls: 2,
-            tokens: {
-              input: 23,
-            },
           },
         ]);
 
         await setTimeout(400);
 
         const stream = streamText({
-          model: google("models/gemini-2.0-flash"),
+          model: google("models/gemini-2.5-flash"),
           prompt: "What is Zen by Aikido Security? Return one sentence.",
         });
 
@@ -121,26 +120,36 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.0-flash-lite",
+            model: "gemini-2.5-flash-lite",
             calls: 2,
-            tokens: {
-              input: 23,
-            },
           },
           {
             provider: "gemini",
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             calls: 1,
-            tokens: {
-              input: 12,
-            },
           },
         ]);
+
+        t.ok(
+          agent.getAIStatistics().getStats()[1].tokens.input > 0,
+          "Input tokens should be greater than 0"
+        );
+
+        t.ok(
+          agent.getAIStatistics().getStats()[1].tokens.output > 0,
+          "Output tokens should be greater than 0"
+        );
+        t.equal(
+          agent.getAIStatistics().getStats()[1].tokens.total,
+          agent.getAIStatistics().getStats()[1].tokens.input +
+            agent.getAIStatistics().getStats()[1].tokens.output,
+          "Total tokens should match input + output"
+        );
 
         await setTimeout(400);
 
         const objectStream = streamObject({
-          model: google("models/gemini-2.0-flash"),
+          model: google("models/gemini-2.5-flash"),
           prompt: "Return numbers one to five",
           output: "array",
           schema: z.array(z.number()),
@@ -156,19 +165,13 @@ export function createAiSdkTests(
         t.match(agent.getAIStatistics().getStats(), [
           {
             provider: "gemini",
-            model: "gemini-2.0-flash-lite",
+            model: "gemini-2.5-flash-lite",
             calls: 2,
-            tokens: {
-              input: 23,
-            },
           },
           {
             provider: "gemini",
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-flash",
             calls: 2,
-            tokens: {
-              input: 23,
-            },
           },
         ]);
       });
