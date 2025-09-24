@@ -42,8 +42,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
   }
 }
 
-process.env.AIKIDO_UNIT_TESTS = "1";
-
 execSync(`tap run ${args}`, {
   stdio: "inherit",
   env: {
@@ -51,5 +49,6 @@ execSync(`tap run ${args}`, {
     AIKIDO_CI: "true",
     // In v24 some sub-dependencies are calling require on a esm module triggering an experimental warning
     NODE_OPTIONS: major === 24 ? "--disable-warning=ExperimentalWarning" : "",
+    AIKIDO_UNIT_TESTS: "1",
   },
 });
