@@ -10,13 +10,15 @@ agent.start([new XmlMinusJs()]);
 
 const xmljs = require("xml-js");
 
-t.test("xml2js works", async () => {
+t.test("xml-js works", async () => {
   const xmlString = (
     await readFile(join(__dirname, "fixtures", "products.xml"), "utf8")
   ).toString();
 
   const result = xmljs.xml2js(xmlString);
-  const expected = require(join(__dirname, "fixtures", "xml2js.json"));
+  const expected = JSON.parse(
+    await readFile(join(__dirname, "fixtures", "xml2js.json"), "utf8")
+  );
   t.same(result, expected);
 
   const context = {
@@ -32,8 +34,8 @@ t.test("xml2js works", async () => {
     route: "/posts/:id",
   };
 
-  const expectedCompact = require(
-    join(__dirname, "fixtures", "xml2js.compact.json")
+  const expectedCompact = JSON.parse(
+    await readFile(join(__dirname, "fixtures", "xml2js.compact.json"), "utf8")
   );
 
   runWithContext(context, () => {
