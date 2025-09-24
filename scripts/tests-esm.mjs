@@ -63,7 +63,6 @@ const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml,js}", {
     "**/Lambda.*.test.ts",
     "**/FunctionsFramework.test.ts",
     "**/PubSub.test.ts",
-    "**/AiSdk.*.test.ts",
     "**/AwsSDKVersion2.test.ts",
   ],
 });
@@ -359,6 +358,9 @@ command +=
 command +=
   "  --test-reporter-destination=stdout --test-reporter-destination=lcov.info";
 command += " --test-coverage-include='../library/**'"; // Exclude test files from coverage
+
+// Pass args to test command, e.g. use node --run test:esm -- ./path/to/test.js
+command += ` ${process.argv.slice(2).join(" ")}`;
 
 await execAsyncWithPipe(command, {
   env: {
