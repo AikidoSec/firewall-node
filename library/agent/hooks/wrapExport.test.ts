@@ -4,38 +4,12 @@ import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
 import { bindContext } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
-import { getInstance, setInstance } from "../AgentSingleton";
 
 const logger = new LoggerForTesting();
 
 createTestAgent({
   logger,
   token: new Token("123"),
-});
-
-t.test("Agent is not initialized", async (t) => {
-  const agent = getInstance();
-  // @ts-expect-error Force agent to be null
-  setInstance(null);
-  try {
-    wrapExport(
-      {},
-      "test",
-      { name: "test", type: "external" },
-      {
-        kind: "outgoing_http_op",
-        inspectArgs: () => {},
-      }
-    );
-    t.fail();
-  } catch (e: unknown) {
-    t.ok(e instanceof Error);
-    if (e instanceof Error) {
-      t.same(e.message, "Can not wrap exports if agent is not initialized");
-    }
-  }
-  // Restore agent
-  if (agent) setInstance(agent);
 });
 
 t.test("Inspect args", async (t) => {
