@@ -30,14 +30,14 @@ const redirectUrl = {
   domainTwice: `${redirectTestUrl}/ssrf-test-domain-twice`, // Redirects to /ssrf-test-domain
 };
 
+const agent = createTestAgent({
+  token: new Token("123"),
+});
+agent.start([new HTTPRequest()]);
+
+const http = require("http") as typeof import("http");
+
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
-  agent.start([new HTTPRequest()]);
-
-  const http = require("http") as typeof import("http");
-
   runWithContext(
     {
       ...context,

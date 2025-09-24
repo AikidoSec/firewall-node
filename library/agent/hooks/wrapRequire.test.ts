@@ -8,6 +8,8 @@ import {
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
 
+// @esm-tests-skip
+
 t.test("Wrap require does not throw an error", async (t) => {
   wrapRequire();
   t.pass();

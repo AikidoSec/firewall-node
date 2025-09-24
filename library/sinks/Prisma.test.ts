@@ -6,6 +6,9 @@ import { promisify } from "util";
 import { exec as execCb } from "child_process";
 import * as path from "path";
 
+// @esm-tests-skip - We can't clear require cache to import different prisma clients for different tests
+// We also can't run them in multiple files, because then they would run in parallel and interfere with each other
+
 const execAsync = promisify(execCb);
 
 const context: Context = {

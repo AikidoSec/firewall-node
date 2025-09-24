@@ -1,7 +1,11 @@
 {
   "name": "firewall-node",
   "devDependencies": {
+    "astring": "^1.9.0",
     "follow-redirects": "^1.15.9",
+    "oxc-parser": "^0.90.0",
+    "oxc-transform": "^0.90.0",
+    "oxc-walker": "^0.5.2",
     "prettier": "^3.2.4",
     "tar": "^7.4.3"
   },
@@ -15,6 +19,7 @@
     "test:ci": "cd library && npm run test:ci",
     "test:new": "cd library && npm run test:new",
     "test:ci:new": "cd library && npm run test:ci:new",
+    "test:esm": "node scripts/tests-esm.mjs",
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
     "end2end:new": "cd end2end && npm run test:new",

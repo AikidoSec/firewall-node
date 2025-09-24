@@ -12,7 +12,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
-const originalRequire = mod.prototype.require;
+const originalRequire = mod.prototype?.require;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];

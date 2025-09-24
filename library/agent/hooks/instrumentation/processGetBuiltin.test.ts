@@ -6,7 +6,7 @@ import {
   patchProcessGetBuiltinModule,
 } from "./processGetBuiltin";
 import { setBuiltinsToInstrument } from "./instructions";
-import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
+import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
 t.test(
   "it works",
@@ -18,8 +18,10 @@ t.test(
   async (t) => {
     createTestAgent();
 
-    // Before patched
-    t.same(getBuiltinModuleWithoutPatching("http"), require("http"));
+    if (!isEsmUnitTest()) {
+      // Before patched
+      t.same(getBuiltinModuleWithoutPatching("http"), require("http"));
+    }
 
     patchProcessGetBuiltinModule();
 

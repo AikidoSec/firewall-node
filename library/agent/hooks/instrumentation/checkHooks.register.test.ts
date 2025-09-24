@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { wrap } from "../../../helpers/wrap";
-import { registerNodeHooks } from ".";
+import { registerNodeHooks } from "./index";
 import * as mod from "node:module";
 
 const logs: string[] = [];

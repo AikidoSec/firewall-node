@@ -3,6 +3,7 @@ import { runWithContext, type Context } from "../agent/Context";
 import { SQLite3 } from "./SQLite3";
 import { promisify } from "util";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -53,7 +54,12 @@ t.test("it detects SQL injections", async () => {
   });
   agent.start([new SQLite3()]);
 
-  const sqlite3 = require("sqlite3") as typeof import("sqlite3");
+  let sqlite3 = require("sqlite3") as typeof import("sqlite3");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error ESM not covered by types
+    sqlite3 = sqlite3.default;
+  }
 
   const db = new sqlite3.Database(":memory:");
   const run = promisify(db.run.bind(db));

@@ -14,7 +14,7 @@ t.after(() => {
   process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
 });
 
-const isSameCode = (code1: string, code2: string) => {
+const isSameCode = (t: any, code1: string, code2: string) => {
   t.same(compareCodeStrings(code1, code2), true);
 };
 
@@ -58,6 +58,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -115,6 +116,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
       const { test } = require("test");
@@ -172,6 +174,7 @@ t.test("wrong function name", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
         const { test } = require("test");
@@ -228,6 +231,7 @@ t.test("typescript code", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
           import { test } from "test";
@@ -317,6 +321,7 @@ t.test("empty code", async (t) => {
   });
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";`
   );
@@ -362,6 +367,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
       import { test } from "test";
@@ -478,6 +484,7 @@ t.test("modify rest parameter args", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
         class Test {
@@ -523,6 +530,7 @@ t.test("modify rest parameter args", async (t) => {
   );
 
   isSameCode(
+    t,
     result2,
     `import { __instrumentModifyArgs } from "@aikidosec/firewall/instrument/internals";
         class Test {
@@ -577,6 +585,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -632,6 +641,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
   );
 
   isSameCode(
+    t,
     result2,
     `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
     const { test } = require("test");
@@ -933,6 +943,7 @@ t.test("does not modify code if function name is not found", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
         const app = require("example");
@@ -986,6 +997,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
     );
 
   isSameCode(
+    t,
     testWithReturnStatement("return arg1;"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1004,6 +1016,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement("return 'test';"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1022,6 +1035,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement("return 'test\"';"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1040,6 +1054,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement("return [1, 2];"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1058,6 +1073,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement("return function() { return 42; };"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1076,6 +1092,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(
       'return funcCall({foo: [1], test: Symbol("abc")});'
     ),
@@ -1096,6 +1113,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement("return function() { return 42; };"),
     `import { __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     import { test } from "test";
@@ -1114,6 +1132,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
     {
       return 42;
@@ -1137,6 +1156,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       if(true) {
         return 42;
@@ -1164,6 +1184,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       do {
         return 42;
@@ -1187,6 +1208,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       while (true) {
         return 42;
@@ -1210,6 +1232,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       for (const key in obj) {
         return 42;
@@ -1233,6 +1256,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       for (const value of iterable) {
         return 42;
@@ -1256,6 +1280,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       for (let i = 0; i < 10; i++) {
         return i;
@@ -1279,6 +1304,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       switch (value) {
         case 1:
@@ -1311,6 +1337,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       try {
         return 42;
@@ -1339,6 +1366,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     testWithReturnStatement(`
       x: while (true) {
         return 42;
@@ -1390,6 +1418,7 @@ t.test("it adds all imports if necessary (CJS)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `const { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } = require("@aikidosec/firewall/instrument/internals");
     test();`
@@ -1425,7 +1454,7 @@ t.test(
       }
     );
 
-    isSameCode(result, `test();`);
+    isSameCode(t, result, `test();`);
   }
 );
 
@@ -1458,7 +1487,7 @@ t.test(
       }
     );
 
-    isSameCode(result, `test();`);
+    isSameCode(t, result, `test();`);
   }
 );
 
@@ -1502,6 +1531,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     const x = 1;
@@ -1556,6 +1586,7 @@ t.test("Modify function declaration (CJS)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `const { __instrumentModifyArgs } = require("@aikidosec/firewall/instrument/internals");
     const x = 1;
@@ -1659,6 +1690,7 @@ t.test("Modify function expression (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
     const x = 1;
@@ -1710,6 +1742,7 @@ t.test("Modify constructor (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
      class Test {
@@ -1758,6 +1791,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
      class Test {
@@ -1807,6 +1841,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `import { __instrumentInspectArgs, __instrumentModifyArgs, __instrumentModifyReturnValue } from "@aikidosec/firewall/instrument/internals";
      class Test {
@@ -1845,6 +1880,7 @@ t.test("Access local variables (ESM)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `
     import { __instrumentAccessLocalVariables } from "@aikidosec/firewall/instrument/internals";
@@ -1880,6 +1916,7 @@ t.test("Access local variables (CJS)", async (t) => {
   );
 
   isSameCode(
+    t,
     result,
     `
     const { __instrumentAccessLocalVariables } = require("@aikidosec/firewall/instrument/internals");
