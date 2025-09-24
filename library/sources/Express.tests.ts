@@ -14,6 +14,7 @@ import { setUser } from "../agent/context/user";
 import { addExpressMiddleware } from "../middleware/express";
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createExpressTests(expressPackageName: string) {
   // Before require("express")
   const agent = startTestAgent({

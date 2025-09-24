@@ -14,6 +14,7 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createKoaRouterTests(koaRouterPackageName: string) {
   const options = {
     skip:

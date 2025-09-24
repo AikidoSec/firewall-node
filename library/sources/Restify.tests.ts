@@ -10,6 +10,7 @@ import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { startTestAgent } from "../helpers/startTestAgent";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createRestifyTests(restifyPackageName: string) {
   const agent = startTestAgent({
     block: true,

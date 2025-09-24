@@ -35,6 +35,7 @@ agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 async function getServer(onRequestExt = true) {
   const hapi = require("@hapi/hapi") as typeof import("@hapi/hapi");
 

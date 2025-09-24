@@ -10,6 +10,7 @@ import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
   wrap(dns, "lookup", function lookup(original) {
