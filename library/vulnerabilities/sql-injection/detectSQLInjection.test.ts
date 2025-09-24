@@ -334,7 +334,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }
@@ -350,7 +350,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }
