@@ -11,6 +11,7 @@ import { addKoaMiddleware } from "../middleware/koa";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createKoaTests(koaPackageName: string) {
   const agent = startTestAgent({
     block: true,
