@@ -81,7 +81,7 @@ agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 t.setTimeout(30 * 1000);
 
-const { join } = require("path");
+const { join } = require("path") as typeof import("path");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
