@@ -132,7 +132,6 @@ for await (const entry of testFiles) {
   // https://www.npmjs.com/package/oxc-walker
   walk(ast.program, {
     enter(node) {
-      // ImportDeclaration nodes
       if (node.type === "ImportDeclaration") {
         const source = node.source;
 
