@@ -188,4 +188,63 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             false,
         );
     }
+
+    fn enter_variable_declarator(
+        &mut self,
+        node: &mut oxc_ast::ast::VariableDeclarator<'a>,
+        _ctx: &mut TraverseCtx<'a, TraverseState>,
+    ) {
+        if !node.id.kind.is_binding_identifier() || !node.init.is_some() {
+            return;
+        }
+
+        let expr = node.init.as_mut().unwrap();
+        if !expr.is_function() {
+            return;
+        }
+
+        let name_str = node.id.get_identifier_name().unwrap().to_string();
+
+        let matching_instruction = self
+            .file_instructions
+            .functions
+            .iter()
+            .find(|f| f.node_type == "FunctionVariableDeclaration" && f.name == name_str);
+
+        if matching_instruction.is_none() {
+            // This function assignment should not be instrumented
+            return;
+        }
+
+        let instruction = matching_instruction.unwrap();
+
+        let function_args = match expr {
+            Expression::FunctionExpression(func_expr) => &func_expr.params,
+            Expression::ArrowFunctionExpression(arrow_func_expr) => &arrow_func_expr.params,
+            _ => return,
+        };
+
+        // We need to collect the arg names before we make the body mutable
+        let arg_names = if instruction.modify_args {
+            get_function_or_method_arg_names(&function_args)
+        } else {
+            Vec::new()
+        };
+
+        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> = match expr {
+            Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+            _ => return,
+        };
+
+        insert_instrument_method_calls(
+            self.allocator,
+            self.ast_builder,
+            instruction,
+            &arg_names,
+            self.pkg_version,
+            body,
+            false,
+        );
+    }
 }

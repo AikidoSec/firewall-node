@@ -2138,3 +2138,134 @@ t.test("Modify async return value (ESM)", async (t) => {
       }`
   );
 });
+
+t.test("Modify async arrow function variable declaration (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = async (...args) => {
+        console.log("test");
+        return 1;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionVariableDeclaration",
+          name: "test",
+          identifier:
+            "testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+    const test = async (...args) => {
+        __instrumentInspectArgs("testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0", arguments, "1.0.0", this);
+        console.log("test");
+        return 1;
+    };`
+  );
+});
+
+t.test("Modify function variable declaration (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = function (...args) {
+        console.log("test");
+        return 1;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionVariableDeclaration",
+          name: "test",
+          identifier:
+            "testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      const test = function(...args) {
+              __instrumentInspectArgs("testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0", arguments, "1.0.0", this);
+              console.log("test");
+              return 1;
+      };`
+  );
+});
+
+t.test("Do not modify function variable declaration (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = function (...args) {
+        console.log("test");
+        return 1;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionVariableDeclaration",
+          name: "testabc",
+          identifier:
+            "testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      const test = function(...args) {
+          console.log("test");
+          return 1;
+      };`
+  );
+});

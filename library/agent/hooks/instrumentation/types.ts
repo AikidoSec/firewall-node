@@ -90,7 +90,8 @@ export type PackageFunctionInstrumentationInstruction = {
     | "MethodDefinition"
     | "FunctionAssignment"
     | "FunctionDeclaration"
-    | "FunctionExpression";
+    | "FunctionExpression"
+    | "FunctionVariableDeclaration";
   name: string;
   /**
    * Used for stats reporting to core, e.g. sql_op
