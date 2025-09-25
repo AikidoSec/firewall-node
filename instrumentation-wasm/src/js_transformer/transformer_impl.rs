@@ -212,7 +212,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             .find(|f| f.node_type == "FunctionVariableDeclaration" && f.name == name_str);
 
         if matching_instruction.is_none() {
-            // This function assignment should not be instrumented
+            // This variable declaration should not be instrumented
             return;
         }
 
