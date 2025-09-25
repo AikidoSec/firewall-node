@@ -29,8 +29,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/Prisma.test.ts",
     "**/sinks/AwsSDK*",
     "**/sinks/OpenAI.test.ts",
-
-    "**/sources/Lambda.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {
