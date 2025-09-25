@@ -35,7 +35,7 @@ t.test("it works", async (t) => {
   t.equal(hookTwoCalls, 0, "hook2 not called");
 
   addHook("beforeSQLExecute", hook2);
-  executeHooks("beforeSQLExecute", "SELECT 1");
+  t.same(executeHooks("beforeSQLExecute", "SELECT 1"), [], "no value returned");
 
   t.equal(hookOneCalls, 2, "hook1 called twice");
   t.equal(hookTwoCalls, 1, "hook2 called once");
@@ -47,8 +47,19 @@ t.test("it works", async (t) => {
   t.equal(hookTwoCalls, 2, "hook2 called twice");
 
   removeHook("beforeSQLExecute", hook2);
-  executeHooks("beforeSQLExecute", "SELECT 1");
+  t.same(executeHooks("beforeSQLExecute", "SELECT 1"), [], "no hooks executed");
 
   t.equal(hookOneCalls, 2, "hook1 still called twice");
   t.equal(hookTwoCalls, 2, "hook2 still called twice");
+
+  // @ts-expect-error returnTest is not defined in the types
+  addHook("returnTest", () => {
+    return 1;
+  });
+  // @ts-expect-error returnTest is not defined in the types
+  addHook("returnTest", () => {
+    return 2;
+  });
+  // @ts-expect-error returnTest is not defined in the types
+  t.same(executeHooks("returnTest"), [1, 2], "returns values from hooks");
 });

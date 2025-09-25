@@ -45,9 +45,12 @@ export function executeHooks<N extends HookName>(
   const hookList = hooks.get(name);
 
   for (const fn of hookList ?? []) {
-    results.push(
-      (fn as (...args: HookTypes[N]["args"]) => HookTypes[N]["return"])(...args)
-    );
+    const result = (
+      fn as (...args: HookTypes[N]["args"]) => HookTypes[N]["return"]
+    )(...args);
+    if (result !== undefined) {
+      results.push(result);
+    }
   }
   return results;
 }
