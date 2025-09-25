@@ -164,7 +164,7 @@ export class AiSDK implements Wrapper {
           } catch (error) {
             agent.onErrorThrownByInterceptor({
               error: error instanceof Error ? error : new Error(String(error)),
-              method: `${methodName}`,
+              method: methodName,
               module: "ai",
             });
           }
