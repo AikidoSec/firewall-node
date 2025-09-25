@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
     AstBuilder, NONE,
-    ast::{Argument, Statement},
+    ast::{Argument, Expression, Statement},
 };
 use oxc_span::SPAN;
 
@@ -51,6 +51,12 @@ fn transform_statement<'a>(
                 .argument
                 .take()
                 .unwrap_or_else(|| builder.expression_identifier(SPAN, "undefined"));
+
+            let needs_await = match arg_expr {
+                Expression::AwaitExpression(_) => true,
+                _ => false,
+            };
+
             instrument_args.push(arg_expr.into());
 
             // Add the `this` context as argument
@@ -64,8 +70,13 @@ fn transform_statement<'a>(
                 false,
             );
 
-            // Replace the return statement with a call to the identifier
-            return_stmt.argument = Some(new_call_expr);
+            if !needs_await {
+                // Replace the return statement with a call to the identifier
+                return_stmt.argument = Some(new_call_expr);
+            } else {
+                // If the original return value was awaited, we need to await the new call expression
+                return_stmt.argument = Some(builder.expression_await(SPAN, new_call_expr));
+            }
         }
         // Recursively transform nested statements
         Statement::BlockStatement(block_stmt) => {
