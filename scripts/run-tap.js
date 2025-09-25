@@ -32,9 +32,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     "**/sinks/OpenAI.test.ts",
     "**/sinks/AiSDK.v4.test.ts",
     "**/sinks/AiSDK.v5.test.ts",
-
-    "**/sources/Lambda.test.ts",
-    "**/sources/FunctionsFramework.test.ts",
   ];
 
   for (const exclude of excludedTestFilesForNewInstrumentation) {
