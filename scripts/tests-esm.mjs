@@ -59,7 +59,6 @@ const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml,js}", {
   exclude: [
     "**/node_modules/**",
 
-    "**/FunctionsFramework.test.ts",
     "**/PubSub.test.ts",
     "**/AwsSDKVersion2.test.ts",
   ],
