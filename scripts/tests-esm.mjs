@@ -56,12 +56,7 @@ await writeFile(join(outDir, "package.json"), "{}");
 
 const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml,js}", {
   cwd: libDir,
-  exclude: [
-    "**/node_modules/**",
-
-    "**/PubSub.test.ts",
-    "**/AwsSDKVersion2.test.ts",
-  ],
+  exclude: ["**/node_modules/**", "**/AwsSDKVersion2.test.ts"],
 });
 
 // Copy all test files and transform them
