@@ -1,5 +1,6 @@
 import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
+import { executeHooks } from "../../agent/hooks";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
@@ -25,6 +26,8 @@ export function checkContextForSqlInjection({
   context: Context;
   dialect: SQLDialect;
 }): InterceptorResult {
+  executeHooks("beforeSQLExecute", sql);
+
   for (const source of SOURCES) {
     const userInput = extractStringsFromUserInputCached(context, source);
     if (!userInput) {
