@@ -2,6 +2,7 @@ import { mkdir, open, unlink, type FileHandle } from "fs/promises";
 import { setTimeout } from "timers/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { isUnitTest } from "./isUnitTest";
 
 const LOCK_DIR = join(tmpdir(), "zen-test-locks");
 
@@ -10,6 +11,10 @@ export class LockFile {
   private lockFile: string;
 
   constructor(name: string) {
+    if (!isUnitTest()) {
+      throw new Error("LockFile can only be used in unit tests");
+    }
+
     this.lockFile = join(LOCK_DIR, `${name}.lock`);
   }
 
