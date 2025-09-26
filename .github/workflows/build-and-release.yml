@@ -20,8 +20,8 @@ jobs:
       id-token: write
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
@@ -31,6 +31,10 @@ jobs:
           rustup toolchain install stable
           rustup default stable
           cargo install wasm-pack
+      - name: Setup Aikido safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain
+          safe-chain setup-ci
       - name: Ensure latest npm version
         run: npm install -g npm@latest
       - name: Install dependencies
