@@ -23,17 +23,6 @@ if (process.argv.includes("--test-new-instrumentation")) {
     );
     process.exit(1);
   }
-
-  // This list excludes test files of sinks and sources that are not yet ported to the new instrumentation
-  const excludedTestFilesForNewInstrumentation = [
-    "**/sinks/Prisma.test.ts",
-    "**/sinks/AwsSDK*",
-    "**/sinks/OpenAI.test.ts",
-  ];
-
-  for (const exclude of excludedTestFilesForNewInstrumentation) {
-    args += ` --exclude='${exclude}'`;
-  }
 }
 
 execSync(`tap run ${args}`, {
