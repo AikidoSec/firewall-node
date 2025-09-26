@@ -5,7 +5,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
 import { join } from "path";
-import { TestLock } from "./testLock";
+import { TestLock } from "../helpers/testLock";
 
 const execAsync = promisify(execCb);
 
