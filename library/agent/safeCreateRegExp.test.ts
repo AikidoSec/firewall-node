@@ -4,7 +4,7 @@ import { safeCreateRegExp } from "./safeCreateRegExp";
 t.test("safeCreateRegExp returns RegExp for valid pattern", async (t) => {
   const regex = safeCreateRegExp("abc", "i");
   t.ok(regex instanceof RegExp);
-  t.match("Abc", regex);
+  t.ok(regex!.test("Abc"));
 });
 
 t.test("safeCreateRegExp returns undefined for invalid pattern", async (t) => {
@@ -20,5 +20,5 @@ t.test("safeCreateRegExp returns undefined for invalid flags", async (t) => {
 t.test("safeCreateRegExp works with empty pattern", async (t) => {
   const regex = safeCreateRegExp("", "");
   t.ok(regex instanceof RegExp);
-  t.match("", regex);
+  t.ok(regex!.test(""));
 });

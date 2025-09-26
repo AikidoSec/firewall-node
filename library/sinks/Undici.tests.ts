@@ -10,7 +10,8 @@ import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
-export function createUndiciTests(undiciPkgName: string, port: number) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
   wrap(dns, "lookup", function lookup(original) {
     return function lookup() {
@@ -67,9 +68,10 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
     };
   }
 
+  const http = require("http") as typeof import("http");
+
   let server: ReturnType<typeof import("http").createServer>;
   t.before(() => {
-    const http = require("http") as typeof import("http");
     server = http.createServer((req, res) => {
       res.end("Hello, world!");
     });
@@ -137,10 +139,10 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await request({
         protocol: "https:",
         hostname: "ssrf-redirects.testssandbox.com",
-        port: "443",
+        port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -167,10 +169,10 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
       await request({
         protocol: "https:",
         hostname: "ssrf-redirects.testssandbox.com",
-        port: "443",
+        port: 443,
       });
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -184,7 +186,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         require("url").parse("https://ssrf-redirects.testssandbox.com")
       );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -192,7 +194,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -200,7 +202,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         require("url").parse("https://ssrf-redirects.testssandbox.com")
       );
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -208,7 +210,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         origin: "https://ssrf-redirects.testssandbox.com",
       } as URL);
       t.same(agent.getHostnames().asArray(), [
-        { hostname: "ssrf-redirects.testssandbox.com", port: "443", hits: 1 },
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
       ]);
       agent.getHostnames().clear();
 
@@ -251,7 +253,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         t.same(events.length, 1);
         t.same(events[0].attack.metadata, {
           hostname: "localhost",
-          port: port,
+          port: port.toString(),
         });
 
         const error2 = await t.rejects(() =>
