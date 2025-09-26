@@ -1,13 +1,12 @@
-import { mkdir, open, unlink } from "fs/promises";
+import { mkdir, open, unlink, type FileHandle } from "fs/promises";
 import { setTimeout } from "timers/promises";
-import * as fs from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
 const LOCK_DIR = join(tmpdir(), "zen-test-locks");
 
 export class TestLock {
-  private handle: fs.FileHandle | null = null;
+  private handle: FileHandle | null = null;
   private lockFile: string;
 
   constructor(name: string) {
