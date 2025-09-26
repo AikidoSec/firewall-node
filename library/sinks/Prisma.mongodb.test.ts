@@ -5,7 +5,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
 import { join } from "path";
-import { TestLock } from "../helpers/testLock";
+import { LockFile } from "../helpers/LockFile";
 
 const execAsync = promisify(execCb);
 
@@ -27,7 +27,7 @@ const noSQLContext: Context = {
 };
 
 t.test("it works with mongodb", async (t) => {
-  const lock = new TestLock("prisma-shared");
+  const lock = new LockFile("prisma-shared");
 
   await lock.withLock(async () => {
     const agent = createTestAgent();

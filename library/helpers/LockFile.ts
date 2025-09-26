@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 
 const LOCK_DIR = join(tmpdir(), "zen-test-locks");
 
-export class TestLock {
+export class LockFile {
   private handle: FileHandle | null = null;
   private lockFile: string;
 
