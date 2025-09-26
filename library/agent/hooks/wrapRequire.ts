@@ -191,7 +191,8 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
   // Read the package.json of the required package
   let packageJson: PackageJson | undefined;
   try {
-    packageJson = originalRequire(
+    packageJson = originalRequire.call(
+      this,
       `${pathInfo.base}/package.json`
     ) as PackageJson;
   } catch {
