@@ -5,12 +5,13 @@ export function getAPIURL() {
     return new URL(process.env.AIKIDO_ENDPOINT);
   }
 
-  const region = extractRegionFromToken(process.env.AIKIDO_TOKEN || '');
+  const region = extractRegionFromToken(process.env.AIKIDO_TOKEN || "");
 
-  if (region === 'US') {
+  if (region === "US") {
     return new URL("https://guard.us.aikido.dev");
   }
-  if (region === 'ME') {
+
+  if (region === "ME") {
     return new URL("https://guard.me.aikido.dev");
   }
 
