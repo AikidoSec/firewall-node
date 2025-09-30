@@ -65,7 +65,7 @@ export function onModuleLoad(
   }
 }
 
-function patchPackage(
+export function patchPackage(
   path: string,
   previousLoadResult: ReturnType<LoadFunction>
 ) {

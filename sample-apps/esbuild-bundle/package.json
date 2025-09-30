@@ -1,0 +1,17 @@
+{
+  "name": "esbuild-bundle",
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.18.1",
+    "hono": "^4.8.12",
+    "sqlite3": "^5.1.7"
+  },
+  "scripts": {
+    "start": "node -r @aikidosec/firewall/instrument ./build/app.js",
+    "build": "node ./build.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "esbuild": "^0.25.8"
+  }
+}
