@@ -42,7 +42,6 @@ t.test("should not return unsupported region", async (t) => {
 });
 
 t.test("should respect AIKIDO_REALTIME_ENDPOINT if set", async (t) => {
-  process.env.AIKIDO_REALTIME_ENDPOINT =
-    "https://custom-runtime.example.com";
+  process.env.AIKIDO_REALTIME_ENDPOINT = "https://custom-runtime.example.com";
   t.equal(getRealtimeURL().href, "https://custom-runtime.example.com/");
 });
