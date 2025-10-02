@@ -31,6 +31,7 @@ export type Context = {
    */
   outgoingRequestRedirects?: { source: URL; destination: URL }[];
   executedMiddleware?: boolean;
+  cachedMatchingEndpoints?: Endpoint[];
   rateLimitGroup?: string; // Used to apply rate limits to a group of users
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
 };
@@ -59,6 +60,11 @@ export function updateContext<K extends keyof Context>(
   if (context.cache && isSourceKey(key)) {
     context.cache.delete(key);
   }
+
+  // Delete cacheMatchingEndpoints if method, url, or route changes
+  if (key === "method" || key === "url" || key === "route") {
+    delete context.cachedMatchingEndpoints;
+  }
 }
 
 /**
@@ -72,8 +78,17 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   const current = ContextStorage.getStore();
 
   // If there is already a context, we just update it
-  // In this way we don't lose the `attackDetected` flag
+  // In this way we don't lose the `attackDetected` flag or other properties like `markUnsafe` or `xml`
   if (current) {
+    if (
+      current.method !== context.method ||
+      current.url !== context.url ||
+      current.route !== context.route
+    ) {
+      // If the method, url, or route changes, we need to delete the cacheMatchingEndpoints
+      delete current.cachedMatchingEndpoints;
+    }
+
     current.url = context.url;
     current.method = context.method;
     current.query = context.query;
