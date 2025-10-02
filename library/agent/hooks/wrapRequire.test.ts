@@ -8,6 +8,8 @@ import {
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
 
+// @esm-tests-skip
+
 t.test("Wrap require does not throw an error", async (t) => {
   wrapRequire();
   t.pass();
@@ -26,8 +28,10 @@ t.test("Can wrap external package", async (t) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "sqlite3");
     t.same(pkgInfo.type, "external");
-    t.ok(pkgInfo.path?.base.endsWith("node_modules/sqlite3"));
-    t.same(pkgInfo.path?.relative, "lib/sqlite3.js");
+    if (pkgInfo.type === "external") {
+      t.ok(pkgInfo.path.base.endsWith("node_modules/sqlite3"));
+      t.same(pkgInfo.path.relative, "lib/sqlite3.js");
+    }
   });
   setPackagesToPatch([pkg]);
 
@@ -56,8 +60,10 @@ t.test("Can wrap file of external package", async (t) => {
       exports._test = "aikido";
       t.same(pkgInfo.name, "hono");
       t.same(pkgInfo.type, "external");
-      t.ok(pkgInfo.path?.base.endsWith("node_modules/hono"));
-      t.same(pkgInfo.path?.relative, "dist/cjs/hono-base.js");
+      if (pkgInfo.type === "external") {
+        t.ok(pkgInfo.path.base.endsWith("node_modules/hono"));
+        t.same(pkgInfo.path.relative, "dist/cjs/hono-base.js");
+      }
     });
   setPackagesToPatch([pkg]);
 
@@ -79,6 +85,7 @@ t.test("Can wrap builtin module", async (t) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "fs");
     t.same(pkgInfo.type, "builtin");
+    // @ts-expect-error Test to ensure types are correct
     t.same(pkgInfo.path, undefined);
   });
   setBuiltinModulesToPatch([module]);

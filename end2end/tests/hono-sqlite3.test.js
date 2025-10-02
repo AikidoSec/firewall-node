@@ -59,10 +59,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked an SQL injection/);
-      t.notMatch(
-        stderr,
-        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
-      );
+      t.notMatch(stderr, /Your application seems to be running in ESM mode\./);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -118,10 +115,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
-      t.notMatch(
-        stderr,
-        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
-      );
+      t.notMatch(stderr, /Your application seems to be running in ESM mode\./);
     })
     .catch((error) => {
       t.fail(error.message);

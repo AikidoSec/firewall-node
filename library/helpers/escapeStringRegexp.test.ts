@@ -13,5 +13,5 @@ t.test("escapes `-` in a way compatible with PCRE", async (t) => {
 });
 
 t.test("escapes `-` in a way compatible with the Unicode flag", async (t) => {
-  t.match("-", new RegExp(escapeStringRegexp("-"), "u"));
+  t.ok(new RegExp(escapeStringRegexp("-"), "u").test("-"));
 });

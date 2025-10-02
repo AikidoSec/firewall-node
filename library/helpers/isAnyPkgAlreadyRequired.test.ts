@@ -2,6 +2,8 @@ import * as t from "tap";
 import { isAnyPkgAlreadyRequired } from "./isAnyPkgAlreadyRequired";
 import { Hooks } from "../agent/hooks/Hooks";
 
+// @esm-tests-skip
+
 t.test("it works", async (t) => {
   const hooks = new Hooks();
   hooks.addPackage("express");
