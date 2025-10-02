@@ -14,6 +14,7 @@ import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { isLibBundled } from "./helpers/isLibBundled";
+import { addHook, removeHook } from "./agent/hooks";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -47,6 +48,8 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  addHook,
+  removeHook,
 };
 
 // Required for ESM / TypeScript default export support
@@ -63,4 +66,6 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  addHook,
+  removeHook,
 };
