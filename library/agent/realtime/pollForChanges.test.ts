@@ -14,27 +14,11 @@ t.test("it does not start interval if no token", async (t) => {
     onConfigUpdate: (config) => t.fail(),
     logger: logger,
     token: undefined,
-    serverless: undefined,
     lastUpdatedAt: 0,
   });
 
   t.same(logger.getMessages(), [
     "No token provided, not polling for config updates",
-  ]);
-});
-
-t.test("it does not start interval if serverless", async (t) => {
-  const logger = new LoggerForTesting();
-  pollForChanges({
-    onConfigUpdate: (config) => t.fail(),
-    logger: logger,
-    token: new Token("123"),
-    serverless: "true",
-    lastUpdatedAt: 0,
-  });
-
-  t.same(logger.getMessages(), [
-    "Running in serverless environment, not polling for config updates",
   ]);
 });
 
@@ -83,7 +67,6 @@ t.test("it checks for config updates", async () => {
     },
     logger: new LoggerNoop(),
     token: new Token("123"),
-    serverless: undefined,
     lastUpdatedAt: 0,
   });
 
@@ -216,7 +199,6 @@ t.test("it deals with API throwing errors", async () => {
     },
     logger: logger,
     token: new Token("123"),
-    serverless: undefined,
     lastUpdatedAt: 0,
   });
 
