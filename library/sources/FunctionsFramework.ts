@@ -49,6 +49,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       }
     }
+
     return await runWithContext(
       {
         method: req.method,
