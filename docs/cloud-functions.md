@@ -61,6 +61,16 @@ If you need to debug the firewall, you can run your cloud function with the envi
 
 This will output debug information to the console (e.g. if the agent failed to start, no token was found, unsupported packages, ...).
 
+## Timeout configuration
+
+By default, Zen uses a 1-second timeout for API requests (startup event and heartbeats) to minimize impact on function execution time.
+
+If you're experiencing timeout errors (e.g., due to slow network connections or specific GCP regions), you can increase the timeout using the `AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS` environment variable:
+
+```bash
+AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS=5000  # 5 seconds
+```
+
 ## Preventing prototype pollution
 
 Zen can also protect your application against prototype pollution attacks.
