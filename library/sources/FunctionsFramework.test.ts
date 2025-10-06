@@ -187,11 +187,11 @@ t.test("it flushes stats first invoke", async (t) => {
 
   await request(app).get("/");
 
-  t.match(api.getEvents(), [{ type: "heartbeat" }]);
+  t.match(api.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   await request(app).get("/");
 
-  t.same(api.getEvents().length, 1);
+  t.same(api.getEvents().length, 2);
 });
 
 t.test("it hooks into functions framework", async () => {

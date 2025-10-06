@@ -227,11 +227,14 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     await handler(gatewayEvent, lambdaContext, () => {});
 
     if (i === 0) {
-      t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+      t.match(testing.getEvents(), [
+        { type: "started" },
+        { type: "heartbeat" },
+      ]);
     }
   }
 
-  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+  t.match(testing.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   testing.clear();
 
@@ -393,7 +396,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
     t.same(error.message, "error");
   }
 
-  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+  t.match(testing.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   clock.uninstall();
 });
