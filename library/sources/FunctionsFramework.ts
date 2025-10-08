@@ -73,6 +73,8 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
             const stats = agent.getInspectionStatistics();
             stats.onRequest();
 
+            await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
+
             if (
               lastFlushStatsAt === undefined ||
               lastFlushStatsAt + getFlushEveryMS() < performance.now()

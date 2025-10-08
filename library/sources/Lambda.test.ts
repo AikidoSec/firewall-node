@@ -1,10 +1,13 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import type { Context } from "aws-lambda";
 import * as t from "tap";
+import { setTimeout } from "timers/promises";
+import type { Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { wrap } from "../helpers/wrap";
 import { APIGatewayProxyEvent, createLambdaWrapper, SQSEvent } from "./Lambda";
 
 const gatewayEvent: APIGatewayProxyEvent = {
@@ -506,4 +509,71 @@ t.test("it counts attacks", async () => {
       },
     },
   });
+});
+
+t.test("it waits for attack events to be sent before returning", async (t) => {
+  let attackReportCallCount = 0;
+  let attackReportResolveCount = 0;
+
+  const testing = new ReportingAPIForTesting();
+
+  wrap(testing, "report", function report(original) {
+    return async function report(...args: unknown[]) {
+      const event = args[1] as Event;
+      if (event.type === "heartbeat" || event.type === "started") {
+        // @ts-expect-error Type is unknown
+        return original.apply(this, args);
+      }
+
+      attackReportCallCount++;
+      await setTimeout(100);
+      attackReportResolveCount++;
+
+      // @ts-expect-error Type is unknown
+      return original.apply(this, args);
+    };
+  });
+
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api: testing,
+  });
+  agent.start([]);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    agent.onDetectedAttack({
+      module: "fs",
+      operation: "readFile",
+      kind: "path_traversal",
+      blocked: false,
+      source: "body",
+      request: getContext(),
+      stack: "stack",
+      paths: ["file"],
+      metadata: {},
+      payload: "../etc/passwd",
+    });
+
+    agent.onDetectedAttackWave({
+      request: getContext()!,
+      metadata: {},
+    });
+
+    return { statusCode: 200 };
+  });
+
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  t.equal(
+    attackReportCallCount,
+    2,
+    "attack reports should have been called twice"
+  );
+  t.equal(
+    attackReportResolveCount,
+    2,
+    "both attack reports should have been awaited"
+  );
 });

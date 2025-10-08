@@ -33,6 +33,7 @@ import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { PendingEvents } from "./PendingEvents";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -69,6 +70,7 @@ export class Agent {
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
+  private pendingEvents = new PendingEvents();
 
   constructor(
     private block: boolean,
@@ -251,7 +253,9 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+      const promise = this.api.report(this.token, attack, this.timeoutInMS);
+      this.pendingEvents.onAPICall(promise);
+      promise.catch(() => {
         this.logger.log("Failed to report attack");
       });
     }
@@ -603,6 +607,10 @@ export class Agent {
     await this.sendHeartbeat(timeoutInMS);
   }
 
+  getPendingEvents() {
+    return this.pendingEvents;
+  }
+
   getRateLimiter() {
     return this.rateLimiter;
   }
@@ -658,9 +666,12 @@ export class Agent {
     };
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack wave");
-      });
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack wave");
+        });
+      this.pendingEvents.onAPICall(promise);
     }
   }
 }

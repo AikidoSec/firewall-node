@@ -1,6 +1,8 @@
 import * as t from "tap";
 import * as express from "express";
 import * as request from "supertest";
+import { setTimeout } from "timers/promises";
+import type { Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import {
@@ -11,7 +13,7 @@ import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";
-import { isWrapped } from "../helpers/wrap";
+import { isWrapped, wrap } from "../helpers/wrap";
 
 function getExpressApp() {
   const app = express();
@@ -207,4 +209,79 @@ t.test("it hooks into functions framework", async () => {
   });
 
   t.same(isWrapped(framework.http), true);
+});
+
+t.test("it waits for attack events to be sent before returning", async (t) => {
+  let attackReportCallCount = 0;
+  let attackReportResolveCount = 0;
+
+  const api = new ReportingAPIForTesting();
+
+  wrap(api, "report", function report(original) {
+    return async function report(...args: unknown[]) {
+      const event = args[1] as Event;
+      if (event.type === "heartbeat" || event.type === "started") {
+        // @ts-expect-error type is unknown
+        return original.apply(this, args);
+      }
+
+      attackReportCallCount++;
+      await setTimeout(100);
+      attackReportResolveCount++;
+
+      // @ts-expect-error type is unknown
+      return original.apply(this, args);
+    };
+  });
+
+  const agent = createTestAgent({
+    api,
+    serverless: "gcp",
+    token: new Token("123"),
+  });
+  agent.start([]);
+
+  const app = express();
+  app.set("env", "test");
+
+  app.get(
+    "/",
+    asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
+      createCloudFunctionWrapper((req, res) => {
+        agent.onDetectedAttack({
+          module: "fs",
+          operation: "readFile",
+          kind: "path_traversal",
+          blocked: false,
+          source: "body",
+          request: getContext(),
+          stack: "stack",
+          paths: ["file"],
+          metadata: {},
+          payload: "../etc/passwd",
+        });
+
+        agent.onDetectedAttackWave({
+          request: getContext()!,
+          metadata: {},
+        });
+
+        res.sendStatus(200);
+      })
+    )
+  );
+
+  await request(app).get("/");
+
+  t.equal(
+    attackReportCallCount,
+    2,
+    "attack reports should have been called twice"
+  );
+  t.equal(
+    attackReportResolveCount,
+    2,
+    "both attack reports should have been awaited"
+  );
 });
