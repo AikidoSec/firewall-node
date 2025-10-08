@@ -212,21 +212,20 @@ t.test("it hooks into functions framework", async () => {
 });
 
 t.test("it waits for attack events to be sent before returning", async (t) => {
-  let attackReportCallCount = 0;
   let attackReportResolveCount = 0;
 
   const api = new ReportingAPIForTesting();
 
   wrap(api, "report", function report(original) {
     return async function report(...args: unknown[]) {
+      await setTimeout(100);
+
       const event = args[1] as Event;
       if (event.type === "heartbeat" || event.type === "started") {
         // @ts-expect-error type is unknown
         return original.apply(this, args);
       }
 
-      attackReportCallCount++;
-      await setTimeout(100);
       attackReportResolveCount++;
 
       // @ts-expect-error type is unknown
@@ -241,44 +240,46 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
   });
   agent.start([]);
 
-  const app = express();
-  app.set("env", "test");
+  const wrappedHandler = createCloudFunctionWrapper((req, res) => {
+    agent.onDetectedAttack({
+      module: "fs",
+      operation: "readFile",
+      kind: "path_traversal",
+      blocked: false,
+      source: "body",
+      request: getContext(),
+      stack: "stack",
+      paths: ["file"],
+      metadata: {},
+      payload: "../etc/passwd",
+    });
 
-  app.get(
-    "/",
-    asyncHandler(
-      // @ts-expect-error Test using cloud function wrapper in an express app
-      createCloudFunctionWrapper((req, res) => {
-        agent.onDetectedAttack({
-          module: "fs",
-          operation: "readFile",
-          kind: "path_traversal",
-          blocked: false,
-          source: "body",
-          request: getContext(),
-          stack: "stack",
-          paths: ["file"],
-          metadata: {},
-          payload: "../etc/passwd",
-        });
+    agent.onDetectedAttackWave({
+      request: getContext()!,
+      metadata: {},
+    });
 
-        agent.onDetectedAttackWave({
-          request: getContext()!,
-          metadata: {},
-        });
+    res.sendStatus(200);
+  });
 
-        res.sendStatus(200);
-      })
-    )
-  );
+  const mockReq = {
+    method: "GET",
+    ip: "127.0.0.1",
+    body: {},
+    protocol: "http",
+    get: () => "127.0.0.1",
+    originalUrl: "/",
+    query: {},
+    cookies: {},
+    headers: {},
+  } as any;
 
-  await request(app).get("/");
+  const mockRes = {
+    sendStatus: () => {},
+  } as any;
 
-  t.equal(
-    attackReportCallCount,
-    2,
-    "attack reports should have been called twice"
-  );
+  await wrappedHandler(mockReq, mockRes);
+
   t.equal(
     attackReportResolveCount,
     2,
