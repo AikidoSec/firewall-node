@@ -1,20 +1,22 @@
 export function getRawUrlPath(url: string): string {
+  let partialUrl = url;
+
   // Remove protocol (http://, https://, etc.)
-  const pathStart = url.indexOf("://");
-  if (pathStart !== -1) url = url.slice(pathStart + 3);
+  const pathStart = partialUrl.indexOf("://");
+  if (pathStart !== -1) partialUrl = partialUrl.slice(pathStart + 3);
 
   // Remove hostname and port
-  const slashIndex = url.indexOf("/");
+  const slashIndex = partialUrl.indexOf("/");
   if (slashIndex === -1) return "/"; // only hostname given
-  url = url.slice(slashIndex);
+  partialUrl = partialUrl.slice(slashIndex);
 
   // Remove query and fragment
-  const queryIndex = url.indexOf("?");
-  const hashIndex = url.indexOf("#");
+  const queryIndex = partialUrl.indexOf("?");
+  const hashIndex = partialUrl.indexOf("#");
 
-  let endIndex = url.length;
+  let endIndex = partialUrl.length;
   if (queryIndex !== -1) endIndex = Math.min(endIndex, queryIndex);
   if (hashIndex !== -1) endIndex = Math.min(endIndex, hashIndex);
 
-  return url.slice(0, endIndex) || "/";
+  return partialUrl.slice(0, endIndex) || "/";
 }
