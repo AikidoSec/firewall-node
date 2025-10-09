@@ -253,11 +253,12 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      const promise = this.api.report(this.token, attack, this.timeoutInMS);
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack");
+        });
       this.pendingEvents.onAPICall(promise);
-      promise.catch(() => {
-        this.logger.log("Failed to report attack");
-      });
     }
   }
 
