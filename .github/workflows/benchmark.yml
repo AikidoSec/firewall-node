@@ -27,13 +27,17 @@ jobs:
       matrix:
         node-version: [20.x, 24.x]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+      - name: Setup Aikido safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain@1.0.24
+          safe-chain setup-ci
       - name: Install K6
         uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2 # v1
       - name: Install wrk

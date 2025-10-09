@@ -60,7 +60,7 @@ server.use((req, res, next) => {
   return next();
 });
 
-// Call this after your auth middleware, before other middleware
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addRestifyMiddleware(server);
 
 server.get("/", (req, res, next) => {

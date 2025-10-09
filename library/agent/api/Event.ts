@@ -39,25 +39,27 @@ export type User = {
 
 export type DetectedAttack = {
   type: "detected_attack";
-  request: {
-    method: string | undefined;
-    ipAddress: string | undefined;
-    userAgent: string | undefined;
-    url: string | undefined;
-    headers: Record<string, string | string[]>;
-    body: string | undefined;
-    source: string;
-    route: string | undefined;
-  };
+  request:
+    | {
+        method: string | undefined;
+        ipAddress: string | undefined;
+        userAgent: string | undefined;
+        url: string | undefined;
+        headers: Record<string, string | string[]>;
+        body: string | undefined;
+        source: string;
+        route: string | undefined;
+      }
+    | undefined;
   attack: {
     kind: Kind;
     operation: string;
     module: string;
     blocked: boolean;
-    source: Source;
+    source: Source | undefined;
     path: string;
     stack: string;
-    payload: string;
+    payload: string | undefined;
     metadata: Record<string, string>;
     user: User | undefined;
   };
@@ -107,6 +109,10 @@ type Heartbeat = {
         total: number;
         blocked: number;
       };
+      attackWaves: {
+        total: number;
+        blocked: number;
+      };
     };
     userAgents: {
       breakdown: Record<string, number>;
@@ -151,4 +157,19 @@ type Heartbeat = {
   middlewareInstalled?: boolean;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat;
+export type DetectedAttackWave = {
+  type: "detected_attack_wave";
+  request: {
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    source: string;
+  };
+  attack: {
+    metadata: Record<string, string>;
+    user: User | undefined;
+  };
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;

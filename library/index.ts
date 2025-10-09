@@ -7,12 +7,13 @@ import { shouldBlockRequest } from "./middleware/shouldBlockRequest";
 import { addExpressMiddleware } from "./middleware/express";
 import { addHonoMiddleware } from "./middleware/hono";
 import { addHapiMiddleware } from "./middleware/hapi";
-import { addFastifyHook } from "./middleware/fastify";
+import { addFastifyHook, fastifyHook } from "./middleware/fastify";
 import { addKoaMiddleware } from "./middleware/koa";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { isLibBundled } from "./helpers/isLibBundled";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
@@ -22,6 +23,12 @@ if (supported && shouldEnable && notAlreadyImported) {
   if (isESM()) {
     console.warn(
       "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
+    );
+  }
+
+  if (isLibBundled()) {
+    console.warn(
+      "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
     );
   }
 
@@ -36,6 +43,7 @@ export {
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
+  fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
@@ -51,6 +59,7 @@ export default {
   addHonoMiddleware,
   addHapiMiddleware,
   addFastifyHook,
+  fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,

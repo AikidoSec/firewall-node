@@ -20,12 +20,18 @@ jobs:
       id-token: write
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "18.x"
+          node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
+      - name: Setup Aikido safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain@1.0.24
+          safe-chain setup-ci
+      - name: Ensure latest npm version
+        run: npm install -g npm@latest
       - name: Install dependencies
         run: npm run install-lib-only
       - name: Get the version
@@ -46,5 +52,3 @@ jobs:
             echo "Publishing version ${{ steps.get_version.outputs.tag }} to NPM"
             cd build && npm publish --provenance --access public
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

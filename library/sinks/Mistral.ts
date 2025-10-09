@@ -65,13 +65,17 @@ export class Mistral implements Wrapper {
             modifyReturnValue: (_, returnValue, agent) => {
               if (returnValue instanceof Promise) {
                 // Inspect the response after the promise resolves
-                returnValue.then((response) => {
-                  try {
+                returnValue
+                  .then((response) => {
                     this.inspectResponse(agent, response);
-                  } catch {
-                    // If we don't catch these errors, it will result in an unhandled promise rejection!
-                  }
-                });
+                  })
+                  .catch((error) => {
+                    agent.onErrorThrownByInterceptor({
+                      error: error,
+                      method: "complete.<promise>",
+                      module: "@mistralai/mistralai",
+                    });
+                  });
               }
 
               return returnValue;

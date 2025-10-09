@@ -57,8 +57,7 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-// Place this middleware after your authentication middleware
-// As early as possible in the middleware chain
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addKoaMiddleware(app);
 
 app.get(...);
@@ -68,7 +67,7 @@ If you are using `@koa/router` or `koa-router`, please make sure to place the `.
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your Koa app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js

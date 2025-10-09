@@ -18,7 +18,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return async function requestListener(
+  return function requestListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,
@@ -74,6 +74,11 @@ function discoverRouteFromStream(
       if (context.rateLimitedEndpoint) {
         agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
+      }
+
+      if (agent.getAttackWaveDetector().check(context)) {
+        agent.onDetectedAttackWave({ request: context, metadata: {} });
+        agent.getInspectionStatistics().onAttackWaveDetected();
       }
     }
   }

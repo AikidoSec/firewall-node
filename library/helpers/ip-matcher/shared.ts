@@ -25,6 +25,7 @@ export function summarizeSortedNetworks(sorted: Network[]): Network[] {
       const a = summarized[summarized.length - 2];
       const b = summarized[summarized.length - 1];
       if (
+        // oxlint-disable-next-line eqeqeq
         a.cidr() != b.cidr() ||
         !a.addr.isBaseAddress(a.cidr() - 1) ||
         !a.adjacent(b)

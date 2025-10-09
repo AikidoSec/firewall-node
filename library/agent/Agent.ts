@@ -7,9 +7,12 @@ import { ip } from "../helpers/ipAddress";
 import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
-import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo, DetectedAttack } from "./api/Event";
+import type {
+  AgentInfo,
+  DetectedAttack,
+  DetectedAttackWave,
+} from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
@@ -28,6 +31,8 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -63,13 +68,15 @@ export class Agent {
   private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private attackWaveDetector = new AttackWaveDetector();
 
   constructor(
     private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined
+    private readonly serverless: string | undefined,
+    private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -78,6 +85,11 @@ export class Agent {
 
   shouldBlock() {
     return this.block;
+  }
+
+  isServerless() {
+    // e.g. "lambda" or "gcp"
+    return typeof this.serverless === "string" && this.serverless.length > 0;
   }
 
   getHostnames() {
@@ -187,13 +199,29 @@ export class Agent {
     operation: string;
     kind: Kind;
     blocked: boolean;
-    source: Source;
-    request: Context;
+    source: Source | undefined;
+    request: Context | undefined;
     stack: string;
     paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    const attackRequest: DetectedAttack["request"] = request
+      ? {
+          method: request.method,
+          url: request.url,
+          ipAddress: request.remoteAddress,
+          userAgent:
+            typeof request.headers["user-agent"] === "string"
+              ? request.headers["user-agent"]
+              : undefined,
+          body: convertRequestBodyToString(request.body),
+          headers: filterEmptyRequestHeaders(request.headers),
+          source: request.source,
+          route: request.route,
+        }
+      : undefined;
+
     const attack: DetectedAttack = {
       type: "detected_attack",
       time: Date.now(),
@@ -206,22 +234,13 @@ export class Agent {
         source: source,
         metadata: limitLengthMetadata(metadata, 4096),
         kind: kind,
-        payload: JSON.stringify(payload).substring(0, 4096),
-        user: request.user,
-      },
-      request: {
-        method: request.method,
-        url: request.url,
-        ipAddress: request.remoteAddress,
-        userAgent:
-          typeof request.headers["user-agent"] === "string"
-            ? request.headers["user-agent"]
+        payload:
+          payload !== undefined
+            ? JSON.stringify(payload).substring(0, 4096)
             : undefined,
-        body: convertRequestBodyToString(request.body),
-        headers: filterEmptyRequestHeaders(request.headers),
-        source: request.source,
-        route: request.route,
+        user: request?.user,
       },
+      request: attackRequest,
       agent: this.getAgentInfo(),
     };
 
@@ -398,7 +417,7 @@ export class Agent {
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
-      } = await fetchBlockedLists(this.token);
+      } = await this.fetchListsAPI.getLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
@@ -607,6 +626,45 @@ export class Agent {
       default:
         // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
         return this.sendHeartbeatEveryMS;
+    }
+  }
+
+  getAttackWaveDetector(): AttackWaveDetector {
+    return this.attackWaveDetector;
+  }
+
+  /**
+   * This function gets called when an attack wave is detected, it reports this attack wave to the API
+   */
+  onDetectedAttackWave({
+    request,
+    metadata,
+  }: {
+    request: Context;
+    metadata: Record<string, string>;
+  }) {
+    const attack: DetectedAttackWave = {
+      type: "detected_attack_wave",
+      time: Date.now(),
+      attack: {
+        metadata: limitLengthMetadata(metadata, 4096),
+        user: request.user,
+      },
+      request: {
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        source: request.source,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    if (this.token) {
+      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
+        this.logger.log("Failed to report attack wave");
+      });
     }
   }
 }

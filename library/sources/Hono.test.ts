@@ -1,10 +1,7 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import type { Response } from "../agent/api/fetchBlockedLists";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { wrap } from "../helpers/wrap";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -14,46 +11,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
 import { setRateLimitGroup } from "../ratelimiting/group";
-
-wrap(fetch, "fetch", function mock(original) {
-  return async function mock(this: typeof fetch) {
-    if (
-      arguments.length > 0 &&
-      arguments[0] &&
-      arguments[0].url.toString().includes("firewall")
-    ) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          blockedIPAddresses: [
-            {
-              key: "geoip/Belgium;BE",
-              source: "geoip",
-              description: "geo restrictions",
-              ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
-            },
-          ],
-          blockedUserAgents: "hacker|attacker",
-          allowedIPAddresses: [],
-          monitoredIPAddresses: [],
-          monitoredUserAgents: "",
-          userAgentDetails: [
-            {
-              key: "hacker",
-              pattern: "hacker",
-            },
-            {
-              key: "attacker",
-              pattern: "attacker",
-            },
-          ],
-        } satisfies Response),
-      };
-    }
-
-    return await original.apply(this, arguments);
-  };
-});
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -85,6 +43,30 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
+  }),
+  fetchListsAPI: new FetchListsAPIForTesting({
+    blockedIPAddresses: [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "geo restrictions",
+        ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
+      },
+    ],
+    blockedUserAgents: "hacker|attacker",
+    allowedIPAddresses: [],
+    monitoredIPAddresses: [],
+    monitoredUserAgents: "",
+    userAgentDetails: [
+      {
+        key: "hacker",
+        pattern: "hacker",
+      },
+      {
+        key: "attacker",
+        pattern: "attacker",
+      },
+    ],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -319,6 +301,22 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+
+  const response4 = await getApp().request("/%72ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response4.status, 429);
+
+  const response5 = await getApp().request("/%2572ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response5.status, 404);
 });
 
 t.test("it ignores invalid json body", opts, async (t) => {
@@ -447,6 +445,7 @@ t.test("Proxy request", opts, async (t) => {
       new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
+        // oxlint-disable-next-line no-invalid-fetch-options
         body: c.req.raw.body,
         // @ts-expect-error wrong types
         duplex: "half",

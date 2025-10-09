@@ -10,7 +10,7 @@ t.test(
         ? "Restify v8 only supports node v16"
         : undefined,
   },
-  async (t) => {
-    createRestifyTests("restify");
+  async () => {
+    createRestifyTests("restify-v8");
   }
 );

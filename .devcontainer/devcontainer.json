@@ -20,7 +20,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "YoavBls.pretty-ts-errors",
-        "rust-lang.rust-analyzer"
+        "rust-lang.rust-analyzer",
+        "oxc.oxc-vscode"
       ]
     }
   },
