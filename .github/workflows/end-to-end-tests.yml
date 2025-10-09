@@ -60,7 +60,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain
+          npm i -g @aikidosec/safe-chain@1.0.24
           safe-chain setup-ci
       - name: Add local.aikido.io to /etc/hosts
         run: |

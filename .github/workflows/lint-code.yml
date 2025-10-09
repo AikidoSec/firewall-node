@@ -23,7 +23,7 @@ jobs:
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain
+          npm i -g @aikidosec/safe-chain@1.0.24
           safe-chain setup-ci
       - run: npm run install-lib-only
       - run: npm run build
