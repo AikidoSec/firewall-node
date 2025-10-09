@@ -47,8 +47,9 @@ jobs:
           - "27019:8123"
     timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18.x, 22.x]
+        node-version: [20.x, 24.x, 22.x]
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
@@ -67,6 +68,14 @@ jobs:
       - name: Build and run server
         run: |
           cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - run: npm install
       - run: npm run build
-      - run: npm run end2end
+      - if: matrix.node-version != '24.x'
+        run: npm run end2end
+      - if: matrix.node-version == '24.x'
+        run: npm run end2end:new
