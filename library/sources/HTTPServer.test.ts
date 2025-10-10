@@ -792,7 +792,7 @@ t.test("it blocks path traversal in path", async (t) => {
 
       t.equal(
         response,
-        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+        "Zen has blocked a path traversal attack originating from url.path."
       );
       server.close();
       resolve();
@@ -914,6 +914,56 @@ t.test(
           "Static files should not be discovered even when rate limited"
         );
 
+        server.close();
+        resolve();
+      });
+    });
+  }
+);
+
+t.test(
+  "it blocks path traversal in path even if its not directly used",
+  async (t) => {
+    const server = http.createServer((req, res) => {
+      res.statusCode = 200;
+      res.end("Hello, world!");
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3328, async () => {
+        const response = await new Promise((resolve, reject) => {
+          // Directly using http.request with a url-like object to prevent path normalization that would remove /../
+          const req = http.request(
+            {
+              hostname: "localhost",
+              port: 3328,
+              path: "/../package.json", // Path traversal attempt
+              method: "GET",
+            },
+            (res) => {
+              let data = "";
+
+              res.on("data", (chunk) => {
+                data += chunk;
+              });
+
+              res.on("end", () => {
+                resolve(data);
+              });
+            }
+          );
+
+          req.on("error", (err) => {
+            reject(err);
+          });
+
+          req.end();
+        });
+
+        t.equal(
+          response,
+          "Zen has blocked a path traversal attack originating from url.path."
+        );
         server.close();
         resolve();
       });
