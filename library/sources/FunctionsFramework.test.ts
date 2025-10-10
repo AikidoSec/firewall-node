@@ -1,6 +1,8 @@
 import * as t from "tap";
 import * as express from "express";
 import * as request from "supertest";
+import { setTimeout } from "timers/promises";
+import type { Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import {
@@ -11,7 +13,7 @@ import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";
-import { isWrapped } from "../helpers/wrap";
+import { isWrapped, wrap } from "../helpers/wrap";
 
 function getExpressApp() {
   const app = express();
@@ -187,11 +189,11 @@ t.test("it flushes stats first invoke", async (t) => {
 
   await request(app).get("/");
 
-  t.match(api.getEvents(), [{ type: "heartbeat" }]);
+  t.match(api.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   await request(app).get("/");
 
-  t.same(api.getEvents().length, 1);
+  t.same(api.getEvents().length, 2);
 });
 
 t.test("it hooks into functions framework", async () => {
@@ -207,4 +209,80 @@ t.test("it hooks into functions framework", async () => {
   });
 
   t.same(isWrapped(framework.http), true);
+});
+
+t.test("it waits for attack events to be sent before returning", async (t) => {
+  let attackReportResolveCount = 0;
+
+  const api = new ReportingAPIForTesting();
+
+  wrap(api, "report", function report(original) {
+    return async function report(...args: unknown[]) {
+      await setTimeout(100);
+
+      const event = args[1] as Event;
+      if (event.type === "heartbeat" || event.type === "started") {
+        // @ts-expect-error type is unknown
+        return original.apply(this, args);
+      }
+
+      attackReportResolveCount++;
+
+      // @ts-expect-error type is unknown
+      return original.apply(this, args);
+    };
+  });
+
+  const agent = createTestAgent({
+    api,
+    serverless: "gcp",
+    token: new Token("123"),
+  });
+  agent.start([]);
+
+  const wrappedHandler = createCloudFunctionWrapper((req, res) => {
+    agent.onDetectedAttack({
+      module: "fs",
+      operation: "readFile",
+      kind: "path_traversal",
+      blocked: false,
+      source: "body",
+      request: getContext(),
+      stack: "stack",
+      paths: ["file"],
+      metadata: {},
+      payload: "../etc/passwd",
+    });
+
+    agent.onDetectedAttackWave({
+      request: getContext()!,
+      metadata: {},
+    });
+
+    res.sendStatus(200);
+  });
+
+  const mockReq = {
+    method: "GET",
+    ip: "127.0.0.1",
+    body: {},
+    protocol: "http",
+    get: () => "127.0.0.1",
+    originalUrl: "/",
+    query: {},
+    cookies: {},
+    headers: {},
+  } as any;
+
+  const mockRes = {
+    sendStatus: () => {},
+  } as any;
+
+  await wrappedHandler(mockReq, mockRes);
+
+  t.equal(
+    attackReportResolveCount,
+    2,
+    "both attack reports should have been awaited"
+  );
 });
