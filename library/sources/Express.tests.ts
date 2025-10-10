@@ -769,7 +769,7 @@ export function createExpressTests(expressPackageName: string) {
     const app = express();
 
     app.get("/search", (req, res) => {
-      const searchTerm = req.query.q;
+      const searchTerm = req.query.q as string;
       const fileUrl = new URL(`file:///public/${searchTerm}`);
 
       readFile(fileUrl, "utf-8", (err, data) => {
