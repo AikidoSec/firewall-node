@@ -87,7 +87,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     }
 
     const undefinedQueryError = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         // @ts-expect-error Test
         return client.query(null);
       });

@@ -13,6 +13,7 @@ export class FetchListsAPIForTesting implements FetchListsAPI {
     }
   ) {}
 
+  // oxlint-disable-next-line require-await
   async getLists(_token: Token): Promise<FetchListsAPIResponse> {
     return this.response;
   }

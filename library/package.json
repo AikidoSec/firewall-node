@@ -116,7 +116,8 @@
     "node-fetch": "^2",
     "openai-v4": "npm:openai@^4.104.0",
     "openai-v5": "npm:openai@^5.8.2",
-    "oxlint": "^1.14.0",
+    "oxlint": "^1.22.0",
+    "oxlint-tsgolint": "^0.2.0",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
@@ -149,7 +150,7 @@
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "npm run lint-oxc && npm run lint-eslint && npm run lint-tsc && npm run check-format",
     "lint-eslint": "eslint '**/*.ts'",
-    "lint-oxc": "oxlint --deny-warnings .",
+    "lint-oxc": "oxlint --deny-warnings --type-aware .",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
   }
