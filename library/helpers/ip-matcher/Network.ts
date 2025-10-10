@@ -132,7 +132,7 @@ export class Network {
       bravo = network;
     } else {
       alpha = network.duplicate().next();
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      // oxlint-disable-next-line no-this-alias
       bravo = this;
     }
 
