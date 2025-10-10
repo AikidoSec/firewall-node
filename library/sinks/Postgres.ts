@@ -55,6 +55,7 @@ export class Postgres implements Wrapper {
       .onRequire((exports, pkgInfo) => {
         wrapExport(exports.Client.prototype, "query", pkgInfo, {
           kind: "sql_op",
+          bindContext: true,
           inspectArgs: (args) => this.inspectQuery(args),
         });
       });

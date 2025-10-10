@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { SQLite3 } from "./SQLite3";
 import { promisify } from "util";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -124,6 +124,25 @@ t.test("it detects SQL injections", async () => {
         'SQLITE_ERROR: unrecognized token: "\' SELECT * FROM test"'
       );
     }
+
+    await new Promise<void>((resolve) => {
+      runWithContext(dangerousContext, () => {
+        db.get("SELECT petname FROM cats;", () => {
+          t.match(getContext(), dangerousContext);
+
+          try {
+            db.get("-- should be blocked", () => {});
+          } catch (error: any) {
+            t.match(
+              error.message,
+              /Zen has blocked an SQL injection: sqlite3\.get\(\.\.\.\) originating from body\.myTitle/
+            );
+          }
+
+          resolve();
+        });
+      });
+    });
   } catch (error: any) {
     t.fail(error);
   } finally {
