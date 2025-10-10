@@ -3,6 +3,7 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
+import oxlint from "eslint-plugin-oxlint";
 
 export default defineConfig([
   { files: ["**/*.{js,mjs,cjs,ts}"] },
@@ -59,4 +60,6 @@ export default defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  // Disable rules already covered by oxlint
+  ...oxlint.configs["flat/recommended"], // oxlint should be the last one
 ]);
