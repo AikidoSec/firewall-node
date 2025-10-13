@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
