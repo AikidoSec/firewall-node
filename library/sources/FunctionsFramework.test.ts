@@ -211,6 +211,52 @@ t.test("it hooks into functions framework", async () => {
   t.same(isWrapped(framework.http), true);
 });
 
+t.test("it discovers routes", async (t) => {
+  const agent = createTestAgent({
+    serverless: "gcp",
+  });
+  agent.start([]);
+
+  const app = express();
+  app.set("env", "test");
+
+  app.get(
+    "/users/:id",
+    asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
+      createCloudFunctionWrapper((req, res) => {
+        res.sendStatus(200);
+      })
+    )
+  );
+
+  app.get(
+    "/posts/:postId/comments/:commentId",
+    asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
+      createCloudFunctionWrapper((req, res) => {
+        res.sendStatus(200);
+      })
+    )
+  );
+
+  await request(app).get("/users/123");
+  await request(app).get("/posts/456/comments/789");
+
+  const routes = agent.getRoutes().asArray();
+  t.same(routes.length, 2);
+  t.match(routes[0], {
+    method: "GET",
+    path: "/users/:number",
+    hits: 1,
+  });
+  t.match(routes[1], {
+    method: "GET",
+    path: "/posts/:number/comments/:number",
+    hits: 1,
+  });
+});
+
 t.test("it waits for attack events to be sent before returning", async (t) => {
   let attackReportResolveCount = 0;
 

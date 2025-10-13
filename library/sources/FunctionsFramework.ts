@@ -4,6 +4,8 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import type { HttpFunction } from "@google-cloud/functions-framework";
+import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
+import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 
 function getFlushEveryMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS) {
@@ -50,26 +52,46 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
       }
     }
 
+    const url = req.protocol + "://" + req.get("host") + req.originalUrl;
+
     return await runWithContext(
       {
         method: req.method,
         remoteAddress: req.ip,
         body: req.body ? req.body : undefined,
-        url: req.protocol + "://" + req.get("host") + req.originalUrl,
+        url: url,
         headers: req.headers,
         query: req.query,
         /* c8 ignore next */
         cookies: req.cookies ? req.cookies : {},
         routeParams: {},
         source: "cloud-function/http",
-        route: undefined,
+        route: buildRouteFromURL(url),
       },
       async () => {
+        let result: unknown;
         try {
-          return await fn(req, res);
+          result = await fn(req, res);
+          return result;
         } finally {
           const context = getContext();
           if (agent && context) {
+            if (
+              context.route &&
+              context.method &&
+              Number.isInteger(res.statusCode)
+            ) {
+              const shouldDiscover = shouldDiscoverRoute({
+                statusCode: res.statusCode,
+                method: context.method,
+                route: context.route,
+              });
+
+              if (shouldDiscover) {
+                agent.onRouteExecute(context);
+              }
+            }
+
             const stats = agent.getInspectionStatistics();
             stats.onRequest();
 
