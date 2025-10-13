@@ -321,9 +321,5 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
     (e) => e.type === "detected_attack" || e.type === "detected_attack_wave"
   );
 
-  t.equal(
-    attackEvents.length,
-    2,
-    "both attack events should have been sent"
-  );
+  t.equal(attackEvents.length, 2, "both attack events should have been sent");
 });
