@@ -512,21 +512,11 @@ t.test("it counts attacks", async () => {
 });
 
 t.test("it waits for attack events to be sent before returning", async (t) => {
-  let attackReportResolveCount = 0;
-
   const testing = new ReportingAPIForTesting();
 
   wrap(testing, "report", function report(original) {
     return async function report(...args: unknown[]) {
       await setTimeout(100);
-
-      const event = args[1] as Event;
-      if (event.type === "heartbeat" || event.type === "started") {
-        // @ts-expect-error Type is unknown
-        return original.apply(this, args);
-      }
-
-      attackReportResolveCount++;
 
       // @ts-expect-error Type is unknown
       return original.apply(this, args);
@@ -565,9 +555,14 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
 
   await handler(gatewayEvent, lambdaContext, () => {});
 
+  const events = testing.getEvents();
+  const attackEvents = events.filter(
+    (e) => e.type === "detected_attack" || e.type === "detected_attack_wave"
+  );
+
   t.equal(
-    attackReportResolveCount,
+    attackEvents.length,
     2,
-    "both attack reports should have been awaited"
+    "both attack events should have been sent"
   );
 });

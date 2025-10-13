@@ -258,21 +258,11 @@ t.test("it discovers routes", async (t) => {
 });
 
 t.test("it waits for attack events to be sent before returning", async (t) => {
-  let attackReportResolveCount = 0;
-
   const api = new ReportingAPIForTesting();
 
   wrap(api, "report", function report(original) {
     return async function report(...args: unknown[]) {
       await setTimeout(100);
-
-      const event = args[1] as Event;
-      if (event.type === "heartbeat" || event.type === "started") {
-        // @ts-expect-error type is unknown
-        return original.apply(this, args);
-      }
-
-      attackReportResolveCount++;
 
       // @ts-expect-error type is unknown
       return original.apply(this, args);
@@ -326,9 +316,14 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
 
   await wrappedHandler(mockReq, mockRes);
 
+  const events = api.getEvents();
+  const attackEvents = events.filter(
+    (e) => e.type === "detected_attack" || e.type === "detected_attack_wave"
+  );
+
   t.equal(
-    attackReportResolveCount,
+    attackEvents.length,
     2,
-    "both attack reports should have been awaited"
+    "both attack events should have been sent"
   );
 });
