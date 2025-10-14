@@ -150,7 +150,6 @@ function inspectArgs(
     }
   }
 
-  const start = performance.now();
   let result: InterceptorResult = undefined;
 
   try {
@@ -173,7 +172,6 @@ function inspectArgs(
     agent,
     result,
     pkgInfo,
-    start,
     `${pkgInfo.name}.${methodName}`,
     kind
   );
