@@ -144,7 +144,7 @@ t.test("it detects SQL injections", async (t) => {
     }
 
     const error6 = await t.rejects(async () => {
-      await runWithContext(dangerousContext, () => {
+      runWithContext(dangerousContext, () => {
         return connection.queryStream("-- should be blocked");
       });
     });
