@@ -90,15 +90,21 @@ async function run() {
   console.log(`With Zen: ${withFirewall} Requests/sec`);
   console.log(`With OpenTelemetry: ${withOpenTelemetry} Requests/sec`);
 
-  const increase = ((withoutFirewall - withFirewall) / withoutFirewall) * 100;
-  console.log(`Decrease with Zen for an empty route: ${increase.toFixed(2)}%`);
+  const decrease = ((withoutFirewall - withFirewall) / withoutFirewall) * 100;
+  console.log(`Decrease with Zen for an empty route: ${decrease.toFixed(2)}%`);
 
-  if (increase > AcceptedDecrease) {
+  if (decrease > AcceptedDecrease) {
     console.error(
       `Performance decrease is higher than the accepted ${AcceptedDecrease}%`
     );
     process.exit(1);
   }
+
+  const otelDecrease =
+    ((withoutFirewall - withOpenTelemetry) / withoutFirewall) * 100;
+  console.log(
+    `Decrease with OpenTelemetry for an empty route: ${otelDecrease.toFixed(2)}%`
+  );
 
   const otelDifference =
     ((withOpenTelemetry - withFirewall) / withOpenTelemetry) * 100;
@@ -106,7 +112,7 @@ async function run() {
     `Performance difference between Zen and OpenTelemetry: ${otelDifference.toFixed(2)}%`
   );
 
-  if (otelDifference < -5) {
+  if (otelDifference > 0) {
     console.error(`Zen performance is worse than OpenTelemetry`);
     process.exit(1);
   }
