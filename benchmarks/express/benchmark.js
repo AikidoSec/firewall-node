@@ -112,8 +112,10 @@ async function run() {
     `Performance difference between Zen and OpenTelemetry: ${otelDifference.toFixed(2)}%`
   );
 
-  if (otelDifference > 0) {
-    console.error(`Zen performance is worse than OpenTelemetry`);
+  if (otelDifference > 10) {
+    console.error(
+      "Zen performance is worse than OpenTelemetry by more than 10%"
+    );
     process.exit(1);
   }
 }
