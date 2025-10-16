@@ -3,12 +3,15 @@ import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";
 import { protectWithNewInstrumentation } from "../agent/protect";
 import { setIsNewHookSystemUsed } from "../agent/isNewHookSystemUsed";
+import { checkIndexImportGuard } from "../helpers/indexImportGuard";
 
 setIsNewHookSystemUsed(true);
 
 const isSupported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
-if (shouldEnable && isSupported) {
+const notAlreadyImported = checkIndexImportGuard();
+
+if (isSupported && shouldEnable && notAlreadyImported) {
   if (!("registerHooks" in mod) || typeof mod.registerHooks !== "function") {
     // eslint-disable-next-line no-console
     console.error(
