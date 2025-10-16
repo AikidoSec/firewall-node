@@ -30,6 +30,15 @@ jobs:
           - node-version: 24.x
             new-instrumentation: "new"
             mode: "esm"
+          - node-version: 25.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "esm"
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5

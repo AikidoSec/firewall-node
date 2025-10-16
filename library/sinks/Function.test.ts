@@ -1,3 +1,4 @@
+/* oxlint-disable no-implied-eval */
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";

@@ -334,7 +334,7 @@ const imdsMockLookup = (
   hostname: string,
   options: any,
   callback: (
-    err: any | null,
+    err: any,
     address: string | LookupAddress[],
     family: number
   ) => void

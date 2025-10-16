@@ -11,6 +11,7 @@ t.test("it returns the token as string", async (t) => {
 });
 
 t.test("it throws error if toString() is called", async (t) => {
+  // oxlint-disable-next-line restrict-template-expressions
   t.throws(() => `${new Token("token")}`);
 });
 

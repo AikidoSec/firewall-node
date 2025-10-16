@@ -6,7 +6,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [24.x]
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
