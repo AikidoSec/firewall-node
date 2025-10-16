@@ -54,10 +54,13 @@ await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
 
 await writeFile(join(outDir, "package.json"), "{}");
 
-const testFiles = glob("**/*.{test.ts,tests.ts,txt,pem,json,xml,js,prisma,toml,sql}", {
-  cwd: libDir,
-  exclude: ["**/node_modules/**"],
-});
+const testFiles = glob(
+  "**/*.{test.ts,tests.ts,txt,pem,json,xml,js,prisma,toml,sql}",
+  {
+    cwd: libDir,
+    exclude: ["**/node_modules/**"],
+  }
+);
 
 // Copy all test files and transform them
 for await (const entry of testFiles) {
@@ -66,7 +69,11 @@ for await (const entry of testFiles) {
 
   await mkdir(dirname(dest), { recursive: true });
 
-  if (["txt", "pem", "json", "xml", "js", "prisma", "toml", "sql"].includes(entry.split(".").pop())) {
+  if (
+    ["txt", "pem", "json", "xml", "js", "prisma", "toml", "sql"].includes(
+      entry.split(".").pop()
+    )
+  ) {
     await copyFile(src, dest);
     continue;
   }
@@ -148,6 +155,11 @@ for await (const entry of testFiles) {
               imported: { type: "Identifier", name: "after" },
               local: { type: "Identifier", name: "after" },
             },
+            {
+              type: "ImportSpecifier",
+              imported: { type: "Identifier", name: "afterEach" },
+              local: { type: "Identifier", name: "afterEach" },
+            },
           ];
 
           source.value = "node:test";
@@ -198,6 +210,7 @@ for await (const entry of testFiles) {
             case "beforeEach":
             case "before":
             case "after":
+            case "afterEach":
               node.callee = {
                 type: "Identifier",
                 name: node.callee.property.name,
