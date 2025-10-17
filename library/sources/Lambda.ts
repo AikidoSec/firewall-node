@@ -119,7 +119,7 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-function getFlushEveryMS(): number {
+export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS) {
     const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS, 10);
     // Minimum is 1 minute
@@ -131,15 +131,39 @@ function getFlushEveryMS(): number {
   return 10 * 60 * 1000; // 10 minutes
 }
 
+export function getTimeoutInMS(): number {
+  if (process.env.AIKIDO_LAMBDA_TIMEOUT_MS) {
+    const parsed = parseInt(process.env.AIKIDO_LAMBDA_TIMEOUT_MS, 10);
+    // Minimum is 1 second
+    if (!isNaN(parsed) && parsed >= 1000) {
+      return parsed;
+    }
+  }
+
+  return 1000; // 1 second
+}
+
 // eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
 
   let lastFlushStatsAt: number | undefined = undefined;
+  let startupEventSent = false;
 
   // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
+    // Send startup event on first invocation
+    if (agent && !startupEventSent) {
+      startupEventSent = true;
+      try {
+        await agent.onStart(getTimeoutInMS());
+      } catch (err: any) {
+        // eslint-disable-next-line no-console
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
+      }
+    }
+
     let agentContext: AgentContext | undefined = undefined;
 
     if (isSQSEvent(event)) {
@@ -216,11 +240,13 @@ export function createLambdaWrapper(handler: Handler): Handler {
         const stats = agent.getInspectionStatistics();
         stats.onRequest();
 
+        await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
+
         if (
           lastFlushStatsAt === undefined ||
           lastFlushStatsAt + getFlushEveryMS() < performance.now()
         ) {
-          await agent.flushStats(1000);
+          await agent.flushStats(getTimeoutInMS());
           lastFlushStatsAt = performance.now();
         }
       }
