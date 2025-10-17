@@ -128,6 +128,10 @@ test("it does not block request in monitoring mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
+    doesNotMatch(
+      stderr,
+      /Zen does not instrument worker threads. Zen will only be active in the main thread./
+    );
   } catch (err) {
     fail(err);
   } finally {
