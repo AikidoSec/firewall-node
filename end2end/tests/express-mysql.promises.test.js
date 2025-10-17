@@ -24,7 +24,7 @@ t.before(() => {
 });
 
 // Restore the original package.json after all tests
-t.teardown(() => {
+t.after(() => {
   if (originalPackageJson) {
     writeFileSync(buildPackageJsonPath, originalPackageJson);
   }
