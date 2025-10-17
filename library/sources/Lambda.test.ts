@@ -8,7 +8,18 @@ import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { wrap } from "../helpers/wrap";
-import { APIGatewayProxyEvent, createLambdaWrapper, SQSEvent } from "./Lambda";
+import {
+  APIGatewayProxyEvent,
+  createLambdaWrapper,
+  getFlushEveryMS,
+  getTimeoutInMS,
+  SQSEvent,
+} from "./Lambda";
+
+t.beforeEach(async () => {
+  delete process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS;
+  delete process.env.AIKIDO_LAMBDA_TIMEOUT_MS;
+});
 
 const gatewayEvent: APIGatewayProxyEvent = {
   resource: "/dev/{proxy+}",
@@ -561,4 +572,64 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
   );
 
   t.equal(attackEvents.length, 2, "both attack events should have been sent");
+});
+
+t.test("getFlushEveryMS", async (t) => {
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "120000";
+  t.equal(getFlushEveryMS(), 120000, "should return 2 minutes");
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "invalid";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for non-numeric"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "30000";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for value below minimum"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "60000";
+  t.equal(
+    getFlushEveryMS(),
+    60000,
+    "should return 1 minute at minimum threshold"
+  );
+});
+
+t.test("getTimeoutInMS", async (t) => {
+  t.equal(getTimeoutInMS(), 1000, "should return 1 second as default");
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "5000";
+  t.equal(getTimeoutInMS(), 5000, "should return 5 seconds");
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "invalid";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for non-numeric"
+  );
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "500";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for value below minimum"
+  );
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "1000";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second at minimum threshold"
+  );
 });

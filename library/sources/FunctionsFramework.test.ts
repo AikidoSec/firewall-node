@@ -8,12 +8,19 @@ import { getContext } from "../agent/Context";
 import {
   createCloudFunctionWrapper,
   FunctionsFramework,
+  getFlushEveryMS,
+  getTimeoutInMS,
 } from "./FunctionsFramework";
 import * as asyncHandler from "express-async-handler";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Token } from "../agent/api/Token";
 import { getInstance } from "../agent/AgentSingleton";
 import { isWrapped, wrap } from "../helpers/wrap";
+
+t.beforeEach(async () => {
+  delete process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS;
+  delete process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS;
+});
 
 function getExpressApp() {
   const app = express();
@@ -322,4 +329,64 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
   );
 
   t.equal(attackEvents.length, 2, "both attack events should have been sent");
+});
+
+t.test("getFlushEveryMS", async (t) => {
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default"
+  );
+
+  process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS = "120000";
+  t.equal(getFlushEveryMS(), 120000, "should return 2 minutes");
+
+  process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS = "invalid";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for non-numeric"
+  );
+
+  process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS = "30000";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for value below minimum"
+  );
+
+  process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS = "60000";
+  t.equal(
+    getFlushEveryMS(),
+    60000,
+    "should return 1 minute at minimum threshold"
+  );
+});
+
+t.test("getTimeoutInMS", async (t) => {
+  t.equal(getTimeoutInMS(), 1000, "should return 1 second as default");
+
+  process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS = "5000";
+  t.equal(getTimeoutInMS(), 5000, "should return 5 seconds");
+
+  process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS = "invalid";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for non-numeric"
+  );
+
+  process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS = "500";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for value below minimum"
+  );
+
+  process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS = "1000";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second at minimum threshold"
+  );
 });

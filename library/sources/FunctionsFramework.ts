@@ -8,7 +8,7 @@ import type { HttpFunction } from "@google-cloud/functions-framework";
 import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
 
-function getFlushEveryMS(): number {
+export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS) {
     const parsed = parseInt(
       process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS,
@@ -23,7 +23,7 @@ function getFlushEveryMS(): number {
   return 10 * 60 * 1000; // 10 minutes
 }
 
-function getTimeoutInMS(): number {
+export function getTimeoutInMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS) {
     const parsed = parseInt(process.env.AIKIDO_CLOUD_FUNCTION_TIMEOUT_MS, 10);
     // Minimum is 1 second

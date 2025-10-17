@@ -119,7 +119,7 @@ function isSQSEvent(event: unknown): event is SQSEvent {
   return isPlainObject(event) && "Records" in event;
 }
 
-function getFlushEveryMS(): number {
+export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS) {
     const parsed = parseInt(process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS, 10);
     // Minimum is 1 minute
@@ -131,7 +131,7 @@ function getFlushEveryMS(): number {
   return 10 * 60 * 1000; // 10 minutes
 }
 
-function getTimeoutInMS(): number {
+export function getTimeoutInMS(): number {
   if (process.env.AIKIDO_LAMBDA_TIMEOUT_MS) {
     const parsed = parseInt(process.env.AIKIDO_LAMBDA_TIMEOUT_MS, 10);
     // Minimum is 1 second
