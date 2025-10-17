@@ -70,10 +70,8 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         route: buildRouteFromURL(url),
       },
       async () => {
-        let result: unknown;
         try {
-          result = await fn(req, res);
-          return result;
+          return await fn(req, res);
         } finally {
           const context = getContext();
           if (agent && context) {
