@@ -332,3 +332,83 @@ t.test("Init class and use in different contexts", async (t) => {
   t.equal(instance2!.getContextUrl(), null);
   t.equal(instance3!.getContextUrl(), "http://localhost:4000/one");
 });
+
+t.test(
+  "Context is lost if callback is called after runWithContext finishes",
+  async (t) => {
+    let callback: (() => void) | undefined;
+    runWithContext(sampleContext, () => {
+      callback = () => {
+        t.equal(getContext(), undefined);
+      };
+    });
+    callback!();
+  }
+);
+
+t.test(
+  "Context is not shared between parallel runWithContext calls",
+  async (t) => {
+    const contextA = { ...sampleContext, url: "A" };
+    const contextB = { ...sampleContext, url: "B" };
+
+    let resultA: string | undefined;
+    let resultB: string | undefined;
+
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        runWithContext(contextA, () => {
+          setTimeout(() => {
+            resultA = getContext()?.url;
+            resolve();
+          }, 10);
+        });
+      }),
+      new Promise<void>((resolve) => {
+        runWithContext(contextB, () => {
+          setTimeout(() => {
+            resultB = getContext()?.url;
+            resolve();
+          }, 10);
+        });
+      }),
+    ]);
+
+    t.equal(resultA, "A", "Context A should be isolated");
+    t.equal(resultB, "B", "Context B should be isolated");
+  }
+);
+
+t.test("Context is preserved in Promise.then chains", async (t) => {
+  await runWithContext(sampleContext, async () => {
+    await Promise.resolve()
+      .then(() => {
+        t.match(
+          getContext(),
+          sampleContext,
+          "Context should be preserved in then"
+        );
+        return Promise.resolve();
+      })
+      .then(() => {
+        t.match(
+          getContext(),
+          sampleContext,
+          "Context should be preserved in chained then"
+        );
+      });
+  });
+});
+
+t.test("Context is not lost in process.nextTick callbacks", async (t) => {
+  let callCount = 0;
+  runWithContext(sampleContext, () => {
+    process.nextTick(() => {
+      t.equal(getContext()?.url, sampleContext.url);
+      callCount++;
+    });
+  });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  t.equal(callCount, 1);
+});
+
