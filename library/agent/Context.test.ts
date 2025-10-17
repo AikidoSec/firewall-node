@@ -411,4 +411,3 @@ t.test("Context is not lost in process.nextTick callbacks", async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 5));
   t.equal(callCount, 1);
 });
-
