@@ -23,7 +23,7 @@ const notAlreadyImported = checkIndexImportGuard();
 if (supported && shouldEnable && notAlreadyImported) {
   if (isBrowser()) {
     console.warn(
-      "AIKIDO: Zen seems to be embedded in a browser-like environment. Zen only runs server-side and should not be used in frontend applications. Please ensure Zen is only included in your server-side code."
+      "AIKIDO: Zen seems to be running in a browser-like environment. Zen only runs server-side and should not be used in frontend applications. Please ensure Zen is only included in your server-side code."
     );
   }
 
