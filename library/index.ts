@@ -14,12 +14,19 @@ import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { isLibBundled } from "./helpers/isLibBundled";
+import { isBrowser } from "./helpers/isBrowser";
 
 const supported = isFirewallSupported();
 const shouldEnable = shouldEnableFirewall();
 const notAlreadyImported = checkIndexImportGuard();
 
 if (supported && shouldEnable && notAlreadyImported) {
+  if (isBrowser()) {
+    console.warn(
+      "AIKIDO: Zen seems to be embedded in a browser-like environment. Zen only runs server-side and should not be used in frontend applications. Please ensure Zen is only included in your server-side code."
+    );
+  }
+
   if (isESM()) {
     console.warn(
       "AIKIDO: Your application seems to be running in ESM mode. Zen does not support ESM at runtime yet."
