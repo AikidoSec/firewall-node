@@ -81,6 +81,7 @@ async function getResult() {
   }
 
   const results = await getResult();
+  console.log(JSON.stringify(results, null, 2));
 
   console.log("====================================");
   console.log("Results with Zen enabled:");
