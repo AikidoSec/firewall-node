@@ -104,6 +104,8 @@ async function getResult() {
     `POST duration: avg=${postResultsWithoutZen.avg}ms, min=${postResultsWithoutZen.min}ms, max=${postResultsWithoutZen.max}ms`
   );
 
+  // This is a confusing
+  // See https://community.grafana.com/t/http-req-failed-reporting-passes-as-failures/94807
   if (result.metrics.http_req_failed.passes > 0) {
     console.log("There were failed HTTP requests during the benchmark: ");
     console.log(result.metrics.http_req_failed);
