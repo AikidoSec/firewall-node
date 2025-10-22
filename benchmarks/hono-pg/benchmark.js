@@ -81,7 +81,6 @@ async function getResult() {
   }
 
   const results = await getResult();
-  console.log(JSON.stringify(results, null, 2));
 
   console.log("====================================");
   console.log("Results with Zen enabled:");
@@ -104,6 +103,12 @@ async function getResult() {
   console.log(
     `POST duration: avg=${postResultsWithoutZen.avg}ms, min=${postResultsWithoutZen.min}ms, max=${postResultsWithoutZen.max}ms`
   );
+
+  if (result.metrics.http_req_failed.passes > 0) {
+    console.log("There were failed HTTP requests during the benchmark: ");
+    console.log(result.metrics.http_req_failed);
+    process.exit(1);
+  }
 
   const getDiff = results.metrics.get_delta.values.avg;
   const postDiff = results.metrics.post_delta.values.avg;
