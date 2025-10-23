@@ -82,7 +82,7 @@ test("it blocks request in blocking mode", async () => {
   }
 });
 
-test("it blocks request in blocking mode", async () => {
+test("it does not block request in monitoring mode", async () => {
   const server = spawn(`node`, ["./dist/main.js"], {
     cwd: pathToAppDir,
     env: {
