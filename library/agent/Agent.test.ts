@@ -181,7 +181,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -189,7 +188,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
