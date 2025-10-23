@@ -5,8 +5,8 @@ const { test, before } = require("node:test");
 const { equal, fail, match, doesNotMatch } = require("node:assert");
 
 const pathToAppDir = resolve(__dirname, "../../sample-apps/nestjs-sentry");
-const port = "4007";
-const port2 = "4008";
+const port = "4012";
+const port2 = "4013";
 
 before(() => {
   const { stderr } = spawnSync(`npm`, ["run", "build"], {

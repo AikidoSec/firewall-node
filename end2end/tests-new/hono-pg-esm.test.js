@@ -7,9 +7,9 @@ const { equal, fail, match, doesNotMatch } = require("node:assert");
 
 const pathToAppDir = resolve(__dirname, "../../sample-apps/hono-pg-esm");
 const testServerUrl = "http://localhost:5874";
-const port = "4004";
-const port2 = "4005";
-const port3 = "4006";
+const port = "4007";
+const port2 = "4008";
+const port3 = "4009";
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(

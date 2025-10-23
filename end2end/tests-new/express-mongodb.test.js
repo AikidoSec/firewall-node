@@ -5,8 +5,8 @@ const { test } = require("node:test");
 const { equal, fail, match, doesNotMatch } = require("node:assert");
 
 const pathToAppDir = resolve(__dirname, "../../sample-apps/express-mongodb");
-const port = "4002";
-const port2 = "4003";
+const port = "4003";
+const port2 = "4004";
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(

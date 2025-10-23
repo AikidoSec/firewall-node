@@ -9,8 +9,8 @@ const { join } = require("node:path");
 const pathToAppDir = resolve(__dirname, "../../sample-apps/adonis-sqlite");
 const pathToAppBuildDir = resolve(pathToAppDir, "build/");
 
-const port = "4009";
-const port2 = "4010";
+const port = "4001";
+const port2 = "4002";
 
 const envVars = {
   TZ: "UTC",

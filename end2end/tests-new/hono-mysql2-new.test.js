@@ -5,8 +5,8 @@ const { test } = require("node:test");
 const { equal, fail, match, doesNotMatch } = require("node:assert");
 
 const pathToAppDir = resolve(__dirname, "../../sample-apps/hono-mysql2-new");
-const port = "4008";
-const port2 = "4009";
+const port = "4005";
+const port2 = "4006";
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
