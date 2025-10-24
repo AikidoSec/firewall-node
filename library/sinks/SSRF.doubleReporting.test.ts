@@ -3,6 +3,7 @@ import { setTimeout } from "timers/promises";
 import { createServer, Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 import { Fetch } from "./Fetch";
@@ -83,8 +84,8 @@ t.test(
 
     api.clear();
 
-    // @ts-expect-error global.fetch may not exist
-    if (global.fetch) {
+    // ReadableStream is not available in Node.js 16 and below
+    if (getMajorNodeVersion() > 16) {
       await runWithContext(createContext(port), async () => {
         const response = await fetch(serverUrl);
         t.same(response.status, 200);
