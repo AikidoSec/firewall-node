@@ -40,39 +40,43 @@ t.before(async () => {
   });
 });
 
-t.test("it works", { skip: getMajorNodeVersion() <= 21 ? "ESM support required" : undefined }, async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
-  agent.start([new HTTPRequest()]);
+t.test(
+  "it works",
+  { skip: getMajorNodeVersion() <= 21 ? "ESM support required" : undefined },
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+    });
+    agent.start([new HTTPRequest()]);
 
-  t.same(agent.getHostnames().asArray(), []);
+    t.same(agent.getHostnames().asArray(), []);
 
-  const gotModule = require("got") as typeof import("got");
-  const got = gotModule.default;
+    const gotModule = require("got") as typeof import("got");
+    const got = gotModule.default;
 
-  await runWithContext(createContext(), async () => {
-    await got("https://www.aikido.dev");
-  });
+    await runWithContext(createContext(), async () => {
+      await got("https://www.aikido.dev");
+    });
 
-  t.same(agent.getHostnames().asArray(), [
-    { hostname: "www.aikido.dev", port: 443, hits: 1 },
-  ]);
-  agent.getHostnames().clear();
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "www.aikido.dev", port: 443, hits: 1 },
+    ]);
+    agent.getHostnames().clear();
 
-  await runWithContext(createContext(), async () => {
-    const error = await t.rejects(got("http://localhost:4131/api/internal"));
-    console.error(error);
+    await runWithContext(createContext(), async () => {
+      const error = await t.rejects(got("http://localhost:4131/api/internal"));
+      console.error(error);
 
-    t.ok(error instanceof Error);
-    if (error instanceof Error) {
-      t.match(
-        error.message,
-        "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
-      );
-    }
-  });
-});
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+        );
+      }
+    });
+  }
+);
 
 t.after(async () => {
   return new Promise((resolve) => {
