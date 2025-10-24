@@ -154,5 +154,8 @@
     "lint-oxc": "oxlint --deny-warnings --type-aware .",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
+  },
+  "overrides": {
+    "koa@<=3.0.2": "3.0.2"
   }
 }
