@@ -1,12 +1,16 @@
-const { spawnSync, spawn } = require("child_process");
-const { resolve } = require("path");
-const timeout = require("../timeout");
-const { test, before } = require("node:test");
-const { equal, fail, match, doesNotMatch } = require("node:assert");
+import { spawnSync, spawn } from "child_process";
+import { resolve } from "path";
+import { test, before } from "node:test";
+import { equal, fail, match, doesNotMatch } from "node:assert";
+import { getRandomPort } from "./utils/get-port.mjs";
+import { timeout } from "./utils/timeout.mjs";
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/nestjs-sentry");
-const port = "4007";
-const port2 = "4008";
+const pathToAppDir = resolve(
+  import.meta.dirname,
+  "../../sample-apps/nestjs-sentry"
+);
+const port = await getRandomPort();
+const port2 = await getRandomPort();
 
 before(() => {
   const { stderr } = spawnSync(`npm`, ["run", "build"], {
@@ -82,7 +86,7 @@ test("it blocks request in blocking mode", async () => {
   }
 });
 
-test("it blocks request in blocking mode", async () => {
+test("it does not block request in monitoring mode", async () => {
   const server = spawn(`node`, ["./dist/main.js"], {
     cwd: pathToAppDir,
     env: {

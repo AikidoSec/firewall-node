@@ -1,23 +1,22 @@
-const { spawn } = require("child_process");
-const { resolve } = require("path");
-const timeout = require("../timeout");
-const { test } = require("node:test");
-const { equal, fail, match, doesNotMatch } = require("node:assert");
+import { spawn } from "child_process";
+import { resolve } from "path";
+import { test } from "node:test";
+import { equal, fail, match, doesNotMatch } from "node:assert";
+import { getRandomPort } from "./utils/get-port.mjs";
+import { timeout } from "./utils/timeout.mjs";
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/hono-pg-ts-esm");
-const port = "4006";
-const port2 = "4007";
+const pathToAppDir = resolve(
+  import.meta.dirname,
+  "../../sample-apps/hono-mysql2-new"
+);
+
+const port = await getRandomPort();
+const port2 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
     `node`,
-    [
-      "--require",
-      "@aikidosec/firewall/instrument",
-      "--experimental-strip-types",
-      "./app.ts",
-      port,
-    ],
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port],
     {
       cwd: pathToAppDir,
       env: {
@@ -49,7 +48,7 @@ test("it blocks request in blocking mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_3;-- H" }),
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -79,13 +78,7 @@ test("it blocks request in blocking mode", async () => {
 test("it does not block request in monitoring mode", async () => {
   const server = spawn(
     `node`,
-    [
-      "--require",
-      "@aikidosec/firewall/instrument",
-      "--experimental-strip-types",
-      "./app.ts",
-      port2,
-    ],
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port2],
     {
       cwd: pathToAppDir,
       env: {
@@ -117,7 +110,7 @@ test("it does not block request in monitoring mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port2}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_3;-- H" }),
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_2;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },

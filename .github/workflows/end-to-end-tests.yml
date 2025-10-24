@@ -49,7 +49,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 24.x, 22.x]
+        include:
+          - node-version: 20.x
+            mode: "old"
+          - node-version: 22.x
+            mode: "old"
+          - node-version: 24.x
+            mode: "new"
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
@@ -75,7 +81,7 @@ jobs:
           cargo install wasm-pack
       - run: npm install
       - run: npm run build
-      - if: matrix.node-version != '24.x'
+      - if: matrix.mode == 'old'
         run: npm run end2end
-      - if: matrix.node-version == '24.x'
+      - if: matrix.mode == 'new'
         run: npm run end2end:new
