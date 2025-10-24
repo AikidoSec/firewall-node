@@ -32,6 +32,11 @@ jobs:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
           npm i -g @aikidosec/safe-chain@1.0.24

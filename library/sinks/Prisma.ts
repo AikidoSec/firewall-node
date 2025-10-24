@@ -12,8 +12,9 @@ import { Context, getContext } from "../agent/Context";
 import { onInspectionInterceptorResult } from "../agent/hooks/onInspectionInterceptorResult";
 import { getInstance } from "../agent/AgentSingleton";
 import type { Agent } from "../agent/Agent";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
+import type { LocalVariableAccessConfig } from "../agent/hooks/instrumentation/types";
 
 type AllOperationsQueryExtension = {
   model?: string;
@@ -172,7 +173,7 @@ export class Prisma implements Wrapper {
     isNoSQLClient: boolean;
     sqlDialect?: SQLDialect;
     agent: Agent;
-    pkgInfo: WrapPackageInfo;
+    pkgInfo: PartialWrapPackageInfo;
   }) {
     let inspectionResult: InterceptorResult | undefined;
     const start = performance.now();
@@ -205,45 +206,71 @@ export class Prisma implements Wrapper {
     return query(args);
   }
 
+  private instrumentPrismaClient(
+    instance: any,
+    pkgInfo: PartialWrapPackageInfo
+  ) {
+    const isNoSQLClient = this.isNoSQLClient(instance);
+
+    const agent = getInstance();
+    if (!agent) {
+      return;
+    }
+
+    // Extend all operations of the Prisma client
+    // https://www.prisma.io/docs/orm/prisma-client/client-extensions/query#modify-all-operations-in-all-models-of-your-schema
+    return instance.$extends({
+      query: {
+        $allOperations: ({
+          model,
+          operation,
+          args,
+          query,
+        }: AllOperationsQueryExtension) => {
+          return this.onClientOperation({
+            model,
+            operation,
+            args,
+            query,
+            isNoSQLClient,
+            sqlDialect: !isNoSQLClient
+              ? this.getClientSQLDialect(instance)
+              : undefined,
+            agent,
+            pkgInfo,
+          });
+        },
+      },
+    });
+  }
+
   wrap(hooks: Hooks) {
+    const accessLocalVariables: LocalVariableAccessConfig = {
+      names: ["module.exports"],
+      cb: (vars, pkgInfo) => {
+        wrapNewInstance(vars[0], "PrismaClient", pkgInfo, (instance) => {
+          return this.instrumentPrismaClient(instance, pkgInfo);
+        });
+      },
+    };
+
     hooks
       .addPackage("@prisma/client")
       .withVersion("^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "PrismaClient", pkgInfo, (instance) => {
-          const isNoSQLClient = this.isNoSQLClient(instance);
-
-          const agent = getInstance();
-          if (!agent) {
-            return;
-          }
-
-          // Extend all operations of the Prisma client
-          // https://www.prisma.io/docs/orm/prisma-client/client-extensions/query#modify-all-operations-in-all-models-of-your-schema
-          return instance.$extends({
-            query: {
-              $allOperations: ({
-                model,
-                operation,
-                args,
-                query,
-              }: AllOperationsQueryExtension) => {
-                return this.onClientOperation({
-                  model,
-                  operation,
-                  args,
-                  query,
-                  isNoSQLClient,
-                  sqlDialect: !isNoSQLClient
-                    ? this.getClientSQLDialect(instance)
-                    : undefined,
-                  agent,
-                  pkgInfo,
-                });
-              },
-            },
-          });
+          return this.instrumentPrismaClient(instance, pkgInfo);
         });
+      })
+      .addFileInstrumentation({
+        path: "./default.js",
+        functions: [],
+        accessLocalVariables,
+      })
+      .addFileInstrumentation({
+        path: "./index.js",
+        functions: [],
+        accessLocalVariables,
       });
   }
 }

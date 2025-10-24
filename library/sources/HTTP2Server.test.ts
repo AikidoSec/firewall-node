@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import { connect, IncomingHttpHeaders } from "http2";
+import type { IncomingHttpHeaders } from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
@@ -49,6 +49,7 @@ const agent = createTestAgent({
 agent.start([new HTTPServer(), new FileSystem()]);
 
 const { readFileSync } = require("fs");
+const { connect } = require("http2") as typeof import("http2");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
@@ -344,10 +345,10 @@ t.test("it works then using the on stream event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "GET",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "GET",
             ":authority": "localhost:3424",
             ":scheme": "http",
@@ -450,7 +451,7 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3427",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -490,7 +491,7 @@ t.test("it wraps the createSecureServer on request event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3428",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -530,7 +531,7 @@ t.test("it wraps the createSecureServer stream event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3429",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -640,10 +641,10 @@ t.test("it works then using the on stream end event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "POST",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "POST",
             ":authority": "localhost:3433",
             ":scheme": "http",

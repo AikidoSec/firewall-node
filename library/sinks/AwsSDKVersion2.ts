@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { wrapNewInstance } from "../agent/hooks/wrapNewInstance";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
@@ -68,19 +69,35 @@ export class AwsSDKVersion2 implements Wrapper {
     return undefined;
   }
 
+  onRequire(exports: any, pkgInfo: PartialWrapPackageInfo) {
+    wrapNewInstance(exports, "S3", pkgInfo, (instance) => {
+      for (const operation of operationsWithKey) {
+        wrapExport(instance, operation, pkgInfo, {
+          kind: "fs_op",
+          inspectArgs: (args) => this.inspectS3Operation(args, operation),
+        });
+      }
+    });
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("aws-sdk")
       .withVersion("^2.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapNewInstance(exports, "S3", pkgInfo, (instance) => {
-          for (const operation of operationsWithKey) {
-            wrapExport(instance, operation, pkgInfo, {
-              kind: "fs_op",
-              inspectArgs: (args) => this.inspectS3Operation(args, operation),
-            });
-          }
-        });
+        this.onRequire(exports, pkgInfo);
+      })
+      .addFileInstrumentation({
+        path: "lib/aws.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && isPlainObject(vars[0])) {
+              this.onRequire(vars[0], pkgInfo);
+            }
+          },
+        },
       });
   }
 }
