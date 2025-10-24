@@ -37,6 +37,7 @@
   "license": "AGPL-3.0-or-later",
   "main": "index.js",
   "types": "index.d.ts",
+  "browser": "browser.js",
   "engines": {
     "node": ">=16"
   },
