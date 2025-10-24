@@ -58,12 +58,6 @@ class Posts {
     return post.rows.length > 0 ? post.rows[0] : null;
   }
 
-  async getAll() {
-    const posts = await this.db.query("SELECT title, text FROM posts;");
-
-    return posts.rows;
-  }
-
   async count() {
     const result = await this.db.query("SELECT COUNT(*) as count FROM posts;");
 
