@@ -137,7 +137,8 @@ t.test(
       );
       if (error instanceof Error) {
         t.same(
-          error.message,
+          // @ts-expect-error Type is not defined
+          error.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -149,6 +150,7 @@ t.test(
       t.same(events[0].attack.metadata, {
         hostname: "localhost",
         port: "4000",
+        privateIP: "::1",
       });
 
       const error2 = await t.rejects(() =>
@@ -156,7 +158,8 @@ t.test(
       );
       if (error2 instanceof Error) {
         t.same(
-          error2.message,
+          // @ts-expect-error Type is not defined
+          error2.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -167,7 +170,8 @@ t.test(
       );
       if (error3 instanceof Error) {
         t.same(
-          error3.message,
+          // @ts-expect-error Type is not defined
+          error3.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -177,7 +181,8 @@ t.test(
       );
       if (error4 instanceof Error) {
         t.same(
-          error4.message,
+          // @ts-expect-error Type is not defined
+          error4.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }

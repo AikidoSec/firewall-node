@@ -166,6 +166,7 @@ t.test(
     t.ok(error instanceof Error);
     if (error instanceof Error) {
       t.same(
+        // @ts-expect-error .cause types are missing
         error.cause.message,
         "Zen has blocked a server-side request forgery: fetch(...) originating from body.url"
       );
