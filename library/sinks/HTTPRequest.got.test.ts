@@ -65,7 +65,6 @@ t.test(
 
     await runWithContext(createContext(), async () => {
       const error = await t.rejects(got("http://localhost:4131/api/internal"));
-      console.error(error);
 
       t.ok(error instanceof Error);
       if (error instanceof Error) {
