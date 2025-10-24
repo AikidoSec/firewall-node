@@ -90,20 +90,15 @@ t.test("it does not block request to localhost with same port", (t) => {
         t.same(response.statusCode, 200);
         response.on("data", () => {});
         response.on("end", () => {});
+        t.end();
+      });
+      request.on("error", (error: Error) => {
+        t.fail(error);
+        t.end();
       });
       request.end();
     }
   );
-
-  const errors: Error[] = [];
-  process.on("uncaughtException", (error) => {
-    errors.push(error);
-  });
-
-  setTimeout(() => {
-    t.same(errors, []);
-    t.end();
-  }, 1000);
 });
 
 t.test("it blocks requests to other ports", (t) => {
@@ -116,32 +111,27 @@ t.test("it blocks requests to other ports", (t) => {
       },
     }),
     () => {
-      try {
-        // Server doing a request to localhost but with a different port
-        // This should be blocked
-        const request = http.request(`${serverUrl}/favicon.ico`);
-        request.on("response", (response: IncomingMessage) => {
-          // This should not be called
-          t.fail();
-          response.on("data", () => {});
-          response.on("end", () => {});
-        });
-        request.end();
-      } catch (error) {
-        t.ok(error instanceof Error);
-        if (error instanceof Error) {
-          t.same(
-            error.message,
-            "Zen has blocked a server-side request forgery: http.request(...) originating from body.url"
-          );
-        }
-      }
+      // Server doing a request to localhost but with a different port
+      // This should be blocked
+      const request = http.request(`${serverUrl}/favicon.ico`);
+      request.on("error", (error: Error) => {
+        console.error(error);
+        t.same(
+          error.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.url"
+        );
+        t.end();
+      });
+      request.on("response", (response: IncomingMessage) => {
+        t.fail();
+        // This should not be called
+        response.on("data", () => {});
+        response.on("end", () => {});
+        t.end();
+      });
+      request.end();
     }
   );
-
-  setTimeout(() => {
-    t.end();
-  }, 1000);
 });
 
 t.after(() => {
