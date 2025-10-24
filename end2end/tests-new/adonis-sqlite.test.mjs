@@ -1,16 +1,20 @@
-const { spawnSync, spawn } = require("child_process");
-const { resolve } = require("path");
-const timeout = require("../timeout");
-const { test, before } = require("node:test");
-const { equal, fail, match, doesNotMatch } = require("node:assert");
-const { mkdirSync } = require("node:fs");
-const { join } = require("node:path");
+import { getRandomPort } from "./utils/get-port.mjs";
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/adonis-sqlite");
+import { spawnSync, spawn } from "node:child_process";
+import { resolve, join } from "node:path";
+import { timeout } from "./utils/timeout.mjs";
+import { test, before } from "node:test";
+import { equal, fail, match, doesNotMatch } from "node:assert";
+import { mkdirSync } from "node:fs";
+
+const pathToAppDir = resolve(
+  import.meta.dirname,
+  "../../sample-apps/adonis-sqlite"
+);
 const pathToAppBuildDir = resolve(pathToAppDir, "build/");
 
-const port = "4001";
-const port2 = "4002";
+const port = await getRandomPort();
+const port2 = await getRandomPort();
 
 const envVars = {
   TZ: "UTC",

@@ -1,13 +1,13 @@
-const { spawn } = require("child_process");
-const { test } = require("node:test");
-const { equal, fail, match } = require("node:assert");
+import { spawn } from "child_process";
+import { test } from "node:test";
+import { equal, fail, match } from "node:assert";
 
 test("it prints a warning when using worker threads", async () => {
   const app = spawn(
     `node`,
     ["-r", "../../build/instrument/index.js", `./fixtures/worker-thread.mjs`],
     {
-      cwd: __dirname,
+      cwd: import.meta.dirname,
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",

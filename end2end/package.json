@@ -7,6 +7,6 @@
   },
   "scripts": {
     "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1",
-    "test:new": "node --test --test-concurrency 4 --test-force-exit tests-new/**/*.test.js"
+    "test:new": "node --test --test-concurrency 4 --test-force-exit tests-new/**/*.test.mjs"
   }
 }
