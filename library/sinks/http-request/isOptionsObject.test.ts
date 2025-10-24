@@ -24,4 +24,5 @@ t.test("it works with non-objects", async (t) => {
   t.equal(isOptionsObject([]), false);
   t.equal(isOptionsObject(null), false);
   t.equal(isOptionsObject(undefined), false);
+  t.equal(isOptionsObject(new URL("https://aikido.dev")), false);
 });

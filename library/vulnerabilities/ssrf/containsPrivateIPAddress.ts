@@ -16,10 +16,6 @@ import { isPrivateIP } from "./isPrivateIP";
  * This will be handled by the inspectDNSLookupCalls function
  */
 export function containsPrivateIPAddress(hostname: string): boolean {
-  if (hostname === "localhost") {
-    return true;
-  }
-
   const url = tryParseURL(`http://${hostname}`);
   if (!url) {
     return false;

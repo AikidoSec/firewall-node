@@ -219,53 +219,65 @@ t.test("it works", (t) => {
     google.end();
 
     // With string URL
-    const error = t.throws(() =>
-      https.request("https://localhost:4000/api/internal")
-    );
-    if (error instanceof Error) {
-      t.same(
-        error.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With URL object
-    const error2 = t.throws(() =>
-      https.request(new URL("https://localhost:4000/api/internal"))
-    );
-    if (error2 instanceof Error) {
-      t.same(
-        error2.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(new URL("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With object like URL
-    const error3 = t.throws(() =>
-      https.request({
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error3 instanceof Error) {
-      t.same(
-        error3.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // Using .get
-    const error4 = t.throws(() =>
-      https.get("https://localhost:4000/api/internal")
-    );
-    if (error4 instanceof Error) {
-      t.same(
-        error4.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .get("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // ECONNREFUSED means that the request is not blocked
     http
@@ -293,31 +305,37 @@ t.test("it works", (t) => {
       });
 
     // With options object at index 1
-    const error5 = t.throws(() =>
-      https.request("", {
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error5 instanceof Error) {
-      t.same(
-        error5.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     const oldUrl = require("url");
-    const error6 = t.throws(() =>
-      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
-    );
-    if (error6 instanceof Error) {
-      t.same(
-        error6.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(oldUrl.parse("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
   });
 
   runWithContext(
