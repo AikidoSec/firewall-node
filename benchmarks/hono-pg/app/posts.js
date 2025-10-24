@@ -63,6 +63,12 @@ class Posts {
 
     return posts.rows;
   }
+
+  async count() {
+    const result = await this.db.query("SELECT COUNT(*) as count FROM posts;");
+
+    return result.rows[0].count;
+  }
 }
 
 module.exports = {
