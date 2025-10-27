@@ -115,7 +115,6 @@ t.test("it blocks requests to other ports", (t) => {
       // This should be blocked
       const request = http.request(`${serverUrl}/favicon.ico`);
       request.on("error", (error: Error) => {
-        console.error(error);
         t.same(
           error.message,
           "Zen has blocked a server-side request forgery: http.request(...) originating from body.url"
