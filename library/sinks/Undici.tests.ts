@@ -54,7 +54,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
     return {
       remoteAddress: "::1",
       method: "POST",
-      url: `http://localhost:${port}}`,
+      url: "acme.com",
       query: {},
       headers: {},
       body: {
@@ -109,6 +109,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         request,
         fetch,
         setGlobalDispatcher,
+        getGlobalDispatcher,
         Agent: UndiciAgent,
       } = require(undiciPkgName) as typeof import("undici-v6");
 
@@ -225,6 +226,17 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           await request(`http://localhost:${port}/api/internal`);
         }
       );
+
+      // Undici re-uses sockets per hostname
+      // This means that the DNS lookup is called only once per hostname
+      // So we need to clear the clients to ensure a new socket is created
+      // and thus a new DNS lookup is performed
+      const symbols = require(`${undiciPkgName}/lib/core/symbols`);
+      const kClients = symbols.kClients;
+      const dispatcher = getGlobalDispatcher();
+      if (dispatcher && (dispatcher as any)[kClients]) {
+        (dispatcher as any)[kClients].clear();
+      }
 
       await runWithContext(createContext(), async () => {
         await request("https://google.com");
