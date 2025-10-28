@@ -51,7 +51,7 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), []);
 
-    const gotModule = require("got") as typeof import("got");
+    const gotModule = require("got");
     const got = gotModule.default;
 
     await runWithContext(createContext(), async () => {
