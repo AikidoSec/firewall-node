@@ -8,7 +8,6 @@ import { startTestAgent } from "../helpers/startTestAgent";
 import { HTTPRequest } from "./HTTPRequest";
 import { Fetch } from "./Fetch";
 import { Undici } from "./Undici";
-import { createTestAgent } from "../helpers/createTestAgent";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 
 function createContext(port: number): Context {
@@ -98,23 +97,23 @@ t.test(
       t.same(attackEvents.length, 1, "fetch should report attack exactly once");
 
       api.clear();
+
+      const undici = require("undici-v6") as typeof import("undici-v6");
+      await runWithContext(createContext(port), async () => {
+        const response = await undici.request(serverUrl);
+        t.same(response.statusCode, 200);
+      });
+
+      await setTimeout(100);
+
+      events = api.getEvents();
+      attackEvents = events.filter((e) => e.type === "detected_attack");
+      t.same(
+        attackEvents.length,
+        1,
+        "undici.request should report attack exactly once"
+      );
     }
-
-    const undici = require("undici-v6") as typeof import("undici-v6");
-    await runWithContext(createContext(port), async () => {
-      const response = await undici.request(serverUrl);
-      t.same(response.statusCode, 200);
-    });
-
-    await setTimeout(100);
-
-    events = api.getEvents();
-    attackEvents = events.filter((e) => e.type === "detected_attack");
-    t.same(
-      attackEvents.length,
-      1,
-      "undici.request should report attack exactly once"
-    );
   }
 );
 
