@@ -247,9 +247,9 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           t.same(error0.code, "ECONNREFUSED");
         }
 
-        const error1 = await t.rejects(async () => {
-          return await request(`http://localhost:${port}/api/internal`);
-        });
+        const error1 = await t.rejects(() =>
+          request(`http://localhost:${port}/api/internal`)
+        );
         if (error1 instanceof Error) {
           t.same(
             error1.message,
