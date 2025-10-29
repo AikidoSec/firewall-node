@@ -57,9 +57,8 @@ const agent = createTestAgent({
 
 agent.start([new Fetch()]);
 
-const port = 1341;
+const port = 1342;
 const serverUrl = `http://localhost:${port}`;
-const hostHeader = `localhost:${port}`;
 
 let server: Server;
 t.before(async () => {
@@ -75,68 +74,36 @@ t.before(async () => {
 });
 
 t.test(
-  "it does not block request to localhost with same port",
+  "it blocks requests to other ports",
   { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    await runWithContext(
-      createContext({
-        url: serverUrl,
-        hostHeader: hostHeader,
-        body: {},
-      }),
-      async () => {
-        // Server doing a request to itself
-        const response = await fetch(`${serverUrl}/favicon.ico`);
-        // The server should respond with a 200
-        t.same(response.status, 200);
-      }
-    );
-  }
-);
+    const error = await t.rejects(async () => {
+      await runWithContext(
+        createContext({
+          url: `http://localhost:${port + 1}`,
+          hostHeader: `localhost:${port + 1}`,
+          body: {
+            url: `${serverUrl}/favicon.ico`,
+          },
+        }),
+        async () => {
+          // Server doing a request to localhost but with a different port
+          // This should be blocked
+          await fetch(`${serverUrl}/favicon.ico`);
+          // This should not be called
+          t.fail();
+        }
+      );
+    });
 
-t.test(
-  "it does not block request to localhost with same port using the origin header",
-  { skip: !global.fetch ? "fetch is not available" : false },
-  async (t) => {
-    await runWithContext(
-      createContext({
-        url: serverUrl,
-        hostHeader: "",
-        body: {},
-        additionalHeaders: {
-          origin: serverUrl,
-        },
-      }),
-      async () => {
-        // Server doing a request to itself
-        const response = await fetch(`${serverUrl}/favicon.ico`);
-        // The server should respond with a 200
-        t.same(response.status, 200);
-      }
-    );
-  }
-);
-
-t.test(
-  "it does not block request to localhost with same port using the referer header",
-  { skip: !global.fetch ? "fetch is not available" : false },
-  async (t) => {
-    await runWithContext(
-      createContext({
-        url: serverUrl,
-        hostHeader: "",
-        body: {},
-        additionalHeaders: {
-          referer: serverUrl,
-        },
-      }),
-      async () => {
-        // Server doing a request to itself
-        const response = await fetch(`${serverUrl}/favicon.ico`);
-        // The server should respond with a 200
-        t.same(response.status, 200);
-      }
-    );
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.same(
+        // @ts-expect-error .cause types are missing
+        error.cause.message,
+        "Zen has blocked a server-side request forgery: fetch(...) originating from body.url"
+      );
+    }
   }
 );
 
