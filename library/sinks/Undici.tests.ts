@@ -54,7 +54,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
     return {
       remoteAddress: "::1",
       method: "POST",
-      url: `http://localhost:${port}}`,
+      url: "acme.com",
       query: {},
       headers: {},
       body: {
@@ -109,6 +109,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         request,
         fetch,
         setGlobalDispatcher,
+        getGlobalDispatcher,
         Agent: UndiciAgent,
       } = require(undiciPkgName) as typeof import("undici-v6");
 
@@ -226,6 +227,17 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         }
       );
 
+      // Undici re-uses sockets per hostname
+      // This means that the DNS lookup is called only once per hostname
+      // So we need to clear the clients to ensure a new socket is created
+      // and thus a new DNS lookup is performed
+      const symbols = require(`${undiciPkgName}/lib/core/symbols`);
+      const kClients = symbols.kClients;
+      const dispatcher = getGlobalDispatcher();
+      if (dispatcher && (dispatcher as any)[kClients]) {
+        (dispatcher as any)[kClients].clear();
+      }
+
       await runWithContext(createContext(), async () => {
         await request("https://google.com");
 
@@ -241,7 +253,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         if (error1 instanceof Error) {
           t.same(
             error1.message,
-            "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
 
@@ -250,6 +262,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
           .filter((e) => e.type === "detected_attack");
         t.same(events.length, 1);
         t.same(events[0].attack.metadata, {
+          privateIP: "::1",
           hostname: "localhost",
           port: port,
         });
@@ -260,7 +273,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         if (error2 instanceof Error) {
           t.same(
             error2.message,
-            "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
         const error3 = await t.rejects(() =>
@@ -274,7 +287,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         if (error3 instanceof Error) {
           t.same(
             error3.message,
-            "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
 
@@ -283,19 +296,20 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         );
         if (error4 instanceof Error) {
           t.same(
-            error4.message,
-            "Zen has blocked a server-side request forgery: undici.fetch(...) originating from body.image"
+            // @ts-expect-error Type is not defined
+            error4.cause.message,
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
 
         const oldUrl = require("url");
-        const error5 = t.throws(() =>
+        const error5 = await t.rejects(() =>
           request(oldUrl.parse(`https://localhost:${port}/api/internal`))
         );
         if (error5 instanceof Error) {
           t.same(
             error5.message,
-            "Zen has blocked a server-side request forgery: undici.request(...) originating from body.image"
+            "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.image"
           );
         }
       });
