@@ -5,10 +5,12 @@ import { tryParseURLPath } from "./tryParseURLPath";
 export type LimitedContext = Pick<Context, "url" | "method" | "route">;
 
 export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
-  const matches: Endpoint[] = [];
+  if (endpoints.length === 0) {
+    return [];
+  }
 
   if (!context.method) {
-    return matches;
+    return [];
   }
 
   const possible = endpoints.filter((endpoint) => {
@@ -31,6 +33,8 @@ export function matchEndpoints(context: LimitedContext, endpoints: Endpoint[]) {
 
     return -1;
   });
+
+  const matches: Endpoint[] = [];
 
   const exact = possible.find((endpoint) => endpoint.route === context.route);
   if (exact) {
