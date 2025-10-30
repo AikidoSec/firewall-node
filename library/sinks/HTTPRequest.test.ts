@@ -324,7 +324,6 @@ t.test("it works", (t) => {
       })
       .end();
 
-    const oldUrl = require("url");
     https
       .request(oldUrl.parse("https://localhost:4000/api/internal"))
       .on("error", (error) => {

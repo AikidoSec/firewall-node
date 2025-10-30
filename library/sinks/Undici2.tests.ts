@@ -71,7 +71,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
   }
 
   let server: ReturnType<typeof import("http").createServer>;
-  t.before(() => {
+  t.before(async () => {
     const http = require("http") as typeof import("http");
     server = http.createServer((req, res) => {
       res.end("Hello, world!");
@@ -141,7 +141,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         t.same(events[0].attack.metadata, {
           privateIP: "::1",
           hostname: "localhost",
-          port: port,
+          port: port.toString(),
         });
 
         const error2 = await t.rejects(() =>
