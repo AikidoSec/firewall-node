@@ -5,6 +5,9 @@ import { Context, runWithContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { Fetch } from "./Fetch";
 
+// Fetch tests are split up because sockets are re-used for the same hostname
+// See Fetch.localhost.test.ts and Fetch.localhost2.test.ts
+
 function createContext({
   url,
   hostHeader,
