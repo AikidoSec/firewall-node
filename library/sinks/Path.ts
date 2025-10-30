@@ -48,6 +48,7 @@ export class Path implements Wrapper {
   }
 
   private wrapFunctions(exports: unknown, pkgInfo: WrapPackageInfo) {
+    // `.join` is not wrapped because it uses `.normalize` under the hood
     const functions = ["resolve", "normalize"];
 
     for (const func of functions) {
