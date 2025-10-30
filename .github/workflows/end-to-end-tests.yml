@@ -58,6 +58,8 @@ jobs:
             mode: "old"
           - node-version: 24.x
             mode: "new"
+          - node-version: 25.x
+            mode: "new"
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
