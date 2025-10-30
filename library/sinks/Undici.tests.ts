@@ -1,57 +1,15 @@
-/* eslint-disable prefer-rest-params */
-import * as dns from "dns";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { startTestAgent } from "../helpers/startTestAgent";
-import { wrap } from "../helpers/wrap";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
 export function createUndiciTests(undiciPkgName: string, port: number) {
-  const calls: Record<string, number> = {};
-  wrap(dns, "lookup", function lookup(original) {
-    return function lookup() {
-      const hostname = arguments[0];
-
-      if (!calls[hostname]) {
-        calls[hostname] = 0;
-      }
-
-      calls[hostname]++;
-
-      if (
-        hostname === "thisdomainpointstointernalip.com" ||
-        hostname === "my-service-hostname" ||
-        hostname === "metadata"
-      ) {
-        return original.apply(
-          // @ts-expect-error We don't know the type of `this`
-          this,
-          ["localhost", ...Array.from(arguments).slice(1)]
-        );
-      }
-
-      if (hostname === "example,prefix.thisdomainpointstointernalip.com") {
-        return original.apply(
-          // @ts-expect-error We don't know the type of `this`
-          this,
-          ["localhost", ...Array.from(arguments).slice(1)]
-        );
-      }
-
-      original.apply(
-        // @ts-expect-error We don't know the type of `this`
-        this,
-        arguments
-      );
-    };
-  });
-
   function createContext(): Context {
     return {
       remoteAddress: "::1",
