@@ -8,6 +8,7 @@ const asyncPool = require("./helpers/asyncPool");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
+const majorNodeVersion = parseInt(process.version.split(".")[0].slice(1), 10);
 
 // If script is called with arg --ci, set env CI to true
 if (process.argv.includes("--ci")) {
@@ -44,6 +45,13 @@ async function main() {
  */
 async function installDependencies(folder) {
   console.log(`Installing dependencies for ${folder}`);
+
+  if (folder === "sample-apps/n8n" && majorNodeVersion >= 24) {
+    console.log(
+      `Skipping installation for ${folder} on Node.js v24 and above due to incompatibility issues.`
+    );
+    return;
+  }
 
   // Don't run potentially unsafe scripts during installation
   const flags = "--ignore-scripts";
