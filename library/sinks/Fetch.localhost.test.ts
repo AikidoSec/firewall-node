@@ -140,39 +140,6 @@ t.test(
   }
 );
 
-t.test(
-  "it blocks requests to other ports",
-  { skip: !global.fetch ? "fetch is not available" : false },
-  async (t) => {
-    const error = await t.rejects(async () => {
-      await runWithContext(
-        createContext({
-          url: `http://localhost:${port + 1}`,
-          hostHeader: `localhost:${port + 1}`,
-          body: {
-            url: `${serverUrl}/favicon.ico`,
-          },
-        }),
-        async () => {
-          // Server doing a request to localhost but with a different port
-          // This should be blocked
-          await fetch(`${serverUrl}/favicon.ico`);
-          // This should not be called
-          t.fail();
-        }
-      );
-    });
-
-    t.ok(error instanceof Error);
-    if (error instanceof Error) {
-      t.same(
-        error.message,
-        "Zen has blocked a server-side request forgery: fetch(...) originating from body.url"
-      );
-    }
-  }
-);
-
 t.after(() => {
   server.close();
 });

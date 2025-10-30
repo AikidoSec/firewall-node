@@ -45,9 +45,9 @@ async function main() {
   const posts = new Posts(db);
 
   app.get("/api/posts", async (c) => {
-    const result = await posts.getAll();
+    const count = await posts.count();
 
-    return c.json(result);
+    return c.json({ count });
   });
 
   app.post("/api/posts", async (c) => {

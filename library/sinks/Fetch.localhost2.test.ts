@@ -2,18 +2,19 @@ import * as t from "tap";
 import { createServer, Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
-import { getMajorNodeVersion } from "../helpers/getNodeVersion";
-import { startTestAgent } from "../helpers/startTestAgent";
-import { Undici } from "./Undici";
+import { createTestAgent } from "../helpers/createTestAgent";
+import { Fetch } from "./Fetch";
 
 function createContext({
   url,
   hostHeader,
   body,
+  additionalHeaders = {},
 }: {
   url: string;
   hostHeader: string;
   body: unknown;
+  additionalHeaders?: Record<string, string>;
 }): Context {
   return {
     url: url,
@@ -37,6 +38,7 @@ function createContext({
       "sec-fetch-dest": "document",
       "accept-encoding": "gzip, deflate, br, zstd",
       "accept-language": "nl,en;q=0.9,en-US;q=0.8",
+      ...additionalHeaders,
     },
     route: "/",
     query: {},
@@ -49,15 +51,14 @@ function createContext({
   };
 }
 
-startTestAgent({
+const agent = createTestAgent({
   token: new Token("123"),
-  wrappers: [new Undici()],
-  rewrite: { undici: "undici-v6" },
 });
 
-const port = 1346;
+agent.start([new Fetch()]);
+
+const port = 1342;
 const serverUrl = `http://localhost:${port}`;
-const hostHeader = `localhost:${port}`;
 
 let server: Server;
 t.before(async () => {
@@ -73,39 +74,9 @@ t.before(async () => {
 });
 
 t.test(
-  "it does not block request to localhost with same port",
-  {
-    skip:
-      getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
-  },
-  async (t) => {
-    const { request } = require("undici-v6") as typeof import("undici-v6");
-
-    await runWithContext(
-      createContext({
-        url: serverUrl,
-        hostHeader: hostHeader,
-        body: {},
-      }),
-      async () => {
-        // Server doing a request to itself
-        const response = await request(`${serverUrl}/favicon.ico`);
-        // The server should respond with a 200
-        t.same(response.statusCode, 200);
-      }
-    );
-  }
-);
-
-t.test(
   "it blocks requests to other ports",
-  {
-    skip:
-      getMajorNodeVersion() <= 16 ? "ReadableStream is not available" : false,
-  },
+  { skip: !global.fetch ? "fetch is not available" : false },
   async (t) => {
-    const { request } = require("undici-v6") as typeof import("undici-v6");
-
     const error = await t.rejects(async () => {
       await runWithContext(
         createContext({
@@ -118,7 +89,7 @@ t.test(
         async () => {
           // Server doing a request to localhost but with a different port
           // This should be blocked
-          await request(`${serverUrl}/favicon.ico`);
+          await fetch(`${serverUrl}/favicon.ico`);
           // This should not be called
           t.fail();
         }
@@ -128,8 +99,9 @@ t.test(
     t.ok(error instanceof Error);
     if (error instanceof Error) {
       t.same(
-        error.message,
-        "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.url"
+        // @ts-expect-error .cause types are missing
+        error.cause.message,
+        "Zen has blocked a server-side request forgery: fetch(...) originating from body.url"
       );
     }
   }

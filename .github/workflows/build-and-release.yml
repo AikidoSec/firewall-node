@@ -5,10 +5,16 @@ on:
 jobs:
   run-unit-tests:
     uses: ./.github/workflows/unit-test.yml
+    permissions:
+      contents: read
   run-end-to-end-tests:
     uses: ./.github/workflows/end-to-end-tests.yml
+    permissions:
+      contents: read
   run-benchmarks:
     uses: ./.github/workflows/benchmark.yml
+    permissions:
+      contents: read
   build:
     needs:
       - run-unit-tests

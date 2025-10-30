@@ -47,6 +47,7 @@
   "license": "AGPL-3.0-or-later",
   "main": "index.js",
   "types": "index.d.ts",
+  "browser": "browser.js",
   "engines": {
     "node": ">=16"
   },
@@ -151,7 +152,8 @@
     "undici-v7": "npm:undici@7.10.0",
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
-    "zod": "^3.25.63"
+    "zod": "^3.25.63",
+    "got": "^14.6.0"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",

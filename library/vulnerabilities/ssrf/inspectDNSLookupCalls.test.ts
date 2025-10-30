@@ -3,7 +3,6 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { Context, runWithContext } from "../../agent/Context";
-import { LoggerNoop } from "../../agent/logger/LoggerNoop";
 import { wrap } from "../../helpers/wrap";
 import { inspectDNSLookupCalls } from "./inspectDNSLookupCalls";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
