@@ -131,7 +131,7 @@ t.test("it does not enable Zen when no environment variables are set", (t) => {
     `./node_modules/.bin/functions-framework`,
     ["--port", "4012"],
     {
-      env: { ...process.env },
+      env: { ...process.env, AIKIDO_CI: false },
       cwd: appDir,
     }
   );

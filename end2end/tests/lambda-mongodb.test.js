@@ -95,6 +95,10 @@ t.test("it does not enable if no environment variable is set", async (t) => {
     "npx --node-options='--no-deprecation' --loglevel=error serverless@3.38.0 invoke local --function login --path payloads/safe-request.json",
     {
       cwd: directory,
+      env: {
+        ...process.env,
+        AIKIDO_CI: false,
+      },
     }
   );
 
