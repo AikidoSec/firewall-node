@@ -143,6 +143,8 @@ t.test("it adds context from request for GET", async (t) => {
     source: "hapi",
     route: "/",
   });
+
+  t.match(response.body.url, /^http:\/\/.*\/\?title=test$/);
 });
 
 t.test("it adds context from POST with JSON body", async (t) => {

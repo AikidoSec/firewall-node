@@ -174,6 +174,8 @@ t.test("it adds context from request for GET", opts, async (t) => {
     source: "hono",
     route: "/",
   });
+
+  t.match(body.url, /^http:\/\/.*\/\?title=test$/);
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {

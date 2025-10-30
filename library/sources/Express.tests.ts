@@ -294,6 +294,9 @@ export function createExpressTests(expressPackageName: string) {
       source: "express",
       route: "/",
     });
+
+    // Url is absolute and includes query parameters
+    t.match(response.body.url, /^http:\/\/.*\/\?title=test&x=5$/);
   });
 
   t.test("it adds context from request for POST", async (t) => {

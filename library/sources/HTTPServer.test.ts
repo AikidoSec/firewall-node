@@ -111,7 +111,7 @@ t.test("it wraps the createServer function of http module", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "http://localhost:3314/",
           method: "GET",
           headers: { host: "localhost:3314", connection: "close" },
           query: {},
@@ -159,7 +159,7 @@ t.test("it wraps the createServer function of https module", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "https://localhost:3315/",
           method: "GET",
           headers: { host: "localhost:3315", connection: "close" },
           query: {},
@@ -193,6 +193,7 @@ t.test("it parses query parameters", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.query, { foo: "bar", baz: "qux" });
+        t.same(context.url, "http://localhost:3317/?foo=bar&baz=qux");
         server.close();
         resolve();
       });
@@ -546,7 +547,7 @@ t.test("it wraps on request event of http", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "http://localhost:3367/",
           method: "GET",
           headers: { host: "localhost:3367", connection: "close" },
           query: {},
@@ -590,7 +591,7 @@ t.test("it wraps on request event of https", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "https://localhost:3361/",
           method: "GET",
           headers: { host: "localhost:3361", connection: "close" },
           query: {},

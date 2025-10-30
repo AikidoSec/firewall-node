@@ -4,6 +4,8 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
 export function contextFromRequest(req: FastifyRequest): Context {
+  const url = req.protocol + "://" + req.host + req.originalUrl;
+
   return {
     method: req.method,
     remoteAddress: getIPAddressFromRequest({
@@ -11,7 +13,7 @@ export function contextFromRequest(req: FastifyRequest): Context {
       remoteAddress: req.socket?.remoteAddress,
     }),
     body: req.body ? req.body : undefined,
-    url: req.url,
+    url: url,
     headers: req.headers,
     // @ts-expect-error not typed
     routeParams: req.params,

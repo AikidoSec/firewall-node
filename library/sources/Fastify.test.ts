@@ -176,7 +176,6 @@ t.test("it adds context from request for all", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/?title[$ne]=null",
     remoteAddress: "127.0.0.1",
     method: "GET",
     query: { "title[$ne]": "null" },
@@ -194,6 +193,9 @@ t.test("it adds context from request for all", opts, async (t) => {
     },
     executedMiddleware: true,
   });
+
+  // Url is absolute and includes query parameters
+  t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
 });
 
 t.test(
