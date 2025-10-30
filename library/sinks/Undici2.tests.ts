@@ -12,7 +12,8 @@ import { Undici } from "./Undici";
 
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
-export function createUndiciTests(undiciPkgName: string, port: number) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
   wrap(dns, "lookup", function lookup(original) {
     return function lookup() {
