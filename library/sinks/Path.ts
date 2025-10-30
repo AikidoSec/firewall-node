@@ -48,7 +48,7 @@ export class Path implements Wrapper {
   }
 
   private wrapFunctions(exports: unknown, pkgInfo: WrapPackageInfo) {
-    const functions = ["join", "resolve", "normalize"];
+    const functions = ["resolve", "normalize"];
 
     for (const func of functions) {
       wrapExport(exports, func, pkgInfo, {
