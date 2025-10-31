@@ -75,19 +75,26 @@ t.test("clear should remove all packages", async (t) => {
   clock.uninstall();
 });
 
-t.test("addPackage should reject new package if max size is reached", async (t) => {
-  const clock = FakeTimers.install();
-  const maxSize = 2;
-  const packages = new Packages(maxSize);
+t.test(
+  "addPackage should reject new package if max size is reached",
+  async (t) => {
+    const clock = FakeTimers.install();
+    const maxSize = 2;
+    const packages = new Packages(maxSize);
 
-  packages.addPackage({ name: "express", version: "4.17.1" });
-  packages.addPackage({ name: "lodash", version: "4.17.20" });
-  packages.addPackage({ name: "moment", version: "2.29.1" }); // should fail
+    packages.addPackage({ name: "express", version: "4.17.1" });
+    packages.addPackage({ name: "lodash", version: "4.17.20" });
+    packages.addPackage({ name: "moment", version: "2.29.1" }); // should fail
 
-  const arr = packages.asArray();
-  t.same(arr, [
-    { name: "express", version: "4.17.1", requiredAt: 0 },
-    { name: "lodash", version: "4.17.20", requiredAt: 0 },
-  ], "should not add new package if max size is reached");
-  clock.uninstall();
-});
+    const arr = packages.asArray();
+    t.same(
+      arr,
+      [
+        { name: "express", version: "4.17.1", requiredAt: 0 },
+        { name: "lodash", version: "4.17.20", requiredAt: 0 },
+      ],
+      "should not add new package if max size is reached"
+    );
+    clock.uninstall();
+  }
+);
