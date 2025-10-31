@@ -132,6 +132,9 @@ export function createKoaTests(koaPackageName: string) {
     t.match(response.headers, {
       "x-powered-by": "aikido",
     });
+
+    // Url is absolute and includes query parameters
+    t.match(response.body.url, /^http:\/\/.*\/context\?title=test&a=1$/);
   });
 
   t.test("it sets the user", async (t) => {

@@ -2,6 +2,8 @@ import type { Request } from "@hapi/hapi";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
+import { getRequestUrl } from "../../helpers/getRequestUrl";
+import { getRawRequestPath } from "../../helpers/getRawRequestPath";
 
 export function contextFromRequest(req: Request): Context {
   return {
@@ -11,7 +13,8 @@ export function contextFromRequest(req: Request): Context {
       remoteAddress: req.info.remoteAddress,
     }),
     body: req.payload,
-    url: req.url.toString(),
+    url: req.raw?.req ? getRequestUrl(req.raw?.req) : req.url.toString(),
+    urlPath: getRawRequestPath(req.url.toString()),
     headers: req.headers,
     routeParams: req.params,
     query: req.query,

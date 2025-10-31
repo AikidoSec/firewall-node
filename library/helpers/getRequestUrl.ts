@@ -45,7 +45,6 @@ function getHost(
 
   const host =
     req instanceof Http2ServerRequest ? req.authority : req.headers?.host;
-
   if (typeof host === "string") {
     return host;
   }
