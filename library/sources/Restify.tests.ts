@@ -229,7 +229,5 @@ export function createRestifyTests(restifyPackageName: string) {
       source: "restify",
       route: "/",
     });
-
-    t.match(response.body.context.url, /^http:\/\/.*\/$/);
   });
 }

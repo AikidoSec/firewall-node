@@ -30,6 +30,6 @@ export function contextFromRequest(req: RestifyRequest): Context {
     query: isPlainObject(req.query) ? req.query : {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     source: "restify",
-    route: buildRouteFromURL(req.href()),
+    route: buildRouteFromURL(req.path()),
   };
 }
