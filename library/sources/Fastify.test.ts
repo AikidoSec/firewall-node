@@ -544,3 +544,42 @@ t.test("it works with addHttpMethod", opts, async (t) => {
     cookies: {},
   });
 });
+
+t.test("it adds context from request for all", opts, async (t) => {
+  const app = getApp();
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/?title[$ne]=null",
+    headers: {
+      accept: "application/json",
+      cookie: "session=123",
+      "X-Forwarded-Host": "example.com",
+      "X-Forwarded-Proto": "http",
+    },
+  });
+
+  t.same(response.statusCode, 200);
+
+  const json = await response.json();
+  t.match(json, {
+    url: "http://example.com/?title[$ne]=null",
+    urlPath: "/",
+    remoteAddress: "127.0.0.1",
+    method: "GET",
+    query: { "title[$ne]": "null" },
+    headers: {
+      accept: "application/json",
+      cookie: "session=123",
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
+    },
+    routeParams: {},
+    source: "fastify",
+    route: "/",
+    cookies: {
+      session: "123",
+    },
+    executedMiddleware: true,
+  });
+});

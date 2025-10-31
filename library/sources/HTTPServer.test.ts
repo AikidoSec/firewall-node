@@ -797,7 +797,7 @@ t.test("it blocks path traversal in path", async (t) => {
 
       t.equal(
         response,
-        "Zen has blocked a path traversal attack: path.join(...) originating from urlPath."
+        "Zen has blocked a path traversal attack: path.normalize(...) originating from urlPath."
       );
       server.close();
       resolve();

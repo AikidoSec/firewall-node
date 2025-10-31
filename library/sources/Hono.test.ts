@@ -260,6 +260,7 @@ t.test("it sets the user in the context", opts, async (t) => {
     method: "GET",
     source: "hono",
     route: "/",
+    urlPath: "/user",
     user: { id: "123" },
   });
 });
@@ -630,4 +631,30 @@ t.test("it rate limits based on group", opts, async (t) => {
 
   t.match(response3.status, 429);
   t.match(await response3.text(), "You are rate limited by Zen.");
+});
+
+t.test("it respects forwarded host header", opts, async (t) => {
+  const response = await getApp().request("/?title=test", {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+      cookie: "session=123",
+      "X-Forwarded-Host": "example.com",
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+
+  const body = await response.json();
+  t.match(body, {
+    url: "http://example.com/?title=test",
+    urlPath: "/",
+    method: "GET",
+    query: { title: "test" },
+    cookies: { session: "123" },
+    headers: { accept: "application/json", cookie: "session=123" },
+    source: "hono",
+    route: "/",
+  });
+
+  t.match(body.url, /^http:\/\/.*\/\?title=test$/);
 });

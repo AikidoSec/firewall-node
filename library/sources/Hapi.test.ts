@@ -265,3 +265,25 @@ t.test("toolkit decorator success works", async (t) => {
   const response = await request(getServer().listener).get("/success");
   t.match(response.body, { status: "ok" });
 });
+
+t.test("it respects forwarded host header", async (t) => {
+  const response = await request(getServer().listener)
+    .get("/?title=test")
+    .set("Accept", "application/json")
+    .set("Cookie", "session=123")
+    .set("X-Forwarded-Host", "example.com")
+    .set("X-Forwarded-Protocol", "https")
+    .set("X-Forwarded-For", "1.2.3.4");
+
+  t.match(response.body, {
+    method: "GET",
+    url: "https://example.com/?title=test",
+    urlPath: "/",
+    query: { title: "test" },
+    cookies: { session: "123" },
+    headers: { accept: "application/json", cookie: "session=123" },
+    remoteAddress: "1.2.3.4",
+    source: "hapi",
+    route: "/",
+  });
+});

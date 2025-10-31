@@ -840,4 +840,31 @@ export function createExpressTests(expressPackageName: string) {
       },
     });
   });
+
+  t.test(
+    "it respects host forwarded header for url construction",
+    async (t) => {
+      const app = getApp();
+      app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"]);
+
+      const response = await request(app)
+        .get("/?title=test&x=5")
+        .set("Cookie", "session=123")
+        .set("Accept", "application/json")
+        .set("X-Forwarded-Host", "example.com")
+        .set("X-Forwarded-Proto", "https")
+        .set("X-Forwarded-For", "1.2.3.4");
+
+      t.match(response.body, {
+        url: "https://example.com/?title=test&x=5",
+        method: "GET",
+        query: { title: "test", x: "5" },
+        cookies: { session: "123" },
+        headers: { accept: "application/json", cookie: "session=123" },
+        remoteAddress: "1.2.3.4",
+        source: "express",
+        route: "/",
+      });
+    }
+  );
 }
