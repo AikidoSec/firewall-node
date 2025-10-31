@@ -2,7 +2,7 @@
 import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import { Context, runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -375,6 +375,15 @@ t.test("it works", (t) => {
       metadataRequest.end();
     }
   );
+
+  runWithContext(createContext(), () => {
+    const req = https.get("https://app.aikido.dev", (res) => {
+      t.same(getContext(), createContext());
+      res.on("data", () => {});
+      res.on("end", () => {});
+    });
+    req.end();
+  });
 
   setTimeout(() => {
     t.end();
