@@ -1,6 +1,7 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { getPathsToPayload } from "../../helpers/attackPath";
+import { extractPathTraversalStringsFromUserInputCached } from "../../helpers/extractPathTraversalStringsFromUserInputCached";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { detectPathTraversal } from "./detectPathTraversal";
@@ -26,7 +27,7 @@ export function checkContextForPathTraversal({
     return;
   }
 
-  for (const str of extractStringsFromUserInputCached(context)) {
+  for (const str of extractPathTraversalStringsFromUserInputCached(context)) {
     if (detectPathTraversal(pathString, str, checkPathStart, isUrl)) {
       const source = getSourceForUserString(context, str);
       if (source) {
