@@ -112,6 +112,7 @@ t.test("it wraps the createServer function of http module", async () => {
         const context = JSON.parse(body);
         t.same(context, {
           url: "http://localhost:3314/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3314", connection: "close" },
           query: {},
@@ -160,6 +161,7 @@ t.test("it wraps the createServer function of https module", async () => {
         const context = JSON.parse(body);
         t.same(context, {
           url: "https://localhost:3315/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3315", connection: "close" },
           query: {},
@@ -548,6 +550,7 @@ t.test("it wraps on request event of http", async () => {
         const context = JSON.parse(body);
         t.same(context, {
           url: "http://localhost:3367/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3367", connection: "close" },
           query: {},
@@ -592,6 +595,7 @@ t.test("it wraps on request event of https", async () => {
         const context = JSON.parse(body);
         t.same(context, {
           url: "https://localhost:3361/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3361", connection: "close" },
           query: {},
@@ -793,7 +797,7 @@ t.test("it blocks path traversal in path", async (t) => {
 
       t.equal(
         response,
-        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+        "Zen has blocked a path traversal attack: path.join(...) originating from urlPath."
       );
       server.close();
       resolve();

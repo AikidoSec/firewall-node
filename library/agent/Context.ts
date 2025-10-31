@@ -8,7 +8,8 @@ import type { Endpoint } from "./Config";
 export type User = { id: string; name?: string };
 
 export type Context = {
-  url: string | undefined;
+  url: string | undefined; // Full URL including protocol and host, if available
+  urlPath: string | undefined; // The path part of the URL (e.g. /api/user)
   method: string | undefined;
   query: ParsedQs;
   headers: Record<string, string | string[] | undefined>;

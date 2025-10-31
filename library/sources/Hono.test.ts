@@ -359,6 +359,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     query: { abc: "test" },
     source: "hono",
     route: "/",
+    urlPath: "/",
   });
   t.ok(isLocalhostIP(body.remoteAddress));
   server.close();
