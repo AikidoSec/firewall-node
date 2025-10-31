@@ -2,7 +2,6 @@ import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractPathTraversalStringsFromUserInputCached } from "../../helpers/extractPathTraversalStringsFromUserInputCached";
-import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { detectPathTraversal } from "./detectPathTraversal";
 
