@@ -175,7 +175,6 @@ export class Prisma implements Wrapper {
     pkgInfo: WrapPackageInfo;
   }) {
     let inspectionResult: InterceptorResult | undefined;
-    const start = performance.now();
 
     if (!isNoSQLClient && SQL_OPERATIONS_TO_PROTECT.includes(operation)) {
       inspectionResult = this.inspectSQLQuery(
@@ -196,7 +195,6 @@ export class Prisma implements Wrapper {
         agent,
         inspectionResult,
         pkgInfo,
-        start,
         operation,
         isNoSQLClient ? "nosql_op" : "sql_op"
       );
