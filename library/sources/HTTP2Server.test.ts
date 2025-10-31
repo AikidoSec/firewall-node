@@ -130,7 +130,8 @@ t.test("it wraps the createServer function of http2 module", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "http://localhost:3415/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -732,3 +733,77 @@ t.test("it reports attack waves", async (t) => {
     });
   });
 });
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Proto headers",
+  async () => {
+    const server = createMinimalTestServer();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3435, () => {
+        http2Request(new URL("http://localhost:3435/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Proto": "https",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "https://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3435",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Proto headers (stream)",
+  async () => {
+    const server = createMinimalTestServerWithStream();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3436, () => {
+        http2Request(new URL("http://localhost:3436/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Proto": "https",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "https://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3436",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
