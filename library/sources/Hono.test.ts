@@ -634,27 +634,35 @@ t.test("it rate limits based on group", opts, async (t) => {
 });
 
 t.test("it respects forwarded host header", opts, async (t) => {
-  const response = await getApp().request("/?title=test", {
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+
+  const server = serve({
+    fetch: getApp().fetch,
+    port: 8770,
+  });
+
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8770/?abc=test"),
     method: "GET",
     headers: {
       accept: "application/json",
-      cookie: "session=123",
       "X-Forwarded-Host": "example.com",
-      "X-Forwarded-For": "1.2.3.4",
+      "X-Forwarded-Proto": "https",
     },
+    timeoutInMS: 500,
   });
 
-  const body = await response.json();
-  t.match(body, {
-    url: "http://example.com/?title=test",
+  t.match(JSON.parse(response.body), {
+    url: "https://example.com/?abc=test",
     urlPath: "/",
     method: "GET",
-    query: { title: "test" },
-    cookies: { session: "123" },
-    headers: { accept: "application/json", cookie: "session=123" },
+    query: { abc: "test" },
+    cookies: {},
+    headers: { accept: "application/json" },
     source: "hono",
     route: "/",
   });
 
-  t.match(body.url, /^http:\/\/.*\/\?title=test$/);
+  server.close();
 });
