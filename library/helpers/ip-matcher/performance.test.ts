@@ -2,6 +2,8 @@ import * as t from "tap";
 import { IPMatcher } from "./IPMatcher";
 import { BlockList } from "net";
 
+// @esm-tests-skip
+
 const testIpRanges = [
   "8.8.4.0/24",
   "8.8.8.0/24",

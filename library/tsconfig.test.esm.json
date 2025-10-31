@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../.esm-tests/library",
+    "noEmit": false,
+    "sourceMap": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.tests.ts"]
+}

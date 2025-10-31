@@ -1,9 +1,10 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { Shelljs } from "./Shelljs";
 import { ChildProcess } from "./ChildProcess";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -51,9 +52,12 @@ const safeContext: Context = {
 const agent = createTestAgent();
 agent.start([new Shelljs(), new FileSystem(), new ChildProcess()]);
 
-t.test("it detects shell injections", async (t) => {
-  const shelljs = require("shelljs");
+let shelljs = require("shelljs");
+if (isEsmUnitTest()) {
+  shelljs = shelljs.default;
+}
 
+t.test("it detects shell injections", async (t) => {
   const error = await t.rejects(async () => {
     runWithContext(dangerousContext, () => {
       return shelljs.exec("ls -la xyz;pwd||x=");
@@ -70,8 +74,6 @@ t.test("it detects shell injections", async (t) => {
 });
 
 t.test("it does not detect injection in safe context", async () => {
-  const shelljs = require("shelljs");
-
   try {
     runWithContext(safeContext, () => {
       return shelljs.exec("ls -la xyz;pwd||x=", { silent: true });
@@ -83,8 +85,6 @@ t.test("it does not detect injection in safe context", async () => {
 });
 
 t.test("it does not detect injection without context", async () => {
-  const shelljs = require("shelljs");
-
   try {
     shelljs.exec("ls -la xyz;pwd||x=", { silent: true });
     t.end();
@@ -94,8 +94,6 @@ t.test("it does not detect injection without context", async () => {
 });
 
 t.test("it detects async shell injections", async (t) => {
-  const shelljs = require("shelljs");
-
   const error = await t.rejects(async () => {
     runWithContext(dangerousContext, () => {
       return shelljs.exec("ls -la xyz;pwd||x=", { async: true });
@@ -140,8 +138,6 @@ t.test("it detects async shell injections", async (t) => {
 });
 
 t.test("it prevents path injections using ls", async (t) => {
-  const shelljs = require("shelljs");
-
   const error = await t.rejects(async () => {
     runWithContext(dangerousPathContext, () => {
       return shelljs.ls("/etc/ssh");
@@ -157,8 +153,6 @@ t.test("it prevents path injections using ls", async (t) => {
 });
 
 t.test("it prevents path injections using cat", async (t) => {
-  const shelljs = require("shelljs");
-
   const error = await t.rejects(async () => {
     runWithContext(
       { ...dangerousPathContext, body: { myTitle: "../package.json" } },
@@ -180,8 +174,6 @@ t.test("it prevents path injections using cat", async (t) => {
 t.test(
   "it does not prevent path injections using cat with safe context",
   async () => {
-    const shelljs = require("shelljs");
-
     try {
       runWithContext(safeContext, () => {
         return shelljs.cat("/etc/ssh/*");
@@ -194,8 +186,6 @@ t.test(
 );
 
 t.test("invalid arguments are passed to shelljs", async () => {
-  const shelljs = require("shelljs");
-
   runWithContext(safeContext, () => {
     const result = shelljs.exec(["ls", "-la", "/"], { silent: true });
     t.same(result.code, 1);

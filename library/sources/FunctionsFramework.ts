@@ -3,10 +3,12 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import type { HttpFunction } from "@google-cloud/functions-framework";
 import { buildRouteFromURL } from "../helpers/buildRouteFromURL";
 import { shouldDiscoverRoute } from "./http-server/shouldDiscoverRoute";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 export function getFlushEveryMS(): number {
   if (process.env.AIKIDO_CLOUD_FUNCTION_FLUSH_EVERY_MS) {
@@ -111,22 +113,39 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
 }
 
 export class FunctionsFramework implements Wrapper {
+  onRequire(exports: any, pkgInfo: PartialWrapPackageInfo) {
+    wrapExport(exports, "http", pkgInfo, {
+      kind: undefined,
+      modifyArgs: (args) => {
+        if (args.length === 2 && typeof args[1] === "function") {
+          const httpFunction = args[1] as HttpFunction;
+          args[1] = createCloudFunctionWrapper(httpFunction);
+        }
+
+        return args;
+      },
+    });
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/functions-framework")
       .withVersion("^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(exports, "http", pkgInfo, {
-          kind: undefined,
-          modifyArgs: (args) => {
-            if (args.length === 2 && typeof args[1] === "function") {
-              const httpFunction = args[1] as HttpFunction;
-              args[1] = createCloudFunctionWrapper(httpFunction);
+        this.onRequire(exports, pkgInfo);
+      })
+      .addFileInstrumentation({
+        path: "build/src/function_registry.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && isPlainObject(vars[0])) {
+              const exports = vars[0];
+              this.onRequire(exports, pkgInfo);
             }
-
-            return args;
           },
-        });
+        },
       });
   }
 }

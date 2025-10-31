@@ -60,18 +60,19 @@ function createContext(): Context {
 
 t.setTimeout(60 * 1000);
 
+const api = new ReportingAPIForTesting();
+const agent = createTestAgent({
+  token: new Token("123"),
+  api,
+});
+agent.start([new HTTPRequest()]);
+
+const http = require("http") as typeof import("http");
+const https = require("https") as typeof import("https");
+const oldUrl = require("url");
+
 t.test("it works", (t) => {
-  const api = new ReportingAPIForTesting();
-  const agent = createTestAgent({
-    token: new Token("123"),
-    api,
-  });
-  agent.start([new HTTPRequest()]);
-
   t.same(agent.getHostnames().asArray(), []);
-
-  const http = require("http") as typeof import("http");
-  const https = require("https") as typeof import("https");
 
   runWithContext(createContext(), () => {
     const aikido = http.request("http://aikido.dev");
@@ -323,7 +324,6 @@ t.test("it works", (t) => {
       })
       .end();
 
-    const oldUrl = require("url");
     https
       .request(oldUrl.parse("https://localhost:4000/api/internal"))
       .on("error", (error) => {

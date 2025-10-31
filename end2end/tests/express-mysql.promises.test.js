@@ -1,6 +1,7 @@
 const t = require("tap");
 const { spawn } = require("child_process");
 const { resolve } = require("path");
+const { readFileSync, writeFileSync } = require("fs");
 const timeout = require("../timeout");
 
 const pathToApp = resolve(
@@ -10,6 +11,24 @@ const pathToApp = resolve(
 );
 
 const testServerUrl = "http://localhost:5874";
+
+const buildPackageJsonPath = resolve(__dirname, "../../build/package.json");
+let originalPackageJson;
+
+// Temporarily add the internal export before all tests
+t.before(() => {
+  originalPackageJson = readFileSync(buildPackageJsonPath, "utf8");
+  const packageJson = JSON.parse(originalPackageJson);
+  packageJson.exports["./agent/AgentSingleton"] = "./agent/AgentSingleton.js";
+  writeFileSync(buildPackageJsonPath, JSON.stringify(packageJson, null, 2));
+});
+
+// Restore the original package.json after all tests
+t.after(() => {
+  if (originalPackageJson) {
+    writeFileSync(buildPackageJsonPath, originalPackageJson);
+  }
+});
 
 let token;
 t.beforeEach(async () => {
