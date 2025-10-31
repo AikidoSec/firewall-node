@@ -1,7 +1,8 @@
 import { Context } from "../../agent/Context";
-import { Source, SOURCES } from "../../agent/Source";
+import { Source } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isRequestToItself } from "./isRequestToItself";
 import { isRequestToServiceHostname } from "./isRequestToServiceHostname";
@@ -39,15 +40,11 @@ export function findHostnameInContext(
     return undefined;
   }
 
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const str of userInput) {
-      const found = findHostnameInUserInput(str, hostname, port);
-      if (found) {
+  for (const str of extractStringsFromUserInputCached(context)) {
+    const found = findHostnameInUserInput(str, hostname, port);
+    if (found) {
+      const source = getSourceForUserString(context, str);
+      if (source) {
         const paths = getPathsToPayload(str, context[source]);
 
         return {

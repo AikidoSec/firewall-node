@@ -1,9 +1,9 @@
 import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
-import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import {
   detectSQLInjection,
   SQLInjectionDetectionResult,
@@ -25,16 +25,12 @@ export function checkContextForSqlInjection({
   context: Context;
   dialect: SQLDialect;
 }): InterceptorResult {
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
+  for (const str of extractStringsFromUserInputCached(context)) {
+    const result = detectSQLInjection(sql, str, dialect);
 
-    for (const str of userInput) {
-      const result = detectSQLInjection(sql, str, dialect);
-
-      if (result === SQLInjectionDetectionResult.INJECTION_DETECTED) {
+    if (result === SQLInjectionDetectionResult.INJECTION_DETECTED) {
+      const source = getSourceForUserString(context, str);
+      if (source) {
         return {
           operation: operation,
           kind: "sql_injection",
@@ -47,12 +43,12 @@ export function checkContextForSqlInjection({
           payload: str,
         };
       }
+    }
 
-      if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
-        // We don't want to block queries that fail to tokenize.
-        // This counter helps us monitor how often our SQL tokenizer fails.
-        getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
-      }
+    if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
+      // We don't want to block queries that fail to tokenize.
+      // This counter helps us monitor how often our SQL tokenizer fails.
+      getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
     }
   }
 }

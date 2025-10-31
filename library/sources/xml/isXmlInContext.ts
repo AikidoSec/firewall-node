@@ -1,6 +1,6 @@
 import { Context } from "../../agent/Context";
 import { SOURCES } from "../../agent/Source";
-import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 
 /**
  * Checks if the XML string can be found in the context.
@@ -11,15 +11,14 @@ export function isXmlInContext(xml: string, context: Context): boolean {
       // Skip parsed XML
       continue;
     }
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
+
+    if (!context[source]) {
       continue;
     }
 
-    for (const str of userInput) {
-      if (str === xml) {
-        return true;
-      }
+    const userInput = extractStringsFromUserInput(context[source]);
+    if (userInput.has(xml)) {
+      return true;
     }
   }
 
