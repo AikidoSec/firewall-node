@@ -25,6 +25,7 @@ t.test("it works", async (t) => {
     "form-data"
   );
   t.same(getBodyDataType({ "content-type": "text/xml" }), "xml");
+  t.same(getBodyDataType({ "content-type": "application/xml" }), "xml");
   t.same(getBodyDataType({ "content-type": "application/atom+xml" }), "xml");
   t.same(getBodyDataType({ "content-type": "text/html" }), undefined);
   t.same(
