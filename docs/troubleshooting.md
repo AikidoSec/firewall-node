@@ -1,0 +1,72 @@
+# Troubleshooting
+
+## Check logs for errors
+
+Common places:
+- Docker: `docker logs <your-app-container>`
+- systemd: `journalctl -u <your-app-service> --since "1 hour ago"`
+- Local dev: your terminal or IDE run console
+
+Tip: search for lines that contain `Aikido` or `Zen` to spot initialization and request logs.
+
+## Confirm the dependency is present
+
+**npm**
+```
+npm ls | grep -i aikido
+cat package.json | grep -i aikido
+```
+
+**yarn**
+
+```
+yarn list –pattern aikido
+cat package.json | grep -i aikido
+```
+
+**pnpm**
+
+```
+pnpm ls | grep -i aikido
+cat package.json | grep -i aikido
+```
+
+## Confirm middleware is registered early
+
+Register the firewall as high as possible in the request pipeline so it sees every request.
+
+**Express**
+```js
+// before routes
+const express = require("express");
+const app = express();
+const aikido = require(".../aikido"); // import from your package name
+
+app.use(aikido());
+app.use(/* your other middleware and routes */);
+```
+
+Fastify
+```js
+// before routes
+import Fastify from "fastify";
+import aikido from ".../aikido";
+
+const app = Fastify();
+await app.register(aikido);
+// register routes after this
+```
+
+
+NestJS (Express adapter)
+```
+// main.ts, before app.listen
+import { NestFactory } from "@nestjs/core";
+import aikido from ".../aikido";
+
+const app = await NestFactory.create(AppModule);
+app.use(aikido());
+await app.listen(3000);
+```
+
+
