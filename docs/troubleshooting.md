@@ -36,6 +36,7 @@ In addition the output contains the name and version of each supported and instr
 ## Bundlers & ECMAScript modules (ESM)
 
 If you are using a bundler like esbuild or a framework that uses bundling please ensure to follow the steps described in the [bundler](./bundler.md) docs. Applications using ESM at runtime are not supported yet. TypeScript code is often translated to CommonJS.
+
 ## Contact support
 
 If you still can’t resolve the issue:
