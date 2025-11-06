@@ -31,6 +31,11 @@ export function getRequestUrl(
   // Determine protocol, fallback to http if not detectable
   const protocol = getProtocol(req);
 
+  if (reqUrl.length && !reqUrl.startsWith("/")) {
+    // Ensure there's a slash between host and path
+    return `${protocol}://${host}/${reqUrl}`;
+  }
+
   return `${protocol}://${host}${reqUrl}`;
 }
 

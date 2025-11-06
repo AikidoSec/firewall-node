@@ -807,3 +807,40 @@ t.test(
     });
   }
 );
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Protocol headers (stream)",
+  async () => {
+    const server = createMinimalTestServerWithStream();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3436, () => {
+        http2Request(new URL("http://localhost:3436/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Protocol": "http",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "http://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/",
+              ":method": "GET",
+              ":authority": "localhost:3436",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
