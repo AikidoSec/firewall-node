@@ -1187,6 +1187,7 @@ t.test("it only allows some IP addresses", async () => {
           pattern: "Bytespider",
         },
       ],
+      domains: [],
     }),
   });
 

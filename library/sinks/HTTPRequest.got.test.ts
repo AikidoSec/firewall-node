@@ -59,7 +59,7 @@ t.test(
     });
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "www.aikido.dev", port: 443, hits: 1 },
+      { hostname: "www.aikido.dev", port: 443, hits: 1, blockedHits: 0 },
     ]);
     agent.getHostnames().clear();
 
