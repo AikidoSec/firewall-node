@@ -64,6 +64,13 @@ t.test("it detects SQL injections", async (t) => {
     t.same(await pool.query("SELECT petname FROM `cats`;"), []);
     t.same(await pool.query({ sql: "SELECT petname FROM `cats`;" }), []);
 
+    const queryStream = connection.queryStream("SELECT petname FROM `cats`;");
+    const streamResult = [];
+    for await (const row of queryStream) {
+      streamResult.push(row);
+    }
+    t.same(streamResult, []);
+
     const error = await t.rejects(async () => {
       await runWithContext(dangerousContext, () => {
         return connection.query("-- should be blocked");
@@ -121,6 +128,30 @@ t.test("it detects SQL injections", async (t) => {
       t.same(
         error4.message,
         "Zen has blocked an SQL injection: mariadb.batch(...) originating from body.myTitle"
+      );
+    }
+
+    const error5 = await t.rejects(async () => {
+      await runWithContext(dangerousContext, () => {
+        return connection.prepare("-- should be blocked");
+      });
+    });
+    if (error5 instanceof Error) {
+      t.same(
+        error5.message,
+        "Zen has blocked an SQL injection: mariadb.prepare(...) originating from body.myTitle"
+      );
+    }
+
+    const error6 = await t.rejects(async () => {
+      runWithContext(dangerousContext, () => {
+        return connection.queryStream("-- should be blocked");
+      });
+    });
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Zen has blocked an SQL injection: mariadb.queryStream(...) originating from body.myTitle"
       );
     }
 

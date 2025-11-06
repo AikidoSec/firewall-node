@@ -45,7 +45,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
       {
         ...context,
         // Redirects to http://127.0.0.1/test
-        ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
+        body: { image: `${redirectTestUrl}/ssrf-test` },
       },
       async () => {
         await fetch(`${redirectTestUrl}/ssrf-test`);

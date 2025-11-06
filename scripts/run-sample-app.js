@@ -56,6 +56,9 @@ const specialApps = {
   "nestjs-fastify": {
     command: "npm run start",
   },
+  "functions-framework-sqlite3": {
+    command: "npx functions-framework",
+  },
 };
 
 if (process.argv.length < 3) {

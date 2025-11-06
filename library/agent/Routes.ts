@@ -2,12 +2,14 @@ import { getMaxApiDiscoverySamples } from "../helpers/getMaxApiDiscoverySamples"
 import { type APISpec, getApiInfo } from "./api-discovery/getApiInfo";
 import { updateApiInfo } from "./api-discovery/updateApiInfo";
 import { isAikidoDASTRequest } from "./AikidoDAST";
+import { Endpoint } from "./Config";
 import type { Context } from "./Context";
 
 export type Route = {
   method: string;
   path: string;
   hits: number;
+  rateLimitedCount: number;
   graphql?: { type: "query" | "mutation"; name: string };
   apispec: APISpec;
 };
@@ -55,6 +57,7 @@ export class Routes {
       path,
       hits: 1,
       apispec,
+      rateLimitedCount: 0,
     });
   }
 
@@ -114,6 +117,7 @@ export class Routes {
       hits: 1,
       graphql: { type, name },
       apispec: {},
+      rateLimitedCount: 0,
     });
   }
 
@@ -133,6 +137,36 @@ export class Routes {
     }
   }
 
+  countRouteRateLimited(route: Endpoint) {
+    let key = this.getKey(route.method, route.route);
+    if (route.graphql) {
+      key = this.getGraphQLKey(
+        route.method,
+        route.route,
+        route.graphql.type,
+        route.graphql.name
+      );
+    }
+    let existing = this.routes.get(key);
+
+    if (!existing) {
+      this.evictLeastUsedRouteIfNecessary();
+      existing = {
+        method: route.method,
+        path: route.route,
+        graphql: route.graphql
+          ? { type: route.graphql.type, name: route.graphql.name }
+          : undefined,
+        hits: 0,
+        apispec: {},
+        rateLimitedCount: 0,
+      };
+      this.routes.set(key, existing);
+    }
+
+    existing.rateLimitedCount++;
+  }
+
   clear() {
     this.routes.clear();
   }
@@ -143,6 +177,7 @@ export class Routes {
         method: route.method,
         path: route.path,
         hits: route.hits,
+        rateLimitedCount: route.rateLimitedCount,
         graphql: route.graphql,
         apispec: route.apispec,
         graphQLSchema: this.graphQLSchemas.get(key),

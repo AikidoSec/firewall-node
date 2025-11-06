@@ -7,7 +7,6 @@ services:
       - "9090:9090"
   mongodb:
     image: mongo:5
-    restart: always
     volumes:
       - mongodb:/data/db
     environment:
@@ -17,7 +16,6 @@ services:
       - "27017:27017"
   postgres:
     image: postgres:14-alpine
-    restart: always
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -58,17 +56,23 @@ services:
     volumes:
       - clickhouse:/var/lib/clickhouse
   mongodb-replica:
-    image: bitnami/mongodb:4.4 # Newer versions do not run on Apple Silicon
+    build:
+      context: ./.mongo-replica/
     environment:
-      - MONGODB_ADVERTISED_HOSTNAME=127.0.0.1
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_ROOT_USER=root
-      - MONGODB_ROOT_PASSWORD=password
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
     ports:
-      - "27020:27017"
-    volumes:
-      - "mongodb-replica:/bitnami/mongodb"
+      - 27020:27017
+    healthcheck:
+      test: |
+        test $$(mongosh --quiet -u root -p password --eval "try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost' }] }).ok } catch (_) { rs.status().ok }") -eq 1
+      interval: 10s
+      start_period: 30s
+  google-pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:11e9b10b6d61177b0046fcb5f1e9479f567a5dacbf66d194baf5a8872653c857
+    command: gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085'
+    ports:
+      - "8085:8085"
   server:
     build:
       context: ../end2end/server

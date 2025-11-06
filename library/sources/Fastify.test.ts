@@ -12,6 +12,7 @@ import type { FastifyInstance } from "fastify";
 import { getContext } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { addFastifyHook } from "../middleware/fastify";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 const agent = new Agent(
   true,
@@ -56,7 +57,8 @@ const agent = new Agent(
     allowedIPAddresses: ["4.3.2.1"],
   }),
   new Token("123"),
-  undefined
+  undefined,
+  new FetchListsAPIForTesting()
 );
 agent.start([new Fastify(), new HTTPServer(), new FileSystem()]);
 setInstance(agent);

@@ -19,11 +19,13 @@ export function addExpressMiddleware(app: Express | Router) {
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
-        return res.status(429).type("text").send(message);
+        res.status(429).type("text").send(message);
+        return;
       }
 
       if (result.type === "blocked") {
-        return res.status(403).type("text").send("You are blocked by Zen.");
+        res.status(403).type("text").send("You are blocked by Zen.");
+        return;
       }
     }
 

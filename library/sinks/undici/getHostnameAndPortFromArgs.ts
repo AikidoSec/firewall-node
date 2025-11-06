@@ -56,6 +56,7 @@ export function getHostnameAndPortFromArgs(
 function parseOptionsObject(obj: any): HostnameAndPort | undefined {
   // Origin is preferred over hostname
   // See https://github.com/nodejs/undici/blob/c926a43ac5952b8b5a6c7d15529b56599bc1b762/lib/core/util.js#L177
+  // oxlint-disable-next-line eqeqeq
   if (obj.origin != null && typeof obj.origin === "string") {
     const url = tryParseURL(obj.origin);
     if (url) {

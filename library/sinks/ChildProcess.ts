@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
@@ -20,12 +19,6 @@ const PATH_PREFIXES = [
 export class ChildProcess implements Wrapper {
   wrap(hooks: Hooks) {
     hooks.addBuiltinModule("child_process").onRequire((exports, pkgInfo) => {
-      wrapExport(exports, "exec", pkgInfo, {
-        kind: "exec_op",
-        inspectArgs: (args) => {
-          return this.inspectExec(args, "exec");
-        },
-      });
       wrapExport(exports, "execSync", pkgInfo, {
         kind: "exec_op",
         inspectArgs: (args) => {
@@ -45,6 +38,7 @@ export class ChildProcess implements Wrapper {
         },
       });
       wrapExport(exports, "execFile", pkgInfo, {
+        // Also protects exec, see https://github.com/nodejs/node/blob/main/lib/child_process.js
         kind: "exec_op",
         inspectArgs: (args) => {
           return this.inspectExecFile(args, "execFile");

@@ -1,17 +1,19 @@
 /* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
-import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
-import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
-import { fetchBlockedLists } from "./api/fetchBlockedLists";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
-import { AgentInfo, DetectedAttack } from "./api/Event";
+import type {
+  AgentInfo,
+  DetectedAttack,
+  DetectedAttackWave,
+} from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
+import { Endpoint } from "./Config";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
@@ -25,19 +27,25 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { Packages } from "./Packages";
+import { AIStatistics } from "./AIStatistics";
+import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { PendingEvents } from "./PendingEvents";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
 export class Agent {
   private started = false;
   private sendHeartbeatEveryMS = 10 * 60 * 1000;
-  private checkIfHeartbeatIsNeededEveryMS = 60 * 1000;
+  private checkIfHeartbeatIsNeededEveryMS = 30 * 1000;
   private lastHeartbeat = performance.now();
-  private reportedInitialStats = false;
+  private sentHeartbeatCounter = 0;
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
+  private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -54,17 +62,21 @@ export class Agent {
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
     maxPerfSamplesInMemory: 5000,
-    maxCompressedStatsInMemory: 100,
+    maxCompressedStatsInMemory: 20, // per operation
   });
+  private aiStatistics = new AIStatistics();
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
+  private attackWaveDetector = new AttackWaveDetector();
+  private pendingEvents = new PendingEvents();
 
   constructor(
     private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
-    private readonly serverless: string | undefined
+    private readonly serverless: string | undefined,
+    private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -75,12 +87,21 @@ export class Agent {
     return this.block;
   }
 
+  isServerless() {
+    // e.g. "lambda" or "gcp"
+    return typeof this.serverless === "string" && this.serverless.length > 0;
+  }
+
   getHostnames() {
     return this.hostnames;
   }
 
   getInspectionStatistics() {
     return this.statistics;
+  }
+
+  getAIStatistics() {
+    return this.aiStatistics;
   }
 
   unableToPreventPrototypePollution(
@@ -109,7 +130,7 @@ export class Agent {
   /**
    * Reports to the API that this agent has started
    */
-  async onStart() {
+  async onStart(timeoutInMS = 60 * 1000) {
     if (this.token) {
       const result = await this.api.report(
         this.token,
@@ -121,7 +142,7 @@ export class Agent {
         // We don't use `this.timeoutInMS` for startup event
         // Since Node.js is single threaded, the HTTP request is fired before other imports are required
         // It might take a long time before our code resumes
-        60 * 1000
+        timeoutInMS
       );
 
       this.checkForReportingAPIError(result);
@@ -178,13 +199,27 @@ export class Agent {
     operation: string;
     kind: Kind;
     blocked: boolean;
-    source: Source;
-    request: Context;
+    source: Source | undefined;
+    request: Context | undefined;
     stack: string;
     paths: string[];
     metadata: Record<string, string>;
     payload: unknown;
   }) {
+    const attackRequest: DetectedAttack["request"] = request
+      ? {
+          method: request.method,
+          url: request.url,
+          ipAddress: request.remoteAddress,
+          userAgent:
+            typeof request.headers["user-agent"] === "string"
+              ? request.headers["user-agent"]
+              : undefined,
+          source: request.source,
+          route: request.route,
+        }
+      : undefined;
+
     const attack: DetectedAttack = {
       type: "detected_attack",
       time: Date.now(),
@@ -197,22 +232,13 @@ export class Agent {
         source: source,
         metadata: limitLengthMetadata(metadata, 4096),
         kind: kind,
-        payload: JSON.stringify(payload).substring(0, 4096),
-        user: request.user,
-      },
-      request: {
-        method: request.method,
-        url: request.url,
-        ipAddress: request.remoteAddress,
-        userAgent:
-          typeof request.headers["user-agent"] === "string"
-            ? request.headers["user-agent"]
+        payload:
+          payload !== undefined
+            ? JSON.stringify(payload).substring(0, 4096)
             : undefined,
-        body: convertRequestBodyToString(request.body),
-        headers: filterEmptyRequestHeaders(request.headers),
-        source: request.source,
-        route: request.route,
+        user: request?.user,
       },
+      request: attackRequest,
       agent: this.getAgentInfo(),
     };
 
@@ -223,9 +249,12 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack");
-      });
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack");
+        });
+      this.pendingEvents.onAPICall(promise);
     }
   }
 
@@ -233,9 +262,13 @@ export class Agent {
    * Sends a heartbeat via the API to the server (only when not in serverless mode)
    */
   private heartbeat(timeoutInMS = this.timeoutInMS) {
-    this.sendHeartbeat(timeoutInMS).catch(() => {
-      this.logger.log("Failed to do heartbeat");
-    });
+    this.sendHeartbeat(timeoutInMS)
+      .catch(() => {
+        this.logger.log("Failed to do heartbeat");
+      })
+      .then(() => {
+        this.sentHeartbeatCounter++;
+      });
   }
 
   getUsers() {
@@ -293,14 +326,18 @@ export class Agent {
     if (this.token) {
       this.logger.log("Heartbeat...");
       const stats = this.statistics.getStats();
+      const aiStats = this.aiStatistics.getStats();
       const routes = this.routes.asArray();
       const outgoingDomains = this.hostnames.asArray();
       const users = this.users.asArray();
+      const packages = this.packages.asArray();
       const endedAt = Date.now();
       this.statistics.reset();
+      this.aiStatistics.reset();
       this.routes.clear();
       this.hostnames.clear();
       this.users.clear();
+      this.packages.clear();
       const response = await this.api.report(
         this.token,
         {
@@ -314,7 +351,10 @@ export class Agent {
             requests: stats.requests,
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
+            sqlTokenizationFailures: stats.sqlTokenizationFailures,
           },
+          ai: aiStats,
+          packages,
           hostnames: outgoingDomains,
           routes: routes,
           users: users,
@@ -331,13 +371,6 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
-    if (this.serverless) {
-      this.logger.log(
-        "Running in serverless environment, not starting heartbeats"
-      );
-      return;
-    }
-
     if (!this.token) {
       this.logger.log("No token provided, not starting heartbeats");
       return;
@@ -349,20 +382,11 @@ export class Agent {
     }
 
     this.interval = setInterval(() => {
-      const now = performance.now();
-      const diff = now - this.lastHeartbeat;
-      const shouldSendHeartbeat = diff > this.sendHeartbeatEveryMS;
-      const hasCompressedStats = this.statistics.hasCompressedStats();
-      const canSendInitialStats =
-        !this.serviceConfig.hasReceivedAnyStats() && !this.statistics.isEmpty();
-      const shouldReportInitialStats =
-        !this.reportedInitialStats &&
-        (hasCompressedStats || canSendInitialStats);
+      const timeSinceLastHeartbeat = performance.now() - this.lastHeartbeat;
 
-      if (shouldSendHeartbeat || shouldReportInitialStats) {
+      if (timeSinceLastHeartbeat > this.getHeartbeatInterval()) {
         this.heartbeat();
-        this.lastHeartbeat = now;
-        this.reportedInitialStats = true;
+        this.lastHeartbeat = performance.now();
       }
     }, this.checkIfHeartbeatIsNeededEveryMS);
 
@@ -387,7 +411,7 @@ export class Agent {
         monitoredIPAddresses,
         monitoredUserAgents,
         userAgentDetails,
-      } = await fetchBlockedLists(this.token);
+      } = await this.fetchListsAPI.getLists(this.token);
       this.serviceConfig.updateBlockedIPAddresses(blockedIPAddresses);
       this.serviceConfig.updateBlockedUserAgents(blockedUserAgents);
       this.serviceConfig.updateAllowedIPAddresses(allowedIPAddresses);
@@ -402,7 +426,6 @@ export class Agent {
   private startPollingForConfigChanges() {
     pollForChanges({
       token: this.token,
-      serverless: this.serverless,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
@@ -479,10 +502,18 @@ export class Agent {
       }
     }
 
+    // When our library is required, we are not intercepting `require` calls yet
+    // We need to add our library to the list of packages manually
+    this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
+
     wrapInstalledPackages(wrappers, this.serverless);
 
-    // Send startup event and wait for config
-    // Then start heartbeats and polling for config changes
+    // In serverless environments, we delay the startup event until the first invocation
+    // since some apps take a long time to boot and the init phase has strict timeouts
+    if (this.serverless) {
+      return;
+    }
+
     this.onStart()
       .then(() => {
         this.startHeartbeats();
@@ -503,11 +534,19 @@ export class Agent {
     this.logger.log(`Failed to wrap module ${module}: ${error.message}`);
   }
 
+  onPackageRequired(name: string, version: string) {
+    this.packages.addPackage({
+      name,
+      version,
+    });
+  }
+
   onPackageWrapped(name: string, details: WrappedPackage) {
     if (this.wrappedPackages[name]) {
       // Already reported as wrapped
       return;
     }
+
     this.wrappedPackages[name] = details;
 
     if (details.version) {
@@ -546,6 +585,12 @@ export class Agent {
     });
   }
 
+  onRouteRateLimited(match: Endpoint) {
+    // The count will be incremented for the rate-limited route, not for the exact route
+    // So if it's a wildcard route, the count will be incremented for the wildcard route
+    this.routes.countRouteRateLimited(match);
+  }
+
   getRoutes() {
     return this.routes;
   }
@@ -559,11 +604,71 @@ export class Agent {
     await this.sendHeartbeat(timeoutInMS);
   }
 
+  getPendingEvents() {
+    return this.pendingEvents;
+  }
+
   getRateLimiter() {
     return this.rateLimiter;
   }
 
   onMiddlewareExecuted() {
     this.middlewareInstalled = true;
+  }
+
+  private getHeartbeatInterval(): number {
+    switch (this.sentHeartbeatCounter) {
+      case 0:
+        // The first heartbeat should be sent after 30 seconds
+        return 1000 * 30;
+      case 1:
+        // The second heartbeat should be sent after 2 minutes
+        return 1000 * 60 * 2;
+      default:
+        // Subsequent heartbeats are sent every `sendHeartbeatEveryMS`
+        return this.sendHeartbeatEveryMS;
+    }
+  }
+
+  getAttackWaveDetector(): AttackWaveDetector {
+    return this.attackWaveDetector;
+  }
+
+  /**
+   * This function gets called when an attack wave is detected, it reports this attack wave to the API
+   */
+  onDetectedAttackWave({
+    request,
+    metadata,
+  }: {
+    request: Context;
+    metadata: Record<string, string>;
+  }) {
+    const attack: DetectedAttackWave = {
+      type: "detected_attack_wave",
+      time: Date.now(),
+      attack: {
+        metadata: limitLengthMetadata(metadata, 4096),
+        user: request.user,
+      },
+      request: {
+        ipAddress: request.remoteAddress,
+        userAgent:
+          typeof request.headers["user-agent"] === "string"
+            ? request.headers["user-agent"]
+            : undefined,
+        source: request.source,
+      },
+      agent: this.getAgentInfo(),
+    };
+
+    if (this.token) {
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack wave");
+        });
+      this.pendingEvents.onAPICall(promise);
+    }
   }
 }

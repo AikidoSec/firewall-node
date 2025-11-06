@@ -6,6 +6,8 @@ import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 
 const calls: Record<string, number> = {};
 wrap(dns, "lookup", function lookup(original) {
@@ -20,7 +22,9 @@ wrap(dns, "lookup", function lookup(original) {
 
     if (
       hostname === "thisdomainpointstointernalip.com" ||
-      hostname === "thisdomainpointstointernalip2.com"
+      hostname === "thisdomainpointstointernalip2.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
     ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
@@ -57,8 +61,10 @@ function createContext(): Context {
 t.setTimeout(60 * 1000);
 
 t.test("it works", (t) => {
+  const api = new ReportingAPIForTesting();
   const agent = createTestAgent({
     token: new Token("123"),
+    api,
   });
   agent.start([new HTTPRequest()]);
 
@@ -127,7 +133,7 @@ t.test("it works", (t) => {
   t.same(withStringPort instanceof http.ClientRequest, true);
   withStringPort.end();
   t.same(agent.getHostnames().asArray(), [
-    { hostname: "aikido.dev", port: "443", hits: 1 },
+    { hostname: "aikido.dev", port: 443, hits: 1 },
   ]);
   agent.getHostnames().clear();
 
@@ -139,7 +145,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip.com" } },
+      body: { image: "thisdomainpointstointernalip.com" },
     },
     () => {
       https
@@ -153,6 +159,19 @@ t.test("it works", (t) => {
           // Ensure the lookup is only called once per hostname
           // Otherwise, it could be vulnerable to TOCTOU
           t.same(calls["thisdomainpointstointernalip.com"], 1);
+
+          t.match(api.getEvents()[api.getEvents().length - 1], {
+            type: "detected_attack",
+            attack: {
+              kind: "ssrf",
+              payload: "thisdomainpointstointernalip.com",
+              metadata: {
+                hostname: "thisdomainpointstointernalip.com",
+                port: "443",
+                privateIP: getMajorNodeVersion() >= 18 ? "::1" : "127.0.0.1",
+              },
+            },
+          });
         })
         .on("finish", () => {
           t.fail("should not finish");
@@ -164,7 +183,7 @@ t.test("it works", (t) => {
   runWithContext(
     {
       ...createContext(),
-      ...{ body: { image: "thisdomainpointstointernalip2.com" } },
+      body: { image: "thisdomainpointstointernalip2.com" },
     },
     () => {
       https
@@ -200,53 +219,65 @@ t.test("it works", (t) => {
     google.end();
 
     // With string URL
-    const error = t.throws(() =>
-      https.request("https://localhost:4000/api/internal")
-    );
-    if (error instanceof Error) {
-      t.same(
-        error.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With URL object
-    const error2 = t.throws(() =>
-      https.request(new URL("https://localhost:4000/api/internal"))
-    );
-    if (error2 instanceof Error) {
-      t.same(
-        error2.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(new URL("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // With object like URL
-    const error3 = t.throws(() =>
-      https.request({
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error3 instanceof Error) {
-      t.same(
-        error3.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // Using .get
-    const error4 = t.throws(() =>
-      https.get("https://localhost:4000/api/internal")
-    );
-    if (error4 instanceof Error) {
-      t.same(
-        error4.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .get("https://localhost:4000/api/internal")
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     // ECONNREFUSED means that the request is not blocked
     http
@@ -274,32 +305,76 @@ t.test("it works", (t) => {
       });
 
     // With options object at index 1
-    const error5 = t.throws(() =>
-      https.request("", {
+    https
+      .request({
         protocol: "https:",
         hostname: "localhost",
         port: 4000,
         path: "/api/internal",
       })
-    );
-    if (error5 instanceof Error) {
-      t.same(
-        error5.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
 
     const oldUrl = require("url");
-    const error6 = t.throws(() =>
-      https.request(oldUrl.parse("https://localhost:4000/api/internal"))
-    );
-    if (error6 instanceof Error) {
-      t.same(
-        error6.message,
-        "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
-      );
-    }
+    https
+      .request(oldUrl.parse("https://localhost:4000/api/internal"))
+      .on("error", (error) => {
+        t.match(
+          error.message,
+          "Zen has blocked a server-side request forgery: https.request(...) originating from body.image"
+        );
+      })
+      .on("finish", () => {
+        t.fail("should not finish");
+      })
+      .end();
   });
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { serviceHostname: "my-service-hostname" },
+    },
+    () => {
+      // This should NOT throw an error because my-service-hostname is a service hostname
+      const serviceRequest = http.request("http://my-service-hostname");
+      serviceRequest.on("error", (e: NodeJS.ErrnoException) => {
+        // ECONNREFUSED means that the request is not blocked
+        t.same(e.code, "ECONNREFUSED");
+      });
+      serviceRequest.end();
+    }
+  );
+
+  runWithContext(
+    {
+      ...createContext(),
+      body: { metadataHost: "metadata" },
+    },
+    () => {
+      const metadataRequest = http.request(
+        "http://metadata/computeMetadata/v1/instance/"
+      );
+      metadataRequest.on("error", (e: NodeJS.ErrnoException) => {
+        t.same(
+          e.message,
+          "Zen has blocked a server-side request forgery: http.request(...) originating from body.metadataHost"
+        );
+      });
+      metadataRequest.on("finish", () => {
+        t.fail("should not finish");
+      });
+      metadataRequest.end();
+    }
+  );
 
   setTimeout(() => {
     t.end();

@@ -93,6 +93,39 @@ async function main(port) {
     })
   );
 
+  app.post("/invalid-query", async (req, res) => {
+    // Simulate an invalid query to test handling
+    await new Promise((resolve, reject) => {
+      db.query(`SELECT ' ${req.query.sql}`, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    res.status(200).send("Done");
+  });
+
+  // This route is for testing purposes only and uses internal APIs
+  // Normal users should NOT rely on these internals as they may change without notice
+  app.get("/pending-events", (req, res) => {
+    try {
+      const {
+        getInstance,
+      } = require("@aikidosec/firewall/agent/AgentSingleton");
+      const agent = getInstance();
+      if (!agent) {
+        return res.status(503).json({ error: "Agent not initialized" });
+      }
+      const pendingEvents = agent.getPendingEvents();
+      res.json({ pendingCount: pendingEvents.pendingPromises.size });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.use(Sentry.Handlers.errorHandler());
 
   return new Promise((resolve, reject) => {

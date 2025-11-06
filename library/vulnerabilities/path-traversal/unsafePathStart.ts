@@ -1,7 +1,7 @@
 import { isAbsolute, resolve } from "path";
 import { isWrapped } from "../../helpers/wrap";
 
-const linuxRootFolders = [
+const rootFolders = [
   "/bin/",
   "/boot/",
   "/dev/",
@@ -21,8 +21,17 @@ const linuxRootFolders = [
   "/tmp/",
   "/usr/",
   "/var/",
-];
-const dangerousPathStarts = [...linuxRootFolders, "c:/", "c:\\"];
+  // macOS specific
+  "/applications/",
+  "/cores/",
+  "/library/",
+  "/private/",
+  "/users/",
+  "/system/",
+  "/volumes/",
+].map((path) => path.toLowerCase());
+
+const dangerousPathStarts = [...rootFolders, "c:/", "c:\\"];
 
 export function startsWithUnsafePath(filePath: string, userInput: string) {
   // Check if path is relative (not absolute or drive letter path)
@@ -38,6 +47,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
 
   const normalizedPath = origResolve(filePath).toLowerCase();
   const normalizedUserInput = origResolve(userInput).toLowerCase();
+
   for (const dangerousStart of dangerousPathStarts) {
     if (
       normalizedPath.startsWith(dangerousStart) &&

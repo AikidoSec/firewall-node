@@ -18,49 +18,32 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
-import type { Response } from "./api/fetchBlockedLists";
+import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
+import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
-let shouldOnlyAllowSomeIPAddresses = false;
-
-wrap(fetch, "fetch", function mock() {
-  return async function mock() {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        blockedIPAddresses: [
-          {
-            key: "some/key",
-            source: "name",
-            description: "Description",
-            ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-          },
-        ],
-        blockedUserAgents: "AI2Bot|Bytespider",
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
-          ? [
-              {
-                key: "some/key",
-                source: "name",
-                description: "Description",
-                ips: ["4.3.2.1"],
-              },
-            ]
-          : [],
-        monitoredIPAddresses: [],
-        monitoredUserAgents: "",
-        userAgentDetails: [
-          {
-            key: "AI2Bot",
-            pattern: "AI2Bot",
-          },
-          {
-            key: "Bytespider",
-            pattern: "Bytespider",
-          },
-        ],
-      } satisfies Response),
-    };
-  };
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  blockedIPAddresses: [
+    {
+      key: "some/key",
+      source: "name",
+      description: "Description",
+      ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+    },
+  ],
+  blockedUserAgents: "AI2Bot|Bytespider",
+  allowedIPAddresses: [],
+  monitoredIPAddresses: [],
+  monitoredUserAgents: "",
+  userAgentDetails: [
+    {
+      key: "AI2Bot",
+      pattern: "AI2Bot",
+    },
+    {
+      key: "Bytespider",
+      pattern: "Bytespider",
+    },
+  ],
 });
 
 let logs: string[] = [];
@@ -78,7 +61,8 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        ""
+        "",
+        new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
   );
@@ -126,7 +110,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.9.0 is supported!",
+    "mongodb@6.20.0 is supported!",
   ]);
 });
 
@@ -196,7 +180,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -204,7 +187,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
@@ -288,8 +270,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -360,8 +340,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -423,8 +401,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);
@@ -597,9 +573,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After 10 minutes, we'll see that the required amount of performance samples has been reached
-  // And then send a heartbeat
-  clock.tick(10 * 60 * 1000);
+  // After 30 seconds, the first heartbeat should be sent
+  clock.tick(30 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -611,8 +586,8 @@ t.test("it sends heartbeat when reached max timings", async () => {
     },
   ]);
 
-  // After another 10 minutes, we'll see that we already sent the initial stats
-  clock.tick(10 * 60 * 1000);
+  // After another 2 minutes, another heartbeat should be sent
+  clock.tick(2 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -622,15 +597,43 @@ t.test("it sends heartbeat when reached max timings", async () => {
     {
       type: "heartbeat",
     },
+    {
+      type: "heartbeat",
+    },
   ]);
 
-  // Every 30 minutes we'll send a heartbeat
-  clock.tick(30 * 60 * 1000);
+  // Every 10 minutes, another heartbeat should be sent
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
     {
       type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  // Every 10 minutes, another heartbeat should be sent
+  clock.tick(11 * 60 * 1000);
+  await clock.nextAsync();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+    {
+      type: "heartbeat",
     },
     {
       type: "heartbeat",
@@ -1074,6 +1077,7 @@ t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: mockedFetchListAPI,
   });
 
   agent.start([]);
@@ -1144,10 +1148,40 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 });
 
 t.test("it only allows some IP addresses", async () => {
-  shouldOnlyAllowSomeIPAddresses = true;
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: new FetchListsAPIForTesting({
+      blockedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+        },
+      ],
+      blockedUserAgents: "AI2Bot|Bytespider",
+      allowedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["4.3.2.1"],
+        },
+      ],
+      monitoredIPAddresses: [],
+      monitoredUserAgents: "",
+      userAgentDetails: [
+        {
+          key: "AI2Bot",
+          pattern: "AI2Bot",
+        },
+        {
+          key: "Bytespider",
+          pattern: "Bytespider",
+        },
+      ],
+    }),
   });
 
   agent.start([]);
@@ -1169,4 +1203,85 @@ t.test("it only allows some IP addresses", async () => {
   t.same(agent.getConfig().isAllowedIPAddress("4.3.2.1"), {
     allowed: true,
   });
+});
+
+t.test("it includes agent's own package in heartbeat", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      packages: [
+        {
+          name: "@aikidosec/firewall",
+          version: "0.0.0",
+          requiredAt: 0,
+        },
+      ],
+    },
+  ]);
+
+  clock.uninstall();
+});
+
+t.test("attack wave detected event", async (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+    block: true,
+  });
+
+  agent.onDetectedAttackWave({
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+      route: "/posts/:id",
+      routeParams: {},
+    },
+    metadata: {
+      x: "test",
+    },
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack_wave",
+      attack: {
+        metadata: {
+          x: "test",
+        },
+      },
+      request: {
+        ipAddress: "::1",
+        userAgent: "agent",
+        source: "express",
+      },
+    },
+  ]);
 });

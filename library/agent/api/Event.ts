@@ -1,3 +1,4 @@
+import { APISpec } from "../api-discovery/getApiInfo";
 import { Kind } from "../Attack";
 import { Source } from "../Source";
 
@@ -38,25 +39,25 @@ export type User = {
 
 export type DetectedAttack = {
   type: "detected_attack";
-  request: {
-    method: string | undefined;
-    ipAddress: string | undefined;
-    userAgent: string | undefined;
-    url: string | undefined;
-    headers: Record<string, string | string[]>;
-    body: string | undefined;
-    source: string;
-    route: string | undefined;
-  };
+  request:
+    | {
+        method: string | undefined;
+        ipAddress: string | undefined;
+        userAgent: string | undefined;
+        url: string | undefined;
+        source: string;
+        route: string | undefined;
+      }
+    | undefined;
   attack: {
     kind: Kind;
     operation: string;
     module: string;
     blocked: boolean;
-    source: Source;
+    source: Source | undefined;
     path: string;
     stack: string;
-    payload: string;
+    payload: string | undefined;
     metadata: Record<string, string>;
     user: User | undefined;
   };
@@ -72,7 +73,8 @@ export type OperationKind =
   | "exec_op"
   | "deserialize_op"
   | "graphql_op"
-  | "eval_op";
+  | "eval_op"
+  | "ai_op";
 
 type OperationStats = {
   kind: OperationKind;
@@ -96,10 +98,16 @@ type Heartbeat = {
     operations: Record<string, OperationStats>;
     startedAt: number;
     endedAt: number;
+    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
+      rateLimited: number;
       attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+      attackWaves: {
         total: number;
         blocked: number;
       };
@@ -111,12 +119,29 @@ type Heartbeat = {
       breakdown: Record<string, number>;
     };
   };
+  ai: {
+    provider: string;
+    model: string;
+    calls: number;
+    tokens: {
+      input: number;
+      output: number;
+      total: number;
+    };
+  }[];
+  packages: {
+    name: string;
+    version: string;
+    requiredAt: number;
+  }[];
   hostnames: { hostname: string; port: number | undefined; hits: number }[];
   routes: {
     path: string;
     method: string;
     hits: number;
+    rateLimitedCount: number;
     graphql?: { type: "query" | "mutation"; name: string };
+    apispec: APISpec;
   }[];
   users: {
     id: string;
@@ -130,4 +155,19 @@ type Heartbeat = {
   middlewareInstalled?: boolean;
 };
 
-export type Event = Started | DetectedAttack | Heartbeat;
+export type DetectedAttackWave = {
+  type: "detected_attack_wave";
+  request: {
+    ipAddress: string | undefined;
+    userAgent: string | undefined;
+    source: string;
+  };
+  attack: {
+    metadata: Record<string, string>;
+    user: User | undefined;
+  };
+  agent: AgentInfo;
+  time: number;
+};
+
+export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;

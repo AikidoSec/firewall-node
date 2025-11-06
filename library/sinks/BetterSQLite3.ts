@@ -67,7 +67,7 @@ export class BetterSQLite3 implements Wrapper {
 
     hooks
       .addPackage("better-sqlite3")
-      .withVersion("^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
+      .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
       .onRequire((exports, pkgInfo) => {
         for (const func of sqlFunctions) {
           wrapExport(exports.prototype, func, pkgInfo, {
@@ -79,7 +79,7 @@ export class BetterSQLite3 implements Wrapper {
         }
         for (const func of fsPathFunctions) {
           wrapExport(exports.prototype, func, pkgInfo, {
-            kind: "sql_op",
+            kind: "fs_op",
             inspectArgs: (args) => {
               return this.inspectPath(`better-sqlite3.${func}`, args);
             },

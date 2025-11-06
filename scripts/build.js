@@ -11,7 +11,7 @@ const {
 const execAsync = promisify(exec);
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.39";
+const INTERNALS_VERSION = "v0.1.50";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
 // ---
 
@@ -66,6 +66,7 @@ async function dlZenInternals() {
     console.log("Zen Internals already installed. Skipping download.");
     return;
   }
+  console.log("Downloading Zen Internals...");
 
   await downloadFile(
     `${INTERNALS_URL}/${tarballFile}`,
@@ -81,18 +82,26 @@ async function dlZenInternals() {
   await rm(join(internalsDir, tarballFile));
   await rm(join(internalsDir, checksumFile));
   await rm(join(internalsDir, "zen_internals.d.ts"));
+
+  await writeFile(versionCacheFile, INTERNALS_VERSION);
 }
 
 async function modifyDtsFilesAfterBuild() {
+  // import type { Express, Router } from "express";
+  //                                       ^^^^^^^
+  // We reference express types, but we don't have it as a dependency
+  // If the user has `"skipLibCheck": false` in their tsconfig.json, TypeScript will complain when express is not installed
+  // If the user has `"skipLibCheck": true` in their tsconfig.json, it's fine
+  //
   // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-  // The // @ts-expect-error comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
-  // That's why we need to replace a JSDoc comment with a // @ts-expect-error comment
+  // The // @ts-ignore comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
+  // That's why we need to replace a JSDoc comment with a // @ts-ignore comment
   const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
     const modifiedContent = content.replaceAll(
       "/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/",
-      "// @ts-expect-error Optional dependency"
+      "// @ts-ignore"
     );
 
     // Write modified content back to the file if it was changed
