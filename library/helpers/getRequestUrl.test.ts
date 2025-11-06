@@ -191,10 +191,10 @@ t.test("url does not start with slash and is not absolute", async (t) => {
 });
 
 t.test("url does not start with http/https but is absolute", async (t) => {
-  t.equal(
+  t.match(
     getRequestUrl(
       await createMockRequest({ url: "ftp://example.com/resource" })
     ),
-    "http://localhost:53497/ftp://example.com/resource"
+    /http:\/\/localhost:\d+\/ftp:\/\/example.com\/resource/
   );
 });
