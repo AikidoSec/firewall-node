@@ -3,6 +3,7 @@ import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserIn
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
 import type { Endpoint } from "./Config";
+import { Source, SOURCES } from "./Source";
 
 export type User = { id: string; name?: string };
 
@@ -43,6 +44,10 @@ export function getContext(): Readonly<Context> | undefined {
   return ContextStorage.getStore();
 }
 
+function isSourceKey(key: string): key is Source {
+  return SOURCES.includes(key as Source);
+}
+
 // We need to use a function to mutate the context because we need to clear the cache when the user input changes
 export function updateContext<K extends keyof Context>(
   context: Context,
@@ -52,7 +57,9 @@ export function updateContext<K extends keyof Context>(
   context[key] = value;
 
   // Clear all the cached user input strings
-  delete context.cache;
+  if (isSourceKey(key)) {
+    delete context.cache;
+  }
 }
 
 /**
