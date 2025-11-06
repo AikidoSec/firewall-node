@@ -8,6 +8,7 @@ Make sure:
 - The firewall is initialized early in your app (before routes or handlers).  
 - Your framework-specific integration (middleware, decorator, etc.) matches the example in the README.  
 - You’re using Node.js 16 or newer
+- Zen runs only on the server side, it does not run in the browser.
 
 ## Check connection to Aikido
 
