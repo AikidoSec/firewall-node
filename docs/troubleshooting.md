@@ -83,6 +83,11 @@ const app = await NestFactory.create(AppModule);
 app.use(aikido());
 await app.listen(3000);
 ```
+## Enable debug logging
+
+Set the environment variable `AIKIDO_DEBUG` to `true` and check the log output of your application.
+You should see the message `AIKIDO: Starting agent vX.X.X`.
+In addition the output contains the name and version of each supported and instrumented library or framework in the format `library@version is supported!`. Please ensure that the logs contain these message at least for your web framework (e.g. express) and your database driver.
 
 ## Contact support
 
