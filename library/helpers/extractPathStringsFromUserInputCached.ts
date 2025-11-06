@@ -1,7 +1,7 @@
 import { Context } from "../agent/Context";
 import { SOURCES } from "../agent/Source";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
-import path from "node:path";
+import { sep } from "node:path";
 
 type ReturnValue = ReturnType<typeof extractStringsFromUserInput>;
 
@@ -23,7 +23,7 @@ export function extractPathStringsFromUserInputCached(
       // Performance optimization: only keep strings that contain a slash
       // as only those can be used for path traversal
       // keeps the set smaller and speeds up `fs` and `path` operations
-      if (item.includes(path.sep)) {
+      if (item.includes(sep)) {
         userStrings.add(item);
       }
     }
