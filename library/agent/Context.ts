@@ -56,8 +56,9 @@ export function updateContext<K extends keyof Context>(
 ) {
   context[key] = value;
 
-  // Clear all the cached user input strings
   if (isSourceKey(key)) {
+    // Clear all the cached user input strings
+    // Only if user input related fields are updated
     delete context.cache;
   }
 }
