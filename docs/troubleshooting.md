@@ -7,7 +7,7 @@ Make sure:
 - The package installed correctly.  
 - The firewall is initialized early in your app (before routes or handlers).  
 - Your framework-specific integration (middleware, decorator, etc.) matches the example in the README.  
-- You’re running a supported runtime version for your language.
+- You’re using Node.js 16 or newer
 
 ## Check connection to Aikido
 
