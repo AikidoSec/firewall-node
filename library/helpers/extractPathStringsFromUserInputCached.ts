@@ -1,14 +1,15 @@
 import { Context } from "../agent/Context";
 import { SOURCES } from "../agent/Source";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
+import { sep } from "node:path";
 
 type ReturnValue = ReturnType<typeof extractStringsFromUserInput>;
 
-export function extractStringsFromUserInputCached(
+export function extractPathStringsFromUserInputCached(
   context: Context
 ): ReturnValue {
-  if (context.cache) {
-    return context.cache;
+  if (context.cachePathTraversal) {
+    return context.cachePathTraversal;
   }
 
   const userStrings: ReturnValue = new Set();
@@ -19,11 +20,16 @@ export function extractStringsFromUserInputCached(
     }
 
     for (const item of extractStringsFromUserInput(context[source])) {
-      userStrings.add(item);
+      // Performance optimization: only keep strings that contain a path separator
+      // as only those can be used for path traversal
+      // keeps the set smaller and speeds up `fs` and `path` operations
+      if (item.includes(sep)) {
+        userStrings.add(item);
+      }
     }
   }
 
-  context.cache = userStrings;
+  context.cachePathTraversal = userStrings;
 
   return userStrings;
 }
