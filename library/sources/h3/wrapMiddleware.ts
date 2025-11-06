@@ -17,7 +17,7 @@ export function wrapMiddleware(
         return await middleware(...args);
       }
 
-      const context = await contextFromEvent(event, h3);
+      const context = contextFromEvent(event, h3);
 
       return await runWithContext(context, async () => {
         return await middleware(...args);
