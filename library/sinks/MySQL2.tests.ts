@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
 import { startTestAgent } from "../helpers/startTestAgent";
 
@@ -158,6 +158,15 @@ export function createMySQL2Tests(versionPkgName: string) {
 
       runWithContext(safeContext, () => {
         connection2!.query("-- This is a comment");
+      });
+
+      await runWithContext(dangerousContext, () => {
+        return new Promise<void>((resolve) => {
+          connection2!.query("SELECT petname FROM cats;", () => {
+            t.same(getContext(), dangerousContext);
+            resolve();
+          });
+        });
       });
     } catch (error: any) {
       t.fail(error);

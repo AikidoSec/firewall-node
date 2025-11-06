@@ -55,6 +55,7 @@ export class MariaDB implements Wrapper {
     for (const fn of functions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
+        bindContext: true,
         inspectArgs: (args) => this.inspectQuery(args, fn),
       });
     }
@@ -66,6 +67,7 @@ export class MariaDB implements Wrapper {
     for (const fn of functions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
+        bindContext: true,
         inspectArgs: (args) => this.inspectQuery(args, fn),
       });
     }

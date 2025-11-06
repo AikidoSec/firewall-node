@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { Context, runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
 
@@ -52,11 +52,12 @@ t.test("it works", async (t) => {
   const {
     writeFile,
     writeFileSync,
+    readFile,
     rename,
     realpath,
     promises: fsDotPromise,
     realpathSync,
-  } = require("fs");
+  } = require("fs") as typeof import("fs");
   const { writeFile: writeFilePromise } =
     require("fs/promises") as typeof import("fs/promises");
 
@@ -64,7 +65,9 @@ t.test("it works", async (t) => {
   t.ok(typeof realpathSync.native === "function");
 
   const runCommandsWithInvalidArgs = () => {
+    // @ts-expect-error Invalid args test
     throws(() => writeFile(), /Received undefined/);
+    // @ts-expect-error Invalid args test
     throws(() => writeFileSync(), /Received undefined/);
   };
 
@@ -308,4 +311,13 @@ t.test("it works", async (t) => {
       rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
     }
   );
+
+  await new Promise<void>((resolve) => {
+    runWithContext(unsafeContext, () => {
+      readFile("./test.txt", "utf-8", (err, data) => {
+        t.same(getContext(), unsafeContext);
+        resolve();
+      });
+    });
+  });
 });
