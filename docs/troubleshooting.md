@@ -24,69 +24,12 @@ Common places:
 
 Tip: search for lines that contain `Aikido` or `Zen` to spot initialization and request logs.
 
-## Confirm the dependency is present
-
-**npm**
-```
-npm ls | grep -i aikido
-cat package.json | grep -i aikido
-```
-
-**yarn**
-
-```
-yarn list –pattern aikido
-cat package.json | grep -i aikido
-```
-
-**pnpm**
-
-```
-pnpm ls | grep -i aikido
-cat package.json | grep -i aikido
-```
-
-## Confirm middleware is registered early
-
-Register the firewall as high as possible in the request pipeline so it sees every request.
-
-**Express**
-```js
-// before routes
-const express = require("express");
-const app = express();
-const aikido = require(".../aikido"); // import from your package name
-
-app.use(aikido());
-app.use(/* your other middleware and routes */);
-```
-
-Fastify
-```js
-// before routes
-import Fastify from "fastify";
-import aikido from ".../aikido";
-
-const app = Fastify();
-await app.register(aikido);
-// register routes after this
-```
-
-
-NestJS (Express adapter)
-```
-// main.ts, before app.listen
-import { NestFactory } from "@nestjs/core";
-import aikido from ".../aikido";
-
-const app = await NestFactory.create(AppModule);
-app.use(aikido());
-await app.listen(3000);
-```
 ## Enable debug logging
 
 Set the environment variable `AIKIDO_DEBUG` to `true` and check the log output of your application.
+
 You should see the message `AIKIDO: Starting agent vX.X.X`.
+
 In addition the output contains the name and version of each supported and instrumented library or framework in the format `library@version is supported!`. Please ensure that the logs contain these message at least for your web framework (e.g. express) and your database driver.
 
 ## Contact support
