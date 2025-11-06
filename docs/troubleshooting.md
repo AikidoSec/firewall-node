@@ -36,7 +36,7 @@ In addition the output contains the name and version of each supported and instr
 
 If you still can’t resolve the issue:
 
-- Use the in-app chat to reach our support team directly.
+- Use the [in-app chat](https://app.aikido.dev/) to reach our support team directly.
 - Or create an issue on [GitHub](../../issues) with details about your setup, framework, and logs.
 
 Include as much context as possible (framework, logs, and how Aikido was added) so we can help you quickly.
