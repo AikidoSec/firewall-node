@@ -7,7 +7,7 @@ Make sure:
 - The package installed correctly.  
 - The firewall is imported early in your app (before any other import).
 - Your framework-specific integration (middleware, decorator, etc.) matches the example in the README.  
-- You’re using Node.js 16 or newer
+- You’re using Node.js 16 or newer.
 - Zen runs only on the server side, it does not run in the browser.
 
 ## Check connection to Aikido
