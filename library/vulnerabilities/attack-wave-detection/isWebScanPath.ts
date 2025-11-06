@@ -15,8 +15,10 @@ const fileExtensions = new Set<string>([
   "sqlite3db",
 ]);
 
-const filenames = new Set<string>(fileNames);
-const directories = new Set<string>(directoryNames);
+const filenames = new Set<string>(fileNames.map((name) => name.toLowerCase()));
+const directories = new Set<string>(
+  directoryNames.map((name) => name.toLowerCase())
+);
 
 export function isWebScanPath(path: string): boolean {
   const normalized = path.toLowerCase();

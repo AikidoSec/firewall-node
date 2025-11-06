@@ -1,7 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -18,53 +17,35 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
-import type { Response } from "./api/fetchBlockedLists";
+import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 
-let shouldOnlyAllowSomeIPAddresses = false;
-
-wrap(fetch, "fetch", function mock() {
-  return async function mock() {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        blockedIPAddresses: [
-          {
-            key: "some/key",
-            source: "name",
-            description: "Description",
-            ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-          },
-        ],
-        blockedUserAgents: "AI2Bot|Bytespider",
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
-          ? [
-              {
-                key: "some/key",
-                source: "name",
-                description: "Description",
-                ips: ["4.3.2.1"],
-              },
-            ]
-          : [],
-        monitoredIPAddresses: [],
-        monitoredUserAgents: "",
-        userAgentDetails: [
-          {
-            key: "AI2Bot",
-            pattern: "AI2Bot",
-          },
-          {
-            key: "Bytespider",
-            pattern: "Bytespider",
-          },
-        ],
-        domains: [
-          { hostname: "example.com", mode: "block" },
-          { hostname: "aikido.dev", mode: "allow" },
-        ],
-      } satisfies Response),
-    };
-  };
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  blockedIPAddresses: [
+    {
+      key: "some/key",
+      source: "name",
+      description: "Description",
+      ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+    },
+  ],
+  blockedUserAgents: "AI2Bot|Bytespider",
+  allowedIPAddresses: [],
+  monitoredIPAddresses: [],
+  monitoredUserAgents: "",
+  userAgentDetails: [
+    {
+      key: "AI2Bot",
+      pattern: "AI2Bot",
+    },
+    {
+      key: "Bytespider",
+      pattern: "Bytespider",
+    },
+  ],
+  domains: [
+    { hostname: "example.com", mode: "block" },
+    { hostname: "aikido.dev", mode: "allow" },
+  ],
 });
 
 let logs: string[] = [];
@@ -82,7 +63,8 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        ""
+        "",
+        new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
   );
@@ -130,7 +112,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.18.0 is supported!",
+    "mongodb@6.20.0 is supported!",
   ]);
 });
 
@@ -200,7 +182,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -208,7 +189,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
@@ -292,8 +272,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -364,8 +342,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -427,8 +403,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);
@@ -632,7 +606,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -651,7 +625,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -1106,6 +1080,7 @@ t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: mockedFetchListAPI,
   });
 
   agent.start([]);
@@ -1179,10 +1154,40 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 });
 
 t.test("it only allows some IP addresses", async () => {
-  shouldOnlyAllowSomeIPAddresses = true;
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: new FetchListsAPIForTesting({
+      blockedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+        },
+      ],
+      blockedUserAgents: "AI2Bot|Bytespider",
+      allowedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["4.3.2.1"],
+        },
+      ],
+      monitoredIPAddresses: [],
+      monitoredUserAgents: "",
+      userAgentDetails: [
+        {
+          key: "AI2Bot",
+          pattern: "AI2Bot",
+        },
+        {
+          key: "Bytespider",
+          pattern: "Bytespider",
+        },
+      ],
+    }),
   });
 
   agent.start([]);

@@ -94,7 +94,7 @@ t.test("it works", async (t) => {
         },
         arr: {
           type: "array",
-          items: undefined,
+          items: null,
         },
       },
     }

@@ -4,6 +4,7 @@ export type Kind =
   | "shell_injection"
   | "path_traversal"
   | "ssrf"
+  | "stored_ssrf"
   | "code_injection"
   | "blocked_outbound_connection";
 
@@ -19,6 +20,8 @@ export function attackKindHumanName(kind: Kind) {
       return "a path traversal attack";
     case "ssrf":
       return "a server-side request forgery";
+    case "stored_ssrf":
+      return "a stored server-side request forgery";
     case "code_injection":
       return "a JavaScript injection";
     case "blocked_outbound_connection":

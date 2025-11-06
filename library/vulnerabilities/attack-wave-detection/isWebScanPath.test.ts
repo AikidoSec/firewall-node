@@ -15,6 +15,8 @@ t.test("isWebScanPath", async (t) => {
   t.ok(isWebScanPath("/.travis.yml"));
   t.ok(isWebScanPath("/../example/"));
   t.ok(isWebScanPath("/./test"));
+  t.ok(isWebScanPath("/Cargo.lock"));
+  t.ok(isWebScanPath("/System32/test"));
 });
 
 t.test("is not a web scan path", async (t) => {

@@ -2,11 +2,9 @@ import { Token } from "../agent/api/Token";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { fetch } from "../helpers/fetch";
-import { wrap } from "../helpers/wrap";
 import { HTTPServer } from "./HTTPServer";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { Response } from "../agent/api/fetchBlockedLists";
-import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 // Before require("http")
 const api = new ReportingAPIForTesting({
@@ -16,44 +14,39 @@ const api = new ReportingAPIForTesting({
   blockedUserIds: [],
   endpoints: [],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  domains: [],
 });
 
 const agent = createTestAgent({
   token: new Token("123"),
   api,
+  fetchListsAPI: new FetchListsAPIForTesting({
+    allowedIPAddresses: [],
+    blockedIPAddresses: [],
+    monitoredIPAddresses: [
+      {
+        key: "known_threat_actors/public_scanners",
+        ips: ["1.2.3.4/32"],
+        source: "test",
+        description: "Test IP list",
+      },
+    ],
+    blockedUserAgents: "",
+    monitoredUserAgents: "GPTBot|Google-Extended",
+    userAgentDetails: [
+      {
+        key: "ai_data_scrapers",
+        pattern: "GPTBot",
+      },
+      {
+        key: "google_extended",
+        pattern: "Google-Extended",
+      },
+    ],
+  }),
 });
 
 agent.start([new HTTPServer()]);
-
-wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
-  return async function fetchBlockedLists(): Promise<Response> {
-    return {
-      allowedIPAddresses: [],
-      blockedIPAddresses: [],
-      monitoredIPAddresses: [
-        {
-          key: "known_threat_actors/public_scanners",
-          ips: ["1.2.3.4/32"],
-          source: "test",
-          description: "Test IP list",
-        },
-      ],
-      blockedUserAgents: "",
-      monitoredUserAgents: "GPTBot|Google-Extended",
-      userAgentDetails: [
-        {
-          key: "ai_data_scrapers",
-          pattern: "GPTBot",
-        },
-        {
-          key: "google_extended",
-          pattern: "Google-Extended",
-        },
-      ],
-      domains: [],
-    } satisfies Response;
-  };
-});
 
 t.setTimeout(30 * 1000);
 

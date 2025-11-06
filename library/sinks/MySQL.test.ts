@@ -89,7 +89,7 @@ t.test("it detects SQL injections", async () => {
     );
 
     const error = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return connection.query("-- should be blocked");
       });
     });
@@ -102,7 +102,7 @@ t.test("it detects SQL injections", async () => {
     }
 
     const error2 = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         return connection.query({ sql: "-- should be blocked" });
       });
     });
@@ -125,7 +125,7 @@ t.test("it detects SQL injections", async () => {
       t.same(undefinedQueryError.message, "ER_EMPTY_QUERY: Query was empty");
     }
 
-    await runWithContext(
+    runWithContext(
       {
         remoteAddress: "::1",
         method: "POST",
@@ -151,6 +151,14 @@ t.test("it detects SQL injections", async () => {
   } catch (error: any) {
     t.fail(error);
   } finally {
-    await connection.end();
+    await new Promise<void>((resolve, reject) =>
+      connection.end((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      })
+    );
   }
 });

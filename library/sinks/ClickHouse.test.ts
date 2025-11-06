@@ -69,14 +69,14 @@ t.test("it detects SQL injections", async (t) => {
       format: "JSONEachRow",
     });
 
-    t.same(await resultSet.json(), [{ id: 1, petname: "Felix" }]);
+    t.same(await resultSet.json(), [{ id: "1", petname: "Felix" }]);
 
     await runWithContext(safeContext, async () => {
       const resultSet = await client.query({
         query: `SELECT * FROM cats;`,
         format: "JSONEachRow",
       });
-      t.same(await resultSet.json(), [{ id: 1, petname: "Felix" }]);
+      t.same(await resultSet.json(), [{ id: "1", petname: "Felix" }]);
     });
 
     await runWithContext(dangerousContext, async () => {

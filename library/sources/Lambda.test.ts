@@ -1,11 +1,25 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import type { Context } from "aws-lambda";
 import * as t from "tap";
+import { setTimeout } from "timers/promises";
+import type { Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { APIGatewayProxyEvent, createLambdaWrapper, SQSEvent } from "./Lambda";
+import { wrap } from "../helpers/wrap";
+import {
+  APIGatewayProxyEvent,
+  createLambdaWrapper,
+  getFlushEveryMS,
+  getTimeoutInMS,
+  SQSEvent,
+} from "./Lambda";
+
+t.beforeEach(async () => {
+  delete process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS;
+  delete process.env.AIKIDO_LAMBDA_TIMEOUT_MS;
+});
 
 const gatewayEvent: APIGatewayProxyEvent = {
   resource: "/dev/{proxy+}",
@@ -227,11 +241,14 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
     await handler(gatewayEvent, lambdaContext, () => {});
 
     if (i === 0) {
-      t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+      t.match(testing.getEvents(), [
+        { type: "started" },
+        { type: "heartbeat" },
+      ]);
     }
   }
 
-  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+  t.match(testing.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   testing.clear();
 
@@ -393,7 +410,7 @@ t.test("if handler throws it still sends heartbeat", async () => {
     t.same(error.message, "error");
   }
 
-  t.match(testing.getEvents(), [{ type: "heartbeat" }]);
+  t.match(testing.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
 
   clock.uninstall();
 });
@@ -503,4 +520,116 @@ t.test("it counts attacks", async () => {
       },
     },
   });
+});
+
+t.test("it waits for attack events to be sent before returning", async (t) => {
+  const testing = new ReportingAPIForTesting();
+
+  wrap(testing, "report", function report(original) {
+    return async function report(...args: unknown[]) {
+      await setTimeout(100);
+
+      // @ts-expect-error Type is unknown
+      return original.apply(this, args);
+    };
+  });
+
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api: testing,
+  });
+  agent.start([]);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    agent.onDetectedAttack({
+      module: "fs",
+      operation: "readFile",
+      kind: "path_traversal",
+      blocked: false,
+      source: "body",
+      request: getContext(),
+      stack: "stack",
+      paths: ["file"],
+      metadata: {},
+      payload: "../etc/passwd",
+    });
+
+    agent.onDetectedAttackWave({
+      request: getContext()!,
+      metadata: {},
+    });
+
+    return { statusCode: 200 };
+  });
+
+  await handler(gatewayEvent, lambdaContext, () => {});
+
+  const events = testing.getEvents();
+  const attackEvents = events.filter(
+    (e) => e.type === "detected_attack" || e.type === "detected_attack_wave"
+  );
+
+  t.equal(attackEvents.length, 2, "both attack events should have been sent");
+});
+
+t.test("getFlushEveryMS", async (t) => {
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "120000";
+  t.equal(getFlushEveryMS(), 120000, "should return 2 minutes");
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "invalid";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for non-numeric"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "30000";
+  t.equal(
+    getFlushEveryMS(),
+    10 * 60 * 1000,
+    "should return 10 minutes as default for value below minimum"
+  );
+
+  process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS = "60000";
+  t.equal(
+    getFlushEveryMS(),
+    60000,
+    "should return 1 minute at minimum threshold"
+  );
+});
+
+t.test("getTimeoutInMS", async (t) => {
+  t.equal(getTimeoutInMS(), 1000, "should return 1 second as default");
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "5000";
+  t.equal(getTimeoutInMS(), 5000, "should return 5 seconds");
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "invalid";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for non-numeric"
+  );
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "500";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second as default for value below minimum"
+  );
+
+  process.env.AIKIDO_LAMBDA_TIMEOUT_MS = "1000";
+  t.equal(
+    getTimeoutInMS(),
+    1000,
+    "should return 1 second at minimum threshold"
+  );
 });

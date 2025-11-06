@@ -11,21 +11,26 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout firewall-node
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: firewall-node
 
       - name: Checkout zen-demo-nodejs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: Aikido-demo-apps/zen-demo-nodejs
           path: zen-demo-nodejs
           submodules: true
 
-      - name: Use Node.js 18.x
-        uses: actions/setup-node@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v5
         with:
-          node-version: "18.x"
+          node-version: "22.x"
+
+      - name: Setup Aikido safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain@1.0.24
+          safe-chain setup-ci
 
       - name: Build firewall-node dev package
         run: |

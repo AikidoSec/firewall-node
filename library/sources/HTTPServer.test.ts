@@ -4,18 +4,16 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
-import { wrap } from "../helpers/wrap";
 import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
 import { HTTPServer } from "./HTTPServer";
 import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
-import type { Response } from "../agent/api/fetchBlockedLists";
-import * as fetchBlockedLists from "../agent/api/fetchBlockedLists";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { FileSystem } from "../sinks/FileSystem";
 import { Path } from "../sinks/Path";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 const execAsync = promisify(exec);
 
 // Before require("http")
@@ -58,32 +56,30 @@ const api = new ReportingAPIForTesting({
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
 });
+
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  allowedIPAddresses: [],
+  blockedIPAddresses: [
+    {
+      key: "geoip/Belgium;BE",
+      source: "geoip",
+      ips: ["9.9.9.9"],
+      description: "geo restrictions",
+    },
+  ],
+  blockedUserAgents: "",
+  monitoredUserAgents: "",
+  monitoredIPAddresses: [],
+  userAgentDetails: [],
+  domains: [],
+});
+
 const agent = createTestAgent({
   token: new Token("123"),
   api,
+  fetchListsAPI: mockedFetchListAPI,
 });
 agent.start([new HTTPServer(), new FileSystem(), new Path()]);
-
-wrap(fetchBlockedLists, "fetchBlockedLists", function fetchBlockedLists() {
-  return async function fetchBlockedLists(): Promise<Response> {
-    return {
-      allowedIPAddresses: [],
-      blockedIPAddresses: [
-        {
-          key: "geoip/Belgium;BE",
-          source: "geoip",
-          ips: ["9.9.9.9"],
-          description: "geo restrictions",
-        },
-      ],
-      blockedUserAgents: "",
-      monitoredUserAgents: "",
-      monitoredIPAddresses: [],
-      userAgentDetails: [],
-      domains: [],
-    } satisfies Response;
-  };
-});
 
 t.setTimeout(30 * 1000);
 
@@ -797,7 +793,7 @@ t.test("it blocks path traversal in path", async (t) => {
 
       t.equal(
         response,
-        "Zen has blocked a path traversal attack: path.join(...) originating from url."
+        "Zen has blocked a path traversal attack: path.normalize(...) originating from url."
       );
       server.close();
       resolve();
