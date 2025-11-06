@@ -1,10 +1,8 @@
 /* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
-import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
-import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
@@ -47,7 +45,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private packages = new Packages();
+  private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -217,8 +215,6 @@ export class Agent {
             typeof request.headers["user-agent"] === "string"
               ? request.headers["user-agent"]
               : undefined,
-          body: convertRequestBodyToString(request.body),
-          headers: filterEmptyRequestHeaders(request.headers),
           source: request.source,
           route: request.route,
         }
