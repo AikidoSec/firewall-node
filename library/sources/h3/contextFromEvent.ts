@@ -3,10 +3,10 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import type { H3Event } from "h3";
 
-export async function contextFromEvent(
+export function contextFromEvent(
   event: H3Event,
   h3: typeof import("h3")
-): Promise<Context> {
+): Context {
   const existingContext = getContext();
 
   const headers = h3.getHeaders(event);

@@ -9,7 +9,7 @@ export function wrapEventHandler(
 ): EventHandler {
   return createWrappedFunction(handler, (handler) => {
     return async (event: H3Event) => {
-      const context = await contextFromEvent(event, h3);
+      const context = contextFromEvent(event, h3);
 
       return await runWithContext(context, async () => {
         return await handler(event);
