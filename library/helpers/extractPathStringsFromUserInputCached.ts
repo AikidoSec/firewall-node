@@ -4,7 +4,7 @@ import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
 type ReturnValue = ReturnType<typeof extractStringsFromUserInput>;
 
-export function extractPathTraversalStringsFromUserInputCached(
+export function extractPathStringsFromUserInputCached(
   context: Context
 ): ReturnValue {
   if (context.cachePathTraversal) {
