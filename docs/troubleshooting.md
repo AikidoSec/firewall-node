@@ -33,6 +33,9 @@ You should see the message `AIKIDO: Starting agent vX.X.X`.
 
 In addition the output contains the name and version of each supported and instrumented library or framework in the format `library@version is supported!`. Please ensure that the logs contain these message at least for your web framework (e.g. express) and your database driver.
 
+## Bundlers & ECMAScript modules (ESM)
+
+If you are using a bundler like esbuild or a framework that uses bundling please ensure to follow the steps described in the [bundler](./bundler.md) docs. Applications using ESM at runtime are not supported yet. TypeScript code is often translated to CommonJS.
 ## Contact support
 
 If you still can’t resolve the issue:
