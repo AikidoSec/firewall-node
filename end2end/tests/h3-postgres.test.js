@@ -10,7 +10,7 @@ t.test("it blocks in blocking mode", (t) => {
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCKING: "true",
+      AIKIDO_BLOCK: "true",
       PORT: "4000",
     },
   });
@@ -38,7 +38,7 @@ t.test("it blocks in blocking mode", (t) => {
     .then(() => {
       return Promise.all([
         fetch(
-          `http://127.0.0.1:4000/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_3;-- H")}`,
+          `http://127.0.0.1:4000/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_4;-- H")}`,
           {
             signal: AbortSignal.timeout(5000),
           }
@@ -86,7 +86,7 @@ t.test("it does not block in dry mode", (t) => {
     .then(() =>
       Promise.all([
         fetch(
-          `http://127.0.0.1:4001/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_3;-- H")}`,
+          `http://127.0.0.1:4001/?petname=${encodeURIComponent("Njuska'); DELETE FROM cats_4;-- H")}`,
           {
             signal: AbortSignal.timeout(5000),
           }
