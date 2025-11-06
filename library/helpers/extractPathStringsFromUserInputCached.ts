@@ -20,7 +20,7 @@ export function extractPathStringsFromUserInputCached(
     }
 
     for (const item of extractStringsFromUserInput(context[source])) {
-      // Performance optimization: only keep strings that contain a slash
+      // Performance optimization: only keep strings that contain a path separator
       // as only those can be used for path traversal
       // keeps the set smaller and speeds up `fs` and `path` operations
       if (item.includes(sep)) {
