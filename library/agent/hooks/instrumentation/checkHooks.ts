@@ -2,6 +2,7 @@ export async function checkHooks() {
   let success = false;
 
   try {
+    // Todo not working because import is bundled
     const imported = await import("./zenHooksCheckImport");
 
     if (imported.test() === ":)") {

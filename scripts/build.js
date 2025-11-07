@@ -41,11 +41,6 @@ const instrumentationWasmOutDir = join(
 );
 
 async function main() {
-  // Delete build directory if it exists
-  if (await fileExists(buildDir)) {
-    await rm(buildDir, { recursive: true });
-  }
-
   await dlZenInternals();
   await buildInstrumentationWasm();
 
@@ -62,22 +57,15 @@ async function main() {
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
   await copyFile(
     join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "internals", "zen_internals_bg.wasm")
+    join(buildDir, "zen_internals_bg.wasm")
   );
   await copyFile(
     join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "internals", "zen_internals_bg.wasm")
+    join(buildDir, "zen_internals_bg.wasm")
   );
   await copyFile(
     join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
-    join(
-      buildDir,
-      "agent",
-      "hooks",
-      "instrumentation",
-      "wasm",
-      "node_code_instrumentation_bg.wasm"
-    )
+    join(buildDir, "node_code_instrumentation_bg.wasm")
   );
 
   await modifyDtsFilesAfterBuild();
