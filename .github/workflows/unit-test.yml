@@ -10,8 +10,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 24.x, 25.x]
-    timeout-minutes: 10
+        include:
+          - node-version: 16.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 18.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 20.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 22.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "new"
+            mode: "esm"
+          - node-version: 25.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "esm"
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
@@ -27,17 +57,26 @@ jobs:
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - run: npm run install-lib-only
       - name: Start containers
         run: npm run containers
       - run: npm run build
       - run: npm run test:ci
-        env:
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+        if: ${{ matrix.new-instrumentation == 'current' }}
+      - run: npm run test:ci:new
+        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'cjs' }}
+      - name: Run tests in ESM mode
+        run: npm run test:esm
+        if: ${{ matrix.new-instrumentation == 'new' &&matrix.mode == 'esm' }}
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
-          files: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node

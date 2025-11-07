@@ -12,8 +12,10 @@ import * as cookieParser from "cookie-parser";
 import { getContext } from "../agent/Context";
 import { setUser } from "../agent/context/user";
 import { addExpressMiddleware } from "../middleware/express";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
-export function createExpressTests(expressPackageName: string) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createExpressTests(expressPackageName: string) {
   // Before require("express")
   const agent = startTestAgent({
     api: new ReportingAPIForTesting({
@@ -72,8 +74,14 @@ export function createExpressTests(expressPackageName: string) {
     },
   });
 
-  const express = require(expressPackageName) as typeof import("express");
-  const { readFile } = require("fs") as typeof import("fs");
+  let express = require(expressPackageName) as typeof import("express");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error Wrong types
+    express = express.default;
+  }
+
+  const { readFile, readdir } = require("fs") as typeof import("fs");
 
   function getApp(userMiddleware = true) {
     const app = express();
@@ -112,7 +120,7 @@ export function createExpressTests(expressPackageName: string) {
     });
 
     app.use("/attack-in-middleware", (req, res, next) => {
-      require("fs").readdir(req.query.directory).unref();
+      readdir(req.query.directory as string, () => {});
       next();
     });
 
@@ -181,13 +189,13 @@ export function createExpressTests(expressPackageName: string) {
     });
 
     app.get("/files", (req, res) => {
-      require("fs").readdir(req.query.directory).unref();
+      readdir(req.query.directory as string, () => {});
 
       res.send(getContext());
     });
 
     app.get("/files-subdomains", (req, res) => {
-      require("fs").readdir(req.subdomains[2]).unref();
+      readdir(req.subdomains[2], () => {});
 
       res.send(getContext());
     });
@@ -246,7 +254,7 @@ export function createExpressTests(expressPackageName: string) {
 
     app.param("file", (req, res, next, path) => {
       // Simulate a vulnerable parameter handler that uses fs operations
-      require("fs").readdir(path, next);
+      readdir(path, next);
     });
 
     app.get("/param/:file", (req, res) => {
