@@ -111,6 +111,7 @@
     "follow-redirects": "^1.15.6",
     "globals": "^16.0.0",
     "graphql": "^16.8.2",
+    "h3": "^1.15.1",
     "hono": "^4.4.2",
     "koa-router": "^13.0.1",
     "koa-v2": "npm:koa@^2.16.1",
