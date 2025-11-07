@@ -107,6 +107,7 @@
     "fast-xml-parser-v5": "npm:fast-xml-parser@^5.2.0",
     "fastify": "^5.0.0",
     "follow-redirects": "^1.15.6",
+    "globals": "^16.0.0",
     "got": "^14.6.0",
     "graphql": "^16.8.2",
     "graphql-v15": "npm:graphql@^15.10.1",
