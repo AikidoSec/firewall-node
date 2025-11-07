@@ -45,9 +45,9 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "browser": "browser.js",
+  "main": "index.cjs",
+  "types": "index.d.cts",
+  "browser": "browser.cjs",
   "engines": {
     "node": ">=16"
   },

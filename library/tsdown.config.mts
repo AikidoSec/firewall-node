@@ -10,6 +10,7 @@ export default defineConfig({
     "./nopp/index.ts",
     "./cloud-function/index.ts",
     "./bundler/index.ts",
+    "./browser.ts",
   ],
   outDir: "../build",
   format: "cjs",
