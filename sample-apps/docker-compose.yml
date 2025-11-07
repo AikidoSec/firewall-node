@@ -7,7 +7,6 @@ services:
       - "9090:9090"
   mongodb:
     image: mongo:5
-    restart: always
     volumes:
       - mongodb:/data/db
     environment:
@@ -17,7 +16,6 @@ services:
       - "27017:27017"
   postgres:
     image: postgres:14-alpine
-    restart: always
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:

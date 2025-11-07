@@ -8,6 +8,11 @@ const asyncPool = require("./helpers/asyncPool");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
+const majorNodeVersion = parseInt(process.version.split(".")[0].slice(1), 10);
+
+const skipInstall = [
+  { folder: "sample-apps/n8n", check: (major) => major >= 24 },
+];
 
 // If script is called with arg --ci, set env CI to true
 if (process.argv.includes("--ci")) {
@@ -44,6 +49,17 @@ async function main() {
  */
 async function installDependencies(folder) {
   console.log(`Installing dependencies for ${folder}`);
+
+  if (
+    skipInstall.some(
+      (entry) => entry.folder === folder && entry.check(majorNodeVersion)
+    )
+  ) {
+    console.log(
+      `Skipping installation for ${folder} due to Node.js version check`
+    );
+    return;
+  }
 
   // Don't run potentially unsafe scripts during installation
   const flags = "--ignore-scripts";

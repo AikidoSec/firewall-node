@@ -1,15 +1,19 @@
-const { spawn } = require("child_process");
-const { resolve } = require("path");
-const timeout = require("../timeout");
-const { test } = require("node:test");
-const { builtinModules } = require("module");
-const { equal, fail, match, doesNotMatch } = require("node:assert");
+import { spawn } from "child_process";
+import { resolve } from "path";
+import { test } from "node:test";
+import { builtinModules } from "module";
+import { equal, fail, match, doesNotMatch } from "node:assert";
+import { getRandomPort } from "./utils/get-port.mjs";
+import { timeout } from "./utils/timeout.mjs";
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/hono-pg-esm");
+const pathToAppDir = resolve(
+  import.meta.dirname,
+  "../../sample-apps/hono-pg-esm"
+);
 const testServerUrl = "http://localhost:5874";
-const port = "4004";
-const port2 = "4005";
-const port3 = "4006";
+const port = await getRandomPort();
+const port2 = await getRandomPort();
+const port3 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -128,6 +132,10 @@ test("it does not block request in monitoring mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
+    doesNotMatch(
+      stderr,
+      /Zen does not instrument worker threads. Zen will only be active in the main thread./
+    );
   } catch (err) {
     fail(err);
   } finally {

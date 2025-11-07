@@ -2269,3 +2269,54 @@ t.test("Do not modify function variable declaration (ESM)", async (t) => {
       };`
   );
 });
+
+t.test("Test codegen comment behavior", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      /**
+       * test
+       **/
+      const test = function (...args) { // test
+        console.log("test");
+        // test
+        return 1;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "FunctionVariableDeclaration",
+          name: "testabc",
+          identifier:
+            "testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      /**
+      * test
+      **/
+      const test = function(...args) {
+              console.log("test");
+              // test
+              return 1;
+      };`
+  );
+});

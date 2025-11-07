@@ -5,10 +5,16 @@ on:
 jobs:
   run-unit-tests:
     uses: ./.github/workflows/unit-test.yml
+    permissions:
+      contents: read
   run-end-to-end-tests:
     uses: ./.github/workflows/end-to-end-tests.yml
+    permissions:
+      contents: read
   run-benchmarks:
     uses: ./.github/workflows/benchmark.yml
+    permissions:
+      contents: read
   build:
     needs:
       - run-unit-tests
@@ -33,7 +39,7 @@ jobs:
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain
+          npm i -g @aikidosec/safe-chain@1.0.24
           safe-chain setup-ci
       - name: Ensure latest npm version
         run: npm install -g npm@latest

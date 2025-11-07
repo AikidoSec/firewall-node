@@ -1,12 +1,14 @@
 name: 🧹 Lint code
 on: push
+permissions:
+  contents: read
 jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [24.x]
     steps:
       - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
@@ -23,7 +25,7 @@ jobs:
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain
+          npm i -g @aikidosec/safe-chain@1.0.24
           safe-chain setup-ci
       - run: npm run install-lib-only
       - run: npm run build

@@ -58,6 +58,7 @@ import { Anthropic } from "../sinks/Anthropic";
 import { GoogleGenAi } from "../sinks/GoogleGenAi";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
+import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -186,6 +187,10 @@ export function protect() {
 }
 
 export function lambda(): (handler: Handler) => Handler {
+  if (!shouldEnableFirewall()) {
+    return (handler: Handler) => handler;
+  }
+
   startAgent({
     serverless: "lambda",
     newInstrumentation: false,
@@ -196,6 +201,10 @@ export function lambda(): (handler: Handler) => Handler {
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
+  if (!shouldEnableFirewall()) {
+    return (handler: HttpFunction) => handler;
+  }
+
   startAgent({
     serverless: "gcp",
     newInstrumentation: false,

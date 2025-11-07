@@ -1,10 +1,8 @@
 /* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
-import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
-import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
@@ -34,6 +32,7 @@ import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { PendingEvents } from "./PendingEvents";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -47,7 +46,7 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private packages = new Packages();
+  private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
@@ -70,6 +69,7 @@ export class Agent {
   private middlewareInstalled = false;
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
+  private pendingEvents = new PendingEvents();
 
   constructor(
     private block: boolean,
@@ -139,7 +139,7 @@ export class Agent {
   /**
    * Reports to the API that this agent has started
    */
-  async onStart() {
+  async onStart(timeoutInMS = 60 * 1000) {
     if (this.token) {
       const result = await this.api.report(
         this.token,
@@ -151,7 +151,7 @@ export class Agent {
         // We don't use `this.timeoutInMS` for startup event
         // Since Node.js is single threaded, the HTTP request is fired before other imports are required
         // It might take a long time before our code resumes
-        60 * 1000
+        timeoutInMS
       );
 
       this.checkForReportingAPIError(result);
@@ -224,8 +224,6 @@ export class Agent {
             typeof request.headers["user-agent"] === "string"
               ? request.headers["user-agent"]
               : undefined,
-          body: convertRequestBodyToString(request.body),
-          headers: filterEmptyRequestHeaders(request.headers),
           source: request.source,
           route: request.route,
         }
@@ -260,9 +258,12 @@ export class Agent {
     this.attackLogger.log(attack);
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack");
-      });
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack");
+        });
+      this.pendingEvents.onAPICall(promise);
     }
   }
 
@@ -379,13 +380,6 @@ export class Agent {
    * Starts a heartbeat when not in serverless mode : Make contact with api every x seconds.
    */
   private startHeartbeats() {
-    if (this.serverless) {
-      this.logger.log(
-        "Running in serverless environment, not starting heartbeats"
-      );
-      return;
-    }
-
     if (!this.token) {
       this.logger.log("No token provided, not starting heartbeats");
       return;
@@ -441,7 +435,6 @@ export class Agent {
   private startPollingForConfigChanges() {
     pollForChanges({
       token: this.token,
-      serverless: this.serverless,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
       onConfigUpdate: (config) => {
@@ -537,6 +530,12 @@ export class Agent {
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
+    // In serverless environments, we delay the startup event until the first invocation
+    // since some apps take a long time to boot and the init phase has strict timeouts
+    if (this.serverless) {
+      return;
+    }
+
     this.onStart()
       .then(() => {
         this.startHeartbeats();
@@ -627,6 +626,10 @@ export class Agent {
     await this.sendHeartbeat(timeoutInMS);
   }
 
+  getPendingEvents() {
+    return this.pendingEvents;
+  }
+
   getRateLimiter() {
     return this.rateLimiter;
   }
@@ -686,9 +689,12 @@ export class Agent {
     };
 
     if (this.token) {
-      this.api.report(this.token, attack, this.timeoutInMS).catch(() => {
-        this.logger.log("Failed to report attack wave");
-      });
+      const promise = this.api
+        .report(this.token, attack, this.timeoutInMS)
+        .catch(() => {
+          this.logger.log("Failed to report attack wave");
+        });
+      this.pendingEvents.onAPICall(promise);
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { Context } from "../../agent/Context";
-import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { extractStringsFromUserInput } from "../../helpers/extractStringsFromUserInput";
 
 const keywords = [
   "SELECT (CASE WHEN",
@@ -24,10 +24,15 @@ const keywords = [
  * Check the query for some common SQL or path traversal patterns.
  */
 export function queryParamsContainDangerousPayload(context: Context): boolean {
-  const queryStrings = extractStringsFromUserInputCached(context, "query");
+  if (!context.query) {
+    return false;
+  }
+
+  const queryStrings = extractStringsFromUserInput(context.query);
   if (!queryStrings) {
     return false;
   }
+
   for (const str of queryStrings) {
     // Performance optimization
     // Some keywords like ../ are shorter than this min length check

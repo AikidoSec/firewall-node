@@ -111,7 +111,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.18.0 is supported!",
+    "mongodb@6.20.0 is supported!",
   ]);
 });
 
@@ -181,7 +181,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -189,7 +188,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
@@ -273,8 +271,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -345,8 +341,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -408,8 +402,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);

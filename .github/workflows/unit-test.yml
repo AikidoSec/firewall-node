@@ -2,6 +2,8 @@ name: 🧪 Unit tests
 on:
   push: {}
   workflow_call: {}
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,6 +32,15 @@ jobs:
           - node-version: 24.x
             new-instrumentation: "new"
             mode: "esm"
+          - node-version: 25.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "esm"
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -41,7 +52,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain
+          npm i -g @aikidosec/safe-chain@1.0.24
           safe-chain setup-ci
       - name: Add local.aikido.io to /etc/hosts
         run: |

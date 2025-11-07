@@ -9,7 +9,7 @@ export function wrapNewInstance(
   subject: unknown,
   className: string | undefined,
   pkgInfo: PartialWrapPackageInfo,
-  interceptor: (exports: any) => void | unknown
+  interceptor: (exports: any) => unknown
 ) {
   const agent = getInstance();
   if (!agent) {

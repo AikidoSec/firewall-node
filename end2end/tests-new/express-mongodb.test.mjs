@@ -1,12 +1,16 @@
-const { spawn } = require("child_process");
-const { resolve } = require("path");
-const timeout = require("../timeout");
-const { test } = require("node:test");
-const { equal, fail, match, doesNotMatch } = require("node:assert");
+import { spawn } from "child_process";
+import { resolve } from "path";
+import { test } from "node:test";
+import { equal, fail, match, doesNotMatch } from "node:assert";
+import { timeout } from "./utils/timeout.mjs";
+import { getRandomPort } from "./utils/get-port.mjs";
 
-const pathToAppDir = resolve(__dirname, "../../sample-apps/express-mongodb");
-const port = "4002";
-const port2 = "4003";
+const pathToAppDir = resolve(
+  import.meta.dirname,
+  "../../sample-apps/express-mongodb"
+);
+const port = await getRandomPort();
+const port2 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
