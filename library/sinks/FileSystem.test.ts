@@ -1,5 +1,4 @@
 import * as t from "tap";
-import { URL } from "url";
 import { Context, runWithContext } from "../agent/Context";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
