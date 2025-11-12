@@ -163,9 +163,20 @@ export function createMySQL2Tests(versionPkgName: string) {
       t.fail(error);
     } finally {
       await connection.end();
-      if (connection2) {
-        await connection2.end();
-      }
+
+      await new Promise<void>((resolve, reject) => {
+        if (!connection2) {
+          resolve();
+          return;
+        }
+        connection2.end((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
     }
   });
 }

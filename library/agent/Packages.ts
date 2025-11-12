@@ -6,8 +6,17 @@ type PackageInfo = {
 
 export class Packages {
   private packages: Map<string, PackageInfo[]> = new Map();
+  private maxSize: number;
+
+  constructor(maxSize: number = 5000) {
+    this.maxSize = maxSize;
+  }
 
   addPackage(pkg: { name: string; version: string }) {
+    if (this.packages.size >= this.maxSize) {
+      return;
+    }
+
     const versions = this.packages.get(pkg.name) || [];
     const existingVersion = versions.find((v) => v.version === pkg.version);
 

@@ -1,8 +1,8 @@
 import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
 import { ChildProcess } from "./ChildProcess";
-import { execFile, execFileSync } from "child_process";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { join } from "path";
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -35,7 +35,7 @@ t.test("it works", async (t) => {
 
   agent.start([new ChildProcess()]);
 
-  const { exec, execSync, spawn, spawnSync, fork } =
+  const { exec, execSync, spawn, spawnSync, fork, execFile, execFileSync } =
     require("child_process") as typeof import("child_process");
 
   const runCommandsWithInvalidArgs = () => {
@@ -83,7 +83,7 @@ t.test("it works", async (t) => {
     execFile("ls", ["-la"], {}, (err, stdout, stderr) => {}).unref();
     execFileSync("ls", ["-la"], {});
 
-    fork("./fixtures/helloWorld.js").unref();
+    fork(join(__dirname, "./fixtures/helloWorld.js")).unref();
   };
 
   runSafeCommands();
@@ -95,7 +95,7 @@ t.test("it works", async (t) => {
   runWithContext(unsafeContext, () => {
     throws(
       () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
-      "Zen has blocked a shell injection: child_process.exec(...) originating from body.file.matches"
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
     );
 
     throws(

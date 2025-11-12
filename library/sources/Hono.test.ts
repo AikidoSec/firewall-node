@@ -1,10 +1,7 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
-import type { Response } from "../agent/api/fetchBlockedLists";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { wrap } from "../helpers/wrap";
 import { Hono as HonoInternal } from "./Hono";
 import { HTTPServer } from "./HTTPServer";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -13,46 +10,8 @@ import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { addHonoMiddleware } from "../middleware/hono";
 import * as fetch from "../helpers/fetch";
-
-wrap(fetch, "fetch", function mock(original) {
-  return async function mock(this: typeof fetch) {
-    if (
-      arguments.length > 0 &&
-      arguments[0] &&
-      arguments[0].url.toString().includes("firewall")
-    ) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          blockedIPAddresses: [
-            {
-              key: "geoip/Belgium;BE",
-              source: "geoip",
-              description: "geo restrictions",
-              ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
-            },
-          ],
-          blockedUserAgents: "hacker|attacker",
-          allowedIPAddresses: [],
-          monitoredIPAddresses: [],
-          monitoredUserAgents: "",
-          userAgentDetails: [
-            {
-              key: "hacker",
-              pattern: "hacker",
-            },
-            {
-              key: "attacker",
-              pattern: "attacker",
-            },
-          ],
-        } satisfies Response),
-      };
-    }
-
-    return await original.apply(this, arguments);
-  };
-});
+import { setRateLimitGroup } from "../ratelimiting/group";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
 const agent = createTestAgent({
   token: new Token("123"),
@@ -69,11 +28,45 @@ const agent = createTestAgent({
           enabled: true,
         },
       },
+      {
+        method: "GET",
+        route: "/rate-limited-group",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 2,
+          enabled: true,
+        },
+      },
     ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
+  }),
+  fetchListsAPI: new FetchListsAPIForTesting({
+    blockedIPAddresses: [
+      {
+        key: "geoip/Belgium;BE",
+        source: "geoip",
+        description: "geo restrictions",
+        ips: ["1.3.2.0/24", "e98c:a7ba:2329:8c69::/64"],
+      },
+    ],
+    blockedUserAgents: "hacker|attacker",
+    allowedIPAddresses: [],
+    monitoredIPAddresses: [],
+    monitoredUserAgents: "",
+    userAgentDetails: [
+      {
+        key: "hacker",
+        pattern: "hacker",
+      },
+      {
+        key: "attacker",
+        pattern: "attacker",
+      },
+    ],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
@@ -84,7 +77,7 @@ type Env = {
   };
 };
 
-function getApp() {
+async function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
   const { contextStorage: honoContextStorage, getContext: getHonoContext } =
     require("hono/context-storage") as typeof import("hono/context-storage");
@@ -99,6 +92,9 @@ function getApp() {
       setUser({ id: "567" });
     } else if (c.req.path.startsWith("/user")) {
       setUser({ id: "123" });
+    } else if (c.req.path.startsWith("/rate-limited-group")) {
+      const rateLimitGroup = c.req.header("X-Rate-Limit-Group") || "default";
+      setRateLimitGroup({ id: rateLimitGroup });
     }
     await next();
   });
@@ -139,6 +135,10 @@ function getApp() {
     return c.text("OK");
   });
 
+  app.get("/rate-limited-group", (c) => {
+    return c.text("OK");
+  });
+
   // Access async context outside of handler
   const getTestProp = () => {
     return getHonoContext<Env>().var.testProp;
@@ -157,7 +157,8 @@ const opts = {
 };
 
 t.test("it adds context from request for GET", opts, async (t) => {
-  const response = await getApp().request("/?title=test", {
+  const app = await getApp();
+  const response = await app.request("/?title=test", {
     method: "GET",
     headers: {
       accept: "application/json",
@@ -177,7 +178,8 @@ t.test("it adds context from request for GET", opts, async (t) => {
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {
-  const response = await getApp().request("/json", {
+  const app = await getApp();
+  const response = await app.request("/json", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -195,7 +197,8 @@ t.test("it adds JSON body to context", opts, async (t) => {
 });
 
 t.test("it adds form body to context", opts, async (t) => {
-  const response = await getApp().request("/form", {
+  const app = await getApp();
+  const response = await app.request("/form", {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -213,7 +216,8 @@ t.test("it adds form body to context", opts, async (t) => {
 });
 
 t.test("it adds text body to context", opts, async (t) => {
-  const response = await getApp().request("/text", {
+  const app = await getApp();
+  const response = await app.request("/text", {
     method: "POST",
     headers: {
       "content-type": "text/plain",
@@ -231,7 +235,8 @@ t.test("it adds text body to context", opts, async (t) => {
 });
 
 t.test("it adds xml body to context", opts, async (t) => {
-  const response = await getApp().request("/text", {
+  const app = await getApp();
+  const response = await app.request("/text", {
     method: "POST",
     headers: {
       "content-type": "application/xml",
@@ -249,7 +254,8 @@ t.test("it adds xml body to context", opts, async (t) => {
 });
 
 t.test("it sets the user in the context", opts, async (t) => {
-  const response = await getApp().request("/user", {
+  const app = await getApp();
+  const response = await app.request("/user", {
     method: "GET",
   });
 
@@ -257,13 +263,18 @@ t.test("it sets the user in the context", opts, async (t) => {
   t.match(body, {
     method: "GET",
     source: "hono",
-    route: "/",
+    route: "/user",
     user: { id: "123" },
+    consumedRateLimit: true,
+    executedMiddleware: true,
+    cookies: {},
+    url: "http://localhost/user",
   });
 });
 
 t.test("it blocks user", opts, async (t) => {
-  const response = await getApp().request("/user/blocked", {
+  const app = await getApp();
+  const response = await app.request("/user/blocked", {
     method: "GET",
   });
 
@@ -272,7 +283,8 @@ t.test("it blocks user", opts, async (t) => {
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
-  const response = await getApp().request("/rate-limited", {
+  const app = await getApp();
+  const response = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -281,7 +293,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response.status, 200);
   t.match(await response.text(), "OK");
 
-  const response2 = await getApp().request("/rate-limited", {
+  const response2 = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -290,7 +302,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response2.status, 200);
   t.match(await response2.text(), "OK");
 
-  const response3 = await getApp().request("/rate-limited", {
+  const response3 = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -301,10 +313,27 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+
+  const response4 = await app.request("/%72ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response4.status, 429);
+
+  const response5 = await app.request("/%2572ate-limited", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+    },
+  });
+  t.match(response5.status, 404);
 });
 
 t.test("it ignores invalid json body", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const app = await getApp();
+  const response = await app.request("/", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -315,7 +344,6 @@ t.test("it ignores invalid json body", opts, async (t) => {
   const body = await response.json();
   t.match(body, {
     method: "POST",
-    body: undefined,
     source: "hono",
     route: "/",
   });
@@ -325,7 +353,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8765,
   });
   const response = await fetch.fetch({
@@ -352,7 +380,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8766,
   });
 
@@ -409,7 +437,8 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
 });
 
 t.test("The hono async context still works", opts, async (t) => {
-  const response = await getApp().request("/hono-async-context", {
+  const app = await getApp();
+  const response = await app.request("/hono-async-context", {
     method: "GET",
   });
 
@@ -429,6 +458,7 @@ t.test("Proxy request", opts, async (t) => {
       new Request("http://127.0.0.1:8768/body", {
         method: c.req.method,
         headers: c.req.raw.headers,
+        // oxlint-disable-next-line no-invalid-fetch-options
         body: c.req.raw.body,
         // @ts-expect-error wrong types
         duplex: "half",
@@ -508,7 +538,7 @@ t.test("Body parsing in middleware", opts, async (t) => {
 });
 
 t.test("invalid json body", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.request("/json", {
     method: "POST",
@@ -528,7 +558,7 @@ t.test("bypass list works", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8769,
   });
 
@@ -576,4 +606,39 @@ t.test("bypass list works", opts, async (t) => {
 
   // Cleanup server
   server.close();
+});
+
+t.test("it rate limits based on group", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.1",
+      "X-User-Id": "123",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+  t.match(response.status, 200);
+
+  const response2 = await app.request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.2",
+      "X-User-Id": "234",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+  t.match(response2.status, 200);
+
+  const response3 = await app.request("/rate-limited-group", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "200.1.2.3",
+      "X-User-Id": "456",
+      "X-Rate-Limit-Group": "default",
+    },
+  });
+
+  t.match(response3.status, 429);
+  t.match(await response3.text(), "You are rate limited by Zen.");
 });

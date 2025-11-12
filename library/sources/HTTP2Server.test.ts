@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import { connect, IncomingHttpHeaders } from "http2";
+import type { IncomingHttpHeaders } from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
@@ -49,6 +49,7 @@ const agent = createTestAgent({
 agent.start([new HTTPServer(), new FileSystem()]);
 
 const { readFileSync } = require("fs");
+const { connect } = require("http2") as typeof import("http2");
 
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
@@ -188,6 +189,7 @@ t.test("it discovers routes", async () => {
               path: "/foo/bar",
               method: "GET",
               hits: 1,
+              rateLimitedCount: 0,
               graphql: undefined,
               apispec: {},
               graphQLSchema: undefined,
@@ -343,10 +345,10 @@ t.test("it works then using the on stream event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "GET",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "GET",
             ":authority": "localhost:3424",
             ":scheme": "http",
@@ -384,6 +386,7 @@ t.test("it discovers routes using stream event", async () => {
             path: "/foo/bar/stream",
             method: "GET",
             hits: 1,
+            rateLimitedCount: 0,
             graphql: undefined,
             apispec: {},
             graphQLSchema: undefined,
@@ -448,7 +451,7 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3427",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -488,7 +491,7 @@ t.test("it wraps the createSecureServer on request event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3428",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -528,7 +531,7 @@ t.test("it wraps the createSecureServer stream event", async () => {
               ":path": "/",
               ":method": "GET",
               ":authority": "localhost:3429",
-              ":scheme": "http",
+              ":scheme": "https",
             },
             query: {},
             route: "/",
@@ -638,10 +641,10 @@ t.test("it works then using the on stream end event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/",
+          url: "/?test=abc",
           method: "POST",
           headers: {
-            ":path": "/",
+            ":path": "/?test=abc",
             ":method": "POST",
             ":authority": "localhost:3433",
             ":scheme": "http",
@@ -656,6 +659,77 @@ t.test("it works then using the on stream end event", async () => {
         server.close();
         resolve();
       });
+    });
+  });
+});
+
+t.test("it reports attack waves", async (t) => {
+  const server = http2.createServer();
+  server.on("stream", (stream, headers) => {
+    stream.respond({ ":status": 404 });
+    stream.end("Not found");
+  });
+
+  api.clear();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3434, async () => {
+      for (let i = 0; i < 16; i++) {
+        const result = await http2Request(
+          new URL("http://localhost:3434/.env"),
+          "GET",
+          {}
+        );
+        t.same(result.headers[":status"], 404);
+      }
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            source: "http2.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+      ]);
+
+      await agent.flushStats(1000);
+
+      t.match(api.getEvents(), [
+        {
+          type: "detected_attack_wave",
+          attack: {
+            metadata: {},
+            user: undefined,
+          },
+          request: {
+            source: "http2.createServer",
+          },
+          agent: {
+            library: "firewall-node",
+          },
+        },
+        {
+          type: "heartbeat",
+          stats: {
+            requests: {
+              attackWaves: {
+                total: 1,
+                blocked: 0,
+              },
+            },
+          },
+        },
+      ]);
+
+      server.close();
+      resolve();
     });
   });
 });

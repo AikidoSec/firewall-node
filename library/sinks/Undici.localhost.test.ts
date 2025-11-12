@@ -129,7 +129,7 @@ t.test(
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen has blocked a server-side request forgery: undici.request(...) originating from body.url"
+        "Zen has blocked a server-side request forgery: undici.[method](...) originating from body.url"
       );
     }
   }

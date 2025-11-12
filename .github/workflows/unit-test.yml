@@ -2,96 +2,81 @@ name: 🧪 Unit tests
 on:
   push: {}
   workflow_call: {}
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      s3:
-        image: adobe/s3mock
-        env:
-          "initialBuckets": "bucket"
-        ports:
-          - "9090:9090"
-      mongodb:
-        image: mongo:5
-        env:
-          "MONGO_INITDB_ROOT_USERNAME": "root"
-          "MONGO_INITDB_ROOT_PASSWORD": "password"
-        ports:
-          - 27017:27017
-      postgres:
-        image: postgres:14-alpine
-        env:
-          "POSTGRES_PASSWORD": "password"
-          "POSTGRES_USER": "root"
-          "POSTGRES_DB": "main_db"
-        ports:
-          - "27016:5432"
-      mysql:
-        image: mysql:8.0
-        # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
-        # We need to use this long command in order to execute the last part : mysql_native_password
-        # https://stackoverflow.com/questions/60902904/how-to-pass-mysql-native-password-to-mysql-service-in-github-actions
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
-        ports:
-          - "27015:3306"
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: mypassword
-          MARIADB_DATABASE: catsdb
-        ports:
-          - "27018:3306"
-      clickhouse:
-        image: clickhouse/clickhouse-server:24
-        env:
-          "CLICKHOUSE_USER": "clickhouse"
-          "CLICKHOUSE_PASSWORD": "clickhouse"
-          "CLICKHOUSE_DB": "main_db"
-          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
-        ports:
-          - "27019:8123"
-      mongodb-replica:
-        image: bitnami/mongodb:4.4
-        env:
-          MONGODB_ADVERTISED_HOSTNAME: 127.0.0.1
-          MONGODB_REPLICA_SET_MODE: primary
-          MONGODB_ROOT_USER: root
-          MONGODB_ROOT_PASSWORD: password
-          MONGODB_REPLICA_SET_KEY: replicasetkey123
-        ports:
-          - "27020:27017"
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 24.x]
-    timeout-minutes: 10
+        include:
+          - node-version: 16.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 18.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 20.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 22.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 24.x
+            new-instrumentation: "new"
+            mode: "esm"
+          - node-version: 25.x
+            new-instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            new-instrumentation: "new"
+            mode: "esm"
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+      - name: Setup Aikido safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain@1.0.24
+          safe-chain setup-ci
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - name: "Install Google Cloud SDK"
-        uses: google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a # v2
-        with:
-          install_components: "beta,pubsub-emulator"
-          version: "524.0.0"
-      - name: "Start Pub/Sub emulator"
+      - name: Set up Rust
         run: |
-          gcloud beta emulators pubsub start --project=sample-project --host-port='0.0.0.0:8085' &
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - run: npm run install-lib-only
+      - name: Start containers
+        run: npm run containers
       - run: npm run build
       - run: npm run test:ci
+        if: ${{ matrix.new-instrumentation == 'current' }}
+      - run: npm run test:ci:new
+        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'cjs' }}
+      - name: Run tests in ESM mode
+        run: npm run test:esm
+        if: ${{ matrix.new-instrumentation == 'new' &&matrix.mode == 'esm' }}
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
-          files: ./library/.tap/report/lcov.info
+          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           slug: AikidoSec/firewall-node

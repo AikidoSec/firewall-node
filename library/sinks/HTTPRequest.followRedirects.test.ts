@@ -39,20 +39,20 @@ t.before(async () => {
 
 const redirectTestUrl = "http://ssrf-redirects.testssandbox.com";
 
+const agent = createTestAgent({
+  token: new Token("123"),
+});
+agent.start([new HTTPRequest()]);
+
+const { http } =
+  require("follow-redirects") as typeof import("follow-redirects");
+
 t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
-  agent.start([new HTTPRequest()]);
-
-  const { http } =
-    require("follow-redirects") as typeof import("follow-redirects");
-
   runWithContext(
     {
       ...context,
       // Redirects to http://127.0.0.1/test
-      ...{ body: { image: `${redirectTestUrl}/ssrf-test` } },
+      body: { image: `${redirectTestUrl}/ssrf-test` },
     },
     () => {
       const response = http.request(`${redirectTestUrl}/ssrf-test`, () => {
@@ -73,7 +73,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     {
       ...context,
       // Redirects to http://local.aikido.io/test
-      ...{ body: { image: `${redirectTestUrl}/ssrf-test-domain` } },
+      body: { image: `${redirectTestUrl}/ssrf-test-domain` },
     },
     () => {
       const response = http.request(
@@ -97,7 +97,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, (t) => {
     {
       ...context,
       // Redirects to http://[::1]/test
-      ...{ body: { image: `${redirectTestUrl}/ssrf-test-ipv6` } },
+      body: { image: `${redirectTestUrl}/ssrf-test-ipv6` },
     },
     () => {
       const response = http.request(`${redirectTestUrl}/ssrf-test-ipv6`, () => {

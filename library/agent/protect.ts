@@ -46,11 +46,19 @@ import { shouldBlock } from "../helpers/shouldBlock";
 import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
+import { Restify } from "../sources/Restify";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
 import { OpenAI } from "../sinks/OpenAI";
 import { AwsSDKVersion3 } from "../sinks/AwsSDKVersion3";
+import { AiSDK } from "../sinks/AiSDK";
+import { Mistral } from "../sinks/Mistral";
+import { Anthropic } from "../sinks/Anthropic";
+import { GoogleGenAi } from "../sinks/GoogleGenAi";
+import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
+import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -83,13 +91,23 @@ function getAPI(): ReportingAPI {
   );
 }
 
+function getFetchListsAPI(): FetchListsAPI {
+  return new FetchListsAPINodeHTTP();
+}
+
 function getTokenFromEnv(): Token | undefined {
   return process.env.AIKIDO_TOKEN
     ? new Token(process.env.AIKIDO_TOKEN)
     : undefined;
 }
 
-function startAgent({ serverless }: { serverless: string | undefined }) {
+function startAgent({
+  serverless,
+  newInstrumentation,
+}: {
+  serverless: string | undefined;
+  newInstrumentation: boolean;
+}) {
   const current = getInstance();
 
   if (current) {
@@ -101,7 +119,9 @@ function startAgent({ serverless }: { serverless: string | undefined }) {
     getLogger(),
     getAPI(),
     getTokenFromEnv(),
-    serverless
+    serverless,
+    newInstrumentation,
+    getFetchListsAPI()
   );
 
   setInstance(agent);
@@ -130,6 +150,8 @@ export function getWrappers() {
     new Hono(),
     new GraphQL(),
     new OpenAI(),
+    new Mistral(),
+    new Anthropic(),
     new Xml2js(),
     new FastXmlParser(),
     new SQLite3(),
@@ -142,32 +164,53 @@ export function getWrappers() {
     new Postgresjs(),
     new Fastify(),
     new Koa(),
+    new Restify(),
     new ClickHouse(),
     new Prisma(),
     new AwsSDKVersion3(),
     // new Function(), Disabled because functionName.constructor === Function is false after patching global
     new AwsSDKVersion2(),
+    new AiSDK(),
+    new GoogleGenAi(),
   ];
 }
 
 export function protect() {
   startAgent({
     serverless: undefined,
+    newInstrumentation: false,
   });
 }
 
 export function lambda(): (handler: Handler) => Handler {
+  if (!shouldEnableFirewall()) {
+    return (handler: Handler) => handler;
+  }
+
   startAgent({
     serverless: "lambda",
+    newInstrumentation: false,
   });
 
   return createLambdaWrapper;
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
+  if (!shouldEnableFirewall()) {
+    return (handler: HttpFunction) => handler;
+  }
+
   startAgent({
     serverless: "gcp",
+    newInstrumentation: false,
   });
 
   return createCloudFunctionWrapper;
+}
+
+export function protectWithNewInstrumentation() {
+  startAgent({
+    serverless: undefined,
+    newInstrumentation: true,
+  });
 }

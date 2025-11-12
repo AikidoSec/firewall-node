@@ -1,0 +1,13 @@
+{
+  "name": "restify-postgres",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SQL Injection with postgres using Restify",
+  "main": "app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "dotenv": "^16.4.1",
+    "restify": "^8.6.0",
+    "pg": "^8.11.3"
+  }
+}

@@ -1,30 +1,36 @@
-import { request as requestHttp } from "http";
+import { request as requestHttp, type Agent } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
 
-async function request({
+function request({
   url,
   method,
   body,
   headers,
   signal,
+  agent,
 }: {
   url: URL;
   method: string;
   headers: Record<string, string>;
   signal: AbortSignal;
   body: string;
+  agent?: Agent;
 }): Promise<{ body: string; statusCode: number }> {
   const request = url.protocol === "https:" ? requestHttps : requestHttp;
 
   return new Promise((resolve, reject) => {
+    // Convert URL object to string for compatibility with old https-proxy-agent versions
+    // Old agent-base library (used by https-proxy-agent) only works with string URLs
+    // and fails when passed URL objects, causing communication with our dashboard to fail
     const req = request(
-      url,
+      url.toString(),
       {
         method,
         headers,
         signal,
+        agent,
       },
       (response) => {
         let stream: Readable = response;
@@ -64,12 +70,14 @@ export async function fetch({
   headers = {},
   body = "",
   timeoutInMS = 5000,
+  agent,
 }: {
   url: URL;
   method?: string;
   headers?: Record<string, string>;
   body?: string;
   timeoutInMS?: number;
+  agent?: Agent;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();
 
@@ -80,6 +88,7 @@ export async function fetch({
       headers,
       signal: abort.signal,
       body,
+      agent,
     }),
     new Promise<{
       body: string;

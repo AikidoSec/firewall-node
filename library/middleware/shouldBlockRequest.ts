@@ -5,7 +5,7 @@ import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 type Result = {
   block: boolean;
   type?: "ratelimited" | "blocked";
-  trigger?: "ip" | "user";
+  trigger?: "ip" | "user" | "group";
   ip?: string;
 };
 
@@ -18,6 +18,11 @@ export function shouldBlockRequest(): Result {
 
   const agent = getInstance();
   if (!agent) {
+    return { block: false };
+  }
+
+  if (agent.isServerless()) {
+    logWarningServerlessNotSupported();
     return { block: false };
   }
 
@@ -34,6 +39,9 @@ export function shouldBlockRequest(): Result {
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);
   if (rateLimitResult.block) {
+    // Mark the request as rate limited in the context
+    updateContext(context, "rateLimitedEndpoint", rateLimitResult.endpoint);
+
     return {
       block: true,
       type: "ratelimited",
@@ -73,4 +81,19 @@ function logWarningAlreadyExecutedMiddleware() {
   );
 
   loggedWarningAlreadyExecutedMiddleware = true;
+}
+
+let loggedWarningServerlessMiddleware = false;
+
+function logWarningServerlessNotSupported() {
+  if (loggedWarningServerlessMiddleware) {
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Zen.shouldBlockRequest() was called within a serverless function. Rate limiting and user blocking are only supported for traditional/long running apps due to the constraints of serverless environments."
+  );
+
+  loggedWarningServerlessMiddleware = true;
 }

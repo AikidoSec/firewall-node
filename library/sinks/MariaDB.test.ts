@@ -36,8 +36,9 @@ t.before(() => {
   agent.start([new MariaDB()]);
 });
 
+const mariadb = require("mariadb") as typeof import("mariadb");
+
 t.test("it detects SQL injections", async (t) => {
-  const mariadb = require("mariadb") as typeof import("mariadb");
   const pool = mariadb.createPool({
     host: "localhost",
     user: "root",
@@ -63,6 +64,13 @@ t.test("it detects SQL injections", async (t) => {
     t.same(await connection.query({ sql: "SELECT petname FROM `cats`;" }), []);
     t.same(await pool.query("SELECT petname FROM `cats`;"), []);
     t.same(await pool.query({ sql: "SELECT petname FROM `cats`;" }), []);
+
+    const queryStream = connection.queryStream("SELECT petname FROM `cats`;");
+    const streamResult = [];
+    for await (const row of queryStream) {
+      streamResult.push(row);
+    }
+    t.same(streamResult, []);
 
     const error = await t.rejects(async () => {
       await runWithContext(dangerousContext, () => {
@@ -124,6 +132,30 @@ t.test("it detects SQL injections", async (t) => {
       );
     }
 
+    const error5 = await t.rejects(async () => {
+      await runWithContext(dangerousContext, () => {
+        return connection.prepare("-- should be blocked");
+      });
+    });
+    if (error5 instanceof Error) {
+      t.same(
+        error5.message,
+        "Zen has blocked an SQL injection: mariadb.prepare(...) originating from body.myTitle"
+      );
+    }
+
+    const error6 = await t.rejects(async () => {
+      runWithContext(dangerousContext, () => {
+        return connection.queryStream("-- should be blocked");
+      });
+    });
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Zen has blocked an SQL injection: mariadb.queryStream(...) originating from body.myTitle"
+      );
+    }
+
     const undefinedQueryError = await t.rejects(async () => {
       await runWithContext(dangerousContext, () => {
         // @ts-expect-error Testing undefined query
@@ -150,9 +182,10 @@ t.test("it detects SQL injections", async (t) => {
   }
 });
 
+const mariadbCallback = require("mariadb/callback.js");
+
 t.test("it detects SQL injections using callbacks", (t) => {
-  const mariadb = require("mariadb/callback");
-  const pool = mariadb.createPool({
+  const pool = mariadbCallback.createPool({
     host: "localhost",
     user: "root",
     password: "mypassword",

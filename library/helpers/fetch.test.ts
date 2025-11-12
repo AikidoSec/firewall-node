@@ -6,6 +6,8 @@ import { getMajorNodeVersion } from "./getNodeVersion";
 
 let server: Server;
 
+// @esm-tests-skip - Mocking not working as exports are immutable
+
 // Start an HTTP server before running tests
 t.beforeEach(async () => {
   server = createServer((req, res) => {
@@ -130,3 +132,29 @@ t.test("should make a POST request with body and gzip", async (t) => {
     },
   });
 });
+
+t.test(
+  "should convert URL object to string for http.request compatibility",
+  async (t) => {
+    const http = require("http");
+    const originalRequest = http.request;
+    let receivedUrl: unknown;
+
+    // Mock the http.request to verify it receives a string URL
+    http.request = (url: unknown, options: unknown, callback: unknown) => {
+      receivedUrl = url;
+      return originalRequest(url, options, callback);
+    };
+
+    try {
+      const url = new URL(`http://localhost:${(server.address() as any).port}`);
+      await fetch({ url });
+
+      t.equal(typeof receivedUrl, "string");
+      t.equal(receivedUrl, url.toString());
+    } finally {
+      // Restore original request!
+      http.request = originalRequest;
+    }
+  }
+);

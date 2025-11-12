@@ -63,6 +63,23 @@ export class FastXmlParser implements Wrapper {
           ...exports,
           XMLParser: wrappedParser,
         };
-      });
+      })
+      .addMultiFileInstrumentation(
+        [
+          "src/xmlparser/XMLParser.js", // ESM
+          "lib/fxp.cjs", // CJS
+        ],
+        [
+          {
+            name: "parse",
+            nodeType: "MethodDefinition",
+            operationKind: "deserialize_op",
+            modifyReturnValue: (args, returnValue) => {
+              this.inspectParse(args, returnValue);
+              return returnValue;
+            },
+          },
+        ]
+      );
   }
 }

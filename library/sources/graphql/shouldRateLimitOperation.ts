@@ -4,6 +4,7 @@ import { Agent } from "../../agent/Agent";
 import { Context } from "../../agent/Context";
 import { isLocalhostIP } from "../../helpers/isLocalhostIP";
 import { extractTopLevelFieldsFromDocument } from "./extractTopLevelFieldsFromDocument";
+import type { Endpoint } from "../../agent/Config";
 
 type Result =
   | {
@@ -14,12 +15,24 @@ type Result =
       field: FieldNode;
       source: "ip";
       remoteAddress: string;
+      operationType: "query" | "mutation";
+      endpoint: Endpoint;
     }
   | {
       block: true;
       field: FieldNode;
       source: "user";
       userId: string;
+      operationType: "query" | "mutation";
+      endpoint: Endpoint;
+    }
+  | {
+      block: true;
+      field: FieldNode;
+      source: "group";
+      groupId: string;
+      operationType: "query" | "mutation";
+      endpoint: Endpoint;
     };
 
 export function shouldRateLimitOperation(
@@ -109,6 +122,29 @@ function shouldRateLimitField(
         field: field,
         source: "ip",
         remoteAddress: context.remoteAddress,
+        operationType: operationType,
+        endpoint: match,
+      };
+    }
+  }
+
+  if (context.rateLimitGroup) {
+    const allowed = agent
+      .getRateLimiter()
+      .isAllowed(
+        `${context.method}:${context.route}:group:${context.rateLimitGroup}:${operationType}:${field.name.value}`,
+        rateLimitedField.rateLimiting.windowSizeInMS,
+        rateLimitedField.rateLimiting.maxRequests
+      );
+
+    if (!allowed) {
+      return {
+        block: true,
+        field: field,
+        source: "group",
+        groupId: context.rateLimitGroup,
+        operationType: operationType,
+        endpoint: match,
       };
     }
   }
@@ -128,6 +164,8 @@ function shouldRateLimitField(
         field: field,
         source: "user",
         userId: context.user.id,
+        operationType: operationType,
+        endpoint: match,
       };
     }
   }
