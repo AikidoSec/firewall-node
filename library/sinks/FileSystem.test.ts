@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { URL } from "url";
 import { Context, runWithContext } from "../agent/Context";
 import { FileSystem } from "./FileSystem";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -50,6 +51,7 @@ t.test("it works", async (t) => {
   agent.start([new FileSystem()]);
 
   const {
+    readFile,
     writeFile,
     writeFileSync,
     rename,
@@ -306,6 +308,30 @@ t.test("it works", async (t) => {
     { ...unsafeContext, body: { file: { matches: "../%" } } },
     () => {
       rename(new URL("file:///../../test.txt"), "../test2.txt", () => {});
+    }
+  );
+
+  runWithContext(
+    {
+      remoteAddress: "::1",
+      method: "POST",
+      url: "http://localhost:4000",
+      query: {
+        q: "file://test/../../../../../../../../../../etc/passwd",
+      },
+      headers: {},
+      body: {},
+      cookies: {},
+      routeParams: {},
+      source: "express",
+      route: "/posts/:id",
+    },
+    () => {
+      const file = "file://test/../../../../../../../../../../etc/passwd";
+      throws(
+        () => readFile(new URL(`file:///public/${file}`)),
+        "Zen has blocked a path traversal attack: fs.readFile(...) originating from query.q"
+      );
     }
   );
 });
