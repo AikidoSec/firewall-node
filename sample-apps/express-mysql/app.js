@@ -1,8 +1,6 @@
 require("dotenv").config();
 require("@aikidosec/firewall");
 const Sentry = require("@sentry/node");
-const fs = require("fs");
-const { URL } = require("url");
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -126,17 +124,6 @@ async function main(port) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
-
-  app.get("/search", (req, res) => {
-    const searchTerm = req.query.q;
-    const fileUrl = new URL(`file:///public/${searchTerm}`);
-    fs.readFile(fileUrl, "utf-8", (err, data) => {
-      if (err) {
-        console.error(err);
-      }
-      res.send(`File content of /public/${searchTerm} : ${data}`);
-    });
   });
 
   app.use(Sentry.Handlers.errorHandler());
