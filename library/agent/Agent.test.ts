@@ -104,7 +104,11 @@ t.test("it sends started event", async (t) => {
           version: getSemverNodeVersion(),
           arch: process.arch,
         },
-        supportedFeatures: ["sca_package_reporting", "ai_stats"],
+        supportedFeatures: [
+          "sca_package_reporting",
+          "ai_stats",
+          "attack_wave_detection",
+        ],
       },
     },
   ]);
