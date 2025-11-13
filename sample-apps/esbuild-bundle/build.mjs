@@ -7,7 +7,7 @@ await esbuild.build({
   bundle: true,
   platform: "node",
   format: "cjs",
-  outfile: "build/app.js",
+  outdir: "build",
   plugins: [zenEsbuildPlugin()],
 });
 

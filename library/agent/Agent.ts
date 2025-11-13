@@ -523,7 +523,12 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
+    wrapInstalledPackages(
+      wrappers,
+      this.newInstrumentation,
+      this.serverless,
+      this.isBundlingProcess
+    );
 
     // In serverless environments, we delay the startup event until the first invocation
     // since some apps take a long time to boot and the init phase has strict timeouts
