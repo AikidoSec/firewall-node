@@ -147,7 +147,8 @@ export function getPackageFileInstrumentationInstructions(
   }
 
   return instructions.find(
-    (f) => f.path === filePath && satisfiesVersion(f.versionRange, version)
+    (f) =>
+      matchesPath(f.path, filePath) && satisfiesVersion(f.versionRange, version)
   );
 }
 

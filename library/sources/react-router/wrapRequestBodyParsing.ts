@@ -1,4 +1,5 @@
 import { getContext, updateContext } from "../../agent/Context";
+import { formDataToPlainObject } from "../../helpers/formDataToPlainObject";
 import { createWrappedFunction, isWrapped } from "../../helpers/wrap";
 
 /**
@@ -27,7 +28,11 @@ function wrapBodyParsingFunction<T extends Function>(func: T) {
       if (returnValue) {
         const context = getContext();
         if (context) {
-          updateContext(context, "body", returnValue);
+          if (returnValue instanceof FormData) {
+            updateContext(context, "body", formDataToPlainObject(returnValue));
+          } else {
+            updateContext(context, "body", returnValue);
+          }
         }
       }
 
