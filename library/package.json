@@ -56,7 +56,7 @@
     "@ai-sdk/google-v1": "npm:@ai-sdk/google@^1.2.19",
     "@ai-sdk/google-v2": "npm:@ai-sdk/google@^2.0.6",
     "@anthropic-ai/sdk": "^0.56.0",
-    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "@aws-sdk/client-bedrock-runtime": "3.929.0",
     "@clickhouse/client": "^1.7.0",
     "@fastify/cookie": "^11.0.2",
     "@google-cloud/functions-framework": "^4.0.0",
