@@ -8,14 +8,14 @@
   },
   "type": "commonjs",
   "exports": {
-    ".": "./index.cjs",
-    "./instrument": "./instrument/index.cjs",
-    "./instrument/internals": "./instrument/internals.cjs",
-    "./context": "./context/index.cjs",
-    "./lambda": "./lambda/index.cjs",
-    "./nopp": "./nopp/index.cjs",
-    "./cloud-function": "./cloud-function/index.cjs",
-    "./bundler": "./bundler/index.cjs"
+    ".": "./index.js",
+    "./instrument": "./instrument/index.js",
+    "./instrument/internals": "./instrument/internals.js",
+    "./context": "./context/index.js",
+    "./lambda": "./lambda/index.js",
+    "./nopp": "./nopp/index.js",
+    "./cloud-function": "./cloud-function/index.js",
+    "./bundler": "./bundler/index.js"
   },
   "homepage": "https://aikido.dev/zen",
   "author": "Aikido Security",
@@ -45,9 +45,9 @@
     "owasp"
   ],
   "license": "AGPL-3.0-or-later",
-  "main": "index.cjs",
-  "types": "index.d.cts",
-  "browser": "browser.cjs",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "browser": "browser.js",
   "engines": {
     "node": ">=16"
   },

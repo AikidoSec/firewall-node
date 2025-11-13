@@ -125,7 +125,7 @@ async function modifyDtsFilesAfterBuild() {
   // Search all d.ts files in the build directory, and replace all non-relative imports with a // @ts-ignore comment before them
   // The // @ts-ignore comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
   // That's why we need to replace a JSDoc comment with a // @ts-ignore comment
-  const dtsFiles = await findFilesWithExtension(buildDir, ".d.cts");
+  const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
     // Add // @ts-ignore before all lines containing library imports (non-relative imports)
