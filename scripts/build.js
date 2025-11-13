@@ -49,6 +49,11 @@ async function main() {
   await dlZenInternals();
   await buildInstrumentationWasm();
 
+  if (process.argv.includes("--only-wasm")) {
+    console.log("Built only WASM files as requested.");
+    process.exit(0);
+  }
+
   await execAsyncWithPipe(`npm run build`, {
     cwd: libDir,
   });
