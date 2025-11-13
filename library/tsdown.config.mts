@@ -19,7 +19,6 @@ export default defineConfig({
   sourcemap: true,
   platform: "node",
   tsconfig: "./tsconfig.build.json",
-  inlineOnly: [],
   fixedExtension: false,
   unbundle: process.env.BUILD_KEEP_STRUCTURE === "true",
 });

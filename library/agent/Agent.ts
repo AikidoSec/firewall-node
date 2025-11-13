@@ -521,7 +521,12 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
+    wrapInstalledPackages(
+      wrappers,
+      this.newInstrumentation,
+      this.serverless,
+      this.isBundlingProcess
+    );
 
     if (this.isBundlingProcess) {
       // No need to report events during the bundling process

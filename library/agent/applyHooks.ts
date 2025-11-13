@@ -18,15 +18,26 @@ import {
  * This method wraps the require function and sets up the hooks.
  * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
+export function applyHooks(
+  hooks: Hooks,
+  newInstrumentation: boolean,
+  isBundlingProcess: boolean = false
+) {
   if (!newInstrumentation) {
     setPackagesToPatch(hooks.getPackages());
     setBuiltinModulesToPatch(hooks.getBuiltInModules());
-    wrapRequire();
+
+    if (!isBundlingProcess) {
+      // No need to wrap require during the bundling process
+      wrapRequire();
+    }
   } else {
     setPackagesToInstrument(hooks.getPackages());
     setBuiltinsToInstrument(hooks.getBuiltInModules());
-    registerNodeHooks();
+    if (!isBundlingProcess) {
+      // No need to register hooks during the bundling process
+      registerNodeHooks();
+    }
   }
 
   hooks.getGlobals().forEach((g) => {

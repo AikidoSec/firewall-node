@@ -1,5 +1,5 @@
 import { externals } from "./externals";
-import { basePlugin } from "./unplugin";
+import { basePlugin } from "./internal/unplugin";
 
 const zenEsbuildPlugin = basePlugin.esbuild;
 
