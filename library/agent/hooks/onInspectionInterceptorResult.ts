@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import type { Agent } from "../Agent";

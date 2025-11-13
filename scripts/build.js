@@ -122,15 +122,18 @@ async function modifyDtsFilesAfterBuild() {
   // If the user has `"skipLibCheck": false` in their tsconfig.json, TypeScript will complain when express is not installed
   // If the user has `"skipLibCheck": true` in their tsconfig.json, it's fine
   //
-  // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
+  // Search all d.ts files in the build directory, and replace all non-relative imports with a // @ts-ignore comment before them
   // The // @ts-ignore comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
   // That's why we need to replace a JSDoc comment with a // @ts-ignore comment
-  const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
+  const dtsFiles = await findFilesWithExtension(buildDir, ".d.cts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
-    const modifiedContent = content.replaceAll(
-      "/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/",
-      "// @ts-ignore"
+    // Add // @ts-ignore before all lines containing library imports (non-relative imports)
+    const modifiedContent = content.replace(
+      /import\s+(.*)\s+from\s+['"]([^./][^'"]*)['"];?/g,
+      (match, p1, p2) => {
+        return `// @ts-ignore\nimport ${p1} from '${p2}';`;
+      }
     );
 
     // Write modified content back to the file if it was changed
