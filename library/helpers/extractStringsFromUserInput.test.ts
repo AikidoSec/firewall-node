@@ -10,6 +10,10 @@ t.test("empty object returns empty array", async () => {
   t.same(extractStringsFromUserInput({}), fromArr([]));
 });
 
+t.test("empty strings are ignored", async () => {
+  t.same(extractStringsFromUserInput({ abc: "" }), fromArr(["abc"]));
+});
+
 t.test("it can extract query objects", async () => {
   t.same(
     extractStringsFromUserInput({ age: { $gt: "21" } }),

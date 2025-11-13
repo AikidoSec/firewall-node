@@ -24,7 +24,7 @@ export NODE_OPTIONS='-r @aikidosec/firewall/instrument'
 
 ## Solved issues
 
-- Solved in Node.js v25.1.0. - The app might crash on startup if used together with some packages that use the Node.js Asynchronous Module Customization Hooks, like Sentry or OpenTelemetry, due to bugs in Node.js itself. Issue: [ERR_INVALID_RETURN_PROPERTY_VALUE when using module.register and module.registerHooks (#57327)](https://github.com/nodejs/node/issues/57327)
+- Solved in Node.js v24.11.1 / v25.1.0. - The app might crash on startup if used together with some packages that use the Node.js Asynchronous Module Customization Hooks, like Sentry or OpenTelemetry, due to bugs in Node.js itself. Issue: [ERR_INVALID_RETURN_PROPERTY_VALUE when using module.register and module.registerHooks (#57327)](https://github.com/nodejs/node/issues/57327)
 - Fixed in Node.js v24.3.0. - [ERR_INTERNAL_ASSERTION: Unexpected module status 3 (#58515)](https://github.com/nodejs/node/issues/58515)
 - Not solved in Node.js, but workaround used. - [TypeError when json file is required in hook and in the imported file (#57358)](https://github.com/nodejs/node/issues/57358). Make sure to always use `--require` to preload the Zen firewall and do not use `--import`.
 
