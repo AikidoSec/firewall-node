@@ -14,20 +14,12 @@ export function transformCode(
   pkgLoadFormat: PackageLoadFormat,
   fileInstructions: PackageFileInstrumentationInstructionJSON
 ): string {
-  // Path can be a RegExp pattern but JSON.stringify will throw an error
-  // We want the actual file path anyway, not the matching pattern
-  const instructionsWasm: JSONSerializable<PackageFileInstrumentationInstructionJSON> =
-    {
-      ...fileInstructions,
-      path: path,
-    };
-
   try {
     const result = wasm_transform_code_str(
       pkgName,
       pkgVersion,
       code,
-      JSON.stringify(instructionsWasm),
+      JSON.stringify(fileInstructions),
       getSourceType(path, pkgLoadFormat)
     );
 
@@ -51,19 +43,3 @@ export function transformCode(
     throw error;
   }
 }
-
-// There's no nice way to create types like these
-// Since we stringify the JSON instructions, we need to ensure that they are serializable
-// e.g. cannot contain RegExp
-type JSONPrimitive = string | number | boolean | null;
-type JSONSerializable<T> = T extends JSONPrimitive
-  ? T
-  : T extends (infer U)[]
-    ? JSONSerializable<U>[]
-    : T extends Record<string, unknown>
-      ? {
-          [K in keyof T as T[K] extends Function | symbol | undefined
-            ? never
-            : K]: JSONSerializable<T[K]>;
-        }
-      : never;
