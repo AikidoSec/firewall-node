@@ -160,5 +160,8 @@
     "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc && npm run check-format",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
+  },
+  "overrides": {
+    "koa@<=3.0.2": "3.0.2"
   }
 }
