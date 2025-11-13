@@ -60,18 +60,33 @@ async function main() {
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
-  await copyFile(
-    join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "zen_internals_bg.wasm")
-  );
-  await copyFile(
-    join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "zen_internals_bg.wasm")
-  );
-  await copyFile(
-    join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
-    join(buildDir, "node_code_instrumentation_bg.wasm")
-  );
+
+  if (process.env.BUILD_KEEP_STRUCTURE === "true") {
+    await copyFile(
+      join(internalsDir, "zen_internals_bg.wasm"),
+      join(buildDir, "internals", "zen_internals_bg.wasm")
+    );
+    await copyFile(
+      join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
+      join(
+        buildDir,
+        "agent",
+        "hooks",
+        "instrumentation",
+        "wasm",
+        "node_code_instrumentation_bg.wasm"
+      )
+    );
+  } else {
+    await copyFile(
+      join(internalsDir, "zen_internals_bg.wasm"),
+      join(buildDir, "zen_internals_bg.wasm")
+    );
+    await copyFile(
+      join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
+      join(buildDir, "node_code_instrumentation_bg.wasm")
+    );
+  }
 
   await modifyDtsFilesAfterBuild();
 

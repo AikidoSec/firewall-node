@@ -1,12 +1,4 @@
-import {
-  mkdir,
-  glob,
-  writeFile,
-  rm,
-  readFile,
-  copyFile,
-  cp,
-} from "fs/promises";
+import { mkdir, glob, writeFile, rm, readFile, copyFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { exec } from "child_process";
 import { existsSync } from "fs";
@@ -38,15 +30,12 @@ async function execAsyncWithPipe(command, options) {
 
 const libDir = join(import.meta.dirname, "../library");
 const outDir = join(import.meta.dirname, "../.esm-tests");
-const libBuildDir = join(import.meta.dirname, "../build");
 const libOutDir = join(outDir, "library");
 const testsOutDir = join(outDir, "tests");
 
 if (existsSync(outDir)) {
   await rm(outDir, { recursive: true, force: true });
 }
-
-await cp(libBuildDir, libOutDir, { recursive: true });
 
 await execAsyncWithPipe("./node_modules/.bin/tsc -p tsconfig.test.esm.json", {
   cwd: libDir,
@@ -343,6 +332,25 @@ await writeFile(
     null,
     2
   )
+);
+
+// Copy additional files to build directory
+await copyFile(join(libDir, "package.json"), join(libOutDir, "package.json"));
+await copyFile(
+  join(libDir, "internals", "zen_internals_bg.wasm"),
+  join(libOutDir, "internals", "zen_internals_bg.wasm")
+);
+
+const instrumentationWasm = join(
+  "agent",
+  "hooks",
+  "instrumentation",
+  "wasm",
+  "node_code_instrumentation_bg.wasm"
+);
+await copyFile(
+  join(libDir, instrumentationWasm),
+  join(libOutDir, instrumentationWasm)
 );
 
 await execAsyncWithPipe("ln -s ../../library/node_modules node_modules", {
