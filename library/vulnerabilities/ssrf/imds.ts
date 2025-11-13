@@ -1,4 +1,5 @@
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
+import mapIPv4ToIPv6 from "../../helpers/mapIPv4ToIPv6";
 
 const IMDSAddresses = new IPMatcher();
 
@@ -6,8 +7,10 @@ const IMDSAddresses = new IPMatcher();
 // We should block any requests to these IP addresses
 // This prevents STORED SSRF attacks that try to access the instance metadata service
 IMDSAddresses.add("169.254.169.254");
+IMDSAddresses.add(mapIPv4ToIPv6("169.254.169.254"));
 IMDSAddresses.add("fd00:ec2::254");
 IMDSAddresses.add("100.100.100.200"); // Alibaba Cloud
+IMDSAddresses.add(mapIPv4ToIPv6("100.100.100.200"));
 
 export function isIMDSIPAddress(ip: string): boolean {
   return IMDSAddresses.has(ip);
