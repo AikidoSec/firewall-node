@@ -59,6 +59,9 @@ const specialApps = {
   "functions-framework-sqlite3": {
     command: "npx functions-framework",
   },
+  "react-router-pg": {
+    command: "npm run start",
+  },
 };
 
 if (process.argv.length < 3) {
