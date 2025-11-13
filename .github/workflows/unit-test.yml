@@ -65,14 +65,19 @@ jobs:
       - run: npm run install-lib-only
       - name: Start containers
         run: npm run containers
-      - run: npm run build
+      - name: Prepare WASM components
+        run: npm run build -- --only-wasm
+        if: ${{ matrix.new-instrumentation != 'new' && matrix.mode != 'esm' }}
+      - name: Build complete library
+        run: npm run build
+        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
       - run: npm run test:ci
         if: ${{ matrix.new-instrumentation == 'current' }}
       - run: npm run test:ci:new
         if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'cjs' }}
       - name: Run tests in ESM mode
         run: npm run test:esm
-        if: ${{ matrix.new-instrumentation == 'new' &&matrix.mode == 'esm' }}
+        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
       - name: "Upload coverage"
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
         with:
