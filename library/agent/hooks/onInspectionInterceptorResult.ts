@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import type { Agent } from "../Agent";
@@ -8,9 +7,10 @@ import { getContext, updateContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
+import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 
 // Used for cleaning up the stack trace
-const libraryRoot = resolve(__dirname, "../..");
+const libraryRoot = getLibraryRoot();
 
 export function onInspectionInterceptorResult(
   context: ReturnType<typeof getContext>,

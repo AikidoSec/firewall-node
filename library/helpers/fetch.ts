@@ -1,5 +1,4 @@
-import type { Agent } from "http";
-import { request as requestHttp } from "http";
+import { request as requestHttp, type Agent } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
