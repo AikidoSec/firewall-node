@@ -1,6 +1,7 @@
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 
@@ -141,51 +142,67 @@ export class AwsSDKVersion3 implements Wrapper {
     });
   }
 
+  onRequire(exports: any, pkgInfo: PartialWrapPackageInfo) {
+    if (exports.BedrockRuntimeClient) {
+      wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
+        kind: "ai_op",
+        modifyReturnValue: (args, returnValue, agent) => {
+          if (args.length > 0) {
+            const command = args[0];
+            if (returnValue instanceof Promise) {
+              // Inspect the response after the promise resolves, it won't change the original promise
+              returnValue
+                .then((response) => {
+                  if (
+                    exports.InvokeModelCommand &&
+                    command instanceof exports.InvokeModelCommand
+                  ) {
+                    this.processInvokeModelResponse(response, command, agent);
+                  } else if (
+                    exports.ConverseCommand &&
+                    command instanceof exports.ConverseCommand
+                  ) {
+                    this.processConverseResponse(response, command, agent);
+                  }
+                })
+                .catch((error) => {
+                  agent.onErrorThrownByInterceptor({
+                    error: error,
+                    method: "send.<promise>",
+                    module: "@aws-sdk/client-bedrock-runtime",
+                  });
+                });
+            }
+          }
+
+          return returnValue;
+        },
+      });
+    }
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@aws-sdk/client-bedrock-runtime")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        if (exports.BedrockRuntimeClient) {
-          wrapExport(exports.BedrockRuntimeClient.prototype, "send", pkgInfo, {
-            kind: "ai_op",
-            modifyReturnValue: (args, returnValue, agent) => {
-              if (args.length > 0) {
-                const command = args[0];
-                if (returnValue instanceof Promise) {
-                  // Inspect the response after the promise resolves, it won't change the original promise
-                  returnValue
-                    .then((response) => {
-                      if (
-                        exports.InvokeModelCommand &&
-                        command instanceof exports.InvokeModelCommand
-                      ) {
-                        this.processInvokeModelResponse(
-                          response,
-                          command,
-                          agent
-                        );
-                      } else if (
-                        exports.ConverseCommand &&
-                        command instanceof exports.ConverseCommand
-                      ) {
-                        this.processConverseResponse(response, command, agent);
-                      }
-                    })
-                    .catch((error) => {
-                      agent.onErrorThrownByInterceptor({
-                        error: error,
-                        method: "send.<promise>",
-                        module: "@aws-sdk/client-bedrock-runtime",
-                      });
-                    });
-                }
-              }
-
-              return returnValue;
-            },
-          });
-        }
+        this.onRequire(exports, pkgInfo);
+      })
+      // ESM instrumentation not added yet
+      // because the package.json "main" field points to CJS build
+      // and "module" is not supported by Node.js:
+      // "module": "./dist-es/index.js",
+      .addFileInstrumentation({
+        path: "dist-cjs/index.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["module.exports"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && isPlainObject(vars[0])) {
+              this.onRequire(vars[0], pkgInfo);
+            }
+          },
+        },
       });
   }
 }

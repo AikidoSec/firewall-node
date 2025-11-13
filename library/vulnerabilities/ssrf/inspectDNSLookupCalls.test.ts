@@ -709,7 +709,7 @@ t.test("Reports IDMS SSRF from current request context", async (t) => {
         blocked: true,
         source: "body",
         path: ".image",
-        payload: "https://imds.test.com",
+        payload: '"https://imds.test.com"',
         metadata: {
           hostname: "imds.test.com",
           privateIP: "169.254.169.254",

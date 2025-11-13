@@ -42,7 +42,7 @@ export function extractStringsFromUserInput(
     results.add(obj.join());
   }
 
-  if (typeof obj === "string") {
+  if (typeof obj === "string" && obj.length > 0) {
     results.add(obj);
 
     if (obj.includes("%") && obj.length >= 3) {

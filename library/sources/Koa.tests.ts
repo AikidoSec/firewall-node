@@ -9,8 +9,10 @@ import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { startTestAgent } from "../helpers/startTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
-export function createKoaTests(koaPackageName: string) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createKoaTests(koaPackageName: string) {
   const agent = startTestAgent({
     block: true,
     api: new ReportingAPIForTesting({
@@ -40,7 +42,13 @@ export function createKoaTests(koaPackageName: string) {
     },
   });
 
-  const koa = require(koaPackageName) as typeof import("koa");
+  let koa = require(koaPackageName) as typeof import("koa");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error default export missing types
+    koa = koa.default;
+  }
+
   const { bodyParser } =
     require("@koa/bodyparser") as typeof import("@koa/bodyparser");
 

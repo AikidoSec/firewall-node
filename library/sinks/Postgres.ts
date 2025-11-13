@@ -57,6 +57,18 @@ export class Postgres implements Wrapper {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(args),
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/client.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "query",
+            operationKind: "sql_op",
+            bindContext: true,
+            inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
       });
   }
 }

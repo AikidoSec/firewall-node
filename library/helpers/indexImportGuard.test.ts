@@ -1,6 +1,8 @@
 import * as t from "tap";
 import { wrap } from "./wrap";
 
+// @esm-tests-skip
+
 const logs: string[] = [];
 wrap(console, "error", function warn() {
   return function error(message: string) {

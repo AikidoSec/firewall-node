@@ -70,6 +70,18 @@ export class GoogleGenAi implements Wrapper {
             module: "@google/genai",
           });
         });
+    } else {
+      try {
+        // The new instrumentation wraps the return statements inside the async function
+        // Inside an async function you can just return normal values (it's not a promise yet)
+        this.inspectResponse(agent, returnValue);
+      } catch (error) {
+        agent.onErrorThrownByInterceptor({
+          error: error instanceof Error ? error : new Error("Unknown error"),
+          method: "generateContent",
+          module: "@google/genai",
+        });
+      }
     }
   }
 
@@ -108,6 +120,20 @@ export class GoogleGenAi implements Wrapper {
         });
 
         return exports;
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["dist/node/index.cjs", "dist/node/index.mjs"],
+        [
+          {
+            name: "this.generateContent",
+            nodeType: "FunctionAssignment",
+            operationKind: "ai_op",
+            modifyReturnValue: (args, returnValue, agent) => {
+              this.inspectReturnValue(agent, returnValue);
+              return returnValue;
+            },
+          },
+        ]
+      );
   }
 }

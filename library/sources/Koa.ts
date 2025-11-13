@@ -44,6 +44,17 @@ export class Koa implements Wrapper {
             modifyArgs: this.wrapUseArgs,
           });
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/application.js",
+        functions: [
+          {
+            name: "use",
+            nodeType: "MethodDefinition",
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapUseArgs(args),
+          },
+        ],
       });
   }
 }

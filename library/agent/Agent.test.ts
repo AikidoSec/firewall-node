@@ -64,6 +64,7 @@ t.test("it throws error if serverless is empty string", async () => {
         new ReportingAPIForTesting(),
         undefined,
         "",
+        false,
         new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"

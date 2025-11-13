@@ -2,8 +2,8 @@ import type { ParsedQs } from "qs";
 import { extractStringsFromUserInput } from "../helpers/extractStringsFromUserInput";
 import { ContextStorage } from "./context/ContextStorage";
 import { AsyncResource } from "async_hooks";
-import { Source, SOURCES } from "./Source";
 import type { Endpoint } from "./Config";
+import { Source, SOURCES } from "./Source";
 
 export type User = { id: string; name?: string };
 
@@ -25,7 +25,8 @@ export type Context = {
   xml?: unknown[];
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
-  cache?: Map<Source, ReturnType<typeof extractStringsFromUserInput>>;
+  cache?: ReturnType<typeof extractStringsFromUserInput>;
+  cachePathTraversal?: ReturnType<typeof extractStringsFromUserInput>;
   /**
    * Used to store redirects in outgoing http(s) requests that are started by a user-supplied input (hostname and port / url) to prevent SSRF redirect attacks.
    */
@@ -56,8 +57,11 @@ export function updateContext<K extends keyof Context>(
 ) {
   context[key] = value;
 
-  if (context.cache && isSourceKey(key)) {
-    context.cache.delete(key);
+  if (isSourceKey(key)) {
+    // Clear all the cached user input strings
+    // Only if user input related fields are updated
+    delete context.cache;
+    delete context.cachePathTraversal;
   }
 }
 
@@ -100,6 +104,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   // In tests the context is often passed by reference
   // Make sure to clean up the cache before running the function
   delete context.cache;
+  delete context.cachePathTraversal;
 
   // If there's no context yet, we create a new context and run the function with it
   return ContextStorage.run(context, fn);

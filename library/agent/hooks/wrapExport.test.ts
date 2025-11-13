@@ -5,26 +5,6 @@ import { Token } from "../api/Token";
 import { bindContext } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
-t.test("Agent is not initialized", async (t) => {
-  try {
-    wrapExport(
-      {},
-      "test",
-      { name: "test", type: "external" },
-      {
-        kind: "outgoing_http_op",
-        inspectArgs: () => {},
-      }
-    );
-    t.fail();
-  } catch (e: unknown) {
-    t.ok(e instanceof Error);
-    if (e instanceof Error) {
-      t.same(e.message, "Can not wrap exports if agent is not initialized");
-    }
-  }
-});
-
 const logger = new LoggerForTesting();
 
 createTestAgent({
@@ -199,7 +179,7 @@ t.test("Wrap non existing method", async (t) => {
   );
 
   t.match(logger.getMessages(), [
-    "Failed to wrap method test123 in module test",
+    "Failed to wrap method test123 in module test: no original function test123 to wrap",
   ]);
 });
 

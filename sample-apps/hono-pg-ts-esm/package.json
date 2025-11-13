@@ -1,0 +1,17 @@
+{
+  "name": "hono-pg-ts-esm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --require @aikidosec/firewall/instrument --experimental-strip-types ./app.ts"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.13.8",
+    "hono": "^4.7.2",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}
