@@ -52,7 +52,7 @@ jobs:
           rustup default stable
           cargo install wasm-pack
       - run: npm install
-      - run: npm run build
+      - run: BUILD_KEEP_STRUCTURE=true npm run build
       - name: Run NoSQL Injection Benchmark
         run: cd benchmarks/nosql-injection && AIKIDO_CI=true node benchmark.js
       - name: Run SQL Injection Benchmark

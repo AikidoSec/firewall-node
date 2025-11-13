@@ -1,6 +1,8 @@
-import { resolve } from "path";
+import { sep, resolve } from "path";
 
-const libraryRoot = resolve(__dirname, "..");
+const isBundled = !__filename.includes(`${sep}helpers${sep}getLibraryRoot`);
+
+const libraryRoot = resolve(__dirname, isBundled ? "." : "..");
 
 export function getLibraryRoot(): string {
   return libraryRoot;
