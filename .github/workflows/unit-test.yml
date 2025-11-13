@@ -70,6 +70,7 @@ jobs:
       - name: Start containers
         run: npm run containers
       - name: Prepare WASM components
+        # When running tests with tap (CJS), we don't need to build our lib, just need the WASM files
         run: npm run build -- --only-wasm
         if: ${{ matrix.mode != 'esm' }}
       - name: Build complete library
