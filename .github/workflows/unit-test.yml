@@ -71,7 +71,7 @@ jobs:
         run: npm run containers
       - name: Prepare WASM components
         run: npm run build -- --only-wasm
-        if: ${{ matrix.new-instrumentation != 'new' && matrix.mode != 'esm' }}
+        if: ${{ matrix.mode != 'esm' }}
       - name: Build complete library
         run: npm run build
         if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
