@@ -54,7 +54,7 @@ jobs:
         run: |
           npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
-      - name: Downgrade npm for v25
+      - name: Downgrade npm for v25 and v24
         # https://github.com/npm/cli/issues/8669
         if: ${{ matrix.node-version == '25.x' || matrix.node-version == '24.x' }}
         run: npm i -g npm@11.6.0
