@@ -6,15 +6,20 @@ import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 type UserOptions = {
-  execlude?: string | string[];
-  inlineWebAssembly?: boolean;
+  /**
+   * Whether to copy Zen to the output directory for ESM builds.
+   */
+  copyModule: boolean;
 };
 
 let outputFormat: "cjs" | "esm" | undefined = undefined;
 let importFound = false;
+let userOptions: UserOptions | undefined = undefined;
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
-  createUnplugin(() => {
+  createUnplugin((options) => {
+    userOptions = options;
+
     return {
       name: "zen-js-bundler-plugin",
 
@@ -147,7 +152,7 @@ function copyFiles(outDir: string, format: "cjs" | "esm") {
     ]) {
       copyFileSync(join(zenLibDir, file), join(outDir, file));
     }
-  } else if (format === "esm") {
+  } else if (format === "esm" && userOptions?.copyModule !== false) {
     cpSync(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
       recursive: true,
     });
