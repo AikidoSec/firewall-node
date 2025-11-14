@@ -1,0 +1,20 @@
+{
+  "name": "restify-postgres",
+  "version": "1.0.0",
+  "description": "A vulnerable app to test out SQL Injection with postgres using Restify",
+  "main": "src/app.js",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "dotenv": "^16.4.1",
+    "restify": "^8.6.0",
+    "pg": "^8.11.3",
+    "@babel/core": "7.28.5",
+    "@babel/cli": "^7.28.3",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-typescript": "7.28.5"
+  },
+  "scripts": {
+    "build": "babel src --out-dir build --extensions '.ts,.js'"
+  }
+}
