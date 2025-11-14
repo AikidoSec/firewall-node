@@ -107,6 +107,8 @@
     "follow-redirects": "^1.15.6",
     "got": "^14.6.0",
     "graphql": "^16.8.2",
+    "graphql-v15": "npm:graphql@^15.10.1",
+    "graphql-v16": "npm:graphql@^16.8.2",
     "hono": "^4.4.2",
     "koa-router": "^13.0.1",
     "koa-v2": "npm:koa@^2.16.1",
