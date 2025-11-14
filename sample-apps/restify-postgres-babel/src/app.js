@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 config();
-import "@aikidosec/firewall";
+import Zen from "@aikidosec/firewall";
 import { Cats } from "./Cats.js";
 import restify from "restify";
 import { Client } from "pg";
@@ -56,6 +56,13 @@ async function main(port) {
   server.use(restify.plugins.queryParser());
   server.use(restify.plugins.bodyParser());
   server.use(restify.plugins.gzipResponse());
+
+  server.use((req, res, next) => {
+    Zen.setUser({ id: "my-user-id" });
+    return next();
+  });
+
+  Zen.addRestifyMiddleware(server);
 
   server.get("/", (req, res, next) => {
     let promise = Promise.resolve();
