@@ -21,4 +21,10 @@ export default defineConfig({
   tsconfig: "./tsconfig.build.json",
   fixedExtension: false,
   unbundle: process.env.BUILD_KEEP_STRUCTURE === "true",
+  copy: [
+    {
+      from: "./bundler/internal/shim.mjs",
+      to: "../build/bundler/internal/shim.mjs",
+    },
+  ],
 });
