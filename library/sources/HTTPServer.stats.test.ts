@@ -42,6 +42,7 @@ const agent = createTestAgent({
         pattern: "Google-Extended",
       },
     ],
+    domains: [],
   }),
 });
 

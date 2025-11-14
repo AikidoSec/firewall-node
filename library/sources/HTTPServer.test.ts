@@ -70,6 +70,7 @@ const mockedFetchListAPI = new FetchListsAPIForTesting({
   monitoredUserAgents: "",
   monitoredIPAddresses: [],
   userAgentDetails: [],
+  domains: [],
 });
 
 const agent = createTestAgent({

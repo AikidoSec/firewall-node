@@ -59,6 +59,7 @@ const agent = createTestAgent({
     ],
     monitoredIPAddresses: [],
     monitoredUserAgents: "",
+    domains: [],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);

@@ -67,6 +67,7 @@ const agent = createTestAgent({
         pattern: "attacker",
       },
     ],
+    domains: [],
   }),
 });
 agent.start([new HonoInternal(), new HTTPServer()]);
