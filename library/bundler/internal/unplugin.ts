@@ -11,13 +11,14 @@ type UserOptions = {
 };
 
 let outputFormat: "cjs" | "esm" | undefined = undefined;
+let importFound = false;
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
   createUnplugin(() => {
     return {
       name: "zen-js-bundler-plugin",
 
-      buildStart(options) {
+      buildStart: () => {
         protectDuringBundling();
       },
 
@@ -26,6 +27,19 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
           id: /\.(js|ts|cjs|mjs|jsx|tsx)$/,
         },
         handler(code, id) {
+          // Check whether the instrumentation import is present in the user's code
+          // The import is required in CJS builds but forbidden in ESM builds
+          if (
+            !importFound &&
+            !id.includes("node_modules") &&
+            // We need to ignore imports of instrument/internals from within the library itself
+            // As the lib is not inside the node_modules folder during unit and e2e tests
+            (code.includes("@aikidosec/firewall/instrument'") ||
+              code.includes('@aikidosec/firewall/instrument"'))
+          ) {
+            importFound = true;
+          }
+
           const result = patchPackage(id, {
             source: code,
             format: "unambiguous",
@@ -39,13 +53,26 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
               ? result.source
               : new TextDecoder("utf-8").decode(result.source);
 
-          // Todo rewrite Zen imports in ESM mode but after code is processed by bundler?
-
           return {
             code: modifiedCode,
           };
         },
       },
+
+      buildEnd: () => {
+        if (outputFormat === "esm" && importFound === true) {
+          throw new Error(
+            "Aikido: Detected import of '@aikidosec/firewall/instrument' in your code while building an ESM bundle. Please remove this import and preload the library by running Node.js with the --require option instead. See our ESM documentation for more information."
+          );
+        }
+
+        if (outputFormat === "cjs" && importFound === false) {
+          throw new Error(
+            "Aikido: Missing import of '@aikidosec/firewall/instrument' in your code while building a CJS bundle. Please add this as the first line of your application's entry point file to ensure proper instrumentation."
+          );
+        }
+      },
+
       esbuild: {
         config: (options) => {
           if (!options.format) {
@@ -73,6 +100,20 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
               options.external.push("@aikidosec/firewall");
             } else {
               throw new Error("esbuild external option is not an array");
+            }
+
+            const injectPath = join(
+              findZenLibPath(),
+              "bundler",
+              "internal",
+              "shim.mjs"
+            );
+            if (!options.inject) {
+              options.inject = [injectPath];
+            } else if (Array.isArray(options.inject)) {
+              options.inject.push(injectPath);
+            } else {
+              throw new Error("esbuild inject option is not an array");
             }
           }
 
@@ -107,7 +148,9 @@ function copyFiles(outDir: string, format: "cjs" | "esm") {
       copyFileSync(join(zenLibDir, file), join(outDir, file));
     }
   } else if (format === "esm") {
-    cpSync(zenLibDir, join(outDir, "zen"), { recursive: true });
+    cpSync(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
+      recursive: true,
+    });
   }
 }
 
