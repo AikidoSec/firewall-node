@@ -68,10 +68,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
-      - name: Setup Aikido safe-chain
-        run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
-          safe-chain setup-ci
       - name: Downgrade npm for v24 and v25
         # https://github.com/npm/cli/issues/8669
         if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
