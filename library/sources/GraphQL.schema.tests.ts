@@ -25,6 +25,15 @@ function getTestContext(): Context {
 }
 
 export function createGraphQLTests(pkgName: string) {
+  function expectedDSL(dsl: string): string {
+    if (pkgName === "graphql-v15") {
+      // GraphQL v15 printSchema adds a new line at the end
+      return dsl + "\n";
+    }
+
+    return dsl;
+  }
+
   t.test("it works", async () => {
     const api = new ReportingAPIForTesting();
     const agent = startTestAgent({
@@ -163,7 +172,7 @@ type Author {
           hits: hits,
           graphql: undefined,
           apispec: {},
-          graphQLSchema: dsl,
+          graphQLSchema: expectedDSL(dsl),
         },
         {
           method: "POST",
