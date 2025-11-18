@@ -113,8 +113,13 @@ function onFinishRequestHandler(
       agent.onRouteRateLimited(context.rateLimitedEndpoint);
     }
 
-    if (agent.getAttackWaveDetector().check(context)) {
-      agent.onDetectedAttackWave({ request: context, metadata: {} });
+    const attackWaveDetector = agent.getAttackWaveDetector();
+
+    if (attackWaveDetector.check(context) && context.remoteAddress) {
+      agent.onDetectedAttackWave({
+        request: context,
+        samples: attackWaveDetector.getSamplesForIP(context.remoteAddress),
+      });
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }

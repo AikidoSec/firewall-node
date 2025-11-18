@@ -30,7 +30,10 @@ import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
-import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
+import {
+  AttackWaveDetector,
+  SuspiciousRequest,
+} from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 
@@ -649,18 +652,19 @@ export class Agent {
    */
   onDetectedAttackWave({
     request,
-    metadata,
+    samples,
   }: {
     request: Context;
-    metadata: Record<string, string>;
+    samples: SuspiciousRequest[];
   }) {
     const attack: DetectedAttackWave = {
       type: "detected_attack_wave",
       time: Date.now(),
       attack: {
-        metadata: limitLengthMetadata(metadata, 4096),
+        metadata: {},
         user: request.user,
       },
+      samples: samples,
       request: {
         ipAddress: request.remoteAddress,
         userAgent:

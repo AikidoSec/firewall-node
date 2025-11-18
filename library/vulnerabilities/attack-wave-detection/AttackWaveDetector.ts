@@ -2,8 +2,13 @@ import { LRUMap } from "../../ratelimiting/LRUMap";
 import type { Context } from "../../agent/Context";
 import { isWebScanner } from "./isWebScanner";
 
+export type SuspiciousRequest = {
+  method: string;
+  url: string;
+};
+
 export class AttackWaveDetector {
-  private suspiciousRequestsMap: LRUMap<string, number>;
+  private suspiciousRequestsMap: LRUMap<string, SuspiciousRequest[]>;
   private sentEventsMap: LRUMap<string, number>;
 
   // How many suspicious requests are allowed before triggering an alert
@@ -57,19 +62,33 @@ export class AttackWaveDetector {
       return false;
     }
 
+    // In isWebScanner we use `context.route`, `context.route` is always created from `context.url`
+    if (!context.method || !context.url) {
+      return false;
+    }
+
     if (!isWebScanner(context)) {
       return false;
     }
 
-    const suspiciousRequests = (this.suspiciousRequestsMap.get(ip) || 0) + 1;
+    const suspiciousRequests = this.suspiciousRequestsMap.get(ip) || [];
+    suspiciousRequests.push({
+      method: context.method,
+      url: context.url,
+    });
+
     this.suspiciousRequestsMap.set(ip, suspiciousRequests);
 
-    if (suspiciousRequests < this.attackWaveThreshold) {
+    if (suspiciousRequests.length < this.attackWaveThreshold) {
       return false;
     }
 
     this.sentEventsMap.set(ip, performance.now());
 
     return true;
+  }
+
+  getSamplesForIP(ip: string) {
+    return this.suspiciousRequestsMap.get(ip) || [];
   }
 }
