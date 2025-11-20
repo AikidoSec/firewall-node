@@ -8,6 +8,10 @@ t.test("it works", async () => {
   agent.start([new PubSubWrapper()]);
 
   process.env.PUBSUB_EMULATOR_HOST = "127.0.0.1:8085";
+  // Do not try to ping the Google Cloud Platform (GCP) metadata server
+  // This causes the tap tests to not exit cleanly, if a HTTP proxy is used
+  // https://github.com/googleapis/google-cloud-node-core/blob/caf493f6e55cf8a6778ddf46d8d02f2013d7a1be/packages/gcp-metadata/README.md#environment-variables
+  process.env.METADATA_SERVER_DETECTION = "none";
 
   const projectId = "sample-project";
   const topicName = "test-topic";

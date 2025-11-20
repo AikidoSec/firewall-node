@@ -39,7 +39,7 @@ jobs:
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
+          npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
       - name: Downgrade npm
         # https://github.com/npm/cli/issues/8669
