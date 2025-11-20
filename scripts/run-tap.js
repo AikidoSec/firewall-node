@@ -25,7 +25,7 @@ if (process.argv.includes("--test-new-instrumentation")) {
   }
 }
 
-execSync(`./node_modules/.bin/tap run ${args}`, {
+execSync(`tap run ${args}`, {
   stdio: "inherit",
   env: {
     ...process.env,
