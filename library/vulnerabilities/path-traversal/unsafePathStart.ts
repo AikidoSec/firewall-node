@@ -1,5 +1,5 @@
 import { isAbsolute, resolve } from "path";
-import { isWrapped } from "../../helpers/wrap";
+import { isWrapped, originalSymbol } from "../../helpers/wrap";
 
 const rootFolders = [
   "/bin/",
@@ -42,7 +42,7 @@ export function startsWithUnsafePath(filePath: string, userInput: string) {
 
   let origResolve = resolve;
   if (isWrapped(resolve)) {
-    origResolve = resolve.__original;
+    origResolve = resolve[originalSymbol];
   }
 
   const normalizedPath = origResolve(filePath).toLowerCase();
