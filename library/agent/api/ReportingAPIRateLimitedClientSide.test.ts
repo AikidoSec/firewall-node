@@ -53,6 +53,11 @@ function generateAttackEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: [
+        "sca_package_reporting",
+        "ai_stats",
+        "attack_wave_detection",
+      ],
     },
   };
 }
@@ -92,6 +97,11 @@ function generateAttackWaveEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: [
+        "sca_package_reporting",
+        "ai_stats",
+        "attack_wave_detection",
+      ],
     },
   };
 }
@@ -150,6 +160,11 @@ function generateStartedEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: [
+        "sca_package_reporting",
+        "ai_stats",
+        "attack_wave_detection",
+      ],
     },
   };
 }
@@ -229,6 +244,11 @@ function generateHeartbeatEvent(): Event {
         version: "version",
         arch: "arch",
       },
+      supportedFeatures: [
+        "sca_package_reporting",
+        "ai_stats",
+        "attack_wave_detection",
+      ],
     },
     hostnames: [],
     routes: [],
