@@ -8,7 +8,8 @@ export type SuspiciousRequest = {
 };
 
 export class AttackWaveDetector {
-  private suspiciousRequestsMap: LRUMap<string, SuspiciousRequest[]>;
+  private suspiciousRequestsCounts: LRUMap<string, number>;
+  private suspiciousRequestsSamples: LRUMap<string, SuspiciousRequest[]>;
   private sentEventsMap: LRUMap<string, number>;
 
   // How many suspicious requests are allowed before triggering an alert
@@ -19,6 +20,8 @@ export class AttackWaveDetector {
   private readonly minTimeBetweenEvents: number;
   // Maximum number of entries in the LRU cache
   private readonly maxLRUEntries: number;
+  // Maximum number of samples to keep per IP
+  private readonly maxSamplesPerIP: number;
 
   constructor(
     options: {
@@ -26,14 +29,20 @@ export class AttackWaveDetector {
       attackWaveTimeFrame?: number;
       minTimeBetweenEvents?: number;
       maxLRUEntries?: number;
+      maxSamplesPerIP?: number;
     } = {}
   ) {
     this.attackWaveThreshold = options.attackWaveThreshold ?? 15; // Default: 15 requests
     this.attackWaveTimeFrame = options.attackWaveTimeFrame ?? 60 * 1000; // Default: 1 minute
     this.minTimeBetweenEvents = options.minTimeBetweenEvents ?? 20 * 60 * 1000; // Default: 20 minutes
     this.maxLRUEntries = options.maxLRUEntries ?? 10_000; // Default: 10,000 entries
+    this.maxSamplesPerIP = options.maxSamplesPerIP ?? 15; // Default: 15 samples
 
-    this.suspiciousRequestsMap = new LRUMap(
+    this.suspiciousRequestsCounts = new LRUMap(
+      this.maxLRUEntries,
+      this.attackWaveTimeFrame
+    );
+    this.suspiciousRequestsSamples = new LRUMap(
       this.maxLRUEntries,
       this.attackWaveTimeFrame
     );
@@ -71,15 +80,15 @@ export class AttackWaveDetector {
       return false;
     }
 
-    const suspiciousRequests = this.suspiciousRequestsMap.get(ip) || [];
-    suspiciousRequests.push({
+    const suspiciousRequests = (this.suspiciousRequestsCounts.get(ip) || 0) + 1;
+    this.suspiciousRequestsCounts.set(ip, suspiciousRequests);
+
+    this.trackSample(ip, {
       method: context.method,
       url: context.url,
     });
 
-    this.suspiciousRequestsMap.set(ip, suspiciousRequests);
-
-    if (suspiciousRequests.length < this.attackWaveThreshold) {
+    if (suspiciousRequests < this.attackWaveThreshold) {
       return false;
     }
 
@@ -88,7 +97,26 @@ export class AttackWaveDetector {
     return true;
   }
 
-  getSamplesForIP(ip: string) {
-    return this.suspiciousRequestsMap.get(ip) || [];
+  getSamplesForIP(ip: string): SuspiciousRequest[] {
+    return this.suspiciousRequestsSamples.get(ip) || [];
+  }
+
+  trackSample(ip: string, request: SuspiciousRequest) {
+    const samples = this.suspiciousRequestsSamples.get(ip) || [];
+    if (samples.length > this.maxSamplesPerIP) {
+      return;
+    }
+
+    // Only store unique samples
+    // We can't use a Set because we have objects
+    if (
+      !samples.some(
+        (sample) =>
+          sample.method === request.method && sample.url === request.url
+      )
+    ) {
+      samples.push(request);
+      this.suspiciousRequestsSamples.set(ip, samples);
+    }
   }
 }

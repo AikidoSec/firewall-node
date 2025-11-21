@@ -81,7 +81,6 @@ function discoverRouteFromStream(
       if (attackWaveDetector.check(context) && context.remoteAddress) {
         agent.onDetectedAttackWave({
           request: context,
-          samples: attackWaveDetector.getSamplesForIP(context.remoteAddress),
         });
         agent.getInspectionStatistics().onAttackWaveDetected();
       }

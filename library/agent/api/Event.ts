@@ -166,10 +166,6 @@ export type DetectedAttackWave = {
     metadata: Record<string, string>;
     user: User | undefined;
   };
-  samples: {
-    method: string;
-    url: string;
-  }[];
   agent: AgentInfo;
   time: number;
 };

@@ -30,10 +30,7 @@ import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
-import {
-  AttackWaveDetector,
-  SuspiciousRequest,
-} from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
+import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 
@@ -650,21 +647,29 @@ export class Agent {
   /**
    * This function gets called when an attack wave is detected, it reports this attack wave to the API
    */
-  onDetectedAttackWave({
-    request,
-    samples,
-  }: {
-    request: Context;
-    samples: SuspiciousRequest[];
-  }) {
+  onDetectedAttackWave({ request }: { request: Context }) {
+    if (!request.remoteAddress) {
+      // Cannot report attack wave without IP address
+      // Should not happen since AttackWaveDetector checks for remoteAddress
+      return;
+    }
+
+    const samples = this.attackWaveDetector.getSamplesForIP(
+      request.remoteAddress
+    );
+
     const attack: DetectedAttackWave = {
       type: "detected_attack_wave",
       time: Date.now(),
       attack: {
-        metadata: {},
+        metadata: limitLengthMetadata(
+          {
+            samples: JSON.stringify(samples),
+          },
+          4096
+        ),
         user: request.user,
       },
-      samples: samples,
       request: {
         ipAddress: request.remoteAddress,
         userAgent:
