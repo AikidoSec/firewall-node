@@ -26,6 +26,14 @@ export class HTTPRequest implements Wrapper {
     if (typeof port === "number" && port > 0) {
       agent.onConnectHostname(url.hostname, port);
     }
+
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
+      return {
+        hostname: url.hostname,
+        operation: `${module}.request`,
+      };
+    }
+
     const context = getContext();
 
     if (!context) {

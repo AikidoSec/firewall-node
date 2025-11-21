@@ -78,6 +78,7 @@ t.test("it fetches the lists", async (t) => {
     blockedUserAgents: "hacker",
     monitoredUserAgents: "",
     userAgentDetails: [],
+    domains: [],
   });
 
   await stop();
@@ -130,6 +131,7 @@ t.test("invalid response", async (t) => {
     blockedUserAgents: "",
     monitoredUserAgents: "",
     userAgentDetails: [],
+    domains: [],
   });
 
   await stop();

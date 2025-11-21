@@ -14,6 +14,8 @@ export class ReportingAPIForTesting implements ReportingAPI {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
       allowedIPAddresses: [],
+      blockNewOutgoingRequests: false,
+      domains: [],
     }
   ) {}
 

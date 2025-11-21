@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -5,7 +6,11 @@ import type { Agent } from "../Agent";
 import { OperationKind } from "../api/Event";
 import { attackKindHumanName } from "../Attack";
 import { getContext, updateContext } from "../Context";
-import type { InterceptorResult } from "./InterceptorResult";
+import {
+  InterceptorResult,
+  isAttackResult,
+  isBlockOutboundConnectionResult,
+} from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
 
@@ -39,7 +44,15 @@ export function onInspectionInterceptorResult(
     context.remoteAddress &&
     agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (result && context && !isBypassedIP) {
+  if (isBlockOutboundConnectionResult(result) && !isBypassedIP) {
+    throw cleanError(
+      new Error(
+        `Zen has blocked an outbound connection: ${result.operation}(...) to ${escapeHTML(result.hostname)}`
+      )
+    );
+  }
+
+  if (isAttackResult(result) && context && !isBypassedIP) {
     // Flag request as having an attack detected
     updateContext(context, "attackDetected", true);
 
