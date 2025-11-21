@@ -20,7 +20,7 @@ export class AttackWaveDetector {
   private readonly minTimeBetweenEvents: number;
   // Maximum number of entries in the LRU cache
   private readonly maxLRUEntries: number;
-  // Maximum number of samples to keep per IP
+  // Maximum number of samples to keep per IP, can not be higher than attackWaveThreshold
   private readonly maxSamplesPerIP: number;
 
   constructor(
@@ -103,20 +103,21 @@ export class AttackWaveDetector {
 
   trackSample(ip: string, request: SuspiciousRequest) {
     const samples = this.suspiciousRequestsSamples.get(ip) || [];
-    if (samples.length > this.maxSamplesPerIP) {
+    if (samples.length >= this.maxSamplesPerIP) {
       return;
     }
 
     // Only store unique samples
     // We can't use a Set because we have objects
     if (
-      !samples.some(
+      samples.some(
         (sample) =>
           sample.method === request.method && sample.url === request.url
       )
     ) {
-      samples.push(request);
-      this.suspiciousRequestsSamples.set(ip, samples);
+      return;
     }
+    samples.push(request);
+    this.suspiciousRequestsSamples.set(ip, samples);
   }
 }
