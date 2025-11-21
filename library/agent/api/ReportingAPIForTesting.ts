@@ -15,6 +15,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
       blockedUserIds: [],
       allowedIPAddresses: [],
       blockNewOutgoingRequests: false,
+      domains: [],
     }
   ) {}
 

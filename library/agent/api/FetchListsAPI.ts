@@ -12,11 +12,6 @@ export type UserAgentDetails = {
   pattern: string; // e.g. "ClaudeBot" (the regex pattern)
 };
 
-export type Domain = {
-  hostname: string;
-  mode: "allow" | "block";
-};
-
 export type FetchListsAPIResponse = {
   blockedIPAddresses: IPList[];
   allowedIPAddresses: IPList[];
@@ -27,7 +22,6 @@ export type FetchListsAPIResponse = {
   // If we want to collect stats about the individual user agents,
   // we can loop through the userAgentDetails and match each pattern.
   userAgentDetails: UserAgentDetails[];
-  domains: Domain[];
 };
 
 export interface FetchListsAPI {

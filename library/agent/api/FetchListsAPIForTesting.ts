@@ -10,7 +10,6 @@ export class FetchListsAPIForTesting implements FetchListsAPI {
       blockedUserAgents: "",
       monitoredUserAgents: "",
       userAgentDetails: [],
-      domains: [],
     }
   ) {}
 

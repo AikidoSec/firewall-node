@@ -42,10 +42,6 @@ const mockedFetchListAPI = new FetchListsAPIForTesting({
       pattern: "Bytespider",
     },
   ],
-  domains: [
-    { hostname: "example.com", mode: "block" },
-    { hostname: "aikido.dev", mode: "allow" },
-  ],
 });
 
 let logs: string[] = [];
@@ -1188,7 +1184,6 @@ t.test("it only allows some IP addresses", async () => {
           pattern: "Bytespider",
         },
       ],
-      domains: [],
     }),
   });
 
@@ -1308,6 +1303,10 @@ t.test("it blocks new outgoing requests if config says so", async () => {
     block: true,
     receivedAnyStats: false,
     blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
   });
   const agent = createTestAgent({
     api,
@@ -1320,6 +1319,8 @@ t.test("it blocks new outgoing requests if config says so", async () => {
   await agent.flushStats(1000);
 
   t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
 
   clock.uninstall();
 });
@@ -1340,6 +1341,10 @@ t.test(
       block: true,
       receivedAnyStats: false,
       blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
     });
     const agent = createTestAgent({
       api,
@@ -1352,6 +1357,8 @@ t.test(
     await agent.flushStats(1000);
 
     t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
 
     clock.uninstall();
   }

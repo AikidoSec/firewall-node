@@ -1,8 +1,8 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import type { Endpoint, EndpointConfig } from "./Config";
-import type { Domain, IPList, UserAgentDetails } from "./api/FetchListsAPI";
+import type { Endpoint, EndpointConfig, Domain } from "./Config";
+import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 
 export class ServiceConfig {

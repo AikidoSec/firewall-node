@@ -23,7 +23,6 @@ function createTestEndpoint({
     blockedUserAgents: "hacker",
     monitoredUserAgents: "",
     userAgentDetails: [],
-    domains: [],
   },
 }: {
   sleepInMs?: number;

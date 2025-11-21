@@ -60,7 +60,6 @@ export class FetchListsAPINodeHTTP implements FetchListsAPI {
         result && Array.isArray(result.userAgentDetails)
           ? result.userAgentDetails
           : [],
-      domains: result && Array.isArray(result.domains) ? result.domains : [],
     };
   }
 }

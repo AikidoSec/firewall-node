@@ -30,26 +30,19 @@ export class Undici implements Wrapper {
     port: number | undefined,
     method: string
   ): InterceptorResult {
-    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
-      if (typeof port === "number" && port > 0) {
-        agent.onConnectHostname(hostname, port, true);
-      }
-
-      return {
-        operation: `undici.${method}`,
-        kind: "blocked_outbound_connection",
-        source: "url",
-        pathsToPayload: [],
-        metadata: {},
-        payload: hostname,
-      };
-    }
-
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
       agent.onConnectHostname(hostname, port);
     }
+
+    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+      return {
+        operation: `undici.${method}`,
+        hostname: hostname,
+      };
+    }
+
     const context = getContext();
 
     if (!context) {
