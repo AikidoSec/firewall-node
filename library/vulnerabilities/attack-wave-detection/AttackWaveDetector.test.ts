@@ -30,7 +30,7 @@ function newAttackWaveDetector() {
     attackWaveTimeFrame: 60 * 1000,
     minTimeBetweenEvents: 60 * 60 * 1000,
     maxLRUEntries: 10_000,
-    maxSamplesPerIP: 6,
+    maxSamplesPerIP: 5,
   });
 }
 
@@ -160,13 +160,12 @@ t.test("it collects samples correctly", async (t) => {
   detector.check(getTestContext(ip, "/.git/config", "GET"));
   detector.check(getTestContext(ip, "/.env", "GET"));
   detector.check(getTestContext(ip, "/.htaccess", "GET"));
-  detector.check(getTestContext(ip, "/.htpasswd", "GET"));
 
   detector.check(getTestContext(ip, "/.htaccess", "GET")); // Duplicate
-  detector.check(getTestContext("::2", "/.htpasswd", "GET")); // Different IP
+  detector.check(getTestContext("::2", "/test/.env", "GET")); // Different IP
 
   const samples = detector.getSamplesForIP(ip);
-  t.equal(samples.length, 6, "should have collected 6 samples");
+  t.equal(samples.length, 5, "should have collected 5 samples");
 
   t.same(
     samples,
@@ -176,7 +175,6 @@ t.test("it collects samples correctly", async (t) => {
       { method: "GET", url: "http://localhost:4000/.git/config" },
       { method: "GET", url: "http://localhost:4000/.env" },
       { method: "GET", url: "http://localhost:4000/.htaccess" },
-      { method: "GET", url: "http://localhost:4000/.htpasswd" },
     ],
     "should have collected the correct samples"
   );
@@ -191,5 +189,17 @@ t.test("it limits samples correctly", async (t) => {
   }
 
   const samples = detector.getSamplesForIP(ip);
-  t.equal(samples.length, 6, "should have collected maximum 6 samples");
+  t.equal(samples.length, 5, "should have collected maximum 5 samples");
+
+  t.same(
+    samples,
+    [
+      { method: "GET", url: "http://localhost:4000/0/.env" },
+      { method: "GET", url: "http://localhost:4000/1/.env" },
+      { method: "GET", url: "http://localhost:4000/2/.env" },
+      { method: "GET", url: "http://localhost:4000/3/.env" },
+      { method: "GET", url: "http://localhost:4000/4/.env" },
+    ],
+    "should have collected the correct samples"
+  );
 });
