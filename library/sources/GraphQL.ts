@@ -172,7 +172,9 @@ export class GraphQL implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const graphqlPkg = hooks.addPackage("graphql").withVersion("^16.0.0");
+    const graphqlPkg = hooks
+      .addPackage("graphql")
+      .withVersion("^15.0.0 || ^16.0.0");
 
     graphqlPkg
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
