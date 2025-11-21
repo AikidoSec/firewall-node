@@ -1271,7 +1271,7 @@ t.test("attack wave detected event", async (t) => {
       type: "detected_attack_wave",
       attack: {
         metadata: {
-          samples: [],
+          samples: "[]",
         },
       },
       request: {
