@@ -421,7 +421,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
     });
     const agent = createTestAgent({
       api,
@@ -490,7 +489,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
     });
     const agent = createTestAgent({
       api,
