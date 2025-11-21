@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { isWrapped, wrap } from "./wrap";
+import { isWrapped, originalSymbol, wrap, wrappedSymbol } from "./wrap";
 
 class MyClass {
   abc = "abc";
@@ -97,16 +97,16 @@ t.test("it preserves the original function's properties", async (t) => {
   t.same(isWrapped(moduleObj.myMethod), true);
   t.same(moduleObj.myMethod.someProperty, "someValue");
   // @ts-expect-error Defined by Zen
-  t.same(moduleObj.myMethod.__original, originalFunction);
+  t.same(moduleObj.myMethod[originalSymbol], originalFunction);
   // @ts-expect-error Defined by Zen
-  t.same(moduleObj.myMethod.__wrapped, true);
+  t.same(moduleObj.myMethod[wrappedSymbol], true);
 
   // @ts-expect-error Not auto detected by TypeScript
   t.same(moduleObj.getterAndSetter(), "Zen");
   // @ts-expect-error Not auto detected by TypeScript
-  t.same(moduleObj.getterAndSetter.__original(), "42");
+  t.same(moduleObj.getterAndSetter[originalSymbol](), "42");
   // @ts-expect-error Not auto detected by TypeScript
-  t.same(moduleObj.getterAndSetter.__wrapped, true);
+  t.same(moduleObj.getterAndSetter[wrappedSymbol], true);
   t.same(
     Object.getOwnPropertyDescriptor(moduleObj, "getterAndSetter")!.enumerable,
     true
@@ -115,11 +115,37 @@ t.test("it preserves the original function's properties", async (t) => {
   // @ts-expect-error Not auto detected by TypeScript
   t.same(moduleObj.nonEnumerable(), "Zen");
   // @ts-expect-error Not auto detected by TypeScript
-  t.same(moduleObj.nonEnumerable.__original(), "nonEnumerable");
+  t.same(moduleObj.nonEnumerable[originalSymbol](), "nonEnumerable");
   // @ts-expect-error Not auto detected by TypeScript
-  t.same(moduleObj.nonEnumerable.__wrapped, true);
+  t.same(moduleObj.nonEnumerable[wrappedSymbol], true);
   t.same(
     Object.getOwnPropertyDescriptor(moduleObj, "nonEnumerable")!.enumerable,
     false
+  );
+});
+
+t.test("throws when original property is non-configurable", async (t) => {
+  const module: any = {};
+  function original() {}
+  Object.defineProperty(module, "fn", {
+    value: original,
+    configurable: false,
+    writable: false,
+    enumerable: true,
+  });
+
+  const wrapper = (orig: Function) => {
+    const w = function (this: any, ...args: any[]) {
+      return orig.apply(this, args);
+    };
+    return w;
+  };
+
+  const error = t.throws(() => {
+    wrap(module, "fn", wrapper);
+  });
+  t.same(
+    error instanceof Error ? error.message : null,
+    "Cannot redefine property: fn"
   );
 });
