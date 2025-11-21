@@ -65,6 +65,12 @@ export class VersionedPackage {
    * The path is relative to the package root.
    */
   addFileInstrumentation(instruction: PackageFileInstrumentationInstruction) {
+    if (instruction.path instanceof RegExp) {
+      // Just accept RegExp paths as-is
+      this.fileInstrumentationInstructions.push(instruction);
+      return this;
+    }
+
     if (instruction.path.length === 0) {
       throw new Error("Path must not be empty");
     }
