@@ -47,7 +47,7 @@ export function onInspectionInterceptorResult(
   if (isBlockOutboundConnectionResult(result) && !isBypassedIP) {
     throw cleanError(
       new Error(
-        `Zen has blocked an outbound HTTP connection: ${result.operation}(...) to ${escapeHTML(result.hostname)}`
+        `Zen has blocked an outbound connection: ${result.operation}(...) to ${escapeHTML(result.hostname)}`
       )
     );
   }
