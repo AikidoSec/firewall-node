@@ -1,7 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -1265,9 +1264,6 @@ t.test("attack wave detected event", async (t) => {
       route: "/posts/:id",
       routeParams: {},
     },
-    metadata: {
-      x: "test",
-    },
   });
 
   t.match(api.getEvents(), [
@@ -1275,7 +1271,7 @@ t.test("attack wave detected event", async (t) => {
       type: "detected_attack_wave",
       attack: {
         metadata: {
-          x: "test",
+          samples: "[]",
         },
       },
       request: {

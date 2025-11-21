@@ -299,7 +299,6 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
 
     agent.onDetectedAttackWave({
       request: getContext()!,
-      metadata: {},
     });
 
     res.sendStatus(200);

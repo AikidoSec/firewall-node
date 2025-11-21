@@ -62,7 +62,7 @@ function generateAttackWaveEvent(): Event {
     type: "detected_attack_wave",
     time: Date.now(),
     request: {
-      ipAddress: undefined,
+      ipAddress: "::1",
       userAgent: undefined,
       source: "express",
     },

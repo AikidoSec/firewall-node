@@ -1103,7 +1103,34 @@ t.test("it reports attack waves", async (t) => {
         {
           type: "detected_attack_wave",
           attack: {
-            metadata: {},
+            metadata: {
+              samples: JSON.stringify([
+                {
+                  method: "GET",
+                  url: "/../package.json",
+                },
+                {
+                  method: "GET",
+                  url: "/.env",
+                },
+                {
+                  method: "GET",
+                  url: "/wp-config.php",
+                },
+                {
+                  method: "GET",
+                  url: "/etc/passwd",
+                },
+                {
+                  method: "GET",
+                  url: "/.git/config",
+                },
+                {
+                  method: "GET",
+                  url: "/%systemroot%/system32/cmd.exe",
+                },
+              ]),
+            },
             user: undefined,
           },
           request: {
