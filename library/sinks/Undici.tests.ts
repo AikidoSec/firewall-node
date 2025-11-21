@@ -77,7 +77,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -88,7 +87,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -103,7 +101,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -118,7 +115,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -133,7 +129,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -148,7 +143,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 80,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -163,7 +157,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -174,7 +167,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -187,7 +179,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -200,7 +191,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -213,7 +203,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();
@@ -226,7 +215,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           hostname: "ssrf-redirects.testssandbox.com",
           port: 443,
           hits: 1,
-          blockedHits: 0,
         },
       ]);
       agent.getHostnames().clear();

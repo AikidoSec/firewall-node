@@ -95,14 +95,14 @@ t.test(
     await fetch("http://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "app.aikido.dev", port: 80, hits: 1, blockedHits: 0 },
+      { hostname: "app.aikido.dev", port: 80, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
     await fetch(new URL("https://app.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "app.aikido.dev", port: 443, hits: 1, blockedHits: 0 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
@@ -115,7 +115,7 @@ t.test(
     await fetch(new Request("https://app.aikido.dev"));
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "app.aikido.dev", port: 443, hits: 1, blockedHits: 0 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
 
     agent.getHostnames().clear();
@@ -588,8 +588,8 @@ t.test(
     await fetch("https://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443, hits: 1, blockedHits: 1 },
-      { hostname: "app.aikido.dev", port: 443, hits: 1, blockedHits: 0 },
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
 
     agent.getConfig().setBlockNewOutgoingRequests(true);
@@ -606,9 +606,9 @@ t.test(
     await fetch("https://app.aikido.dev");
 
     t.same(agent.getHostnames().asArray(), [
-      { hostname: "aikido.dev", port: 443, hits: 1, blockedHits: 1 },
-      { hostname: "app.aikido.dev", port: 443, hits: 2, blockedHits: 0 },
-      { hostname: "example.com", port: 443, hits: 1, blockedHits: 1 },
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 2 },
+      { hostname: "example.com", port: 443, hits: 1 },
     ]);
   }
 );

@@ -1,48 +1,23 @@
-type Ports = Map<
-  number,
-  {
-    hits: number;
-    blockedHits: number;
-  }
->;
+type Ports = Map<number, number>;
 
 export class Hostnames {
   private map: Map<string, Ports> = new Map();
 
   constructor(private readonly maxEntries: number = 200) {}
 
-  add(hostname: string, port: number, blocked = false) {
+  add(hostname: string, port: number) {
     if (port <= 0) {
       return;
     }
 
     if (!this.map.has(hostname)) {
-      this.map.set(
-        hostname,
-        new Map([
-          [
-            port,
-            {
-              hits: 1,
-              blockedHits: blocked ? 1 : 0,
-            },
-          ],
-        ])
-      );
+      this.map.set(hostname, new Map([[port, 1]]));
     } else {
       const ports = this.map.get(hostname) as Ports;
       if (!ports.has(port)) {
-        ports.set(port, {
-          hits: 1,
-          blockedHits: blocked ? 1 : 0,
-        });
+        ports.set(port, 1);
       } else {
-        ports.set(port, {
-          hits: ports.get(port)!.hits + 1,
-          blockedHits: blocked
-            ? ports.get(port)!.blockedHits + 1
-            : ports.get(port)!.blockedHits,
-        });
+        ports.set(port, ports.get(port)! + 1);
       }
     }
 
@@ -72,12 +47,11 @@ export class Hostnames {
 
   asArray() {
     return Array.from(this.map.entries()).flatMap(([hostname, ports]) =>
-      Array.from(ports.entries()).map(([port, stats]) => {
+      Array.from(ports.entries()).map(([port, hits]) => {
         return {
           hostname,
           port,
-          hits: stats.hits,
-          blockedHits: stats.blockedHits,
+          hits,
         };
       })
     );
