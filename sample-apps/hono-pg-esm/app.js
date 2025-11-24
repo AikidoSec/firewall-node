@@ -37,6 +37,16 @@ app.get("/clear", async (c) => {
   return c.text("Table cleared");
 });
 
+app.get("/fetch", async (c) => {
+  const url = c.req.query("url");
+  if (!url) {
+    return c.json({ error: "url query param is required" }, 400);
+  }
+  const response = await fetch(url);
+  const text = await response.text();
+  return c.json({ success: true, status: response.status, body: text });
+});
+
 function getPort() {
   const port = parseInt(process.argv[2], 10) || 4000;
 

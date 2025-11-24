@@ -1,4 +1,5 @@
-const { updateAppConfig, getAppConfig } = require("../zen/config");
+const { updateAppConfig } = require("../zen/config");
+
 module.exports = function updateConfig(req, res) {
   if (!req.app) {
     throw new Error("App is missing");

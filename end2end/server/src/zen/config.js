@@ -10,6 +10,8 @@ function generateConfig(app) {
     blockedUserIds: [],
     allowedIPAddresses: [],
     receivedAnyStats: false,
+    blockNewOutgoingRequests: false,
+    domains: [],
   };
 }
 
