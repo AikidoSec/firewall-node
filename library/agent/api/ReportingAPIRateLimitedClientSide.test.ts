@@ -279,6 +279,7 @@ t.test("it does not blow memory", async () => {
       blockedUserIds: [],
       allowedIPAddresses: [],
       blockNewOutgoingRequests: false,
+      domains: [],
     });
   }
 

@@ -48,6 +48,7 @@ t.test("it ignores valid tokens", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     blockNewOutgoingRequests: false,
+    domains: [],
   });
   t.same(api.getEvents(), [event]);
 
@@ -59,6 +60,7 @@ t.test("it ignores valid tokens", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     blockNewOutgoingRequests: false,
+    domains: [],
   });
   t.same(api.getEvents(), [event, event]);
 });

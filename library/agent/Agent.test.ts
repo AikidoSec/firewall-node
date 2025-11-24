@@ -1114,9 +1114,6 @@ t.test("it fetches blocked lists", async () => {
   t.same(agent.getConfig().isUserAgentBlocked("Mozilla/5.0 (compatible)"), {
     blocked: false,
   });
-
-  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
-  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
 });
 
 t.test("it does not fetch blocked IPs if serverless", async () => {

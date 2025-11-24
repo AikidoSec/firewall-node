@@ -388,7 +388,7 @@ t.test("it works", (t) => {
   if (blockedError1 instanceof Error) {
     t.same(
       blockedError1.message,
-      "Zen has blocked an outbound connection: https.request(...) to https://aikido.dev/block"
+      "Zen has blocked an outbound connection: https.request(...) to aikido.dev"
     );
   }
 
@@ -406,7 +406,7 @@ t.test("it works", (t) => {
   if (blockedError2 instanceof Error) {
     t.same(
       blockedError2.message,
-      "Zen has blocked an outbound connection: https.request(...) to https://example.com/"
+      "Zen has blocked an outbound connection: https.request(...) to example.com"
     );
   }
 

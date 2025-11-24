@@ -581,7 +581,7 @@ t.test(
     if (blockedError1 instanceof Error) {
       t.same(
         blockedError1.message,
-        "Zen has blocked an outbound connection: fetch(...) to https://aikido.dev/block"
+        "Zen has blocked an outbound connection: fetch(...) to aikido.dev"
       );
     }
 
@@ -599,7 +599,7 @@ t.test(
     if (blockedError2 instanceof Error) {
       t.same(
         blockedError2.message,
-        "Zen has blocked an outbound connection: fetch(...) to https://example.com/"
+        "Zen has blocked an outbound connection: fetch(...) to example.com"
       );
     }
 
