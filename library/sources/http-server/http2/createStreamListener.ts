@@ -76,7 +76,11 @@ function discoverRouteFromStream(
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
 
-      if (agent.getAttackWaveDetector().check(context)) {
+      if (
+        context.remoteAddress &&
+        !agent.getConfig().isBypassedIP(context.remoteAddress) &&
+        agent.getAttackWaveDetector().check(context)
+      ) {
         agent.onDetectedAttackWave({ request: context, metadata: {} });
         agent.getInspectionStatistics().onAttackWaveDetected();
       }
