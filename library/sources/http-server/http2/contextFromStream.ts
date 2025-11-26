@@ -1,3 +1,4 @@
+import { getRegisteredRouteParams } from "../../../agent/addRouteParam";
 import { Context } from "../../../agent/Context";
 import { buildRouteFromURL } from "../../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../../helpers/getIPAddressFromRequest";
@@ -27,7 +28,7 @@ export function contextFromStream(
     url: url,
     method: headers[":method"] as string,
     headers: headers,
-    route: url ? buildRouteFromURL(url) : undefined,
+    route: url ? buildRouteFromURL(url, getRegisteredRouteParams()) : undefined,
     query: queryObject,
     source: `${module}.createServer`,
     routeParams: {},

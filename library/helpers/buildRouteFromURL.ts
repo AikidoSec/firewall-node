@@ -17,7 +17,7 @@ const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 const HASH_LENGTHS = [32, 40, 64, 128];
 const NUMBER_ARRAY = /^\d+(?:,\d+)*$/;
 
-export function buildRouteFromURL(url: string, custom: string[] = []) {
+export function buildRouteFromURL(url: string, custom: RegExp[]) {
   let path = tryParseURLPath(url);
 
   if (!path) {
@@ -33,7 +33,7 @@ export function buildRouteFromURL(url: string, custom: string[] = []) {
 
   const route = path
     .split("/")
-    .map(replaceURLSegmentWithCustomParam(custom))
+    .map((segment) => replaceURLSegmentWithParam(segment, custom))
     .join("/");
 
   if (route === "/") {
@@ -47,7 +47,7 @@ export function buildRouteFromURL(url: string, custom: string[] = []) {
   return route;
 }
 
-function compileCustom(pattern: string) {
+export function compileCustomPattern(pattern: string) {
   if (!pattern.includes("{") || !pattern.includes("}")) {
     return undefined;
   }
@@ -70,23 +70,7 @@ function compileCustom(pattern: string) {
   return safeCreateRegExp(`^${regexParts.join("")}$`, "");
 }
 
-function replaceURLSegmentWithCustomParam(custom: string[]) {
-  const customPatterns = custom
-    .map(compileCustom)
-    .filter((p) => p !== undefined);
-
-  return (segment: string) => {
-    for (const pattern of customPatterns) {
-      if (pattern.test(segment)) {
-        return `:custom`;
-      }
-    }
-
-    return replaceURLSegmentWithParam(segment);
-  };
-}
-
-function replaceURLSegmentWithParam(segment: string) {
+function replaceURLSegmentWithParam(segment: string, customPatterns: RegExp[]) {
   const charCode = segment.charCodeAt(0);
   const startsWithNumber = charCode >= 48 && charCode <= 57; // ASCII codes for '0' to '9'
 
@@ -128,6 +112,12 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (looksLikeASecret(segment)) {
     return ":secret";
+  }
+
+  for (const pattern of customPatterns) {
+    if (pattern.test(segment)) {
+      return `:custom`;
+    }
   }
 
   return segment;

@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+import { getRegisteredRouteParams } from "../agent/addRouteParam";
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -69,7 +70,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         cookies: req.cookies ? req.cookies : {},
         routeParams: {},
         source: "cloud-function/http",
-        route: buildRouteFromURL(url),
+        route: buildRouteFromURL(url, getRegisteredRouteParams()),
       },
       async () => {
         try {
