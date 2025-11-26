@@ -57,7 +57,6 @@ function compileCustom(pattern: string) {
     "{alpha}": "[a-zA-Z]+",
   };
 
-  // Split the pattern into tokens (placeholders and literals)
   const placeholderRegex = /(\{[a-zA-Z]+})/g;
   const parts = pattern.split(placeholderRegex);
   const regexParts = parts.map((part) => {
@@ -78,7 +77,7 @@ function replaceURLSegmentWithCustomParam(custom: string[]) {
 
   return (segment: string) => {
     for (const pattern of customPatterns) {
-      if (pattern && pattern.test(segment)) {
+      if (pattern.test(segment)) {
         return `:custom`;
       }
     }
