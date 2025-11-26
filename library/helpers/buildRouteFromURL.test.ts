@@ -164,7 +164,7 @@ t.test("it replaces secrets", async () => {
 t.test("it replaces BSON ObjectIDs", async () => {
   t.same(
     // @ts-expect-error It says that the expression isn't callable
-    buildRouteFromURL(`/posts/${ObjectID().toHexString()}`),
+    buildRouteFromURL(`/posts/${ObjectID().toHexString()}`, []),
     "/posts/:objectId"
   );
   t.same(
