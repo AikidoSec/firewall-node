@@ -1,4 +1,5 @@
 import type { FastifyRequest } from "fastify";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -21,6 +22,6 @@ export function contextFromRequest(req: FastifyRequest): Context {
     // @ts-expect-error not typed
     cookies: req.cookies ? req.cookies : {},
     source: "fastify",
-    route: buildRouteFromURL(req.url),
+    route: buildRouteFromURL(req.url, getRegisteredRouteParams()),
   };
 }

@@ -1,4 +1,5 @@
 import type { Context as HonoContext } from "hono";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -29,6 +30,6 @@ export function contextFromRequest(c: HonoContext): Context {
     /* c8 ignore next */
     cookies: cookieHeader ? parse(cookieHeader) : {},
     source: "hono",
-    route: buildRouteFromURL(req.url),
+    route: buildRouteFromURL(req.url, getRegisteredRouteParams()),
   };
 }

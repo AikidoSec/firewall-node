@@ -1,4 +1,5 @@
 import type { Request } from "@hapi/hapi";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -18,6 +19,6 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.state || {},
     source: "hapi",
-    route: buildRouteFromURL(req.url.toString()),
+    route: buildRouteFromURL(req.url.toString(), getRegisteredRouteParams()),
   };
 }

@@ -1,4 +1,5 @@
 import type { Context as KoaContext } from "koa";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -20,7 +21,7 @@ export function contextFromRequest(ctx: KoaContext): Context {
     query: ctx.request.query,
     cookies: ctx.req.headers.cookie ? parseCookies(ctx.req.headers.cookie) : {},
     source: "koa",
-    route: buildRouteFromURL(ctx.request.href),
+    route: buildRouteFromURL(ctx.request.href, getRegisteredRouteParams()),
     subdomains: ctx.request.subdomains,
   };
 }
