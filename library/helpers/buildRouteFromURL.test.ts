@@ -198,3 +198,15 @@ t.test("it detects numeric comma separated arrays", async (t) => {
   t.same(buildRouteFromURL("/users/1,2,3_"), "/users/1,2,3_");
   t.same(buildRouteFromURL("/users/1,2,3a"), "/users/1,2,3a");
 });
+
+t.test("it supports custom patterns", async () => {
+  t.same(
+    buildRouteFromURL("/prefix-103799/api/dashboard", ["prefix-{digits}"]),
+    "/:custom/api/dashboard"
+  );
+
+  t.same(
+    buildRouteFromURL("/blog/01-31513/slug", ["{digits}-{digits}"]),
+    "/blog/:custom/slug"
+  );
+});
