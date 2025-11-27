@@ -1,6 +1,8 @@
+import { getMaxBodySize } from "./getMaxBodySize";
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryDecodeBuffer } from "./tryDecodeBuffer";
 
 type UserString = string;
 
@@ -63,6 +65,15 @@ export function extractStringsFromUserInput(
       extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
         results.add(value);
       });
+    }
+  }
+
+  if (Buffer.isBuffer(obj) || obj instanceof ArrayBuffer) {
+    if (obj.byteLength < getMaxBodySize()) {
+      const decoded = tryDecodeBuffer(obj);
+      if (decoded) {
+        results.add(decoded);
+      }
     }
   }
 

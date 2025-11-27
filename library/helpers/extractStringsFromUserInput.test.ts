@@ -233,3 +233,32 @@ t.test("it handles deeply nested JWT without stack overflow", async () => {
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
 });
+
+t.test("it decodes buffers and array buffers", async () => {
+  const buffer = Buffer.from("Hello, world!", "utf-8");
+  const arrayBuffer = buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength
+  );
+
+  t.same(
+    extractStringsFromUserInput({
+      buf: buffer,
+      arrBuf: arrayBuffer,
+    }),
+    fromArr(["buf", "Hello, world!", "arrBuf", "Hello, world!"])
+  );
+});
+
+t.test("it ignores large buffers and array buffers", async () => {
+  process.env.AIKIDO_MAX_BODY_SIZE_MB = "1"; // 1 MB
+  const largeBuffer = Buffer.alloc(1024 * 1024 + 1, "a"); // 1 MB + 1 byte
+
+  t.same(
+    extractStringsFromUserInput({
+      buf: largeBuffer,
+    }),
+    fromArr(["buf"])
+  );
+  delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
+});
