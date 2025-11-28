@@ -1,4 +1,4 @@
-import { defineConfig } from '@adonisjs/core/app'
+import { defineConfig } from "@adonisjs/core/app";
 
 export default defineConfig({
   /*
@@ -25,7 +25,10 @@ export default defineConfig({
   | will be scanned automatically from the "./commands" directory.
   |
   */
-  commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands')],
+  commands: [
+    () => import("@adonisjs/core/commands"),
+    () => import("@adonisjs/lucid/commands"),
+  ],
 
   /*
   |--------------------------------------------------------------------------
@@ -37,15 +40,15 @@ export default defineConfig({
   |
   */
   providers: [
-    () => import('@adonisjs/core/providers/app_provider'),
-    () => import('@adonisjs/core/providers/hash_provider'),
+    () => import("@adonisjs/core/providers/app_provider"),
+    () => import("@adonisjs/core/providers/hash_provider"),
     {
-      file: () => import('@adonisjs/core/providers/repl_provider'),
-      environment: ['repl', 'test'],
+      file: () => import("@adonisjs/core/providers/repl_provider"),
+      environment: ["repl", "test"],
     },
-    () => import('@adonisjs/cors/cors_provider'),
-    () => import('@adonisjs/lucid/database_provider'),
-    () => import('@adonisjs/auth/auth_provider'),
+    () => import("@adonisjs/cors/cors_provider"),
+    () => import("@adonisjs/lucid/database_provider"),
+    () => import("@adonisjs/auth/auth_provider"),
   ],
 
   /*
@@ -56,7 +59,7 @@ export default defineConfig({
   | List of modules to import before starting the application.
   |
   */
-  preloads: [() => import('#start/routes'), () => import('#start/kernel')],
+  preloads: [() => import("#start/routes"), () => import("#start/kernel")],
 
   /*
   |--------------------------------------------------------------------------
@@ -70,16 +73,16 @@ export default defineConfig({
   tests: {
     suites: [
       {
-        files: ['tests/unit/**/*.spec(.ts|.js)'],
-        name: 'unit',
+        files: ["tests/unit/**/*.spec(.ts|.js)"],
+        name: "unit",
         timeout: 2000,
       },
       {
-        files: ['tests/functional/**/*.spec(.ts|.js)'],
-        name: 'functional',
+        files: ["tests/functional/**/*.spec(.ts|.js)"],
+        name: "functional",
         timeout: 30000,
       },
     ],
     forceExit: false,
   },
-})
+});
