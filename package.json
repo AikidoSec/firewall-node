@@ -26,6 +26,6 @@
     "format": "prettier --write .",
     "benchmark": "node scripts/benchmark.js",
     "sample-app": "node scripts/run-sample-app.js",
-    "check:format": "prettier --check ."
+    "format:check": "prettier --check ."
   }
 }
