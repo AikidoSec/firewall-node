@@ -25,9 +25,10 @@ Zen also protects against stored SSRF attacks targeting instance metadata servic
 ## Which built-in modules are protected?
 
 Firewall protects against SSRF attacks in the following built-in modules:
-* `node:http`
-* `node:https`
-* `undici`
-* `globalThis.fetch` (Node.js 18+)
+
+- `node:http`
+- `node:https`
+- `undici`
+- `globalThis.fetch` (Node.js 18+)
 
 Note: Any HTTP client that uses `node:http` or `node:https` under the hood is also supported, such as `axios`, `node-fetch`, or `follow-redirects`.

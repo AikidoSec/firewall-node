@@ -63,10 +63,7 @@ module.exports = function updateIPLists(req, res) {
     updateMonitoredIPAddresses(req.app, req.body.monitoredIPAddresses);
   }
 
-  if (
-    req.body.userAgentDetails &&
-    Array.isArray(req.body.userAgentDetails)
-  ) {
+  if (req.body.userAgentDetails && Array.isArray(req.body.userAgentDetails)) {
     updateUserAgentDetails(req.app, req.body.userAgentDetails);
   }
 
