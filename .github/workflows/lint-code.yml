@@ -36,7 +36,7 @@ jobs:
       - name: Run Linter for JavaScript/TypeScript
         run: npm run lint
       - name: Check formatting
-        run: npm run check:format
+        run: npm run format:check
       - name: Check Rust formatting
         run: cd instrumentation-wasm && cargo fmt --check
       - name: Run Rust Linter
