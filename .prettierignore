@@ -1,6 +1,6 @@
 .tap/
 internals/
-agent/hooks/instrumentation/wasm/
+wasm/
 .next/
 out/
 build/
