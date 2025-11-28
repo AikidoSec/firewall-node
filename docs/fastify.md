@@ -80,12 +80,16 @@ async function authenticate(request, reply) {
   });
 }
 
-fastify.get('/dashboard', {
-  preHandler: [authenticate, Zen.fastifyHook],
-                          // ^ Add the Zen hook after your authentication logic
-}, async (request, reply) => {
-  return { message: "Welcome to your dashboard!" };
-});
+fastify.get(
+  "/dashboard",
+  {
+    preHandler: [authenticate, Zen.fastifyHook],
+    // ^ Add the Zen hook after your authentication logic
+  },
+  async (request, reply) => {
+    return { message: "Welcome to your dashboard!" };
+  }
+);
 ```
 
 This approach allows user blocking and rate limiting to work properly when authentication runs in the `preHandler` stage where the request body is parsed.

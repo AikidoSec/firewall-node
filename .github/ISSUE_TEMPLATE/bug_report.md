@@ -11,6 +11,7 @@ A clear and concise description of what went wrong.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. …
 2. …
 3. …
@@ -22,6 +23,7 @@ What you expected to happen.
 What actually happened (include logs or error messages if possible).
 
 **Environment**
+
 - OS: [e.g. Ubuntu 22.04, macOS 15.0, Windows 11]
 - Language version: [e.g. 18, 20, 22]
 - Framework: [e.g. Express, Hono, Fastify]

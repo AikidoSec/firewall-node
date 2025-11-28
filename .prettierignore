@@ -1,3 +1,9 @@
 .tap/
 internals/
 agent/hooks/instrumentation/wasm/
+.next/
+out/
+build/
+dist/
+coverage/
+.esm-tests/
