@@ -78,8 +78,11 @@ function discoverRouteFromStream(
 
       const attackWaveDetector = agent.getAttackWaveDetector();
 
-      if (context.remoteAddress &&
-        !agent.getConfig().isBypassedIP(context.remoteAddress) &&attackWaveDetector.check(context) && context.remoteAddress) {
+      if (
+        context.remoteAddress &&
+        !agent.getConfig().isBypassedIP(context.remoteAddress) &&
+        attackWaveDetector.check(context)
+      ) {
         agent.onDetectedAttackWave({
           request: context,
         });
