@@ -565,8 +565,8 @@ export class Agent {
     }
   }
 
-  onConnectHostname(url: URL, port: number) {
-    this.hostnames.add(url.hostname, port);
+  onConnectHostname(hostname: string, port: number) {
+    this.hostnames.add(hostname, port);
   }
 
   onConnectHTTP(url: URL, port: number, method: string) {
