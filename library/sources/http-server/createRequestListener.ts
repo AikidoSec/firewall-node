@@ -118,7 +118,9 @@ function onFinishRequestHandler(
       !agent.getConfig().isBypassedIP(context.remoteAddress) &&
       agent.getAttackWaveDetector().check(context)
     ) {
-      agent.onDetectedAttackWave({ request: context, metadata: {} });
+      agent.onDetectedAttackWave({
+        request: context,
+      });
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }
