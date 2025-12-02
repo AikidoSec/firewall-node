@@ -113,12 +113,10 @@ function onFinishRequestHandler(
       agent.onRouteRateLimited(context.rateLimitedEndpoint);
     }
 
-    const attackWaveDetector = agent.getAttackWaveDetector();
-
     if (
       context.remoteAddress &&
       !agent.getConfig().isBypassedIP(context.remoteAddress) &&
-      attackWaveDetector.check(context)
+      agent.getAttackWaveDetector().check(context)
     ) {
       agent.onDetectedAttackWave({
         request: context,
