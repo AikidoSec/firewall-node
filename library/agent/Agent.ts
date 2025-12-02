@@ -27,7 +27,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
-import { triggerOutboundRequestHooks } from "./hooks/outboundRequest";
+import { executeHooks } from "./hooks";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
@@ -570,7 +570,7 @@ export class Agent {
   }
 
   onConnectHTTP(url: URL, port: number, method: string) {
-    triggerOutboundRequestHooks({ url, port, method });
+    executeHooks("beforeOutboundRequest", { url, port, method });
   }
 
   onRouteExecute(context: Context) {

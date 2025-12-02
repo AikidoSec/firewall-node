@@ -15,7 +15,7 @@ import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { isLibBundled } from "./helpers/isLibBundled";
-import { onOutboundRequest } from "./agent/hooks/outboundRequest";
+import { addHook, removeHook } from "./agent/hooks";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -52,7 +52,8 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
-  onOutboundRequest,
+  addHook,
+  removeHook,
 };
 
 // Required for ESM / TypeScript default export support
@@ -69,5 +70,6 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
-  onOutboundRequest,
+  addHook,
+  removeHook,
 };
