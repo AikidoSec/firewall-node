@@ -33,9 +33,7 @@ export function removeHook<N extends HookName>(
   name: N,
   fn: (...args: HookTypes[N]["args"]) => void | Promise<void>
 ) {
-  if (hooks.has(name)) {
-    hooks.get(name)!.delete(fn);
-  }
+  hooks.get(name)?.delete(fn);
 }
 
 export function executeHooks<N extends HookName>(
