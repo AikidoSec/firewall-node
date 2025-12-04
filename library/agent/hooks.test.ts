@@ -1,5 +1,10 @@
 import * as t from "tap";
-import { addHook, removeHook, executeHooks, OutboundRequestInfo } from "./hooks";
+import {
+  addHook,
+  removeHook,
+  executeHooks,
+  OutboundRequestInfo,
+} from "./hooks";
 
 t.test("it works", async (t) => {
   let hookOneCalls = 0;
@@ -85,11 +90,13 @@ t.test("it handles errors gracefully", async (t) => {
   addHook("beforeOutboundRequest", successHook);
 
   // Should not throw even though one hook throws
-  t.doesNotThrow(() => {
-    executeHooks("beforeOutboundRequest", testRequest);
-  });
+  executeHooks("beforeOutboundRequest", testRequest);
 
-  t.equal(successCalls, 1, "success hook still called despite error in other hook");
+  t.equal(
+    successCalls,
+    1,
+    "success hook still called despite error in other hook"
+  );
 
   removeHook("beforeOutboundRequest", throwingHook);
   removeHook("beforeOutboundRequest", successHook);
@@ -112,9 +119,7 @@ t.test("it handles async hooks with rejected promises", async (t) => {
   addHook("beforeOutboundRequest", asyncHook);
 
   // Should not throw even though async hook rejects
-  t.doesNotThrow(() => {
-    executeHooks("beforeOutboundRequest", testRequest);
-  });
+  executeHooks("beforeOutboundRequest", testRequest);
 
   t.equal(asyncCalls, 1, "async hook was called");
 
