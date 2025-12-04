@@ -46,7 +46,9 @@ export function executeHooks<N extends HookName>(
 
   for (const fn of hookSet ?? []) {
     try {
-      const result = (fn as (...args: HookTypes[N]["args"]) => void | Promise<void>)(...args);
+      const result = (
+        fn as (...args: HookTypes[N]["args"]) => void | Promise<void>
+      )(...args);
       // If it returns a promise, catch any errors but don't wait
       if (result instanceof Promise) {
         result.catch(() => {
