@@ -3,6 +3,7 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { addHook, removeHook } from "../agent/hooks";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
 import * as dns from "dns";
@@ -92,12 +93,24 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), []);
 
+    const hookArgs: unknown[] = [];
+    const hook = (args: unknown) => {
+      hookArgs.push(args);
+    };
+    addHook("beforeOutboundRequest", hook);
     await fetch("http://app.aikido.dev");
-
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 80, hits: 1 },
     ]);
     agent.getHostnames().clear();
+    t.same(hookArgs, [
+      {
+        url: new URL("http://app.aikido.dev"),
+        method: "GET",
+        port: 80,
+      },
+    ]);
+    removeHook("beforeOutboundRequest", hook);
 
     await fetch(new URL("https://app.aikido.dev"));
 
