@@ -1,6 +1,7 @@
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
+import { Context, updateContext } from "./Context";
 import type { Endpoint, EndpointConfig } from "./Config";
 import { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
@@ -66,8 +67,14 @@ export class ServiceConfig {
     }
   }
 
-  getEndpoints(context: LimitedContext) {
-    return matchEndpoints(context, this.nonGraphQLEndpoints);
+  getEndpoints(context: Context): Endpoint[] {
+    if (context.cachedMatchingEndpoints) {
+      return context.cachedMatchingEndpoints;
+    }
+    const endpoints = matchEndpoints(context, this.nonGraphQLEndpoints);
+    // Cache the endpoints to avoid re-running the matchEndpoints function
+    updateContext(context, "cachedMatchingEndpoints", endpoints);
+    return endpoints;
   }
 
   getGraphQLField(

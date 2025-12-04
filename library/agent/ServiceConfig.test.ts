@@ -1,5 +1,28 @@
 import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
+import {
+  getContext,
+  runWithContext,
+  updateContext,
+  type Context,
+} from "./Context";
+
+const getTestContext = (
+  url: string | undefined,
+  method: string | undefined,
+  route: string | undefined
+): Context => ({
+  url,
+  method,
+  route,
+  query: {},
+  headers: {},
+  routeParams: {},
+  remoteAddress: undefined,
+  body: undefined,
+  cookies: {},
+  source: "http",
+});
 
 t.test("it returns false if empty rules", async () => {
   const config = new ServiceConfig([], 0, [], [], false, [], []);
@@ -7,11 +30,7 @@ t.test("it returns false if empty rules", async () => {
   t.same(config.isUserBlocked("id"), false);
   t.same(config.isBypassedIP("1.2.3.4"), false);
   t.same(
-    config.getEndpoints({
-      url: undefined,
-      method: undefined,
-      route: undefined,
-    }),
+    config.getEndpoints(getTestContext(undefined, undefined, undefined)),
     []
   );
 });
@@ -60,26 +79,19 @@ t.test("it works", async () => {
 
   t.same(config.isUserBlocked("123"), true);
   t.same(config.isUserBlocked("567"), false);
-  t.same(
-    config.getEndpoints({
-      url: undefined,
+  t.same(config.getEndpoints(getTestContext("/foo", "GET", "/foo")), [
+    {
       method: "GET",
       route: "/foo",
-    }),
-    [
-      {
-        method: "GET",
-        route: "/foo",
-        forceProtectionOff: false,
-        allowedIPAddresses: undefined,
-        rateLimiting: {
-          enabled: false,
-          maxRequests: 0,
-          windowSizeInMS: 0,
-        },
+      forceProtectionOff: false,
+      allowedIPAddresses: undefined,
+      rateLimiting: {
+        enabled: false,
+        maxRequests: 0,
+        windowSizeInMS: 0,
       },
-    ]
-  );
+    },
+  ]);
 });
 
 t.test("it checks if IP is bypassed", async () => {
@@ -257,6 +269,99 @@ t.test("bypassed ips support cidr", async () => {
 
   t.same(config.isBypassedIP("123.123.123.1"), false);
   t.same(config.isBypassedIP("999.999.999.999"), false);
+});
+
+t.test("matching endpoints are cached", async () => {
+  const config = new ServiceConfig(
+    [
+      {
+        method: "GET",
+        route: "/foo",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: false,
+          maxRequests: 0,
+          windowSizeInMS: 0,
+        },
+      },
+    ],
+    0,
+    [],
+    [],
+    false,
+    [],
+    []
+  );
+
+  const testContext = getTestContext("/foo", "GET", "/foo");
+  t.same(config.getEndpoints(testContext), [
+    {
+      method: "GET",
+      route: "/foo",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: false,
+        maxRequests: 0,
+        windowSizeInMS: 0,
+      },
+      allowedIPAddresses: undefined,
+    },
+  ]);
+
+  t.same(testContext.cachedMatchingEndpoints, [
+    {
+      method: "GET",
+      route: "/foo",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: false,
+        maxRequests: 0,
+        windowSizeInMS: 0,
+      },
+      allowedIPAddresses: undefined,
+    },
+  ]);
+  // Cached
+  t.same(config.getEndpoints(testContext), [
+    {
+      method: "GET",
+      route: "/foo",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: false,
+        maxRequests: 0,
+        windowSizeInMS: 0,
+      },
+      allowedIPAddresses: undefined,
+    },
+  ]);
+
+  // Clears cache
+  updateContext(testContext, "method", "POST");
+  t.same(testContext.cachedMatchingEndpoints, undefined);
+  t.same(config.getEndpoints(testContext), []);
+  t.same(testContext.cachedMatchingEndpoints, []);
+
+  runWithContext(testContext, () => {
+    t.same(getContext()!.cachedMatchingEndpoints, []);
+  });
+
+  runWithContext(
+    {
+      ...testContext,
+      route: "/bar",
+    },
+    () => {
+      const context = getContext();
+      if (!context) {
+        t.fail("context is undefined");
+        return;
+      }
+      t.same(context.cachedMatchingEndpoints, []);
+      t.same(config.getEndpoints(context), []);
+      t.same(context.cachedMatchingEndpoints, []);
+    }
+  );
 });
 
 t.test("it sets and updates monitored IP lists", async (t) => {

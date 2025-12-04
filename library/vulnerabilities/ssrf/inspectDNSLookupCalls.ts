@@ -15,6 +15,7 @@ import { getRedirectOrigin } from "./getRedirectOrigin";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
 import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 import { cleanError } from "../../helpers/cleanError";
+import { isProtectionOffForRoute } from "../../agent/context/isProtectionOffForRoute";
 
 export function inspectDNSLookupCalls(
   lookup: Function,
@@ -91,14 +92,10 @@ function wrapDNSLookupCallback(
 
     const context = getContext();
 
-    if (context) {
-      const matches = agent.getConfig().getEndpoints(context);
-
-      if (matches.find((endpoint) => endpoint.forceProtectionOff)) {
-        // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
-        // Just call the original callback to allow the DNS lookup
-        return callback(err, addresses, family);
-      }
+    if (isProtectionOffForRoute(agent, context)) {
+      // User disabled protection for this endpoint, we don't need to inspect the resolved IPs
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
     }
 
     const resolvedIPAddresses = getResolvedIPAddresses(addresses);
