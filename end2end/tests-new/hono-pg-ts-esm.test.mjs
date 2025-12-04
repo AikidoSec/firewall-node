@@ -220,13 +220,13 @@ test("It reports own http requests in heartbeat events", async () => {
 
     const heartbeatEvent = heartbeatEvents[0];
 
-    equal(heartbeatEvent.hostnames, [
-      {
-        hits: 2,
-        hostname: "localhost",
-        port: 5874,
-      },
-    ]);
+    equal(heartbeatEvent.hostnames.length, 1);
+
+    const hostname = heartbeatEvent.hostnames[0];
+
+    equal(hostname.hostname, "localhost");
+    equal(hostname.hits, 2);
+    equal(hostname.port, 5874);
   } catch (err) {
     fail(err);
   } finally {
