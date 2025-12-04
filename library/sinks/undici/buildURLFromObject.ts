@@ -1,3 +1,5 @@
+// oxlint-disable typescript-eslint(no-base-to-string)
+// oxlint-disable typescript-eslint(restrict-template-expressions)
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isOptionsObject } from "../http-request/isOptionsObject";
 
