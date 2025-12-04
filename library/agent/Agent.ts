@@ -570,7 +570,11 @@ export class Agent {
   }
 
   onConnectHTTP(url: URL, port: number, method: string) {
-    executeHooks("beforeOutboundRequest", { url, port, method });
+    executeHooks("beforeOutboundRequest", {
+      url,
+      port,
+      method: method.toUpperCase(),
+    });
   }
 
   onRouteExecute(context: Context) {
