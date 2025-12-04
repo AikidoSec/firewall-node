@@ -325,6 +325,17 @@ export class Agent {
       ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
       }
+
+      if (
+        typeof response.blockNewOutgoingRequests === "boolean" &&
+        response.domains &&
+        Array.isArray(response.domains)
+      ) {
+        this.serviceConfig.setBlockNewOutgoingRequests(
+          response.blockNewOutgoingRequests
+        );
+        this.serviceConfig.updateDomains(response.domains);
+      }
     }
   }
 

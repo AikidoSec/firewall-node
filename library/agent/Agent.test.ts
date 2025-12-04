@@ -18,7 +18,6 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
-import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -421,6 +420,7 @@ t.test(
       allowedIPAddresses: [],
       block: true,
       receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
     });
     const agent = createTestAgent({
       api,
@@ -1282,3 +1282,78 @@ t.test("attack wave detected event", async (t) => {
     },
   ]);
 });
+
+t.test("it blocks new outgoing requests if config says so", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    receivedAnyStats: false,
+    blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it does not block new outgoing requests if config says so",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
+    });
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    await agent.flushStats(1000);
+
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+    clock.uninstall();
+  }
+);

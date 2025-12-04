@@ -278,6 +278,8 @@ t.test("it does not blow memory", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
       allowedIPAddresses: [],
+      blockNewOutgoingRequests: false,
+      domains: [],
     });
   }
 
