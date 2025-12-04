@@ -295,6 +295,7 @@ export class ServiceConfig {
 
     if (this.blockNewOutgoingRequests) {
       // Only allow outgoing requests if the mode is "allow"
+      // mode is undefined for unknown hostnames, so they get blocked
       return mode !== "allow";
     }
 
