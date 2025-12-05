@@ -99,8 +99,10 @@ t.test(
     };
     addHook("beforeOutboundRequest", hook);
     await fetch("http://app.aikido.dev");
+    await fetch(new Request("https://app.aikido.dev", { method: "POST" }));
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 80, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
     agent.getHostnames().clear();
     t.same(hookArgs, [
@@ -108,6 +110,11 @@ t.test(
         url: new URL("http://app.aikido.dev"),
         method: "GET",
         port: 80,
+      },
+      {
+        url: new URL("https://app.aikido.dev/"),
+        method: "POST",
+        port: 443,
       },
     ]);
     removeHook("beforeOutboundRequest", hook);

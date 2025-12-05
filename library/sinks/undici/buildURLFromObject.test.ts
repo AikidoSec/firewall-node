@@ -2,6 +2,11 @@ import * as t from "tap";
 import { buildURLFromArgs } from "./buildURLFromObject";
 import { parse as parseUrl } from "url";
 
+t.test("empty", async (t) => {
+  const url = buildURLFromArgs([]);
+  t.same(url, undefined);
+});
+
 t.test("it returns an URL instance", async (t) => {
   const url = buildURLFromArgs(["http://localhost:4000"]);
   t.ok(url instanceof URL);
@@ -17,6 +22,21 @@ t.test("it returns the full url", async () => {
   t.same(
     buildURLFromArgs([
       { origin: "http://localhost:4000", path: "/api?page=1" },
+    ])?.toString(),
+    "http://localhost:4000/api?page=1"
+  );
+});
+
+t.test("origin ends with slash", async (t) => {
+  t.same(
+    buildURLFromArgs([
+      { origin: "http://localhost:4000/", pathname: "/api", search: "?page=1" },
+    ])?.toString(),
+    "http://localhost:4000/api?page=1"
+  );
+  t.same(
+    buildURLFromArgs([
+      { origin: "http://localhost:4000/", path: "/api?page=1" },
     ])?.toString(),
     "http://localhost:4000/api?page=1"
   );

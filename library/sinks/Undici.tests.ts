@@ -83,8 +83,12 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         pathname: "/my-path",
         search: "?a=b",
       });
+      await request(`http://localhost:${port}/api/internal`, {
+        method: "POST",
+      });
       t.same(agent.getHostnames().asArray(), [
         { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        { hostname: "localhost", port: port, hits: 1 },
       ]);
       agent.getHostnames().clear();
       t.same(hookArgs, [
@@ -92,6 +96,11 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           url: new URL("https://ssrf-redirects.testssandbox.com/my-path?a=b"),
           method: "GET",
           port: 443,
+        },
+        {
+          url: new URL(`http://localhost:${port}/api/internal`),
+          method: "POST",
+          port: port,
         },
       ]);
       removeHook("beforeOutboundRequest", beforeOutbound);
