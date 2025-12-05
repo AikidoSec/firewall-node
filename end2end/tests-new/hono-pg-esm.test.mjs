@@ -266,6 +266,7 @@ test("if bypass IP is set, attack waves are ignored for that IP", async () => {
         ...process.env,
         AIKIDO_TOKEN: token,
         AIKIDO_ENDPOINT: testServerUrl,
+        AIKIDO_REALTIME_ENDPOINT: testServerUrl,
         AIKIDO_DEBUG: "true",
       },
     }
