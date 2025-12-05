@@ -1,16 +1,18 @@
-const { getAppConfig } = require("../zen/config");
-const { captureEvent: capture } = require("../zen/events");
-const { setTimeout } = require("timers/promises");
-const { randomInt } = require("crypto");
+import type { Response } from "express";
+import { getAppConfig } from "../zen/config.ts";
+import { captureEvent as capture } from "../zen/events.ts";
+import { setTimeout } from "node:timers/promises";
+import { randomInt } from "node:crypto";
+import type { ZenRequest } from "../types.ts";
 
-module.exports = async function captureEvent(req, res) {
-  if (!req.app) {
+export async function captureEvent(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
     throw new Error("App is missing");
   }
 
   // For testing: allow simulating API failures and delays for attack events
   if (req.body.type === "detected_attack") {
-    const config = getAppConfig(req.app);
+    const config = getAppConfig(req.zenApp);
 
     if (typeof config.failureRate === "number" && config.failureRate > 0) {
       if (Math.random() < config.failureRate) {
@@ -24,7 +26,7 @@ module.exports = async function captureEvent(req, res) {
     }
   }
 
-  capture(req.body, req.app);
+  capture(req.body, req.zenApp);
 
   if (req.body.type === "detected_attack") {
     return res.json({
@@ -32,5 +34,5 @@ module.exports = async function captureEvent(req, res) {
     });
   }
 
-  return res.json(getAppConfig(req.app));
-};
+  return res.json(getAppConfig(req.zenApp));
+}
