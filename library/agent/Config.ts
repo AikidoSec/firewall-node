@@ -20,6 +20,8 @@ export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
   allowedIPAddresses: IPMatcher | undefined;
 };
 
+export type Domain = { hostname: string; mode: "allow" | "block" };
+
 export type Config = {
   endpoints: EndpointConfig[];
   heartbeatIntervalInMS: number;
@@ -28,4 +30,6 @@ export type Config = {
   allowedIPAddresses: string[];
   block?: boolean;
   receivedAnyStats?: boolean;
+  blockNewOutgoingRequests?: boolean;
+  domains?: Domain[];
 };

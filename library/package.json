@@ -129,7 +129,6 @@
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
-    "prettier": "^3.2.4",
     "prisma": "^5.22.0",
     "restify-v10": "npm:restify@^10.0.0",
     "restify-v11": "npm:restify@^11.0.0",

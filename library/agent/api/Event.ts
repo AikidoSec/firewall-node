@@ -158,7 +158,7 @@ type Heartbeat = {
 export type DetectedAttackWave = {
   type: "detected_attack_wave";
   request: {
-    ipAddress: string | undefined;
+    ipAddress: string;
     userAgent: string | undefined;
     source: string;
   };

@@ -14,6 +14,7 @@ const testServerUrl = "http://localhost:5874";
 const port = await getRandomPort();
 const port2 = await getRandomPort();
 const port3 = await getRandomPort();
+const port4 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -231,6 +232,90 @@ test("it reports packages in heartbeat with ESM instrumentation", async () => {
         fail(`Did not expect package name to start with node: ${pkg.name}`);
       }
     }
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("if bypass IP is set, attack waves are ignored for that IP", async () => {
+  const response = await fetch(`${testServerUrl}/api/runtime/apps`, {
+    method: "POST",
+  });
+  const body = await response.json();
+  const token = body.token;
+
+  await fetch(`${testServerUrl}/api/runtime/config`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({
+      allowedIPAddresses: ["1.2.3.4"],
+    }),
+  });
+
+  const server = spawn(
+    `node`,
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port4],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_TOKEN: token,
+        AIKIDO_ENDPOINT: testServerUrl,
+        AIKIDO_REALTIME_ENDPOINT: testServerUrl,
+        AIKIDO_DEBUG: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    await timeout(2000);
+
+    await Promise.all(
+      Array.from({ length: 15 }).map(() =>
+        fetch(`http://localhost:${port4}/.env`, {
+          headers: {
+            "x-forwarded-for": "1.2.3.4",
+          },
+        })
+      )
+    );
+
+    // Wait for the attack wave event to be sent
+    await timeout(2000);
+
+    const eventsResponse = await fetch(`${testServerUrl}/api/runtime/events`, {
+      method: "GET",
+      headers: {
+        Authorization: token,
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    const events = await eventsResponse.json();
+    const attackWaveEvents = events.filter(
+      (event) => event.type === "detected_attack_wave"
+    );
+    equal(attackWaveEvents.length, 0);
   } catch (err) {
     fail(err);
   } finally {
