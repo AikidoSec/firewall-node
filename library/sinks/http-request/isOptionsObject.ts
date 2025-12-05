@@ -1,6 +1,6 @@
 /**
  * Check if the argument is treated as an options object by Node.js.
- * For checking if the argument can be used as options for a outgoing HTTP request.
+ * For checking if the argument can be used as options for an outgoing HTTP request.
  */
 export function isOptionsObject(arg: any): arg is { [key: string]: unknown } {
   return (
