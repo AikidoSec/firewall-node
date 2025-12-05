@@ -1,11 +1,11 @@
-FROM node:22-slim
+FROM node:24-slim
 
 WORKDIR /app
 
-COPY package.json /app
+COPY package.json package-lock.json /app/
 
-RUN npm install
+RUN npm ci
 
-COPY . /app
+COPY . /app/
 
-CMD ["node" , "/app/app.js"]
+CMD ["node" , "/app/app.ts"]

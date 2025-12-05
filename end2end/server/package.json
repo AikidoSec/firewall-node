@@ -1,9 +1,19 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.ts",
   "private": true,
+  "type": "module",
   "dependencies": {
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "start": "node ./app.ts",
+    "check:types": "tsc --noEmit"
   }
 }
