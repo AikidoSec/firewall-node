@@ -47,6 +47,8 @@ t.test("it ignores valid tokens", async () => {
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
     allowedIPAddresses: [],
+    blockNewOutgoingRequests: false,
+    domains: [],
   });
   t.same(api.getEvents(), [event]);
 
@@ -57,6 +59,8 @@ t.test("it ignores valid tokens", async () => {
     heartbeatIntervalInMS: 10 * 60 * 1000,
     blockedUserIds: [],
     allowedIPAddresses: [],
+    blockNewOutgoingRequests: false,
+    domains: [],
   });
   t.same(api.getEvents(), [event, event]);
 });

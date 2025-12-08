@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { lookup } from "dns";
 import { Agent } from "../agent/Agent";
 import { getContext } from "../agent/Context";
@@ -26,6 +25,14 @@ export class Fetch implements Wrapper {
       agent.onConnectHostname(url.hostname, port);
       agent.onConnectHTTP(url, port, method);
     }
+
+    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+      return {
+        operation: "fetch",
+        hostname: hostname,
+      };
+    }
+
     const context = getContext();
 
     if (!context) {

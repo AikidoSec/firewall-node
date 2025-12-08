@@ -389,6 +389,49 @@ t.test("it works", (t) => {
     }
   );
 
+  agent.getHostnames().clear();
+  agent.getConfig().updateDomains([
+    { hostname: "aikido.dev", mode: "block" },
+    { hostname: "app.aikido.dev", mode: "allow" },
+  ]);
+
+  const blockedError1 = t.throws(() =>
+    https.request("https://aikido.dev/block")
+  );
+  if (blockedError1 instanceof Error) {
+    t.same(
+      blockedError1.message,
+      "Zen has blocked an outbound connection: https.request(...) to aikido.dev"
+    );
+  }
+
+  const notBlocked1 = https.request("https://app.aikido.dev");
+  notBlocked1.end();
+
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 1 },
+  ]);
+
+  agent.getConfig().setBlockNewOutgoingRequests(true);
+
+  const blockedError2 = t.throws(() => https.request("https://example.com"));
+  if (blockedError2 instanceof Error) {
+    t.same(
+      blockedError2.message,
+      "Zen has blocked an outbound connection: https.request(...) to example.com"
+    );
+  }
+
+  const notBlocked2 = https.request("https://app.aikido.dev");
+  notBlocked2.end();
+
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "aikido.dev", port: 443, hits: 1 },
+    { hostname: "app.aikido.dev", port: 443, hits: 2 },
+    { hostname: "example.com", port: 443, hits: 1 },
+  ]);
+
   setTimeout(() => {
     t.end();
   }, 3000);

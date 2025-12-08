@@ -2,6 +2,8 @@ import { request as requestHttp, type Agent } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
+import { getInstance } from "../agent/AgentSingleton";
+import { getPortFromURL } from "./getPortFromURL";
 
 function request({
   url,
@@ -19,6 +21,8 @@ function request({
   agent?: Agent;
 }): Promise<{ body: string; statusCode: number }> {
   const request = url.protocol === "https:" ? requestHttps : requestHttp;
+
+  trackRequest(url);
 
   return new Promise((resolve, reject) => {
     // Convert URL object to string for compatibility with old https-proxy-agent versions
@@ -107,4 +111,27 @@ export async function fetch({
       timeout.unref();
     }),
   ]);
+}
+
+function trackRequest(url: URL) {
+  const agent = getInstance();
+  if (!agent) {
+    // This should not happen
+    return;
+  }
+
+  // If the old (non ESM) hook system is used, the fetch function used
+  // here is already a patched version that tracks requests.
+  // If the new hook system is used, the import is executed before
+  // the hooks are applied, so we need to track the request here.
+  if (!agent.isUsingNewInstrumentation()) {
+    return;
+  }
+
+  const port = getPortFromURL(url);
+  if (!port) {
+    return;
+  }
+
+  agent.onConnectHostname(url.hostname, port);
 }
