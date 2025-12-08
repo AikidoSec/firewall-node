@@ -26,10 +26,10 @@ export class Fetch implements Wrapper {
       agent.onConnectHTTP(url, port, method);
     }
 
-    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
       return {
         operation: "fetch",
-        hostname: hostname,
+        hostname: url.hostname,
       };
     }
 

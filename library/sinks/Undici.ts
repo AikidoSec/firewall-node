@@ -40,10 +40,10 @@ export class Undici implements Wrapper {
       agent.onConnectHTTP(url, port, httpMethod);
     }
 
-    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
       return {
         operation: `undici.${method}`,
-        hostname: hostname,
+        hostname: url.hostname,
       };
     }
 
