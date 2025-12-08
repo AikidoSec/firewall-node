@@ -1,6 +1,7 @@
 import type { Callback, Context, Handler } from "aws-lambda";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
+import { envToBool } from "../helpers/envToBool";
 import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
@@ -257,7 +258,10 @@ export function createLambdaWrapper(handler: Handler): Handler {
 let loggedWarningUnsupportedTrigger = false;
 
 function logWarningUnsupportedTrigger() {
-  if (loggedWarningUnsupportedTrigger) {
+  if (
+    loggedWarningUnsupportedTrigger ||
+    envToBool(process.env.AIKIDO_LAMBDA_IGNORE_UNSUPPORTED_TRIGGER_WARNING)
+  ) {
     return;
   }
 
