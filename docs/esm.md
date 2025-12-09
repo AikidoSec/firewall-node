@@ -15,8 +15,21 @@ Alternatively, you can set the `NODE_OPTIONS` environment variable to include th
 export NODE_OPTIONS='-r @aikidosec/firewall/instrument'
 ```
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Please also check the documentation on how to integrate Zen with your used web framework.
+
+## Loading environment variables
+
+When using `--require`/`-r` to preload the Zen firewall, the instrumentation hook runs before your application code. This means environment variables loaded by packages like `dotenv` will not be available when the firewall starts.
+
+To ensure `AIKIDO_TOKEN` and other environment variables are available during instrumentation, use Node.js's native `--env-file` flag:
+
+```sh
+node --env-file=.env -r @aikidosec/firewall/instrument your-app.js
+```
+
+> [!NOTE]
+> The `--env-file` flag cannot be used in `NODE_OPTIONS`.
 
 ## Known issues
 
