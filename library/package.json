@@ -129,7 +129,6 @@
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
-    "prettier": "^3.2.4",
     "prisma": "^5.22.0",
     "restify-v10": "npm:restify@^10.0.0",
     "restify-v11": "npm:restify@^11.0.0",
@@ -158,8 +157,7 @@
     "test:esm": "node ../scripts/tests-esm.mjs",
     "build": "tsc -p tsconfig.build.json",
     "build:watch": "tsc --watch -p tsconfig.build.json",
-    "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc && npm run check-format",
-    "lint-tsc": "tsc",
-    "check-format": "prettier --check ."
+    "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc",
+    "lint-tsc": "tsc"
   }
 }

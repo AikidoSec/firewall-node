@@ -33,7 +33,10 @@ jobs:
         run: npm i -g npm@11.6.0
       - run: npm run install-lib-only
       - run: npm run build
-      - run: npm run lint
+      - name: Run Linter for JavaScript/TypeScript
+        run: npm run lint
+      - name: Check formatting
+        run: npm run format:check
       - name: Check Rust formatting
         run: cd instrumentation-wasm && cargo fmt --check
       - name: Run Rust Linter

@@ -49,6 +49,8 @@ t.test("it stops sending requests if rate limited", async (t) => {
     configUpdatedAt: 0,
     blockedUserIds: [],
     allowedIPAddresses: [],
+    blockNewOutgoingRequests: false,
+    domains: [],
   });
   t.match(api.getEvents(), [{ type: "started" }]);
 
