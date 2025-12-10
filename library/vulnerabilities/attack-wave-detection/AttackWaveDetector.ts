@@ -8,7 +8,7 @@ export type SuspiciousRequest = {
 };
 
 export class AttackWaveDetector {
-  private suspiciousRequestsCounts: LRUMap<string, number>;
+  private suspiciousRequestsCounts: LRUMap<string, number[]>;
   private suspiciousRequestsSamples: LRUMap<string, SuspiciousRequest[]>;
   private sentEventsMap: LRUMap<string, number>;
 
@@ -80,13 +80,23 @@ export class AttackWaveDetector {
       return false;
     }
 
-    const suspiciousRequests = (this.suspiciousRequestsCounts.get(ip) || 0) + 1;
-    this.suspiciousRequestsCounts.set(ip, suspiciousRequests);
+    const currentTime = performance.now();
+    const requestTimestamps = this.suspiciousRequestsCounts.get(ip) || [];
+
+    const filteredTimestamps = requestTimestamps.filter(
+      (timestamp) => currentTime - timestamp <= this.attackWaveTimeFrame
+    );
+
+    filteredTimestamps.push(currentTime);
+
+    this.suspiciousRequestsCounts.set(ip, filteredTimestamps);
 
     this.trackSample(ip, {
       method: context.method,
       url: context.url,
     });
+
+    const suspiciousRequests = filteredTimestamps.length;
 
     if (suspiciousRequests < this.attackWaveThreshold) {
       return false;
