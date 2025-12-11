@@ -4,7 +4,7 @@ export type App = {
   id: number;
   token: string;
   configUpdatedAt: number;
-}
+};
 
 const apps: App[] = [];
 

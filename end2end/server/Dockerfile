@@ -1,11 +1,12 @@
 FROM node:24-slim
 
+USER node
 WORKDIR /app
 
-COPY package.json package-lock.json /app/
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --ignore-scripts
 
-RUN npm ci
+COPY --chown=node:node . ./
+RUN node --run check:types
 
-COPY . /app/
-
-CMD ["node" , "/app/app.ts"]
+CMD ["node" , "app.ts"]
