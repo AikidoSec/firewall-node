@@ -1,6 +1,6 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 
-export interface App {
+export type App = {
   id: number;
   token: string;
   configUpdatedAt: number;
