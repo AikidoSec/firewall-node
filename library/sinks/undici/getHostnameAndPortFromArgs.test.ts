@@ -1,6 +1,21 @@
+// There used to be a function named `getHostnameAndPortFromArgs`, we kept the tests for it!
 import * as t from "tap";
-import { getHostnameAndPortFromArgs as get } from "./getHostnameAndPortFromArgs";
+import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { buildURLFromArgs } from "./buildURLFromObject";
 import { parse as parseUrl } from "url";
+
+function get(args: unknown[]) {
+  const url = buildURLFromArgs(args);
+
+  if (url) {
+    return {
+      hostname: url.hostname,
+      port: getPortFromURL(url),
+    };
+  }
+
+  return undefined;
+}
 
 t.test("it works with url string", async (t) => {
   t.same(get(["http://localhost:4000"]), {
@@ -81,10 +96,6 @@ t.test(
   "it works with an options object containing protocol, hostname and port",
   async (t) => {
     t.same(get([{ protocol: "http:", hostname: "localhost", port: 4000 }]), {
-      hostname: "localhost",
-      port: 4000,
-    });
-    t.same(get([{ hostname: "localhost", port: 4000 }]), {
       hostname: "localhost",
       port: 4000,
     });
