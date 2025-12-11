@@ -1,7 +1,9 @@
-const { updateAppConfig } = require("../zen/config");
+import type { Response } from "express";
+import { updateAppConfig } from "../zen/config.ts";
+import type { ZenRequest } from "../types.ts";
 
-module.exports = function updateConfig(req, res) {
-  if (!req.app) {
+export function updateConfig(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
     throw new Error("App is missing");
   }
 
@@ -16,5 +18,5 @@ module.exports = function updateConfig(req, res) {
       message: "Request body is missing or invalid",
     });
   }
-  res.json({ success: updateAppConfig(req.app, req.body) });
-};
+  res.json({ success: updateAppConfig(req.zenApp, req.body) });
+}

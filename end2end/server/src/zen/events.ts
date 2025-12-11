@@ -1,6 +1,8 @@
+import type { App } from "./apps.ts";
+
 const events = new Map();
 
-function captureEvent(event, app) {
+export function captureEvent(event: unknown, app: App) {
   if (!events.has(app.id)) {
     events.set(app.id, []);
   }
@@ -8,11 +10,6 @@ function captureEvent(event, app) {
   events.get(app.id).push(event);
 }
 
-function listEvents(app) {
+export function listEvents(app: App) {
   return events.get(app.id) || [];
 }
-
-module.exports = {
-  captureEvent,
-  listEvents,
-};
