@@ -67,11 +67,12 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         },
       });
 
-      const { request, fetch } = require(
+      const { request, fetch, Client, Agent } = require(
         undiciPkgName
       ) as typeof import("undici-v6");
 
       await request("https://ssrf-redirects.testssandbox.com");
+
       t.same(agent.getHostnames().asArray(), [
         {
           hostname: "ssrf-redirects.testssandbox.com",
@@ -232,6 +233,47 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           await request(`http://localhost:${port}/api/internal`);
         }
       );
+
+      agent.getHostnames().clear();
+
+      const client = new Client(`http://localhost:${port}`);
+      await client.request({
+        path: "/api/test",
+        method: "GET",
+      });
+      await client.request({
+        path: "/api/test2",
+        method: "GET",
+      });
+      t.same(agent.getHostnames().asArray(), [
+        {
+          hostname: "localhost",
+          port: port,
+          hits: 2,
+        },
+      ]);
+
+      agent.getHostnames().clear();
+
+      const undiciAgent = new Agent();
+      await undiciAgent.request({
+        origin: `http://localhost:${port}`,
+        path: "/api/test",
+        method: "GET",
+      });
+      await undiciAgent.request({
+        origin: new URL(`http://localhost:${port}`),
+        path: "/api/test",
+        method: "GET",
+      });
+
+      t.same(agent.getHostnames().asArray(), [
+        {
+          hostname: "localhost",
+          port: port,
+          hits: 2,
+        },
+      ]);
     }
   );
 
