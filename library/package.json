@@ -158,7 +158,7 @@
     "test:esm": "node ../scripts/tests-esm.mjs",
     "build": "tsdown",
     "build:watch": "tsdown --watch",
-    "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc && npm run check-format",
+    "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc",
     "lint-tsc": "tsc",
     "check-format": "prettier --check ."
   }

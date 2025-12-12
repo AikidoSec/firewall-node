@@ -1,8 +1,9 @@
-**/.tap/*
-**/wasm/*
-**/.next/*
-**/out/*
-**/build/*
-**/dist/*
+.tap/
+internals/
+wasm/
+.next/
+out/
+build/
+dist/
 coverage/
 .esm-tests/
