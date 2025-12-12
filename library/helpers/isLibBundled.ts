@@ -5,6 +5,6 @@ export function isLibBundled(): boolean {
 
   return (
     !normalizedDirName.includes("node_modules/@aikidosec/firewall/helpers") &&
-    !normalizedDirName.includes("firewall-node/build/helpers") // In case of e2e tests
+    !normalizedDirName.includes("/build/helpers") // In case of e2e tests
   );
 }

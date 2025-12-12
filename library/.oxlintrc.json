@@ -30,5 +30,6 @@
         "no-unused-vars": "off"
       }
     }
-  ]
+  ],
+  "ignorePatterns": ["**/wasm/**"]
 }
