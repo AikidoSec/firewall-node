@@ -1,6 +1,7 @@
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryParseURL } from "./tryParseURL";
 
 type UserString = string;
 
@@ -56,10 +57,28 @@ export function extractStringsFromUserInput(
 
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
-      // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
-      if (jwt.object && typeof jwt.object === "object" && "iss" in jwt.object) {
-        delete jwt.object.iss;
+      if (jwt.object && typeof jwt.object === "object") {
+        // Do not add the issuer of the JWT as a string because it can contain a domain / url and produce false positives
+        if ("iss" in jwt.object) {
+          delete jwt.object.iss;
+        }
+
+        // Do not add any keys that are URLs to prevent false positives
+        // E.g. { "http://example.com/some/path": "value" }
+        // We still need to extract strings from the value
+        Object.keys(jwt.object).forEach((key) => {
+          if (key.startsWith("http") && tryParseURL(key)) {
+            extractStringsFromUserInput(
+              (jwt.object as Record<string, unknown>)[key],
+              depth + 1
+            ).forEach((value) => {
+              results.add(value);
+            });
+            delete (jwt.object as Record<string, unknown>)[key];
+          }
+        });
       }
+
       extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
         results.add(value);
       });
