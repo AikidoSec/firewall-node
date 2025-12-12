@@ -20,7 +20,7 @@
     "test:new": "cd library && npm run test:new",
     "test:ci:new": "cd library && npm run test:ci:new",
     "test:esm": "node scripts/tests-esm.mjs",
-    "lint": "cd library && npm run lint",
+    "lint": "npm run format:check && cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
     "end2end:new": "cd end2end && npm run test:new",
     "format": "prettier --write .",
