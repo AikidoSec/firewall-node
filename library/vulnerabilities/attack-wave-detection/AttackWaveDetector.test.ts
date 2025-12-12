@@ -30,6 +30,7 @@ function newAttackWaveDetector() {
     attackWaveTimeFrame: 60 * 1000,
     minTimeBetweenEvents: 60 * 60 * 1000,
     maxLRUEntries: 10_000,
+    maxSamplesPerIP: 5,
   });
 }
 
@@ -149,4 +150,56 @@ t.test("a slow web scanner that triggers in the third interval", async (t) => {
   t.ok(detector.check(getTestContext("::1", "/.htaccess", "GET")));
 
   clock.uninstall();
+});
+
+t.test("it collects samples correctly", async (t) => {
+  const detector = newAttackWaveDetector();
+  const ip = "::1";
+  detector.check(getTestContext(ip, "/wp-config.php", "GET"));
+  detector.check(getTestContext(ip, "/wp-config.php.bak", "GET"));
+  detector.check(getTestContext(ip, "/.git/config", "GET"));
+  detector.check(getTestContext(ip, "/.env", "GET"));
+  detector.check(getTestContext(ip, "/.htaccess", "GET"));
+
+  detector.check(getTestContext(ip, "/.htaccess", "GET")); // Duplicate
+  detector.check(getTestContext("::2", "/test/.env", "GET")); // Different IP
+
+  const samples = detector.getSamplesForIP(ip);
+  t.equal(samples.length, 5, "should have collected 5 samples");
+
+  t.same(
+    samples,
+    [
+      { method: "GET", url: "http://localhost:4000/wp-config.php" },
+      { method: "GET", url: "http://localhost:4000/wp-config.php.bak" },
+      { method: "GET", url: "http://localhost:4000/.git/config" },
+      { method: "GET", url: "http://localhost:4000/.env" },
+      { method: "GET", url: "http://localhost:4000/.htaccess" },
+    ],
+    "should have collected the correct samples"
+  );
+});
+
+t.test("it limits samples correctly", async (t) => {
+  const detector = newAttackWaveDetector();
+  const ip = "::1";
+
+  for (let i = 0; i < 10; i++) {
+    detector.check(getTestContext(ip, `/${i}/.env`, "GET"));
+  }
+
+  const samples = detector.getSamplesForIP(ip);
+  t.equal(samples.length, 5, "should have collected maximum 5 samples");
+
+  t.same(
+    samples,
+    [
+      { method: "GET", url: "http://localhost:4000/0/.env" },
+      { method: "GET", url: "http://localhost:4000/1/.env" },
+      { method: "GET", url: "http://localhost:4000/2/.env" },
+      { method: "GET", url: "http://localhost:4000/3/.env" },
+      { method: "GET", url: "http://localhost:4000/4/.env" },
+    ],
+    "should have collected the correct samples"
+  );
 });

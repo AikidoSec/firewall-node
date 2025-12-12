@@ -328,6 +328,17 @@ export class Agent {
       ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
       }
+
+      if (
+        typeof response.blockNewOutgoingRequests === "boolean" &&
+        response.domains &&
+        Array.isArray(response.domains)
+      ) {
+        this.serviceConfig.setBlockNewOutgoingRequests(
+          response.blockNewOutgoingRequests
+        );
+        this.serviceConfig.updateDomains(response.domains);
+      }
     }
   }
 
@@ -668,18 +679,27 @@ export class Agent {
   /**
    * This function gets called when an attack wave is detected, it reports this attack wave to the API
    */
-  onDetectedAttackWave({
-    request,
-    metadata,
-  }: {
-    request: Context;
-    metadata: Record<string, string>;
-  }) {
+  onDetectedAttackWave({ request }: { request: Context }) {
+    if (!request.remoteAddress) {
+      // Cannot report attack wave without IP address
+      // Should not happen since AttackWaveDetector checks for remoteAddress
+      return;
+    }
+
+    const samples = this.attackWaveDetector.getSamplesForIP(
+      request.remoteAddress
+    );
+
     const attack: DetectedAttackWave = {
       type: "detected_attack_wave",
       time: Date.now(),
       attack: {
-        metadata: limitLengthMetadata(metadata, 4096),
+        metadata: limitLengthMetadata(
+          {
+            samples: JSON.stringify(samples),
+          },
+          4096
+        ),
         user: request.user,
       },
       request: {

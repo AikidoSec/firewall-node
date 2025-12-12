@@ -4,9 +4,10 @@
 
 Double-check your setup against the [installation guide](../README.md#installation).  
 Make sure:
-- The package installed correctly.  
+
+- The package installed correctly.
 - The firewall is imported early in your app (before any other import).
-- Your framework-specific integration (middleware, decorator, etc.) matches the example in the README.  
+- Your framework-specific integration (middleware, decorator, etc.) matches the example in the README.
 - You’re using Node.js 16 or newer.
 - Zen runs only on the server side, it does not run in the browser.
 
@@ -19,6 +20,7 @@ Test from the same environment where your app runs and follow the instructions o
 ## Check logs for errors
 
 Common places:
+
 - Docker: `docker logs <your-app-container>`
 - systemd: `journalctl -u <your-app-service> --since "1 hour ago"`
 - Local dev: your terminal or IDE run console
@@ -45,4 +47,3 @@ If you still can’t resolve the issue:
 - Or create an issue on [GitHub](https://github.com/AikidoSec/firewall-node/issues) with details about your setup, framework, and logs.
 
 Include as much context as possible (framework, logs, and how Aikido was added) so we can help you quickly.
-

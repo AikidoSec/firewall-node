@@ -113,8 +113,14 @@ function onFinishRequestHandler(
       agent.onRouteRateLimited(context.rateLimitedEndpoint);
     }
 
-    if (agent.getAttackWaveDetector().check(context)) {
-      agent.onDetectedAttackWave({ request: context, metadata: {} });
+    if (
+      context.remoteAddress &&
+      !agent.getConfig().isBypassedIP(context.remoteAddress) &&
+      agent.getAttackWaveDetector().check(context)
+    ) {
+      agent.onDetectedAttackWave({
+        request: context,
+      });
       agent.getInspectionStatistics().onAttackWaveDetected();
     }
   }
