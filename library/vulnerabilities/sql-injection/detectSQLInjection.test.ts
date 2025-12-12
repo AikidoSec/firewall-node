@@ -211,6 +211,13 @@ t.test("It does not flag key keyword as SQL injection", async () => {
   isNotSqlInjection(query, "UPDATE");
   isNotSqlInjection(query, "INSERT");
   isNotSqlInjection(query, "INTO");
+  isNotSqlInjection(
+    `
+    SELECT * FROM users u
+    WHERE u.status NOT IN ('active', 'pending')
+  `,
+    "not in"
+  );
 });
 
 t.test("It flags function calls as SQL injections", async () => {
