@@ -1,8 +1,9 @@
 name: 🧪 QA Tests
+
 permissions:
   contents: read
+
 on:
-  push: {}
   workflow_call: {}
 
 jobs:
@@ -11,41 +12,33 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout firewall-node
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: firewall-node
 
       - name: Checkout zen-demo-nodejs
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: Aikido-demo-apps/zen-demo-nodejs
           path: zen-demo-nodejs
           submodules: true
 
-      - name: Use Node.js 22.x
-        uses: actions/setup-node@v5
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v6
         with:
-          node-version: "22.x"
+          node-version: "24.x"
 
-      - name: Setup Aikido safe-chain
-        run: |
-          npm i -g @aikidosec/safe-chain
-          safe-chain setup-ci
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}
+          path: firewall-node
 
-      - name: Set up Rust
+      - name: Pack firewall-node library
         run: |
-          rustup toolchain install stable
-          rustup default stable
-          cargo install wasm-pack
-
-      - name: Build firewall-node dev package
-        run: |
-          cd firewall-node
-          npm run install-lib-only
-          npm run build
+          cd firewall-node/build
 
           # Pack the built package for local installation
-          cd build
           npm pack
 
           # Move the packed tarball to zen-demo-nodejs directory
