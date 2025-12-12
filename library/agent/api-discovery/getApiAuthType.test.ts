@@ -41,6 +41,17 @@ t.test("it detects api keys", async (t) => {
   ]);
 });
 
+t.test("it doesn't add the same api key again", async () => {
+  t.same(get(getContext({ "api-key": "token", "api-key-a": "token" })), [
+    { type: "apiKey", in: "header", name: "api-key" },
+    { type: "apiKey", in: "header", name: "api-key-a" },
+  ]);
+  t.same(get(getContext({ "api-key": "token", "api-key-apikey": "token" })), [
+    { type: "apiKey", in: "header", name: "api-key" },
+    { type: "apiKey", in: "header", name: "api-key-apikey" },
+  ]);
+});
+
 t.test("it detects auth cookies", async (t) => {
   t.same(get(getContext({}, { "api-key": "token" })), [
     { type: "apiKey", in: "cookie", name: "api-key" },
@@ -52,6 +63,49 @@ t.test("it detects auth cookies", async (t) => {
       name: "session",
     },
   ]);
+});
+
+t.test("it detects multiple auth cookies", async (t) => {
+  t.same(get(getContext({}, { "api-key": "token", "api-key-a": "token" })), [
+    { type: "apiKey", in: "cookie", name: "api-key" },
+    { type: "apiKey", in: "cookie", name: "api-key-a" },
+  ]);
+  t.same(get(getContext({}, { "api-key": "token", "api-key-sid": "token" })), [
+    { type: "apiKey", in: "cookie", name: "api-key-sid" },
+    { type: "apiKey", in: "cookie", name: "api-key" },
+  ]);
+});
+
+t.test("it detects cookies and api keys at same time", async (t) => {
+  t.same(
+    get(
+      getContext(
+        {
+          "api-key": "token",
+        },
+        { "api-key": "token" }
+      )
+    ),
+    [
+      { type: "apiKey", in: "header", name: "api-key" },
+      { type: "apiKey", in: "cookie", name: "api-key" },
+    ]
+  );
+
+  t.same(
+    get(
+      getContext(
+        {
+          "x-api-key": "token",
+        },
+        { "api-key": "token" }
+      )
+    ),
+    [
+      { type: "apiKey", in: "header", name: "x-api-key" },
+      { type: "apiKey", in: "cookie", name: "api-key" },
+    ]
+  );
 });
 
 t.test("no auth", async (t) => {
