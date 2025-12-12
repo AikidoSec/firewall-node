@@ -1,3 +1,5 @@
+import { safeCreateRegExp } from "../agent/safeCreateRegExp";
+import { escapeStringRegexp } from "./escapeStringRegexp";
 import { looksLikeASecret } from "./looksLikeASecret";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryParseURLPath } from "./tryParseURLPath";
@@ -15,7 +17,7 @@ const HASH = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 const HASH_LENGTHS = [32, 40, 64, 128];
 const NUMBER_ARRAY = /^\d+(?:,\d+)*$/;
 
-export function buildRouteFromURL(url: string) {
+export function buildRouteFromURL(url: string, custom: RegExp[]) {
   let path = tryParseURLPath(url);
 
   if (!path) {
@@ -29,7 +31,10 @@ export function buildRouteFromURL(url: string) {
     }
   }
 
-  const route = path.split("/").map(replaceURLSegmentWithParam).join("/");
+  const route = path
+    .split("/")
+    .map((segment) => replaceURLSegmentWithParam(segment, custom))
+    .join("/");
 
   if (route === "/") {
     return "/";
@@ -42,7 +47,30 @@ export function buildRouteFromURL(url: string) {
   return route;
 }
 
-function replaceURLSegmentWithParam(segment: string) {
+export function compileCustomPattern(pattern: string) {
+  if (!pattern.includes("{") || !pattern.includes("}")) {
+    return undefined;
+  }
+
+  const supported: Record<string, string> = {
+    "{digits}": `\\d+`,
+    "{alpha}": "[a-zA-Z]+",
+  };
+
+  const placeholderRegex = /(\{[a-zA-Z]+})/g;
+  const parts = pattern.split(placeholderRegex);
+  const regexParts = parts.map((part) => {
+    if (supported[part]) {
+      return supported[part];
+    }
+
+    return escapeStringRegexp(part);
+  });
+
+  return safeCreateRegExp(`^${regexParts.join("")}$`, "");
+}
+
+function replaceURLSegmentWithParam(segment: string, customPatterns: RegExp[]) {
   const charCode = segment.charCodeAt(0);
   const startsWithNumber = charCode >= 48 && charCode <= 57; // ASCII codes for '0' to '9'
 
@@ -84,6 +112,12 @@ function replaceURLSegmentWithParam(segment: string) {
 
   if (looksLikeASecret(segment)) {
     return ":secret";
+  }
+
+  for (const pattern of customPatterns) {
+    if (pattern.test(segment)) {
+      return `:custom`;
+    }
   }
 
   return segment;
