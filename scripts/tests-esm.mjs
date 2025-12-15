@@ -2,7 +2,7 @@ import { mkdir, glob, writeFile, rm, readFile, copyFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { exec } from "child_process";
 import { existsSync } from "fs";
-import { parseSync } from "oxc-parser";
+import { parse } from "oxc-parser";
 import { generate } from "astring";
 import { transform } from "oxc-transform";
 import { walk } from "oxc-walker";
@@ -77,7 +77,7 @@ for await (const entry of testFiles) {
   const newFilename = filename.replace(/ts$/, "js");
 
   // --------------- Transform TS to JS and parse to AST ----------------
-  let { code, errors } = transform(filename, sourceText, {
+  let { code, errors } = await transform(filename, sourceText, {
     target: "es2022",
     typescript: {
       rewriteImportExtensions: "rewrite",
@@ -110,7 +110,7 @@ for await (const entry of testFiles) {
     `import * as _testHelpers from '${join(import.meta.dirname, "helpers", "test-helpers.mjs")}';\n` +
     code;
 
-  const ast = parseSync(newFilename, code, {
+  const ast = await parse(newFilename, code, {
     preserveParens: false,
   });
 

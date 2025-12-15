@@ -3,15 +3,17 @@
   "devDependencies": {
     "astring": "^1.9.0",
     "follow-redirects": "^1.15.11",
-    "oxc-parser": "^0.96.0",
-    "oxc-transform": "^0.96.0",
-    "oxc-walker": "^0.5.2",
+    "oxc-parser": "^0.102.0",
+    "oxc-transform": "^0.102.0",
+    "oxc-walker": "^0.6.0",
     "prettier": "^3.2.4",
     "tar": "^7.5.1"
   },
   "scripts": {
     "install": "node scripts/install.js",
     "install-lib-only": "node scripts/install.js --lib-only",
+    "install-e2e-only": "node scripts/install.js --end2end-only",
+    "install-benchmarks-only": "node scripts/install.js --benchmarks-only",
     "containers": "cd sample-apps && docker compose up -d --remove-orphans --build",
     "build": "node scripts/build.js",
     "watch": "cd library && npm run build:watch",

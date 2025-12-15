@@ -111,7 +111,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_or_method_arg_names(&function_args)
+            get_function_or_method_arg_names(function_args)
         } else {
             Vec::new()
         };
@@ -194,7 +194,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
         node: &mut oxc_ast::ast::VariableDeclarator<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
-        if !node.id.kind.is_binding_identifier() || !node.init.is_some() {
+        if !node.id.kind.is_binding_identifier() || node.init.is_none() {
             return;
         }
 
@@ -226,7 +226,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
         // We need to collect the arg names before we make the body mutable
         let arg_names = if instruction.modify_args {
-            get_function_or_method_arg_names(&function_args)
+            get_function_or_method_arg_names(function_args)
         } else {
             Vec::new()
         };

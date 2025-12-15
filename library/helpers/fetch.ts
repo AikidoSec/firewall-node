@@ -113,6 +113,8 @@ export async function fetch({
   ]);
 }
 
+// Add our own requests as outbound connections (Heartbeats, realtime polling, etc.)
+// Only for new instrumentation (see below)
 function trackRequest(url: URL) {
   const agent = getInstance();
   if (!agent) {
