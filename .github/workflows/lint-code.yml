@@ -55,7 +55,9 @@ jobs:
         run: npm run format:check
 
       - name: Check Rust formatting
-        run: cd instrumentation-wasm && cargo fmt --check
+        run: cargo fmt --check
+        working-directory: ./instrumentation-wasm
 
       - name: Run Rust Linter
-        run: cd instrumentation-wasm && cargo clippy
+        run: cargo clippy -- -D warnings
+        working-directory: ./instrumentation-wasm

@@ -23,7 +23,7 @@ async function execAsyncWithPipe(command, options) {
 }
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.50";
+const INTERNALS_VERSION = "v0.1.55";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
 // ---
 
