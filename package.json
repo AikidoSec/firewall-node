@@ -12,6 +12,8 @@
   "scripts": {
     "install": "node scripts/install.js",
     "install-lib-only": "node scripts/install.js --lib-only",
+    "install-e2e-only": "node scripts/install.js --end2end-only",
+    "install-benchmarks-only": "node scripts/install.js --benchmarks-only",
     "containers": "cd sample-apps && docker compose up -d --remove-orphans --build",
     "build": "node scripts/build.js",
     "watch": "cd library && npm run build:watch",

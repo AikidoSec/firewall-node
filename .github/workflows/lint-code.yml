@@ -1,7 +1,11 @@
 name: 🧹 Lint code
-on: push
+
+on:
+  workflow_call: {}
+
 permissions:
   contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -10,36 +14,50 @@ jobs:
       matrix:
         node-version: [24.x]
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+
       - name: Set up Rust
         run: |
           rustup toolchain install stable
           rustup default stable
           rustup component add rustfmt clippy
-          cargo install wasm-pack
+
       - name: Setup Aikido safe-chain
         run: |
           npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
+
       - name: Downgrade npm for v24 and v25
         # https://github.com/npm/cli/issues/8669
         if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
         run: npm i -g npm@11.6.0
-      - run: npm run install-lib-only
-      - run: npm run build
+
+      - name: Install dependencies (library only)
+        run: npm run install-lib-only
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}
+
       - name: Run Linter for JavaScript/TypeScript
         run: npm run lint
+
       - name: Check formatting
         run: npm run format:check
+
       - name: Check Rust formatting
         run: cargo fmt --check
         working-directory: ./instrumentation-wasm
+
       - name: Run Rust Linter
         run: cargo clippy -- -D warnings
         working-directory: ./instrumentation-wasm
