@@ -1,14 +1,18 @@
 name: 🧪 Unit tests
+
 on:
-  push: {}
   workflow_call: {}
+
 permissions:
   contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
+
       matrix:
         include:
           - node-version: 16.x
@@ -41,50 +45,57 @@ jobs:
           - node-version: 25.x
             new-instrumentation: "new"
             mode: "esm"
-    timeout-minutes: 15
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+
       - name: Setup Aikido safe-chain
         run: |
           npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
+
       - name: Downgrade npm for v24 and v25
         # https://github.com/npm/cli/issues/8669
         if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
         run: npm i -g npm@11.6.0
+
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - name: Set up Rust
-        run: |
-          rustup toolchain install stable
-          rustup default stable
-          cargo install wasm-pack
-      - run: npm run install-lib-only
+
+      - name: Install dependencies (library only)
+        run: npm run install-lib-only
+
       - name: Start containers
         run: npm run containers
-      - name: Prepare WASM components
-        # When running tests with tap (CJS), we don't need to build our lib, just need the WASM files
-        run: npm run build -- --only-wasm
-        if: ${{ matrix.mode != 'esm' }}
-      - name: Build complete library
-        run: npm run build
-        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
-      - run: npm run test:ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Run tests with current instrumentation
+        run: npm run test:ci
         if: ${{ matrix.new-instrumentation == 'current' }}
-      - run: npm run test:ci:new
+
+      - name: Run tests with new instrumentation in CJS mode
+        run: npm run test:ci:new
         if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'cjs' }}
+
       - name: Run tests in ESM mode
         run: npm run test:esm
         if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
+
       - name: "Upload coverage"
-        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
         env:
