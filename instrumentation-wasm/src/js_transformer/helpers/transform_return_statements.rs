@@ -52,10 +52,7 @@ fn transform_statement<'a>(
                 .take()
                 .unwrap_or_else(|| builder.expression_identifier(SPAN, "undefined"));
 
-            let needs_await = match arg_expr {
-                Expression::AwaitExpression(_) => true,
-                _ => false,
-            };
+            let needs_await = matches!(arg_expr, Expression::AwaitExpression(_));
 
             instrument_args.push(arg_expr.into());
 
