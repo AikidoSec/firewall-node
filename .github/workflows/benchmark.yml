@@ -63,7 +63,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v5
         with:
-          name: firewall-node-library-${{ github.sha }}
+          name: firewall-node-library-${{ github.sha }}-original-structure
 
       - name: Install dependencies for benchmarks
         run: npm run install-benchmarks-only
