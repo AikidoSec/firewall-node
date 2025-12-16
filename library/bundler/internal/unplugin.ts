@@ -1,17 +1,21 @@
 import { createUnplugin, type UnpluginInstance } from "unplugin";
 import { patchPackage } from "../../agent/hooks/instrumentation/loadHook";
-import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { findZenLibPath } from "./findZenLibPath";
 import { processEsbuildOptions } from "./bundlers/esbuild";
 import { wrapInstalledPackages } from "../../agent/wrapInstalledPackages";
 import { getWrappers } from "../../agent/protect";
+import { copyFile, cp, mkdir } from "node:fs/promises";
+import { processRolldownAndUpOptions } from "./bundlers/rolldownAndUp";
 
 type UserOptions = {
   /**
-   * Whether to copy Zen to the output directory for ESM builds.
+   * Whether to copy the required files to the output directory.
+   * In ESM builds, the entire module is copied, while for CJS builds, only the wasm files are copied.
+   * @default true
    */
-  copyModule: boolean;
+  copyFiles?: boolean;
 };
 
 export type OutputFormat = "cjs" | "esm";
@@ -20,11 +24,10 @@ export type BundlerProcessedOptions = {
   outputFormat: OutputFormat;
 };
 
-let outputFormat: OutputFormat | undefined = undefined;
 let importFound = false;
 let userOptions: UserOptions | undefined = undefined;
-let outdir: string | undefined = undefined;
 let initialized = false;
+let processedBundlerOpts: BundlerProcessedOptions | undefined = undefined;
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
   createUnplugin((options) => {
@@ -86,37 +89,57 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
         },
       },
 
-      buildEnd: () => {
-        if (!outputFormat) {
+      buildEnd: async () => {
+        if (!processedBundlerOpts?.outputFormat) {
           throw new Error(
             "Aikido: Output format is undefined at build end. This is likely a bug in the bundler plugin."
           );
         }
 
-        if (!outdir) {
+        if (!processedBundlerOpts.outdir) {
           throw new Error(
             "Aikido: Output directory is undefined at build end. This is likely a bug in the bundler plugin."
           );
         }
 
-        if (outputFormat === "esm" && importFound === true) {
+        if (
+          processedBundlerOpts.outputFormat === "esm" &&
+          importFound === true
+        ) {
           throw new Error(
             "Aikido: Detected import of '@aikidosec/firewall/instrument' in your code while building an ESM bundle. Please remove this import and preload the library by running Node.js with the --require option instead. See our ESM documentation for more information."
           );
         }
 
-        if (outputFormat === "cjs" && importFound === false) {
+        if (
+          processedBundlerOpts.outputFormat === "cjs" &&
+          importFound === false
+        ) {
           throw new Error(
             "Aikido: Missing import of '@aikidosec/firewall/instrument' in your code while building a CJS bundle. Please add this as the first line of your application's entry point file to ensure proper instrumentation."
           );
         }
 
-        copyFiles(outdir, outputFormat);
+        if (userOptions?.copyFiles !== false) {
+          await copyFiles(
+            processedBundlerOpts.outdir,
+            processedBundlerOpts.outputFormat
+          );
+        }
       },
 
       esbuild: {
-        config: (options) => {
-          ({ outputFormat, outdir } = processEsbuildOptions(options));
+        config: (esbuildOptions) => {
+          processedBundlerOpts = processEsbuildOptions(esbuildOptions);
+
+          // Reset state on subsequent builds
+          importFound = false;
+        },
+      },
+
+      rolldown: {
+        options: (rolldownOptions) => {
+          processedBundlerOpts = processRolldownAndUpOptions(rolldownOptions);
 
           // Reset state on subsequent builds
           importFound = false;
@@ -125,11 +148,11 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
     };
   });
 
-function copyFiles(outDir: string, format: "cjs" | "esm") {
+async function copyFiles(outDir: string, format: "cjs" | "esm") {
   const zenLibDir = findZenLibPath();
 
   if (!existsSync(outDir)) {
-    mkdirSync(outDir, { recursive: true });
+    await mkdir(outDir, { recursive: true });
   }
 
   if (format === "cjs") {
@@ -138,11 +161,14 @@ function copyFiles(outDir: string, format: "cjs" | "esm") {
       "node_code_instrumentation_bg.wasm",
       "zen_internals_bg.wasm",
     ]) {
-      copyFileSync(join(zenLibDir, file), join(outDir, file));
+      await copyFile(join(zenLibDir, file), join(outDir, file));
     }
-  } else if (format === "esm" && userOptions?.copyModule !== false) {
-    cpSync(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
-      recursive: true,
-    });
+
+    return;
   }
+
+  // ESM: Copy the entire module into the output directory
+  await cp(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
+    recursive: true,
+  });
 }
