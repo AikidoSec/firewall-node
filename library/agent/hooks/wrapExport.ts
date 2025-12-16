@@ -47,23 +47,20 @@ export function wrapExport(
   pkgInfo: PartialWrapPackageInfo,
   interceptors: InterceptorObject
 ) {
-  const agent = getInstance();
-  if (!agent) {
-    throw new Error("Can not wrap exports if agent is not initialized");
-  }
-
   try {
     return wrapDefaultOrNamed(
       subject,
       methodName,
       function wrap(original: Function) {
         return function wrap() {
+          const agent = getInstance();
+
           // eslint-disable-next-line prefer-rest-params
           let args = Array.from(arguments);
           const context = getContext();
 
           // Run inspectArgs interceptor if provided
-          if (typeof interceptors.inspectArgs === "function") {
+          if (agent && typeof interceptors.inspectArgs === "function") {
             // Bind context to functions in arguments
             for (let i = 0; i < args.length; i++) {
               if (typeof args[i] === "function") {
@@ -85,7 +82,7 @@ export function wrapExport(
           }
 
           // Run modifyArgs interceptor if provided
-          if (typeof interceptors.modifyArgs === "function") {
+          if (agent && typeof interceptors.modifyArgs === "function") {
             try {
               args = interceptors.modifyArgs(
                 args,
@@ -109,7 +106,7 @@ export function wrapExport(
           );
 
           // Run modifyReturnValue interceptor if provided
-          if (typeof interceptors.modifyReturnValue === "function") {
+          if (agent && typeof interceptors.modifyReturnValue === "function") {
             try {
               return interceptors.modifyReturnValue(
                 args,
@@ -133,7 +130,7 @@ export function wrapExport(
     );
   } catch (error) {
     if (error instanceof Error) {
-      agent.onFailedToWrapMethod(
+      getInstance()?.onFailedToWrapMethod(
         pkgInfo.name,
         methodName || "default export",
         error

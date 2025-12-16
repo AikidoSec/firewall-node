@@ -79,9 +79,7 @@ export class Agent {
     private readonly serverless: string | undefined,
     // Use the new instrumentation system (CJS & ESM) using registerHook
     private readonly newInstrumentation: boolean = false,
-    private readonly fetchListsAPI: FetchListsAPI,
-    // Set to true during the bundling process when the bundler plugin is used to disable certain features
-    private readonly isBundlingProcess: boolean = false
+    private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -504,28 +502,22 @@ export class Agent {
 
     this.started = true;
 
-    if (!this.isBundlingProcess) {
-      this.logger.log(`Starting agent v${getAgentVersion()}...`);
+    this.logger.log(`Starting agent v${getAgentVersion()}...`);
 
-      if (!this.block) {
-        this.logger.log("Dry mode enabled, no requests will be blocked!");
-      }
+    if (!this.block) {
+      this.logger.log("Dry mode enabled, no requests will be blocked!");
+    }
 
-      if (this.token) {
-        this.logger.log("Found token, reporting enabled!");
-      } else {
-        this.logger.log("No token provided, disabling reporting.");
-
-        if (!this.block && !isAikidoCI()) {
-          console.log(
-            "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
-          );
-        }
-      }
+    if (this.token) {
+      this.logger.log("Found token, reporting enabled!");
     } else {
-      this.logger.log(
-        `Starting agent v${getAgentVersion()} in bundling mode...`
-      );
+      this.logger.log("No token provided, disabling reporting.");
+
+      if (!this.block && !isAikidoCI()) {
+        console.log(
+          "AIKIDO: Running in monitoring only mode without reporting to Aikido Cloud. Set AIKIDO_BLOCK=true to enable blocking."
+        );
+      }
     }
 
     // When our library is required, we are not intercepting `require` calls yet
@@ -536,13 +528,8 @@ export class Agent {
       wrappers,
       this.newInstrumentation,
       this.serverless,
-      this.isBundlingProcess
+      false // Is bundling process
     );
-
-    if (this.isBundlingProcess) {
-      // No need to report events during the bundling process
-      return;
-    }
 
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
