@@ -1,9 +1,11 @@
 import { createUnplugin, type UnpluginInstance } from "unplugin";
-import { protectDuringBundling } from "../../agent/protect";
 import { patchPackage } from "../../agent/hooks/instrumentation/loadHook";
-import { createRequire } from "node:module";
 import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { findZenLibPath } from "./findZenLibPath";
+import { processEsbuildOptions } from "./bundlers/esbuild";
+import { wrapInstalledPackages } from "../../agent/wrapInstalledPackages";
+import { getWrappers } from "../../agent/protect";
 
 type UserOptions = {
   /**
@@ -12,9 +14,17 @@ type UserOptions = {
   copyModule: boolean;
 };
 
-let outputFormat: "cjs" | "esm" | undefined = undefined;
+export type OutputFormat = "cjs" | "esm";
+export type BundlerProcessedOptions = {
+  outdir: string;
+  outputFormat: OutputFormat;
+};
+
+let outputFormat: OutputFormat | undefined = undefined;
 let importFound = false;
 let userOptions: UserOptions | undefined = undefined;
+let outdir: string | undefined = undefined;
+let initialized = false;
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
   createUnplugin((options) => {
@@ -24,7 +34,19 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
       name: "zen-js-bundler-plugin",
 
       buildStart: () => {
-        protectDuringBundling();
+        if (!initialized) {
+          initialized = true;
+
+          // On first execution of bundler plugin
+          wrapInstalledPackages(
+            getWrappers(),
+            true, // Use new instrumentation during bundling
+            undefined, // serverless
+            true // Is bundling process
+          );
+
+          return;
+        }
       },
 
       transform: {
@@ -65,6 +87,18 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
       },
 
       buildEnd: () => {
+        if (!outputFormat) {
+          throw new Error(
+            "Aikido: Output format is undefined at build end. This is likely a bug in the bundler plugin."
+          );
+        }
+
+        if (!outdir) {
+          throw new Error(
+            "Aikido: Output directory is undefined at build end. This is likely a bug in the bundler plugin."
+          );
+        }
+
         if (outputFormat === "esm" && importFound === true) {
           throw new Error(
             "Aikido: Detected import of '@aikidosec/firewall/instrument' in your code while building an ESM bundle. Please remove this import and preload the library by running Node.js with the --require option instead. See our ESM documentation for more information."
@@ -76,62 +110,16 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
             "Aikido: Missing import of '@aikidosec/firewall/instrument' in your code while building a CJS bundle. Please add this as the first line of your application's entry point file to ensure proper instrumentation."
           );
         }
+
+        copyFiles(outdir, outputFormat);
       },
 
       esbuild: {
         config: (options) => {
-          if (!options.format) {
-            // Todo We can try to determine the default format based on the platform (https://esbuild.github.io/api/#format) in the future
-            throw new Error(
-              "Aikido: esbuild output format is undefined. Please set it to 'cjs' or 'esm' explicitly in your esbuild config."
-            );
-          }
+          ({ outputFormat, outdir } = processEsbuildOptions(options));
 
-          if (options.format !== "cjs" && options.format !== "esm") {
-            throw new Error(
-              `Aikido: esbuild output format is set to unsupported value '${options.format}'. Please set it to 'cjs' or 'esm'.`
-            );
-          }
-
-          outputFormat = options.format;
-
-          // Todo not needed if bundle is false or packages are externalized
-
-          // We only need to mark @aikidosec/firewall as external for ESM builds, as we need to preload it before any other ESM module is loaded
-          if (outputFormat === "esm") {
-            if (!options.external) {
-              options.external = ["@aikidosec/firewall"];
-            } else if (Array.isArray(options.external)) {
-              options.external.push("@aikidosec/firewall");
-            } else {
-              throw new Error("esbuild external option is not an array");
-            }
-
-            const injectPath = join(
-              findZenLibPath(),
-              "bundler",
-              "internal",
-              "shim.mjs"
-            );
-            if (!options.inject) {
-              options.inject = [injectPath];
-            } else if (Array.isArray(options.inject)) {
-              options.inject.push(injectPath);
-            } else {
-              throw new Error("esbuild inject option is not an array");
-            }
-          }
-
-          if (!options.outdir) {
-            // Todo also support outfile if it contains a directory path?
-            throw new Error(
-              "Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config."
-            );
-          }
-
-          copyFiles(options.outdir, options.format);
-
-          return options;
+          // Reset state on subsequent builds
+          importFound = false;
         },
       },
     };
@@ -157,11 +145,4 @@ function copyFiles(outDir: string, format: "cjs" | "esm") {
       recursive: true,
     });
   }
-}
-
-function findZenLibPath(): string {
-  // create a require function relative to current file
-  const requireFunc = createRequire(__dirname);
-  // resolve the library path
-  return dirname(requireFunc.resolve("@aikidosec/firewall"));
 }
