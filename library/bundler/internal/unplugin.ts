@@ -139,7 +139,10 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
 
       rolldown: {
         options: (rolldownOptions) => {
-          processedBundlerOpts = processRolldownAndUpOptions(rolldownOptions);
+          processedBundlerOpts = processRolldownAndUpOptions(
+            rolldownOptions,
+            "rolldown"
+          );
 
           // Reset state on subsequent builds
           importFound = false;
