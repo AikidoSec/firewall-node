@@ -14,6 +14,12 @@ export type InspectArgsInterceptor = (
   subject: unknown
 ) => InterceptorResult | void;
 
+export type AsyncInspectArgsInterceptor = (
+  args: unknown[],
+  agent: Agent,
+  subject: unknown
+) => Promise<InterceptorResult | void>;
+
 export type ModifyArgsInterceptor = (
   args: unknown[],
   agent: Agent,
@@ -28,6 +34,7 @@ export type ModifyReturnValueInterceptor = (
 ) => unknown;
 
 export type InterceptorObject = {
+  asyncInspectArgs?: AsyncInspectArgsInterceptor;
   inspectArgs?: InspectArgsInterceptor;
   modifyArgs?: ModifyArgsInterceptor;
   modifyReturnValue?: ModifyReturnValueInterceptor;
@@ -53,6 +60,62 @@ export function wrapExport(
   }
 
   try {
+    if (interceptors.asyncInspectArgs) {
+      return wrapDefaultOrNamed(
+        subject,
+        methodName,
+        function wrap(original: Function) {
+          return async function wrap() {
+            // eslint-disable-next-line prefer-rest-params
+            let args = Array.from(arguments);
+            const context = getContext();
+
+            if (context) {
+              const matches = agent.getConfig().getEndpoints(context);
+
+              if (matches.find((match) => match.forceProtectionOff)) {
+                return;
+              }
+            }
+
+            const start = performance.now();
+            let result: InterceptorResult = undefined;
+
+            try {
+              result = await interceptors.asyncInspectArgs!(
+                args,
+                agent,
+                // @ts-expect-error We don't now the type of this
+                this
+              );
+            } catch (error: any) {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: methodName || "default export",
+                module: pkgInfo.name,
+              });
+            }
+
+            onInspectionInterceptorResult(
+              context,
+              agent,
+              result,
+              pkgInfo,
+              start,
+              `${pkgInfo.name}.${methodName}`,
+              interceptors.kind
+            );
+
+            return original.apply(
+              // @ts-expect-error We don't now the type of this
+              this,
+              args
+            );
+          };
+        }
+      );
+    }
+
     return wrapDefaultOrNamed(
       subject,
       methodName,

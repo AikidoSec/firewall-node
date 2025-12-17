@@ -1,9 +1,11 @@
 /* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
+import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { shouldBlockLLMCall } from "../vulnerabilities/prompt-injection/shouldBlockLLMCall";
 
 type Response = {
   model: string;
@@ -38,6 +40,25 @@ function isCompletionResponse(
     "model" in response &&
     typeof response.model === "string"
   );
+}
+
+type Message = {
+  content: string;
+  role: string;
+};
+
+function isMessage(message: unknown): message is Message {
+  return (
+    isPlainObject(message) &&
+    "content" in message &&
+    typeof message.content === "string" &&
+    "role" in message &&
+    typeof message.role === "string"
+  );
+}
+
+function messagesToPrompt(messages: Message[]): string {
+  return messages.map((msg) => msg.content).join("\n");
 }
 
 type Provider = "openai" | "azure";
@@ -190,6 +211,38 @@ export class OpenAI implements Wrapper {
     return returnValue;
   }
 
+  private async inspectCreateResponse(
+    args: unknown[]
+  ): Promise<InterceptorResult> {
+    if (args.length === 0) {
+      return;
+    }
+
+    const options = args[0];
+    if (isPlainObject(options)) {
+      let input: Message[] = [];
+      if (typeof options.input === "string") {
+        input = [{ role: "user", content: options.input }];
+      }
+      if (Array.isArray(options.input) && options.input.every(isMessage)) {
+        input = options.input;
+      }
+      if (input.length > 0) {
+        const decision = await shouldBlockLLMCall(messagesToPrompt(input));
+        if (decision.block) {
+          return {
+            operation: "openai.responses.create",
+            kind: "prompt-injection",
+            source: "headers",
+            pathsToPayload: [],
+            metadata: {},
+            payload: messagesToPrompt(input),
+          };
+        }
+      }
+    }
+  }
+
   wrap(hooks: Hooks) {
     // Note: Streaming is not supported yet
     hooks
@@ -200,6 +253,9 @@ export class OpenAI implements Wrapper {
         if (responsesClass) {
           wrapExport(responsesClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
+            asyncInspectArgs: async (args) => {
+              return await this.inspectCreateResponse(args);
+            },
             modifyReturnValue: (_args, returnValue, agent, subject) =>
               this.onResponseCreated(returnValue, agent, subject),
           });
