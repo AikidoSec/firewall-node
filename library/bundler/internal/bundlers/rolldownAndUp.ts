@@ -15,17 +15,42 @@ export function processRolldownAndUpOptions(
       })
     | (RollupInputOptions & {
         output?: RollupOutputOptions;
-      })
+      }),
+  bundler: "rolldown" | "rollup"
 ): BundlerProcessedOptions {
-  const outputFormat = getModuleFormat(options.output?.format);
+  const outputFormat = getModuleFormat(options.output?.format, bundler);
 
   // Todo detect cases where bundling is not enabled and throw an error
 
-  // Todo
+  if (!options.output?.dir) {
+    throw new Error(
+      `Aikido: ${bundler} output directory is not specified. Please set the 'output.dir' option in your ${bundler} config.`
+    );
+  }
+
+  if (outputFormat === "esm") {
+    if (!options.external) {
+      options.external = ["@aikidosec/firewall"];
+    } else if (Array.isArray(options.external)) {
+      if (!options.external.includes("@aikidosec/firewall")) {
+        options.external.push("@aikidosec/firewall");
+      }
+    } else {
+      throw new Error(
+        `Aikido: ${bundler} external option needs to be an array for ESM builds if Zen is used.`
+      );
+    }
+  }
+
+  return {
+    outputFormat,
+    outdir: options.output.dir,
+  };
 }
 
 function getModuleFormat(
-  format: RolldownOutputOptions["format"] | RollupOutputOptions["format"]
+  format: RolldownOutputOptions["format"] | RollupOutputOptions["format"],
+  bundler: "rolldown" | "rollup"
 ): OutputFormat {
   if (!format) {
     return "esm"; // Default to ESM if format is not specified
@@ -41,7 +66,7 @@ function getModuleFormat(
       return "esm";
     default:
       throw new Error(
-        `Aikido: rolldown/rollup output format is set to unsupported value '${format}'. Please set it to 'cjs' or 'esm'.`
+        `Aikido: ${bundler} output format is set to unsupported value '${format}'. Please set it to 'cjs' or 'esm'.`
       );
   }
 }
