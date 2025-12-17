@@ -36,6 +36,9 @@ export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
       return;
     }
 
+    // @ts-expect-error We know the name exists
+    const original = global[name];
+
     wrapExport(
       global,
       name,
@@ -45,5 +48,9 @@ export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
       },
       g.getInterceptors()
     );
+
+    if (name === "Function") {
+      original.prototype.constructor = global[name];
+    }
   });
 }

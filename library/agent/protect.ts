@@ -57,6 +57,7 @@ import { Mistral } from "../sinks/Mistral";
 import { Anthropic } from "../sinks/Anthropic";
 import { GoogleGenAi } from "../sinks/GoogleGenAi";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
+import { Function } from "../sinks/Function";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 
@@ -168,7 +169,7 @@ export function getWrappers() {
     new ClickHouse(),
     new Prisma(),
     new AwsSDKVersion3(),
-    // new Function(), Disabled because functionName.constructor === Function is false after patching global
+    new Function(),
     new AwsSDKVersion2(),
     new AiSDK(),
     new GoogleGenAi(),
