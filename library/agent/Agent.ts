@@ -77,6 +77,7 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
+    // Use the new instrumentation system (CJS & ESM) using registerHook
     private readonly newInstrumentation: boolean = false,
     private readonly fetchListsAPI: FetchListsAPI
   ) {
@@ -523,8 +524,15 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
+    wrapInstalledPackages(
+      wrappers,
+      this.newInstrumentation,
+      this.serverless,
+      false // Is bundling process
+    );
 
+    // Send startup event and wait for config
+    // Then start heartbeats and polling for config changes
     // In serverless environments, we delay the startup event until the first invocation
     // since some apps take a long time to boot and the init phase has strict timeouts
     if (this.serverless) {
