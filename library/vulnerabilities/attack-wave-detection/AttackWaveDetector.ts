@@ -111,7 +111,7 @@ export class AttackWaveDetector {
     return this.suspiciousRequests.get(ip)?.samples || [];
   }
 
-  trackSample(request: SuspiciousRequest, samples: SuspiciousRequest[] = []) {
+  trackSample(request: SuspiciousRequest, samples: SuspiciousRequest[]) {
     if (samples.length >= this.maxSamplesPerIP) {
       return;
     }
