@@ -36,6 +36,7 @@ If you want to see a full example, check our [lambda sample app](../sample-apps/
 
 If you're using [Middy](https://middy.js.org/) as a middleware framework for your Lambda functions, wrap the Middy handler with `protect`:
 
+<!-- prettier-ignore-start -->
 ```js
 const protect = require("@aikidosec/firewall/lambda");
 const middy = require("@middy/core");
@@ -46,13 +47,14 @@ const lambdaHandler = (event, context) => {
 };
 
 exports.handler = protect(
-  middy(lambdaHandler)
-    .use(/* your middleware */)
+  middy(lambdaHandler).use(/* your middleware */)
 );
 ```
+<!-- prettier-ignore-end -->
 
 or ESM import style:
 
+<!-- prettier-ignore-start -->
 ```js
 import protect from "@aikidosec/firewall/lambda";
 import middy from "@middy/core";
@@ -63,10 +65,10 @@ const lambdaHandler = (event, context) => {
 };
 
 export const handler = protect(
-  middy(lambdaHandler)
-    .use(/* your middleware */)
+  middy(lambdaHandler).use(/* your middleware */)
 );
 ```
+<!-- prettier-ignore-end -->
 
 ## Blocking mode
 
