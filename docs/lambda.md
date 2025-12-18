@@ -32,6 +32,42 @@ That's it! Your AWS Lambda function is now protected by Zen.
 
 If you want to see a full example, check our [lambda sample app](../sample-apps/lambda-mongodb).
 
+## Using with Middy
+
+If you're using [Middy](https://middy.js.org/) as a middleware framework for your Lambda functions, wrap the Middy handler with `protect`:
+
+```js
+const protect = require("@aikidosec/firewall/lambda");
+const middy = require("@middy/core");
+
+const lambdaHandler = (event, context) => {
+  // Your business logic
+  return doSomethingUsefulWith(event);
+};
+
+exports.handler = protect(
+  middy(lambdaHandler)
+    .use(/* your middleware */)
+);
+```
+
+or ESM import style:
+
+```js
+import protect from "@aikidosec/firewall/lambda";
+import middy from "@middy/core";
+
+const lambdaHandler = (event, context) => {
+  // Your business logic
+  return doSomethingUsefulWith(event);
+};
+
+export const handler = protect(
+  middy(lambdaHandler)
+    .use(/* your middleware */)
+);
+```
+
 ## Blocking mode
 
 By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
