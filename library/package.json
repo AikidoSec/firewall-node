@@ -159,5 +159,8 @@
     "build:watch": "tsc --watch -p tsconfig.build.json",
     "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc",
     "lint-tsc": "tsc"
+  },
+  "overrides": {
+    "koa@<=3.0.2": "3.0.2"
   }
 }
