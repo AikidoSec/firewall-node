@@ -49,10 +49,12 @@ export async function readBodyStream(
           return;
         }
 
-        const decodedVal = tryParseJSON(val);
-        if (decodedVal !== undefined) {
-          bodyFields.push({ name: fieldname, value: decodedVal });
-          return;
+        if (val.includes('"')) {
+          const decodedVal = tryParseJSON(val);
+          if (decodedVal !== undefined) {
+            bodyFields.push({ name: fieldname, value: decodedVal });
+            return;
+          }
         }
 
         bodyFields.push({ name: fieldname, value: val });
