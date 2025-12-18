@@ -22,6 +22,8 @@ before(() => {
 });
 
 function sendReact2ShellRequest(port) {
+  // Based on https://github.com/assetnote/react2shell-scanner/
+
   const cmd = "echo $((41*271))";
 
   const prefixPayload =
