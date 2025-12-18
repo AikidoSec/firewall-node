@@ -7,7 +7,7 @@ import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 
 export function contextFromRequest(
   req: IncomingMessage,
-  body: string | undefined,
+  body: unknown,
   module: string
 ): Context {
   const queryObject: Record<string, string> = {};
@@ -15,15 +15,6 @@ export function contextFromRequest(
     const params = tryParseURLParams(req.url);
     for (const [key, value] of params.entries()) {
       queryObject[key] = value;
-    }
-  }
-
-  let parsedBody: unknown = undefined;
-  if (body) {
-    try {
-      parsedBody = JSON.parse(body);
-    } catch {
-      // Ignore
     }
   }
 
@@ -36,7 +27,7 @@ export function contextFromRequest(
     source: `${module}.createServer`,
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
-    body: parsedBody,
+    body: body ? body : undefined,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
       remoteAddress: req.socket?.remoteAddress,

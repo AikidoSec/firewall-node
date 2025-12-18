@@ -52,7 +52,7 @@ function callListenerWithContext(
   res: ServerResponse,
   module: string,
   agent: Agent,
-  body: string
+  body: unknown
 ) {
   const context = contextFromRequest(req, body, module);
 
