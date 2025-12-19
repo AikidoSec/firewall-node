@@ -9,12 +9,12 @@ import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLD
 import type { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { Context, getContext } from "../agent/Context";
-import { onInspectionInterceptorResult } from "../agent/hooks/onInspectionInterceptorResult";
 import { getInstance } from "../agent/AgentSingleton";
 import type { Agent } from "../agent/Agent";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
 import type { LocalVariableAccessConfig } from "../agent/hooks/instrumentation/types";
+import { inspectArgs } from "../agent/hooks/wrapExport";
 
 type AllOperationsQueryExtension = {
   model?: string;
@@ -175,33 +175,27 @@ export class Prisma implements Wrapper {
     agent: Agent;
     pkgInfo: PartialWrapPackageInfo;
   }) {
-    let inspectionResult: InterceptorResult | undefined;
-    const start = performance.now();
+    inspectArgs(
+      args,
+      () => {
+        if (isNoSQLClient) {
+          return this.inspectNoSQLQuery(args, operation, model);
+        }
 
-    if (!isNoSQLClient && SQL_OPERATIONS_TO_PROTECT.includes(operation)) {
-      inspectionResult = this.inspectSQLQuery(
-        args,
-        operation,
-        sqlDialect || new SQLDialectGeneric()
-      );
-    }
-
-    if (isNoSQLClient) {
-      inspectionResult = this.inspectNoSQLQuery(args, operation, model);
-    }
-
-    if (inspectionResult) {
-      // Run the logic to handle a detected attack
-      onInspectionInterceptorResult(
-        getContext(),
-        agent,
-        inspectionResult,
-        pkgInfo,
-        start,
-        operation,
-        isNoSQLClient ? "nosql_op" : "sql_op"
-      );
-    }
+        if (SQL_OPERATIONS_TO_PROTECT.includes(operation)) {
+          return this.inspectSQLQuery(
+            args,
+            operation,
+            sqlDialect || new SQLDialectGeneric()
+          );
+        }
+      },
+      getContext(),
+      agent,
+      pkgInfo,
+      operation,
+      isNoSQLClient ? "nosql_op" : "sql_op"
+    );
 
     return query(args);
   }
