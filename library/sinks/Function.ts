@@ -37,7 +37,7 @@ export class Function implements Wrapper {
     if (!existsSync(binaryPath)) {
       // oxlint-disable-next-line no-console
       console.warn(
-        `Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Function sink will not be instrumented.`
+        `AIKIDO: Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Function sink will not be instrumented.`
       );
       return;
     }
@@ -50,7 +50,7 @@ export class Function implements Wrapper {
     if (!bindings || typeof bindings.setCodeGenerationCallback !== "function") {
       // oxlint-disable-next-line no-console
       console.warn(
-        `Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid. Function sink will not be instrumented.`
+        `AIKIDO: Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid. Function sink will not be instrumented.`
       );
       return;
     }
