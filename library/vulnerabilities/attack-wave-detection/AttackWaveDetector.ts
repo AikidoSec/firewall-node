@@ -88,7 +88,7 @@ export class AttackWaveDetector {
 
     suspiciousRequests.count += 1;
 
-    this.trackSample(
+    suspiciousRequests.samples = this.trackSample(
       {
         method: context.method,
         url: context.url,
@@ -111,9 +111,12 @@ export class AttackWaveDetector {
     return this.suspiciousRequests.get(ip)?.samples || [];
   }
 
-  trackSample(request: SuspiciousRequest, samples: SuspiciousRequest[]) {
+  trackSample(
+    request: SuspiciousRequest,
+    samples: SuspiciousRequest[]
+  ): SuspiciousRequest[] {
     if (samples.length >= this.maxSamplesPerIP) {
-      return;
+      return samples;
     }
 
     // Only store unique samples
@@ -124,8 +127,10 @@ export class AttackWaveDetector {
           sample.method === request.method && sample.url === request.url
       )
     ) {
-      return;
+      return samples;
     }
     samples.push(request);
+
+    return samples;
   }
 }
