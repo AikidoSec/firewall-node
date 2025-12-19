@@ -116,7 +116,7 @@ export class AttackWaveDetector {
     samples: SuspiciousRequest[]
   ): SuspiciousRequest[] {
     if (samples.length >= this.maxSamplesPerIP) {
-      return samples;
+      return [...samples];
     }
 
     // Only store unique samples
@@ -127,10 +127,9 @@ export class AttackWaveDetector {
           sample.method === request.method && sample.url === request.url
       )
     ) {
-      return samples;
+      return [...samples];
     }
-    samples.push(request);
 
-    return samples;
+    return [...samples, request];
   }
 }
