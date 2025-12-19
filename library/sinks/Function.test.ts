@@ -81,7 +81,7 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
 
@@ -92,7 +92,7 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
 
@@ -107,7 +107,7 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
   });
