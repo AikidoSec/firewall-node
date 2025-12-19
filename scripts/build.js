@@ -106,7 +106,17 @@ async function main() {
 async function dlNodeInternals() {
   await mkdir(nodeInternalsDir, { recursive: true });
 
-  // TODO parallelize downloads
+  // Check if the wanted version of Node Internals is already installed
+  const versionCacheFile = join(nodeInternalsDir, ".installed_version");
+  const installedVersion = (await fileExists(versionCacheFile))
+    ? await readFile(versionCacheFile, "utf8")
+    : null;
+  if (installedVersion === NODE_INTERNALS_VERSION) {
+    console.log("Node Internals already installed. Skipping download.");
+    return;
+  }
+
+  const downloads = [];
   for (const nodeVersion of NODE_VERSIONS) {
     for (const platform of ["linux", "darwin", "win32"]) {
       let archs = ["x64", "arm64"];
@@ -127,10 +137,14 @@ async function dlNodeInternals() {
         console.log(
           `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch}...`
         );
-        await downloadFile(url, destPath);
+        downloads.push(downloadFile(url, destPath));
       }
     }
   }
+
+  await Promise.all(downloads);
+
+  await writeFile(versionCacheFile, NODE_INTERNALS_VERSION);
 }
 
 // Download Zen Internals tarball and verify checksum
