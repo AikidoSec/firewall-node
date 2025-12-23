@@ -40,6 +40,14 @@ export function checkIfRequestIsBlocked(
   // Also ensures that the statistics are only counted once
   res[checkedBlocks] = true;
 
+  const isBypassedIP =
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress);
+
+  if (isBypassedIP) {
+    return false;
+  }
+
   if (!ipAllowedToAccessRoute(context, agent)) {
     res.statusCode = 403;
     res.setHeader("Content-Type", "text/plain");
@@ -52,14 +60,6 @@ export function checkIfRequestIsBlocked(
     res.end(message);
 
     return true;
-  }
-
-  const isBypassedIP =
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
-
-  if (isBypassedIP) {
-    return false;
   }
 
   if (
