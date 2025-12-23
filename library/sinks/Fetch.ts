@@ -15,19 +15,21 @@ export class Fetch implements Wrapper {
 
   private inspectHostname(
     agent: Agent,
-    hostname: string,
-    port: number | undefined
+    url: URL,
+    port: number | undefined,
+    method: string
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
-      agent.onConnectHostname(hostname, port);
+      agent.onConnectHostname(url.hostname, port);
+      agent.onConnectHTTP(url, port, method);
     }
 
-    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
       return {
         operation: "fetch",
-        hostname: hostname,
+        hostname: url.hostname,
       };
     }
 
@@ -38,7 +40,7 @@ export class Fetch implements Wrapper {
     }
 
     return checkContextForSSRF({
-      hostname: hostname,
+      hostname: url.hostname,
       operation: "fetch",
       context: context,
       port: port,
@@ -47,14 +49,26 @@ export class Fetch implements Wrapper {
 
   inspectFetch(args: unknown[], agent: Agent): InterceptorResult {
     if (args.length > 0) {
+      // Extract method from options or Request object
+      let method = "GET";
+      if (args[0] instanceof Request) {
+        method = args[0].method.toUpperCase();
+      } else if (args.length > 1 && args[1] && typeof args[1] === "object") {
+        const options = args[1] as { method?: string };
+        if (options.method) {
+          method = options.method.toUpperCase();
+        }
+      }
+
       // URL string
       if (typeof args[0] === "string" && args[0].length > 0) {
         const url = tryParseURL(args[0]);
         if (url) {
           const attack = this.inspectHostname(
             agent,
-            url.hostname,
-            getPortFromURL(url)
+            url,
+            getPortFromURL(url),
+            method
           );
           if (attack) {
             return attack;
@@ -71,8 +85,9 @@ export class Fetch implements Wrapper {
         if (url) {
           const attack = this.inspectHostname(
             agent,
-            url.hostname,
-            getPortFromURL(url)
+            url,
+            getPortFromURL(url),
+            method
           );
           if (attack) {
             return attack;
@@ -84,8 +99,9 @@ export class Fetch implements Wrapper {
       if (args[0] instanceof URL && args[0].hostname.length > 0) {
         const attack = this.inspectHostname(
           agent,
-          args[0].hostname,
-          getPortFromURL(args[0])
+          args[0],
+          getPortFromURL(args[0]),
+          method
         );
         if (attack) {
           return attack;
@@ -98,8 +114,9 @@ export class Fetch implements Wrapper {
         if (url) {
           const attack = this.inspectHostname(
             agent,
-            url.hostname,
-            getPortFromURL(url)
+            url,
+            getPortFromURL(url),
+            method
           );
           if (attack) {
             return attack;
