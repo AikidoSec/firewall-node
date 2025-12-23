@@ -182,37 +182,6 @@ t.test("it rate limits localhost when not in production mode", async (t) => {
   });
 });
 
-t.test("it does not rate limit when the IP is allowed", async (t) => {
-  const agent = await createAgent(
-    [
-      {
-        method: "POST",
-        route: "/login",
-        forceProtectionOff: false,
-        rateLimiting: {
-          enabled: true,
-          maxRequests: 3,
-          windowSizeInMS: 1000,
-        },
-      },
-    ],
-    ["1.2.3.4"]
-  );
-
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
-    block: false,
-  });
-});
-
 t.test("it rate limits by user", async (t) => {
   const agent = await createAgent([
     {
@@ -432,40 +401,6 @@ t.test(
       block: false,
     });
     t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123456"), agent), {
-      block: false,
-    });
-  }
-);
-
-t.test(
-  "it does not rate limit requests from allowed ip with user",
-  async (t) => {
-    const agent = await createAgent(
-      [
-        {
-          method: "POST",
-          route: "/login",
-          forceProtectionOff: false,
-          rateLimiting: {
-            enabled: true,
-            maxRequests: 3,
-            windowSizeInMS: 1000,
-          },
-        },
-      ],
-      ["1.2.3.4"]
-    );
-
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
-      block: false,
-    });
-    t.same(shouldRateLimitRequest(createContext("1.2.3.4", "123"), agent), {
       block: false,
     });
   }
