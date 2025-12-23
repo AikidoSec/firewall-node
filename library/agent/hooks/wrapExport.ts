@@ -4,6 +4,7 @@ import { getInstance } from "../AgentSingleton";
 import { OperationKind } from "../api/Event";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
+import { isAttackResult } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
@@ -151,14 +152,6 @@ export function inspectArgs(
   methodName: string,
   kind: OperationKind | undefined
 ) {
-  if (context) {
-    const matches = agent.getConfig().getEndpoints(context);
-
-    if (matches.find((match) => match.forceProtectionOff)) {
-      return;
-    }
-  }
-
   const start = performance.now();
   let result: InterceptorResult = undefined;
 
@@ -175,6 +168,16 @@ export function inspectArgs(
       method: methodName,
       module: pkgInfo.name,
     });
+  }
+
+  // When forceProtectionOff is enabled, skip attack detection
+  // but still allow outbound connection blocking
+  if (context && isAttackResult(result)) {
+    const matches = agent.getConfig().getEndpoints(context);
+
+    if (matches.find((match) => match.forceProtectionOff)) {
+      return;
+    }
   }
 
   onInspectionInterceptorResult(
