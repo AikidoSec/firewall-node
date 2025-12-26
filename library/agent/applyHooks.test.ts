@@ -88,74 +88,79 @@ t.test(
   }
 );
 
-t.test("it ignores route if force protection off is on", async (t) => {
-  const inspectionCalls: { args: unknown[] }[] = [];
+t.test(
+  "it still inspects outbound connections if force protection off is on",
+  async (t) => {
+    const inspectionCalls: { args: unknown[] }[] = [];
 
-  const hooks = new Hooks();
-  hooks.addBuiltinModule("dns/promises").onRequire((exports, pkgInfo) => {
-    wrapExport(exports, "lookup", pkgInfo, {
-      kind: "outgoing_http_op",
-      inspectArgs: (args, agent) => {
-        inspectionCalls.push({ args });
-      },
+    const hooks = new Hooks();
+    hooks.addBuiltinModule("dns/promises").onRequire((exports, pkgInfo) => {
+      wrapExport(exports, "lookup", pkgInfo, {
+        kind: "outgoing_http_op",
+        inspectArgs: (args, agent) => {
+          inspectionCalls.push({ args });
+        },
+      });
     });
-  });
 
-  applyHooks(hooks, agent.isUsingNewInstrumentation());
+    applyHooks(hooks, agent.isUsingNewInstrumentation());
 
-  reportingAPI.setResult({
-    success: true,
-    endpoints: [
+    reportingAPI.setResult({
+      success: true,
+      endpoints: [
+        {
+          method: "GET",
+          route: "/route",
+          forceProtectionOff: true,
+          rateLimiting: {
+            enabled: false,
+            maxRequests: 0,
+            windowSizeInMS: 0,
+          },
+        },
+      ],
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      configUpdatedAt: 0,
+    });
+
+    // Read rules from API
+    await agent.flushStats(1000);
+
+    const { lookup } = require("dns/promises");
+
+    await lookup("www.google.com");
+    t.same(inspectionCalls, [{ args: ["www.google.com"] }]);
+
+    await runWithContext(context, async () => {
+      await lookup("www.aikido.dev");
+    });
+
+    t.same(inspectionCalls, [
+      { args: ["www.google.com"] },
+      { args: ["www.aikido.dev"] },
+    ]);
+
+    // forceProtectionOff still allows outbound connection inspection
+    await runWithContext(
       {
+        ...context,
         method: "GET",
         route: "/route",
-        forceProtectionOff: true,
-        rateLimiting: {
-          enabled: false,
-          maxRequests: 0,
-          windowSizeInMS: 0,
-        },
       },
-    ],
-    heartbeatIntervalInMS: 10 * 60 * 1000,
-    blockedUserIds: [],
-    allowedIPAddresses: [],
-    configUpdatedAt: 0,
-  });
+      async () => {
+        await lookup("www.times.com");
+      }
+    );
 
-  // Read rules from API
-  await agent.flushStats(1000);
-
-  const { lookup } = require("dns/promises");
-
-  await lookup("www.google.com");
-  t.same(inspectionCalls, [{ args: ["www.google.com"] }]);
-
-  await runWithContext(context, async () => {
-    await lookup("www.aikido.dev");
-  });
-
-  t.same(inspectionCalls, [
-    { args: ["www.google.com"] },
-    { args: ["www.aikido.dev"] },
-  ]);
-
-  await runWithContext(
-    {
-      ...context,
-      method: "GET",
-      route: "/route",
-    },
-    async () => {
-      await lookup("www.times.com");
-    }
-  );
-
-  t.same(inspectionCalls, [
-    { args: ["www.google.com"] },
-    { args: ["www.aikido.dev"] },
-  ]);
-});
+    t.same(inspectionCalls, [
+      { args: ["www.google.com"] },
+      { args: ["www.aikido.dev"] },
+      { args: ["www.times.com"] },
+    ]);
+  }
+);
 
 t.test("it does not report attack if IP is allowed", async (t) => {
   const hooks = new Hooks();
