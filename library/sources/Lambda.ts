@@ -222,13 +222,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return result;
     } finally {
       if (agent) {
-        if (isGatewayEvent(event) && isGatewayResponse(result)) {
-          incrementStatsAndDiscoverAPISpec(
-            agentContext,
-            agent,
-            result.statusCode
-          );
-        }
+        incrementStatsAndDiscoverAPISpec(agentContext, agent, event, result);
 
         await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
@@ -247,7 +241,8 @@ export function createLambdaWrapper(handler: Handler): Handler {
 function incrementStatsAndDiscoverAPISpec(
   agentContext: AgentContext,
   agent: Agent,
-  statusCode: number
+  event: unknown,
+  result: unknown
 ) {
   if (
     agentContext.remoteAddress &&
@@ -256,9 +251,14 @@ function incrementStatsAndDiscoverAPISpec(
     return;
   }
 
-  if (agentContext.route && agentContext.method) {
+  if (
+    isGatewayEvent(event) &&
+    isGatewayResponse(result) &&
+    agentContext.route &&
+    agentContext.method
+  ) {
     const shouldDiscover = shouldDiscoverRoute({
-      statusCode: statusCode,
+      statusCode: result.statusCode,
       method: agentContext.method,
       route: agentContext.route,
     });
