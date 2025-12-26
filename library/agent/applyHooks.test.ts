@@ -88,7 +88,7 @@ t.test(
   }
 );
 
-t.test("it ignores route if force protection off is on", async (t) => {
+t.test("it still inspects outbound connections if force protection off is on", async (t) => {
   const inspectionCalls: { args: unknown[] }[] = [];
 
   const hooks = new Hooks();
@@ -140,6 +140,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
     { args: ["www.aikido.dev"] },
   ]);
 
+  // forceProtectionOff still allows outbound connection inspection
   await runWithContext(
     {
       ...context,
@@ -154,6 +155,7 @@ t.test("it ignores route if force protection off is on", async (t) => {
   t.same(inspectionCalls, [
     { args: ["www.google.com"] },
     { args: ["www.aikido.dev"] },
+    { args: ["www.times.com"] },
   ]);
 });
 
