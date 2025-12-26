@@ -15,6 +15,9 @@ import { Undici } from "./Undici";
 // Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
 export async function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
+
+  const undiciMajorVersion = Number(undiciPkgName.split("-v")[1]);
+
   wrap(dns, "lookup", function lookup(original) {
     return function lookup() {
       const hostname = arguments[0];
@@ -127,6 +130,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         const error1 = await t.rejects(() =>
           request(`http://localhost:${port}/api/internal`)
         );
+        t.ok(error1 instanceof Error);
         if (error1 instanceof Error) {
           t.same(
             error1.message,
@@ -147,6 +151,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         const error2 = await t.rejects(() =>
           request(new URL(`http://localhost:${port}/api/internal`))
         );
+        t.ok(error2 instanceof Error);
         if (error2 instanceof Error) {
           t.same(
             error2.message,
@@ -198,7 +203,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           if (error instanceof Error) {
             t.same(
               error.message,
-              "Zen has blocked a server-side request forgery: undici.request(...) originating from routeParams.param"
+              "Zen has blocked a server-side request forgery: undici.[method](...) originating from routeParams.param"
             );
           }
         }
@@ -285,10 +290,13 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       );
 
       logger.clear();
-      setGlobalDispatcher(new UndiciAgent({}));
-      t.same(logger.getMessages(), [
-        "undici.setGlobalDispatcher(..) was called, we can't guarantee protection!",
-      ]);
+
+      if (undiciMajorVersion < 7) {
+        setGlobalDispatcher(new UndiciAgent({}));
+        t.same(logger.getMessages(), [
+          "undici.setGlobalDispatcher(..) was called, we can't guarantee protection!",
+        ]);
+      }
     }
   );
 
