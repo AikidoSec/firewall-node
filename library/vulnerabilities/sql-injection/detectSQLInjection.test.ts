@@ -211,6 +211,21 @@ t.test("It does not flag key keyword as SQL injection", async () => {
   isNotSqlInjection(query, "UPDATE");
   isNotSqlInjection(query, "INSERT");
   isNotSqlInjection(query, "INTO");
+  isNotSqlInjection(
+    `
+    SELECT * FROM users u
+    WHERE u.status NOT IN ('active', 'pending')
+  `,
+    "not in"
+  );
+  isNotSqlInjection(
+    `SELECT *::timestamptz AT TIME ZONE 'UTC' AS created_at_utc FROM events`,
+    "TIME ZONE"
+  );
+});
+
+t.test("short string of letters, digits and spaces", async () => {
+  isNotSqlInjection(`select * from "table" where "id" = $1 limit $2`, "1 l");
 });
 
 t.test("It flags function calls as SQL injections", async () => {

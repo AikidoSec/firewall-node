@@ -1,14 +1,16 @@
-const {
+import {
   getBlockedIPAddresses,
   getBlockedUserAgents,
   getAllowedIPAddresses,
   getMonitoredUserAgents,
   getMonitoredIPAddresses,
   getUserAgentDetails,
-} = require("../zen/config");
+} from "../zen/config.ts";
+import type { Response } from "express";
+import type { ZenRequest } from "../types.ts";
 
-module.exports = function lists(req, res) {
-  if (!req.app) {
+export function lists(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
     throw new Error("App is missing");
   }
 
@@ -22,16 +24,16 @@ module.exports = function lists(req, res) {
     });
   }
 
-  const blockedIps = getBlockedIPAddresses(req.app);
-  const blockedUserAgents = getBlockedUserAgents(req.app);
-  const allowedIps = getAllowedIPAddresses(req.app);
-  const monitoredUserAgents = getMonitoredUserAgents(req.app);
-  const monitoredIps = getMonitoredIPAddresses(req.app);
-  const userAgentDetails = getUserAgentDetails(req.app);
+  const blockedIps = getBlockedIPAddresses(req.zenApp);
+  const blockedUserAgents = getBlockedUserAgents(req.zenApp);
+  const allowedIps = getAllowedIPAddresses(req.zenApp);
+  const monitoredUserAgents = getMonitoredUserAgents(req.zenApp);
+  const monitoredIps = getMonitoredIPAddresses(req.zenApp);
+  const userAgentDetails = getUserAgentDetails(req.zenApp);
 
   res.json({
     success: true,
-    serviceId: req.app.id,
+    serviceId: req.zenApp.id,
     blockedIPAddresses:
       blockedIps.length > 0
         ? [
@@ -69,4 +71,4 @@ module.exports = function lists(req, res) {
             },
           ],
   });
-};
+}

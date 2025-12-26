@@ -1,14 +1,16 @@
-const {
+import type { Response } from "express";
+import {
   updateBlockedIPAddresses,
   updateBlockedUserAgents,
   updateAllowedIPAddresses,
   updateMonitoredUserAgents,
   updateMonitoredIPAddresses,
   updateUserAgentDetails,
-} = require("../zen/config");
+} from "../zen/config.ts";
+import type { ZenRequest } from "../types.ts";
 
-module.exports = function updateIPLists(req, res) {
-  if (!req.app) {
+export function updateIPLists(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
     throw new Error("App is missing");
   }
 
@@ -33,42 +35,39 @@ module.exports = function updateIPLists(req, res) {
     });
   }
 
-  updateBlockedIPAddresses(req.app, req.body.blockedIPAddresses);
+  updateBlockedIPAddresses(req.zenApp, req.body.blockedIPAddresses);
 
   if (
     req.body.blockedUserAgents &&
     typeof req.body.blockedUserAgents === "string"
   ) {
-    updateBlockedUserAgents(req.app, req.body.blockedUserAgents);
+    updateBlockedUserAgents(req.zenApp, req.body.blockedUserAgents);
   }
 
   if (
     req.body.allowedIPAddresses &&
     Array.isArray(req.body.allowedIPAddresses)
   ) {
-    updateAllowedIPAddresses(req.app, req.body.allowedIPAddresses);
+    updateAllowedIPAddresses(req.zenApp, req.body.allowedIPAddresses);
   }
 
   if (
     req.body.monitoredUserAgents &&
     typeof req.body.monitoredUserAgents === "string"
   ) {
-    updateMonitoredUserAgents(req.app, req.body.monitoredUserAgents);
+    updateMonitoredUserAgents(req.zenApp, req.body.monitoredUserAgents);
   }
 
   if (
     req.body.monitoredIPAddresses &&
     Array.isArray(req.body.monitoredIPAddresses)
   ) {
-    updateMonitoredIPAddresses(req.app, req.body.monitoredIPAddresses);
+    updateMonitoredIPAddresses(req.zenApp, req.body.monitoredIPAddresses);
   }
 
-  if (
-    req.body.userAgentDetails &&
-    Array.isArray(req.body.userAgentDetails)
-  ) {
-    updateUserAgentDetails(req.app, req.body.userAgentDetails);
+  if (req.body.userAgentDetails && Array.isArray(req.body.userAgentDetails)) {
+    updateUserAgentDetails(req.zenApp, req.body.userAgentDetails);
   }
 
   res.json({ success: true });
-};
+}

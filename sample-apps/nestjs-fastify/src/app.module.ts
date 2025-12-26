@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { CatsController } from './cats.controller';
-import { DBService } from './db.service';
+import { Module } from "@nestjs/common";
+import { CatsController } from "./cats.controller";
+import { DBService } from "./db.service";
 
 @Module({
   imports: [],
