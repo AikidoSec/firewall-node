@@ -1,4 +1,5 @@
 import type { Callback, Context, Handler } from "aws-lambda";
+import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
 import { envToBool } from "../helpers/envToBool";
@@ -221,25 +222,13 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return result;
     } finally {
       if (agent) {
-        if (
-          isGatewayEvent(event) &&
-          isGatewayResponse(result) &&
-          agentContext.route &&
-          agentContext.method
-        ) {
-          const shouldDiscover = shouldDiscoverRoute({
-            statusCode: result.statusCode,
-            method: agentContext.method,
-            route: agentContext.route,
-          });
-
-          if (shouldDiscover) {
-            agent.onRouteExecute(agentContext);
-          }
+        if (isGatewayEvent(event) && isGatewayResponse(result)) {
+          incrementStatsAndDiscoverAPISpec(
+            agentContext,
+            agent,
+            result.statusCode
+          );
         }
-
-        const stats = agent.getInspectionStatistics();
-        stats.onRequest();
 
         await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
@@ -253,6 +242,34 @@ export function createLambdaWrapper(handler: Handler): Handler {
       }
     }
   };
+}
+
+function incrementStatsAndDiscoverAPISpec(
+  agentContext: AgentContext,
+  agent: Agent,
+  statusCode: number
+) {
+  if (
+    agentContext.remoteAddress &&
+    agent.getConfig().isBypassedIP(agentContext.remoteAddress)
+  ) {
+    return;
+  }
+
+  if (agentContext.route && agentContext.method) {
+    const shouldDiscover = shouldDiscoverRoute({
+      statusCode: statusCode,
+      method: agentContext.method,
+      route: agentContext.route,
+    });
+
+    if (shouldDiscover) {
+      agent.onRouteExecute(agentContext);
+    }
+  }
+
+  const stats = agent.getInspectionStatistics();
+  stats.onRequest();
 }
 
 let loggedWarningUnsupportedTrigger = false;
