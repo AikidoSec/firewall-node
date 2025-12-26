@@ -2,7 +2,7 @@ import * as t from "tap";
 import { ServiceConfig } from "./ServiceConfig";
 
 t.test("it returns false if empty rules", async () => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
   t.same(config.getLastUpdatedAt(), 0);
   t.same(config.isUserBlocked("id"), false);
   t.same(config.isBypassedIP("1.2.3.4"), false);
@@ -53,7 +53,6 @@ t.test("it works", async () => {
     0,
     ["123"],
     [],
-    false,
     [],
     []
   );
@@ -83,7 +82,7 @@ t.test("it works", async () => {
 });
 
 t.test("it checks if IP is bypassed", async () => {
-  const config = new ServiceConfig([], 0, [], ["1.2.3.4"], false, [], []);
+  const config = new ServiceConfig([], 0, [], ["1.2.3.4"], [], []);
   t.same(config.isBypassedIP("1.2.3.4"), true);
   t.same(config.isBypassedIP("1.2.3.5"), false);
 });
@@ -94,7 +93,6 @@ t.test("ip blocking works", async () => {
     0,
     [],
     [],
-    false,
     [
       {
         key: "geoip/Belgium;BE",
@@ -143,7 +141,7 @@ t.test("ip blocking works", async () => {
 });
 
 t.test("it blocks bots", async () => {
-  const config = new ServiceConfig([], 0, [], [], true, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
   config.updateBlockedUserAgents("googlebot|bingbot");
 
   t.same(config.isUserAgentBlocked("googlebot"), { blocked: true });
@@ -161,7 +159,6 @@ t.test("restricting access to some ips", async () => {
     0,
     [],
     [],
-    true,
     [],
     [
       {
@@ -189,7 +186,6 @@ t.test("only allow some ips: empty list", async () => {
     0,
     [],
     [],
-    true,
     [],
     [
       {
@@ -211,7 +207,6 @@ t.test("bypassed ips support cidr", async () => {
     0,
     [],
     ["192.168.2.0/24", "::1"],
-    false,
     [],
     []
   );
@@ -221,13 +216,7 @@ t.test("bypassed ips support cidr", async () => {
   t.same(config.isBypassedIP("::2"), false);
   t.same(config.isBypassedIP("10.0.0.1"), false);
 
-  config.updateConfig(
-    [],
-    0,
-    [],
-    ["invalid", "2002::1/124", "127.0.0.1"],
-    false
-  );
+  config.updateConfig([], 0, [], ["invalid", "2002::1/124", "127.0.0.1"]);
 
   t.same(config.isBypassedIP("2002::6"), true);
   t.same(config.isBypassedIP("2002::f"), true);
@@ -240,8 +229,7 @@ t.test("bypassed ips support cidr", async () => {
     [],
     0,
     [],
-    ["0", "123.123.123.1/32", "234.0.0.0/8", "999.999.999.999", "::1/128"],
-    false
+    ["0", "123.123.123.1/32", "234.0.0.0/8", "999.999.999.999", "::1/128"]
   );
 
   t.same(config.isBypassedIP("123.123.123.1"), true);
@@ -253,14 +241,14 @@ t.test("bypassed ips support cidr", async () => {
   t.same(config.isBypassedIP("::1"), true);
   t.same(config.isBypassedIP("::2"), false);
 
-  config.updateConfig([], 0, [], [], false);
+  config.updateConfig([], 0, [], []);
 
   t.same(config.isBypassedIP("123.123.123.1"), false);
   t.same(config.isBypassedIP("999.999.999.999"), false);
 });
 
 t.test("it sets and updates monitored IP lists", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
 
   t.same(config.getMatchingMonitoredIPListKeys("9.9.9.9"), []);
   t.same(config.getMatchingMonitoredIPListKeys("1.2.3.4"), []);
@@ -284,7 +272,7 @@ t.test("it sets and updates monitored IP lists", async (t) => {
 });
 
 t.test("it returns matching IP lists keys", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
 
   config.updateMonitoredIPAddresses([
     {
@@ -340,7 +328,7 @@ t.test("it returns matching IP lists keys", async (t) => {
 });
 
 t.test("should return all matching user agent patterns", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
   config.updateUserAgentDetails([
     {
       key: "list1",
@@ -359,7 +347,7 @@ t.test("should return all matching user agent patterns", async (t) => {
 });
 
 t.test("it clears RegExp when updating with empty pattern", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
   config.updateBlockedUserAgents("googlebot");
   config.updateMonitoredUserAgents("googlebot");
   config.updateUserAgentDetails([
@@ -381,7 +369,7 @@ t.test("it clears RegExp when updating with empty pattern", async (t) => {
 t.test(
   "it does not throw error when updating user agent lists with invalid patterns",
   async (t) => {
-    const config = new ServiceConfig([], 0, [], [], false, [], []);
+    const config = new ServiceConfig([], 0, [], [], [], []);
 
     config.updateBlockedUserAgents("googlebot");
     config.updateMonitoredUserAgents("googlebot");
@@ -408,7 +396,7 @@ t.test(
 );
 
 t.test("outbound request blocking", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
 
   t.same(config.shouldBlockOutgoingRequest("example.com"), false);
 
