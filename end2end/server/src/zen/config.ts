@@ -8,7 +8,6 @@ type AppConfig = {
   endpoints: any[];
   blockedUserIds: number[];
   allowedIPAddresses: string[];
-  receivedAnyStats: boolean;
   blockNewOutgoingRequests: boolean;
   domains: any[];
   failureRate?: number;

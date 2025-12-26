@@ -396,7 +396,7 @@ t.test(
 );
 
 t.test("outbound request blocking", async (t) => {
-  const config = new ServiceConfig([], 0, [], [], false, [], []);
+  const config = new ServiceConfig([], 0, [], [], [], []);
 
   t.same(config.shouldBlockOutgoingRequest("example.com"), false);
 
