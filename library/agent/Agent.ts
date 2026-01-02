@@ -33,6 +33,7 @@ import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUni
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
+import { domainToUnicode } from "node:url";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -565,6 +566,14 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number) {
+    try {
+      // new URL(...) always converts hostnames to punycode
+      // When reporting them in heartbeats, we want to send the unicode version
+      hostname = domainToUnicode(hostname);
+    } catch (e: any) {
+      this.logger.log(`Failed to convert hostname to unicode: ${e.message}`);
+    }
+
     this.hostnames.add(hostname, port);
   }
 
