@@ -5,6 +5,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { inspectArgs } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { envToBool } from "../helpers/envToBool";
 import { getLibraryRoot } from "../helpers/getLibraryRoot";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
@@ -68,6 +69,10 @@ export class Function implements Wrapper {
   }
 
   wrap(_: Hooks) {
+    if (envToBool(process.env.AIKIDO_DISABLE_CODE_GENERATION_HOOK)) {
+      return;
+    }
+
     const bindings = this.loadNativeAddon();
     if (!bindings) {
       return;

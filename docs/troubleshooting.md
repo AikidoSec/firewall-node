@@ -39,6 +39,14 @@ In addition the output contains the name and version of each supported and instr
 
 If you are using a bundler like esbuild or a framework that uses bundling please ensure to follow the steps described in the [bundler](./bundler.md) docs. Applications using ESM at runtime are not supported yet. TypeScript code is often translated to CommonJS.
 
+## Disable code generation hook
+
+Zen uses a native addon to protect against code injection via `eval()` and `new Function()`. In the rare case that you experience fatal V8 errors, you can disable it:
+
+```bash
+AIKIDO_DISABLE_CODE_GENERATION_HOOK=true node server.js
+```
+
 ## Contact support
 
 If you still can’t resolve the issue:
