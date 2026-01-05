@@ -11,7 +11,7 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { checkContextForJsInjection } from "../vulnerabilities/js-injection/checkContextForJsInjection";
 import { existsSync } from "node:fs";
 
-export class Function implements Wrapper {
+export class FunctionSink implements Wrapper {
   private inspectFunction(args: unknown[]): InterceptorResult {
     if (args.length === 0) {
       return undefined;

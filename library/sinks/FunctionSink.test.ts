@@ -3,7 +3,7 @@
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { Function as FunctionWrapper } from "./Function";
+import { FunctionSink } from "./FunctionSink";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -37,7 +37,7 @@ const safeContext: Context = {
 
 t.test("it detects JS injections using Function", async (t) => {
   const agent = createTestAgent();
-  agent.start([new FunctionWrapper()]);
+  agent.start([new FunctionSink()]);
 
   t.same(new Function("return 1 + 1")(), 2);
   t.same(new Function("1 + 1")(), undefined);
