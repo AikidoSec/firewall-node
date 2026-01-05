@@ -47,7 +47,7 @@ export class Function implements Wrapper {
     if (!existsSync(binaryPath)) {
       // oxlint-disable-next-line no-console
       console.warn(
-        `AIKIDO: Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Function sink will not be instrumented.`
+        `AIKIDO: Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Code injection attacks via eval() and new Function() will not be blocked. You can request support at https://github.com/AikidoSec/firewall-node/issues`
       );
       return;
     }
