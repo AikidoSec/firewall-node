@@ -16,7 +16,7 @@ const modules = [
   },
   {
     module: "jsinjection",
-    name: "`new Function(...)` / `eval(...)`",
+    name: "`new Function(...)`",
   },
   {
     module: "shelli",
