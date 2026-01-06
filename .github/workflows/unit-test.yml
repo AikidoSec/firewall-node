@@ -98,7 +98,7 @@ jobs:
           max_attempts: 3
           command: npm run test:ci:new
 
-      - name:  Run tests in ESM mode (max 3 attempts)
+      - name: Run tests in ESM mode (max 3 attempts)
         if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
         uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
         with:
