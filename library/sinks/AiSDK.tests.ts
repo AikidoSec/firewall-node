@@ -5,6 +5,7 @@ import { runWithContext, type Context } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { getInstance } from "../agent/AgentSingleton";
 import { setTimeout } from "timers/promises";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 export function createAiSdkTests(
   pkgName: string,
@@ -44,22 +45,22 @@ export function createAiSdkTests(
 
       const { google } = require(
         googlePkgName
-      ) as typeof import("@ai-sdk/google-v2");
+      ) as typeof import("@ai-sdk/google-v3");
       const { generateText, generateObject, streamText, streamObject } =
-        require(pkgName) as typeof import("ai-v5");
+        require(pkgName) as typeof import("ai-v6");
 
       const { z } = require(zodPkgName) as typeof import("zod/v4");
 
       await runWithContext(getTestContext(), async () => {
-        await generateText({
-          model: google("models/gemini-2.5-flash-lite"),
-          prompt: "What is Zen by Aikido Security? Return one sentence.",
-        });
-
         const agent = getInstance();
         if (!agent) {
           throw new Error("Agent instance not found");
         }
+
+        await generateText({
+          model: google("models/gemini-2.5-flash-lite"),
+          prompt: "What is Zen by Aikido Security? Return one sentence.",
+        });
 
         t.match(agent.getAIStatistics().getStats(), [
           {
@@ -174,6 +175,33 @@ export function createAiSdkTests(
             calls: 2,
           },
         ]);
+
+        if (pkgName === "ai-v6" && isEsmUnitTest()) {
+          agent.getAIStatistics().reset();
+
+          // The ToolLoopAgent is currently only protected in ESM applications
+          // As for CJS we only modify the exported generate functions
+          // and internally the ToolLoopAgent uses the unwrapped generate function directly
+          const { ToolLoopAgent } = require(pkgName) as typeof import("ai-v6");
+          const agentInstance = new ToolLoopAgent({
+            model: google("models/gemini-2.5-flash-lite"),
+            tools: {},
+          });
+
+          const result = await agentInstance.generate({
+            prompt: "What is Zen by Aikido Security? Return one sentence.",
+          });
+
+          t.ok(result.text.length > 0, "Agent result text should not be empty");
+
+          t.match(agent.getAIStatistics().getStats(), [
+            {
+              provider: "gemini",
+              model: "gemini-2.5-flash-lite",
+              calls: 1,
+            },
+          ]);
+        }
       });
     }
   );
