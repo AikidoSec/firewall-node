@@ -85,6 +85,9 @@ async function main() {
   await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
     recursive: true,
   });
+  // Remove .gitignore so npm doesn't exclude .node files during publish
+  await rm(join(buildDir, "node_internals", ".gitignore"));
+  await rm(join(buildDir, "node_internals", ".installed_version"));
   await copyFile(
     join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
     join(
