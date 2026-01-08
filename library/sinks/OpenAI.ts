@@ -4,6 +4,11 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { isPlainObject } from "../helpers/isPlainObject";
+import {
+  type AiMessage,
+  isAiMessagesArray,
+} from "../vulnerabilities/prompt-injection/messages";
+import { checkForPromptInjection } from "../vulnerabilities/prompt-injection/checkForPromptInjection";
 
 type Response = {
   model: string;
@@ -137,27 +142,47 @@ export class OpenAI implements Wrapper {
   }
 
   private onResponseCreated(
+    args: unknown[],
     returnValue: unknown,
     agent: Agent,
     subject: unknown
   ) {
     if (returnValue instanceof Promise) {
-      // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue
-        .then((response) => {
-          this.inspectResponse(
-            agent,
-            response,
-            this.getProvider(exports, subject)
-          );
-        })
-        .catch((error) => {
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: "create.<promise>",
-            module: "openai",
-          });
+      const messages = this.getMessagesFromArgs(args);
+      if (!messages || !isAiMessagesArray(messages)) {
+        return returnValue;
+      }
+
+      const pendingCheck = checkForPromptInjection(agent, messages);
+
+      return new Promise((resolve, reject) => {
+        returnValue.then(async (response) => {
+          const promptCheckResult = await pendingCheck;
+          if (promptCheckResult.block) {
+            // Todo capture Event etc. like in other sinks
+
+            return reject(
+              new Error("Prompt injection detected in AI response. WIP!")
+            );
+          }
+
+          resolve(response);
+
+          try {
+            this.inspectResponse(
+              agent,
+              response,
+              this.getProvider(exports, subject)
+            );
+          } catch (error) {
+            agent.onErrorThrownByInterceptor({
+              error: error instanceof Error ? error : new Error(String(error)),
+              method: "create.<promise>",
+              module: "openai",
+            });
+          }
         });
+      });
     }
 
     return returnValue;
@@ -190,6 +215,31 @@ export class OpenAI implements Wrapper {
     return returnValue;
   }
 
+  private getMessagesFromArgs(args: unknown[]): AiMessage[] | undefined {
+    if (args.length === 0) {
+      return undefined;
+    }
+
+    const options = args[0];
+    if (isPlainObject(options)) {
+      const messages: AiMessage[] = [];
+
+      if (isAiMessagesArray(options.input)) {
+        messages.push(...options.input);
+      }
+
+      if (typeof options.input === "string") {
+        messages.push({ role: "user", content: options.input });
+      }
+
+      if (typeof options.instructions === "string") {
+        messages.push({ role: "system", content: options.instructions });
+      }
+
+      return messages.length > 0 ? messages : undefined;
+    }
+  }
+
   wrap(hooks: Hooks) {
     // Note: Streaming is not supported yet
     hooks
@@ -200,8 +250,8 @@ export class OpenAI implements Wrapper {
         if (responsesClass) {
           wrapExport(responsesClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (_args, returnValue, agent, subject) =>
-              this.onResponseCreated(returnValue, agent, subject),
+            modifyReturnValue: (args, returnValue, agent, subject) =>
+              this.onResponseCreated(args, returnValue, agent, subject),
           });
         }
 
@@ -224,8 +274,8 @@ export class OpenAI implements Wrapper {
             name: "create",
             nodeType: "MethodDefinition",
             operationKind: "ai_op",
-            modifyReturnValue: (_args, returnValue, agent, subject) =>
-              this.onResponseCreated(returnValue, agent, subject),
+            modifyReturnValue: (args, returnValue, agent, subject) =>
+              this.onResponseCreated(args, returnValue, agent, subject),
           },
         ]
       )
