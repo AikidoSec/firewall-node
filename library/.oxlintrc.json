@@ -31,5 +31,5 @@
       }
     }
   ],
-  "ignorePatterns": ["**/wasm/**"]
+  "ignorePatterns": ["**/wasm/**", "helpers/form-parsing/**"]
 }

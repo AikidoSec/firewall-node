@@ -36,7 +36,6 @@ export class ServiceConfig {
     private lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
-    private receivedAnyStats: boolean,
     blockedIPAddresses: IPList[],
     allowedIPAddresses: IPList[]
   ) {
@@ -267,22 +266,16 @@ export class ServiceConfig {
     endpoints: EndpointConfig[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
-    bypassedIPAddresses: string[],
-    hasReceivedAnyStats: boolean
+    bypassedIPAddresses: string[]
   ) {
     this.setEndpoints(endpoints);
     this.setBlockedUserIds(blockedUserIds);
     this.setBypassedIPAddresses(bypassedIPAddresses);
     this.lastUpdatedAt = lastUpdatedAt;
-    this.receivedAnyStats = hasReceivedAnyStats;
   }
 
   getLastUpdatedAt() {
     return this.lastUpdatedAt;
-  }
-
-  hasReceivedAnyStats() {
-    return this.receivedAnyStats;
   }
 
   setBlockNewOutgoingRequests(block: boolean) {
