@@ -4,6 +4,7 @@ import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
+import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 
 export class ServiceConfig {
   private blockedUserIds: Map<string, string> = new Map();
@@ -98,7 +99,9 @@ export class ServiceConfig {
       this.bypassedIPAddresses = undefined;
       return;
     }
-    this.bypassedIPAddresses = new IPMatcher(ipAddresses);
+    this.bypassedIPAddresses = new IPMatcher(
+      addIPv4MappedAddresses(ipAddresses)
+    );
   }
 
   isBypassedIP(ip: string) {

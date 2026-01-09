@@ -300,11 +300,8 @@ t.test("it does not block bypass IP if in blocklist", (t) => {
           "X-Forwarded-For": "1.3.2.2",
         },
       });
-      t.same(resp3.status, 403);
-      t.same(
-        await resp3.text(),
-        `Your IP address is not allowed to access this resource. (Your IP: 1.3.2.2)`
-      );
+      t.same(resp3.status, 200);
+      t.match(await resp3.text(), "Admin panel");
     })
     .catch((error) => {
       t.fail(error);

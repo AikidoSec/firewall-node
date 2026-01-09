@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
+import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
-import { getContext, runWithContext } from "../agent/Context";
+import { Context, getContext, runWithContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
@@ -77,24 +78,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
         } finally {
           const context = getContext();
           if (agent && context) {
-            if (
-              context.route &&
-              context.method &&
-              Number.isInteger(res.statusCode)
-            ) {
-              const shouldDiscover = shouldDiscoverRoute({
-                statusCode: res.statusCode,
-                method: context.method,
-                route: context.route,
-              });
-
-              if (shouldDiscover) {
-                agent.onRouteExecute(context);
-              }
-            }
-
-            const stats = agent.getInspectionStatistics();
-            stats.onRequest();
+            incrementStatsAndDiscoverAPISpec(context, agent, res.statusCode);
 
             await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
@@ -110,6 +94,34 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
       }
     );
   };
+}
+
+function incrementStatsAndDiscoverAPISpec(
+  context: Context,
+  agent: Agent,
+  statusCode: number
+) {
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress)
+  ) {
+    return;
+  }
+
+  if (context.route && context.method && Number.isInteger(statusCode)) {
+    const shouldDiscover = shouldDiscoverRoute({
+      statusCode: statusCode,
+      method: context.method,
+      route: context.route,
+    });
+
+    if (shouldDiscover) {
+      agent.onRouteExecute(context);
+    }
+  }
+
+  const stats = agent.getInspectionStatistics();
+  stats.onRequest();
 }
 
 export class FunctionsFramework implements Wrapper {
