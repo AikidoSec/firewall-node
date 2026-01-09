@@ -72,7 +72,8 @@ export async function createRawBodyTests(rawBodyPackageName: string) {
     }
   );
 
-  t.test("it works with callback style", async (t) => {
+  // Callback style support isn't implemented yet, but we need to ensure we don't break it
+  t.test("it does not break callback style", async (t) => {
     const server = http.createServer((req, res) => {
       rawBody(req, { limit: "1mb" }, (err: Error | null, buffer: Buffer) => {
         if (err) {
@@ -104,7 +105,7 @@ export async function createRawBodyTests(rawBodyPackageName: string) {
     }
   });
 
-  t.test("it works with encoding option", async (t) => {
+  t.test("it does not break function usage", async (t) => {
     const server = http.createServer(async (req, res) => {
       try {
         const str = await rawBody(req, { encoding: "utf-8" });
@@ -134,7 +135,7 @@ export async function createRawBodyTests(rawBodyPackageName: string) {
     }
   });
 
-  t.test("it works without options", async (t) => {
+  t.test("it does not break promise style", async (t) => {
     const server = http.createServer(async (req, res) => {
       try {
         const buffer = await rawBody(req);
