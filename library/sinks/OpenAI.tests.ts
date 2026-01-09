@@ -94,6 +94,8 @@ export function createOpenAITests(openAiPkgName: string) {
 
       t.ok(eventCount > 0, "Should receive at least one event from the stream");
 
+      agent.getAIStatistics().reset();
+
       // --- Prompt Injection Protection Tests ---
       const error = await t.rejects(
         client.responses.create({
@@ -142,6 +144,14 @@ export function createOpenAITests(openAiPkgName: string) {
         (error2 as Error).message,
         /Zen has blocked a prompt injection: create\.<promise>\(\.\.\.\)/
       );
+
+      // Verify that stats are collected for the blocked calls
+      t.match(agent.getAIStatistics().getStats(), [
+        {
+          provider: "openai",
+          calls: 2,
+        },
+      ]);
     }
   );
 }

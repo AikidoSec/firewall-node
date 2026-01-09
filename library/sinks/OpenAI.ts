@@ -163,11 +163,6 @@ export class OpenAI implements Wrapper {
       return new Promise((resolve, reject) => {
         returnValue.then(async (response) => {
           const promptCheckResult = await pendingCheck;
-          if (promptCheckResult.block) {
-            return reject(promptCheckResult.error);
-          }
-
-          resolve(response);
 
           try {
             this.inspectResponse(
@@ -182,6 +177,12 @@ export class OpenAI implements Wrapper {
               module: "openai",
             });
           }
+
+          if (promptCheckResult.block) {
+            return reject(promptCheckResult.error);
+          }
+
+          resolve(response);
         });
       });
     }
@@ -211,11 +212,6 @@ export class OpenAI implements Wrapper {
       return new Promise((resolve, reject) => {
         returnValue.then(async (response) => {
           const promptCheckResult = await pendingCheck;
-          if (promptCheckResult.block) {
-            return reject(promptCheckResult.error);
-          }
-
-          resolve(response);
 
           try {
             this.inspectCompletionResponse(
@@ -230,6 +226,12 @@ export class OpenAI implements Wrapper {
               module: "openai",
             });
           }
+
+          if (promptCheckResult.block) {
+            return reject(promptCheckResult.error);
+          }
+
+          resolve(response);
         });
       });
     }
