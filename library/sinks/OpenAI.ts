@@ -153,17 +153,18 @@ export class OpenAI implements Wrapper {
         return returnValue;
       }
 
-      const pendingCheck = checkForPromptInjection(agent, messages);
+      const pendingCheck = checkForPromptInjection(
+        agent,
+        messages,
+        "openai",
+        "create.<promise>"
+      );
 
       return new Promise((resolve, reject) => {
         returnValue.then(async (response) => {
           const promptCheckResult = await pendingCheck;
           if (promptCheckResult.block) {
-            // Todo capture Event etc. like in other sinks
-
-            return reject(
-              new Error("Prompt injection detected in AI response. WIP!")
-            );
+            return reject(promptCheckResult.error);
           }
 
           resolve(response);
