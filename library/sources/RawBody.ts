@@ -7,6 +7,8 @@ import { Wrapper } from "../agent/Wrapper";
 /**
  * This helps detect attacks in frameworks that parse the body lazily inside handlers
  * rather than using middleware before the handler is invoked.
+ *
+ * Note: We only support promise-based usage of raw-body, callbacks are not supported yet.
  */
 export class RawBody implements Wrapper {
   private looksLikeJson(str: string): boolean {
