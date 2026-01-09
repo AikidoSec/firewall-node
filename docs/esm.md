@@ -31,6 +31,15 @@ node --env-file=.env -r @aikidosec/firewall/instrument your-app.js
 > [!NOTE]
 > The `--env-file` flag cannot be used in `NODE_OPTIONS`.
 
+## Use Zen together with Sentry (ESM)
+
+You need to use Node.js v24.11.1 / v25.1.0 or later to use Zen together with Sentry in an ESM application.
+Follow the [Sentry instructions for ESM](https://docs.sentry.io/platforms/javascript/guides/node/install/esm/) to set up Sentry. After that, make sure to preload Zen using `--require`/`-r` before loading Sentry:
+
+```sh
+node -r @aikidosec/firewall/instrument --import ./instrument.mjs your-app.js
+```
+
 ## Known issues
 
 - Zen can not protect ESM sub-dependencies of an ESM package. For example if an ESM package `foo` imports a sub-dependency `bar` that is also an ESM package, Zen will not be able to protect the code in `bar`. This is because the V8 engine does not allow Node.js to observe the evaluation of inner ESM packages (yet). Open issue: [Adding an evaluation hook for v8::Module](https://issues.chromium.org/u/1/issues/384413088). See a full example below.
