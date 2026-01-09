@@ -23,6 +23,7 @@ export type Context = {
   route: string | undefined;
   graphql?: string[];
   xml?: unknown[];
+  rawBody?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
   cache?: ReturnType<typeof extractStringsFromUserInput>;
