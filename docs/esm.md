@@ -34,21 +34,10 @@ node --env-file=.env -r @aikidosec/firewall/instrument your-app.js
 ## Use Zen together with Sentry (ESM)
 
 You need to use Node.js v24.11.1 / v25.1.0 or later to use Zen together with Sentry in an ESM application.
-Follow the [Sentry instructions for ESM](https://docs.sentry.io/platforms/javascript/guides/node/install/esm/) to set up Sentry. After that, add the Zen import inside the `instrument.mjs` file as shown below.
-
-```js
-import "@aikidosec/firewall/instrument";
-import * as Sentry from "@sentry/node";
-
-Sentry.init({
-  // ...
-});
-```
-
-Import the `instrument.mjs` file using the `--import` flag when starting your application. The `-r @aikidosec/firewall/instrument` CLI flag is not needed in this case.
+Follow the [Sentry instructions for ESM](https://docs.sentry.io/platforms/javascript/guides/node/install/esm/) to set up Sentry. After that, make sure to preload Zen using `--require`/`-r` before loading Sentry:
 
 ```sh
-node --import ./instrument.mjs your-app.js
+node -r @aikidosec/firewall/instrument --import ./instrument.mjs your-app.js
 ```
 
 ## Known issues
