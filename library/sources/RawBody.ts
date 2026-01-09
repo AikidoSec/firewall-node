@@ -25,7 +25,7 @@ export class RawBody implements Wrapper {
       return;
     }
 
-    const str = buffer.toString("utf-8");
+    const str = new TextDecoder("utf-8").decode(buffer);
 
     if (!this.looksLikeJson(str)) {
       return;
