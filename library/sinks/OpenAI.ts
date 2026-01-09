@@ -190,27 +190,48 @@ export class OpenAI implements Wrapper {
   }
 
   private onCompletionsCreated(
+    args: unknown[],
     returnValue: unknown,
     agent: Agent,
     subject: unknown
   ) {
     if (returnValue instanceof Promise) {
-      // Inspect the response after the promise resolves, it won't change the original promise
-      returnValue
-        .then((response) => {
-          this.inspectCompletionResponse(
-            agent,
-            response,
-            this.getProvider(exports, subject)
-          );
-        })
-        .catch((error) => {
-          agent.onErrorThrownByInterceptor({
-            error: error,
-            method: "create.<promise>",
-            module: "openai",
-          });
+      const messages = this.getMessagesFromArgs(args);
+      if (!messages || !isAiMessagesArray(messages)) {
+        return returnValue;
+      }
+
+      const pendingCheck = checkForPromptInjection(
+        agent,
+        messages,
+        "openai",
+        "create.<promise>"
+      );
+
+      return new Promise((resolve, reject) => {
+        returnValue.then(async (response) => {
+          const promptCheckResult = await pendingCheck;
+          if (promptCheckResult.block) {
+            return reject(promptCheckResult.error);
+          }
+
+          resolve(response);
+
+          try {
+            this.inspectCompletionResponse(
+              agent,
+              response,
+              this.getProvider(exports, subject)
+            );
+          } catch (error) {
+            agent.onErrorThrownByInterceptor({
+              error: error instanceof Error ? error : new Error(String(error)),
+              method: "create.<promise>",
+              module: "openai",
+            });
+          }
         });
+      });
     }
 
     return returnValue;
@@ -227,6 +248,10 @@ export class OpenAI implements Wrapper {
 
       if (isAiMessagesArray(options.input)) {
         messages.push(...options.input);
+      }
+
+      if (isAiMessagesArray(options.messages)) {
+        messages.push(...options.messages);
       }
 
       if (typeof options.input === "string") {
@@ -260,8 +285,8 @@ export class OpenAI implements Wrapper {
         if (completionsClass) {
           wrapExport(completionsClass.prototype, "create", pkgInfo, {
             kind: "ai_op",
-            modifyReturnValue: (_args, returnValue, agent, subject) =>
-              this.onCompletionsCreated(returnValue, agent, subject),
+            modifyReturnValue: (args, returnValue, agent, subject) =>
+              this.onCompletionsCreated(args, returnValue, agent, subject),
           });
         }
       })
@@ -290,8 +315,8 @@ export class OpenAI implements Wrapper {
             name: "create",
             nodeType: "MethodDefinition",
             operationKind: "ai_op",
-            modifyReturnValue: (_args, returnValue, agent, subject) =>
-              this.onCompletionsCreated(returnValue, agent, subject),
+            modifyReturnValue: (args, returnValue, agent, subject) =>
+              this.onCompletionsCreated(args, returnValue, agent, subject),
           },
         ]
       );

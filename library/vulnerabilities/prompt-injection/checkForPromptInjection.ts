@@ -70,7 +70,7 @@ export async function checkForPromptInjection(
       stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
       paths: [],
       metadata: {
-        prompts: messagesToString(input),
+        prompt: messagesToString(input),
       },
       request: context,
       payload: undefined,

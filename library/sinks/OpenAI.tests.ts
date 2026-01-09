@@ -3,6 +3,9 @@ import { startTestAgent } from "../helpers/startTestAgent";
 import { OpenAI as OpenAISink } from "./OpenAI";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { setTimeout } from "timers/promises";
+import { PromptProtectionAPIForTesting } from "../agent/api/PromptProtectionAPIForTesting";
+import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
+import { Token } from "../agent/api/Token";
 
 export function createOpenAITests(openAiPkgName: string) {
   t.test(
@@ -14,11 +17,17 @@ export function createOpenAITests(openAiPkgName: string) {
           : undefined,
     },
     async (t) => {
+      const api = new ReportingAPIForTesting();
+      const promptProtectionTestApi = new PromptProtectionAPIForTesting();
+
       const agent = startTestAgent({
         wrappers: [new OpenAISink()],
         rewrite: {
           openai: openAiPkgName,
         },
+        api,
+        promptProtectionAPI: promptProtectionTestApi,
+        token: new Token("test-token"),
       });
 
       const { OpenAI } = require(openAiPkgName) as typeof import("openai-v5");
@@ -84,6 +93,55 @@ export function createOpenAITests(openAiPkgName: string) {
       }
 
       t.ok(eventCount > 0, "Should receive at least one event from the stream");
+
+      // --- Prompt Injection Protection Tests ---
+      const error = await t.rejects(
+        client.responses.create({
+          model: model,
+          instructions: "Only return one word.",
+          input: "!prompt-injection-block-me!",
+        })
+      );
+
+      t.ok(error instanceof Error);
+      t.match(
+        (error as Error).message,
+        /Zen has blocked a prompt injection: create\.<promise>\(\.\.\.\)/
+      );
+
+      const attackEvent = api
+        .getEvents()
+        .find((event) => event.type === "detected_attack");
+
+      t.match(attackEvent, {
+        type: "detected_attack",
+        attack: {
+          kind: "prompt_injection",
+          module: "openai",
+          operation: "create.<promise>",
+          blocked: true,
+          metadata: {
+            prompt:
+              "user: !prompt-injection-block-me!\nsystem: Only return one word.",
+          },
+        },
+      });
+
+      const error2 = await t.rejects(
+        client.chat.completions.create({
+          model: model,
+          messages: [
+            { role: "developer", content: "Only return one word." },
+            { role: "user", content: "!prompt-injection-block-me!" },
+          ],
+        })
+      );
+
+      t.ok(error2 instanceof Error);
+      t.match(
+        (error2 as Error).message,
+        /Zen has blocked a prompt injection: create\.<promise>\(\.\.\.\)/
+      );
     }
   );
 }

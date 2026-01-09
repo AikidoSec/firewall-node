@@ -4,5 +4,5 @@ export function getPromptInjectionServiceURL(): URL {
   }
 
   // Todo add default URL when deployed
-  return new URL("");
+  return new URL("http://localhost:8123");
 }
