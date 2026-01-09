@@ -91,6 +91,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.route = context.route;
     current.graphql = context.graphql;
     current.xml = context.xml;
+    current.rawBody = context.rawBody;
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
     current.markUnsafe = context.markUnsafe;
