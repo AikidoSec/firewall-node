@@ -33,6 +33,9 @@ import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUni
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
+import type { PromptProtectionApi } from "./api/PromptProtectionAPI";
+import { PromptProtectionAPINodeHTTP } from "./api/PromptProtectionAPINodeHTTP";
+import type { AiMessage } from "../vulnerabilities/prompt-injection/messages";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -70,7 +73,8 @@ export class Agent {
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
     private readonly newInstrumentation: boolean = false,
-    private readonly fetchListsAPI: FetchListsAPI
+    private readonly fetchListsAPI: FetchListsAPI,
+    private readonly promptProtectionAPI: PromptProtectionApi = new PromptProtectionAPINodeHTTP()
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
@@ -689,5 +693,12 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  checkForPromptInjection(input: AiMessage[]) {
+    if (!this.token) {
+      return Promise.resolve({ success: false, block: false });
+    }
+    return this.promptProtectionAPI.checkForInjection(this.token, input);
   }
 }
