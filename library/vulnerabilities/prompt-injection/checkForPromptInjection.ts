@@ -16,8 +16,6 @@ export async function checkForPromptInjection(
   block: boolean;
   error?: Error;
 }> {
-  const start = performance.now();
-
   const context = getContext();
   if (context) {
     const matches = agent.getConfig().getEndpoints(context);
@@ -38,16 +36,6 @@ export async function checkForPromptInjection(
 
   try {
     const result = await agent.checkForPromptInjection(input);
-
-    const end = performance.now();
-    agent.getInspectionStatistics().onInspectedCall({
-      operation: "ai_op",
-      kind: "ai_op",
-      attackDetected: !!result,
-      blocked: agent.shouldBlock(),
-      durationInMs: end - start,
-      withoutContext: !context,
-    });
 
     if (!result.success || !result.block) {
       return {
