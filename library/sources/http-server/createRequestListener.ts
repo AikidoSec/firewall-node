@@ -7,7 +7,7 @@ import {
   updateContext,
 } from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
-import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
+import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
@@ -74,7 +74,7 @@ function callListenerWithContext(
       });
     }
 
-    if (checkIfRequestIsBlocked(res, agent)) {
+    if (blockIPsAndBots(res, agent)) {
       if (context) {
         // To prevent attack wave detection from checking this request
         updateContext(context, "blockedDueToIPOrBot", true);
