@@ -1,4 +1,5 @@
 import type { Request } from "express";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -20,7 +21,7 @@ export function contextFromRequest(req: Request): Context {
     /* c8 ignore next */
     cookies: req.cookies ? req.cookies : {},
     source: "express",
-    route: buildRouteFromURL(url),
+    route: buildRouteFromURL(url, getRegisteredRouteParams()),
     subdomains: req.subdomains,
   };
 }

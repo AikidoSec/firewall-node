@@ -1,4 +1,5 @@
 import { IncomingMessage } from "http";
+import { getRegisteredRouteParams } from "../../agent/addRouteParam";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
@@ -27,6 +28,6 @@ export function contextFromRequest(req: RestifyRequest): Context {
     query: isPlainObject(req.query) ? req.query : {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     source: "restify",
-    route: buildRouteFromURL(req.href()),
+    route: buildRouteFromURL(req.href(), getRegisteredRouteParams()),
   };
 }

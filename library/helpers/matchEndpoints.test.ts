@@ -14,7 +14,7 @@ const context: Context = {
   cookies: {},
   routeParams: {},
   source: "express",
-  route: buildRouteFromURL(url),
+  route: buildRouteFromURL(url, []),
 };
 
 t.test("invalid URL and no route", async () => {
@@ -66,7 +66,7 @@ t.test("it returns endpoint based on route", async () => {
 t.test("it returns endpoint based on relative url", async () => {
   t.same(
     matchEndpoints(
-      { ...context, route: buildRouteFromURL("/posts/3"), url: "/posts/3" },
+      { ...context, route: buildRouteFromURL("/posts/3", []), url: "/posts/3" },
       [
         {
           method: "POST",
