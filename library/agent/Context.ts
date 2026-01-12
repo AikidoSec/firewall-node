@@ -17,6 +17,7 @@ export type Context = {
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
   attackDetected?: boolean;
+  blockedDueToIPOrBot?: boolean;
   consumedRateLimit?: boolean;
   user?: User;
   source: string;

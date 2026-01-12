@@ -1,6 +1,11 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { type Context, getContext, runWithContext } from "../../agent/Context";
+import {
+  type Context,
+  getContext,
+  runWithContext,
+  updateContext,
+} from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
 import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
 import { contextFromRequest } from "./contextFromRequest";
@@ -70,6 +75,11 @@ function callListenerWithContext(
     }
 
     if (checkIfRequestIsBlocked(res, agent)) {
+      if (context) {
+        // To prevent attack wave detection from checking this request
+        updateContext(context, "blockedDueToIPOrBot", true);
+      }
+
       // The return is necessary to prevent the listener from being called
       return;
     }
@@ -115,6 +125,7 @@ function onFinishRequestHandler(
 
     if (
       context.remoteAddress &&
+      !context.blockedDueToIPOrBot &&
       !agent.getConfig().isBypassedIP(context.remoteAddress) &&
       agent.getAttackWaveDetector().check(context)
     ) {
