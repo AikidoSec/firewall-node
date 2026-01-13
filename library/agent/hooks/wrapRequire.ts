@@ -134,6 +134,8 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     return originalExports;
   }
 
+  getInstance()?.onBuiltinWrapped(moduleName);
+
   // Get interceptors from all matching builtin modules
   const interceptors = matchingBuiltins
     .map((m) => m.getRequireInterceptors())

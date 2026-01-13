@@ -564,6 +564,10 @@ export class Agent {
     }
   }
 
+  onBuiltinWrapped(name: string) {
+    this.logger.log(`node:${name} is supported!`);
+  }
+
   onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
   }
