@@ -103,6 +103,13 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress)
+  ) {
+    return;
+  }
+
   if (context.route && context.method) {
     const shouldDiscover = shouldDiscoverRoute({
       statusCode: res.statusCode,
@@ -126,7 +133,6 @@ function onFinishRequestHandler(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
-      !agent.getConfig().isBypassedIP(context.remoteAddress) &&
       agent.getAttackWaveDetector().check(context)
     ) {
       agent.onDetectedAttackWave({
