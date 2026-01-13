@@ -565,7 +565,7 @@ export class Agent {
   }
 
   onBuiltinWrapped(name: string) {
-    this.logger.log(`${name} (builtin) is supported!`);
+    this.logger.log(`node:${name} is supported!`);
   }
 
   onConnectHostname(hostname: string, port: number) {
