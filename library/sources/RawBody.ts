@@ -1,6 +1,5 @@
 import { getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
-import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 
@@ -40,27 +39,19 @@ export class RawBody implements Wrapper {
     }
   }
 
-  private getFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
-    return [
-      {
-        nodeType: "FunctionDeclaration",
-        name: "getRawBody",
-        operationKind: undefined,
-        modifyReturnValue: (args, returnValue) => {
-          if (returnValue instanceof Promise) {
-            // Update context after the promise resolves, it won't change the original promise
-            returnValue
-              .then((buffer: Buffer) => {
-                this.tryUpdateContextBody(buffer);
-              })
-              .catch(() => {
-                // Ignore errors
-              });
-          }
-          return returnValue;
-        },
-      },
-    ];
+  private onBodyParsed(_: unknown[], returnValue: unknown) {
+    if (returnValue instanceof Promise) {
+      // Update context after the promise resolves, it won't change the original promise
+      returnValue
+        .then((buffer: Buffer) => {
+          this.tryUpdateContextBody(buffer);
+        })
+        .catch(() => {
+          // Ignore errors
+        });
+    }
+
+    return returnValue;
   }
 
   wrap(hooks: Hooks) {
@@ -71,23 +62,22 @@ export class RawBody implements Wrapper {
         return wrapExport(exports, undefined, pkgInfo, {
           kind: undefined,
           modifyReturnValue: (args, returnValue) => {
-            if (returnValue instanceof Promise) {
-              // Update context after the promise resolves, it won't change the original promise
-              returnValue
-                .then((buffer: Buffer) => {
-                  this.tryUpdateContextBody(buffer);
-                })
-                .catch(() => {
-                  // Ignore errors
-                });
-            }
-            return returnValue;
+            return this.onBodyParsed(args, returnValue);
           },
         });
       })
       .addFileInstrumentation({
         path: "index.js",
-        functions: this.getFunctionInstructions(),
+        functions: [
+          {
+            nodeType: "FunctionDeclaration",
+            name: "getRawBody",
+            operationKind: undefined,
+            modifyReturnValue: (args, returnValue) => {
+              return this.onBodyParsed(args, returnValue);
+            },
+          },
+        ],
       });
   }
 }
