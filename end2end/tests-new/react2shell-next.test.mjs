@@ -1,7 +1,7 @@
 import { spawnSync, spawn } from "child_process";
 import { resolve } from "path";
 import { test, before } from "node:test";
-import { equal, fail, match } from "node:assert";
+import { deepStrictEqual, fail, match } from "node:assert";
 import { getRandomPort } from "./utils/get-port.mjs";
 import { timeout } from "./utils/timeout.mjs";
 
@@ -10,6 +10,7 @@ const pathToAppDir = resolve(
   "../../sample-apps/react2shell-next"
 );
 const port = await getRandomPort();
+const port2 = await getRandomPort();
 
 before(() => {
   const { stderr } = spawnSync(`npm`, ["run", "build"], {
@@ -21,77 +22,72 @@ before(() => {
   }
 });
 
-function sendReact2ShellRequest(port) {
-  // Based on https://github.com/assetnote/react2shell-scanner/
-
-  const cmd = "echo $((41*271))";
-
-  const prefixPayload =
-    "var res=process.mainModule.require('child_process').execSync('{cmd}').toString().trim();;throw Object.assign(new Error('NEXT_REDIRECT'),{{digest: `NEXT_REDIRECT;push;/login?a=${{res}};307;`}});".replace(
-      "{cmd}",
-      cmd
-    );
-
-  const part0 =
-    '{"then":"$1:__proto__:then","status":"resolved_model","reason":-1,"value":"{\\"then\\":\\"$B1337\\"}","_response":{"_prefix":"${prefixPayload}","_chunks":"$Q2","_formData":{"get":"$1:constructor:constructor"}}}'.replace(
-      "{prefixPayload}",
-      prefixPayload
-    );
-
-  // Build the multipart body as a string
+async function testReact2Shell(targetUrl) {
   const boundary = "----WebKitFormBoundaryx8jO2oVc6SWP3Sad";
-  const parts = [];
-  parts.push(
-    `${boundary}\r\n` +
-      'Content-Disposition: form-data; name="0"\r\n\r\n' +
-      `${part0}\r\n`
-  );
-  parts.push(
-    `${boundary}\r\n` +
-      'Content-Disposition: form-data; name="1"\r\n\r\n' +
-      '"$@0"\r\n'
-  );
-  parts.push(
-    `${boundary}\r\n` +
-      'Content-Disposition: form-data; name="2"\r\n\r\n' +
-      "[]\r\n"
-  );
-  parts.push(`${boundary}--`);
-  const body = parts.join("");
 
-  return fetch(`http://127.0.0.1:${port}/`, {
+  const part0 = JSON.stringify({
+    then: "$1:__proto__:then",
+    status: "resolved_model",
+    reason: -1,
+    value: '{"then":"$B1337"}',
+    _response: {
+      _prefix:
+        "var res=process.mainModule.require('child_process').execSync('echo $((41*271))').toString().trim();;throw Object.assign(new Error('NEXT_REDIRECT'),{digest: `NEXT_REDIRECT;push;/login?a=${res};307;`});",
+      _chunks: "$Q2",
+      _formData: { get: "$1:constructor:constructor" },
+    },
+  });
+
+  const body = [
+    `------WebKitFormBoundaryx8jO2oVc6SWP3Sad`,
+    `Content-Disposition: form-data; name="0"`,
+    ``,
+    part0,
+    `------WebKitFormBoundaryx8jO2oVc6SWP3Sad`,
+    `Content-Disposition: form-data; name="1"`,
+    ``,
+    `"$@0"`,
+    `------WebKitFormBoundaryx8jO2oVc6SWP3Sad`,
+    `Content-Disposition: form-data; name="2"`,
+    ``,
+    `[]`,
+    `------WebKitFormBoundaryx8jO2oVc6SWP3Sad--`,
+  ].join("\r\n");
+
+  const response = await fetch(targetUrl, {
+    method: "POST",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36 Assetnote/1.0.0",
+      "Content-Type": `multipart/form-data; boundary=${boundary}`,
       "Next-Action": "x",
       "X-Nextjs-Request-Id": "b5dce965",
-      "X-Nextjs-Html-Request-Id": "SSTMXm7OJ_g0Ncx6jpQt9",
-      "Content-Type": `multipart/form-data; boundary=${boundary.slice(2)}`,
     },
-    body,
-    method: "POST",
+    body: body,
+    redirect: "manual",
   });
+
+  const redirectHeader = response.headers.get("X-Action-Redirect") || "";
+  const isVulnerable = /.*\/login\?a=11111.*/.test(redirectHeader);
+
+  return {
+    vulnerable: isVulnerable,
+    statusCode: response.status,
+    redirectHeader: redirectHeader,
+  };
 }
 
-test("Request is not blocked in monitoring mode", async () => {
-  const server = spawn(
-    `node`,
-    ["-r", "@aikidosec/firewall", "./.next/standalone/server.js"],
-    {
-      cwd: pathToAppDir,
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "false",
-        PORT: port,
-        HOSTNAME: "127.0.0.1",
-      },
-    }
-  );
+test("vulnerable to RCE without Zen", async () => {
+  const server = spawn(`node`, ["./.next/standalone/server.js"], {
+    cwd: pathToAppDir,
+    env: {
+      ...process.env,
+      PORT: port,
+      HOSTNAME: "127.0.0.1",
+    },
+  });
 
   try {
     server.on("error", (err) => {
-      fail(err.message);
+      fail(err);
     });
 
     let stdout = "";
@@ -107,17 +103,73 @@ test("Request is not blocked in monitoring mode", async () => {
     // Wait for the server to start
     await timeout(2000);
 
-    const result = await sendReact2ShellRequest(port);
-
-    equal(result.status, 500);
-    const response = await result.text();
-    equal(response.includes('E{"digest":"'), true);
-
-    match(stdout, /Starting agent/);
-    //match(stderr, /Zen has blocked an SQL injection/);
+    const result = await testReact2Shell(`http://127.0.0.1:${port}`);
+    deepStrictEqual(result, {
+      vulnerable: true,
+      statusCode: 303,
+      redirectHeader: "/login?a=11111;push",
+    });
   } catch (err) {
     fail(err);
   } finally {
     server.kill();
   }
 });
+
+test("not vulnerable to RCE with Zen", async () => {
+  const server = spawn(`node`, ["./.next/standalone/server.js"], {
+    cwd: pathToAppDir,
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      PORT: port2,
+      HOSTNAME: "127.0.0.1",
+      NODE_OPTIONS: "-r @aikidosec/firewall",
+    },
+  });
+
+  try {
+    server.on("error", (err) => {
+      fail(err);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    await timeout(2000);
+
+    const result = await testReact2Shell(`http://127.0.0.1:${port2}`);
+    deepStrictEqual(result, {
+      vulnerable: false,
+      statusCode: 500,
+      redirectHeader: "",
+    });
+
+    match(stdout, /Starting agent/);
+    match(
+      stderr,
+      new RegExp(
+        escapeStringRegexp(
+          "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.fields.[0].value._response._prefix"
+        )
+      )
+    );
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+function escapeStringRegexp(string) {
+  return string.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
+}

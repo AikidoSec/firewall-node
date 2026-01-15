@@ -53,7 +53,18 @@ function discoverRouteFromStream(
   stream: ServerHttp2Stream,
   agent: Agent
 ) {
-  if (context && context.route && context.method) {
+  if (!context) {
+    return;
+  }
+
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress)
+  ) {
+    return;
+  }
+
+  if (context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
     if (!isNaN(statusCode)) {
@@ -78,7 +89,6 @@ function discoverRouteFromStream(
 
       if (
         context.remoteAddress &&
-        !agent.getConfig().isBypassedIP(context.remoteAddress) &&
         agent.getAttackWaveDetector().check(context)
       ) {
         agent.onDetectedAttackWave({

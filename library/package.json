@@ -133,6 +133,8 @@
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
     "prisma": "^5.22.0",
+    "raw-body-v2": "npm:raw-body@^2.0.0",
+    "raw-body-v3": "npm:raw-body@^3.0.0",
     "restify-v10": "npm:restify@^10.0.0",
     "restify-v11": "npm:restify@^11.0.0",
     "restify-v8": "npm:restify@^8.6.1",

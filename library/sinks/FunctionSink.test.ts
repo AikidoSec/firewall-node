@@ -1,8 +1,9 @@
 /* oxlint-disable no-implied-eval */
+/* oxlint-disable no-eval */
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { Function as FunctionWrapper } from "./Function";
+import { FunctionSink } from "./FunctionSink";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -36,7 +37,7 @@ const safeContext: Context = {
 
 t.test("it detects JS injections using Function", async (t) => {
   const agent = createTestAgent();
-  agent.start([new FunctionWrapper()]);
+  agent.start([new FunctionSink()]);
 
   t.same(new Function("return 1 + 1")(), 2);
   t.same(new Function("1 + 1")(), undefined);
@@ -81,7 +82,7 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error instanceof Error) {
       t.same(
         error.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
 
@@ -92,7 +93,7 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error2 instanceof Error) {
       t.same(
         error2.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
 
@@ -107,7 +108,55 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error3 instanceof Error) {
       t.same(
         error3.message,
-        "Zen has blocked a JavaScript injection: new Function(...) originating from body.calc"
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+  });
+
+  t.same(eval("1 + 1"), 2);
+  t.same(eval("const x = 2 + 2; x"), 4);
+  t.same(eval("(() => 3 * 3)()"), 9);
+
+  // Indirect eval
+  t.same((0, eval)("1 + 1"), 2);
+  t.same(eval.call(null, "2 + 2"), 4);
+
+  runWithContext(safeContext, () => {
+    t.same(eval("1 + 1"), 2);
+    t.same(eval("const x = 1+ 1; x"), 2);
+  });
+
+  runWithContext(dangerousContext, () => {
+    t.same(eval("1 + 1"), 2);
+    t.same(eval("const x = 1 + 1; x"), 2);
+
+    const error4 = t.throws(() => eval("1 + 1; console.log('hello')"));
+    t.ok(error4 instanceof Error);
+    if (error4 instanceof Error) {
+      t.same(
+        error4.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    const error5 = t.throws(() =>
+      eval("const test = 1 + 1; console.log('hello')")
+    );
+    t.ok(error5 instanceof Error);
+    if (error5 instanceof Error) {
+      t.same(
+        error5.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Indirect eval should also be blocked
+    const error6 = t.throws(() => (0, eval)("1 + 1; console.log('hello')"));
+    t.ok(error6 instanceof Error);
+    if (error6 instanceof Error) {
+      t.same(
+        error6.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
   });

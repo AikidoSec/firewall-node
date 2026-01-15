@@ -1,8 +1,13 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
-import { type Context, getContext, runWithContext } from "../../agent/Context";
+import {
+  type Context,
+  getContext,
+  runWithContext,
+  updateContext,
+} from "../../agent/Context";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
-import { checkIfRequestIsBlocked } from "./checkIfRequestIsBlocked";
+import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
 import { shouldDiscoverRoute } from "./shouldDiscoverRoute";
@@ -52,7 +57,7 @@ function callListenerWithContext(
   res: ServerResponse,
   module: string,
   agent: Agent,
-  body: string
+  body: unknown
 ) {
   const context = contextFromRequest(req, body, module);
 
@@ -69,7 +74,12 @@ function callListenerWithContext(
       });
     }
 
-    if (checkIfRequestIsBlocked(res, agent)) {
+    if (blockIPsAndBots(res, agent)) {
+      if (context) {
+        // To prevent attack wave detection from checking this request
+        updateContext(context, "blockedDueToIPOrBot", true);
+      }
+
       // The return is necessary to prevent the listener from being called
       return;
     }
@@ -93,6 +103,13 @@ function onFinishRequestHandler(
   // Mark the request as counted
   req[countedRequest] = true;
 
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress)
+  ) {
+    return;
+  }
+
   if (context.route && context.method) {
     const shouldDiscover = shouldDiscoverRoute({
       statusCode: res.statusCode,
@@ -115,7 +132,7 @@ function onFinishRequestHandler(
 
     if (
       context.remoteAddress &&
-      !agent.getConfig().isBypassedIP(context.remoteAddress) &&
+      !context.blockedDueToIPOrBot &&
       agent.getAttackWaveDetector().check(context)
     ) {
       agent.onDetectedAttackWave({

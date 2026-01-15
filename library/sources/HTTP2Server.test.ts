@@ -733,3 +733,91 @@ t.test("it reports attack waves", async (t) => {
     });
   });
 });
+
+t.test("it parses Multipart body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3435, () => {
+      http2Request(
+        new URL("http://localhost:3435"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "value1" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("it ignores files in Multipart body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3436, () => {
+      http2Request(
+        new URL("http://localhost:3436"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="file1"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nThis is the content of the file.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "valueabc" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("invalid Multipart body results in empty body", async () => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = createMinimalTestServer();
+
+  await new Promise<void>((resolve) => {
+    server.listen(3437, () => {
+      http2Request(
+        new URL("http://localhost:3437"),
+        "POST",
+        {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundaryABCDEFGHIJ",
+        },
+        '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--'
+      ).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
