@@ -4,11 +4,13 @@ import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
-import { APIGatewayProxyEvent, createLambdaWrapper } from "./Lambda";
+import { createLambdaWrapper } from "./Lambda";
 import { wrap } from "../helpers/wrap";
+import type { APIGatewayProxyEventV1 } from "./lambda/gateway";
 
-const gatewayEvent: APIGatewayProxyEvent = {
+const gatewayEvent: APIGatewayProxyEventV1 = {
   resource: "/dev/{proxy+}",
+  path: "/dev/some/path",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
