@@ -128,7 +128,7 @@
     "openai-v5": "npm:openai@^5.8.2",
     "openai-v6": "npm:openai@^6.15.0",
     "oxlint": "^1.35.0",
-    "oxlint-tsgolint": "^0.10.0",
+    "oxlint-tsgolint": "^0.11.0",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",

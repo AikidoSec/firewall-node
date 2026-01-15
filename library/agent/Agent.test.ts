@@ -109,7 +109,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
