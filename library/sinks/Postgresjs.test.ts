@@ -52,6 +52,7 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
     await sql`insert into cats_2 ${sql(cats, "petname")}`;
 
     const transactionResult = await sql.begin((sql) => [
+      // @ts-expect-error Broken types
       sql`SELECT * FROM cats_2`,
     ]);
     t.same(transactionResult[0], cats);
