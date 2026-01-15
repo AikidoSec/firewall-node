@@ -18,6 +18,9 @@ jobs:
     name: 🧪 Unit tests
     uses: ./.github/workflows/unit-test.yml
     needs: build
+    permissions:
+      contents: read
+      id-token: write
   end-to-end-tests:
     name: 🕵️ End to end tests
     uses: ./.github/workflows/end-to-end-tests.yml

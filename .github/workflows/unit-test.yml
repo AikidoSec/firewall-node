@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   test:
@@ -106,10 +107,8 @@ jobs:
           max_attempts: 3
           command: npm run test:esm
 
-      - name: "Upload coverage"
+      - name: Upload coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/firewall-node
+          use_oidc: true
