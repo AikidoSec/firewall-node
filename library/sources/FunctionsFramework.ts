@@ -118,6 +118,17 @@ function incrementStatsAndDiscoverAPISpec(
     if (shouldDiscover) {
       agent.onRouteExecute(context);
     }
+
+    if (
+      context.remoteAddress &&
+      !context.blockedDueToIPOrBot &&
+      agent.getAttackWaveDetector().check(context)
+    ) {
+      agent.onDetectedAttackWave({
+        request: context,
+      });
+      agent.getInspectionStatistics().onAttackWaveDetected();
+    }
   }
 
   const stats = agent.getInspectionStatistics();
