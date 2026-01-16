@@ -17,7 +17,7 @@ export async function checkForPromptInjection(
   block: boolean;
   error?: Error;
 }> {
-  if (!isFeatureEnabled("PROMPT_INJECTION_PROTECTION")) {
+  if (!isFeatureEnabled("PROMPT_PROTECTION")) {
     return { success: false, block: false };
   }
 
