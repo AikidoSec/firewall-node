@@ -20,6 +20,12 @@ export function throws(...args) {
         );
         return err;
       }
+
+      if (args[1] instanceof RegExp) {
+        assert.match(err.message ?? err.toString(), args[1]);
+        return err;
+      }
+
       throw new TypeError(
         `Second argument of throws must be a string, got ${typeof args[1]}`
       );
@@ -114,4 +120,22 @@ export function rejects(...args) {
         );
       });
   });
+}
+
+export function doesNotThrow(...args) {
+  if (args.length === 0) {
+    throw new TypeError("doesNotThrow requires at least one argument");
+  }
+
+  if (typeof args[0] !== "function") {
+    throw new TypeError("First argument to doesNotThrow must be a function");
+  }
+
+  try {
+    args[0]();
+  } catch (err) {
+    assert.fail(
+      `Unexpected exception thrown: ${err.message ?? err.toString()}`
+    );
+  }
 }
