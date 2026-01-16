@@ -225,7 +225,7 @@ export class AiSDK implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
-      .withVersion("^5.0.0 || ^4.0.0")
+      .withVersion("^6.0.0 || ^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;

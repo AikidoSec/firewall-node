@@ -109,7 +109,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -419,7 +419,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
       blockNewOutgoingRequests: false,
     });
     const agent = createTestAgent({
@@ -489,7 +488,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
     });
     const agent = createTestAgent({
       api,
@@ -1295,7 +1293,6 @@ t.test("it blocks new outgoing requests if config says so", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
-    receivedAnyStats: false,
     blockNewOutgoingRequests: true,
     domains: [
       { hostname: "example.com", mode: "block" },
@@ -1333,7 +1330,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
       blockNewOutgoingRequests: false,
       domains: [
         { hostname: "example.com", mode: "block" },

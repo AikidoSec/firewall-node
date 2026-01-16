@@ -1,4 +1,12 @@
-import { mkdir, glob, writeFile, rm, readFile, copyFile } from "fs/promises";
+import {
+  mkdir,
+  glob,
+  writeFile,
+  rm,
+  readFile,
+  copyFile,
+  cp,
+} from "fs/promises";
 import { dirname, join, resolve } from "path";
 import { exec } from "child_process";
 import { existsSync } from "fs";
@@ -339,6 +347,16 @@ await copyFile(join(libDir, "package.json"), join(libOutDir, "package.json"));
 await copyFile(
   join(libDir, "internals", "zen_internals_bg.wasm"),
   join(libOutDir, "internals", "zen_internals_bg.wasm")
+);
+await cp(join(libDir, "node_internals"), join(libOutDir, "node_internals"), {
+  recursive: true,
+});
+await cp(
+  join(libDir, "helpers", "form-parsing"),
+  join(libOutDir, "helpers", "form-parsing"),
+  {
+    recursive: true,
+  }
 );
 
 const instrumentationWasm = join(

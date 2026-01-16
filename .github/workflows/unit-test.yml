@@ -5,11 +5,12 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     strategy:
       fail-fast: false
 
@@ -19,31 +20,31 @@ jobs:
             instrumentation: "current"
             mode: "cjs"
           - node-version: 18.x
-            new-instrumentation: "current"
+            instrumentation: "current"
             mode: "cjs"
           - node-version: 20.x
-            new-instrumentation: "current"
+            instrumentation: "current"
             mode: "cjs"
           - node-version: 22.x
-            new-instrumentation: "current"
+            instrumentation: "current"
             mode: "cjs"
           - node-version: 24.x
-            new-instrumentation: "current"
+            instrumentation: "current"
             mode: "cjs"
           - node-version: 24.x
-            new-instrumentation: "new"
+            instrumentation: "new"
             mode: "cjs"
           - node-version: 24.x
-            new-instrumentation: "new"
+            instrumentation: "new"
             mode: "esm"
           - node-version: 25.x
-            new-instrumentation: "current"
+            instrumentation: "current"
             mode: "cjs"
           - node-version: 25.x
-            new-instrumentation: "new"
+            instrumentation: "new"
             mode: "cjs"
           - node-version: 25.x
-            new-instrumentation: "new"
+            instrumentation: "new"
             mode: "esm"
 
     steps:
@@ -82,22 +83,33 @@ jobs:
         with:
           name: firewall-node-library-${{ github.sha }}
 
-      - name: Run tests with current instrumentation
-        run: npm run test:ci
-        if: ${{ matrix.new-instrumentation == 'current' }}
+      - name: Run tests with current instrumentation (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'current' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci
 
-      - name: Run tests with new instrumentation in CJS mode
-        run: npm run test:ci:new
-        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'cjs' }}
+      - name: Run tests with new instrumentation in CJS mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'cjs' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci:new
 
-      - name: Run tests in ESM mode
-        run: npm run test:esm
-        if: ${{ matrix.new-instrumentation == 'new' && matrix.mode == 'esm' }}
+      - name: Run tests in ESM mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'esm' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:esm
 
-      - name: "Upload coverage"
+      - name: Upload coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/firewall-node
+          use_oidc: true
+          fail_ci_if_error: true

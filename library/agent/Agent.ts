@@ -50,15 +50,7 @@ export class Agent {
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig(
-    [],
-    Date.now(),
-    [],
-    [],
-    true,
-    [],
-    []
-  );
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -311,10 +303,7 @@ export class Agent {
           response.allowedIPAddresses &&
             Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
-            : [],
-          typeof response.receivedAnyStats === "boolean"
-            ? response.receivedAnyStats
-            : true
+            : []
         );
       }
 
@@ -581,6 +570,10 @@ export class Agent {
         this.logger.log(`${name}@${details.version} is not supported!`);
       }
     }
+  }
+
+  onBuiltinWrapped(name: string) {
+    this.logger.log(`node:${name} is supported!`);
   }
 
   onConnectHostname(hostname: string, port: number) {

@@ -2,7 +2,7 @@ import * as t from "tap";
 import * as express from "express";
 import * as request from "supertest";
 import { setTimeout } from "timers/promises";
-import type { Event } from "../agent/api/Event";
+import type { DetectedAttackWave, Event } from "../agent/api/Event";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import {
@@ -387,5 +387,83 @@ t.test("getTimeoutInMS", async (t) => {
     getTimeoutInMS(),
     1000,
     "should return 1 second at minimum threshold"
+  );
+});
+
+t.test("it detects attack waves", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    serverless: "gcp",
+    token: new Token("123"),
+  });
+  agent.start([]);
+  api.clear();
+
+  const app = express();
+  app.set("env", "test");
+
+  app.get(
+    "/",
+    asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
+      createCloudFunctionWrapper((req, res) => {
+        res.status(200).send("OK");
+      })
+    )
+  );
+
+  app.use(
+    asyncHandler(
+      // @ts-expect-error Test using cloud function wrapper in an express app
+      createCloudFunctionWrapper((req, res) => {
+        res.status(404).send("Not Found");
+      })
+    )
+  );
+
+  const paths = [
+    "/.env",
+    "/wp-config.php",
+    "/.git/config",
+    "/.htaccess",
+    "/.aws/credentials",
+    "/docker-compose.yml",
+    "/../etc/passwd",
+    "/.bash_history",
+    "/config/.env",
+    "/app/docker-compose.yml",
+    "/.gitignore",
+    "/.ssh/id_rsa",
+    "/../.env",
+    "/.htpasswd",
+    "/.vscode/settings.json",
+    "/config.php",
+    "/.idea/workspace.xml",
+    "/.DS_Store",
+    "/.env.local",
+    "/secrets/.env",
+  ];
+
+  for (const path of paths) {
+    const response = await request(app).get(path);
+    t.equal(response.status, 404);
+  }
+
+  const attackWaveEvents = api
+    .getEvents()
+    .filter((e) => e.type === "detected_attack_wave") as Event[];
+
+  t.equal(attackWaveEvents.length, 1, "should have detected one attack wave");
+  t.match(attackWaveEvents[0], {
+    type: "detected_attack_wave",
+    request: {
+      userAgent: undefined,
+      source: "cloud-function/http",
+    },
+  });
+  t.match(
+    (attackWaveEvents[0] as DetectedAttackWave).attack.metadata.samples,
+    "/wp-config.php"
   );
 });
