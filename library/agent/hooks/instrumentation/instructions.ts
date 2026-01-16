@@ -44,7 +44,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
         return versionedPackage
           .getFileInstrumentationInstructions()
           .map((file) => {
-            const fileIdentifier = `${pkg.getName()}.${file.path}.${versionedPackage.getRange()}`;
+            const fileIdentifier = `${pkg.getName()}.${getIdentifier(file.path)}.${versionedPackage.getRange()}`;
             if (file.accessLocalVariables?.cb) {
               fileCallbackInfo.set(fileIdentifier, {
                 pkgName: pkg.getName(),
@@ -57,7 +57,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
               versionRange: versionedPackage.getRange(),
               identifier: fileIdentifier,
               functions: file.functions.map((func) => {
-                const identifier = `${pkg.getName()}.${file.path}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
+                const identifier = `${pkg.getName()}.${getIdentifier(file.path)}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
 
                 // If bindContext is set to true, but no modifyArgs is defined, modifyArgs will be set to a stub function
                 // The reason for this is that the bindContext logic needs to modify the arguments
@@ -117,6 +117,25 @@ export function shouldPatchPackage(name: string): boolean {
   return packages.has(name);
 }
 
+function matchesPath(
+  pathOrPattern: string | RegExp,
+  filePath: string
+): boolean {
+  if (typeof pathOrPattern === "string") {
+    return pathOrPattern === filePath;
+  }
+
+  return pathOrPattern.test(filePath);
+}
+
+function getIdentifier(pathOrPattern: string | RegExp) {
+  if (typeof pathOrPattern === "string") {
+    return pathOrPattern;
+  }
+
+  return pathOrPattern.toString();
+}
+
 export function getPackageFileInstrumentationInstructions(
   packageName: string,
   version: string,
@@ -128,7 +147,8 @@ export function getPackageFileInstrumentationInstructions(
   }
 
   return instructions.find(
-    (f) => f.path === filePath && satisfiesVersion(f.versionRange, version)
+    (f) =>
+      matchesPath(f.path, filePath) && satisfiesVersion(f.versionRange, version)
   );
 }
 
@@ -141,7 +161,7 @@ export function shouldPatchFile(
     return false;
   }
 
-  return instructions.some((f) => f.path === filePath);
+  return instructions.some((f) => matchesPath(f.path, filePath));
 }
 
 export function getFunctionCallbackInfo(
