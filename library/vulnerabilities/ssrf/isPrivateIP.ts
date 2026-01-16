@@ -1,5 +1,5 @@
+import { addIPv4MappedAddresses } from "../../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
-import mapIPv4ToIPv6 from "../../helpers/mapIPv4ToIPv6";
 
 const PRIVATE_IP_RANGES = [
   "0.0.0.0/8", // "This" network (RFC 1122)
@@ -31,20 +31,12 @@ const PRIVATE_IPV6_RANGES = [
   "100::/64", // Discard prefix (RFC 6666)
   "2001:db8::/32", // Documentation prefix (RFC 3849)
   "3fff::/20", // Documentation prefix (RFC 9637)
-].concat(
-  // Add the IPv4-mapped IPv6 addresses
-  PRIVATE_IP_RANGES.map(mapIPv4ToIPv6)
+];
+
+// Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
+const privateIp = new IPMatcher(
+  addIPv4MappedAddresses([...PRIVATE_IP_RANGES, ...PRIVATE_IPV6_RANGES])
 );
-
-const privateIp = new IPMatcher();
-
-PRIVATE_IP_RANGES.forEach((range) => {
-  privateIp.add(range);
-});
-
-PRIVATE_IPV6_RANGES.forEach((range) => {
-  privateIp.add(range);
-});
 
 export function isPrivateIP(ip: string): boolean {
   return privateIp.has(ip);
