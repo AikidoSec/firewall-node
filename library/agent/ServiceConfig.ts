@@ -1,4 +1,6 @@
+import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import { ipMatcherHasWithMappedCheck } from "../helpers/ipMatcherHasWithMappedCheck";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
@@ -55,7 +57,10 @@ export class ServiceConfig {
         Array.isArray(endpoint.allowedIPAddresses) &&
         endpoint.allowedIPAddresses.length > 0
       ) {
-        allowedIPAddresses = new IPMatcher(endpoint.allowedIPAddresses);
+        // Small list: add IPv4-mapped versions at creation time for fast lookups
+        allowedIPAddresses = new IPMatcher(
+          addIPv4MappedAddresses(endpoint.allowedIPAddresses)
+        );
       }
 
       const endpointConfig = { ...endpoint, allowedIPAddresses };
@@ -98,7 +103,10 @@ export class ServiceConfig {
       this.bypassedIPAddresses = undefined;
       return;
     }
-    this.bypassedIPAddresses = new IPMatcher(ipAddresses);
+    // Small list: add IPv4-mapped versions at creation time for fast lookups
+    this.bypassedIPAddresses = new IPMatcher(
+      addIPv4MappedAddresses(ipAddresses)
+    );
   }
 
   isBypassedIP(ip: string) {
@@ -119,8 +127,8 @@ export class ServiceConfig {
   isIPAddressBlocked(
     ip: string
   ): { blocked: true; reason: string } | { blocked: false } {
-    const blocklist = this.blockedIPAddresses.find((blocklist) =>
-      blocklist.blocklist.has(ip)
+    const blocklist = this.blockedIPAddresses.find((list) =>
+      ipMatcherHasWithMappedCheck(list.blocklist, ip)
     );
 
     if (blocklist) {
@@ -213,13 +221,13 @@ export class ServiceConfig {
 
   getMatchingBlockedIPListKeys(ip: string): string[] {
     return this.blockedIPAddresses
-      .filter((list) => list.blocklist.has(ip))
+      .filter((list) => ipMatcherHasWithMappedCheck(list.blocklist, ip))
       .map((list) => list.key);
   }
 
   getMatchingMonitoredIPListKeys(ip: string): string[] {
     return this.monitoredIPAddresses
-      .filter((list) => list.list.has(ip))
+      .filter((list) => ipMatcherHasWithMappedCheck(list.list, ip))
       .map((list) => list.key);
   }
 
@@ -253,7 +261,7 @@ export class ServiceConfig {
     }
 
     const allowlist = this.allowedIPAddresses.find((list) =>
-      list.allowlist.has(ip)
+      ipMatcherHasWithMappedCheck(list.allowlist, ip)
     );
 
     return { allowed: !!allowlist };

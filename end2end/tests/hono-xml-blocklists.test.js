@@ -143,6 +143,22 @@ t.test("it blocks geo restricted IPs", (t) => {
       });
       t.same(resp3.status, 200);
       t.same(await resp3.text(), JSON.stringify({ success: true }));
+
+      // IPv4-mapped IPv6 address should also be blocked (matches 1.3.2.0/24)
+      const resp4 = await fetch("http://127.0.0.1:4002/add", {
+        method: "POST",
+        body: "<cat><name>Mapped</name></cat>",
+        headers: {
+          "Content-Type": "application/xml",
+          "X-Forwarded-For": "::ffff:1.3.2.4",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp4.status, 403);
+      t.same(
+        await resp4.text(),
+        "Your IP address is blocked due to geo restrictions. (Your IP: ::ffff:1.3.2.4)"
+      );
     })
     .catch((error) => {
       t.fail(error);
@@ -305,6 +321,24 @@ t.test("it does not block bypass IP if in blocklist", (t) => {
         await resp3.text(),
         `Your IP address is not allowed to access this resource. (Your IP: 1.3.2.2)`
       );
+
+      // IPv4-mapped IPv6 address should also bypass (matches bypass list 1.3.2.1)
+      const resp4 = await fetch("http://127.0.0.1:4004/", {
+        headers: {
+          "X-Forwarded-For": "::ffff:1.3.2.1",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp4.status, 200);
+
+      // IPv4-mapped IPv6 address should also access endpoint allowlist
+      const resp5 = await fetch("http://127.0.0.1:4004/admin", {
+        headers: {
+          "X-Forwarded-For": "::ffff:1.3.2.1",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp5.status, 200);
     })
     .catch((error) => {
       t.fail(error);
