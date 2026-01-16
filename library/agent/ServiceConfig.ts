@@ -58,10 +58,11 @@ export class ServiceConfig {
         endpoint.allowedIPAddresses.length > 0
       ) {
         // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-        allowedIPAddresses = new IPMatcher();
+        const matcher = new IPMatcher();
         for (const ip of addIPv4MappedAddresses(endpoint.allowedIPAddresses)) {
-          allowedIPAddresses.add(ip);
+          matcher.add(ip);
         }
+        allowedIPAddresses = matcher;
       }
 
       const endpointConfig = { ...endpoint, allowedIPAddresses };
@@ -105,10 +106,11 @@ export class ServiceConfig {
       return;
     }
     // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-    this.bypassedIPAddresses = new IPMatcher();
+    const matcher = new IPMatcher();
     for (const ip of addIPv4MappedAddresses(ipAddresses)) {
-      this.bypassedIPAddresses.add(ip);
+      matcher.add(ip);
     }
+    this.bypassedIPAddresses = matcher;
   }
 
   isBypassedIP(ip: string) {
