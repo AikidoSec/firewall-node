@@ -86,9 +86,6 @@ async function main() {
         "node_code_instrumentation_bg.wasm"
       )
     );
-    await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
-      recursive: true,
-    });
   } else {
     await copyFile(
       join(internalsDir, "zen_internals_bg.wasm"),
