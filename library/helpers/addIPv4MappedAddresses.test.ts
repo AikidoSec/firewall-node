@@ -19,15 +19,18 @@ t.test("it adds IPv4-mapped IPv6 addresses", async (t) => {
     ]
   );
 });
+
 t.test("it handles empty array", async (t) => {
   t.same(addIPv4MappedAddresses([]), []);
 });
+
 t.test("it handles only IPv6 addresses", async (t) => {
   t.same(addIPv4MappedAddresses(["2001:db8::1", "::1"]), [
     "2001:db8::1",
     "::1",
   ]);
 });
+
 t.test("it handles only IPv4 addresses", async (t) => {
   t.same(addIPv4MappedAddresses(["1.2.3.4", "5.6.7.8"]), [
     "1.2.3.4",
