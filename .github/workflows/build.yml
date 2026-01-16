@@ -58,6 +58,7 @@ jobs:
           path: |
             build/
             library/internals/
+            library/node_internals/
             library/agent/hooks/instrumentation/wasm/
 
       - name: Build but keep structure

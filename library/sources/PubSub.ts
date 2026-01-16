@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import type { Message } from "@google-cloud/pubsub";
+import { tryParseJSON } from "../helpers/tryParseJSON";
 
 export class PubSub implements Wrapper {
   private wrapMessageHandler(args: unknown[]) {
@@ -85,12 +86,4 @@ function handleMessage(handler: Function) {
       }
     );
   };
-}
-
-function tryParseJSON(jsonString: string) {
-  try {
-    return JSON.parse(jsonString);
-  } catch {
-    return undefined;
-  }
 }
