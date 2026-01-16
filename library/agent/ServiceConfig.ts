@@ -1,6 +1,5 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
-import { ipMatcherHasWithMappedCheck } from "../helpers/ipMatcherHasWithMappedCheck";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
@@ -132,7 +131,7 @@ export class ServiceConfig {
     ip: string
   ): { blocked: true; reason: string } | { blocked: false } {
     const blocklist = this.blockedIPAddresses.find((list) =>
-      ipMatcherHasWithMappedCheck(list.blocklist, ip)
+      list.blocklist.hasWithMappedCheck(ip)
     );
 
     if (blocklist) {
@@ -227,13 +226,13 @@ export class ServiceConfig {
 
   getMatchingBlockedIPListKeys(ip: string): string[] {
     return this.blockedIPAddresses
-      .filter((list) => ipMatcherHasWithMappedCheck(list.blocklist, ip))
+      .filter((list) => list.blocklist.hasWithMappedCheck(ip))
       .map((list) => list.key);
   }
 
   getMatchingMonitoredIPListKeys(ip: string): string[] {
     return this.monitoredIPAddresses
-      .filter((list) => ipMatcherHasWithMappedCheck(list.list, ip))
+      .filter((list) => list.list.hasWithMappedCheck(ip))
       .map((list) => list.key);
   }
 
@@ -268,7 +267,7 @@ export class ServiceConfig {
     }
 
     const allowlist = this.allowedIPAddresses.find((list) =>
-      ipMatcherHasWithMappedCheck(list.allowlist, ip)
+      list.allowlist.hasWithMappedCheck(ip)
     );
 
     return { allowed: !!allowlist };

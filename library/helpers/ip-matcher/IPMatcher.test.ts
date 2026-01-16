@@ -204,3 +204,34 @@ t.test("allow all ips", async (t) => {
   t.same(matcher.has("10.0.0.255"), true);
   t.same(matcher.has("192.168.1.1"), true);
 });
+
+t.test("hasWithMappedCheck matches direct IPv4", async (t) => {
+  const matcher = new IPMatcher(["192.0.2.1"]);
+  t.same(matcher.hasWithMappedCheck("192.0.2.1"), true);
+  t.same(matcher.hasWithMappedCheck("192.0.2.2"), false);
+});
+
+t.test("hasWithMappedCheck matches IPv4-mapped IPv6 against IPv4 in list", async (t) => {
+  const matcher = new IPMatcher(["192.0.2.1"]);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
+  t.same(matcher.hasWithMappedCheck("::ffff:c000:201"), true);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.2"), false);
+});
+
+t.test("hasWithMappedCheck matches IPv4-mapped IPv6 against IPv4 CIDR range", async (t) => {
+  const matcher = new IPMatcher(["192.0.2.0/24"]);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.255"), true);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.3.1"), false);
+});
+
+t.test("hasWithMappedCheck matches direct IPv6", async (t) => {
+  const matcher = new IPMatcher(["2001:db8::1"]);
+  t.same(matcher.hasWithMappedCheck("2001:db8::1"), true);
+  t.same(matcher.hasWithMappedCheck("2001:db8::2"), false);
+});
+
+t.test("hasWithMappedCheck matches explicit IPv4-mapped in list", async (t) => {
+  const matcher = new IPMatcher(["::ffff:192.0.2.1"]);
+  t.same(matcher.hasWithMappedCheck("::ffff:192.0.2.1"), true);
+});
