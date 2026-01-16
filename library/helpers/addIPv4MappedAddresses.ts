@@ -6,5 +6,6 @@ import mapIPv4ToIPv6 from "./mapIPv4ToIPv6";
  */
 export function addIPv4MappedAddresses(ips: string[]): string[] {
   const ipv4Addresses = ips.filter((ip) => !ip.includes(":"));
+
   return ips.concat(ipv4Addresses.map(mapIPv4ToIPv6));
 }
