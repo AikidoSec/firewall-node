@@ -52,15 +52,16 @@ export class ServiceConfig {
     this.graphqlFields = [];
 
     for (const endpoint of endpointConfigs) {
-      let allowedIPAddresses = undefined;
+      let allowedIPAddresses: IPMatcher | undefined = undefined;
       if (
         Array.isArray(endpoint.allowedIPAddresses) &&
         endpoint.allowedIPAddresses.length > 0
       ) {
         // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-        allowedIPAddresses = new IPMatcher(
-          addIPv4MappedAddresses(endpoint.allowedIPAddresses)
-        );
+        allowedIPAddresses = new IPMatcher();
+        for (const ip of addIPv4MappedAddresses(endpoint.allowedIPAddresses)) {
+          allowedIPAddresses.add(ip);
+        }
       }
 
       const endpointConfig = { ...endpoint, allowedIPAddresses };
@@ -104,9 +105,10 @@ export class ServiceConfig {
       return;
     }
     // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-    this.bypassedIPAddresses = new IPMatcher(
-      addIPv4MappedAddresses(ipAddresses)
-    );
+    this.bypassedIPAddresses = new IPMatcher();
+    for (const ip of addIPv4MappedAddresses(ipAddresses)) {
+      this.bypassedIPAddresses.add(ip);
+    }
   }
 
   isBypassedIP(ip: string) {

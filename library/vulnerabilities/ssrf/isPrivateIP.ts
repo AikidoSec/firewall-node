@@ -34,9 +34,13 @@ const PRIVATE_IPV6_RANGES = [
 ];
 
 // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
-const privateIp = new IPMatcher(
-  addIPv4MappedAddresses([...PRIVATE_IP_RANGES, ...PRIVATE_IPV6_RANGES])
-);
+const privateIp = new IPMatcher();
+for (const range of addIPv4MappedAddresses([
+  ...PRIVATE_IP_RANGES,
+  ...PRIVATE_IPV6_RANGES,
+])) {
+  privateIp.add(range);
+}
 
 export function isPrivateIP(ip: string): boolean {
   return privateIp.has(ip);
