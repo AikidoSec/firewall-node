@@ -6,7 +6,6 @@ import { Network } from "./ip-matcher/Network";
  * - ::ffff:192.0.2.1
  * - ::ffff:c000:201
  * - 0000:0000:0000:0000:0000:ffff:c000:0201
- * - [::ffff:192.0.2.1]
  *
  * @returns The IPv4 address string, or null if not an IPv4-mapped address
  */
