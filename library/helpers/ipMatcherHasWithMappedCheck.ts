@@ -14,6 +14,9 @@ export function ipMatcherHasWithMappedCheck(
   }
 
   const ipv4 = extractIPv4FromMapped(ip);
+  if (ipv4) {
+    return matcher.has(ipv4);
+  }
 
-  return ipv4 !== null && matcher.has(ipv4);
+  return false;
 }
