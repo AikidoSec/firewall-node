@@ -68,7 +68,8 @@ export function onModuleLoad(
 
 export function patchPackage(
   path: string,
-  previousLoadResult: ReturnType<LoadFunction>
+  previousLoadResult: ReturnType<LoadFunction>,
+  isBundling = false
 ) {
   const moduleInfo = getModuleInfoFromPath(path);
   if (!moduleInfo) {
@@ -130,8 +131,11 @@ export function patchPackage(
     path,
     sourceString,
     pkgLoadFormat,
-    matchingInstructions
+    matchingInstructions,
+    isBundling
   );
+
+  // Todo if we not instrument the package we still want to modify it to insert the package loaded call
 
   // Prevent returning empty or undefined source text
   if (!newSource) {

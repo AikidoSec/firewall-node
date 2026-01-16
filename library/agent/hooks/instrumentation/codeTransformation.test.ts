@@ -2320,3 +2320,118 @@ t.test("Test codegen comment behavior", async (t) => {
       };`
   );
 });
+
+t.test("Inject package loaded in bundling mode (CJS)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "application.js",
+    `
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+    `,
+    "commonjs",
+    {
+      path: "application.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [],
+      accessLocalVariables: [],
+    },
+    true
+  );
+
+  isSameCode(
+    t,
+    result,
+    `
+    const { __instrumentPackageLoaded } = require("@aikidosec/firewall/instrument/internals");
+    const test = 1;
+    function stub(x) {
+            return x++;
+    }
+    __instrumentPackageLoaded("testpkg", "1.0.0");
+    `
+  );
+});
+
+t.test(
+  "Inject package loaded in bundling mode and access local var (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "application.js",
+      `
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+    `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [],
+        accessLocalVariables: ["test", "stub"],
+      },
+      true
+    );
+
+    isSameCode(
+      t,
+      result,
+      `
+    const { __instrumentAccessLocalVariables, __instrumentPackageLoaded } = require("@aikidosec/firewall/instrument/internals");
+    const test = 1;
+    function stub(x) {
+            return x++;
+    }
+    __instrumentAccessLocalVariables("testpkg.test.js.^1.0.0", [test, stub]);
+    __instrumentPackageLoaded("testpkg", "1.0.0");
+    `
+    );
+  }
+);
+
+t.test("Inject package loaded in bundling mode (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.1.0",
+    "application.js",
+    `
+      const test = 1;
+
+      function stub(x){
+        return x++;
+      }
+    `,
+    "module",
+    {
+      path: "application.js",
+      versionRange: "^1.1.0",
+      identifier: "testpkg.test.js.^1.1.0",
+      functions: [],
+      accessLocalVariables: [],
+    },
+    true
+  );
+
+  isSameCode(
+    t,
+    result,
+    `
+    import { __instrumentPackageLoaded } from "@aikidosec/firewall/instrument/internals";
+    const test = 1;
+    function stub(x) {
+            return x++;
+    }
+    __instrumentPackageLoaded("testpkg", "1.1.0");
+    `
+  );
+});
