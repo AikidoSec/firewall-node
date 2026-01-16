@@ -4,6 +4,7 @@ import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { ipAllowedToAccessRoute } from "./ipAllowedToAccessRoute";
+import type { ServerHttp2Stream } from "http2";
 
 const checkedBlocks = Symbol("__zen_checked_blocks__");
 
@@ -17,7 +18,7 @@ export function blockIPsAndBots(
   // This flag is used to determine whether the request has already been checked
   // We use a Symbol so that we don't accidentally overwrite any other properties on the response object
   // and that we're the only ones that can access it
-  res: ServerResponse & { [checkedBlocks]?: boolean },
+  res: (ServerResponse | ServerHttp2Stream) & { [checkedBlocks]?: boolean },
   agent: Agent
 ): boolean {
   if (res.headersSent) {
@@ -41,15 +42,12 @@ export function blockIPsAndBots(
   res[checkedBlocks] = true;
 
   if (!ipAllowedToAccessRoute(context, agent)) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
-
     let message = "Your IP address is not allowed to access this resource.";
     if (context.remoteAddress) {
       message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }
 
-    res.end(message);
+    sendResponse(res, 403, message);
 
     return true;
   }
@@ -66,15 +64,12 @@ export function blockIPsAndBots(
     context.remoteAddress &&
     !agent.getConfig().isAllowedIPAddress(context.remoteAddress).allowed
   ) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
-
     let message = "Your IP address is not allowed to access this resource.";
     if (context.remoteAddress) {
       message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }
 
-    res.end(message);
+    sendResponse(res, 403, message);
 
     return true;
   }
@@ -100,15 +95,12 @@ export function blockIPsAndBots(
   }
 
   if (result.blocked) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
-
     let message = `Your IP address is blocked due to ${escapeHTML(result.reason)}.`;
     if (context.remoteAddress) {
       message += ` (Your IP: ${escapeHTML(context.remoteAddress)})`;
     }
 
-    res.end(message);
+    sendResponse(res, 403, message);
 
     return true;
   }
@@ -137,10 +129,9 @@ export function blockIPsAndBots(
   }
 
   if (isUserAgentBlocked.blocked) {
-    res.statusCode = 403;
-    res.setHeader("Content-Type", "text/plain");
-
-    res.end(
+    sendResponse(
+      res,
+      403,
       "You are not allowed to access this resource because you have been identified as a bot."
     );
 
@@ -148,4 +139,25 @@ export function blockIPsAndBots(
   }
 
   return false;
+}
+
+function isStream(
+  res: ServerResponse | ServerHttp2Stream
+): res is ServerHttp2Stream {
+  return "respond" in res;
+}
+
+function sendResponse(
+  res: ServerResponse | ServerHttp2Stream,
+  statusCode: number,
+  message: string
+) {
+  if (isStream(res)) {
+    res.respond({ ":status": statusCode, "Content-Type": "text/plain" });
+    res.end(message);
+    return;
+  }
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "text/plain");
+  res.end(message);
 }
