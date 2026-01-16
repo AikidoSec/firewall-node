@@ -57,7 +57,7 @@ export class ServiceConfig {
         Array.isArray(endpoint.allowedIPAddresses) &&
         endpoint.allowedIPAddresses.length > 0
       ) {
-        // Small list: add IPv4-mapped versions at creation time for fast lookups
+        // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
         allowedIPAddresses = new IPMatcher(
           addIPv4MappedAddresses(endpoint.allowedIPAddresses)
         );
@@ -103,7 +103,7 @@ export class ServiceConfig {
       this.bypassedIPAddresses = undefined;
       return;
     }
-    // Small list: add IPv4-mapped versions at creation time for fast lookups
+    // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
     this.bypassedIPAddresses = new IPMatcher(
       addIPv4MappedAddresses(ipAddresses)
     );
@@ -144,6 +144,7 @@ export class ServiceConfig {
     for (const source of blockedIPAddresses) {
       this.blockedIPAddresses.push({
         key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
         blocklist: new IPMatcher(source.ips),
         description: source.description,
       });
@@ -160,6 +161,7 @@ export class ServiceConfig {
     for (const source of monitoredIPAddresses) {
       this.monitoredIPAddresses.push({
         key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
         list: new IPMatcher(source.ips),
       });
     }
@@ -240,6 +242,7 @@ export class ServiceConfig {
         continue;
       }
       this.allowedIPAddresses.push({
+        // Large list: IPv4-mapped checked at lookup time to save memory
         allowlist: new IPMatcher(source.ips),
         description: source.description,
       });
