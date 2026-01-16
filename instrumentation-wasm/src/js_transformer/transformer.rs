@@ -5,6 +5,8 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_traverse::traverse_mut;
 
+use crate::js_transformer::helpers::insert_code::insert_package_loaded;
+
 use super::{
     helpers::{
         code_str_includes_instrument_funcs::code_str_includes_instrument_funcs,
@@ -16,11 +18,12 @@ use super::{
 };
 
 pub fn transform_code_str(
-    _pkg_name: &str,
+    pkg_name: &str,
     pkg_version: &str,
     code: &str,
     instructions_json: &str,
     src_type: &str,
+    is_bundling: bool,
 ) -> Result<String, String> {
     let allocator = Allocator::default();
 
@@ -77,6 +80,7 @@ pub fn transform_code_str(
         &ast_builder,
         &mut program.body,
         &file_instructions,
+        is_bundling,
     );
 
     if !file_instructions.access_local_variables.is_empty() {
@@ -85,6 +89,16 @@ pub fn transform_code_str(
             &ast_builder,
             &file_instructions.identifier,
             &file_instructions.access_local_variables,
+            &mut program.body,
+        );
+    }
+
+    if is_bundling {
+        insert_package_loaded(
+            &allocator,
+            &ast_builder,
+            pkg_name,
+            pkg_version,
             &mut program.body,
         );
     }

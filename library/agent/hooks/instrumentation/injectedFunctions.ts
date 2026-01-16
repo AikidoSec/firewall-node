@@ -154,3 +154,15 @@ export function __instrumentAccessLocalVariables(
     }
   }
 }
+
+export function __instrumentPackageLoaded(
+  pkgName: string,
+  pkgVersion: string
+): void {
+  const agent = getInstance();
+  if (!agent) {
+    return;
+  }
+
+  agent.onPackageRequired(pkgName, pkgVersion);
+}

@@ -70,13 +70,15 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
             importFound = true;
           }
 
-          const result = patchPackage(id, {
-            source: code,
-            format: "unambiguous",
-            shortCircuit: false,
-          });
-
-          // Todo fix SCA not reporting packages patched during bundling
+          const result = patchPackage(
+            id,
+            {
+              source: code,
+              format: "unambiguous",
+              shortCircuit: false,
+            },
+            true
+          );
 
           const modifiedCode =
             typeof result.source === "string"
@@ -166,6 +168,14 @@ async function copyFiles(outDir: string, format: "cjs" | "esm") {
     ]) {
       await copyFile(join(zenLibDir, file), join(outDir, file));
     }
+
+    await cp(
+      join(zenLibDir, "node_internals"),
+      join(outDir, "node_internals"),
+      {
+        recursive: true,
+      }
+    );
 
     return;
   }

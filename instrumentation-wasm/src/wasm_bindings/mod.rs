@@ -9,6 +9,14 @@ pub fn wasm_transform_code_str(
     code: &str,
     instructions_json: &str,
     source_type: &str,
+    is_bundling: bool,
 ) -> Result<String, String> {
-    transform_code_str(pkg_name, pkg_version, code, instructions_json, source_type)
+    transform_code_str(
+        pkg_name,
+        pkg_version,
+        code,
+        instructions_json,
+        source_type,
+        is_bundling,
+    )
 }

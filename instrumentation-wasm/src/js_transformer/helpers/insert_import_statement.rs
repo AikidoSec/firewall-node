@@ -15,6 +15,7 @@ const INSTRUMENT_INSPECT_ARGS_METHOD_NAME: &str = "__instrumentInspectArgs";
 const INSTRUMENT_MODIFY_ARGS_METHOD_NAME: &str = "__instrumentModifyArgs";
 const INSTRUMENT_MODIFY_RETURN_VALUE_METHOD_NAME: &str = "__instrumentModifyReturnValue";
 const INSTRUMENT_ACCESS_LOCAL_VARS_METHOD_NAME: &str = "__instrumentAccessLocalVariables";
+const INSTRUMENT_PACKAGE_LOADED_METHOD_NAME: &str = "__instrumentPackageLoaded";
 
 type ImportMethodPredicate = fn(&FunctionInstructions) -> bool;
 
@@ -50,6 +51,7 @@ pub fn insert_import_statement<'a>(
     builder: &'a AstBuilder,
     body: &mut OxcVec<'a, Statement<'a>>,
     file_instructions: &FileInstructions,
+    is_bundling: bool,
 ) {
     // Common JS require() statement
     if is_common_js(source_type, has_module_syntax) {
@@ -99,6 +101,23 @@ pub fn insert_import_statement<'a>(
                     false,
                 ),
             );
+        }
+
+        if is_bundling {
+            binding_properties.push(builder.binding_property(
+                SPAN,
+                builder.property_key_static_identifier(SPAN, INSTRUMENT_PACKAGE_LOADED_METHOD_NAME),
+                builder.binding_pattern(
+                    builder.binding_pattern_kind_binding_identifier(
+                        SPAN,
+                        INSTRUMENT_PACKAGE_LOADED_METHOD_NAME,
+                    ),
+                    NONE,
+                    false,
+                ),
+                true,
+                false,
+            ));
         }
 
         if binding_properties.is_empty() {
@@ -166,6 +185,15 @@ pub fn insert_import_statement<'a>(
                 ImportOrExportKind::Value,
             ),
         );
+    }
+
+    if is_bundling {
+        specifiers.push(builder.import_declaration_specifier_import_specifier(
+            SPAN,
+            builder.module_export_name_identifier_name(SPAN, INSTRUMENT_PACKAGE_LOADED_METHOD_NAME),
+            builder.binding_identifier(SPAN, INSTRUMENT_PACKAGE_LOADED_METHOD_NAME),
+            ImportOrExportKind::Value,
+        ));
     }
 
     if specifiers.is_empty() {
