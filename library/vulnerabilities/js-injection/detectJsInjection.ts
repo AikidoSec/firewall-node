@@ -2,6 +2,8 @@ import { shouldReturnEarly } from "./shouldReturnEarly";
 // eslint-disable-next-line camelcase
 import { wasm_detect_js_injection } from "../../internals/zen_internals";
 
+type ZenInternalsJsSourceType = 0 | 1 | 2 | 3 | 4;
+
 /**
  * Detects if the user input is a JS injection
  * The sourceType is used to determine the source of the user input
@@ -10,7 +12,10 @@ import { wasm_detect_js_injection } from "../../internals/zen_internals";
 export function detectJsInjection(
   code: string,
   userInput: string,
-  sourceType = 0
+  // Assume CommonJS by default, as eval() and new Function() can not execute ESM directly
+  // The oxc parser has a bug that causes HTML-like comments to not be parsed in the unambiguous mode
+  // See https://github.com/oxc-project/oxc/issues/18392
+  sourceType: ZenInternalsJsSourceType = 2
 ): boolean {
   const codeLowercase = code.toLowerCase();
   const userInputLowercase = userInput.toLowerCase();

@@ -71,6 +71,7 @@ t.test("it detects JS injections using Function", async (t) => {
   runWithContext(safeContext, () => {
     t.same(new Function("1 + 1")(), undefined);
     t.same(new Function("const x = 1 + 1; return x")(), 2);
+    t.same(new Function("<!--\nreturn 1 + 1\n-->")(), 2);
   });
 
   runWithContext(dangerousContext, () => {
@@ -156,6 +157,17 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error6 instanceof Error) {
       t.same(
         error6.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Also block with HTML-like Comments
+    // https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-html-like-comments
+    const error7 = t.throws(() => eval("<!--\n1 + 1; console.log('hello')"));
+    t.ok(error7 instanceof Error);
+    if (error7 instanceof Error) {
+      t.same(
+        error7.message,
         "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
