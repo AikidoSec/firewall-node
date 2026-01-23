@@ -154,3 +154,25 @@ export function __instrumentAccessLocalVariables(
     }
   }
 }
+
+export function __instrumentPackageWrapped(
+  pkgName: string,
+  pkgVersion: string
+): void {
+  const agent = getInstance();
+  if (!agent) {
+    return;
+  }
+
+  agent.onPackageWrapped(pkgName, {
+    version: pkgVersion,
+    supported: true,
+  });
+}
+
+export function __instrumentPackageLoaded(
+  pkgName: string,
+  pkgVersion: string
+): void {
+  getInstance()?.onPackageRequired(pkgName, pkgVersion);
+}

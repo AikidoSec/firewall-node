@@ -16,6 +16,7 @@ import {
   __instrumentInspectArgs,
   __instrumentModifyArgs,
   __instrumentModifyReturnValue,
+  __instrumentPackageLoaded,
 } from "./injectedFunctions";
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
@@ -529,4 +530,10 @@ t.test("addFileInstrumentation checks path", async (t) => {
   if (error3 instanceof Error) {
     t.same(error3.message, "Relative paths with '..' are not allowed");
   }
+});
+
+t.test("instrumentPackageLoaded works", async (t) => {
+  let packageLoadedCalled = false;
+
+  __instrumentPackageLoaded("foo", "1.0.0");
 });

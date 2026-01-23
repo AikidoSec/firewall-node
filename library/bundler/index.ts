@@ -1,3 +1,8 @@
 import { externals } from "./externals";
+import { basePlugin } from "./internal/unplugin";
 
-export { externals };
+const zenEsbuildPlugin = basePlugin.esbuild;
+
+const zenRolldownPlugin = basePlugin.rolldown;
+
+export { externals, zenEsbuildPlugin, zenRolldownPlugin };

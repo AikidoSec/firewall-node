@@ -1,28 +1,23 @@
-import type { PackageFileInstrumentationInstructionJSON } from "./types";
 // eslint-disable-next-line camelcase
-import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
+import { wasm_transform_code_str_insert_sca } from "./wasm/node_code_instrumentation";
 import { getSourceType, PackageLoadFormat } from "./getSourceType";
 import { join } from "path";
 import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
 import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
-export function transformCode(
+export function transformCodeInsertSCA(
   pkgName: string,
   pkgVersion: string,
   path: string,
   code: string,
-  pkgLoadFormat: PackageLoadFormat,
-  fileInstructions: PackageFileInstrumentationInstructionJSON,
-  isBundling = false
+  pkgLoadFormat: PackageLoadFormat
 ): string {
   try {
-    const result = wasm_transform_code_str(
+    const result = wasm_transform_code_str_insert_sca(
       pkgName,
       pkgVersion,
       code,
-      JSON.stringify(fileInstructions),
-      getSourceType(path, pkgLoadFormat),
-      isBundling
+      getSourceType(path, pkgLoadFormat)
     );
 
     // Rewrite import path for unit tests if environment variable is set to true
