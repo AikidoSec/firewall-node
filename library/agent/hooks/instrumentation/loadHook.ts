@@ -1,6 +1,9 @@
 /* eslint-disable max-lines-per-function */
 import type { LoadFunction } from "./types";
-import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
+import {
+  getModuleInfoFromPath,
+  ModulePathInfo,
+} from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
 import { transformCode } from "./codeTransformation";
@@ -69,9 +72,11 @@ export function onModuleLoad(
 export function patchPackage(
   path: string,
   previousLoadResult: ReturnType<LoadFunction>,
-  isBundling = false
+  isBundling = false,
+  moduleInfo: ModulePathInfo | undefined = undefined,
+  pkgVersion: string | undefined = undefined
 ) {
-  const moduleInfo = getModuleInfoFromPath(path);
+  moduleInfo ??= getModuleInfoFromPath(path);
   if (!moduleInfo) {
     // This is e.g. the case for user code (not a dependency)
     // We don't want to modify user code yet
@@ -79,7 +84,7 @@ export function patchPackage(
   }
 
   // Check if the version of the package is supported
-  const pkgVersion = getPackageVersionFromPath(moduleInfo.base);
+  pkgVersion ??= getPackageVersionFromPath(moduleInfo.base);
   if (!pkgVersion) {
     // We can't determine the version of the package
     return previousLoadResult;
@@ -134,8 +139,6 @@ export function patchPackage(
     matchingInstructions,
     isBundling
   );
-
-  // Todo if we not instrument the package we still want to modify it to insert the package loaded call
 
   // Prevent returning empty or undefined source text
   if (!newSource) {

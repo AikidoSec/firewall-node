@@ -4,17 +4,21 @@ import { cp, rm, writeFile } from "fs/promises";
 
 await rm("./build", { recursive: true, force: true });
 
-const buildMatrix = [
-  {
-    format: "cjs",
-  },
-  {
-    format: "esm",
-  },
-];
+const buildMatrix = process.env.ESBUILD_BUILD_MATRIX
+  ? JSON.parse(process.env.ESBUILD_BUILD_MATRIX)
+  : [
+      {
+        format: "cjs",
+        sourceFile: "src/app-cjs.ts",
+      },
+      {
+        format: "esm",
+        sourceFile: "src/app-esm.ts",
+      },
+    ];
 
 for (const buildConfig of buildMatrix) {
-  const appPath = `src/app-${buildConfig.format}.ts`;
+  const appPath = buildConfig.sourceFile;
   const outdir = `./build/${buildConfig.format}`;
 
   await esbuild.build({

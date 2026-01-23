@@ -24,7 +24,7 @@ export default defineConfig({
   copy: [
     {
       from: "./bundler/internal/shim.mjs",
-      to: "../build/bundler/internal/shim.mjs",
+      to: "../build/bundler/internal/",
     },
   ],
 });

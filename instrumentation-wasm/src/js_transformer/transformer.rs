@@ -5,12 +5,13 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_traverse::traverse_mut;
 
-use crate::js_transformer::helpers::insert_code::insert_package_loaded;
+use crate::js_transformer::helpers::insert_code::insert_package_wrapped;
 
 use super::{
     helpers::{
         code_str_includes_instrument_funcs::code_str_includes_instrument_funcs,
-        insert_code::insert_access_local_var, insert_import_statement::insert_import_statement,
+        insert_code::insert_access_local_var,
+        insert_import_statement::insert_import_statement_for_instructions,
         select_sourcetype_based_on_enum::select_sourcetype_based_on_enum,
     },
     instructions::FileInstructions,
@@ -73,7 +74,7 @@ pub fn transform_code_str(
     traverse_mut(t, &allocator, program, scopes, state);
 
     // Add import / require statement
-    insert_import_statement(
+    insert_import_statement_for_instructions(
         &source_type,
         parser_result.module_record.has_module_syntax,
         &allocator,
@@ -94,7 +95,7 @@ pub fn transform_code_str(
     }
 
     if is_bundling {
-        insert_package_loaded(
+        insert_package_wrapped(
             &allocator,
             &ast_builder,
             pkg_name,
