@@ -5,7 +5,6 @@ import { equal, fail, match, doesNotMatch, ok } from "node:assert";
 import { getRandomPort } from "./utils/get-port.mjs";
 import { timeout } from "./utils/timeout.mjs";
 import { spawnSync } from "node:child_process";
-import { join } from "path";
 
 const pathToAppDir = resolve(
   import.meta.dirname,
