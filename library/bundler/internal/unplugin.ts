@@ -8,6 +8,9 @@ import { wrapInstalledPackages } from "../../agent/wrapInstalledPackages";
 import { getWrappers } from "../../agent/protect";
 import { copyFile, cp, mkdir } from "node:fs/promises";
 import { processRolldownAndUpOptions } from "./bundlers/rolldownAndUp";
+import { getModuleInfoFromPath } from "../../agent/hooks/getModuleInfoFromPath";
+import { getPackageVersionFromPath } from "../../agent/hooks/instrumentation/getPackageVersionFromPath";
+import { transformCodeInsertSCA } from "../../agent/hooks/instrumentation/transformCodeInsertSCA";
 
 type UserOptions = {
   /**
@@ -28,6 +31,7 @@ let importFound = false;
 let userOptions: UserOptions | undefined = undefined;
 let initialized = false;
 let processedBundlerOpts: BundlerProcessedOptions | undefined = undefined;
+const instrumentedForSCA = new Set<string>();
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
   createUnplugin((options) => {
@@ -70,6 +74,22 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
             importFound = true;
           }
 
+          const moduleInfo = getModuleInfoFromPath(id);
+          if (!moduleInfo) {
+            // In this case the file is not inside the node_modules folder
+            return {
+              code,
+            };
+          }
+
+          const pkgVersion = getPackageVersionFromPath(moduleInfo.base);
+          if (!pkgVersion) {
+            // We don't instrument packages without a valid version
+            return {
+              code,
+            };
+          }
+
           const result = patchPackage(
             id,
             {
@@ -77,13 +97,30 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
               format: "unambiguous",
               shortCircuit: false,
             },
-            true
+            true, // Bundling mode
+            moduleInfo, // Prevents double extraction of module info
+            pkgVersion
           );
 
-          const modifiedCode =
+          let modifiedCode =
             typeof result.source === "string"
               ? result.source
               : new TextDecoder("utf-8").decode(result.source);
+
+          // We use the base path of the module as unique identifier
+          // The same package could be required from different locations with different versions
+          if (!instrumentedForSCA.has(moduleInfo.base)) {
+            instrumentedForSCA.add(moduleInfo.base);
+            const insertSCAResult = transformCodeInsertSCA(
+              moduleInfo.name,
+              pkgVersion,
+              moduleInfo.path,
+              modifiedCode,
+              "unambiguous"
+            );
+
+            modifiedCode = insertSCAResult ?? modifiedCode;
+          }
 
           return {
             code: modifiedCode,

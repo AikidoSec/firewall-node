@@ -155,7 +155,7 @@ export function __instrumentAccessLocalVariables(
   }
 }
 
-export function __instrumentPackageLoaded(
+export function __instrumentPackageWrapped(
   pkgName: string,
   pkgVersion: string
 ): void {
@@ -164,5 +164,15 @@ export function __instrumentPackageLoaded(
     return;
   }
 
-  agent.onPackageRequired(pkgName, pkgVersion);
+  agent.onPackageWrapped(pkgName, {
+    version: pkgVersion,
+    supported: true,
+  });
+}
+
+export function __instrumentPackageLoaded(
+  pkgName: string,
+  pkgVersion: string
+): void {
+  getInstance()?.onPackageRequired(pkgName, pkgVersion);
 }

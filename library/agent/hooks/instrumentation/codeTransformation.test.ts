@@ -2321,7 +2321,7 @@ t.test("Test codegen comment behavior", async (t) => {
   );
 });
 
-t.test("Inject package loaded in bundling mode (CJS)", async (t) => {
+t.test("Inject package wrapped in bundling mode (CJS)", async (t) => {
   const result = transformCode(
     "testpkg",
     "1.0.0",
@@ -2348,18 +2348,18 @@ t.test("Inject package loaded in bundling mode (CJS)", async (t) => {
     t,
     result,
     `
-    const { __instrumentPackageLoaded } = require("@aikidosec/firewall/instrument/internals");
+    const { __instrumentPackageWrapped } = require("@aikidosec/firewall/instrument/internals");
     const test = 1;
     function stub(x) {
             return x++;
     }
-    __instrumentPackageLoaded("testpkg", "1.0.0");
+    __instrumentPackageWrapped("testpkg", "1.0.0");
     `
   );
 });
 
 t.test(
-  "Inject package loaded in bundling mode and access local var (CJS)",
+  "Inject package wrapped in bundling mode and access local var (CJS)",
   async (t) => {
     const result = transformCode(
       "testpkg",
@@ -2387,19 +2387,19 @@ t.test(
       t,
       result,
       `
-    const { __instrumentAccessLocalVariables, __instrumentPackageLoaded } = require("@aikidosec/firewall/instrument/internals");
+    const { __instrumentAccessLocalVariables, __instrumentPackageWrapped } = require("@aikidosec/firewall/instrument/internals");
     const test = 1;
     function stub(x) {
             return x++;
     }
     __instrumentAccessLocalVariables("testpkg.test.js.^1.0.0", [test, stub]);
-    __instrumentPackageLoaded("testpkg", "1.0.0");
+    __instrumentPackageWrapped("testpkg", "1.0.0");
     `
     );
   }
 );
 
-t.test("Inject package loaded in bundling mode (ESM)", async (t) => {
+t.test("Inject package wrapped in bundling mode (ESM)", async (t) => {
   const result = transformCode(
     "testpkg",
     "1.1.0",
@@ -2426,12 +2426,12 @@ t.test("Inject package loaded in bundling mode (ESM)", async (t) => {
     t,
     result,
     `
-    import { __instrumentPackageLoaded } from "@aikidosec/firewall/instrument/internals";
+    import { __instrumentPackageWrapped } from "@aikidosec/firewall/instrument/internals";
     const test = 1;
     function stub(x) {
             return x++;
     }
-    __instrumentPackageLoaded("testpkg", "1.1.0");
+    __instrumentPackageWrapped("testpkg", "1.1.0");
     `
   );
 });

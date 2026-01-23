@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { resolve } from "path";
-import { test } from "node:test";
+import { before, test } from "node:test";
 import { equal, fail, match, doesNotMatch, ok } from "node:assert";
 import { getRandomPort } from "./utils/get-port.mjs";
 import { timeout } from "./utils/timeout.mjs";
@@ -11,31 +11,28 @@ const pathToAppDir = resolve(
   import.meta.dirname,
   "../../sample-apps/esbuild-bundle"
 );
+
+const cjsAppDir = resolve(pathToAppDir, "build/cjs");
+const esmAppDir = resolve(pathToAppDir, "build/esm");
+
 const port = await getRandomPort();
 const port2 = await getRandomPort();
 const port3 = await getRandomPort();
 const port4 = await getRandomPort();
 
-function buildApp(format, appPath) {
+before(() => {
   const { stderr } = spawnSync(`node`, ["./build.mjs"], {
     cwd: pathToAppDir,
-    env: {
-      ...process.env,
-      BUNDLE_FORMAT: format,
-      APP_PATH: appPath,
-    },
   });
 
   if (stderr && stderr.toString().length > 0) {
     throw new Error(`Failed to build: ${stderr.toString()}`);
   }
-}
+});
 
 test("it blocks request in blocking mode (CJS)", async () => {
-  buildApp("cjs", "src/app-cjs.ts");
-
-  const server = spawn(`node`, ["./build/app-cjs.js", port], {
-    cwd: pathToAppDir,
+  const server = spawn(`node`, ["./app-cjs.js", port], {
+    cwd: cjsAppDir,
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -97,10 +94,8 @@ test("it blocks request in blocking mode (CJS)", async () => {
 });
 
 test("it does not block request in monitoring mode (CJS)", async () => {
-  buildApp("cjs", "src/app-cjs.ts");
-
-  const server = spawn(`node`, ["./build/app-cjs.js", port2], {
-    cwd: pathToAppDir,
+  const server = spawn(`node`, ["./app-cjs.js", port2], {
+    cwd: cjsAppDir,
     env: {
       ...process.env,
       AIKIDO_DEBUG: "true",
@@ -162,13 +157,11 @@ test("it does not block request in monitoring mode (CJS)", async () => {
 });
 
 test("it blocks request in blocking mode (ESM)", async () => {
-  buildApp("esm", "src/app-esm.ts");
-
   const server = spawn(
     `node`,
     ["-r", "@aikidosec/firewall/instrument", "./app-esm.js", port3],
     {
-      cwd: join(pathToAppDir, "build"),
+      cwd: esmAppDir,
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
@@ -235,13 +228,11 @@ test("it blocks request in blocking mode (ESM)", async () => {
 });
 
 test("it does not block request in monitoring mode (ESM)", async () => {
-  buildApp("esm", "src/app-esm.ts");
-
   const server = spawn(
     `node`,
     ["-r", "@aikidosec/firewall/instrument", "./app-esm.js", port4],
     {
-      cwd: join(pathToAppDir, "build"),
+      cwd: esmAppDir,
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
@@ -308,8 +299,27 @@ test("it does not block request in monitoring mode (ESM)", async () => {
 });
 
 test("it throws error when Zen is initialized wrong", async () => {
+  const testBuild = (format, appPath) => {
+    const { stderr } = spawnSync(`node`, ["./build.mjs"], {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        ESBUILD_BUILD_MATRIX: JSON.stringify([
+          {
+            format,
+            sourceFile: appPath,
+          },
+        ]),
+      },
+    });
+
+    if (stderr && stderr.toString().length > 0) {
+      throw new Error(`Failed to build: ${stderr.toString()}`);
+    }
+  };
+
   try {
-    buildApp("esm", "src/app-cjs.ts");
+    testBuild("esm", "src/app-cjs.ts");
     fail("Build should have failed but didn't");
   } catch (err) {
     ok(
@@ -320,7 +330,7 @@ test("it throws error when Zen is initialized wrong", async () => {
   }
 
   try {
-    buildApp("cjs", "src/app-esm.ts");
+    testBuild("cjs", "src/app-esm.ts");
     fail("Build should have failed but didn't");
   } catch (err) {
     ok(
