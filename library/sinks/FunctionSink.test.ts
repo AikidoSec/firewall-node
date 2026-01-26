@@ -186,5 +186,39 @@ t.test("it detects JS injections using Function", async (t) => {
         "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
+
+    // Strict mode directive should not bypass detection
+    const error9 = t.throws(() =>
+      eval("'use strict'; 1 + 1; console.log('hello')")
+    );
+    t.ok(error9 instanceof Error);
+    if (error9 instanceof Error) {
+      t.same(
+        error9.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Block statement wrapping should not bypass detection
+    const error10 = t.throws(() => eval("{ 1 + 1; console.log('hello') }"));
+    t.ok(error10 instanceof Error);
+    if (error10 instanceof Error) {
+      t.same(
+        error10.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Labeled statement should not bypass detection
+    const error11 = t.throws(() =>
+      eval("label: 1 + 1; console.log('hello')")
+    );
+    t.ok(error11 instanceof Error);
+    if (error11 instanceof Error) {
+      t.same(
+        error11.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
   });
 });
