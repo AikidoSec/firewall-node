@@ -171,5 +171,20 @@ t.test("it detects JS injections using Function", async (t) => {
         "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
+
+    // Block injection even when code contains "return" (which is invalid syntax for eval)
+    // eval('return 42') throws "SyntaxError: Illegal return statement" because return
+    // is only valid inside a function. However, the parser uses CommonJS mode which
+    // allows top-level return, so we can still detect the injection.
+    const error8 = t.throws(() =>
+      eval("return 1 + 1; console.log('hello')")
+    );
+    t.ok(error8 instanceof Error);
+    if (error8 instanceof Error) {
+      t.same(
+        error8.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
   });
 });
