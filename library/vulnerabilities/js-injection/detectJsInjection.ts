@@ -2,7 +2,12 @@ import { shouldReturnEarly } from "./shouldReturnEarly";
 // eslint-disable-next-line camelcase
 import { wasm_detect_js_injection } from "../../internals/zen_internals";
 
-type ZenInternalsJsSourceType = 0 | 1 | 2 | 3 | 4;
+type ZenInternalsJsSourceType =
+  | 0 // js (auto-detect CJS or ESM)
+  | 1 // ts (TypeScript)
+  | 2 // cjs (CommonJS)
+  | 3 // mjs (ESM)
+  | 4; // tsx (TypeScript with JSX)
 
 /**
  * Detects if the user input is a JS injection
