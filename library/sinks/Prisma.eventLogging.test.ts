@@ -69,7 +69,10 @@ t.test(
 
       await client.appUser.findMany();
 
-      t.ok(queryEventFired, "$on() should work when instrumentation is disabled");
+      t.ok(
+        queryEventFired,
+        "$on() should work when instrumentation is disabled"
+      );
 
       // SQL injection should NOT be blocked (because instrumentation is disabled)
       await runWithContext(context, async () => {
