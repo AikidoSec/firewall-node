@@ -9,7 +9,7 @@ export function wrapNewInstance(
   subject: unknown,
   className: string | undefined,
   pkgInfo: PartialWrapPackageInfo,
-  interceptor: (exports: any) => unknown
+  interceptor: (instance: any, constructorArgs: unknown[]) => unknown
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -29,7 +29,7 @@ export function wrapNewInstance(
           const newInstance = new original(...args);
 
           try {
-            const returnVal = interceptor(newInstance);
+            const returnVal = interceptor(newInstance, args);
             if (returnVal) {
               return returnVal;
             }
