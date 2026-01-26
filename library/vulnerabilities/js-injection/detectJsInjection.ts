@@ -3,14 +3,38 @@ import { shouldReturnEarly } from "./shouldReturnEarly";
 import { wasm_detect_js_injection } from "../../internals/zen_internals";
 
 /**
+ * Source types for the JavaScript parser in zen-internals.
+ * @see https://github.com/AikidoSec/zen-internals/blob/main/src/js_injection/helpers/select_sourcetype_based_on_enum.rs
+ */
+export type JsSourceType =
+  | "js" // JS, auto-detect CJS or ESM
+  | "ts" // TypeScript (ESM)
+  | "cjs" // CommonJS
+  | "mjs" // ESM (.mjs)
+  | "tsx"; // TSX (TypeScript with JSX)
+
+function sourceTypeToNumber(sourceType: JsSourceType): number {
+  switch (sourceType) {
+    case "js":
+      return 0;
+    case "ts":
+      return 1;
+    case "cjs":
+      return 2;
+    case "mjs":
+      return 3;
+    case "tsx":
+      return 4;
+  }
+}
+
+/**
  * Detects if the user input is a JS injection
- * The sourceType is used to determine the source of the user input
- * https://github.com/AikidoSec/zen-internals/blob/4b7bf2c7796155731dc2736a04e3f4d99cdc712b/src/js_injection/helpers/select_sourcetype_based_on_enum.rs#L4
  */
 export function detectJsInjection(
   code: string,
   userInput: string,
-  sourceType = 0
+  sourceType: JsSourceType = "js"
 ): boolean {
   const codeLowercase = code.toLowerCase();
   const userInputLowercase = userInput.toLowerCase();
@@ -22,6 +46,6 @@ export function detectJsInjection(
   return wasm_detect_js_injection(
     codeLowercase,
     userInputLowercase,
-    sourceType
+    sourceTypeToNumber(sourceType)
   );
 }

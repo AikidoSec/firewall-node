@@ -77,7 +77,7 @@ t.test("test source type", async (t) => {
     detectJsInjection(
       "const test: string = 'Hello World!'; console.log('test'); //';",
       "Hello World!'; console.log('test'); //",
-      0
+      "js"
     ),
     false // Cannot be parsed as JS, it's TS
   );
@@ -85,7 +85,7 @@ t.test("test source type", async (t) => {
     detectJsInjection(
       "const test: string = 'Hello World!'; console.log('test'); //';",
       "Hello World!'; console.log('test'); //",
-      1
+      "ts"
     ),
     true
   );
