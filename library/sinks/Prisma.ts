@@ -206,6 +206,10 @@ export class Prisma implements Wrapper {
   // instrument clients that use event-based logging.
   // See: https://github.com/prisma/prisma/issues/24070
   private usesEventBasedLogging(constructorArgs: unknown[]): boolean {
+    if (constructorArgs.length === 0) {
+      return false;
+    }
+
     const options = constructorArgs[0];
     if (!isPlainObject(options) || !Array.isArray(options.log)) {
       return false;
