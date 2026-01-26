@@ -44,10 +44,10 @@ jobs:
         run: bash ./.github/workflows/utils/install-wasm-pack.sh
 
       - name: Install dependencies (library only)
-        run: npm run install-lib-only
+        run: node --run install-lib-only
 
       - name: Build complete library
-        run: npm run build
+        run: node --run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5
@@ -59,4 +59,20 @@ jobs:
             build/
             library/internals/
             library/node_internals/
+            library/agent/hooks/instrumentation/wasm/
+
+      - name: Build but keep structure
+        run: node --run build
+        env:
+          BUILD_KEEP_STRUCTURE: "true"
+
+      - name: Upload build artifacts (keep structure)
+        uses: actions/upload-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}-original-structure
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            build/
+            library/internals/
             library/agent/hooks/instrumentation/wasm/

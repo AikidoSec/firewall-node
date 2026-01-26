@@ -49,11 +49,6 @@ const instrumentationWasmOutDir = join(
 );
 
 async function main() {
-  // Delete build directory if it exists
-  if (await fileExists(buildDir)) {
-    await rm(buildDir, { recursive: true });
-  }
-
   await dlZenInternals();
   await buildInstrumentationWasm();
   await dlNodeInternals();
@@ -74,32 +69,41 @@ async function main() {
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
-  await copyFile(
-    join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "internals", "zen_internals_bg.wasm")
-  );
-  await copyFile(
-    join(internalsDir, "zen_internals_bg.wasm"),
-    join(buildDir, "internals", "zen_internals_bg.wasm")
-  );
+
+  if (process.env.BUILD_KEEP_STRUCTURE === "true") {
+    await copyFile(
+      join(internalsDir, "zen_internals_bg.wasm"),
+      join(buildDir, "internals", "zen_internals_bg.wasm")
+    );
+    await copyFile(
+      join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
+      join(
+        buildDir,
+        "agent",
+        "hooks",
+        "instrumentation",
+        "wasm",
+        "node_code_instrumentation_bg.wasm"
+      )
+    );
+  } else {
+    await copyFile(
+      join(internalsDir, "zen_internals_bg.wasm"),
+      join(buildDir, "zen_internals_bg.wasm")
+    );
+    await copyFile(
+      join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
+      join(buildDir, "node_code_instrumentation_bg.wasm")
+    );
+  }
+
   await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
     recursive: true,
   });
+
   // Remove .gitignore so npm doesn't exclude .node files during publish
   await rm(join(buildDir, "node_internals", ".gitignore"));
   await rm(join(buildDir, "node_internals", ".installed_version"));
-  await copyFile(
-    join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
-    join(
-      buildDir,
-      "agent",
-      "hooks",
-      "instrumentation",
-      "wasm",
-      "node_code_instrumentation_bg.wasm"
-    )
-  );
-
   await modifyDtsFilesAfterBuild();
 
   console.log("Build successful");
@@ -193,15 +197,18 @@ async function modifyDtsFilesAfterBuild() {
   // If the user has `"skipLibCheck": false` in their tsconfig.json, TypeScript will complain when express is not installed
   // If the user has `"skipLibCheck": true` in their tsconfig.json, it's fine
   //
-  // Search all d.ts files in the build directory, and replace /** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
+  // Search all d.ts files in the build directory, and replace all non-relative imports with a // @ts-ignore comment before them
   // The // @ts-ignore comments are not added to .d.ts files if they are inside the code, only JSDoc comments are added
   // That's why we need to replace a JSDoc comment with a // @ts-ignore comment
   const dtsFiles = await findFilesWithExtension(buildDir, ".d.ts");
   for (const dtsFile of dtsFiles) {
     const content = await readFile(dtsFile, "utf8");
-    const modifiedContent = content.replaceAll(
-      "/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/",
-      "// @ts-ignore"
+    // Add // @ts-ignore before all lines containing library imports (non-relative imports)
+    const modifiedContent = content.replace(
+      /import\s+(.*)\s+from\s+['"]([^./][^'"]*)['"];?/g,
+      (match, p1, p2) => {
+        return `// @ts-ignore\nimport ${p1} from '${p2}';`;
+      }
     );
 
     // Write modified content back to the file if it was changed

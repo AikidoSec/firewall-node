@@ -84,7 +84,7 @@
     "@types/koa__router": "^12.0.4",
     "@types/mysql": "^2.15.25",
     "@types/needle": "^3.3.0",
-    "@types/node": "^22.3.0",
+    "@types/node": "^24.10.4",
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
     "@types/shell-quote": "^1.7.5",
@@ -144,6 +144,7 @@
     "sqlite3": "^5.1.7",
     "supertest": "^6.3.4",
     "tap": "^18.6.1",
+    "tsdown": "^0.19.0",
     "type-fest": "^4.24.0",
     "typescript": "^5.3.3",
     "undici-v4": "npm:undici@^4.0.0",
@@ -160,9 +161,10 @@
     "test:new": "node ../scripts/run-tap.js --test-new-instrumentation",
     "test:ci:new": "node ../scripts/run-tap.js --ci --test-new-instrumentation",
     "test:esm": "node ../scripts/tests-esm.mjs",
-    "build": "tsc -p tsconfig.build.json",
-    "build:watch": "tsc --watch -p tsconfig.build.json",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "lint": "oxlint --deny-warnings --type-aware . && npm run lint-tsc",
-    "lint-tsc": "tsc"
+    "lint-tsc": "tsc",
+    "check-format": "prettier --check ."
   }
 }

@@ -1,8 +1,9 @@
-import { resolve } from "path";
+import { join } from "path";
+import { getLibraryRoot } from "./getLibraryRoot";
 
 export function getAgentVersion(): string {
   try {
-    const json = require(resolve(__dirname, "../package.json"));
+    const json = require(join(getLibraryRoot(), "package.json"));
 
     /* c8 ignore start */
     if (!json.version) {
