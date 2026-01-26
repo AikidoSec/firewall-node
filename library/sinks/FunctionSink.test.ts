@@ -176,9 +176,7 @@ t.test("it detects JS injections using Function", async (t) => {
     // eval('return 42') throws "SyntaxError: Illegal return statement" because return
     // is only valid inside a function. However, the parser uses CommonJS mode which
     // allows top-level return, so we can still detect the injection.
-    const error8 = t.throws(() =>
-      eval("return 1 + 1; console.log('hello')")
-    );
+    const error8 = t.throws(() => eval("return 1 + 1; console.log('hello')"));
     t.ok(error8 instanceof Error);
     if (error8 instanceof Error) {
       t.same(
@@ -210,9 +208,7 @@ t.test("it detects JS injections using Function", async (t) => {
     }
 
     // Labeled statement should not bypass detection
-    const error11 = t.throws(() =>
-      eval("label: 1 + 1; console.log('hello')")
-    );
+    const error11 = t.throws(() => eval("label: 1 + 1; console.log('hello')"));
     t.ok(error11 instanceof Error);
     if (error11 instanceof Error) {
       t.same(
