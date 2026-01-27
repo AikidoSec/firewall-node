@@ -555,7 +555,7 @@ t.test("it works with addHttpMethod", opts, async (t) => {
 });
 
 t.test("it adds context from request for all", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "GET",

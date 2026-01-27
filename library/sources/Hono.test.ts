@@ -652,7 +652,7 @@ t.test("it respects forwarded host header", opts, async (t) => {
     require("@hono/node-server") as typeof import("@hono/node-server");
 
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8770,
   });
 

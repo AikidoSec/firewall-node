@@ -269,7 +269,7 @@ t.test("toolkit decorator success works", async (t) => {
 });
 
 t.test("it respects forwarded host header", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/?title=test")
     .set("Accept", "application/json")
     .set("Cookie", "session=123")
