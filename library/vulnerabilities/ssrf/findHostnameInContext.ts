@@ -6,6 +6,7 @@ import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { isRequestToItself } from "./isRequestToItself";
 import { isRequestToServiceHostname } from "./isRequestToServiceHostname";
+import { getServerUrlFromContext } from "./getServerUrlFromContext";
 
 type HostnameLocation = {
   source: Source;
@@ -27,10 +28,17 @@ export function findHostnameInContext(
     return undefined;
   }
 
+  // Build full server URL from context for self-request detection.
+  // Some frameworks set context.url to just the path (e.g. "/"), which
+  // prevents isRequestToItself from comparing hostnames.
+  // See https://github.com/AikidoSec/firewall-node/pull/796 for the
+  // full fix that normalizes context.url across all frameworks.
+  const serverUrl = getServerUrlFromContext(context);
+
   if (
-    context.url &&
+    serverUrl &&
     isRequestToItself({
-      serverUrl: context.url,
+      serverUrl: serverUrl,
       outboundHostname: hostname,
       outboundPort: port,
     })

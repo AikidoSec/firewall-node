@@ -7,6 +7,7 @@ import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isRequestToItself } from "./isRequestToItself";
+import { getServerUrlFromContext } from "./getServerUrlFromContext";
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -31,10 +32,17 @@ export function checkContextForSSRF({
     return;
   }
 
+  // Build full server URL from context for self-request detection.
+  // Some frameworks set context.url to just the path (e.g. "/"), which
+  // prevents isRequestToItself from comparing hostnames.
+  // See https://github.com/AikidoSec/firewall-node/pull/796 for the
+  // full fix that normalizes context.url across all frameworks.
+  const serverUrl = getServerUrlFromContext(context);
+
   if (
-    context.url &&
+    serverUrl &&
     isRequestToItself({
-      serverUrl: context.url,
+      serverUrl: serverUrl,
       outboundHostname: hostname,
       outboundPort: port,
     })
