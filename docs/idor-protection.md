@@ -56,7 +56,7 @@ const result = await Zen.withoutIdorProtection(async () => {
 Zen IDOR protection: query on table 'orders' is missing a filter on column 'tenant_id'
 ```
 
-This means you have a query like `SELECT * FROM orders WHERE status = 'active'` that doesn't filter on `tenant_id`.
+This means you have a query like `SELECT * FROM orders WHERE status = 'active'` that doesn't filter on `tenant_id`. The same check applies to `UPDATE` and `DELETE` queries.
 
 **Wrong tenant ID value:**
 
@@ -65,6 +65,22 @@ Zen IDOR protection: query on table 'orders' filters 'tenant_id' with value '456
 ```
 
 This means the query filters on `tenant_id`, but the value doesn't match the tenant ID set via `setTenantId`.
+
+**Missing tenant column in INSERT:**
+
+```
+Zen IDOR protection: INSERT on table 'orders' is missing column 'tenant_id'
+```
+
+This means an `INSERT` statement doesn't include the tenant column. Every INSERT must include the tenant column with the correct tenant ID value.
+
+**Wrong tenant ID in INSERT:**
+
+```
+Zen IDOR protection: INSERT on table 'orders' sets 'tenant_id' to '456' but tenant ID is '123'
+```
+
+This means the INSERT includes the tenant column, but the value doesn't match the tenant ID set via `setTenantId`.
 
 **Missing setTenantId call:**
 
@@ -75,9 +91,18 @@ Zen IDOR protection: setTenantId() was not called for this request. Every reques
 ## Supported databases
 
 - MySQL (via `mysql` and `mysql2` packages)
+- PostgreSQL (via `pg` and `postgres` packages)
+
+## Supported SQL statements
+
+- `SELECT` — checks that the WHERE clause filters on the tenant column
+- `INSERT` — checks that the tenant column is included with the correct value
+- `UPDATE` — checks that the WHERE clause filters on the tenant column
+- `DELETE` — checks that the WHERE clause filters on the tenant column
+
+Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. Use `withoutIdorProtection()` to bypass the check for those queries.
 
 ## Notes
 
 - IDOR protection always throws on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
-- Only `SELECT` queries are checked. Support for `UPDATE` and `DELETE` will be added later.
 - Parse results are cached using an LRU cache, so repeated queries with the same SQL string (e.g. parameterized queries) are efficient.

@@ -182,6 +182,169 @@ t.test("IDOR protection for MySQL", async (t) => {
       }
     });
 
+    await t.test("allows INSERT with tenant column and correct value", async () => {
+      await runWithContext(context, () => {
+        return query(
+          "INSERT INTO cats_idor (petname, tenant_id) VALUES (?, ?)",
+          connection,
+          ["Mittens", "org_123"]
+        );
+      });
+    });
+
+    await t.test("blocks INSERT without tenant column", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query(
+            "INSERT INTO cats_idor (petname) VALUES (?)",
+            connection,
+            ["Mittens"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: INSERT on table 'cats_idor' is missing column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test("blocks INSERT with wrong tenant ID value", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query(
+            "INSERT INTO cats_idor (petname, tenant_id) VALUES (?, ?)",
+            connection,
+            ["Mittens", "org_456"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "INSERT on table 'cats_idor' sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+        );
+      }
+    });
+
+    await t.test("allows UPDATE with tenant filter", async () => {
+      await runWithContext(context, () => {
+        return query(
+          "UPDATE cats_idor SET petname = ? WHERE tenant_id = ?",
+          connection,
+          ["Rex", "org_123"]
+        );
+      });
+    });
+
+    await t.test("blocks UPDATE without tenant filter", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query(
+            "UPDATE cats_idor SET petname = ?",
+            connection,
+            ["Rex"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test("blocks UPDATE with wrong tenant ID value", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query(
+            "UPDATE cats_idor SET petname = ? WHERE tenant_id = ?",
+            connection,
+            ["Rex", "org_456"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+        );
+      }
+    });
+
+    await t.test("allows DELETE with tenant filter", async () => {
+      await runWithContext(context, () => {
+        return query(
+          "DELETE FROM cats_idor WHERE tenant_id = ?",
+          connection,
+          ["org_123"]
+        );
+      });
+    });
+
+    await t.test("blocks DELETE without tenant filter", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query("DELETE FROM cats_idor", connection);
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test("blocks DELETE with wrong tenant ID value", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query(
+            "DELETE FROM cats_idor WHERE tenant_id = ?",
+            connection,
+            ["org_456"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+        );
+      }
+    });
+
+    await t.test("blocks unsupported statement types", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return query("TRUNCATE cats_idor", connection);
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Unsupported SQL statement type"
+        );
+      }
+    });
+
+    await t.test("allows unsupported statements inside withoutIdorProtection", async () => {
+      await runWithContext(context, () => {
+        return withoutIdorProtection(() => {
+          return query("TRUNCATE cats_idor", connection);
+        });
+      });
+    });
+
     await t.test("skips IDOR check when not configured", async () => {
       agent.setIdorProtectionConfig(undefined!);
 
