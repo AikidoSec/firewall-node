@@ -15,7 +15,12 @@
     "no-prototype-builtins": "error",
     "require-await": "error",
     "no-floating-promises": "off",
-    "unbound-method": "off"
+    "unbound-method": "off",
+    "func-names": ["error", "as-needed"],
+    "no-eval": "error",
+    "no-var": "error",
+    "no-warning-comments": "error",
+    "no-duplicate-imports": "error"
   },
   "overrides": [
     {
@@ -25,5 +30,6 @@
         "no-unused-vars": "off"
       }
     }
-  ]
+  ],
+  "ignorePatterns": ["**/wasm/**", "helpers/form-parsing/**"]
 }

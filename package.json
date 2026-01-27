@@ -1,22 +1,33 @@
 {
   "name": "firewall-node",
   "devDependencies": {
-    "follow-redirects": "^1.15.9",
+    "astring": "^1.9.0",
+    "follow-redirects": "^1.15.11",
+    "oxc-parser": "^0.96.0",
+    "oxc-transform": "^0.96.0",
+    "oxc-walker": "^0.5.2",
     "prettier": "^3.2.4",
-    "tar": "^7.4.3"
+    "tar": "^7.5.1"
   },
   "scripts": {
     "install": "node scripts/install.js",
     "install-lib-only": "node scripts/install.js --lib-only",
+    "install-e2e-only": "node scripts/install.js --end2end-only",
+    "install-benchmarks-only": "node scripts/install.js --benchmarks-only",
     "containers": "cd sample-apps && docker compose up -d --remove-orphans --build",
     "build": "node scripts/build.js",
     "watch": "cd library && npm run build:watch",
     "test": "cd library && npm run test",
     "test:ci": "cd library && npm run test:ci",
+    "test:new": "cd library && npm run test:new",
+    "test:ci:new": "cd library && npm run test:ci:new",
+    "test:esm": "node scripts/tests-esm.mjs",
     "lint": "cd library && npm run lint",
     "end2end": "cd end2end && npm run test",
+    "end2end:new": "cd end2end && npm run test:new",
     "format": "prettier --write .",
     "benchmark": "node scripts/benchmark.js",
-    "sample-app": "node scripts/run-sample-app.js"
+    "sample-app": "node scripts/run-sample-app.js",
+    "format:check": "prettier --check ."
   }
 }

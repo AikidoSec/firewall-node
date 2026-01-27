@@ -1,0 +1,12 @@
+{
+  "name": "hono-xml",
+  "scripts": {
+    "start": "node --import @aikidosec/firewall/instrument ./app.js"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.11.2",
+    "hono": "^4.4.2",
+    "mysql2": "^3.10.0"
+  }
+}

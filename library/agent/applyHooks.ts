@@ -5,6 +5,11 @@ import {
   wrapRequire,
 } from "./hooks/wrapRequire";
 import { wrapExport } from "./hooks/wrapExport";
+import { registerNodeHooks } from "./hooks/instrumentation/index";
+import {
+  setBuiltinsToInstrument,
+  setPackagesToInstrument,
+} from "./hooks/instrumentation/instructions";
 
 /**
  * Hooks allows you to register packages and then wrap specific methods on
@@ -13,10 +18,16 @@ import { wrapExport } from "./hooks/wrapExport";
  * This method wraps the require function and sets up the hooks.
  * Globals are wrapped directly.
  */
-export function applyHooks(hooks: Hooks) {
-  setPackagesToPatch(hooks.getPackages());
-  setBuiltinModulesToPatch(hooks.getBuiltInModules());
-  wrapRequire();
+export function applyHooks(hooks: Hooks, newInstrumentation: boolean) {
+  if (!newInstrumentation) {
+    setPackagesToPatch(hooks.getPackages());
+    setBuiltinModulesToPatch(hooks.getBuiltInModules());
+    wrapRequire();
+  } else {
+    setPackagesToInstrument(hooks.getPackages());
+    setBuiltinsToInstrument(hooks.getBuiltInModules());
+    registerNodeHooks();
+  }
 
   hooks.getGlobals().forEach((g) => {
     const name = g.getName();

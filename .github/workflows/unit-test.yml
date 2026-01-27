@@ -1,43 +1,115 @@
 name: 🧪 Unit tests
+
 on:
-  push: {}
   workflow_call: {}
+
 permissions:
   contents: read
+  id-token: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
+
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 24.x, 25.x]
-    timeout-minutes: 10
+        include:
+          - node-version: 16.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 18.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 20.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 22.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "esm"
+          - node-version: 25.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "esm"
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
+          npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
+
+      - name: Downgrade npm for v24 and v25
+        # https://github.com/npm/cli/issues/8669
+        if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
+        run: npm i -g npm@11.6.0
+
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - run: npm run install-lib-only
+
+      - name: Install dependencies (library only)
+        run: npm run install-lib-only
+
       - name: Start containers
         run: npm run containers
-      - run: npm run build
-      - run: npm run test:ci
-        env:
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
-      - name: "Upload coverage"
-        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
         with:
-          files: ./library/.tap/report/lcov.info
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/firewall-node
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Run tests with current instrumentation (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'current' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci
+
+      - name: Run tests with new instrumentation in CJS mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'cjs' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci:new
+
+      - name: Run tests in ESM mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'esm' }}
+        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:esm
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
+          use_oidc: true
+          fail_ci_if_error: true

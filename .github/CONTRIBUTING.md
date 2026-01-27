@@ -101,6 +101,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/Aikido
 - run `$ npm run build` to build the library
 - run `$ npm run watch` to watch for changes and rebuild the library
 - run `$ npm t` to run tests using tap
+- run `$ npx tap dir/File.test.ts` in `library/` to run individual test cases
 - run `$ npm run end2end` to run end-to-end tests using tap
 - run `$ npm run lint` to run ESLint
 

@@ -1,7 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -19,7 +18,6 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
-import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -62,6 +60,7 @@ t.test("it throws error if serverless is empty string", async () => {
         new ReportingAPIForTesting(),
         undefined,
         "",
+        false,
         new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
@@ -110,7 +109,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -270,8 +269,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -342,8 +339,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -405,8 +400,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);
@@ -426,7 +419,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
     });
     const agent = createTestAgent({
       api,
@@ -495,7 +488,6 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
     });
     const agent = createTestAgent({
       api,
@@ -1270,9 +1262,6 @@ t.test("attack wave detected event", async (t) => {
       route: "/posts/:id",
       routeParams: {},
     },
-    metadata: {
-      x: "test",
-    },
   });
 
   t.match(api.getEvents(), [
@@ -1280,7 +1269,7 @@ t.test("attack wave detected event", async (t) => {
       type: "detected_attack_wave",
       attack: {
         metadata: {
-          x: "test",
+          samples: "[]",
         },
       },
       request: {
@@ -1291,3 +1280,76 @@ t.test("attack wave detected event", async (t) => {
     },
   ]);
 });
+
+t.test("it blocks new outgoing requests if config says so", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it does not block new outgoing requests if config says so",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
+    });
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    await agent.flushStats(1000);
+
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+    clock.uninstall();
+  }
+);

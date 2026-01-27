@@ -3,15 +3,23 @@ on:
   release:
     types: [created]
 jobs:
+  build-artifacts:
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
   run-unit-tests:
+    needs: build-artifacts
     uses: ./.github/workflows/unit-test.yml
     permissions:
       contents: read
+      id-token: write
   run-end-to-end-tests:
+    needs: build-artifacts
     uses: ./.github/workflows/end-to-end-tests.yml
     permissions:
       contents: read
   run-benchmarks:
+    needs: build-artifacts
     uses: ./.github/workflows/benchmark.yml
     permissions:
       contents: read
@@ -26,18 +34,24 @@ jobs:
       id-token: write
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22.x"
+          node-version: "24.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@aikidosec"
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable
+          rustup default stable
+          cargo install wasm-pack
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
+          npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
-      - name: Ensure latest npm version
-        run: npm install -g npm@latest
+      - name: Downgrade npm
+        # https://github.com/npm/cli/issues/8669
+        run: npm i -g npm@11.6.0
       - name: Install dependencies
         run: npm run install-lib-only
       - name: Get the version

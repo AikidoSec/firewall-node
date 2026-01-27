@@ -9,11 +9,13 @@ import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLD
 import type { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { Context, getContext } from "../agent/Context";
-import { onInspectionInterceptorResult } from "../agent/hooks/onInspectionInterceptorResult";
 import { getInstance } from "../agent/AgentSingleton";
 import type { Agent } from "../agent/Agent";
-import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
+import type { LocalVariableAccessConfig } from "../agent/hooks/instrumentation/types";
+import { inspectArgs } from "../agent/hooks/wrapExport";
+import { isPlainObject } from "../helpers/isPlainObject";
 
 type AllOperationsQueryExtension = {
   model?: string;
@@ -172,78 +174,129 @@ export class Prisma implements Wrapper {
     isNoSQLClient: boolean;
     sqlDialect?: SQLDialect;
     agent: Agent;
-    pkgInfo: WrapPackageInfo;
+    pkgInfo: PartialWrapPackageInfo;
   }) {
-    let inspectionResult: InterceptorResult | undefined;
-    const start = performance.now();
+    inspectArgs(
+      args,
+      () => {
+        if (isNoSQLClient) {
+          return this.inspectNoSQLQuery(args, operation, model);
+        }
 
-    if (!isNoSQLClient && SQL_OPERATIONS_TO_PROTECT.includes(operation)) {
-      inspectionResult = this.inspectSQLQuery(
-        args,
-        operation,
-        sqlDialect || new SQLDialectGeneric()
-      );
-    }
-
-    if (isNoSQLClient) {
-      inspectionResult = this.inspectNoSQLQuery(args, operation, model);
-    }
-
-    if (inspectionResult) {
-      // Run the logic to handle a detected attack
-      onInspectionInterceptorResult(
-        getContext(),
-        agent,
-        inspectionResult,
-        pkgInfo,
-        start,
-        operation,
-        isNoSQLClient ? "nosql_op" : "sql_op"
-      );
-    }
+        if (SQL_OPERATIONS_TO_PROTECT.includes(operation)) {
+          return this.inspectSQLQuery(
+            args,
+            operation,
+            sqlDialect || new SQLDialectGeneric()
+          );
+        }
+      },
+      getContext(),
+      agent,
+      pkgInfo,
+      operation,
+      isNoSQLClient ? "nosql_op" : "sql_op"
+    );
 
     return query(args);
   }
 
+  // Check if the Prisma client uses event-based logging (emit: 'event')
+  // which requires $on() to work. Since $extends() breaks $on(), we can't
+  // instrument clients that use event-based logging.
+  // See: https://github.com/prisma/prisma/issues/24070
+  private usesEventBasedLogging(constructorArgs: unknown[]): boolean {
+    if (constructorArgs.length === 0) {
+      return false;
+    }
+
+    const options = constructorArgs[0];
+    if (!isPlainObject(options) || !Array.isArray(options.log)) {
+      return false;
+    }
+
+    return options.log.some(
+      (entry) => isPlainObject(entry) && entry.emit === "event"
+    );
+  }
+
+  private instrumentPrismaClient(
+    instance: any,
+    pkgInfo: PartialWrapPackageInfo,
+    constructorArgs: unknown[]
+  ) {
+    // Disable instrumentation if event-based logging is used
+    // $extends() breaks $on() which is required for event-based logging
+    // See: https://github.com/prisma/prisma/issues/24070
+    if (this.usesEventBasedLogging(constructorArgs)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "AIKIDO: Prisma instrumentation disabled because event-based logging (emit: 'event') is enabled. Zen uses $extends() internally which is incompatible with $on(). See: https://github.com/prisma/prisma/issues/24070"
+      );
+      return;
+    }
+
+    const isNoSQLClient = this.isNoSQLClient(instance);
+
+    const agent = getInstance();
+    if (!agent) {
+      return;
+    }
+
+    // Extend all operations of the Prisma client
+    // https://www.prisma.io/docs/orm/prisma-client/client-extensions/query#modify-all-operations-in-all-models-of-your-schema
+    return instance.$extends({
+      query: {
+        $allOperations: ({
+          model,
+          operation,
+          args,
+          query,
+        }: AllOperationsQueryExtension) => {
+          return this.onClientOperation({
+            model,
+            operation,
+            args,
+            query,
+            isNoSQLClient,
+            sqlDialect: !isNoSQLClient
+              ? this.getClientSQLDialect(instance)
+              : undefined,
+            agent,
+            pkgInfo,
+          });
+        },
+      },
+    });
+  }
+
   wrap(hooks: Hooks) {
+    const accessLocalVariables: LocalVariableAccessConfig = {
+      names: ["module.exports"],
+      cb: (vars, pkgInfo) => {
+        wrapNewInstance(vars[0], "PrismaClient", pkgInfo, (instance, args) => {
+          return this.instrumentPrismaClient(instance, pkgInfo, args);
+        });
+      },
+    };
+
     hooks
       .addPackage("@prisma/client")
       .withVersion("^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapNewInstance(exports, "PrismaClient", pkgInfo, (instance) => {
-          const isNoSQLClient = this.isNoSQLClient(instance);
-
-          const agent = getInstance();
-          if (!agent) {
-            return;
-          }
-
-          // Extend all operations of the Prisma client
-          // https://www.prisma.io/docs/orm/prisma-client/client-extensions/query#modify-all-operations-in-all-models-of-your-schema
-          return instance.$extends({
-            query: {
-              $allOperations: ({
-                model,
-                operation,
-                args,
-                query,
-              }: AllOperationsQueryExtension) => {
-                return this.onClientOperation({
-                  model,
-                  operation,
-                  args,
-                  query,
-                  isNoSQLClient,
-                  sqlDialect: !isNoSQLClient
-                    ? this.getClientSQLDialect(instance)
-                    : undefined,
-                  agent,
-                  pkgInfo,
-                });
-              },
-            },
-          });
+        wrapNewInstance(exports, "PrismaClient", pkgInfo, (instance, args) => {
+          return this.instrumentPrismaClient(instance, pkgInfo, args);
         });
+      })
+      .addFileInstrumentation({
+        path: "./default.js",
+        functions: [],
+        accessLocalVariables,
+      })
+      .addFileInstrumentation({
+        path: "./index.js",
+        functions: [],
+        accessLocalVariables,
       });
   }
 }

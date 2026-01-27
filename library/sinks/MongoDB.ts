@@ -7,6 +7,7 @@ import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 
 const OPERATIONS_WITH_FILTER = [
   "count",
@@ -233,6 +234,45 @@ export class MongoDB implements Wrapper {
         process.nextTick(() => {
           this.wrapCollection(exports, pkgInfo);
         });
+      })
+      .addFileInstrumentation({
+        path: "lib/collection.js",
+        functions: [
+          ...OPERATIONS_WITH_FILTER.map(
+            (operation): PackageFunctionInstrumentationInstruction => ({
+              name: operation,
+              nodeType: "MethodDefinition",
+              operationKind: "nosql_op",
+              inspectArgs: (args, agent, collection) =>
+                this.inspectOperation(
+                  operation,
+                  args,
+                  collection as Collection
+                ),
+            })
+          ),
+          {
+            name: "bulkWrite",
+            nodeType: "MethodDefinition",
+            operationKind: "nosql_op",
+            inspectArgs: (args, agent, collection) =>
+              this.inspectBulkWrite(args, collection as Collection),
+          },
+          {
+            name: "aggregate",
+            nodeType: "MethodDefinition",
+            operationKind: "nosql_op",
+            inspectArgs: (args, agent, collection) =>
+              this.inspectAggregate(args, collection as Collection),
+          },
+          {
+            name: "distinct",
+            nodeType: "MethodDefinition",
+            operationKind: "nosql_op",
+            inspectArgs: (args, agent, collection) =>
+              this.inspectDistinct(args, collection as Collection),
+          },
+        ],
       });
   }
 }

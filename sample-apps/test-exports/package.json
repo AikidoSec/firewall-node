@@ -1,0 +1,11 @@
+{
+  "name": "test-exports",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.3.0",
+    "typescript": "^5.3.3"
+  }
+}

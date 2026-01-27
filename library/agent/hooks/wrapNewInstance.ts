@@ -1,6 +1,6 @@
 import { getInstance } from "../AgentSingleton";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
-import { WrapPackageInfo } from "./WrapPackageInfo";
+import { PartialWrapPackageInfo } from "./WrapPackageInfo";
 
 /**
  * Intercepts the creation of a new instance of a class, to wrap it's methods and properties.
@@ -8,8 +8,8 @@ import { WrapPackageInfo } from "./WrapPackageInfo";
 export function wrapNewInstance(
   subject: unknown,
   className: string | undefined,
-  pkgInfo: WrapPackageInfo,
-  interceptor: (exports: any) => unknown
+  pkgInfo: PartialWrapPackageInfo,
+  interceptor: (instance: any, constructorArgs: unknown[]) => unknown
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -29,7 +29,7 @@ export function wrapNewInstance(
           const newInstance = new original(...args);
 
           try {
-            const returnVal = interceptor(newInstance);
+            const returnVal = interceptor(newInstance, args);
             if (returnVal) {
               return returnVal;
             }

@@ -12,7 +12,7 @@ import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
 
-const originalRequire = mod.prototype.require;
+const originalRequire = mod.prototype?.require;
 let isRequireWrapped = false;
 
 let packages: Package[] = [];
@@ -133,6 +133,8 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
   if (!matchingBuiltins.length) {
     return originalExports;
   }
+
+  getInstance()?.onBuiltinWrapped(moduleName);
 
   // Get interceptors from all matching builtin modules
   const interceptors = matchingBuiltins
@@ -287,7 +289,7 @@ function executeInterceptors(
     try {
       const returnVal = interceptor(exports, wrapPackageInfo);
       // If the interceptor returns a value, we want to use this value as the new exports
-      if (typeof returnVal !== "undefined") {
+      if (returnVal !== undefined) {
         exports = returnVal;
       }
     } catch (error) {

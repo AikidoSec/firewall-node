@@ -1,10 +1,8 @@
 /* eslint-disable max-lines-per-function, no-console */
 import { hostname, platform, release } from "os";
-import { convertRequestBodyToString } from "../helpers/convertRequestBodyToString";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
-import { filterEmptyRequestHeaders } from "../helpers/filterEmptyRequestHeaders";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
@@ -31,6 +29,7 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
@@ -47,19 +46,11 @@ export class Agent {
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
   private wrappedPackages: Record<string, WrappedPackage> = {};
-  private packages = new Packages();
+  private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig(
-    [],
-    Date.now(),
-    [],
-    [],
-    true,
-    [],
-    []
-  );
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -78,10 +69,15 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
+    private readonly newInstrumentation: boolean = false,
     private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
+    }
+
+    if (isNewInstrumentationUnitTest()) {
+      this.newInstrumentation = true;
     }
   }
 
@@ -217,8 +213,6 @@ export class Agent {
             typeof request.headers["user-agent"] === "string"
               ? request.headers["user-agent"]
               : undefined,
-          body: convertRequestBodyToString(request.body),
-          headers: filterEmptyRequestHeaders(request.headers),
           source: request.source,
           route: request.route,
         }
@@ -308,10 +302,7 @@ export class Agent {
           response.allowedIPAddresses &&
             Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
-            : [],
-          typeof response.receivedAnyStats === "boolean"
-            ? response.receivedAnyStats
-            : true
+            : []
         );
       }
 
@@ -322,6 +313,17 @@ export class Agent {
         response.heartbeatIntervalInMS >= minimumHeartbeatIntervalMS
       ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
+      }
+
+      if (
+        typeof response.blockNewOutgoingRequests === "boolean" &&
+        response.domains &&
+        Array.isArray(response.domains)
+      ) {
+        this.serviceConfig.setBlockNewOutgoingRequests(
+          response.blockNewOutgoingRequests
+        );
+        this.serviceConfig.updateDomains(response.domains);
       }
     }
   }
@@ -510,7 +512,7 @@ export class Agent {
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.serverless);
+    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
 
     // In serverless environments, we delay the startup event until the first invocation
     // since some apps take a long time to boot and the init phase has strict timeouts
@@ -560,6 +562,10 @@ export class Agent {
         this.logger.log(`${name}@${details.version} is not supported!`);
       }
     }
+  }
+
+  onBuiltinWrapped(name: string) {
+    this.logger.log(`node:${name} is supported!`);
   }
 
   onConnectHostname(hostname: string, port: number) {
@@ -620,6 +626,10 @@ export class Agent {
     this.middlewareInstalled = true;
   }
 
+  isUsingNewInstrumentation() {
+    return this.newInstrumentation;
+  }
+
   private getHeartbeatInterval(): number {
     switch (this.sentHeartbeatCounter) {
       case 0:
@@ -641,18 +651,27 @@ export class Agent {
   /**
    * This function gets called when an attack wave is detected, it reports this attack wave to the API
    */
-  onDetectedAttackWave({
-    request,
-    metadata,
-  }: {
-    request: Context;
-    metadata: Record<string, string>;
-  }) {
+  onDetectedAttackWave({ request }: { request: Context }) {
+    if (!request.remoteAddress) {
+      // Cannot report attack wave without IP address
+      // Should not happen since AttackWaveDetector checks for remoteAddress
+      return;
+    }
+
+    const samples = this.attackWaveDetector.getSamplesForIP(
+      request.remoteAddress
+    );
+
     const attack: DetectedAttackWave = {
       type: "detected_attack_wave",
       time: Date.now(),
       attack: {
-        metadata: limitLengthMetadata(metadata, 4096),
+        metadata: limitLengthMetadata(
+          {
+            samples: JSON.stringify(samples),
+          },
+          4096
+        ),
         user: request.user,
       },
       request: {

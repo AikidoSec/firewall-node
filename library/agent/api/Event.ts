@@ -45,8 +45,6 @@ export type DetectedAttack = {
         ipAddress: string | undefined;
         userAgent: string | undefined;
         url: string | undefined;
-        headers: Record<string, string | string[]>;
-        body: string | undefined;
         source: string;
         route: string | undefined;
       }
@@ -160,7 +158,7 @@ type Heartbeat = {
 export type DetectedAttackWave = {
   type: "detected_attack_wave";
   request: {
-    ipAddress: string | undefined;
+    ipAddress: string;
     userAgent: string | undefined;
     source: string;
   };

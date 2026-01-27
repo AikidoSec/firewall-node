@@ -1,8 +1,8 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
-import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { detectShellInjection } from "./detectShellInjection";
 
 /**
@@ -18,14 +18,10 @@ export function checkContextForShellInjection({
   operation: string;
   context: Context;
 }): InterceptorResult {
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const str of userInput) {
-      if (detectShellInjection(command, str)) {
+  for (const str of extractStringsFromUserInputCached(context)) {
+    if (detectShellInjection(command, str)) {
+      const source = getSourceForUserString(context, str);
+      if (source) {
         return {
           operation: operation,
           kind: "shell_injection",

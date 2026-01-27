@@ -31,3 +31,16 @@ t.test("returns undefined for invalid path", async (t) => {
   const info = getModuleInfoFromPath("/Users/aikido/Projects/sec");
   t.equal(info, undefined);
 });
+
+t.test("works with file:// protocol", async (t) => {
+  t.same(
+    getModuleInfoFromPath(
+      "file:///Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework/build/src/logger.js"
+    ),
+    {
+      name: "@google-cloud/functions-framework",
+      base: "/Users/aikido/Projects/sec/node_modules/@google-cloud/functions-framework",
+      path: "build/src/logger.js",
+    }
+  );
+});

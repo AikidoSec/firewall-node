@@ -1,6 +1,8 @@
 import type { Callback, Context, Handler } from "aws-lambda";
+import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
+import { envToBool } from "../helpers/envToBool";
 import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
@@ -220,25 +222,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return result;
     } finally {
       if (agent) {
-        if (
-          isGatewayEvent(event) &&
-          isGatewayResponse(result) &&
-          agentContext.route &&
-          agentContext.method
-        ) {
-          const shouldDiscover = shouldDiscoverRoute({
-            statusCode: result.statusCode,
-            method: agentContext.method,
-            route: agentContext.route,
-          });
-
-          if (shouldDiscover) {
-            agent.onRouteExecute(agentContext);
-          }
-        }
-
-        const stats = agent.getInspectionStatistics();
-        stats.onRequest();
+        incrementStatsAndDiscoverAPISpec(agentContext, agent, event, result);
 
         await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
@@ -254,10 +238,47 @@ export function createLambdaWrapper(handler: Handler): Handler {
   };
 }
 
+function incrementStatsAndDiscoverAPISpec(
+  agentContext: AgentContext,
+  agent: Agent,
+  event: unknown,
+  result: unknown
+) {
+  if (
+    agentContext.remoteAddress &&
+    agent.getConfig().isBypassedIP(agentContext.remoteAddress)
+  ) {
+    return;
+  }
+
+  if (
+    isGatewayEvent(event) &&
+    isGatewayResponse(result) &&
+    agentContext.route &&
+    agentContext.method
+  ) {
+    const shouldDiscover = shouldDiscoverRoute({
+      statusCode: result.statusCode,
+      method: agentContext.method,
+      route: agentContext.route,
+    });
+
+    if (shouldDiscover) {
+      agent.onRouteExecute(agentContext);
+    }
+  }
+
+  const stats = agent.getInspectionStatistics();
+  stats.onRequest();
+}
+
 let loggedWarningUnsupportedTrigger = false;
 
 function logWarningUnsupportedTrigger() {
-  if (loggedWarningUnsupportedTrigger) {
+  if (
+    loggedWarningUnsupportedTrigger ||
+    envToBool(process.env.AIKIDO_LAMBDA_IGNORE_UNSUPPORTED_TRIGGER_WARNING)
+  ) {
     return;
   }
 

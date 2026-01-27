@@ -12,7 +12,8 @@ import { Undici } from "./Undici";
 
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
-export function createUndiciTests(undiciPkgName: string, port: number) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createUndiciTests(undiciPkgName: string, port: number) {
   const calls: Record<string, number> = {};
   wrap(dns, "lookup", function lookup(original) {
     return function lookup() {
@@ -70,7 +71,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
   }
 
   let server: ReturnType<typeof import("http").createServer>;
-  t.before(() => {
+  t.before(async () => {
     const http = require("http") as typeof import("http");
     server = http.createServer((req, res) => {
       res.end("Hello, world!");
@@ -95,7 +96,6 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         blockedUserIds: [],
         allowedIPAddresses: ["1.2.3.4"],
         block: true,
-        receivedAnyStats: false,
       });
       const agent = startTestAgent({
         api,
@@ -140,7 +140,7 @@ export function createUndiciTests(undiciPkgName: string, port: number) {
         t.same(events[0].attack.metadata, {
           privateIP: "::1",
           hostname: "localhost",
-          port: port,
+          port: port.toString(),
         });
 
         const error2 = await t.rejects(() =>

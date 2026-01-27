@@ -9,6 +9,16 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
 
+const connectionFunctions = [
+  "query",
+  "execute",
+  "prepare",
+  "batch",
+  "queryStream",
+];
+
+const poolFunctions = ["query", "execute", "batch"];
+
 export class MariaDB implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
 
@@ -50,9 +60,7 @@ export class MariaDB implements Wrapper {
   }
 
   private wrapConnection(exports: any, pkgInfo: WrapPackageInfo) {
-    const functions = ["query", "execute", "prepare", "batch", "queryStream"];
-
-    for (const fn of functions) {
+    for (const fn of connectionFunctions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
         inspectArgs: (args) => this.inspectQuery(args, fn),
@@ -61,9 +69,7 @@ export class MariaDB implements Wrapper {
   }
 
   private wrapPool(exports: any, pkgInfo: WrapPackageInfo) {
-    const functions = ["query", "execute", "batch"];
-
-    for (const fn of functions) {
+    for (const fn of poolFunctions) {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
         inspectArgs: (args) => this.inspectQuery(args, fn),
@@ -86,6 +92,26 @@ export class MariaDB implements Wrapper {
       })
       .onFileRequire("lib/pool-callback.js", (exports, pkgInfo) => {
         this.wrapPool(exports, pkgInfo);
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["lib/connection-promise.js", "lib/connection-callback.js"],
+        connectionFunctions.map((fn) => ({
+          name: fn,
+          nodeType: "MethodDefinition",
+          operationKind: "sql_op",
+          bindContext: true,
+          inspectArgs: (args) => this.inspectQuery(args, fn),
+        }))
+      )
+      .addMultiFileInstrumentation(
+        ["lib/pool-promise.js", "lib/pool-callback.js"],
+        poolFunctions.map((fn) => ({
+          name: fn,
+          nodeType: "MethodDefinition",
+          operationKind: "sql_op",
+          bindContext: true,
+          inspectArgs: (args) => this.inspectQuery(args, fn),
+        }))
+      );
   }
 }

@@ -8,7 +8,9 @@ export const SOURCES = [
   "xml",
   "subdomains",
   "markUnsafe",
+  "url",
   "urlPath",
+  "rawBody",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];

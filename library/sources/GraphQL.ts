@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
@@ -12,14 +13,16 @@ import { shouldRateLimitOperation } from "./graphql/shouldRateLimitOperation";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
 export class GraphQL implements Wrapper {
-  private graphqlModule: typeof import("graphql") | undefined;
+  private printSchema: typeof import("graphql").printSchema | undefined;
+  private visit: typeof import("graphql").visit | undefined;
+  private GraphQLError: typeof import("graphql").GraphQLError | undefined;
 
   private discoverGraphQLSchema(
     context: Context,
     executeArgs: ExecutionArgs,
     agent: Agent
   ) {
-    if (!this.graphqlModule) {
+    if (!this.printSchema) {
       return;
     }
 
@@ -33,7 +36,8 @@ export class GraphQL implements Wrapper {
 
     if (!agent.hasGraphQLSchema(context.method, context.route)) {
       try {
-        const schema = this.graphqlModule.printSchema(executeArgs.schema);
+        const schema = this.printSchema(executeArgs.schema);
+
         agent.onGraphQLSchema(context.method, context.route, schema);
       } catch {
         // Ignore errors
@@ -66,11 +70,7 @@ export class GraphQL implements Wrapper {
   }
 
   private inspectGraphQLExecute(args: unknown[], agent: Agent): void {
-    if (
-      !Array.isArray(args) ||
-      typeof args[0] !== "object" ||
-      !this.graphqlModule
-    ) {
+    if (!Array.isArray(args) || typeof args[0] !== "object" || !this.visit) {
       return;
     }
 
@@ -96,7 +96,7 @@ export class GraphQL implements Wrapper {
 
     const userInputs = extractInputsFromDocument(
       executeArgs.document,
-      this.graphqlModule.visit
+      this.visit
     );
 
     if (
@@ -124,7 +124,7 @@ export class GraphQL implements Wrapper {
   ) {
     const context = getContext();
 
-    if (!context || !agent || !this.graphqlModule) {
+    if (!context || !agent || !this.GraphQLError) {
       return origReturnVal;
     }
 
@@ -144,7 +144,7 @@ export class GraphQL implements Wrapper {
 
       return {
         errors: [
-          new this.graphqlModule.GraphQLError("You are rate limited by Zen.", {
+          new this.GraphQLError("You are rate limited by Zen.", {
             nodes: [result.field],
             extensions: {
               code: "RATE_LIMITED_BY_ZEN",
@@ -172,21 +172,69 @@ export class GraphQL implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    hooks
+    const graphqlPkg = hooks
       .addPackage("graphql")
-      .withVersion("^16.0.0")
+      .withVersion("^15.0.0 || ^16.0.0");
+
+    graphqlPkg
       .onFileRequire("execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
       })
       .onRequire((exports) => {
-        this.graphqlModule = exports;
+        this.printSchema = exports.printSchema;
+        this.visit = exports.visit;
+        this.GraphQLError = exports.GraphQLError;
+      })
+      .addMultiFileInstrumentation(
+        ["execution/execute.js", "execution/execute.mjs"],
+        ["execute", "executeSync"].map((method) => ({
+          name: method,
+          operationKind: "graphql_op",
+          nodeType: "FunctionDeclaration",
+          modifyReturnValue: (args, returnValue, agent) =>
+            this.handleRateLimiting(args, returnValue, agent),
+          inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
+        }))
+      );
+
+    const localVariableAndFiles = new Map([
+      ["language/visitor.js", "visit"],
+      ["language/visitor.mjs", "visit"],
+      ["utilities/printSchema.js", "printSchema"],
+      ["utilities/printSchema.mjs", "printSchema"],
+      ["error/GraphQLError.js", "GraphQLError"],
+      ["error/GraphQLError.mjs", "GraphQLError"],
+    ]);
+
+    for (const [file, variable] of localVariableAndFiles) {
+      graphqlPkg.addFileInstrumentation({
+        path: file,
+        functions: [],
+        accessLocalVariables: {
+          names: [variable],
+          cb: (value) => {
+            this[variable as keyof this] = value[0];
+          },
+        },
       });
+    }
 
     hooks
       .addPackage("@graphql-tools/executor")
       .withVersion("^1.0.0")
       .onFileRequire("cjs/execution/execute.js", (exports, pkgInfo) => {
         this.wrapExecution(exports, pkgInfo);
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["cjs/execution/execute.js", "esm/execution/execute.js"],
+        ["execute", "executeSync"].map((method) => ({
+          name: method,
+          operationKind: "graphql_op",
+          nodeType: "FunctionDeclaration",
+          modifyReturnValue: (args, returnValue, agent) =>
+            this.handleRateLimiting(args, returnValue, agent),
+          inspectArgs: (args, agent) => this.inspectGraphQLExecute(args, agent),
+        }))
+      );
   }
 }

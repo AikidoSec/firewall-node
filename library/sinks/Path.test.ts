@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
-import { isWrapped } from "../helpers/wrap";
+import { isWrapped, originalSymbol } from "../helpers/wrap";
 import { Path } from "./Path";
 import { createTestAgent } from "../helpers/createTestAgent";
 
@@ -186,7 +186,7 @@ t.test("it works", async (t) => {
 
   const checkForDoubleWrapping = [join, resolve, normalize];
   for (const fn of checkForDoubleWrapping) {
-    if (isWrapped(fn) && isWrapped(fn.__original)) {
+    if (isWrapped(fn) && isWrapped(fn[originalSymbol])) {
       t.fail(`${fn.name} is double wrapped!`);
     }
   }

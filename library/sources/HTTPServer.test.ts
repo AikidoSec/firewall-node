@@ -6,7 +6,6 @@ import { getContext } from "../agent/Context";
 import { fetch } from "../helpers/fetch";
 import { shouldBlockRequest } from "../middleware/shouldBlockRequest";
 import { HTTPServer } from "./HTTPServer";
-import { join } from "path";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { mkdtemp, writeFile, unlink } from "fs/promises";
 import { exec } from "child_process";
@@ -82,6 +81,8 @@ agent.start([new HTTPServer(), new FileSystem(), new Path()]);
 
 t.setTimeout(30 * 1000);
 
+const { join } = require("path") as typeof import("path");
+
 t.beforeEach(() => {
   delete process.env.AIKIDO_MAX_BODY_SIZE_MB;
   delete process.env.NODE_ENV;
@@ -99,8 +100,6 @@ t.test("it wraps the createServer function of http module", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  http.globalAgent = new http.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3314, () => {
       fetch({
@@ -108,6 +107,7 @@ t.test("it wraps the createServer function of http module", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new http.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -148,8 +148,6 @@ t.test("it wraps the createServer function of https module", async () => {
     }
   );
 
-  https.globalAgent = new https.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3315, () => {
       fetch({
@@ -157,6 +155,7 @@ t.test("it wraps the createServer function of https module", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new https.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -537,8 +536,6 @@ t.test("it wraps on request event of http", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  http.globalAgent = new http.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3367, () => {
       fetch({
@@ -546,6 +543,7 @@ t.test("it wraps on request event of http", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new http.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -582,8 +580,6 @@ t.test("it wraps on request event of https", async () => {
     res.end(JSON.stringify(getContext()));
   });
 
-  https.globalAgent = new https.Agent({ keepAlive: false });
-
   await new Promise<void>((resolve) => {
     server.listen(3361, () => {
       fetch({
@@ -591,6 +587,7 @@ t.test("it wraps on request event of https", async () => {
         method: "GET",
         headers: {},
         timeoutInMS: 500,
+        agent: new https.Agent({ keepAlive: false }),
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
@@ -677,6 +674,7 @@ t.test("it blocks IP address", async (t) => {
             "x-forwarded-for": "9.9.9.9",
           },
           timeoutInMS: 500,
+          agent: new http.Agent({ keepAlive: false }),
         }),
         fetch({
           url: new URL("http://localhost:3325"),
@@ -826,9 +824,9 @@ t.test("it blocks double encoded path traversal", async (t) => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3327, async () => {
+    server.listen(3397, async () => {
       fetch({
-        url: new URL("http://localhost:3327/?path=.%252E/etc/passwd"),
+        url: new URL("http://localhost:3397/?path=.%252E/etc/passwd"),
         method: "GET",
         headers: {
           "x-forwarded-for": "1.2.3.4",
@@ -946,11 +944,11 @@ t.test("rate limiting works with url encoded paths", async (t) => {
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(3328, async () => {
+    server.listen(3329, async () => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -962,7 +960,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -974,7 +972,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/rate-limited"),
+            url: new URL("http://localhost:3329/rate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -986,7 +984,7 @@ t.test("rate limiting works with url encoded paths", async (t) => {
       t.equal(
         (
           await fetch({
-            url: new URL("http://localhost:3328/%72ate-limited"),
+            url: new URL("http://localhost:3329/%72ate-limited"),
             method: "GET",
             headers: {},
             timeoutInMS: 500,
@@ -1110,7 +1108,34 @@ t.test("it reports attack waves", async (t) => {
         {
           type: "detected_attack_wave",
           attack: {
-            metadata: {},
+            metadata: {
+              samples: JSON.stringify([
+                {
+                  method: "GET",
+                  url: "/../package.json",
+                },
+                {
+                  method: "GET",
+                  url: "/.env",
+                },
+                {
+                  method: "GET",
+                  url: "/wp-config.php",
+                },
+                {
+                  method: "GET",
+                  url: "/etc/passwd",
+                },
+                {
+                  method: "GET",
+                  url: "/.git/config",
+                },
+                {
+                  method: "GET",
+                  url: "/%systemroot%/system32/cmd.exe",
+                },
+              ]),
+            },
             user: undefined,
           },
           request: {
@@ -1137,6 +1162,107 @@ t.test("it reports attack waves", async (t) => {
 
       server.close();
       resolve();
+    });
+  });
+});
+
+t.test("It decodes multipart form data and sets body in context", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3230, () => {
+      fetch({
+        url: new URL("http://localhost:3230"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "value1" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("It ignores multipart form data files", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3231, () => {
+      fetch({
+        url: new URL("http://localhost:3231"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="file1"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nThis is the content of the file.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "valueabc" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("Invalid multipart form data is ignored", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3232, () => {
+      fetch({
+        url: new URL("http://localhost:3232"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundaryABCDEFGHIJ",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
     });
   });
 });

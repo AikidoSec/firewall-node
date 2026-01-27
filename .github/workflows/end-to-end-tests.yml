@@ -1,75 +1,68 @@
 name: 🕵️ End to end tests
+
 on:
-  push: {}
   workflow_call: {}
+
 permissions:
   contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      mongodb:
-        image: mongo:5
-        env:
-          "MONGO_INITDB_ROOT_USERNAME": "root"
-          "MONGO_INITDB_ROOT_PASSWORD": "password"
-        ports:
-          - 27017:27017
-      postgres:
-        image: postgres:14-alpine
-        env:
-          "POSTGRES_PASSWORD": "password"
-          "POSTGRES_USER": "root"
-          "POSTGRES_DB": "main_db"
-        ports:
-          - "27016:5432"
-      mysql:
-        image: mysql:8.0
-        # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
-        # We need to use this long command in order to execute the last part : mysql_native_password
-        # https://stackoverflow.com/questions/60902904/how-to-pass-mysql-native-password-to-mysql-service-in-github-actions
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5 -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=catsdb --entrypoint sh mysql:8.0 -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
-        ports:
-          - "27015:3306"
-      mariadb:
-        image: mariadb:11
-        env:
-          MARIADB_ROOT_PASSWORD: mypassword
-          MARIADB_DATABASE: catsdb
-        ports:
-          - "27018:3306"
-      clickhouse:
-        image: clickhouse/clickhouse-server:24
-        env:
-          "CLICKHOUSE_USER": "clickhouse"
-          "CLICKHOUSE_PASSWORD": "clickhouse"
-          "CLICKHOUSE_DB": "main_db"
-          "CLICKHOUSE_DEFAULT_ACCESS": "MANAGEMENT=1"
-        ports:
-          - "27019:8123"
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 22.x]
+        include:
+          - node-version: 20.x
+            mode: "old"
+          - node-version: 22.x
+            mode: "old"
+          - node-version: 24.x
+            mode: "new"
+          - node-version: 25.x
+            mode: "new"
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+
       - name: Setup Aikido safe-chain
         run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
+          npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
+
+      - name: Downgrade npm for v24 and v25
+        # https://github.com/npm/cli/issues/8669
+        if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
+        run: npm i -g npm@11.6.0
+
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - name: Build and run server
-        run: |
-          cd end2end/server && docker build -t server . && docker run -d -p 5874:3000 server
-      - run: npm install
-      - run: npm run build
-      - run: npm run end2end
+
+      - name: Run Containers
+        run: npm run containers
+
+      - name: Install dependencies (end-to-end only)
+        run: npm run install-e2e-only
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Run end-to-end tests
+        if: matrix.mode == 'old'
+        run: npm run end2end
+
+      - name: Run new end-to-end tests
+        if: matrix.mode == 'new'
+        run: npm run end2end:new

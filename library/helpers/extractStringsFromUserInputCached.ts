@@ -1,25 +1,29 @@
 import { Context } from "../agent/Context";
-import { Source } from "../agent/Source";
+import { SOURCES } from "../agent/Source";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
+type ReturnValue = ReturnType<typeof extractStringsFromUserInput>;
+
 export function extractStringsFromUserInputCached(
-  context: Context,
-  source: Source
-): ReturnType<typeof extractStringsFromUserInput> | undefined {
-  if (!context[source]) {
-    return undefined;
+  context: Context
+): ReturnValue {
+  if (context.cache) {
+    return context.cache;
   }
 
-  if (!context.cache) {
-    context.cache = new Map();
+  const userStrings: ReturnValue = new Set();
+
+  for (const source of SOURCES) {
+    if (!context[source]) {
+      continue;
+    }
+
+    for (const item of extractStringsFromUserInput(context[source])) {
+      userStrings.add(item);
+    }
   }
 
-  let result = context.cache.get(source);
+  context.cache = userStrings;
 
-  if (!result) {
-    result = extractStringsFromUserInput(context[source]);
-    context.cache.set(source, result);
-  }
-
-  return result;
+  return userStrings;
 }

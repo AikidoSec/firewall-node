@@ -1,0 +1,35 @@
+name: Main Workflow
+
+on:
+  push: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ⚙️ Build library
+    uses: ./.github/workflows/build.yml
+  lint-code:
+    name: 🧹 Lint code
+    uses: ./.github/workflows/lint-code.yml
+    needs: build
+  unit-tests:
+    name: 🧪 Unit tests
+    uses: ./.github/workflows/unit-test.yml
+    needs: build
+    permissions:
+      contents: read
+      id-token: write
+  end-to-end-tests:
+    name: 🕵️ End to end tests
+    uses: ./.github/workflows/end-to-end-tests.yml
+    needs: build
+  benchmark:
+    name: 📊 Benchmark
+    uses: ./.github/workflows/benchmark.yml
+    needs: build
+  qa-tests:
+    name: 🧪 QA Tests
+    uses: ./.github/workflows/qa-tests.yml
+    needs: build

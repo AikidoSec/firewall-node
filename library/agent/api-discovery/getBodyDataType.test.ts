@@ -10,6 +10,13 @@ t.test("it works", async (t) => {
   t.same(getBodyDataType({ "content-type": "application/csp-report" }), "json");
   t.same(getBodyDataType({ "content-type": "application/x-json" }), "json");
   t.same(
+    getBodyDataType({ "content-type": "application/json; charset=utf-8" }),
+    "json"
+  );
+  t.same(getBodyDataType({ "content-type": "Application/JSON" }), "json");
+  t.same(getBodyDataType({ "content-type": "application/ld+json" }), "json");
+  t.same(getBodyDataType({ "content-type": " application/json " }), "json");
+  t.same(
     getBodyDataType({ "content-type": "application/x-www-form-urlencoded" }),
     "form-urlencoded"
   );
@@ -18,6 +25,8 @@ t.test("it works", async (t) => {
     "form-data"
   );
   t.same(getBodyDataType({ "content-type": "text/xml" }), "xml");
+  t.same(getBodyDataType({ "content-type": "application/xml" }), "xml");
+  t.same(getBodyDataType({ "content-type": "application/atom+xml" }), "xml");
   t.same(getBodyDataType({ "content-type": "text/html" }), undefined);
   t.same(
     getBodyDataType({ "content-type": ["application/json", "text/html"] }),

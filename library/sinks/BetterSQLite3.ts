@@ -1,5 +1,7 @@
+/* eslint-disable max-lines-per-function */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
@@ -65,26 +67,66 @@ export class BetterSQLite3 implements Wrapper {
     const sqlFunctions = ["prepare", "exec", "pragma"];
     const fsPathFunctions = ["backup", "loadExtension"];
 
-    hooks
+    const pkg = hooks
       .addPackage("better-sqlite3")
-      .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0")
-      .onRequire((exports, pkgInfo) => {
-        for (const func of sqlFunctions) {
-          wrapExport(exports.prototype, func, pkgInfo, {
-            kind: "sql_op",
-            inspectArgs: (args) => {
-              return this.inspectQuery(`better-sqlite3.${func}`, args);
-            },
-          });
-        }
-        for (const func of fsPathFunctions) {
-          wrapExport(exports.prototype, func, pkgInfo, {
-            kind: "fs_op",
-            inspectArgs: (args) => {
-              return this.inspectPath(`better-sqlite3.${func}`, args);
-            },
-          });
-        }
-      });
+      .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0");
+
+    pkg.onRequire((exports, pkgInfo) => {
+      for (const func of sqlFunctions) {
+        wrapExport(exports.prototype, func, pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => {
+            return this.inspectQuery(`better-sqlite3.${func}`, args);
+          },
+        });
+      }
+      for (const func of fsPathFunctions) {
+        wrapExport(exports.prototype, func, pkgInfo, {
+          kind: "fs_op",
+          inspectArgs: (args) => {
+            return this.inspectPath(`better-sqlite3.${func}`, args);
+          },
+        });
+      }
+    });
+
+    const wrapperFunctionsInstructions: PackageFunctionInstrumentationInstruction[] =
+      sqlFunctions.map((func) => ({
+        name: `exports.${func}`,
+        operationKind: "sql_op",
+        nodeType: "FunctionAssignment",
+        inspectArgs: (args) => {
+          return this.inspectQuery(`better-sqlite3.${func}`, args);
+        },
+      }));
+
+    wrapperFunctionsInstructions.push({
+      name: "exports.loadExtension",
+      operationKind: "fs_op",
+      nodeType: "FunctionAssignment",
+      inspectArgs: (args) => {
+        return this.inspectPath("better-sqlite3.loadExtension", args);
+      },
+    });
+
+    pkg.addFileInstrumentation({
+      path: "lib/methods/wrappers.js",
+      functions: wrapperFunctionsInstructions,
+    });
+
+    // Add backup instrumentation
+    pkg.addFileInstrumentation({
+      path: "lib/methods/backup.js",
+      functions: [
+        {
+          name: "module.exports",
+          operationKind: "fs_op",
+          nodeType: "FunctionAssignment",
+          inspectArgs: (args) => {
+            return this.inspectPath("better-sqlite3.backup", args);
+          },
+        },
+      ],
+    });
   }
 }

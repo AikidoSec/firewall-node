@@ -2,6 +2,8 @@ import { readdir, readFile } from "fs/promises";
 import { join } from "path";
 import * as t from "tap";
 
+// @esm-tests-skip
+
 t.test("check that all sources and sinks are imported", async (t) => {
   // -----
 

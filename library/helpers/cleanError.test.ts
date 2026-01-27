@@ -1,6 +1,8 @@
 import * as t from "tap";
 import { cleanError } from "./cleanError";
 
+// @esm-tests-skip - Different directory structure (not inside lib dir)
+
 t.test("it works", async () => {
   const error = new Error("test");
   t.same(error.message, "test");

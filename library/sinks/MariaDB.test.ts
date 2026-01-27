@@ -36,8 +36,9 @@ t.before(() => {
   agent.start([new MariaDB()]);
 });
 
+const mariadb = require("mariadb") as typeof import("mariadb");
+
 t.test("it detects SQL injections", async (t) => {
-  const mariadb = require("mariadb") as typeof import("mariadb");
   const pool = mariadb.createPool({
     host: "localhost",
     user: "root",
@@ -181,9 +182,10 @@ t.test("it detects SQL injections", async (t) => {
   }
 });
 
+const mariadbCallback = require("mariadb/callback.js");
+
 t.test("it detects SQL injections using callbacks", (t) => {
-  const mariadb = require("mariadb/callback");
-  const pool = mariadb.createPool({
+  const pool = mariadbCallback.createPool({
     host: "localhost",
     user: "root",
     password: "mypassword",

@@ -62,7 +62,7 @@ function generateAttackWaveEvent(): Event {
     type: "detected_attack_wave",
     time: Date.now(),
     request: {
-      ipAddress: undefined,
+      ipAddress: "::1",
       userAgent: undefined,
       source: "express",
     },
@@ -278,6 +278,8 @@ t.test("it does not blow memory", async () => {
       heartbeatIntervalInMS: 10 * 60 * 1000,
       blockedUserIds: [],
       allowedIPAddresses: [],
+      blockNewOutgoingRequests: false,
+      domains: [],
     });
   }
 

@@ -77,7 +77,7 @@ type Env = {
   };
 };
 
-function getApp() {
+async function getApp() {
   const { Hono } = require("hono") as typeof import("hono");
   const { contextStorage: honoContextStorage, getContext: getHonoContext } =
     require("hono/context-storage") as typeof import("hono/context-storage");
@@ -157,7 +157,8 @@ const opts = {
 };
 
 t.test("it adds context from request for GET", opts, async (t) => {
-  const response = await getApp().request("/?title=test", {
+  const app = await getApp();
+  const response = await app.request("/?title=test", {
     method: "GET",
     headers: {
       accept: "application/json",
@@ -179,7 +180,8 @@ t.test("it adds context from request for GET", opts, async (t) => {
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {
-  const response = await getApp().request("/json", {
+  const app = await getApp();
+  const response = await app.request("/json", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -197,7 +199,8 @@ t.test("it adds JSON body to context", opts, async (t) => {
 });
 
 t.test("it adds form body to context", opts, async (t) => {
-  const response = await getApp().request("/form", {
+  const app = await getApp();
+  const response = await app.request("/form", {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -215,7 +218,8 @@ t.test("it adds form body to context", opts, async (t) => {
 });
 
 t.test("it adds text body to context", opts, async (t) => {
-  const response = await getApp().request("/text", {
+  const app = await getApp();
+  const response = await app.request("/text", {
     method: "POST",
     headers: {
       "content-type": "text/plain",
@@ -233,7 +237,8 @@ t.test("it adds text body to context", opts, async (t) => {
 });
 
 t.test("it adds xml body to context", opts, async (t) => {
-  const response = await getApp().request("/text", {
+  const app = await getApp();
+  const response = await app.request("/text", {
     method: "POST",
     headers: {
       "content-type": "application/xml",
@@ -251,7 +256,8 @@ t.test("it adds xml body to context", opts, async (t) => {
 });
 
 t.test("it sets the user in the context", opts, async (t) => {
-  const response = await getApp().request("/user", {
+  const app = await getApp();
+  const response = await app.request("/user", {
     method: "GET",
   });
 
@@ -259,14 +265,19 @@ t.test("it sets the user in the context", opts, async (t) => {
   t.match(body, {
     method: "GET",
     source: "hono",
-    route: "/",
+    route: "/user",
     urlPath: "/user",
     user: { id: "123" },
+    consumedRateLimit: true,
+    executedMiddleware: true,
+    cookies: {},
+    url: "http://localhost/user",
   });
 });
 
 t.test("it blocks user", opts, async (t) => {
-  const response = await getApp().request("/user/blocked", {
+  const app = await getApp();
+  const response = await app.request("/user/blocked", {
     method: "GET",
   });
 
@@ -275,7 +286,8 @@ t.test("it blocks user", opts, async (t) => {
 });
 
 t.test("it rate limits based on IP address", opts, async (t) => {
-  const response = await getApp().request("/rate-limited", {
+  const app = await getApp();
+  const response = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -284,7 +296,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response.status, 200);
   t.match(await response.text(), "OK");
 
-  const response2 = await getApp().request("/rate-limited", {
+  const response2 = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -293,7 +305,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   t.match(response2.status, 200);
   t.match(await response2.text(), "OK");
 
-  const response3 = await getApp().request("/rate-limited", {
+  const response3 = await app.request("/rate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -305,7 +317,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
 
-  const response4 = await getApp().request("/%72ate-limited", {
+  const response4 = await app.request("/%72ate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -313,7 +325,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
   });
   t.match(response4.status, 429);
 
-  const response5 = await getApp().request("/%2572ate-limited", {
+  const response5 = await app.request("/%2572ate-limited", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "1.2.3.4",
@@ -323,7 +335,8 @@ t.test("it rate limits based on IP address", opts, async (t) => {
 });
 
 t.test("it ignores invalid json body", opts, async (t) => {
-  const response = await getApp().request("/", {
+  const app = await getApp();
+  const response = await app.request("/", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -334,7 +347,6 @@ t.test("it ignores invalid json body", opts, async (t) => {
   const body = await response.json();
   t.match(body, {
     method: "POST",
-    body: undefined,
     source: "hono",
     route: "/",
   });
@@ -344,7 +356,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8765,
   });
   const response = await fetch.fetch({
@@ -372,7 +384,7 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8766,
   });
 
@@ -429,7 +441,8 @@ t.test("ip and bot blocking works (real socket)", opts, async (t) => {
 });
 
 t.test("The hono async context still works", opts, async (t) => {
-  const response = await getApp().request("/hono-async-context", {
+  const app = await getApp();
+  const response = await app.request("/hono-async-context", {
     method: "GET",
   });
 
@@ -529,7 +542,7 @@ t.test("Body parsing in middleware", opts, async (t) => {
 });
 
 t.test("invalid json body", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.request("/json", {
     method: "POST",
@@ -549,7 +562,7 @@ t.test("bypass list works", opts, async (t) => {
   const { serve } =
     require("@hono/node-server") as typeof import("@hono/node-server");
   const server = serve({
-    fetch: getApp().fetch,
+    fetch: (await getApp()).fetch,
     port: 8769,
   });
 
@@ -600,7 +613,8 @@ t.test("bypass list works", opts, async (t) => {
 });
 
 t.test("it rate limits based on group", opts, async (t) => {
-  const response = await getApp().request("/rate-limited-group", {
+  const app = await getApp();
+  const response = await app.request("/rate-limited-group", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "200.1.2.1",
@@ -610,7 +624,7 @@ t.test("it rate limits based on group", opts, async (t) => {
   });
   t.match(response.status, 200);
 
-  const response2 = await getApp().request("/rate-limited-group", {
+  const response2 = await app.request("/rate-limited-group", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "200.1.2.2",
@@ -620,7 +634,7 @@ t.test("it rate limits based on group", opts, async (t) => {
   });
   t.match(response2.status, 200);
 
-  const response3 = await getApp().request("/rate-limited-group", {
+  const response3 = await app.request("/rate-limited-group", {
     method: "GET",
     headers: {
       "X-Forwarded-For": "200.1.2.3",
