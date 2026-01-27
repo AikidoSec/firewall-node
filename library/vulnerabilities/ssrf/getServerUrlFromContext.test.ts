@@ -27,11 +27,11 @@ t.test("returns undefined if context.url is undefined", async (t) => {
 t.test("returns full URL as-is if already absolute", async (t) => {
   t.equal(
     getServerUrlFromContext(
-      createContext("http://10.129.219.235:3000/", {
-        host: "10.129.219.235:3000",
+      createContext("http://192.168.1.50:3000/", {
+        host: "192.168.1.50:3000",
       })
     ),
-    "http://10.129.219.235:3000/"
+    "http://192.168.1.50:3000/"
   );
   t.equal(
     getServerUrlFromContext(
@@ -46,9 +46,9 @@ t.test(
   async (t) => {
     t.equal(
       getServerUrlFromContext(
-        createContext("/", { host: "10.129.219.235:3000" })
+        createContext("/", { host: "192.168.1.50:3000" })
       ),
-      "http://10.129.219.235:3000/"
+      "http://192.168.1.50:3000/"
     );
     t.equal(
       getServerUrlFromContext(
@@ -76,10 +76,10 @@ t.test("uses Host header and ignores x-forwarded-host", async (t) => {
   t.equal(
     getServerUrlFromContext(
       createContext("/", {
-        host: "10.129.219.235:3000",
+        host: "192.168.1.50:3000",
         "x-forwarded-host": "app.example.com",
       })
     ),
-    "http://10.129.219.235:3000/"
+    "http://192.168.1.50:3000/"
   );
 });
