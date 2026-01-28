@@ -226,7 +226,6 @@ t.test(
 
     const json = await response.json();
     t.match(json, {
-      url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
       query: { "title[$ne]": "null" },
@@ -243,6 +242,9 @@ t.test(
         session: "123",
       },
     });
+
+    // Url is absolute and includes query parameters
+    t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
   }
 );
 
@@ -265,7 +267,6 @@ t.test(
 
     const json = await response.json();
     t.match(json, {
-      url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
       query: { "title[$ne]": "null" },
@@ -282,6 +283,9 @@ t.test(
         session: "123",
       },
     });
+
+    // Url is absolute and includes query parameters
+    t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
   }
 );
 
@@ -301,7 +305,6 @@ t.test("it adds context from request for all", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
     query: {},
@@ -318,6 +321,9 @@ t.test("it adds context from request for all", opts, async (t) => {
       session: "123",
     },
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/context$/);
 });
 
 t.test("it adds body to context", opts, async (t) => {
@@ -338,7 +344,6 @@ t.test("it adds body to context", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
     query: {},
@@ -357,6 +362,9 @@ t.test("it adds body to context", opts, async (t) => {
     route: "/context",
     cookies: {},
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/context$/);
 });
 
 t.test("it blocks request in on-request hook", opts, async (t) => {
@@ -477,7 +485,6 @@ t.test("It works with route params", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/hello/123",
     remoteAddress: "127.0.0.1",
     method: "GET",
     query: {},
@@ -493,6 +500,9 @@ t.test("It works with route params", opts, async (t) => {
     route: "/hello/:number",
     cookies: {},
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/hello\/123$/);
 });
 
 t.test(
@@ -539,7 +549,6 @@ t.test("it works with addHttpMethod", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/testurl",
     remoteAddress: "127.0.0.1",
     method: "MKCOL",
     query: {},
@@ -552,6 +561,9 @@ t.test("it works with addHttpMethod", opts, async (t) => {
     route: "/testurl",
     cookies: {},
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/testurl$/);
 });
 
 t.test("it adds context from request for all", opts, async (t) => {

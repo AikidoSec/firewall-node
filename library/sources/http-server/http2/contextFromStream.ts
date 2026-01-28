@@ -1,6 +1,7 @@
 import { Context } from "../../../agent/Context";
 import { buildRouteFromURL } from "../../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../../helpers/getIPAddressFromRequest";
+import { getRawRequestPath } from "../../../helpers/getRawRequestPath";
 import { getRequestUrlFromStream } from "../../../helpers/getRequestUrlFromStream";
 import { parse } from "../../../helpers/parseCookies";
 import { tryParseURLParams } from "../../../helpers/tryParseURLParams";
@@ -26,7 +27,7 @@ export function contextFromStream(
 
   return {
     url: getRequestUrlFromStream(headers),
-    urlPath: path,
+    urlPath: getRawRequestPath(path || ""),
     method: headers[":method"] as string,
     headers: headers,
     route: path ? buildRouteFromURL(path) : undefined,
