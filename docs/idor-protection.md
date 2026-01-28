@@ -102,6 +102,37 @@ Zen IDOR protection: setTenantId() was not called for this request. Every reques
 
 Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. Use `withoutIdorProtection()` to bypass the check for those queries.
 
+## Limitations
+
+### MySQL bulk insert syntax
+
+The `mysql` and `mysql2` packages support a shorthand for bulk inserts using `VALUES ?` with nested arrays:
+
+```js
+connection.query('INSERT INTO orders (name, tenant_id) VALUES ?', [
+  [['Widget', 'org_123'], ['Gadget', 'org_123']]
+]);
+```
+
+This syntax is not standard SQL and cannot be analyzed by Zen. Wrap these calls with `withoutIdorProtection()`:
+
+```js
+await Zen.withoutIdorProtection(async () => {
+  return connection.query('INSERT INTO orders (name, tenant_id) VALUES ?', [
+    [['Widget', 'org_123'], ['Gadget', 'org_123']]
+  ]);
+});
+```
+
+Alternatively, use explicit placeholders which Zen can analyze:
+
+```js
+connection.query(
+  'INSERT INTO orders (name, tenant_id) VALUES (?, ?), (?, ?)',
+  ['Widget', 'org_123', 'Gadget', 'org_123']
+);
+```
+
 ## Notes
 
 - IDOR protection always throws on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.

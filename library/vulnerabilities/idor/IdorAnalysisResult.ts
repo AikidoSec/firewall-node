@@ -6,7 +6,6 @@ export type TableRef = {
 export type FilterColumn = {
   table?: string;
   column: string;
-  operator: string;
   value: string;
   /** 0-based position of a `?` placeholder in the query (MySQL-style) */
   placeholder_number?: number;

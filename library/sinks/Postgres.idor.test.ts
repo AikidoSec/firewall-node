@@ -1,25 +1,8 @@
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
-import { MySQL } from "./MySQL";
-import type { Connection } from "mysql";
+import { Postgres } from "./Postgres";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { withoutIdorProtection } from "../agent/context/withoutIdorProtection";
-
-function query(
-  sql: string,
-  connection: Connection,
-  values?: unknown[]
-): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    connection.query(sql, values, (error, results) => {
-      if (error) {
-        return reject(error);
-      }
-
-      resolve(results);
-    });
-  });
-}
 
 const context: Context = {
   remoteAddress: "::1",
@@ -48,49 +31,46 @@ const contextWithoutTenantId: Context = {
   route: "/posts/:id",
 };
 
-t.test("IDOR protection for MySQL", async (t) => {
+t.test("IDOR protection for Postgres (pg)", async (t) => {
   const agent = createTestAgent();
-  agent.start([new MySQL()]);
+  agent.start([new Postgres()]);
   agent.setIdorProtectionConfig({
     tenantColumnName: "tenant_id",
     excludedTables: ["migrations"],
   });
 
-  const mysql = require("mysql") as typeof import("mysql");
-  const connection = mysql.createConnection({
-    host: "localhost",
+  const { Client } = require("pg") as typeof import("pg");
+  const client = new Client({
     user: "root",
-    password: "mypassword",
-    database: "catsdb",
-    port: 27015,
-    multipleStatements: true,
+    host: "127.0.0.1",
+    database: "main_db",
+    password: "password",
+    port: 27016,
   });
+  await client.connect();
 
   try {
-    await query(
-      `
-        CREATE TABLE IF NOT EXISTS cats_idor (
-            petname varchar(255),
-            tenant_id varchar(255)
-        );
-      `,
-      connection
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cats_pg_idor (
+          petname varchar(255),
+          tenant_id varchar(255)
+      );
+    `);
+    await client.query(
+      "CREATE TABLE IF NOT EXISTS migrations (id int)"
     );
-    await query(
-      "CREATE TABLE IF NOT EXISTS migrations (id int)",
-      connection
-    );
-    await query("TRUNCATE cats_idor", connection);
+    await client.query("TRUNCATE cats_pg_idor");
 
     await t.test("allows query with tenant filter", async () => {
       t.same(
-        await runWithContext(context, () => {
-          return query(
-            "SELECT petname FROM cats_idor WHERE tenant_id = ?",
-            connection,
-            ["org_123"]
-          );
-        }),
+        (
+          await runWithContext(context, () => {
+            return client.query(
+              "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
+              ["org_123"]
+            );
+          })
+        ).rows,
         []
       );
     });
@@ -98,28 +78,28 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks query without tenant filter", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query("SELECT petname FROM cats_idor", connection);
+          return client.query("SELECT petname FROM cats_pg_idor");
         });
       });
 
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
         );
       }
     });
 
     await t.test("allows query on excluded table", async () => {
       await runWithContext(context, () => {
-        return query("SELECT * FROM migrations", connection);
+        return client.query("SELECT * FROM migrations");
       });
     });
 
     await t.test("throws when tenantId is not set", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(contextWithoutTenantId, () => {
-          return query("SELECT petname FROM cats_idor", connection);
+          return client.query("SELECT petname FROM cats_pg_idor");
         });
       });
 
@@ -131,9 +111,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks query with wrong tenant ID value", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "SELECT petname FROM cats_idor WHERE tenant_id = ?",
-            connection,
+          return client.query(
+            "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
             ["org_456"]
           );
         });
@@ -150,7 +129,7 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("allows queries inside withoutIdorProtection", async () => {
       const result = await runWithContext(context, () => {
         return withoutIdorProtection(() => {
-          return query("SELECT count(*) FROM cats_idor", connection);
+          return client.query("SELECT count(*) FROM cats_pg_idor");
         });
       });
 
@@ -160,33 +139,36 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks query object format without tenant filter", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return new Promise((resolve, reject) => {
-            connection.query(
-              { sql: "SELECT petname FROM cats_idor" },
-              (err, results) => {
-                if (err) {
-                  return reject(err);
-                }
-                resolve(results);
-              }
-            );
-          });
+          return client.query({ text: "SELECT petname FROM cats_pg_idor" });
         });
       });
 
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
         );
       }
     });
 
+    await t.test("allows query object format with tenant filter", async () => {
+      t.same(
+        (
+          await runWithContext(context, () => {
+            return client.query({
+              text: "SELECT petname FROM cats_pg_idor WHERE tenant_id = $1",
+              values: ["org_123"],
+            });
+          })
+        ).rows,
+        []
+      );
+    });
+
     await t.test("allows INSERT with tenant column and correct value", async () => {
       await runWithContext(context, () => {
-        return query(
-          "INSERT INTO cats_idor (petname, tenant_id) VALUES (?, ?)",
-          connection,
+        return client.query(
+          "INSERT INTO cats_pg_idor (petname, tenant_id) VALUES ($1, $2)",
           ["Mittens", "org_123"]
         );
       });
@@ -195,9 +177,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks INSERT without tenant column", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "INSERT INTO cats_idor (petname) VALUES (?)",
-            connection,
+          return client.query(
+            "INSERT INTO cats_pg_idor (petname) VALUES ($1)",
             ["Mittens"]
           );
         });
@@ -206,7 +187,7 @@ t.test("IDOR protection for MySQL", async (t) => {
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: INSERT on table 'cats_idor' is missing column 'tenant_id'"
+          "Zen IDOR protection: INSERT on table 'cats_pg_idor' is missing column 'tenant_id'"
         );
       }
     });
@@ -214,9 +195,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks INSERT with wrong tenant ID value", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "INSERT INTO cats_idor (petname, tenant_id) VALUES (?, ?)",
-            connection,
+          return client.query(
+            "INSERT INTO cats_pg_idor (petname, tenant_id) VALUES ($1, $2)",
             ["Mittens", "org_456"]
           );
         });
@@ -225,16 +205,15 @@ t.test("IDOR protection for MySQL", async (t) => {
       if (error instanceof Error) {
         t.match(
           error.message,
-          "INSERT on table 'cats_idor' sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+          "INSERT on table 'cats_pg_idor' sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
         );
       }
     });
 
     await t.test("allows UPDATE with tenant filter", async () => {
       await runWithContext(context, () => {
-        return query(
-          "UPDATE cats_idor SET petname = ? WHERE tenant_id = ?",
-          connection,
+        return client.query(
+          "UPDATE cats_pg_idor SET petname = $1 WHERE tenant_id = $2",
           ["Rex", "org_123"]
         );
       });
@@ -243,9 +222,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks UPDATE without tenant filter", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "UPDATE cats_idor SET petname = ?",
-            connection,
+          return client.query(
+            "UPDATE cats_pg_idor SET petname = $1",
             ["Rex"]
           );
         });
@@ -254,7 +232,7 @@ t.test("IDOR protection for MySQL", async (t) => {
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
         );
       }
     });
@@ -262,9 +240,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks UPDATE with wrong tenant ID value", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "UPDATE cats_idor SET petname = ? WHERE tenant_id = ?",
-            connection,
+          return client.query(
+            "UPDATE cats_pg_idor SET petname = $1 WHERE tenant_id = $2",
             ["Rex", "org_456"]
           );
         });
@@ -280,9 +257,8 @@ t.test("IDOR protection for MySQL", async (t) => {
 
     await t.test("allows DELETE with tenant filter", async () => {
       await runWithContext(context, () => {
-        return query(
-          "DELETE FROM cats_idor WHERE tenant_id = ?",
-          connection,
+        return client.query(
+          "DELETE FROM cats_pg_idor WHERE tenant_id = $1",
           ["org_123"]
         );
       });
@@ -291,14 +267,14 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks DELETE without tenant filter", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query("DELETE FROM cats_idor", connection);
+          return client.query("DELETE FROM cats_pg_idor");
         });
       });
 
       if (error instanceof Error) {
         t.match(
           error.message,
-          "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
         );
       }
     });
@@ -306,9 +282,8 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks DELETE with wrong tenant ID value", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query(
-            "DELETE FROM cats_idor WHERE tenant_id = ?",
-            connection,
+          return client.query(
+            "DELETE FROM cats_pg_idor WHERE tenant_id = $1",
             ["org_456"]
           );
         });
@@ -322,48 +297,10 @@ t.test("IDOR protection for MySQL", async (t) => {
       }
     });
 
-    await t.test("blocks bulk insert with VALUES ? syntax (use withoutIdorProtection)", async () => {
-      const error = await t.rejects(async () => {
-        await runWithContext(context, () => {
-          return query(
-            "INSERT INTO cats_idor (petname, tenant_id) VALUES ?",
-            connection,
-            [
-              [
-                ["Mittens", "org_123"],
-                ["Felix", "org_123"],
-              ],
-            ]
-          );
-        });
-      });
-
-      if (error instanceof Error) {
-        t.match(error.message, "Zen IDOR protection");
-      }
-    });
-
-    await t.test("allows bulk insert with VALUES ? inside withoutIdorProtection", async () => {
-      await runWithContext(context, () => {
-        return withoutIdorProtection(() => {
-          return query(
-            "INSERT INTO cats_idor (petname, tenant_id) VALUES ?",
-            connection,
-            [
-              [
-                ["Mittens", "org_123"],
-                ["Felix", "org_123"],
-              ],
-            ]
-          );
-        });
-      });
-    });
-
     await t.test("blocks unsupported statement types", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query("TRUNCATE cats_idor", connection);
+          return client.query("TRUNCATE cats_pg_idor");
         });
       });
 
@@ -378,7 +315,7 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("allows unsupported statements inside withoutIdorProtection", async () => {
       await runWithContext(context, () => {
         return withoutIdorProtection(() => {
-          return query("TRUNCATE cats_idor", connection);
+          return client.query("TRUNCATE cats_pg_idor");
         });
       });
     });
@@ -387,9 +324,11 @@ t.test("IDOR protection for MySQL", async (t) => {
       agent.setIdorProtectionConfig(undefined!);
 
       t.same(
-        await runWithContext(context, () => {
-          return query("SELECT petname FROM cats_idor", connection);
-        }),
+        (
+          await runWithContext(context, () => {
+            return client.query("SELECT petname FROM cats_pg_idor");
+          })
+        ).rows,
         []
       );
 
@@ -400,14 +339,6 @@ t.test("IDOR protection for MySQL", async (t) => {
       });
     });
   } finally {
-    await new Promise<void>((resolve, reject) =>
-      connection.end((err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      })
-    );
+    await client.end();
   }
 });

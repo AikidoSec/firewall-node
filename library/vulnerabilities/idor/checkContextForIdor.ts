@@ -117,9 +117,6 @@ function checkWhereFilters(
       if (f.column !== config.tenantColumnName) {
         return false;
       }
-      if (f.operator !== "=") {
-        return false;
-      }
       // If filter is qualified (e.g. u.tenant_id), match against table name or alias
       if (f.table) {
         return (
