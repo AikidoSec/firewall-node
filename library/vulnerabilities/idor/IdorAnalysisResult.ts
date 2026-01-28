@@ -25,6 +25,3 @@ export type SqlQueryResult = {
   /** For INSERT statements: column-value pairs for each row */
   insert_columns?: InsertColumn[][];
 };
-
-// Backward compat alias
-export type SelectQueryResult = SqlQueryResult;
