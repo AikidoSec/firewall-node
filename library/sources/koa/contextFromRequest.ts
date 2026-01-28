@@ -3,6 +3,7 @@ import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse as parseCookies } from "../../helpers/parseCookies";
+import { getRequestUrl } from "../../helpers/getRequestUrl";
 
 export function contextFromRequest(ctx: KoaContext): Context {
   return {
@@ -13,7 +14,8 @@ export function contextFromRequest(ctx: KoaContext): Context {
     }),
     // Body is not available by default in Koa, only if a body parser is used
     body: (ctx.request as any).body ? (ctx.request as any).body : undefined,
-    url: ctx.request.href,
+    url: getRequestUrl(ctx.request.req),
+    urlPath: ctx.request.path,
     headers: ctx.request.headers,
     // Only available if e.g. koa-router is used
     routeParams: ctx.params ? ctx.params : {},

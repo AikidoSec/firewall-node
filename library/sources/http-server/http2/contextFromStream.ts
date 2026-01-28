@@ -1,6 +1,8 @@
 import { Context } from "../../../agent/Context";
 import { buildRouteFromURL } from "../../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../../helpers/getIPAddressFromRequest";
+import { getRawRequestPath } from "../../../helpers/getRawRequestPath";
+import { getRequestUrlFromStream } from "../../../helpers/getRequestUrlFromStream";
 import { parse } from "../../../helpers/parseCookies";
 import { tryParseURLParams } from "../../../helpers/tryParseURLParams";
 import { ServerHttp2Stream, IncomingHttpHeaders } from "http2";
@@ -13,21 +15,22 @@ export function contextFromStream(
   headers: IncomingHttpHeaders,
   module: string
 ): Context {
-  const url = headers[":path"];
+  const path = headers[":path"];
 
   const queryObject: Record<string, string> = {};
-  if (url) {
-    const params = tryParseURLParams(url);
+  if (path) {
+    const params = tryParseURLParams(path);
     for (const [key, value] of params.entries()) {
       queryObject[key] = value;
     }
   }
 
   return {
-    url: url,
+    url: getRequestUrlFromStream(headers),
+    urlPath: getRawRequestPath(path || ""),
     method: headers[":method"] as string,
     headers: headers,
-    route: url ? buildRouteFromURL(url) : undefined,
+    route: path ? buildRouteFromURL(path) : undefined,
     query: queryObject,
     source: `${module}.createServer`,
     routeParams: {},
