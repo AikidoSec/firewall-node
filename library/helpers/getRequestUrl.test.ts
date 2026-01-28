@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { getRequestUrl } from "./getRequestUrl";
-
 import { get as httpGet, createServer, IncomingMessage } from "node:http";
 
 t.beforeEach(() => {
