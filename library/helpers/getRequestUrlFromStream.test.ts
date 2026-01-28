@@ -38,21 +38,18 @@ t.test("uses x-forwarded-host when trust proxy is enabled", async (t) => {
   );
 });
 
-t.test(
-  "ignores x-forwarded-host when trust proxy is disabled",
-  async (t) => {
-    process.env.AIKIDO_TRUST_PROXY = "0";
+t.test("ignores x-forwarded-host when trust proxy is disabled", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "0";
 
-    t.equal(
-      getRequestUrlFromStream({
-        ":path": "/forwarded/path",
-        ":authority": "original.com",
-        "x-forwarded-host": "forwarded.com",
-      }),
-      "http://original.com/forwarded/path"
-    );
-  }
-);
+  t.equal(
+    getRequestUrlFromStream({
+      ":path": "/forwarded/path",
+      ":authority": "original.com",
+      "x-forwarded-host": "forwarded.com",
+    }),
+    "http://original.com/forwarded/path"
+  );
+});
 
 t.test("uses x-forwarded-proto for protocol", async (t) => {
   t.equal(
@@ -76,21 +73,18 @@ t.test("uses x-forwarded-protocol for protocol", async (t) => {
   );
 });
 
-t.test(
-  "ignores x-forwarded-proto when trust proxy is disabled",
-  async (t) => {
-    process.env.AIKIDO_TRUST_PROXY = "0";
+t.test("ignores x-forwarded-proto when trust proxy is disabled", async (t) => {
+  process.env.AIKIDO_TRUST_PROXY = "0";
 
-    t.equal(
-      getRequestUrlFromStream({
-        ":path": "/secure/path",
-        ":authority": "example.com",
-        "x-forwarded-proto": "https",
-      }),
-      "http://example.com/secure/path"
-    );
-  }
-);
+  t.equal(
+    getRequestUrlFromStream({
+      ":path": "/secure/path",
+      ":authority": "example.com",
+      "x-forwarded-proto": "https",
+    }),
+    "http://example.com/secure/path"
+  );
+});
 
 t.test("uses :scheme header for protocol when https", async (t) => {
   process.env.AIKIDO_TRUST_PROXY = "0";
