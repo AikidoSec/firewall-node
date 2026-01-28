@@ -15,6 +15,9 @@ import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { isLibBundled } from "./helpers/isLibBundled";
+import { setTenantId } from "./agent/context/tenantId";
+import { enableIdorProtection } from "./agent/idorProtection";
+import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -51,6 +54,9 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  setTenantId,
+  enableIdorProtection,
+  withoutIdorProtection,
 };
 
 // Required for ESM / TypeScript default export support
@@ -67,4 +73,7 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  setTenantId,
+  enableIdorProtection,
+  withoutIdorProtection,
 };
