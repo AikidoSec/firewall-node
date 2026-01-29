@@ -1,11 +1,11 @@
 import type { BuildOptions } from "esbuild";
-import type { BundlerProcessedOptions } from "../unplugin";
+import type { ProcessedBundlerOptions } from "../unplugin";
 import { findZenLibPath } from "../findZenLibPath";
 import { join } from "node:path";
 
 export function processEsbuildOptions(
   options: BuildOptions
-): BundlerProcessedOptions {
+): ProcessedBundlerOptions {
   if (!options.format) {
     throw new Error(
       "Aikido: esbuild output format is undefined. Please set it to 'cjs' or 'esm' explicitly in your esbuild config."
@@ -67,6 +67,7 @@ export function processEsbuildOptions(
 
   return {
     outputFormat,
-    outdir: options.outdir,
+    outDir: options.outdir,
+    copyMode: outputFormat === "cjs" ? "only-wasm-node" : "full",
   };
 }
