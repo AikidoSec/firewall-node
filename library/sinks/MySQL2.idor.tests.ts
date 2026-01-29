@@ -64,9 +64,7 @@ export function createMySQL2IdorTests(versionPkgName: string) {
             tenant_id varchar(255)
         );
       `);
-      await connection.query(
-        "CREATE TABLE IF NOT EXISTS migrations (id int)"
-      );
+      await connection.query("CREATE TABLE IF NOT EXISTS migrations (id int)");
       await connection.query("TRUNCATE cats_idor2");
 
       await t.test("allows query with tenant filter", async () => {
@@ -140,31 +138,37 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         t.ok(result);
       });
 
-      await t.test("blocks query object format without tenant filter", async () => {
-        const error = await t.rejects(async () => {
-          await runWithContext(context, () => {
-            return connection.query({
-              sql: "SELECT petname FROM cats_idor2",
+      await t.test(
+        "blocks query object format without tenant filter",
+        async () => {
+          const error = await t.rejects(async () => {
+            await runWithContext(context, () => {
+              return connection.query({
+                sql: "SELECT petname FROM cats_idor2",
+              });
             });
           });
-        });
 
-        if (error instanceof Error) {
-          t.match(
-            error.message,
-            "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
-          );
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
+            );
+          }
         }
-      });
+      );
 
-      await t.test("allows INSERT with tenant column and correct value", async () => {
-        await runWithContext(context, () => {
-          return connection.query(
-            "INSERT INTO cats_idor2 (petname, tenant_id) VALUES (?, ?)",
-            ["Mittens", "org_123"]
-          );
-        });
-      });
+      await t.test(
+        "allows INSERT with tenant column and correct value",
+        async () => {
+          await runWithContext(context, () => {
+            return connection.query(
+              "INSERT INTO cats_idor2 (petname, tenant_id) VALUES (?, ?)",
+              ["Mittens", "org_123"]
+            );
+          });
+        }
+      );
 
       await t.test("blocks INSERT without tenant column", async () => {
         const error = await t.rejects(async () => {
@@ -214,10 +218,9 @@ export function createMySQL2IdorTests(versionPkgName: string) {
       await t.test("blocks UPDATE without tenant filter", async () => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
-            return connection.query(
-              "UPDATE cats_idor2 SET petname = ?",
-              ["Rex"]
-            );
+            return connection.query("UPDATE cats_idor2 SET petname = ?", [
+              "Rex",
+            ]);
           });
         });
 
@@ -297,20 +300,20 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         });
 
         if (error instanceof Error) {
-          t.match(
-            error.message,
-            "Unsupported SQL statement type"
-          );
+          t.match(error.message, "Unsupported SQL statement type");
         }
       });
 
-      await t.test("allows unsupported statements inside withoutIdorProtection", async () => {
-        await runWithContext(context, () => {
-          return withoutIdorProtection(() => {
-            return connection.query("TRUNCATE cats_idor2");
+      await t.test(
+        "allows unsupported statements inside withoutIdorProtection",
+        async () => {
+          await runWithContext(context, () => {
+            return withoutIdorProtection(() => {
+              return connection.query("TRUNCATE cats_idor2");
+            });
           });
-        });
-      });
+        }
+      );
 
       await t.test("skips IDOR check when not configured", async () => {
         agent.setIdorProtectionConfig(undefined!);

@@ -109,8 +109,11 @@ Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. 
 The `mysql` and `mysql2` packages support a shorthand for bulk inserts using `VALUES ?` with nested arrays:
 
 ```js
-connection.query('INSERT INTO orders (name, tenant_id) VALUES ?', [
-  [['Widget', 'org_123'], ['Gadget', 'org_123']]
+connection.query("INSERT INTO orders (name, tenant_id) VALUES ?", [
+  [
+    ["Widget", "org_123"],
+    ["Gadget", "org_123"],
+  ],
 ]);
 ```
 
@@ -118,8 +121,11 @@ This syntax is not standard SQL and cannot be analyzed by Zen. Wrap these calls 
 
 ```js
 await Zen.withoutIdorProtection(async () => {
-  return connection.query('INSERT INTO orders (name, tenant_id) VALUES ?', [
-    [['Widget', 'org_123'], ['Gadget', 'org_123']]
+  return connection.query("INSERT INTO orders (name, tenant_id) VALUES ?", [
+    [
+      ["Widget", "org_123"],
+      ["Gadget", "org_123"],
+    ],
   ]);
 });
 ```
@@ -127,10 +133,12 @@ await Zen.withoutIdorProtection(async () => {
 Alternatively, use explicit placeholders which Zen can analyze:
 
 ```js
-connection.query(
-  'INSERT INTO orders (name, tenant_id) VALUES (?, ?), (?, ?)',
-  ['Widget', 'org_123', 'Gadget', 'org_123']
-);
+connection.query("INSERT INTO orders (name, tenant_id) VALUES (?, ?), (?, ?)", [
+  "Widget",
+  "org_123",
+  "Gadget",
+  "org_123",
+]);
 ```
 
 ### MySQL INSERT ... SET ? with object
@@ -138,16 +146,19 @@ connection.query(
 The `mysql` and `mysql2` packages support inserting a row using an object with `SET ?`:
 
 ```js
-connection.query('INSERT INTO orders SET ?', { name: 'Widget', tenant_id: 'org_123' });
+connection.query("INSERT INTO orders SET ?", {
+  name: "Widget",
+  tenant_id: "org_123",
+});
 ```
 
 The driver expands this to `INSERT INTO orders SET name = 'Widget', tenant_id = 'org_123'`, but Zen sees the unexpanded `SET ?` which is not parseable. Wrap these calls with `withoutIdorProtection()`, or use explicit placeholders:
 
 ```js
-connection.query(
-  'INSERT INTO orders (name, tenant_id) VALUES (?, ?)',
-  ['Widget', 'org_123']
-);
+connection.query("INSERT INTO orders (name, tenant_id) VALUES (?, ?)", [
+  "Widget",
+  "org_123",
+]);
 ```
 
 ### OR clauses (planned)
@@ -166,10 +177,13 @@ Queries using Common Table Expressions (WITH clauses) are not yet supported and 
 
 ```js
 await Zen.withoutIdorProtection(async () => {
-  return db.query(`
+  return db.query(
+    `
     WITH active_orders AS (SELECT * FROM orders WHERE status = 'active')
     SELECT * FROM active_orders WHERE tenant_id = $1
-  `, [tenantId]);
+  `,
+    [tenantId]
+  );
 });
 ```
 
