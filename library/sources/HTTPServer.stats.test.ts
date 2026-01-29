@@ -95,9 +95,7 @@ t.test("it tracks monitored user agents", async () => {
         const stats = agent.getInspectionStatistics().getStats();
         t.same(stats.userAgents, {
           breakdown: {
-            // eslint-disable-next-line camelcase
             ai_data_scrapers: 1,
-            // eslint-disable-next-line camelcase
             google_extended: 1,
           },
         });
@@ -196,7 +194,6 @@ t.test("it only counts once if multiple listeners", async () => {
           .getStats();
         t.same(userAgents, {
           breakdown: {
-            // eslint-disable-next-line camelcase
             ai_data_scrapers: 2,
           },
         });

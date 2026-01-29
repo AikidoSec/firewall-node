@@ -1,5 +1,4 @@
 import { shouldReturnEarly } from "./shouldReturnEarly";
-// eslint-disable-next-line camelcase
 import { wasm_detect_js_injection } from "../../internals/zen_internals";
 
 type ZenInternalsJsSourceType =

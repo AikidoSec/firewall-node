@@ -22,7 +22,6 @@ export function wrapNewInstance(
       className,
       function wrap(original: Function) {
         return function wrap() {
-          // eslint-disable-next-line prefer-rest-params
           const args = Array.from(arguments);
 
           // @ts-expect-error It's a constructor
