@@ -2,6 +2,8 @@ import { Agent } from "../agent/Agent";
 import { setInstance } from "../agent/AgentSingleton";
 import type { FetchListsAPI } from "../agent/api/FetchListsAPI";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
+import type { PromptProtectionApi } from "../agent/api/PromptProtectionAPI";
+import { PromptProtectionAPIForTesting } from "../agent/api/PromptProtectionAPIForTesting";
 import type { ReportingAPI } from "../agent/api/ReportingAPI";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import type { Token } from "../agent/api/Token";
@@ -20,6 +22,7 @@ export function createTestAgent(opts?: {
   serverless?: string;
   suppressConsoleLog?: boolean;
   fetchListsAPI?: FetchListsAPI;
+  promptProtectionAPI?: PromptProtectionApi;
 }) {
   if (opts?.suppressConsoleLog ?? true) {
     wrap(console, "log", function log() {
@@ -34,7 +37,8 @@ export function createTestAgent(opts?: {
     opts?.token, // Defaults to undefined
     opts?.serverless, // Defaults to undefined
     false, // During tests this is controlled by the AIKIDO_TEST_NEW_INSTRUMENTATION env var
-    opts?.fetchListsAPI ?? new FetchListsAPIForTesting()
+    opts?.fetchListsAPI ?? new FetchListsAPIForTesting(),
+    opts?.promptProtectionAPI ?? new PromptProtectionAPIForTesting()
   );
 
   setInstance(agent);
