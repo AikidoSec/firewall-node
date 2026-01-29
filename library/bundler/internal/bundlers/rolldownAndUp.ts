@@ -20,8 +20,6 @@ export function processRolldownAndUpOptions(
 ): ProcessedBundlerOptions {
   const outputFormat = getModuleFormat(options.output?.format, bundler);
 
-  // Todo detect cases where bundling is not enabled and throw an error
-
   if (!options.output?.dir) {
     throw new Error(
       `Aikido: ${bundler} output directory is not specified. Please set the 'output.dir' option in your ${bundler} config.`
@@ -41,7 +39,6 @@ export function processRolldownAndUpOptions(
   return {
     outputFormat,
     outDir: options.output.dir,
-    copyMode: "full",
   };
 }
 

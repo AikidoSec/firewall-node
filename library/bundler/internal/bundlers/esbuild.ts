@@ -32,18 +32,17 @@ export function processEsbuildOptions(
     );
   }
 
-  // We only need to mark @aikidosec/firewall as external for ESM builds, as we need to preload it before any other ESM module is loaded
-  if (outputFormat === "esm") {
-    if (!options.external) {
-      options.external = ["@aikidosec/firewall"];
-    } else if (Array.isArray(options.external)) {
-      if (!options.external.includes("@aikidosec/firewall")) {
-        options.external.push("@aikidosec/firewall");
-      }
-    } else {
-      throw new Error("esbuild external option is not an array");
+  if (!options.external) {
+    options.external = ["@aikidosec/firewall"];
+  } else if (Array.isArray(options.external)) {
+    if (!options.external.includes("@aikidosec/firewall")) {
+      options.external.push("@aikidosec/firewall");
     }
+  } else {
+    throw new Error("esbuild external option is not an array");
+  }
 
+  if (outputFormat === "esm") {
     const injectPath = join(
       findZenLibPath(),
       "bundler",
@@ -68,6 +67,5 @@ export function processEsbuildOptions(
   return {
     outputFormat,
     outDir: options.outdir,
-    copyMode: outputFormat === "cjs" ? "only-wasm-node" : "full",
   };
 }

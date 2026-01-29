@@ -6,7 +6,7 @@ import { findZenLibPath } from "./findZenLibPath";
 import { processEsbuildOptions } from "./bundlers/esbuild";
 import { wrapInstalledPackages } from "../../agent/wrapInstalledPackages";
 import { getWrappers } from "../../agent/protect";
-import { copyFile, cp, mkdir } from "node:fs/promises";
+import { cp, mkdir } from "node:fs/promises";
 import { processRolldownAndUpOptions } from "./bundlers/rolldownAndUp";
 import { getModuleInfoFromPath } from "../../agent/hooks/getModuleInfoFromPath";
 import { getPackageVersionFromPath } from "../../agent/hooks/instrumentation/getPackageVersionFromPath";
@@ -25,7 +25,6 @@ export type OutputFormat = "cjs" | "esm";
 export type ProcessedBundlerOptions = {
   outDir: string;
   outputFormat: OutputFormat;
-  copyMode: "full" | "only-wasm-node";
 };
 
 let importFound = false;
@@ -201,26 +200,6 @@ async function copyFiles() {
   }
 
   const zenLibDir = findZenLibPath();
-
-  if (processedBundlerOpts.copyMode === "only-wasm-node") {
-    // Copy only the wasm files into the output directory
-    for (const file of [
-      "node_code_instrumentation_bg.wasm",
-      "zen_internals_bg.wasm",
-    ]) {
-      await copyFile(join(zenLibDir, file), join(outDir, file));
-    }
-
-    await cp(
-      join(zenLibDir, "node_internals"),
-      join(outDir, "node_internals"),
-      {
-        recursive: true,
-      }
-    );
-
-    return;
-  }
 
   // ESM: Copy the entire module into the output directory
   await cp(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
