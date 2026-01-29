@@ -136,9 +136,10 @@ function checkWhereFilters(
     );
     if (
       resolvedValue !== undefined &&
+      context.tenantId !== undefined &&
       (typeof resolvedValue === "string" || typeof resolvedValue === "number")
     ) {
-      const tenantIdStr = context.tenantId!.toString();
+      const tenantIdStr = context.tenantId.toString();
       const resolvedStr = String(resolvedValue);
 
       if (resolvedStr !== tenantIdStr) {
@@ -188,9 +189,10 @@ function checkInsert(
       );
       if (
         resolvedValue !== undefined &&
+        context.tenantId !== undefined &&
         (typeof resolvedValue === "string" || typeof resolvedValue === "number")
       ) {
-        const tenantIdStr = context.tenantId!.toString();
+        const tenantIdStr = context.tenantId.toString();
         const resolvedStr = String(resolvedValue);
 
         if (resolvedStr !== tenantIdStr) {
