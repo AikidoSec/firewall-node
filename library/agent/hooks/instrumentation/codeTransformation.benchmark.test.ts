@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import * as t from "tap";
 import { transformCode } from "./codeTransformation";
 import { readFile } from "fs/promises";
@@ -62,6 +61,7 @@ t.test("Benchmark: Small code transformation", async (t) => {
   const duration = end - start;
   const durationPerIteration = duration / iterations;
 
+  // oxlint-disable-next-line no-console
   console.log(
     `Code transformation took ${durationPerIteration}ms per iteration`
   );
@@ -106,6 +106,7 @@ t.test("Benchmark: Large code transformation", async (t) => {
   const duration = end - start;
   const durationPerIteration = duration / iterations;
 
+  // oxlint-disable-next-line no-console
   console.log(
     `Code transformation took ${durationPerIteration}ms per iteration`
   );

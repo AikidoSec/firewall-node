@@ -1,4 +1,5 @@
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
+
 import * as mod from "node:module";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";

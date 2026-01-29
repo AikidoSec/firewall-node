@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import isFirewallSupported from "./helpers/isFirewallSupported";
 import shouldEnableFirewall from "./helpers/shouldEnableFirewall";
 import { setUser } from "./agent/context/user";
@@ -24,12 +23,14 @@ if (!isNewHookSystemUsed()) {
 
   if (supported && shouldEnable && notAlreadyImported) {
     if (isESM()) {
+      // oxlint-disable-next-line no-console
       console.warn(
         "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
       );
     }
 
     if (isLibBundled()) {
+      // oxlint-disable-next-line no-console
       console.warn(
         "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
       );

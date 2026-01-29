@@ -229,7 +229,7 @@ export class Prisma implements Wrapper {
     // $extends() breaks $on() which is required for event-based logging
     // See: https://github.com/prisma/prisma/issues/24070
     if (this.usesEventBasedLogging(constructorArgs)) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.warn(
         "AIKIDO: Prisma instrumentation disabled because event-based logging (emit: 'event') is enabled. Zen uses $extends() internally which is incompatible with $on(). See: https://github.com/prisma/prisma/issues/24070"
       );

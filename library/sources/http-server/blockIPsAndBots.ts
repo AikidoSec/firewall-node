@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import type { ServerResponse } from "http";
 import { Agent } from "../../agent/Agent";
 import { getContext } from "../../agent/Context";
