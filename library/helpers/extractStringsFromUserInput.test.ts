@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import * as t from "tap";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 

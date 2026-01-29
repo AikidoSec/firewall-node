@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { isDeepStrictEqual } from "util";
 import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";

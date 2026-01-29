@@ -1,4 +1,5 @@
-/* eslint-disable max-lines-per-function, no-console */
+/* oxlint-disable no-console */
+
 import { hostname, platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
@@ -425,6 +426,7 @@ export class Agent {
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
+      // oxlint-disable-next-line no-console
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
   }

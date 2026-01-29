@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Token } from "./Token";
 import { Event } from "./Event";
 import { ReportingAPI, ReportingAPIResponse } from "./ReportingAPI";
@@ -27,7 +26,7 @@ export class ReportingAPIForTesting implements ReportingAPI {
   async report(
     token: Token,
     event: Event,
-    timeoutInMS: number
+    _timeoutInMS: number
   ): Promise<ReportingAPIResponse> {
     this.events.push(event);
 
