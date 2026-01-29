@@ -175,6 +175,8 @@ t.test("it adds context from request for GET", opts, async (t) => {
     source: "hono",
     route: "/",
   });
+
+  t.match(body.url, /^http:\/\/.*\/\?title=test$/);
 });
 
 t.test("it adds JSON body to context", opts, async (t) => {
@@ -264,6 +266,7 @@ t.test("it sets the user in the context", opts, async (t) => {
     method: "GET",
     source: "hono",
     route: "/user",
+    urlPath: "/user",
     user: { id: "123" },
     consumedRateLimit: true,
     executedMiddleware: true,
@@ -369,6 +372,7 @@ t.test("works using @hono/node-server (real socket ip)", opts, async (t) => {
     query: { abc: "test" },
     source: "hono",
     route: "/",
+    urlPath: "/",
   });
   t.ok(isLocalhostIP(body.remoteAddress));
   server.close();
@@ -641,4 +645,38 @@ t.test("it rate limits based on group", opts, async (t) => {
 
   t.match(response3.status, 429);
   t.match(await response3.text(), "You are rate limited by Zen.");
+});
+
+t.test("it respects forwarded host header", opts, async (t) => {
+  const { serve } =
+    require("@hono/node-server") as typeof import("@hono/node-server");
+
+  const server = serve({
+    fetch: (await getApp()).fetch,
+    port: 8770,
+  });
+
+  const response = await fetch.fetch({
+    url: new URL("http://127.0.0.1:8770/?abc=test"),
+    method: "GET",
+    headers: {
+      accept: "application/json",
+      "X-Forwarded-Host": "example.com",
+      "X-Forwarded-Proto": "https",
+    },
+    timeoutInMS: 500,
+  });
+
+  t.match(JSON.parse(response.body), {
+    url: "https://example.com/?abc=test",
+    urlPath: "/",
+    method: "GET",
+    query: { abc: "test" },
+    cookies: {},
+    headers: { accept: "application/json" },
+    source: "hono",
+    route: "/",
+  });
+
+  server.close();
 });

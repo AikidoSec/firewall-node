@@ -2,6 +2,8 @@ import type { FastifyRequest } from "fastify";
 import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
+import { getRawRequestPath } from "../../helpers/getRawRequestPath";
+import { getRequestUrl } from "../../helpers/getRequestUrl";
 
 export function contextFromRequest(req: FastifyRequest): Context {
   return {
@@ -11,7 +13,8 @@ export function contextFromRequest(req: FastifyRequest): Context {
       remoteAddress: req.socket?.remoteAddress,
     }),
     body: req.body ? req.body : undefined,
-    url: req.url,
+    url: getRequestUrl(req.raw),
+    urlPath: getRawRequestPath(req.originalUrl),
     headers: req.headers,
     // @ts-expect-error not typed
     routeParams: req.params,

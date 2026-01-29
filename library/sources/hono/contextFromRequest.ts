@@ -4,12 +4,16 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 import { getRemoteAddress } from "./getRemoteAddress";
+import { getRequestUrl } from "../../helpers/getRequestUrl";
+import { getRawNodeRequest } from "./getRawRequest";
 
 export function contextFromRequest(c: HonoContext): Context {
   const { req } = c;
 
   const cookieHeader = req.header("cookie");
   const existingContext = getContext();
+
+  const rawReq = getRawNodeRequest(c);
 
   return {
     method: c.req.method,
@@ -22,7 +26,8 @@ export function contextFromRequest(c: HonoContext): Context {
       existingContext && existingContext.source === "hono"
         ? existingContext.body
         : undefined,
-    url: req.url,
+    url: rawReq ? getRequestUrl(rawReq) : req.url,
+    urlPath: req.path,
     headers: req.header(),
     routeParams: req.param(),
     query: req.query(),

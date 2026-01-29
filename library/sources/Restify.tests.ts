@@ -120,6 +120,8 @@ export async function createRestifyTests(restifyPackageName: string) {
       source: "restify",
       route: "/",
     });
+
+    t.match(response.body.context.url, /^http:\/\/.*\/$/);
   });
 
   t.test("it adds context from request for route with params", async (t) => {
@@ -210,5 +212,23 @@ export async function createRestifyTests(restifyPackageName: string) {
       .get("/rate-limited")
       .set("x-forwarded-for", "1.2.3.4");
     t.same(res3.statusCode, 200);
+  });
+
+  t.test("it respects forwarded host header", async (t) => {
+    const response = await request(getApp())
+      .get("/")
+      .set("x-forwarded-host", "example.com");
+
+    t.match(response.body.context, {
+      url: "http://example.com/",
+      urlPath: "/",
+      method: "GET",
+      query: {},
+      headers: {
+        "x-forwarded-host": "example.com",
+      },
+      source: "restify",
+      route: "/",
+    });
   });
 }
