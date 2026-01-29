@@ -150,9 +150,19 @@ connection.query(
 );
 ```
 
-### CTEs (WITH clauses)
+### OR clauses (planned)
 
-Queries using Common Table Expressions (WITH clauses) are not supported yet and will throw an error. Wrap these calls with `withoutIdorProtection()`:
+Zen checks that a query filters on the tenant column, but does not yet verify that the filter cannot be bypassed with an `OR` clause. For example:
+
+```sql
+SELECT * FROM orders WHERE tenant_id = $1 OR public = true
+```
+
+This query passes the IDOR check because `tenant_id` is present as a filter, but the `OR public = true` condition could return rows from other tenants.
+
+### CTEs (WITH clauses) (planned)
+
+Queries using Common Table Expressions (WITH clauses) are not yet supported and will throw an error. Wrap these calls with `withoutIdorProtection()` for now:
 
 ```js
 await Zen.withoutIdorProtection(async () => {
