@@ -22,15 +22,16 @@ type UserOptions = {
 };
 
 export type OutputFormat = "cjs" | "esm";
-export type BundlerProcessedOptions = {
-  outdir: string;
+export type ProcessedBundlerOptions = {
+  outDir: string;
   outputFormat: OutputFormat;
+  copyMode: "full" | "only-wasm-node";
 };
 
 let importFound = false;
 let userOptions: UserOptions | undefined = undefined;
 let initialized = false;
-let processedBundlerOpts: BundlerProcessedOptions | undefined = undefined;
+let processedBundlerOpts: ProcessedBundlerOptions | undefined = undefined;
 const instrumentedForSCA = new Set<string>();
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
@@ -135,7 +136,7 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
           );
         }
 
-        if (!processedBundlerOpts.outdir) {
+        if (!processedBundlerOpts.outDir) {
           throw new Error(
             "Aikido: Output directory is undefined at build end. This is likely a bug in the bundler plugin."
           );
@@ -160,10 +161,7 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
         }
 
         if (userOptions?.copyFiles !== false) {
-          await copyFiles(
-            processedBundlerOpts.outdir,
-            processedBundlerOpts.outputFormat
-          );
+          await copyFiles();
         }
       },
 
@@ -190,14 +188,21 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
     };
   });
 
-async function copyFiles(outDir: string, format: "cjs" | "esm") {
-  const zenLibDir = findZenLibPath();
+async function copyFiles() {
+  if (!processedBundlerOpts) {
+    throw new Error(
+      "Aikido: processedBundlerOpts is undefined in copyFiles. This is likely a bug in the bundler plugin."
+    );
+  }
+  const outDir = processedBundlerOpts.outDir;
 
   if (!existsSync(outDir)) {
     await mkdir(outDir, { recursive: true });
   }
 
-  if (format === "cjs") {
+  const zenLibDir = findZenLibPath();
+
+  if (processedBundlerOpts.copyMode === "only-wasm-node") {
     // Copy only the wasm files into the output directory
     for (const file of [
       "node_code_instrumentation_bg.wasm",

@@ -1,4 +1,4 @@
-import type { BundlerProcessedOptions, OutputFormat } from "../unplugin";
+import type { ProcessedBundlerOptions, OutputFormat } from "../unplugin";
 import type {
   OutputOptions as RolldownOutputOptions,
   InputOptions as RolldownInputOptions,
@@ -17,7 +17,7 @@ export function processRolldownAndUpOptions(
         output?: RollupOutputOptions;
       }),
   bundler: "rolldown" | "rollup"
-): BundlerProcessedOptions {
+): ProcessedBundlerOptions {
   const outputFormat = getModuleFormat(options.output?.format, bundler);
 
   // Todo detect cases where bundling is not enabled and throw an error
@@ -28,23 +28,20 @@ export function processRolldownAndUpOptions(
     );
   }
 
-  if (outputFormat === "esm") {
-    if (!options.external) {
-      options.external = ["@aikidosec/firewall"];
-    } else if (Array.isArray(options.external)) {
-      if (!options.external.includes("@aikidosec/firewall")) {
-        options.external.push("@aikidosec/firewall");
-      }
-    } else {
-      throw new Error(
-        `Aikido: ${bundler} external option needs to be an array for ESM builds if Zen is used.`
-      );
-    }
+  if (!options.external) {
+    options.external = [/@aikidosec\/firewall.*/];
+  } else if (Array.isArray(options.external)) {
+    options.external.push(/@aikidosec\/firewall.*/);
+  } else {
+    throw new Error(
+      `Aikido: ${bundler} external option needs to be an array for ESM builds if Zen is used.`
+    );
   }
 
   return {
     outputFormat,
-    outdir: options.output.dir,
+    outDir: options.output.dir,
+    copyMode: "full",
   };
 }
 
