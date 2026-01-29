@@ -4,7 +4,6 @@ import { isIdorProtectionIgnored } from "../../agent/context/withoutIdorProtecti
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
-// eslint-disable-next-line camelcase
 import { wasm_idor_analyze_sql } from "../../internals/zen_internals";
 import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
@@ -82,7 +81,6 @@ export function checkContextForIdor({
         return insertViolation;
       }
     } else {
-      // select, update, delete: check WHERE clause filters
       const whereViolation = checkWhereFilters(
         queryResult,
         config,
@@ -112,18 +110,17 @@ function checkWhereFilters(
       continue;
     }
 
-    // Find a filter on the tenant column for this table
     const tenantFilter = queryResult.filters.find((f) => {
       if (f.column !== config.tenantColumnName) {
         return false;
       }
-      // If filter is qualified (e.g. u.tenant_id), match against table name or alias
+      // If qualified (e.g. u.tenant_id), match against table name or alias
       if (f.table) {
         return (
           f.table === table.name || (table.alias && f.table === table.alias)
         );
       }
-      // Unqualified filter: only match if there's a single table
+      // Unqualified: only match if there's a single table
       return queryResult.tables.length === 1;
     });
 
@@ -133,7 +130,6 @@ function checkWhereFilters(
       );
     }
 
-    // Check that the placeholder value matches the tenant ID
     const resolvedValue = resolvePlaceholder(
       tenantFilter.value,
       tenantFilter.placeholder_number
@@ -174,7 +170,6 @@ function checkInsert(
       );
     }
 
-    // Check every row
     for (const row of queryResult.insert_columns) {
       const tenantCol = row.find((c) => c.column === config.tenantColumnName);
 
@@ -184,7 +179,6 @@ function checkInsert(
         );
       }
 
-      // Check value matches tenant ID
       const resolvedValue = resolvePlaceholder(
         tenantCol.value,
         tenantCol.placeholder_number
