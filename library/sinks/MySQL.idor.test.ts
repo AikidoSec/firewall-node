@@ -51,10 +51,6 @@ const contextWithoutTenantId: Context = {
 t.test("IDOR protection for MySQL", async (t) => {
   const agent = createTestAgent();
   agent.start([new MySQL()]);
-  agent.setIdorProtectionConfig({
-    tenantColumnName: "tenant_id",
-    excludedTables: ["migrations"],
-  });
 
   const mysql = require("mysql") as typeof import("mysql");
   const connection = mysql.createConnection({
@@ -78,6 +74,20 @@ t.test("IDOR protection for MySQL", async (t) => {
     );
     await query("CREATE TABLE IF NOT EXISTS migrations (id int)", connection);
     await query("TRUNCATE cats_idor", connection);
+
+    await t.test("skips IDOR check when not configured", async () => {
+      t.same(
+        await runWithContext(context, () => {
+          return query("SELECT petname FROM cats_idor", connection);
+        }),
+        []
+      );
+    });
+
+    agent.setIdorProtectionConfig({
+      tenantColumnName: "tenant_id",
+      excludedTables: ["migrations"],
+    });
 
     await t.test("allows query with tenant filter", async () => {
       t.same(
@@ -385,23 +395,6 @@ t.test("IDOR protection for MySQL", async (t) => {
         });
       }
     );
-
-    await t.test("skips IDOR check when not configured", async () => {
-      agent.setIdorProtectionConfig(undefined!);
-
-      t.same(
-        await runWithContext(context, () => {
-          return query("SELECT petname FROM cats_idor", connection);
-        }),
-        []
-      );
-
-      // Restore config
-      agent.setIdorProtectionConfig({
-        tenantColumnName: "tenant_id",
-        excludedTables: ["migrations"],
-      });
-    });
   } finally {
     await new Promise<void>((resolve, reject) =>
       connection.end((err) => {

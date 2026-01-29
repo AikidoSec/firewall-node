@@ -39,11 +39,6 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         mysql2: versionPkgName,
       },
     });
-    agent.setIdorProtectionConfig({
-      tenantColumnName: "tenant_id",
-      excludedTables: ["migrations"],
-    });
-
     const mysql = require(
       `${versionPkgName}/promise`
     ) as typeof import("mysql2-v3.12/promise");
@@ -66,6 +61,18 @@ export function createMySQL2IdorTests(versionPkgName: string) {
       `);
       await connection.query("CREATE TABLE IF NOT EXISTS migrations (id int)");
       await connection.query("TRUNCATE cats_idor2");
+
+      await t.test("skips IDOR check when not configured", async () => {
+        const [rows] = await runWithContext(context, () => {
+          return connection.query("SELECT petname FROM cats_idor2");
+        });
+        t.same(rows, []);
+      });
+
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: ["migrations"],
+      });
 
       await t.test("allows query with tenant filter", async () => {
         const [rows] = await runWithContext(context, () => {
@@ -314,21 +321,6 @@ export function createMySQL2IdorTests(versionPkgName: string) {
           });
         }
       );
-
-      await t.test("skips IDOR check when not configured", async () => {
-        agent.setIdorProtectionConfig(undefined!);
-
-        const [rows] = await runWithContext(context, () => {
-          return connection.query("SELECT petname FROM cats_idor2");
-        });
-        t.same(rows, []);
-
-        // Restore config
-        agent.setIdorProtectionConfig({
-          tenantColumnName: "tenant_id",
-          excludedTables: ["migrations"],
-        });
-      });
     } finally {
       await connection.end();
     }

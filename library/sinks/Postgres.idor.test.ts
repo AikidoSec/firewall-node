@@ -34,10 +34,6 @@ const contextWithoutTenantId: Context = {
 t.test("IDOR protection for Postgres (pg)", async (t) => {
   const agent = createTestAgent();
   agent.start([new Postgres()]);
-  agent.setIdorProtectionConfig({
-    tenantColumnName: "tenant_id",
-    excludedTables: ["migrations"],
-  });
 
   const { Client } = require("pg") as typeof import("pg");
   const client = new Client({
@@ -58,6 +54,22 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
     `);
     await client.query("CREATE TABLE IF NOT EXISTS migrations (id int)");
     await client.query("TRUNCATE cats_pg_idor");
+
+    await t.test("skips IDOR check when not configured", async () => {
+      t.same(
+        (
+          await runWithContext(context, () => {
+            return client.query("SELECT petname FROM cats_pg_idor");
+          })
+        ).rows,
+        []
+      );
+    });
+
+    agent.setIdorProtectionConfig({
+      tenantColumnName: "tenant_id",
+      excludedTables: ["migrations"],
+    });
 
     await t.test("allows query with tenant filter", async () => {
       t.same(
@@ -318,25 +330,6 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
         });
       }
     );
-
-    await t.test("skips IDOR check when not configured", async () => {
-      agent.setIdorProtectionConfig(undefined!);
-
-      t.same(
-        (
-          await runWithContext(context, () => {
-            return client.query("SELECT petname FROM cats_pg_idor");
-          })
-        ).rows,
-        []
-      );
-
-      // Restore config
-      agent.setIdorProtectionConfig({
-        tenantColumnName: "tenant_id",
-        excludedTables: ["migrations"],
-      });
-    });
   } finally {
     await client.end();
   }
