@@ -522,6 +522,12 @@ export class Agent {
       false // Is bundling process
     );
 
+    // In serverless environments, we delay the startup event until the first invocation
+    // since some apps take a long time to boot and the init phase has strict timeouts
+    if (this.serverless) {
+      return;
+    }
+
     // Send startup event and wait for config
     // Then start heartbeats and polling for config changes
     this.onStart()
