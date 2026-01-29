@@ -91,7 +91,7 @@ Zen IDOR protection: setTenantId() was not called for this request. Every reques
 ## Supported databases
 
 - MySQL (via `mysql` and `mysql2` packages)
-- PostgreSQL (via `pg` and `postgres` packages)
+- PostgreSQL (via `pg` package)
 
 ## Supported SQL statements
 
@@ -131,6 +131,36 @@ connection.query(
   'INSERT INTO orders (name, tenant_id) VALUES (?, ?), (?, ?)',
   ['Widget', 'org_123', 'Gadget', 'org_123']
 );
+```
+
+### MySQL INSERT ... SET ? with object
+
+The `mysql` and `mysql2` packages support inserting a row using an object with `SET ?`:
+
+```js
+connection.query('INSERT INTO orders SET ?', { name: 'Widget', tenant_id: 'org_123' });
+```
+
+The driver expands this to `INSERT INTO orders SET name = 'Widget', tenant_id = 'org_123'`, but Zen sees the unexpanded `SET ?` which is not parseable. Wrap these calls with `withoutIdorProtection()`, or use explicit placeholders:
+
+```js
+connection.query(
+  'INSERT INTO orders (name, tenant_id) VALUES (?, ?)',
+  ['Widget', 'org_123']
+);
+```
+
+### CTEs (WITH clauses)
+
+Queries using Common Table Expressions (WITH clauses) are not supported yet and will throw an error. Wrap these calls with `withoutIdorProtection()`:
+
+```js
+await Zen.withoutIdorProtection(async () => {
+  return db.query(`
+    WITH active_orders AS (SELECT * FROM orders WHERE status = 'active')
+    SELECT * FROM active_orders WHERE tenant_id = $1
+  `, [tenantId]);
+});
 ```
 
 ## Notes
