@@ -134,7 +134,10 @@ function checkWhereFilters(
       tenantFilter.value,
       tenantFilter.placeholder_number
     );
-    if (resolvedValue !== undefined) {
+    if (
+      resolvedValue !== undefined &&
+      (typeof resolvedValue === "string" || typeof resolvedValue === "number")
+    ) {
       const tenantIdStr = context.tenantId!.toString();
       const resolvedStr = String(resolvedValue);
 
@@ -183,7 +186,10 @@ function checkInsert(
         tenantCol.value,
         tenantCol.placeholder_number
       );
-      if (resolvedValue !== undefined) {
+      if (
+        resolvedValue !== undefined &&
+        (typeof resolvedValue === "string" || typeof resolvedValue === "number")
+      ) {
         const tenantIdStr = context.tenantId!.toString();
         const resolvedStr = String(resolvedValue);
 
