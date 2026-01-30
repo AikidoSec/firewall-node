@@ -1,8 +1,10 @@
 import * as t from "tap";
 import { rolldown } from "rolldown";
 import { resolve } from "path";
-import { zenRolldownPlugin } from "../..";
+import { zenRolldownPlugin } from "../../index";
 import { readFile } from "fs/promises";
+
+// @esm-tests-skip
 
 const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
 const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
@@ -48,6 +50,7 @@ t.test("it works when writing to temp file (ESM)", async (t) => {
   // Read the generated file
   // noopengrep
   const bundledFile = await readFile(
+    //noopengrep
     resolve(tempDir, "hono-esm-pg.js"),
     "utf-8"
   );

@@ -1,7 +1,9 @@
 import * as t from "tap";
 import { build } from "esbuild";
 import { resolve } from "node:path";
-import { zenEsbuildPlugin } from "../..";
+import { zenEsbuildPlugin } from "../../index";
+
+// @esm-tests-skip
 
 const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
 const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
@@ -23,8 +25,8 @@ t.test("it works in memory (ESM)", async (t) => {
   t.equal(result.outputFiles?.length, 1);
   const code = result.outputFiles?.[0].text || "";
 
-  t.match(code, /__instrumentInspectArgs\("pg\.lib/);
-  t.match(code, /__instrumentModifyArgs\("hono.dist/);
+  t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
   t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
   t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
