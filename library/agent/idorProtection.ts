@@ -35,7 +35,10 @@ export function enableIdorProtection(config: {
 
   let excludedTables: string[] = [];
   if ("excludedTables" in rawConfig) {
-    if (!Array.isArray(rawConfig.excludedTables)) {
+    if (
+      !Array.isArray(rawConfig.excludedTables) ||
+      rawConfig.excludedTables.some((t) => typeof t !== "string")
+    ) {
       agent.log(
         `enableIdorProtection(...) expects 'excludedTables' to be an array of strings.`
       );
