@@ -118,7 +118,6 @@ function checkWhereFilters(
       tenantFilter.placeholder_number
     );
     if (
-      resolvedValue !== undefined &&
       context.tenantId !== undefined &&
       (typeof resolvedValue === "string" || typeof resolvedValue === "number")
     ) {
@@ -171,7 +170,6 @@ function checkInsert(
         tenantCol.placeholder_number
       );
       if (
-        resolvedValue !== undefined &&
         context.tenantId !== undefined &&
         (typeof resolvedValue === "string" || typeof resolvedValue === "number")
       ) {
