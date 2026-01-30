@@ -143,7 +143,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
-If you are using ESM, also check out [Adding Zen to an ESM application](docs/esm.md).
+For ESM applications, see [docs/esm.md](docs/esm.md).
 
 ## Reporting to your Aikido Security dashboard
 
