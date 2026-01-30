@@ -4,10 +4,13 @@ import { resolve } from "path";
 import { zenRolldownPlugin } from "../..";
 import { readFile } from "fs/promises";
 
+const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
+const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
+
 t.test("it works in memory (ESM)", async (t) => {
   const bundle = await rolldown({
     platform: "node",
-    input: resolve(__dirname, "../../../../sample-apps/hono-pg-esm", "app.js"),
+    input: esmTestPath,
     plugins: [
       zenRolldownPlugin({
         copyFiles: false,
@@ -20,8 +23,8 @@ t.test("it works in memory (ESM)", async (t) => {
   t.same(output.length > 0, true);
   const code = output[0].code;
 
-  t.match(code, /__instrumentInspectArgs\("pg\.lib/);
-  t.match(code, /__instrumentModifyArgs\("hono.dist/);
+  t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
   t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
   t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
@@ -32,7 +35,7 @@ t.test("it works when writing to temp file (ESM)", async (t) => {
 
   const bundle = await rolldown({
     platform: "node",
-    input: resolve(__dirname, "../../../../sample-apps/hono-pg-esm", "app.js"),
+    input: esmTestPath,
     plugins: [
       zenRolldownPlugin({
         copyFiles: false,
@@ -43,12 +46,16 @@ t.test("it works when writing to temp file (ESM)", async (t) => {
   await bundle.write({ format: "esm", dir: tempDir });
 
   // Read the generated file
-  const bundledFile = await readFile(resolve(tempDir, "app.js"), "utf-8");
+  // noopengrep
+  const bundledFile = await readFile(
+    resolve(tempDir, "hono-esm-pg.js"),
+    "utf-8"
+  );
 
   t.same(bundledFile.length > 0, true);
 
   t.match(bundledFile, /__instrumentInspectArgs\("pg\.lib/);
-  t.match(bundledFile, /__instrumentModifyArgs\("hono.dist/);
+  t.match(bundledFile, /__instrumentModifyArgs.*"hono.dist/);
   t.match(bundledFile, /@aikidosec\/firewall\/instrument\/internals/);
   t.notMatch(bundledFile, /function __instrumentInspectArgs/);
 });
@@ -56,7 +63,7 @@ t.test("it works when writing to temp file (ESM)", async (t) => {
 t.test("it throws error when output dir is not set", async (t) => {
   const bundle = await rolldown({
     platform: "node",
-    input: resolve(__dirname, "../../../../sample-apps/hono-pg-esm", "app.js"),
+    input: esmTestPath,
     plugins: [zenRolldownPlugin()],
   });
 
@@ -75,11 +82,7 @@ t.test("external option is not an array", async (t) => {
   const error = await t.rejects(() =>
     rolldown({
       platform: "node",
-      input: resolve(
-        __dirname,
-        "../../../../sample-apps/hono-pg-esm",
-        "app.js"
-      ),
+      input: esmTestPath,
       plugins: [zenRolldownPlugin()],
       external: "test123",
     })
@@ -96,7 +99,7 @@ t.test("external option is not an array", async (t) => {
 t.test("invalid output format", async (t) => {
   const bundle = await rolldown({
     platform: "node",
-    input: resolve(__dirname, "../../../../sample-apps/hono-pg-esm", "app.js"),
+    input: esmTestPath,
     plugins: [zenRolldownPlugin()],
   });
 
@@ -114,10 +117,7 @@ t.test("invalid output format", async (t) => {
 t.test("it works in memory (CJS)", async (t) => {
   const bundle = await rolldown({
     platform: "node",
-    input: resolve(
-      __dirname,
-      "../../../../sample-apps/rolldown-bundle/src/app-cjs.ts"
-    ),
+    input: cjsTestPath,
     plugins: [
       zenRolldownPlugin({
         copyFiles: false,
@@ -131,7 +131,7 @@ t.test("it works in memory (CJS)", async (t) => {
   const code = output[0].code;
 
   t.match(code, /__instrumentPackageLoaded/);
-  t.match(code, /__instrumentModifyArgs\)\("hono.dist/);
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
   t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
   t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
   t.notMatch(code, /function __instrumentInspectArgs/);

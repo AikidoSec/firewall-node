@@ -143,6 +143,8 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
+If you are using a bundler, please refer to [Installing Zen in a Node.js Application that uses a bundler](./docs/bundler.md).
+
 ## Reporting to your Aikido Security dashboard
 
 > Aikido is your no nonsense application security platform. One central system that scans your source code & cloud, shows you what vulnerabilities matter, and how to fix them - fast. So you can get back to building.
