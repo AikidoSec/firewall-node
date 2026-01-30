@@ -1,15 +1,24 @@
 import * as t from "tap";
-import { rolldown } from "rolldown";
 import { resolve } from "path";
 import { zenRolldownPlugin } from "../../index";
 import { readFile } from "fs/promises";
+import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
 
 // @esm-tests-skip
+
+const options = {
+  skip:
+    getMajorNodeVersion() < 20
+      ? "Rolldown ESM builds require Node.js 20+"
+      : false,
+};
 
 const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
 const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
 
-t.test("it works in memory (ESM)", async (t) => {
+t.test("it works in memory (ESM)", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
   const bundle = await rolldown({
     platform: "node",
     input: esmTestPath,
@@ -32,8 +41,9 @@ t.test("it works in memory (ESM)", async (t) => {
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
 
-t.test("it works when writing to temp file (ESM)", async (t) => {
+t.test("it works when writing to temp file (ESM)", options, async (t) => {
   const tempDir = t.testdir();
+  const { rolldown } = await import("rolldown");
 
   const bundle = await rolldown({
     platform: "node",
@@ -63,7 +73,9 @@ t.test("it works when writing to temp file (ESM)", async (t) => {
   t.notMatch(bundledFile, /function __instrumentInspectArgs/);
 });
 
-t.test("it throws error when output dir is not set", async (t) => {
+t.test("it throws error when output dir is not set", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
   const bundle = await rolldown({
     platform: "node",
     input: esmTestPath,
@@ -81,7 +93,9 @@ t.test("it throws error when output dir is not set", async (t) => {
   }
 });
 
-t.test("external option is not an array", async (t) => {
+t.test("external option is not an array", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
   const error = await t.rejects(() =>
     rolldown({
       platform: "node",
@@ -99,7 +113,9 @@ t.test("external option is not an array", async (t) => {
   }
 });
 
-t.test("invalid output format", async (t) => {
+t.test("invalid output format", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
   const bundle = await rolldown({
     platform: "node",
     input: esmTestPath,
@@ -117,7 +133,9 @@ t.test("invalid output format", async (t) => {
   }
 });
 
-t.test("it works in memory (CJS)", async (t) => {
+t.test("it works in memory (CJS)", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
   const bundle = await rolldown({
     platform: "node",
     input: cjsTestPath,
