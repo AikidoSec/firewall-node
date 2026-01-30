@@ -23,6 +23,7 @@ t.test("it works in memory (ESM)", async (t) => {
   t.match(code, /__instrumentInspectArgs\("pg\.lib/);
   t.match(code, /__instrumentModifyArgs\("hono.dist/);
   t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
 
@@ -108,4 +109,30 @@ t.test("invalid output format", async (t) => {
       /Aikido: rolldown output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./
     );
   }
+});
+
+t.test("it works in memory (CJS)", async (t) => {
+  const bundle = await rolldown({
+    platform: "node",
+    input: resolve(
+      __dirname,
+      "../../../../sample-apps/rolldown-bundle/src/app-cjs.ts"
+    ),
+    plugins: [
+      zenRolldownPlugin({
+        copyFiles: false,
+      }),
+    ],
+  });
+
+  const { output } = await bundle.generate({ format: "cjs" });
+
+  t.same(output.length > 0, true);
+  const code = output[0].code;
+
+  t.match(code, /__instrumentPackageLoaded/);
+  t.match(code, /__instrumentModifyArgs\)\("hono.dist/);
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
+  t.notMatch(code, /function __instrumentInspectArgs/);
 });
