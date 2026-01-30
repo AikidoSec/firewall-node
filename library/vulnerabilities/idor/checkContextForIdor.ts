@@ -9,47 +9,6 @@ import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
 import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
 
-const cache = new LRUMap<string, SqlQueryResult[]>(1000);
-
-type AnalysisResult =
-  | { violation: false; results: SqlQueryResult[] }
-  | { violation: true; result: IdorViolationResult };
-
-function getAnalysisResults(sql: string, dialect: SQLDialect): AnalysisResult {
-  const cached = cache.get(sql);
-  if (cached) {
-    return { violation: false, results: cached };
-  }
-
-  const json = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
-  const parsed = tryParseJSON(json);
-
-  if (!parsed) {
-    return {
-      violation: true,
-      result: violation(
-        "Zen IDOR protection: failed to parse SQL analysis result"
-      ),
-    };
-  }
-
-  if (parsed.error) {
-    return {
-      violation: true,
-      result: violation(`Zen IDOR protection: ${parsed.error}`),
-    };
-  }
-
-  const results = parsed as SqlQueryResult[];
-  cache.set(sql, results);
-
-  return { violation: false, results };
-}
-
-function violation(message: string): IdorViolationResult {
-  return { idorViolation: true, message };
-}
-
 export function checkContextForIdor({
   sql,
   context,
@@ -84,13 +43,13 @@ export function checkContextForIdor({
     );
   }
 
-  const analysis = getAnalysisResults(sql, dialect);
+  const results = getAnalysisResults(sql, dialect);
 
-  if (analysis.violation) {
-    return analysis.result;
+  if (!results) {
+    return violation("Zen IDOR protection: failed to analyze SQL query");
   }
 
-  for (const queryResult of analysis.results) {
+  for (const queryResult of results) {
     if (queryResult.kind === "insert") {
       const insertViolation = checkInsert(
         queryResult,
@@ -226,4 +185,32 @@ function checkInsert(
   }
 
   return undefined;
+}
+
+const cache = new LRUMap<string, SqlQueryResult[]>(1000);
+
+function getAnalysisResults(
+  sql: string,
+  dialect: SQLDialect
+): SqlQueryResult[] | undefined {
+  const cached = cache.get(sql);
+  if (cached) {
+    return cached;
+  }
+
+  const json = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
+  const parsed = tryParseJSON(json);
+
+  if (!parsed || parsed.error) {
+    return undefined;
+  }
+
+  const results = parsed as SqlQueryResult[];
+  cache.set(sql, results);
+
+  return results;
+}
+
+function violation(message: string): IdorViolationResult {
+  return { idorViolation: true, message };
 }
