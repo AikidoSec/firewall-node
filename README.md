@@ -143,6 +143,8 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
+For ESM applications, see [docs/esm.md](docs/esm.md).
+
 ## Reporting to your Aikido Security dashboard
 
 > Aikido is your no nonsense application security platform. One central system that scans your source code & cloud, shows you what vulnerabilities matter, and how to fix them - fast. So you can get back to building.
