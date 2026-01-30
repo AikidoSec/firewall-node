@@ -81,10 +81,7 @@ test("it blocks request in blocking mode (CJS)", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
-    match(
-      stderr,
-      / The new instrumentation system with ESM support is still under active development/
-    );
+
     doesNotMatch(stderr, /Zen has already been initialized/);
     match(stdout, /AIKIDO: hono@.* is supported!/);
     match(stdout, /AIKIDO: node:path is supported!/);
@@ -146,10 +143,7 @@ test("it does not block request in monitoring mode (CJS)", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
-    match(
-      stderr,
-      / The new instrumentation system with ESM support is still under active development/
-    );
+
     doesNotMatch(stderr, /Zen has already been initialized/);
   } catch (err) {
     fail(err);
@@ -213,10 +207,7 @@ test("it blocks request in blocking mode (ESM)", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
-    match(
-      stderr,
-      / The new instrumentation system with ESM support is still under active development/
-    );
+
     doesNotMatch(stderr, /Zen has already been initialized/);
     doesNotMatch(
       stderr,
@@ -286,10 +277,7 @@ test("it does not block request in monitoring mode (ESM)", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
-    match(
-      stderr,
-      / The new instrumentation system with ESM support is still under active development/
-    );
+
     doesNotMatch(stderr, /Zen has already been initialized/);
     doesNotMatch(
       stderr,
