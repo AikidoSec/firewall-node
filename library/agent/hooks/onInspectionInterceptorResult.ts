@@ -45,7 +45,7 @@ export function onInspectionInterceptorResult(
     context.remoteAddress &&
     agent.getConfig().isBypassedIP(context.remoteAddress);
 
-  if (isIdorViolationResult(result)) {
+  if (isIdorViolationResult(result) && !isBypassedIP) {
     throw cleanError(new Error(result.message));
   }
 
