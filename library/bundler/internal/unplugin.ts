@@ -11,6 +11,7 @@ import { processRolldownAndUpOptions } from "./bundlers/rolldownAndUp";
 import { getModuleInfoFromPath } from "../../agent/hooks/getModuleInfoFromPath";
 import { getPackageVersionFromPath } from "../../agent/hooks/instrumentation/getPackageVersionFromPath";
 import { transformCodeInsertSCA } from "../../agent/hooks/instrumentation/transformCodeInsertSCA";
+import { getAgentVersion } from "../../helpers/getAgentVersion";
 
 type UserOptions = {
   /**
@@ -31,7 +32,8 @@ let importFound = false;
 let userOptions: UserOptions | undefined = undefined;
 let initialized = false;
 let processedBundlerOpts: ProcessedBundlerOptions | undefined = undefined;
-const instrumentedForSCA = new Set<string>();
+let instrumentedForSCA = new Set<string>();
+const agentVersion = getAgentVersion();
 
 export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
   createUnplugin((options) => {
@@ -114,6 +116,7 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
             const insertSCAResult = transformCodeInsertSCA(
               moduleInfo.name,
               pkgVersion,
+              agentVersion,
               moduleInfo.path,
               modifiedCode,
               "unambiguous"
@@ -162,6 +165,12 @@ export const basePlugin: UnpluginInstance<UserOptions | undefined, false> =
         if (userOptions?.copyFiles !== false) {
           await copyFiles();
         }
+
+        // Reset state for multiple builds in one process
+        importFound = false;
+        initialized = false;
+        processedBundlerOpts = undefined;
+        instrumentedForSCA = new Set<string>();
       },
 
       esbuild: {

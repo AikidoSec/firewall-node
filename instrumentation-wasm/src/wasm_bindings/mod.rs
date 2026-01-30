@@ -27,8 +27,9 @@ pub fn wasm_transform_code_str(
 pub fn wasm_transform_code_str_insert_sca(
     pkg_name: &str,
     pkg_version: &str,
+    agent_version: &str,
     code: &str,
     source_type: &str,
 ) -> Result<String, String> {
-    transform_code_str_insert_sca(pkg_name, pkg_version, code, source_type)
+    transform_code_str_insert_sca(pkg_name, pkg_version, agent_version, code, source_type)
 }

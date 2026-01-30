@@ -8,6 +8,7 @@ import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 export function transformCodeInsertSCA(
   pkgName: string,
   pkgVersion: string,
+  agentVersion: string,
   path: string,
   code: string,
   pkgLoadFormat: PackageLoadFormat
@@ -16,6 +17,7 @@ export function transformCodeInsertSCA(
     const result = wasm_transform_code_str_insert_sca(
       pkgName,
       pkgVersion,
+      agentVersion,
       code,
       getSourceType(path, pkgLoadFormat)
     );

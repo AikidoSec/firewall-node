@@ -11,6 +11,7 @@ use super::helpers::{
 pub fn transform_code_str_insert_sca(
     pkg_name: &str,
     pkg_version: &str,
+    agent_version: &str,
     code: &str,
     src_type: &str,
 ) -> Result<String, String> {
@@ -45,6 +46,7 @@ pub fn transform_code_str_insert_sca(
         &ast_builder,
         pkg_name,
         pkg_version,
+        agent_version,
         &mut program.body,
     );
 

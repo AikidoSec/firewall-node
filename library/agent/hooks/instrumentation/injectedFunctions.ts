@@ -1,7 +1,10 @@
+import { getAgentVersion } from "../../../helpers/getAgentVersion";
 import { getInstance } from "../../AgentSingleton";
 import { bindContext, getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
 import { getFileCallbackInfo, getFunctionCallbackInfo } from "./instructions";
+
+let loggedWrongAgentVersion = false;
 
 export function __instrumentInspectArgs(
   id: string,
@@ -172,7 +175,24 @@ export function __instrumentPackageWrapped(
 
 export function __instrumentPackageLoaded(
   pkgName: string,
-  pkgVersion: string
+  pkgVersion: string,
+  agentVersion: string
 ): void {
   getInstance()?.onPackageRequired(pkgName, pkgVersion);
+
+  const currentAgentVersion = getAgentVersion();
+  if (currentAgentVersion && agentVersion !== currentAgentVersion) {
+    logWrongAgentVersionOnce();
+  }
+}
+
+function logWrongAgentVersionOnce() {
+  if (loggedWrongAgentVersion) {
+    return;
+  }
+  // oxlint-disable-next-line no-console
+  console.warn(
+    "Aikido: Warning: A different version of the Aikido agent was used during bundling than the one running in the application. This may lead to unexpected behavior. Please ensure that the same version is used."
+  );
+  loggedWrongAgentVersion = true;
 }

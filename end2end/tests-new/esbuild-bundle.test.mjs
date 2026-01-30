@@ -86,6 +86,8 @@ test("it blocks request in blocking mode (CJS)", async () => {
       / The new instrumentation system with ESM support is still under active development/
     );
     doesNotMatch(stderr, /Zen has already been initialized/);
+    match(stdout, /AIKIDO: hono@.* is supported!/);
+    match(stdout, /AIKIDO: node:path is supported!/);
   } catch (err) {
     fail(err);
   } finally {
@@ -220,6 +222,8 @@ test("it blocks request in blocking mode (ESM)", async () => {
       stderr,
       /Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions./
     );
+    match(stdout, /AIKIDO: hono@.* is supported!/);
+    match(stdout, /AIKIDO: node:path is supported!/);
   } catch (err) {
     fail(err);
   } finally {

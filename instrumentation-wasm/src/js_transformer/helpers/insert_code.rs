@@ -305,15 +305,16 @@ pub fn insert_package_wrapped<'a>(
     body.push(stmt_expression);
 }
 
-// Add a statement to the end of the body: __instrumentPackageLoaded('name', 'version');
+// Add a statement to the end of the body: __instrumentPackageLoaded('name', 'version', 'agent_version');
 pub fn insert_package_loaded<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
     pkg_name: &str,
     pkg_version: &str,
+    agent_version: &str,
     body: &mut OxcVec<'a, Statement<'a>>,
 ) {
-    let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(2);
+    let mut instrument_args: OxcVec<'a, Argument<'a>> = builder.vec_with_capacity(3);
 
     instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
         SPAN,
@@ -324,6 +325,12 @@ pub fn insert_package_loaded<'a>(
     instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
         SPAN,
         allocator.alloc_str(pkg_version),
+        None,
+    )));
+
+    instrument_args.push(Argument::StringLiteral(builder.alloc_string_literal(
+        SPAN,
+        allocator.alloc_str(agent_version),
         None,
     )));
 

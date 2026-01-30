@@ -22,6 +22,7 @@ t.test("it inserts __instrumentPackageWrapped correctly (CJS)", async (t) => {
     transformCodeInsertSCA(
       "testpkg",
       "1.0.0",
+      "3.2.1",
       "index.js",
       `
       function test() {
@@ -35,7 +36,7 @@ t.test("it inserts __instrumentPackageWrapped correctly (CJS)", async (t) => {
     function test() {
       return true;
     }
-    __instrumentPackageLoaded("testpkg", "1.0.0");
+    __instrumentPackageLoaded("testpkg", "1.0.0", "3.2.1");
   `
   );
 });
@@ -46,6 +47,7 @@ t.test("it inserts __instrumentPackageWrapped correctly (ESM)", async (t) => {
     transformCodeInsertSCA(
       "testpkg",
       "1.0.0",
+      "3.2.1",
       "index.js",
       `
       function test() {
@@ -59,7 +61,7 @@ t.test("it inserts __instrumentPackageWrapped correctly (ESM)", async (t) => {
     function test() {
       return true;
     }
-    __instrumentPackageLoaded("testpkg", "1.0.0");
+    __instrumentPackageLoaded("testpkg", "1.0.0", "3.2.1");
   `
   );
 });
@@ -69,6 +71,7 @@ t.test("invalid code throws error", async (t) => {
     transformCodeInsertSCA(
       "testpkg",
       "1.0.0",
+      "3.2.1",
       "index.js",
       `
       function test( {
@@ -89,6 +92,7 @@ t.test("correct format detection", async (t) => {
     transformCodeInsertSCA(
       "testpkg",
       "1.0.0",
+      "3.2.1",
       "index.mjs",
       `
       function test() {
@@ -102,7 +106,7 @@ t.test("correct format detection", async (t) => {
     function test() {
       return true;
     }
-    __instrumentPackageLoaded("testpkg", "1.0.0");
+    __instrumentPackageLoaded("testpkg", "1.0.0", "3.2.1");
   `
   );
 });
