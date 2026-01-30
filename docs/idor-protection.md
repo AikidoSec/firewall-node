@@ -2,12 +2,15 @@
 
 IDOR (Insecure Direct Object Reference) protection ensures that every SQL query filters on a tenant column, preventing one tenant from accessing another tenant's data. Zen analyzes SQL queries at runtime and throws an error if a query is missing a tenant filter or uses the wrong tenant ID.
 
+> [!IMPORTANT]
+> IDOR protection always throws on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
+
 ## Setup
 
 ### 1. Enable IDOR protection at startup
 
 ```js
-const Zen = require("@aikidosec/firewall");
+import Zen from "@aikidosec/firewall";
 
 Zen.enableIdorProtection({
   tenantColumnName: "tenant_id",
@@ -23,7 +26,7 @@ Zen.enableIdorProtection({
 Every request must have a tenant ID when IDOR protection is enabled. Call `setTenantId` early in your request handler (e.g. in middleware after authentication):
 
 ```js
-const Zen = require("@aikidosec/firewall");
+import Zen from "@aikidosec/firewall";
 
 app.use((req, res, next) => {
   // Get the tenant ID from your authentication layer
@@ -33,14 +36,15 @@ app.use((req, res, next) => {
 });
 ```
 
-If `setTenantId` is not called for a request, Zen will throw an error when a SQL query is executed.
+> [!IMPORTANT]
+> If `setTenantId` is not called for a request, Zen will throw an error when a SQL query is executed.
 
 ### 3. Bypass for specific queries (optional)
 
 Some queries don't need tenant filtering (e.g. aggregations across all tenants for an admin dashboard). Use `withoutIdorProtection` to bypass the check for a specific callback:
 
 ```js
-const Zen = require("@aikidosec/firewall");
+import Zen from "@aikidosec/firewall";
 
 // IDOR checks are skipped for queries inside this callback
 const result = await Zen.withoutIdorProtection(async () => {
@@ -100,7 +104,8 @@ Zen IDOR protection: setTenantId() was not called for this request. Every reques
 - `UPDATE` — checks that the WHERE clause filters on the tenant column
 - `DELETE` — checks that the WHERE clause filters on the tenant column
 
-Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. Use `withoutIdorProtection()` to bypass the check for those queries.
+> [!WARNING]
+> Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. Use `withoutIdorProtection()` to bypass the check for those queries.
 
 ## Limitations
 
@@ -161,7 +166,7 @@ connection.query("INSERT INTO orders (name, tenant_id) VALUES (?, ?)", [
 ]);
 ```
 
-### OR clauses (planned)
+### OR clauses (not yet supported)
 
 Zen checks that a query filters on the tenant column, but does not yet verify that the filter cannot be bypassed with an `OR` clause. For example:
 
@@ -171,7 +176,7 @@ SELECT * FROM orders WHERE tenant_id = $1 OR public = true
 
 This query passes the IDOR check because `tenant_id` is present as a filter, but the `OR public = true` condition could return rows from other tenants.
 
-### CTEs (WITH clauses) (planned)
+### CTEs (WITH clauses) (not yet supported)
 
 Queries using Common Table Expressions (WITH clauses) are not yet supported and will throw an error. Wrap these calls with `withoutIdorProtection()` for now:
 
@@ -187,7 +192,3 @@ await Zen.withoutIdorProtection(async () => {
 });
 ```
 
-## Notes
-
-- IDOR protection always throws on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
-- Parse results are cached using an LRU cache, so repeated queries with the same SQL string (e.g. parameterized queries) are efficient.
