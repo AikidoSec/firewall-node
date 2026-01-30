@@ -3,7 +3,6 @@ import { Context } from "../../agent/Context";
 import { isIdorProtectionIgnored } from "../../agent/context/withoutIdorProtection";
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
-import { tryParseJSON } from "../../helpers/tryParseJSON";
 import { wasm_idor_analyze_sql } from "../../internals/zen_internals";
 import { SQLDialect } from "../sql-injection/dialects/SQLDialect";
 import type { SqlQueryResult } from "./IdorAnalysisResult";
@@ -43,13 +42,17 @@ export function checkContextForIdor({
     );
   }
 
-  const results = getAnalysisResults(sql, dialect);
+  const analysis = getAnalysisResults(sql, dialect);
 
-  if (!results) {
+  if (!analysis) {
     return violation("Zen IDOR protection: failed to analyze SQL query");
   }
 
-  for (const queryResult of results) {
+  if ("error" in analysis) {
+    return violation(`Zen IDOR protection: ${analysis.error}`);
+  }
+
+  for (const queryResult of analysis.results) {
     if (queryResult.kind === "insert") {
       const insertViolation = checkInsert(
         queryResult,
@@ -193,23 +196,26 @@ const cache = new LRUMap<string, SqlQueryResult[]>(1000);
 function getAnalysisResults(
   sql: string,
   dialect: SQLDialect
-): SqlQueryResult[] | undefined {
+): { results: SqlQueryResult[] } | { error: string } | undefined {
   const cached = cache.get(sql);
   if (cached) {
-    return cached;
+    return { results: cached };
   }
 
-  const json = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
-  const parsed = tryParseJSON(json);
+  const result = wasm_idor_analyze_sql(sql, dialect.getWASMDialectInt());
 
-  if (!parsed || parsed.error) {
+  if (!result) {
     return undefined;
   }
 
-  const results = parsed as SqlQueryResult[];
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  const results = result as SqlQueryResult[];
   cache.set(sql, results);
 
-  return results;
+  return { results };
 }
 
 function violation(message: string): IdorViolationResult {
