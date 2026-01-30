@@ -100,7 +100,10 @@ function checkWhereFilters(
           f.table === table.name || (table.alias && f.table === table.alias)
         );
       }
-      // Unqualified: only match if there's a single table
+      // Unqualified column (e.g. WHERE tenant_id = $1 without table prefix):
+      // We can only safely attribute it to the current table when there's
+      // exactly one table in the query. With multiple tables, we can't know
+      // which table the unqualified column belongs to.
       return queryResult.tables.length === 1;
     });
 
