@@ -1,10 +1,14 @@
 import type { BuildOptions } from "esbuild";
-import type { ProcessedBundlerOptions } from "../unplugin";
+import type {
+  ProcessedBundlerOptions,
+  ZenBundlerPluginUserOptions,
+} from "../unplugin";
 import { findZenLibPath } from "../findZenLibPath";
 import { join } from "node:path";
 
 export function processEsbuildOptions(
-  options: BuildOptions
+  options: BuildOptions,
+  userOptions: ZenBundlerPluginUserOptions | undefined
 ): ProcessedBundlerOptions {
   if (!options.format) {
     throw new Error(
@@ -39,7 +43,9 @@ export function processEsbuildOptions(
       options.external.push("@aikidosec/firewall");
     }
   } else {
-    throw new Error("esbuild external option is not an array");
+    throw new Error(
+      "Aikido: esbuild external option needs to be an array or undefined."
+    );
   }
 
   if (outputFormat === "esm") {
@@ -58,7 +64,7 @@ export function processEsbuildOptions(
     }
   }
 
-  if (!options.outdir) {
+  if (!options.outdir && userOptions?.copyFiles !== false) {
     throw new Error(
       "Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config."
     );

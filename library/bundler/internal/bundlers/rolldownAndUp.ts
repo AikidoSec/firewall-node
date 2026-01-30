@@ -1,4 +1,8 @@
-import type { ProcessedBundlerOptions, OutputFormat } from "../unplugin";
+import type {
+  ProcessedBundlerOptions,
+  OutputFormat,
+  ZenBundlerPluginUserOptions,
+} from "../unplugin";
 import type {
   OutputOptions as RolldownOutputOptions,
   InputOptions as RolldownInputOptions,
@@ -8,7 +12,7 @@ import type {
   InputOptions as RollupInputOptions,
 } from "rollup";
 
-export function processRolldownAndUpOptions(
+export function processRolldownAndUpInputOptions(
   options:
     | (RolldownInputOptions & {
         output?: RolldownOutputOptions;
@@ -17,28 +21,34 @@ export function processRolldownAndUpOptions(
         output?: RollupOutputOptions;
       }),
   bundler: "rolldown" | "rollup"
-): ProcessedBundlerOptions {
-  const outputFormat = getModuleFormat(options.output?.format, bundler);
-
-  if (!options.output?.dir) {
-    throw new Error(
-      `Aikido: ${bundler} output directory is not specified. Please set the 'output.dir' option in your ${bundler} config.`
-    );
-  }
-
+): void {
   if (!options.external) {
     options.external = [/@aikidosec\/firewall.*/];
   } else if (Array.isArray(options.external)) {
     options.external.push(/@aikidosec\/firewall.*/);
   } else {
     throw new Error(
-      `Aikido: ${bundler} external option needs to be an array for ESM builds if Zen is used.`
+      `Aikido: ${bundler} external option needs to be an array or undefined.`
+    );
+  }
+}
+
+export function processRolldownAndUpOutputOptions(
+  options: RolldownOutputOptions | RollupOutputOptions,
+  bundler: "rolldown" | "rollup",
+  userOptions: ZenBundlerPluginUserOptions | undefined
+): ProcessedBundlerOptions {
+  const outputFormat = getModuleFormat(options.format, bundler);
+
+  if (!options?.dir && userOptions?.copyFiles !== false) {
+    throw new Error(
+      `Aikido: ${bundler} output directory is not specified. Please set the 'output.dir' option in your ${bundler} config.`
     );
   }
 
   return {
     outputFormat,
-    outDir: options.output.dir,
+    outDir: options.dir,
   };
 }
 

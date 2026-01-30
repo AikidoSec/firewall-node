@@ -7,6 +7,24 @@ import { createTestAgent } from "../../helpers/createTestAgent";
 
 const logger = new LoggerForTesting();
 
+t.test("Only calls interceptors with agent", async (t) => {
+  const toWrap = {
+    test: () => "test",
+  };
+
+  wrapExport(
+    toWrap,
+    "test",
+    { name: "test", type: "external" },
+    {
+      kind: undefined,
+      modifyReturnValue: () => "modified",
+    }
+  );
+
+  t.same(toWrap.test(), "test");
+});
+
 createTestAgent({
   logger,
   token: new Token("123"),
