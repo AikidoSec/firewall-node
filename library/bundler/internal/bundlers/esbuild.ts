@@ -1,10 +1,57 @@
-import type { BuildOptions } from "esbuild";
 import type {
-  ProcessedBundlerOptions,
-  ZenBundlerPluginUserOptions,
-} from "../unplugin";
+  BuildOptions,
+  Plugin as EsbuildPlugin,
+  OnLoadArgs,
+  OnLoadResult,
+} from "esbuild";
+import {
+  fileMatchRegex,
+  onBuildEnd,
+  onBuildStart,
+  transform,
+  type ProcessedBundlerOptions,
+  type ZenBundlerPluginUserOptions,
+} from "../base";
 import { findZenLibPath } from "../findZenLibPath";
 import { join } from "node:path";
+import { readFile } from "node:fs/promises";
+
+let processedBundlerOpts: ProcessedBundlerOptions | undefined;
+
+export function zenEsbuildPlugin(
+  userOptions?: ZenBundlerPluginUserOptions
+): EsbuildPlugin {
+  return {
+    name: "zen-esbuild-plugin",
+    setup(build) {
+      processedBundlerOpts = processEsbuildOptions(
+        build.initialOptions,
+        userOptions
+      );
+
+      build.onStart(onBuildStart);
+      build.onEnd(async () => {
+        await onBuildEnd(processedBundlerOpts, userOptions);
+      });
+
+      build.onLoad({ filter: fileMatchRegex, namespace: "file" }, onLoad);
+    },
+  };
+}
+
+async function onLoad(args: OnLoadArgs): Promise<OnLoadResult> {
+  // noopengrep
+  const fileContent = await readFile(args.path, "utf-8");
+
+  const result = transform(fileContent, args.path);
+
+  return {
+    contents: result.code,
+    // Esbuild stops auto-detecting the loader based on file extension
+    // and tries to parse TS files as JS etc. which can lead to errors.
+    loader: getLoaderFromFilePath(args.path),
+  };
+}
 
 export function processEsbuildOptions(
   options: BuildOptions,
@@ -74,4 +121,28 @@ export function processEsbuildOptions(
     outputFormat,
     outDir: options.outdir,
   };
+}
+
+function getLoaderFromFilePath(path: string): OnLoadResult["loader"] {
+  const extension = path.split(".").pop();
+
+  switch (extension) {
+    case "js":
+    case "cjs":
+    case "mjs": {
+      return "js";
+    }
+    case "ts":
+    case "mts":
+    case "cts": {
+      return "ts";
+    }
+    case "tsx":
+    case "jsx": {
+      return extension;
+    }
+    default: {
+      return "default";
+    }
+  }
 }
