@@ -1,8 +1,5 @@
 # Adding Zen to an ESM application
 
-> [!WARNING]  
-> The new instrumentation system with ESM support is still under active development and not suitable for production use.
-
 Modify the start command of your application to include the Zen firewall:
 
 ```sh
