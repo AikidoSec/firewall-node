@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";

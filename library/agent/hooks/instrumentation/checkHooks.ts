@@ -12,7 +12,7 @@ export async function checkHooks() {
   }
 
   if (!success) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.warn(
       `AIKIDO: A self check of the code instrumentation failed. This means that the protection might not work as expected.`
     );

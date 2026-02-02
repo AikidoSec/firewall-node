@@ -1,4 +1,5 @@
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
+
 import * as mod from "node:module";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
 import isFirewallSupported from "../helpers/isFirewallSupported";
@@ -31,10 +32,6 @@ function start() {
     );
     return;
   }
-
-  console.warn(
-    "AIKIDO: The new instrumentation system with ESM support is still under active development and not suitable for production use."
-  );
 
   protectWithNewInstrumentation();
 }

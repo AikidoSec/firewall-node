@@ -6,7 +6,7 @@ export function checkIndexImportGuard(): boolean {
   };
 
   if (globalState[symbol]) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.error(
       "AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time."
     );

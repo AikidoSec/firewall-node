@@ -69,7 +69,6 @@ export function inspectDNSLookupCalls(
   };
 }
 
-// eslint-disable-next-line max-lines-per-function
 function wrapDNSLookupCallback(
   callback: Function,
   hostname: string,
@@ -79,7 +78,6 @@ function wrapDNSLookupCallback(
   urlArg?: URL,
   callingLocationStackTrace?: Error
 ): Function {
-  // eslint-disable-next-line max-lines-per-function
   return function wrappedDNSLookupCallback(
     err: Error,
     addresses: string | LookupAddress[],

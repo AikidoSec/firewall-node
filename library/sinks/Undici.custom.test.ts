@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
