@@ -6,12 +6,14 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
+import { getPortFromURL } from "../helpers/getPortFromURL";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
+import { buildURLFromArgs } from "./undici/buildURLFromObject";
 import { wrapDispatch } from "./undici/wrapDispatch";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import { getHostnameAndPortFromArgs } from "./undici/getHostnameAndPortFromArgs";
 import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 const methods = [
@@ -26,20 +28,22 @@ const methods = [
 export class Undici implements Wrapper {
   private inspectHostname(
     agent: Agent,
-    hostname: string,
-    port: number | undefined,
-    method: string
+    url: URL,
+    method: string,
+    httpMethod: string
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
+    const port = getPortFromURL(url);
     if (typeof port === "number" && port > 0) {
-      agent.onConnectHostname(hostname, port);
+      agent.onConnectHostname(url.hostname, port);
+      agent.onConnectHTTP(url, port, httpMethod);
     }
 
-    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+    if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
       return {
         operation: `undici.${method}`,
-        hostname: hostname,
+        hostname: url.hostname,
       };
     }
 
@@ -50,7 +54,7 @@ export class Undici implements Wrapper {
     }
 
     return checkContextForSSRF({
-      hostname: hostname,
+      hostname: url.hostname,
       operation: `undici.${method}`,
       context,
       port,
@@ -62,14 +66,18 @@ export class Undici implements Wrapper {
     agent: Agent,
     method: string
   ): InterceptorResult {
-    const hostnameAndPort = getHostnameAndPortFromArgs(args);
-    if (hostnameAndPort) {
-      const attack = this.inspectHostname(
-        agent,
-        hostnameAndPort.hostname,
-        hostnameAndPort.port,
-        method
-      );
+    let httpMethod = "GET";
+    if (
+      args.length > 1 &&
+      isPlainObject(args[1]) &&
+      typeof args[1].method === "string"
+    ) {
+      httpMethod = args[1].method;
+    }
+
+    const url = buildURLFromArgs(args);
+    if (url) {
+      const attack = this.inspectHostname(agent, url, method, httpMethod);
       if (attack) {
         return attack;
       }

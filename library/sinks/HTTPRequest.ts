@@ -19,12 +19,14 @@ export class HTTPRequest implements Wrapper {
     agent: Agent,
     url: URL,
     port: number | undefined,
-    module: "http" | "https"
+    module: "http" | "https",
+    method: string
   ): InterceptorResult {
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
       agent.onConnectHostname(url.hostname, port);
+      agent.onConnectHTTP(url, port, method);
     }
 
     if (agent.getConfig().shouldBlockOutgoingRequest(url.hostname)) {
@@ -82,11 +84,21 @@ export class HTTPRequest implements Wrapper {
     }
 
     if (url.hostname.length > 0) {
+      // Extract method from options object
+      let method = "GET";
+      const optionObj = args.find((arg): arg is RequestOptions =>
+        isOptionsObject(arg)
+      );
+      if (optionObj && optionObj.method) {
+        method = optionObj.method.toUpperCase();
+      }
+
       const attack = this.inspectHostname(
         agent,
         url,
         getPortFromURL(url),
-        module
+        module,
+        method
       );
       if (attack) {
         return attack;

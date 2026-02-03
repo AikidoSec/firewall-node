@@ -28,6 +28,7 @@ import { wrapInstalledPackages } from "./wrapInstalledPackages";
 import { Wrapper } from "./Wrapper";
 import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
+import { executeHooks } from "./hooks";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
 import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
@@ -572,6 +573,14 @@ export class Agent {
 
   onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
+  }
+
+  onConnectHTTP(url: URL, port: number, method: string) {
+    executeHooks("beforeOutboundRequest", {
+      url,
+      port,
+      method: method.toUpperCase(),
+    });
   }
 
   onRouteExecute(context: Context) {

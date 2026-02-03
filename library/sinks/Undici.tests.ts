@@ -2,6 +2,7 @@ import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { addHook, removeHook } from "../agent/hooks";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -69,6 +70,39 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       const { request, fetch } = require(
         undiciPkgName
       ) as typeof import("undici-v6");
+
+      const hookArgs: unknown[] = [];
+      const beforeOutbound = (args: unknown) => {
+        hookArgs.push(args);
+      };
+      addHook("beforeOutboundRequest", beforeOutbound);
+      await request({
+        protocol: "https:",
+        hostname: "ssrf-redirects.testssandbox.com",
+        pathname: "/my-path",
+        search: "?a=b",
+      });
+      await request(`http://localhost:${port}/api/internal`, {
+        method: "POST",
+      });
+      t.same(agent.getHostnames().asArray(), [
+        { hostname: "ssrf-redirects.testssandbox.com", port: 443, hits: 1 },
+        { hostname: "localhost", port: port, hits: 1 },
+      ]);
+      agent.getHostnames().clear();
+      t.same(hookArgs, [
+        {
+          url: new URL("https://ssrf-redirects.testssandbox.com/my-path?a=b"),
+          method: "GET",
+          port: 443,
+        },
+        {
+          url: new URL(`http://localhost:${port}/api/internal`),
+          method: "POST",
+          port: port,
+        },
+      ]);
+      removeHook("beforeOutboundRequest", beforeOutbound);
 
       await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [

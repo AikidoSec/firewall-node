@@ -2,6 +2,7 @@ import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
+import { addHook, removeHook } from "../agent/hooks";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -73,15 +74,27 @@ const oldUrl = require("url");
 t.test("it works", (t) => {
   t.same(agent.getHostnames().asArray(), []);
 
+  const hookArgs: unknown[] = [];
+  const hook = (args: unknown) => {
+    hookArgs.push(args);
+  };
+  addHook("beforeOutboundRequest", hook);
   runWithContext(createContext(), () => {
     const aikido = http.request("http://aikido.dev");
     aikido.end();
   });
-
   t.same(agent.getHostnames().asArray(), [
     { hostname: "aikido.dev", port: 80, hits: 1 },
   ]);
   agent.getHostnames().clear();
+  t.same(hookArgs, [
+    {
+      url: new URL("http://aikido.dev/"),
+      port: 80,
+      method: "GET",
+    },
+  ]);
+  removeHook("beforeOutboundRequest", hook);
 
   runWithContext(createContext(), () => {
     const aikido = https.request("https://aikido.dev");
