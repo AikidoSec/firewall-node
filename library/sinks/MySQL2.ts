@@ -49,22 +49,23 @@ export class MySQL2 implements Wrapper {
         const sql = args[0];
         const params = this.findParams(args);
 
-        const idorResult = checkContextForIdor({
+        // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+        const sqlInjectionResult = checkContextForSqlInjection({
+          operation: operation,
+          sql: sql,
+          context: context,
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
+
+        return checkContextForIdor({
           sql,
           context,
           dialect: this.dialect,
           resolvePlaceholder: (placeholder, placeholderNumber) =>
             this.resolvePlaceholder(placeholder, placeholderNumber, params),
-        });
-        if (idorResult) {
-          return idorResult;
-        }
-
-        return checkContextForSqlInjection({
-          operation: operation,
-          sql: sql,
-          context: context,
-          dialect: this.dialect,
         });
       }
 
@@ -76,22 +77,23 @@ export class MySQL2 implements Wrapper {
         const sql = args[0].sql;
         const params = this.findParams(args);
 
-        const idorResult = checkContextForIdor({
+        // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+        const sqlInjectionResult = checkContextForSqlInjection({
+          operation: operation,
+          sql: sql,
+          context: context,
+          dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
+
+        return checkContextForIdor({
           sql,
           context,
           dialect: this.dialect,
           resolvePlaceholder: (placeholder, placeholderNumber) =>
             this.resolvePlaceholder(placeholder, placeholderNumber, params),
-        });
-        if (idorResult) {
-          return idorResult;
-        }
-
-        return checkContextForSqlInjection({
-          operation: operation,
-          sql: sql,
-          context: context,
-          dialect: this.dialect,
         });
       }
     }

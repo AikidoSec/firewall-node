@@ -56,22 +56,23 @@ export class Postgres implements Wrapper {
       const sql: string = args[0];
       const params = this.findParams(args);
 
-      const idorResult = checkContextForIdor({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
+        sql: sql,
+        context: context,
+        operation: "pg.query",
+        dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
         sql,
         context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
-      });
-      if (idorResult) {
-        return idorResult;
-      }
-
-      return checkContextForSqlInjection({
-        sql: sql,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
       });
     }
 
@@ -84,22 +85,23 @@ export class Postgres implements Wrapper {
       const text = args[0].text;
       const params = this.findParams(args);
 
-      const idorResult = checkContextForIdor({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
+        sql: text,
+        context: context,
+        operation: "pg.query",
+        dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
         sql: text,
         context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
-      });
-      if (idorResult) {
-        return idorResult;
-      }
-
-      return checkContextForSqlInjection({
-        sql: text,
-        context: context,
-        operation: "pg.query",
-        dialect: this.dialect,
       });
     }
 
