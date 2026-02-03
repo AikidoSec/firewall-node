@@ -14,7 +14,15 @@ export async function createConnection() {
   await client.query(`
     CREATE TABLE IF NOT EXISTS cats_3 (
         petname varchar(255),
-        comment varchar(255)
+        comment varchar(255),
+        user_id integer
+    );
+  `);
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS cats_3_with_idor (
+        petname varchar(255),
+        comment varchar(255),
+        user_id integer
     );
   `);
 

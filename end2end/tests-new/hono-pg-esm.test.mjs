@@ -17,6 +17,7 @@ const port3 = await getRandomPort();
 const port4 = await getRandomPort();
 const port5 = await getRandomPort();
 const port6 = await getRandomPort();
+const port7 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -115,7 +116,9 @@ test("it does not block request in monitoring mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port2}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_3;-- H" }),
+        body: JSON.stringify({
+          name: "Njuska', '1'); DELETE FROM cats_3;-- H",
+        }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -505,6 +508,71 @@ test("if bot is blocked, attack waves are not counted for that bot", async () =>
     );
     // No attack wave events should be generated for blocked bots
     equal(attackWaveEvents.length, 0);
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("IDOR protection works", async () => {
+  const server = spawn(
+    `node`,
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port7],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    await timeout(2000);
+
+    const [idorBypass, normalAdd] = await Promise.all([
+      fetch(`http://127.0.0.1:${port7}/add`, {
+        method: "POST",
+        headers: {
+          "x-user-id": "2",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Njuska",
+          withIdorProtection: true,
+        }),
+        signal: AbortSignal.timeout(5000),
+      }),
+      fetch(`http://127.0.0.1:${port7}/add`, {
+        method: "POST",
+        body: JSON.stringify({ name: "Miau", withIdorProtection: true }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(5000),
+      }),
+    ]);
+
+    equal(idorBypass.status, 500);
+    equal(normalAdd.status, 200);
+    match(stdout, /Starting agent/);
   } catch (err) {
     fail(err);
   } finally {
