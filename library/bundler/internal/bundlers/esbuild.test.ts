@@ -9,6 +9,21 @@ import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentat
 const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
 const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
 
+let restoreTestNewInstrumentationEnv = false;
+t.before(() => {
+  if (isNewInstrumentationUnitTest()) {
+    // Skip replacing the import path for unit tests from @aikidosec/firewall/instrument/internals to the local path
+    process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "false";
+    restoreTestNewInstrumentationEnv = true;
+  }
+});
+
+t.after(() => {
+  if (restoreTestNewInstrumentationEnv) {
+    process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
+  }
+});
+
 t.test("it works in memory (ESM)", async (t) => {
   const result = await build({
     entryPoints: [esmTestPath],
@@ -28,11 +43,7 @@ t.test("it works in memory (ESM)", async (t) => {
 
   t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-
-  if (!isNewInstrumentationUnitTest()) {
-    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
-  }
-
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
   t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
@@ -55,9 +66,7 @@ t.test("it works in memory (CJS)", async (t) => {
   const code = result.outputFiles?.[0].text || "";
 
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-  if (!isNewInstrumentationUnitTest()) {
-    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
-  }
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
   t.match(code, /__instrumentPackageLoaded/);
   t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
   t.notMatch(code, /function __instrumentInspectArgs/);
@@ -72,14 +81,14 @@ t.test("it throws error when outdir is missing", async (t) => {
       format: "cjs",
       plugins: [zenEsbuildPlugin()],
       write: false,
-    })
+    }),
   );
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config./
+      /Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config./,
     );
   }
 });
@@ -95,13 +104,13 @@ t.test("it throws error when external is invalid", async (t) => {
       // @ts-expect-error testing invalid external option
       external: "test123",
       write: false,
-    })
+    }),
   );
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild external option needs to be an array or undefined./
+      /Aikido: esbuild external option needs to be an array or undefined./,
     );
   }
 });
@@ -115,14 +124,14 @@ t.test("it throws error when output format is invalid", async (t) => {
       format: "iife",
       plugins: [zenEsbuildPlugin()],
       write: false,
-    })
+    }),
   );
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./
+      /Aikido: esbuild output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./,
     );
   }
 });
