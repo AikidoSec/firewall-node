@@ -33,10 +33,6 @@ function start() {
     return;
   }
 
-  console.warn(
-    "AIKIDO: The new instrumentation system with ESM support is still under active development and not suitable for production use."
-  );
-
   protectWithNewInstrumentation();
 }
 

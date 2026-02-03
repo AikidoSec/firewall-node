@@ -144,6 +144,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
 If you are using a bundler, please refer to [Installing Zen in a Node.js Application that uses a bundler](./docs/bundler.md).
+For ESM applications, see [docs/esm.md](docs/esm.md).
 
 ## Reporting to your Aikido Security dashboard
 
