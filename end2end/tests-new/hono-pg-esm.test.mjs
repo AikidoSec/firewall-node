@@ -40,11 +40,14 @@ test("it blocks request in blocking mode", async () => {
 
     let stdout = "";
     server.stdout.on("data", (data) => {
+      console.log(data.toString());
+
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
+      console.error(data.toString());
       stderr += data.toString();
     });
 
@@ -102,11 +105,13 @@ test("it does not block request in monitoring mode", async () => {
 
     let stdout = "";
     server.stdout.on("data", (data) => {
+      console.log(data.toString());
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
+      console.error(data.toString());
       stderr += data.toString();
     });
 
