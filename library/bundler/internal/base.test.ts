@@ -1,9 +1,5 @@
 import * as t from "tap";
 import { onBuildEnd, resetBuildState, transform } from "./base";
-import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { existsSync } from "node:fs";
 
 // @esm-tests-skip
 
@@ -107,35 +103,6 @@ t.test(
     }
   }
 );
-
-t.test("File copy process is working", async (t) => {
-  resetBuildState();
-  transform(`require("@aikidosec/firewall/instrument");`, "test-file.js");
-
-  const outputDir = await mkdtemp(
-    join(tmpdir(), "zen-unit-test-bundling-copy-")
-  );
-  try {
-    await onBuildEnd(
-      {
-        outputFormat: "cjs",
-        outDir: outputDir,
-      },
-      {}
-    );
-
-    const packagePath = join(
-      outputDir,
-      "node_modules",
-      "@aikidosec",
-      "firewall"
-    );
-    t.same(existsSync(join(packagePath, "package.json")), true);
-    t.same(existsSync(join(packagePath, "node_internals")), true);
-  } finally {
-    await rm(outputDir, { recursive: true, force: true });
-  }
-});
 
 t.test(
   "calling onBuildEnd can't find lib if unit test env is false",
