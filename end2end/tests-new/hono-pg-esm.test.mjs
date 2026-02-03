@@ -40,14 +40,11 @@ test("it blocks request in blocking mode", async () => {
 
     let stdout = "";
     server.stdout.on("data", (data) => {
-      console.log(data.toString());
-
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
-      console.error(data.toString());
       stderr += data.toString();
     });
 
@@ -57,7 +54,7 @@ test("it blocks request in blocking mode", async () => {
     const [sqlInjection, normalAdd] = await Promise.all([
       fetch(`http://127.0.0.1:${port}/add`, {
         method: "POST",
-        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_3;-- H" }),
+        body: JSON.stringify({ name: "Njuska'); DELETE FROM cats_6;-- H" }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -105,13 +102,11 @@ test("it does not block request in monitoring mode", async () => {
 
     let stdout = "";
     server.stdout.on("data", (data) => {
-      console.log(data.toString());
       stdout += data.toString();
     });
 
     let stderr = "";
     server.stderr.on("data", (data) => {
-      console.error(data.toString());
       stderr += data.toString();
     });
 
@@ -122,7 +117,7 @@ test("it does not block request in monitoring mode", async () => {
       fetch(`http://127.0.0.1:${port2}/add`, {
         method: "POST",
         body: JSON.stringify({
-          name: "Njuska', '1'); DELETE FROM cats_3;-- H",
+          name: "Njuska', '1'); DELETE FROM cats_6;-- H",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -580,7 +575,7 @@ test("IDOR protection works", async () => {
     match(stdout, /Starting agent/);
     match(
       stderr,
-      /Zen IDOR protection: INSERT on table 'cats_3_with_idor' sets 'user_id' to '1' but tenant ID is '2'/
+      /Zen IDOR protection: INSERT on table 'cats_6_with_idor' sets 'user_id' to '1' but tenant ID is '2'/
     );
   } catch (err) {
     fail(err);

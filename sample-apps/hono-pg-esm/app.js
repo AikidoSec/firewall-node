@@ -7,7 +7,7 @@ import Zen from "@aikidosec/firewall";
 
 Zen.enableIdorProtection({
   tenantColumnName: "user_id",
-  excludedTables: ["cats_3"],
+  excludedTables: ["cats_6"],
 });
 
 const app = new Hono();
@@ -48,7 +48,7 @@ app.post("/add", async (c) => {
   }
 
   const table =
-    json.withIdorProtection === true ? "cats_3_with_idor" : "cats_3";
+    json.withIdorProtection === true ? "cats_6_with_idor" : "cats_6";
 
   // Insecure
   await db.query(
@@ -58,7 +58,7 @@ app.post("/add", async (c) => {
 });
 
 app.get("/clear", async (c) => {
-  await db.query(`DELETE FROM cats_3 WHERE user_id = ${c.get("userId")};`);
+  await db.query(`DELETE FROM cats_6 WHERE user_id = ${c.get("userId")};`);
   return c.text("Table cleared");
 });
 

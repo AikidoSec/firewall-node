@@ -12,14 +12,14 @@ export async function createConnection() {
 
   await client.connect();
   await client.query(`
-    CREATE TABLE IF NOT EXISTS cats_3 (
+    CREATE TABLE IF NOT EXISTS cats_6 (
         petname varchar(255),
         comment varchar(255),
         user_id integer
     );
   `);
   await client.query(`
-    CREATE TABLE IF NOT EXISTS cats_3_with_idor (
+    CREATE TABLE IF NOT EXISTS cats_6_with_idor (
         petname varchar(255),
         comment varchar(255),
         user_id integer
