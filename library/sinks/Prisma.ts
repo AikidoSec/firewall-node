@@ -203,7 +203,7 @@ export class Prisma implements Wrapper {
 
   // Check if the Prisma client uses event-based logging (emit: 'event')
   // which requires $on() to work. Since $extends() breaks $on(), we can't
-  // instrument clients that use event-based logging.
+  // protect clients against (No)SQL injections that use event-based logging.
   // See: https://github.com/prisma/prisma/issues/24070
   private usesEventBasedLogging(constructorArgs: unknown[]): boolean {
     if (constructorArgs.length === 0) {
@@ -225,7 +225,7 @@ export class Prisma implements Wrapper {
     pkgInfo: PartialWrapPackageInfo,
     constructorArgs: unknown[]
   ) {
-    // Disable instrumentation if event-based logging is used
+    // Disable (No)SQL injection protection if event-based logging is used
     // $extends() breaks $on() which is required for event-based logging
     // See: https://github.com/prisma/prisma/issues/24070
     if (this.usesEventBasedLogging(constructorArgs)) {
