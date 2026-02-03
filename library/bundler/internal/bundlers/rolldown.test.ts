@@ -78,7 +78,7 @@ t.test("it works when writing to temp file (ESM)", options, async (t) => {
   const bundledFile = await readFile(
     //noopengrep
     resolve(tempDir, "hono-esm-pg.js"),
-    "utf-8",
+    "utf-8"
   );
 
   t.same(bundledFile.length > 0, true);
@@ -104,7 +104,7 @@ t.test("it throws error when output dir is not set", options, async (t) => {
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: rolldown output directory is not specified. Please set the 'output.dir' option in your rolldown config./,
+      /Aikido: rolldown output directory is not specified. Please set the 'output.dir' option in your rolldown config./
     );
   }
 });
@@ -118,13 +118,13 @@ t.test("external option is not an array", options, async (t) => {
       input: esmTestPath,
       plugins: [zenRolldownPlugin()],
       external: "test123",
-    }),
+    })
   );
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: rolldown external option needs to be an array or undefined./,
+      /Aikido: rolldown external option needs to be an array or undefined./
     );
   }
 });
@@ -144,7 +144,7 @@ t.test("invalid output format", options, async (t) => {
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: rolldown output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./,
+      /Aikido: rolldown output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./
     );
   }
 });

@@ -81,14 +81,14 @@ t.test("it throws error when outdir is missing", async (t) => {
       format: "cjs",
       plugins: [zenEsbuildPlugin()],
       write: false,
-    }),
+    })
   );
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config./,
+      /Aikido: esbuild outdir is not set. Please set the outdir option in your esbuild config./
     );
   }
 });
@@ -104,13 +104,13 @@ t.test("it throws error when external is invalid", async (t) => {
       // @ts-expect-error testing invalid external option
       external: "test123",
       write: false,
-    }),
+    })
   );
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild external option needs to be an array or undefined./,
+      /Aikido: esbuild external option needs to be an array or undefined./
     );
   }
 });
@@ -124,14 +124,14 @@ t.test("it throws error when output format is invalid", async (t) => {
       format: "iife",
       plugins: [zenEsbuildPlugin()],
       write: false,
-    }),
+    })
   );
 
   t.ok(error instanceof Error);
   if (error instanceof Error) {
     t.match(
       error.message,
-      /Aikido: esbuild output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./,
+      /Aikido: esbuild output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./
     );
   }
 });
