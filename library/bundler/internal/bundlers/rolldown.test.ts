@@ -3,6 +3,7 @@ import { resolve } from "path";
 import { zenRolldownPlugin } from "../../index";
 import { readFile } from "fs/promises";
 import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
+import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
 
 // @esm-tests-skip
 
@@ -36,7 +37,9 @@ t.test("it works in memory (ESM)", options, async (t) => {
 
   t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  if (!isNewInstrumentationUnitTest()) {
+    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  }
   t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
@@ -69,7 +72,9 @@ t.test("it works when writing to temp file (ESM)", options, async (t) => {
 
   t.match(bundledFile, /__instrumentInspectArgs\("pg\.lib/);
   t.match(bundledFile, /__instrumentModifyArgs.*"hono.dist/);
-  t.match(bundledFile, /@aikidosec\/firewall\/instrument\/internals/);
+  if (!isNewInstrumentationUnitTest()) {
+    t.match(bundledFile, /@aikidosec\/firewall\/instrument\/internals/);
+  }
   t.notMatch(bundledFile, /function __instrumentInspectArgs/);
 });
 
@@ -153,7 +158,9 @@ t.test("it works in memory (CJS)", options, async (t) => {
 
   t.match(code, /__instrumentPackageLoaded/);
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  if (!isNewInstrumentationUnitTest()) {
+    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  }
   t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });

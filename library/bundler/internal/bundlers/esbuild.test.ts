@@ -2,6 +2,7 @@ import * as t from "tap";
 import { build } from "esbuild";
 import { resolve } from "node:path";
 import { zenEsbuildPlugin } from "../../index";
+import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
 
 // @esm-tests-skip
 
@@ -27,7 +28,11 @@ t.test("it works in memory (ESM)", async (t) => {
 
   t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+
+  if (!isNewInstrumentationUnitTest()) {
+    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  }
+
   t.match(code, /__instrumentPackageLoaded/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
@@ -50,7 +55,9 @@ t.test("it works in memory (CJS)", async (t) => {
   const code = result.outputFiles?.[0].text || "";
 
   t.match(code, /__instrumentModifyArgs.*"hono.dist/);
-  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  if (!isNewInstrumentationUnitTest()) {
+    t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  }
   t.match(code, /__instrumentPackageLoaded/);
   t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
   t.notMatch(code, /function __instrumentInspectArgs/);
