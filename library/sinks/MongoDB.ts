@@ -223,7 +223,7 @@ export class MongoDB implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("mongodb")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0")
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
       .onRequire((exports, pkgInfo) => {
         // From mongodb v6.10.0, the Collection is undefined
         // It's defined like:

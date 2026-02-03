@@ -55,7 +55,7 @@ Zen for Node.js 16+ is compatible with:
 
 ### Database drivers
 
-- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
+- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x, 6.x and 7.x _(npm package versions, not MongoDB server versions)_
 - ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) 8.x, 7.x and 6.x
 - ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 - ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
