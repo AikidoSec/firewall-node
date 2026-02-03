@@ -173,3 +173,54 @@ t.test("it works in memory (CJS)", options, async (t) => {
   t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
+
+t.test("it works in memory (no format)", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
+  const bundle = await rolldown({
+    platform: "node",
+    input: esmTestPath,
+    plugins: [
+      zenRolldownPlugin({
+        copyFiles: false,
+      }),
+    ],
+  });
+
+  const { output } = await bundle.generate({});
+
+  t.same(output.length > 0, true);
+  const code = output[0].code;
+
+  t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  t.match(code, /__instrumentPackageLoaded/);
+  t.notMatch(code, /function __instrumentInspectArgs/);
+});
+
+t.test("it works with external option as array", options, async (t) => {
+  const { rolldown } = await import("rolldown");
+
+  const bundle = await rolldown({
+    platform: "node",
+    input: esmTestPath,
+    external: ["test"],
+    plugins: [
+      zenRolldownPlugin({
+        copyFiles: false,
+      }),
+    ],
+  });
+
+  const { output } = await bundle.generate({});
+
+  t.same(output.length > 0, true);
+  const code = output[0].code;
+
+  t.match(code, /__instrumentInspectArgs.*"pg\.lib/);
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  t.match(code, /__instrumentPackageLoaded/);
+  t.notMatch(code, /function __instrumentInspectArgs/);
+});

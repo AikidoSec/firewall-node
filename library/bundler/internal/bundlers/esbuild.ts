@@ -107,7 +107,7 @@ export function processEsbuildOptions(
     } else if (Array.isArray(options.inject)) {
       options.inject.push(injectPath);
     } else {
-      throw new Error("esbuild inject option is not an array");
+      throw new Error("Aikido: esbuild inject option is not an array");
     }
   }
 

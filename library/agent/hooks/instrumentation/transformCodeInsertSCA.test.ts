@@ -110,3 +110,26 @@ t.test("correct format detection", async (t) => {
   `
   );
 });
+
+t.test("it replaces import path during unit tests", async (t) => {
+  process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "true";
+  const result = transformCodeInsertSCA(
+    "testpkg",
+    "1.0.0",
+    "3.2.1",
+    "index.js",
+    `
+      function test() {
+        return true;
+      }
+    `,
+    "commonjs"
+  );
+
+  t.same(
+    result.includes("injectedFunctions.js") ||
+      result.includes("injectedFunctions.ts"),
+    true
+  );
+  process.env.AIKIDO_TEST_NEW_INSTRUMENTATION = "false";
+});

@@ -149,20 +149,11 @@ export async function onBuildEnd(
     await copyFiles(processedBundlerOpts);
   }
 
-  // Reset state for subsequent builds
-  importFound = false;
-  initialized = false;
-  instrumentedForSCA = new Set<string>();
+  resetBuildState();
 }
 
 async function copyFiles(processedBundlerOpts: ProcessedBundlerOptions) {
-  if (!processedBundlerOpts) {
-    throw new Error(
-      "Aikido: processedBundlerOpts is undefined in copyFiles. This is likely a bug in the bundler plugin."
-    );
-  }
-
-  const outDir = processedBundlerOpts.outDir;
+  const outDir = processedBundlerOpts?.outDir;
   if (!outDir) {
     throw new Error(
       "Aikido: outDir is undefined in copyFiles. This is likely a bug in the bundler plugin."
@@ -180,4 +171,11 @@ async function copyFiles(processedBundlerOpts: ProcessedBundlerOptions) {
   await cp(zenLibDir, join(outDir, "node_modules", "@aikidosec", "firewall"), {
     recursive: true,
   });
+}
+
+export function resetBuildState() {
+  // Reset state for subsequent builds
+  importFound = false;
+  initialized = false;
+  instrumentedForSCA = new Set<string>();
 }

@@ -1,13 +1,17 @@
 import * as t from "tap";
-import { build } from "esbuild";
 import { resolve } from "node:path";
 import { zenEsbuildPlugin } from "../../index";
 import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
+import { getMajorNodeVersion } from "../../../helpers/getNodeVersion";
 
 // @esm-tests-skip
 
 const cjsTestPath = resolve(__dirname, "fixtures", "hono-cjs-sqlite.cjs");
 const esmTestPath = resolve(__dirname, "fixtures", "hono-esm-pg.mjs");
+
+const options = {
+  skip: getMajorNodeVersion() < 18 ? "Tests require Node.js 18+" : false,
+};
 
 let restoreTestNewInstrumentationEnv = false;
 t.before(() => {
@@ -24,7 +28,8 @@ t.after(() => {
   }
 });
 
-t.test("it works in memory (ESM)", async (t) => {
+t.test("it works in memory (ESM)", options, async (t) => {
+  const { build } = await import("esbuild");
   const result = await build({
     entryPoints: [esmTestPath],
     bundle: true,
@@ -48,7 +53,9 @@ t.test("it works in memory (ESM)", async (t) => {
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
 
-t.test("it works in memory (CJS)", async (t) => {
+t.test("it works in memory (CJS)", options, async (t) => {
+  const { build } = await import("esbuild");
+
   const result = await build({
     entryPoints: [cjsTestPath],
     bundle: true,
@@ -72,7 +79,9 @@ t.test("it works in memory (CJS)", async (t) => {
   t.notMatch(code, /function __instrumentInspectArgs/);
 });
 
-t.test("it throws error when outdir is missing", async (t) => {
+t.test("it throws error when outdir is missing", options, async (t) => {
+  const { build } = await import("esbuild");
+
   const error = await t.rejects(() =>
     build({
       entryPoints: [cjsTestPath],
@@ -93,7 +102,9 @@ t.test("it throws error when outdir is missing", async (t) => {
   }
 });
 
-t.test("it throws error when external is invalid", async (t) => {
+t.test("it throws error when external is invalid", options, async (t) => {
+  const { build } = await import("esbuild");
+
   const error = await t.rejects(() =>
     build({
       entryPoints: [esmTestPath],
@@ -115,7 +126,9 @@ t.test("it throws error when external is invalid", async (t) => {
   }
 });
 
-t.test("it throws error when output format is invalid", async (t) => {
+t.test("it throws error when output format is invalid", options, async (t) => {
+  const { build } = await import("esbuild");
+
   const error = await t.rejects(() =>
     build({
       entryPoints: [esmTestPath],
@@ -133,5 +146,120 @@ t.test("it throws error when output format is invalid", async (t) => {
       error.message,
       /Aikido: esbuild output format is set to unsupported value 'iife'. Please set it to 'cjs' or 'esm'./
     );
+  }
+});
+
+t.test("it throws error when output format is missing", options, async (t) => {
+  const { build } = await import("esbuild");
+
+  const error = await t.rejects(() =>
+    build({
+      entryPoints: [esmTestPath],
+      bundle: true,
+      platform: "node",
+      plugins: [zenEsbuildPlugin()],
+      write: false,
+    })
+  );
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(error.message, /Aikido: esbuild output format is undefined./);
+  }
+});
+
+t.test("it throws error when bundle is false", options, async (t) => {
+  const { build } = await import("esbuild");
+
+  const error = await t.rejects(() =>
+    build({
+      entryPoints: [esmTestPath],
+      bundle: false,
+      platform: "node",
+      plugins: [zenEsbuildPlugin()],
+      write: false,
+      format: "esm",
+    })
+  );
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(
+      error.message,
+      /Aikido: esbuild bundling is not enabled. You do not need to use the Aikido esbuild plugin/
+    );
+  }
+});
+
+t.test("it throws error if packages are externalized", options, async (t) => {
+  const { build } = await import("esbuild");
+
+  const error = await t.rejects(() =>
+    build({
+      entryPoints: [esmTestPath],
+      bundle: true,
+      platform: "node",
+      plugins: [zenEsbuildPlugin()],
+      write: false,
+      format: "esm",
+      packages: "external",
+    })
+  );
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(
+      error.message,
+      /Aikido: esbuild 'packages' option is set to 'external'./
+    );
+  }
+});
+
+t.test("it works when external is an array", options, async (t) => {
+  const { build } = await import("esbuild");
+
+  const result = await build({
+    entryPoints: [cjsTestPath],
+    bundle: true,
+    platform: "node",
+    format: "cjs",
+    plugins: [
+      zenEsbuildPlugin({
+        copyFiles: false,
+      }),
+    ],
+    external: ["some-external-package"],
+    write: false,
+  });
+
+  t.equal(result.outputFiles?.length, 1);
+  const code = result.outputFiles?.[0].text || "";
+
+  t.match(code, /__instrumentModifyArgs.*"hono.dist/);
+  t.match(code, /@aikidosec\/firewall\/instrument\/internals/);
+  t.match(code, /__instrumentPackageLoaded/);
+  t.match(code, /__instrumentAccessLocalVariables\("sqlite3.lib/);
+  t.notMatch(code, /function __instrumentInspectArgs/);
+});
+
+t.test("it throws if inject is invalid", options, async (t) => {
+  const { build } = await import("esbuild");
+
+  const error = await t.rejects(() =>
+    build({
+      entryPoints: [esmTestPath],
+      bundle: true,
+      platform: "node",
+      plugins: [zenEsbuildPlugin()],
+      write: false,
+      format: "esm",
+      // @ts-expect-error testing invalid inject option
+      inject: { invalid: true },
+    })
+  );
+
+  t.ok(error instanceof Error);
+  if (error instanceof Error) {
+    t.match(error.message, /Aikido: esbuild inject option is not an array/);
   }
 });
