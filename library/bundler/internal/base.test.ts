@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 
+// @esm-tests-skip
+
 t.test("calling onBuildEnd throws if not options are set", async (t) => {
   const error = await t.rejects(() => onBuildEnd(undefined, {}));
 
