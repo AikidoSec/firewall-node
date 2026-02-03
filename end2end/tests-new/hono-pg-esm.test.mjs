@@ -573,6 +573,10 @@ test("IDOR protection works", async () => {
     equal(idorBypass.status, 500);
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
+    match(
+      stderr,
+      /Zen IDOR protection: INSERT on table 'cats_3_with_idor' sets 'user_id' to '1' but tenant ID is '2'/
+    );
   } catch (err) {
     fail(err);
   } finally {
