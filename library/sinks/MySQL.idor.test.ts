@@ -243,6 +243,28 @@ t.test("IDOR protection for MySQL", async (t) => {
       }
     });
 
+    await t.test(
+      "blocks INSERT with wrong tenant ID value without placeholder",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return query(
+              "INSERT INTO cats_idor (petname, tenant_id) VALUES ('Mittens', 'org_456')",
+              connection,
+              []
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "INSERT on table 'cats_idor' sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+          );
+        }
+      }
+    );
+
     await t.test("allows UPDATE with tenant filter", async () => {
       await runWithContext(context, () => {
         return query(
