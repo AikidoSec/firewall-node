@@ -34,6 +34,7 @@ import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUni
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
+import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -63,6 +64,7 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
+  private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
 
   constructor(
     private block: boolean,
@@ -101,6 +103,14 @@ export class Agent {
 
   getAIStatistics() {
     return this.aiStatistics;
+  }
+
+  setIdorProtectionConfig(config: IdorProtectionConfig) {
+    this.idorProtectionConfig = config;
+  }
+
+  getIdorProtectionConfig(): IdorProtectionConfig | undefined {
+    return this.idorProtectionConfig;
   }
 
   unableToPreventPrototypePollution(
