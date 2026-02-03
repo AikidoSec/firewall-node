@@ -27,6 +27,7 @@ Zen will autonomously protect your Node.js applications against:
 - 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 - 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 - 🛡️ JS injection
+- 🛡 [IDOR attacks](./docs/idor.md)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
