@@ -172,12 +172,20 @@ function checkInsert(
         tenantCol.value,
         tenantCol.placeholder_number
       );
+
+      let value = tenantCol.value;
+
+      // Replace value with resolved placeholder if possible
       if (
-        context.tenantId !== undefined &&
-        (typeof resolvedValue === "string" || typeof resolvedValue === "number")
+        typeof resolvedValue === "string" ||
+        typeof resolvedValue === "number"
       ) {
+        value = String(resolvedValue);
+      }
+
+      if (context.tenantId !== undefined && value !== undefined) {
         const tenantIdStr = context.tenantId.toString();
-        const resolvedStr = String(resolvedValue);
+        const resolvedStr = String(value);
 
         if (resolvedStr !== tenantIdStr) {
           return violation(
