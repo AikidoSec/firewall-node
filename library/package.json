@@ -119,6 +119,7 @@
     "mongodb-v4": "npm:mongodb@^4.0.0",
     "mongodb-v5": "npm:mongodb@^5.0.0",
     "mongodb-v6": "npm:mongodb@^6.0.0",
+    "mongodb-v7": "npm:mongodb@^7.0.0",
     "mysql": "^2.18.1",
     "mysql2-v3.10": "npm:mysql2@3.10",
     "mysql2-v3.12": "npm:mysql2@3.12",
