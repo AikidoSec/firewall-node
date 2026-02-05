@@ -82,6 +82,11 @@ async function main() {
     join(internalsDir, "zen_internals_bg.wasm"),
     join(buildDir, "internals", "zen_internals_bg.wasm")
   );
+  await copyFile(
+    join(rootDir, "library", "bundler", "internal", "shim.mjs"),
+    join(buildDir, "bundler", "internal", "shim.mjs")
+  );
+
   await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
     recursive: true,
   });
