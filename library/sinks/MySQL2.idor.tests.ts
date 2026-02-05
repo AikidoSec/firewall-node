@@ -342,6 +342,48 @@ export function createMySQL2IdorTests(versionPkgName: string) {
           });
         }
       );
+
+      await t.test("allows transaction queries", async () => {
+        await runWithContext(context, () => {
+          return connection.query("START TRANSACTION");
+        });
+        await runWithContext(context, () => {
+          return connection.query("COMMIT");
+        });
+        await runWithContext(context, () => {
+          return connection.query("BEGIN");
+        });
+        await runWithContext(context, () => {
+          return connection.query("ROLLBACK");
+        });
+      });
+
+      await t.test("allows CTE with tenant filter", async () => {
+        const [rows] = await runWithContext(context, () => {
+          return connection.query(
+            "WITH active AS (SELECT * FROM cats_idor2 WHERE tenant_id = ?) SELECT * FROM active",
+            ["org_123"]
+          );
+        });
+        t.same(rows, []);
+      });
+
+      await t.test("blocks CTE without tenant filter", async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return connection.query(
+              "WITH active AS (SELECT * FROM cats_idor2) SELECT * FROM active"
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
+          );
+        }
+      });
     } finally {
       await connection.end();
     }
