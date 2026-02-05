@@ -351,6 +351,52 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
         });
       }
     );
+
+    await t.test("allows transaction queries", async () => {
+      await runWithContext(context, () => {
+        return client.query("START TRANSACTION");
+      });
+      await runWithContext(context, () => {
+        return client.query("COMMIT");
+      });
+      await runWithContext(context, () => {
+        return client.query("BEGIN");
+      });
+      await runWithContext(context, () => {
+        return client.query("ROLLBACK");
+      });
+    });
+
+    await t.test("allows CTE with tenant filter", async () => {
+      t.same(
+        (
+          await runWithContext(context, () => {
+            return client.query(
+              "WITH active AS (SELECT * FROM cats_pg_idor WHERE tenant_id = $1) SELECT * FROM active",
+              ["org_123"]
+            );
+          })
+        ).rows,
+        []
+      );
+    });
+
+    await t.test("blocks CTE without tenant filter", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return client.query(
+            "WITH active AS (SELECT * FROM cats_pg_idor) SELECT * FROM active"
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
   } finally {
     await client.end();
   }
