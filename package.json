@@ -19,7 +19,8 @@
     "format": "oxfmt --write .",
     "benchmark": "node scripts/benchmark.js",
     "sample-app": "node scripts/run-sample-app.js",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "check-unsupported": "node scripts/unsupported-check.mts"
   },
   "devDependencies": {
     "astring": "^1.9.0",
