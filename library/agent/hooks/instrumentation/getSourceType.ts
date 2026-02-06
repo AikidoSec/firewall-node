@@ -1,6 +1,14 @@
 export type PackageLoadFormat = "commonjs" | "module" | "unambiguous";
 
-type SourceType = "unambiguous" | "ts" | "cjs" | "mjs" | "tsx" | "jsx";
+type SourceType =
+  | "unambiguous"
+  | "ts"
+  | "cjs"
+  | "mjs"
+  | "tsx"
+  | "jsx"
+  | "mts"
+  | "cts";
 
 /**
  * Get the source type based on the file extension and package load format.
@@ -25,7 +33,9 @@ export function getSourceType(
     case "cjs":
     case "mjs":
     case "tsx":
-    case "jsx": {
+    case "jsx":
+    case "mts":
+    case "cts": {
       return extension;
     }
 
