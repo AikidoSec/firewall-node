@@ -1,5 +1,3 @@
-use core::panic;
-
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
     AstBuilder, NONE,
