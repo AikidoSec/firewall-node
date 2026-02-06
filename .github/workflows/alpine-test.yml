@@ -1,0 +1,23 @@
+name: 🏔️ Alpine test
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  alpine-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Test Zen on Alpine
+        run: bash scripts/test-alpine.sh
