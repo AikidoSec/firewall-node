@@ -1,6 +1,5 @@
 import { wasm_detect_shell_injection } from "../../internals/zen_internals";
 
-const SAFE = 0;
 const INJECTION_DETECTED = 1;
 const FAILED_TO_TOKENIZE = 3;
 

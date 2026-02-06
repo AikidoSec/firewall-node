@@ -92,7 +92,7 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
-    const shellViolation = this.checkShellViolation(args, name);
+    const shellViolation = this.checkShellViolation(args);
     if (shellViolation) {
       return shellViolation;
     }
@@ -123,7 +123,7 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
-    const shellViolation = this.checkShellViolation(args, name);
+    const shellViolation = this.checkShellViolation(args);
     if (shellViolation) {
       return shellViolation;
     }
@@ -150,7 +150,7 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
-    const shellViolation = this.checkShellViolation(args, name);
+    const shellViolation = this.checkShellViolation(args);
     if (shellViolation) {
       return shellViolation;
     }
@@ -214,7 +214,7 @@ export class ChildProcess implements Wrapper {
     return undefined;
   }
 
-  private checkShellViolation(args: unknown[], name: string) {
+  private checkShellViolation(args: unknown[]) {
     if (!isShellInjectionStrictMode()) {
       return undefined;
     }
