@@ -5,6 +5,7 @@ import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
+import { colorText } from "../helpers/colorText";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import type {
@@ -571,7 +572,9 @@ export class Agent {
       if (details.supported) {
         this.logger.log(`${name}@${details.version} is supported!`);
       } else {
-        this.logger.log(`${name}@${details.version} is not supported!`);
+        this.logger.log(
+          colorText("red", `${name}@${details.version} is not supported!`)
+        );
       }
     }
   }
