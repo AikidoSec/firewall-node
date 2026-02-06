@@ -1,25 +1,18 @@
-import type { PackageFileInstrumentationInstructionJSON } from "./types";
-import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
+import { wasm_transform_user_code } from "./wasm/node_code_instrumentation";
 import { getSourceType, PackageLoadFormat } from "./getSourceType";
 import { join } from "path";
 import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
 import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
-export function transformCode(
-  pkgName: string,
-  pkgVersion: string,
+export function transformUserCode(
   path: string,
   code: string,
-  pkgLoadFormat: PackageLoadFormat,
-  fileInstructions: PackageFileInstrumentationInstructionJSON
-): string {
+  loadFormat: PackageLoadFormat
+): string | undefined {
   try {
-    const result = wasm_transform_code_str(
-      pkgName,
-      pkgVersion,
+    const result = wasm_transform_user_code(
       code,
-      JSON.stringify(fileInstructions),
-      getSourceType(path, pkgLoadFormat)
+      getSourceType(path, loadFormat)
     );
 
     // Rewrite import path for unit tests if environment variable is set to true
@@ -34,12 +27,8 @@ export function transformCode(
     }
 
     return result;
-  } catch (error) {
-    // Convert string errors to Error objects
-    if (typeof error === "string") {
-      throw new Error(`Error transforming code: ${error}`);
-    }
-    throw error;
+  } catch {
+    // Don't break user code loading if transformation fails
+    return undefined;
   }
 }
-
