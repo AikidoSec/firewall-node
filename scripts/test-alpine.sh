@@ -1,14 +1,19 @@
 #!/bin/bash
 set -e
 
-# Test that Zen loads correctly on Alpine Linux (musl)
-# This script is meant to be run from the repo root after building.
+if [ -z "$1" ]; then
+  echo "Error: Node.js version is required"
+  echo "Usage: bash scripts/test-alpine.sh <node-version>"
+  exit 1
+fi
 
-echo "Testing Zen on Alpine Linux (musl)..."
+NODE_VERSION="$1"
+
+echo "Testing Zen on Alpine Linux (musl) with Node.js ${NODE_VERSION}..."
 
 output=$(docker run --rm -e AIKIDO_DEBUG=true -w /app \
   -v "$(pwd)/build:/app/node_modules/@aikidosec/firewall" \
-  node:22-alpine \
+  "node:${NODE_VERSION}-alpine" \
   node -e "require('@aikidosec/firewall'); setTimeout(() => console.log('OK'), 1000);" 2>&1)
 
 echo "$output"
