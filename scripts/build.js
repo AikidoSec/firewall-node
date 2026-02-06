@@ -28,7 +28,7 @@ const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/downl
 // ---
 
 // Node Internals configuration
-const NODE_INTERNALS_VERSION = "1.0.0";
+const NODE_INTERNALS_VERSION = "1.0.1";
 const NODE_INTERNALS_URL = `https://github.com/AikidoSec/zen-internals-node/releases/download/${NODE_INTERNALS_VERSION}`;
 // 17 is not included on purpose
 const NODE_VERSIONS = [16, 18, 19, 20, 21, 22, 23, 24, 25];
