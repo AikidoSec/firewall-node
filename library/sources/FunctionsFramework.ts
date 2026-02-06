@@ -152,7 +152,7 @@ export class FunctionsFramework implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/functions-framework")
-      .withVersion("^4.0.0 || ^3.0.0")
+      .withVersion("^5.0.0 || ^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
         this.onRequire(exports, pkgInfo);
       })
