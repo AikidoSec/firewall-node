@@ -85,6 +85,7 @@ See list above for supported database drivers.
 - ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 - ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 - ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
+- ✅ [`kysely`](https://www.npmjs.com/package/kysely)
 
 ### API tools
 
