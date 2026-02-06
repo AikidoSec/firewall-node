@@ -9,7 +9,7 @@ pub fn select_sourcetype_based_on_enum(src_type: &str) -> SourceType {
         "mjs" => SourceType::mjs(),
         "tsx" => SourceType::tsx(),
         "jsx" => SourceType::jsx(),
-        "cts" => SourceType::ts().with_script(true),
+        "cts" => SourceType::ts().with_commonjs(true),
         "mts" => SourceType::ts().with_module(true),
         _ => SourceType::unambiguous(),
     }
