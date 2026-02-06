@@ -165,6 +165,76 @@ t.test("IDOR protection for MySQL", async (t) => {
     });
 
     await t.test(
+      "warns when a non-function is passed to withoutIdorProtection",
+      async () => {
+        const originalWarn = console.warn;
+        const warnings: string[] = [];
+        console.warn = (msg: string) => warnings.push(msg);
+
+        try {
+          // @ts-expect-error Testing invalid input
+          withoutIdorProtection("not a function");
+
+          t.equal(warnings.length, 1);
+          t.match(warnings[0], "Expected a function, but received a value");
+        } finally {
+          console.warn = originalWarn;
+        }
+      }
+    );
+
+    await t.test(
+      "warns when sync callback returns a Promise in withoutIdorProtection",
+      async () => {
+        const originalWarn = console.warn;
+        const warnings: string[] = [];
+        console.warn = (msg: string) => warnings.push(msg);
+
+        try {
+          await runWithContext(context, () => {
+            return withoutIdorProtection(() => {
+              return query(
+                "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                connection,
+                ["org_123"]
+              );
+            });
+          });
+
+          t.equal(warnings.length, 1);
+          t.match(warnings[0], "returned a Promise without awaiting it");
+        } finally {
+          console.warn = originalWarn;
+        }
+      }
+    );
+
+    await t.test(
+      "does not warn when async callback is used in withoutIdorProtection",
+      async () => {
+        const originalWarn = console.warn;
+        const warnings: string[] = [];
+        console.warn = (msg: string) => warnings.push(msg);
+
+        try {
+          await runWithContext(context, () => {
+            return withoutIdorProtection(async () => {
+              return await query(
+                "SELECT petname FROM cats_idor WHERE tenant_id = ?",
+                connection,
+                ["org_123"]
+              );
+            });
+          });
+
+          t.equal(warnings.length, 0);
+        } finally {
+          console.warn = originalWarn;
+        }
+      }
+    );
+
+    await t.test(
       "blocks query object format without tenant filter",
       async () => {
         const error = await t.rejects(async () => {
