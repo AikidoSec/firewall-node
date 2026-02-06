@@ -141,6 +141,16 @@ async function dlNodeInternals() {
           `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch}...`
         );
         downloads.push(downloadFile(url, destPath));
+
+        // zen-internals-node-linux-x64-musl-node20.node
+        const muslFilename = `zen-internals-node-${platform}-${arch}-musl-node${nodeVersion}.node`;
+        const muslUrl = `${NODE_INTERNALS_URL}/${muslFilename}`;
+        const muslDestPath = join(nodeInternalsDir, muslFilename);
+
+        console.log(
+          `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch} (musl)...`
+        );
+        downloads.push(downloadFile(muslUrl, muslDestPath));
       }
     }
   }
