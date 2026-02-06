@@ -176,6 +176,27 @@ SELECT * FROM orders WHERE tenant_id = $1 OR public = true
 
 This query passes the IDOR check because `tenant_id` is present as a filter, but the `OR public = true` condition could return rows from other tenants.
 
+### Async callbacks must use `await`
+
+If your callback returns a Promise (e.g. from an ORM like Drizzle), you must use an `async` callback with `await`. Otherwise the query executes outside the protected context and IDOR protection won't be disabled:
+
+```js
+// Does NOT work — the Promise is awaited outside withoutIdorProtection
+await Zen.withoutIdorProtection(() =>
+  db.query.orders.findFirst({ columns: { id: true } })
+);
+```
+
+```js
+// Works — the query is awaited inside withoutIdorProtection
+await Zen.withoutIdorProtection(async () => {
+  return await db.query.orders.findFirst({ columns: { id: true } });
+});
+```
+
+> [!NOTE]
+> Zen will log a warning to the console if it detects this pattern.
+
 ### CTEs (WITH clauses) (not yet supported)
 
 Queries using Common Table Expressions (WITH clauses) are not yet supported and will throw an error. Wrap these calls with `withoutIdorProtection()` for now:
