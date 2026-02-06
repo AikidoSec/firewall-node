@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { MySQL } from "./MySQL";
