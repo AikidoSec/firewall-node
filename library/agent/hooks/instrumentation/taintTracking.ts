@@ -125,3 +125,50 @@ function addToTaintTracking(
   }
   context.taintTracking.set(value, sourceInfo);
 }
+
+/**
+ * Runtime hook injected into user code to track tainted value through concatenation.
+ *
+ * Handles:
+ *   a + b          → __zen_wrapConcat(a, b)
+ *   a += b         → a = __zen_wrapConcat(a, b)
+ *   str.concat(…)  → __zen_wrapConcat(str, a, b, …)
+ *
+ * Checks every argument: if any is a known user input, the string result is tracked.
+ */
+export function __zen_wrapConcat(...args: unknown[]): unknown {
+  // Compute the concatenation result using + to preserve JS semantics
+  let result: unknown = args[0];
+  for (let i = 1; i < args.length; i++) {
+    result = (result as any) + (args[i] as any);
+  }
+
+  try {
+    if (typeof result !== "string" || result.length === 0) {
+      return result;
+    }
+
+    const context = getContext() as Context | undefined;
+    if (!context) {
+      return result;
+    }
+
+    const cache = extractStringsFromUserInputCached(context);
+
+    // Check if any argument is tainted
+    for (const arg of args) {
+      if (typeof arg === "string" && arg.length > 0 && cache.has(arg)) {
+        const sourceInfo = resolveSource(context, arg);
+        if (sourceInfo) {
+          cache.add(result);
+          addToTaintTracking(context, result, sourceInfo);
+          return result;
+        }
+      }
+    }
+  } catch {
+    // Never break user code due to taint tracking errors
+  }
+
+  return result;
+}

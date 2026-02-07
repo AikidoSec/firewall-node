@@ -267,3 +267,123 @@ t.test("wraps chained optional method calls", async (t) => {
     const x = __zen_wrapMethodCallResult(__zen_wrapMethodCallResult(a.b, (__a) => __a?.trim()), (__a) => __a?.toLowerCase());`
   );
 });
+
+t.test("wraps binary + operator", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `const greeting = "Hello " + name;`,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    const greeting = __zen_wrapConcat("Hello ", name);`
+  );
+});
+
+t.test("wraps chained + operators", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `const sql = "SELECT * FROM " + table + " WHERE 1";`,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    const sql = __zen_wrapConcat(__zen_wrapConcat("SELECT * FROM ", table), " WHERE 1");`
+  );
+});
+
+t.test("wraps += assignment (identifier)", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `let str = "Hello"; str += name;`,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    let str = "Hello"; str = __zen_wrapConcat(str, name);`
+  );
+});
+
+t.test("wraps .concat() method call", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `const result = str.concat(a, b);`,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    const result = __zen_wrapConcat(str, a, b);`
+  );
+});
+
+t.test("wraps .concat() with single argument", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `const result = str.concat(other);`,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    const result = __zen_wrapConcat(str, other);`
+  );
+});
+
+t.test("imports both hooks when needed", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `
+    const upper = name.toUpperCase();
+    const greeting = "Hello " + upper;
+    `,
+    "module"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `import { __zen_wrapMethodCallResult, __zen_wrapConcat } from "@aikidosec/firewall/instrument/internals";
+    const upper = __zen_wrapMethodCallResult(name, (__a) => __a.toUpperCase());
+    const greeting = __zen_wrapConcat("Hello ", upper);`
+  );
+});
+
+t.test("wraps + in CJS mode", async (t) => {
+  const result = transformUserCode(
+    "app.js",
+    `
+    const express = require("express");
+    const greeting = "Hello " + name;
+    `,
+    "commonjs"
+  );
+
+  t.ok(result);
+  isSameCode(
+    t,
+    result!,
+    `const { __zen_wrapConcat } = require("@aikidosec/firewall/instrument/internals");
+    const express = require("express");
+    const greeting = __zen_wrapConcat("Hello ", name);`
+  );
+});

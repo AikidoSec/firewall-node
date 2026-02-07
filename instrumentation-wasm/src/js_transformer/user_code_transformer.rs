@@ -2,20 +2,22 @@ use std::collections::HashSet;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, Expression, FormalParameterKind, FormalParameters, FunctionBody,
-    ImportOrExportKind, Statement, VariableDeclarationKind,
+    Argument, AssignmentOperator, AssignmentTarget, BinaryOperator, Expression,
+    FormalParameterKind, FormalParameters, FunctionBody, ImportOrExportKind, Statement,
+    VariableDeclarationKind,
 };
 use oxc_ast::{AstBuilder, NONE};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, SPAN};
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_span::{SPAN, SourceType};
+use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
 use super::helpers::select_sourcetype_based_on_enum::select_sourcetype_based_on_enum;
 use super::transformer_impl::TraverseState;
 
 const WRAP_HOOK_NAME: &str = "__zen_wrapMethodCallResult";
+const CONCAT_HOOK_NAME: &str = "__zen_wrapConcat";
 const INSTRUMENT_IMPORT_SOURCE: &str = "@aikidosec/firewall/instrument/internals";
 
 /// Methods to wrap with taint tracking in user code.
@@ -39,7 +41,6 @@ const METHODS_TO_WRAP: &[&str] = &[
     "repeat",
     "padStart",
     "padEnd",
-    "concat",
     "split",
     "charAt",
     "at",
@@ -53,7 +54,7 @@ pub fn transform_user_code_str(code: &str, src_type: &str) -> Result<String, Str
     let allocator = Allocator::default();
 
     // Don't double-transform
-    if code.contains(WRAP_HOOK_NAME) {
+    if code.contains(WRAP_HOOK_NAME) || code.contains(CONCAT_HOOK_NAME) {
         return Err("Code already contains taint tracking hook".to_string());
     }
 
@@ -88,18 +89,28 @@ pub fn transform_user_code_str(code: &str, src_type: &str) -> Result<String, Str
 
     traverse_mut(t, &allocator, program, scopes, state);
 
-    if !t.has_transforms {
-        // No method calls found to wrap - return original code unchanged
+    if !t.has_method_transforms && !t.has_concat_transforms {
+        // No transforms found - return original code unchanged
         return Ok(code.to_string());
     }
 
-    // Insert import for __zen_wrapMethodCallResult
+    // Collect which hooks need to be imported
+    let mut hooks: Vec<&str> = Vec::new();
+    if t.has_method_transforms {
+        hooks.push(WRAP_HOOK_NAME);
+    }
+    if t.has_concat_transforms {
+        hooks.push(CONCAT_HOOK_NAME);
+    }
+
+    // Insert import for the hooks that are used
     insert_wrap_hook_import(
         &source_type,
         parser_result.module_record.has_module_syntax,
         &allocator,
         &ast_builder,
         &mut program.body,
+        &hooks,
     );
 
     let js = Codegen::new()
@@ -134,9 +145,10 @@ fn insert_wrap_hook_import<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
     body: &mut oxc_allocator::Vec<'a, Statement<'a>>,
+    hooks: &[&'a str],
 ) {
     if is_common_js(source_type, has_module_syntax) {
-        // const { __zen_wrapMethodCallResult } = require("@aikidosec/firewall/instrument/internals");
+        // const { hook1, hook2 } = require("@aikidosec/firewall/instrument/internals");
         let mut require_args = builder.vec_with_capacity(1);
         require_args.push(Argument::StringLiteral(builder.alloc_string_literal(
             SPAN,
@@ -144,14 +156,16 @@ fn insert_wrap_hook_import<'a>(
             None,
         )));
 
-        let mut binding_properties = builder.vec_with_capacity(1);
-        binding_properties.push(builder.binding_property(
-            SPAN,
-            builder.property_key_static_identifier(SPAN, WRAP_HOOK_NAME),
-            builder.binding_pattern_binding_identifier(SPAN, WRAP_HOOK_NAME),
-            true,
-            false,
-        ));
+        let mut binding_properties = builder.vec_with_capacity(hooks.len());
+        for &hook in hooks {
+            binding_properties.push(builder.binding_property(
+                SPAN,
+                builder.property_key_static_identifier(SPAN, hook),
+                builder.binding_pattern_binding_identifier(SPAN, hook),
+                true,
+                false,
+            ));
+        }
 
         let mut declarations = builder.vec_with_capacity(1);
         declarations.push(builder.variable_declarator(
@@ -180,16 +194,16 @@ fn insert_wrap_hook_import<'a>(
         return;
     }
 
-    // ESM: import { __zen_wrapMethodCallResult } from "@aikidosec/firewall/instrument/internals";
-    let mut specifiers = builder.vec_with_capacity(1);
-    specifiers.push(
-        builder.import_declaration_specifier_import_specifier(
+    // ESM: import { hook1, hook2 } from "@aikidosec/firewall/instrument/internals";
+    let mut specifiers = builder.vec_with_capacity(hooks.len());
+    for &hook in hooks {
+        specifiers.push(builder.import_declaration_specifier_import_specifier(
             SPAN,
-            builder.module_export_name_identifier_name(SPAN, WRAP_HOOK_NAME),
-            builder.binding_identifier(SPAN, WRAP_HOOK_NAME),
+            builder.module_export_name_identifier_name(SPAN, hook),
+            builder.binding_identifier(SPAN, hook),
             ImportOrExportKind::Value,
-        ),
-    );
+        ));
+    }
 
     let import_stmt = Statement::ImportDeclaration(builder.alloc_import_declaration(
         SPAN,
@@ -207,7 +221,8 @@ pub struct UserCodeTransformer<'a> {
     pub allocator: &'a Allocator,
     pub ast_builder: &'a AstBuilder<'a>,
     methods: HashSet<&'static str>,
-    pub has_transforms: bool,
+    pub has_method_transforms: bool,
+    pub has_concat_transforms: bool,
 }
 
 impl<'a> UserCodeTransformer<'a> {
@@ -216,7 +231,8 @@ impl<'a> UserCodeTransformer<'a> {
             allocator,
             ast_builder,
             methods: METHODS_TO_WRAP.iter().copied().collect(),
-            has_transforms: false,
+            has_method_transforms: false,
+            has_concat_transforms: false,
         }
     }
 
@@ -243,13 +259,8 @@ impl<'a> UserCodeTransformer<'a> {
                 false,
             ));
 
-        let inner_call = builder.expression_call(
-            SPAN,
-            inner_callee,
-            oxc_ast::NONE,
-            arguments,
-            optional,
-        );
+        let inner_call =
+            builder.expression_call(SPAN, inner_callee, oxc_ast::NONE, arguments, optional);
 
         // Build arrow function body: { return __a.method(args); }
         // Use expression body for conciseness: (__a) => __a.method(args)
@@ -275,13 +286,12 @@ impl<'a> UserCodeTransformer<'a> {
             false,         // override
         ));
 
-        let params: oxc_allocator::Box<'a, FormalParameters<'a>> =
-            builder.alloc_formal_parameters(
-                SPAN,
-                FormalParameterKind::ArrowFormalParameters,
-                params_items,
-                oxc_ast::NONE,
-            );
+        let params: oxc_allocator::Box<'a, FormalParameters<'a>> = builder.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params_items,
+            oxc_ast::NONE,
+        );
 
         // Build arrow function: (__a) => __a.method(args)
         let arrow = builder.expression_arrow_function(
@@ -307,6 +317,18 @@ impl<'a> UserCodeTransformer<'a> {
             false,
         )
     }
+
+    /// Build: __zen_wrapConcat(arg1, arg2, ...)
+    fn build_concat_call(&self, arguments: oxc_allocator::Vec<'a, Argument<'a>>) -> Expression<'a> {
+        self.ast_builder.expression_call(
+            SPAN,
+            self.ast_builder
+                .expression_identifier(SPAN, CONCAT_HOOK_NAME),
+            oxc_ast::NONE,
+            arguments,
+            false,
+        )
+    }
 }
 
 impl<'a> Traverse<'a, TraverseState> for UserCodeTransformer<'a> {
@@ -315,42 +337,139 @@ impl<'a> Traverse<'a, TraverseState> for UserCodeTransformer<'a> {
         node: &mut Expression<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
-        // Check if this is: expr.method(args) where method is in our target list
-        let should_transform = match node {
-            Expression::CallExpression(call_expr) => match &call_expr.callee {
-                Expression::StaticMemberExpression(member_expr) => {
-                    self.is_target_method(member_expr.property.name.as_str())
-                }
-                _ => false,
-            },
-            _ => false,
-        };
-
-        if !should_transform {
-            return;
+        enum TransformKind {
+            MethodCall,
+            ConcatMethodCall,
+            BinaryAddition,
+            AssignmentAddition,
         }
 
-        // Take the expression out, replacing with a placeholder
+        // Determine what kind of transform to apply (read-only check)
+        let transform = match node {
+            Expression::CallExpression(call_expr) => match &call_expr.callee {
+                Expression::StaticMemberExpression(member_expr) => {
+                    let name = member_expr.property.name.as_str();
+                    if name == "concat" {
+                        Some(TransformKind::ConcatMethodCall)
+                    } else if self.is_target_method(name) {
+                        Some(TransformKind::MethodCall)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            Expression::BinaryExpression(bin_expr)
+                if bin_expr.operator == BinaryOperator::Addition =>
+            {
+                Some(TransformKind::BinaryAddition)
+            }
+            Expression::AssignmentExpression(assign_expr)
+                if assign_expr.operator == AssignmentOperator::Addition
+                    && matches!(
+                        &assign_expr.left,
+                        AssignmentTarget::AssignmentTargetIdentifier(_)
+                    ) =>
+            {
+                Some(TransformKind::AssignmentAddition)
+            }
+            _ => None,
+        };
+
+        let Some(transform) = transform else {
+            return;
+        };
+
         let placeholder = self.ast_builder.expression_null_literal(SPAN);
         let old_expr = std::mem::replace(node, placeholder);
 
-        // Destructure the call expression
-        let Expression::CallExpression(call_box) = old_expr else {
-            unreachable!()
-        };
+        match transform {
+            TransformKind::MethodCall => {
+                let Expression::CallExpression(call_box) = old_expr else {
+                    unreachable!()
+                };
+                let call_expr = call_box.unbox();
+                let Expression::StaticMemberExpression(member_box) = call_expr.callee else {
+                    unreachable!()
+                };
+                let member_expr = member_box.unbox();
+                let method_name = member_expr.property.name.as_str();
+                let subject = member_expr.object;
+                let arguments = call_expr.arguments;
 
-        let call_expr = call_box.unbox();
-        let Expression::StaticMemberExpression(member_box) = call_expr.callee else {
-            unreachable!()
-        };
+                *node =
+                    self.build_wrapped_call(subject, method_name, arguments, call_expr.optional);
+                self.has_method_transforms = true;
+            }
 
-        let member_expr = member_box.unbox();
-        let method_name = member_expr.property.name.as_str();
-        let subject = member_expr.object;
-        let arguments = call_expr.arguments;
+            TransformKind::ConcatMethodCall => {
+                // str.concat(a, b) → __zen_wrapConcat(str, a, b)
+                let Expression::CallExpression(call_box) = old_expr else {
+                    unreachable!()
+                };
+                let call_expr = call_box.unbox();
+                let Expression::StaticMemberExpression(member_box) = call_expr.callee else {
+                    unreachable!()
+                };
+                let member_expr = member_box.unbox();
+                let subject = member_expr.object;
+                let arguments = call_expr.arguments;
 
-        // Build the wrapped expression
-        *node = self.build_wrapped_call(subject, method_name, arguments, call_expr.optional);
-        self.has_transforms = true;
+                let mut new_args = self.ast_builder.vec_with_capacity(arguments.len() + 1);
+                new_args.push(Argument::from(subject));
+                for arg in arguments.into_iter() {
+                    new_args.push(arg);
+                }
+
+                *node = self.build_concat_call(new_args);
+                self.has_concat_transforms = true;
+            }
+
+            TransformKind::BinaryAddition => {
+                // a + b → __zen_wrapConcat(a, b)
+                let Expression::BinaryExpression(bin_box) = old_expr else {
+                    unreachable!()
+                };
+                let bin_expr = bin_box.unbox();
+
+                let mut args = self.ast_builder.vec_with_capacity(2);
+                args.push(Argument::from(bin_expr.left));
+                args.push(Argument::from(bin_expr.right));
+
+                *node = self.build_concat_call(args);
+                self.has_concat_transforms = true;
+            }
+
+            TransformKind::AssignmentAddition => {
+                // a += b → a = __zen_wrapConcat(a, b)
+                let Expression::AssignmentExpression(assign_box) = old_expr else {
+                    unreachable!()
+                };
+                let assign_expr = assign_box.unbox();
+
+                // Extract identifier name from target to create an expression
+                let AssignmentTarget::AssignmentTargetIdentifier(ref ident) = assign_expr.left
+                else {
+                    unreachable!()
+                };
+                let left_expr = self
+                    .ast_builder
+                    .expression_identifier(SPAN, self.allocator.alloc_str(ident.name.as_str()));
+
+                let mut args = self.ast_builder.vec_with_capacity(2);
+                args.push(Argument::from(left_expr));
+                args.push(Argument::from(assign_expr.right));
+
+                let concat_call = self.build_concat_call(args);
+
+                *node = self.ast_builder.expression_assignment(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    assign_expr.left,
+                    concat_call,
+                );
+                self.has_concat_transforms = true;
+            }
+        }
     }
 }

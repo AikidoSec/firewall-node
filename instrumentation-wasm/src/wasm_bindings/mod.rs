@@ -15,9 +15,6 @@ pub fn wasm_transform_code_str(
 }
 
 #[wasm_bindgen]
-pub fn wasm_transform_user_code(
-    code: &str,
-    source_type: &str,
-) -> Result<String, String> {
+pub fn wasm_transform_user_code(code: &str, source_type: &str) -> Result<String, String> {
     transform_user_code_str(code, source_type)
 }

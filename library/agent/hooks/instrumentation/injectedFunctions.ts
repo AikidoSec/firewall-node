@@ -3,7 +3,7 @@ import { bindContext, getContext } from "../../Context";
 import { inspectArgs } from "../wrapExport";
 import { getFileCallbackInfo, getFunctionCallbackInfo } from "./instructions";
 
-export { __zen_wrapMethodCallResult } from "./taintTracking";
+export { __zen_wrapMethodCallResult, __zen_wrapConcat } from "./taintTracking";
 
 export function __instrumentInspectArgs(
   id: string,

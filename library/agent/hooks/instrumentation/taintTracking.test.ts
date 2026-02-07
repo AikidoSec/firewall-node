@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { Context, runWithContext } from "../../Context";
-import { __zen_wrapMethodCallResult } from "./taintTracking";
+import { __zen_wrapMethodCallResult, __zen_wrapConcat } from "./taintTracking";
 import { extractStringsFromUserInputCached } from "../../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../../helpers/getSourceForUserString";
 import { checkContextForSqlInjection } from "../../../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -228,9 +228,7 @@ t.test("it handles null subject (optional chaining)", async (t) => {
 
   runWithContext(context, () => {
     // Simulates: a.b?.trim() where a.b is null
-    const result = __zen_wrapMethodCallResult(null, (s) =>
-      (s as any)?.trim()
-    );
+    const result = __zen_wrapMethodCallResult(null, (s) => (s as any)?.trim());
     t.same(result, undefined);
   });
 });
@@ -274,3 +272,95 @@ t.test(
     });
   }
 );
+
+// __zen_wrapConcat tests
+
+t.test("wrapConcat returns result without context", async (t) => {
+  const result = __zen_wrapConcat("hello", " world");
+  t.same(result, "hello world");
+});
+
+t.test("wrapConcat preserves number addition semantics", async (t) => {
+  const result = __zen_wrapConcat(1, 2);
+  t.same(result, 3);
+});
+
+t.test("wrapConcat tracks when left arg is tainted", async (t) => {
+  const context = createContext({ query: { name: "admin" } });
+
+  runWithContext(context, () => {
+    const result = __zen_wrapConcat("admin", " OR 1=1");
+    t.same(result, "admin OR 1=1");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.ok(cache.has("admin OR 1=1"));
+    t.same(getSourceForUserString(context, "admin OR 1=1"), "query");
+  });
+});
+
+t.test("wrapConcat tracks when right arg is tainted", async (t) => {
+  const context = createContext({ query: { name: "admin" } });
+
+  runWithContext(context, () => {
+    const result = __zen_wrapConcat("Hello ", "admin");
+    t.same(result, "Hello admin");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.ok(cache.has("Hello admin"));
+    t.same(getSourceForUserString(context, "Hello admin"), "query");
+  });
+});
+
+t.test("wrapConcat does not track when no arg is tainted", async (t) => {
+  const context = createContext({ query: { name: "admin" } });
+
+  runWithContext(context, () => {
+    const result = __zen_wrapConcat("hello", " world");
+    t.same(result, "hello world");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.notOk(cache.has("hello world"));
+  });
+});
+
+t.test("wrapConcat handles multiple args (concat scenario)", async (t) => {
+  const context = createContext({ query: { name: "evil" } });
+
+  runWithContext(context, () => {
+    const result = __zen_wrapConcat("prefix_", "evil", "_suffix");
+    t.same(result, "prefix_evil_suffix");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.ok(cache.has("prefix_evil_suffix"));
+    t.same(getSourceForUserString(context, "prefix_evil_suffix"), "query");
+  });
+});
+
+t.test("wrapConcat ignores empty string result", async (t) => {
+  const context = createContext({ query: { name: "admin" } });
+
+  runWithContext(context, () => {
+    const result = __zen_wrapConcat("", "");
+    t.same(result, "");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.notOk(cache.has(""));
+  });
+});
+
+t.test("wrapConcat tracks through chain with method transform", async (t) => {
+  const context = createContext({ query: { name: "  admin  " } });
+
+  runWithContext(context, () => {
+    // Simulate: name.trim() + " OR 1=1"
+    const trimmed = __zen_wrapMethodCallResult("  admin  ", (s) =>
+      (s as string).trim()
+    );
+    const result = __zen_wrapConcat(trimmed, " OR 1=1");
+    t.same(result, "admin OR 1=1");
+
+    const cache = extractStringsFromUserInputCached(context);
+    t.ok(cache.has("admin OR 1=1"));
+    t.same(getSourceForUserString(context, "admin OR 1=1"), "query");
+  });
+});
