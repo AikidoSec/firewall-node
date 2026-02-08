@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, AssignmentOperator, AssignmentTarget, BinaryOperator, Expression,
+    Argument, AssignmentOperator, AssignmentTarget, BinaryOperator, ChainElement, Expression,
     FormalParameterKind, FormalParameters, FunctionBody, ImportOrExportKind, Statement,
     VariableDeclarationKind,
 };
@@ -250,17 +250,35 @@ impl<'a> UserCodeTransformer<'a> {
     ) -> Expression<'a> {
         let builder = self.ast_builder;
 
-        // Build the inner call: __a.method(args)
-        let inner_callee =
-            Expression::StaticMemberExpression(builder.alloc_static_member_expression(
+        // Build the inner call: __a.method(args) or __a?.method(args)
+        let inner_call = if optional {
+            // Build __a?.method(args) as a ChainExpression
+            // The ?. is on the member access, not the call
+            let inner_callee =
+                Expression::StaticMemberExpression(builder.alloc_static_member_expression(
+                    SPAN,
+                    builder.expression_identifier(SPAN, "__a"),
+                    builder.identifier_name(SPAN, self.allocator.alloc_str(method_name)),
+                    true, // optional member access: __a?.method
+                ));
+            let chain_element = builder.chain_element_call_expression(
                 SPAN,
-                builder.expression_identifier(SPAN, "__a"),
-                builder.identifier_name(SPAN, self.allocator.alloc_str(method_name)),
-                false,
-            ));
-
-        let inner_call =
-            builder.expression_call(SPAN, inner_callee, oxc_ast::NONE, arguments, optional);
+                inner_callee,
+                oxc_ast::NONE,
+                arguments,
+                false, // the call itself is not optional
+            );
+            builder.expression_chain(SPAN, chain_element)
+        } else {
+            let inner_callee =
+                Expression::StaticMemberExpression(builder.alloc_static_member_expression(
+                    SPAN,
+                    builder.expression_identifier(SPAN, "__a"),
+                    builder.identifier_name(SPAN, self.allocator.alloc_str(method_name)),
+                    false,
+                ));
+            builder.expression_call(SPAN, inner_callee, oxc_ast::NONE, arguments, false)
+        };
 
         // Build arrow function body: { return __a.method(args); }
         // Use expression body for conciseness: (__a) => __a.method(args)
@@ -340,6 +358,8 @@ impl<'a> Traverse<'a, TraverseState> for UserCodeTransformer<'a> {
         enum TransformKind {
             MethodCall,
             ConcatMethodCall,
+            ChainMethodCall,
+            ChainConcatMethodCall,
             BinaryAddition,
             AssignmentAddition,
         }
@@ -357,6 +377,22 @@ impl<'a> Traverse<'a, TraverseState> for UserCodeTransformer<'a> {
                         None
                     }
                 }
+                _ => None,
+            },
+            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::CallExpression(call_expr) => match &call_expr.callee {
+                    Expression::StaticMemberExpression(member_expr) => {
+                        let name = member_expr.property.name.as_str();
+                        if name == "concat" {
+                            Some(TransformKind::ChainConcatMethodCall)
+                        } else if self.is_target_method(name) {
+                            Some(TransformKind::ChainMethodCall)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                },
                 _ => None,
             },
             Expression::BinaryExpression(bin_expr)
@@ -394,17 +430,66 @@ impl<'a> Traverse<'a, TraverseState> for UserCodeTransformer<'a> {
                 };
                 let member_expr = member_box.unbox();
                 let method_name = member_expr.property.name.as_str();
+                let optional = call_expr.optional || member_expr.optional;
                 let subject = member_expr.object;
                 let arguments = call_expr.arguments;
 
-                *node =
-                    self.build_wrapped_call(subject, method_name, arguments, call_expr.optional);
+                *node = self.build_wrapped_call(subject, method_name, arguments, optional);
                 self.has_method_transforms = true;
             }
 
             TransformKind::ConcatMethodCall => {
                 // str.concat(a, b) → __zen_wrapConcat(str, a, b)
                 let Expression::CallExpression(call_box) = old_expr else {
+                    unreachable!()
+                };
+                let call_expr = call_box.unbox();
+                let Expression::StaticMemberExpression(member_box) = call_expr.callee else {
+                    unreachable!()
+                };
+                let member_expr = member_box.unbox();
+                let subject = member_expr.object;
+                let arguments = call_expr.arguments;
+
+                let mut new_args = self.ast_builder.vec_with_capacity(arguments.len() + 1);
+                new_args.push(Argument::from(subject));
+                for arg in arguments.into_iter() {
+                    new_args.push(arg);
+                }
+
+                *node = self.build_concat_call(new_args);
+                self.has_concat_transforms = true;
+            }
+
+            TransformKind::ChainMethodCall => {
+                // a.b?.method() → __zen_wrapMethodCallResult(a.b, (__a) => __a?.method())
+                let Expression::ChainExpression(chain_box) = old_expr else {
+                    unreachable!()
+                };
+                let chain_expr = chain_box.unbox();
+                let ChainElement::CallExpression(call_box) = chain_expr.expression else {
+                    unreachable!()
+                };
+                let call_expr = call_box.unbox();
+                let Expression::StaticMemberExpression(member_box) = call_expr.callee else {
+                    unreachable!()
+                };
+                let member_expr = member_box.unbox();
+                let method_name = member_expr.property.name.as_str();
+                let subject = member_expr.object;
+                let arguments = call_expr.arguments;
+
+                *node = self.build_wrapped_call(subject, method_name, arguments, true);
+                self.has_method_transforms = true;
+            }
+
+            TransformKind::ChainConcatMethodCall => {
+                // a.b?.concat(x) → __zen_wrapConcat(a.b, x)
+                let Expression::ChainExpression(chain_box) = old_expr else {
+                    unreachable!()
+                };
+                let chain_expr = chain_box.unbox();
+                let ChainElement::CallExpression(call_box) = chain_expr.expression else {
                     unreachable!()
                 };
                 let call_expr = call_box.unbox();
