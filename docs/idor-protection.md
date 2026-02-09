@@ -1,20 +1,17 @@
 # IDOR Protection
 
-IDOR (Insecure Direct Object Reference) protection ensures that every SQL query filters on a tenant column, preventing one tenant from accessing another tenant's data. Zen analyzes SQL queries at runtime and throws an error if a query is missing a tenant filter or uses the wrong tenant ID.
+IDOR stands for Insecure Direct Object Reference — it's when one account can access another account's data because a query doesn't properly filter by account.
 
-> [!IMPORTANT]
-> IDOR protection always throws an `Error` on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
+If your SaaS has accounts (or organizations, workspaces, teams, ...) and uses a column like `tenant_id` to keep each account's data separate, IDOR protection ensures every SQL query filters on the correct tenant. Zen analyzes queries at runtime and throws an error if a query is missing that filter or uses the wrong tenant ID, catching mistakes like:
 
-## When to use this
-
-If your app is multi-tenant and uses a column like `tenant_id` to separate data, IDOR protection helps you catch common mistakes:
-
-- A `SELECT` that forgets the tenant filter, letting one tenant read another's orders
-- An `UPDATE` or `DELETE` without a tenant filter, letting one tenant modify another's data
+- A `SELECT` that forgets the tenant filter, letting one account read another's orders
+- An `UPDATE` or `DELETE` without a tenant filter, letting one account modify another's data
 - An `INSERT` that omits the tenant column, creating orphaned or misassigned rows
-- New features that reuse existing queries but forget to add tenant filtering
 
 Zen catches these at runtime so they surface during development and testing, not in production. See [IDOR vulnerability explained](https://www.aikido.dev/blog/idor-vulnerability-explained) for more background.
+
+> [!IMPORTANT]
+> IDOR protection always throws an `Error` on violations regardless of block/detect mode. A missing filter is a developer bug, not an external attack.
 
 ## Setup
 
@@ -29,8 +26,8 @@ Zen.enableIdorProtection({
 });
 ```
 
-- `tenantColumnName` — the column name that identifies the tenant in your database tables.
-- `excludedTables` — tables where rows aren't owned by a single tenant (e.g. a shared `users` table that stores users across all tenants).
+- `tenantColumnName` — the column name that identifies the tenant in your database tables (e.g. `account_id`, `organization_id`, `team_id`).
+- `excludedTables` — tables that Zen should skip IDOR checks for, because rows aren't scoped to a single tenant (e.g. a shared `users` table that stores users across all tenants).
 
 ### 2. Set the tenant ID per request
 
@@ -63,7 +60,7 @@ const result = await Zen.withoutIdorProtection(async () => {
 });
 ```
 
-## Error examples
+## Troubleshooting
 
 <details>
 <summary>Missing tenant filter</summary>
@@ -127,15 +124,6 @@ Any ORM or query builder that uses these database packages under the hood is sup
 
 > [!NOTE]
 > If you're using ESM, check the [ESM caveats](esm.md) — queries inside uninstrumented ESM sub-dependencies cannot be checked by Zen.
-
-## Supported SQL statements
-
-- `SELECT` — checks that the WHERE clause filters on the tenant column with the correct value
-- `INSERT` — checks that the tenant column is included with the correct value
-- `UPDATE` — checks that the WHERE clause filters on the tenant column with the correct value
-- `DELETE` — checks that the WHERE clause filters on the tenant column with the correct value
-
-Other statement types (DDL like `CREATE TABLE`, session commands like `SET`, etc.) are safely ignored.
 
 ## Limitations
 
@@ -201,7 +189,7 @@ connection.query("INSERT INTO orders (name, tenant_id) VALUES (?, ?)", [
 When using `withoutIdorProtection` with async code, you must use an `async` callback and `await` the query inside it. Otherwise the query completes after the callback exits and IDOR protection won't be disabled:
 
 ```js
-// Does NOT work — missing async/await, the query resolves after the callback exits
+// Zen will still throw — the query runs after the callback exits, so IDOR protection is re-enabled
 await Zen.withoutIdorProtection(() =>
   db.query.orders.findFirst({ columns: { id: true } })
 );
@@ -215,3 +203,10 @@ await Zen.withoutIdorProtection(async () => {
 > [!NOTE]
 > Zen will log a warning to the console if it detects this pattern.
 
+## Statements that are always allowed
+
+Zen only checks statements that read or modify row data (`SELECT`, `INSERT`, `UPDATE`, `DELETE`). The following statement types are also recognized and never trigger an IDOR error:
+
+- DDL — `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, ...
+- Session commands — `SET`, `SHOW`, ...
+- Transactions — `BEGIN`, `COMMIT`, `ROLLBACK`, ...
