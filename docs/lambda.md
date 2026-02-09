@@ -13,13 +13,16 @@ exports.handler = protect(async (event, context) => {
 });
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import protect from "@aikidosec/firewall/lambda";
 
 // ...
 ```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
 
 Right now, we support the following triggers:
 
@@ -52,7 +55,7 @@ exports.handler = protect(
 ```
 <!-- prettier-ignore-end -->
 
-or ESM import style:
+or using `import` syntax:
 
 <!-- prettier-ignore-start -->
 ```js

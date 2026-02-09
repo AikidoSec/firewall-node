@@ -27,7 +27,7 @@ Zen will autonomously protect your Node.js applications against:
 - 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 - 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 - 🛡️ JS injection
-- 🛡 [IDOR attacks](./docs/idor-protection.md)
+- 🛡️ [IDOR attacks](./docs/idor-protection.md) (opt-in, see setup guide)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -145,7 +145,17 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
-For ESM applications, see [docs/esm.md](docs/esm.md).
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup in the framework docs above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](docs/esm.md) for additional steps.
+
+## Guides
+
+- [Troubleshooting](docs/troubleshooting.md) — common issues and how to debug Zen
+- [ESM support](docs/esm.md) — setup for native ECMAScript module apps
+- [Bundlers](docs/bundler.md) — using Zen with esbuild and other bundlers
+- [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
+- [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
+- [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
 
 ## Reporting to your Aikido Security dashboard
 
