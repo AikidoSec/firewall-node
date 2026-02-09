@@ -155,7 +155,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Bundlers](docs/bundler.md) — using Zen with esbuild and other bundlers
 - [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
 - [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
-- [IDOR protection](docs/idor-protection.md) — prevent data leaks between tenants in multi-tenant apps
+- [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
 
 ## Reporting to your Aikido Security dashboard
 
