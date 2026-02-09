@@ -320,15 +320,21 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         }
       });
 
+      await t.test("allows TRUNCATE statement", async () => {
+        await runWithContext(context, () => {
+          return connection.query("TRUNCATE cats_idor2");
+        });
+      });
+
       await t.test("blocks unsupported statement types", async () => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
-            return connection.query("TRUNCATE cats_idor2");
+            return connection.query("ANALYZE TABLE cats_idor2");
           });
         });
 
         if (error instanceof Error) {
-          t.match(error.message, "Unsupported SQL statement type");
+          t.match(error.message, "Unrecognized SQL statement");
         }
       });
 

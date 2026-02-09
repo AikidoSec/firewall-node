@@ -466,15 +466,21 @@ t.test("IDOR protection for MySQL", async (t) => {
       }
     );
 
+    await t.test("allows TRUNCATE statement", async () => {
+      await runWithContext(context, () => {
+        return query("TRUNCATE cats_idor", connection);
+      });
+    });
+
     await t.test("blocks unsupported statement types", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query("TRUNCATE cats_idor", connection);
+          return query("ANALYZE TABLE cats_idor", connection);
         });
       });
 
       if (error instanceof Error) {
-        t.match(error.message, "Unsupported SQL statement type");
+        t.match(error.message, "Unrecognized SQL statement");
       }
     });
 
@@ -483,7 +489,7 @@ t.test("IDOR protection for MySQL", async (t) => {
       async () => {
         await runWithContext(context, () => {
           return withoutIdorProtection(() => {
-            return query("TRUNCATE cats_idor", connection);
+            return query("ANALYZE TABLE cats_idor", connection);
           });
         });
       }
@@ -534,6 +540,88 @@ t.test("IDOR protection for MySQL", async (t) => {
         );
       }
     });
+
+    await t.test(
+      "blocks SELECT with tenant filter inside OR",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return query(
+              "SELECT * FROM cats_idor WHERE tenant_id = ? OR petname = ?",
+              connection,
+              ["org_123", "Mittens"]
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          );
+        }
+      }
+    );
+
+    await t.test(
+      "allows SELECT with tenant filter in AND around OR",
+      async () => {
+        t.same(
+          await runWithContext(context, () => {
+            return query(
+              "SELECT * FROM cats_idor WHERE tenant_id = ? AND (petname = ? OR petname = ?)",
+              connection,
+              ["org_123", "Mittens", "Felix"]
+            );
+          }),
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "blocks UPDATE with tenant filter inside OR",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return query(
+              "UPDATE cats_idor SET petname = ? WHERE tenant_id = ? OR petname = ?",
+              connection,
+              ["Rex", "org_123", "Mittens"]
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          );
+        }
+      }
+    );
+
+    await t.test(
+      "blocks DELETE with tenant filter inside OR",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return query(
+              "DELETE FROM cats_idor WHERE tenant_id = ? OR petname = ?",
+              connection,
+              ["org_123", "Mittens"]
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor' is missing a filter on column 'tenant_id'"
+          );
+        }
+      }
+    );
   } finally {
     await new Promise<void>((resolve, reject) =>
       connection.end((err) => {
