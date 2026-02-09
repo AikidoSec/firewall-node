@@ -3,7 +3,18 @@
 IDOR (Insecure Direct Object Reference) protection ensures that every SQL query filters on a tenant column, preventing one tenant from accessing another tenant's data. Zen analyzes SQL queries at runtime and throws an error if a query is missing a tenant filter or uses the wrong tenant ID.
 
 > [!IMPORTANT]
-> IDOR protection always throws on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
+> IDOR protection always throws an `Error` on violations regardless of block/detect mode. A missing tenant filter is a developer bug, not an external attack.
+
+## When to use this
+
+If your app is multi-tenant and uses a column like `tenant_id` to separate data, IDOR protection helps you catch common mistakes:
+
+- A `SELECT` that forgets the tenant filter, letting one tenant read another's orders
+- An `UPDATE` or `DELETE` without a tenant filter, letting one tenant modify another's data
+- An `INSERT` that omits the tenant column, creating orphaned or misassigned rows
+- New features that reuse existing queries but forget to add tenant filtering
+
+Zen catches these at runtime so they surface during development and testing, not in production. See [IDOR vulnerability explained](https://www.aikido.dev/blog/idor-vulnerability-explained) for more background.
 
 ## Setup
 
@@ -19,7 +30,7 @@ Zen.enableIdorProtection({
 ```
 
 - `tenantColumnName` — the column name that identifies the tenant in your database tables.
-- `excludedTables` — tables that don't need a tenant filter (e.g. the users table itself).
+- `excludedTables` — tables where rows aren't owned by a single tenant (e.g. a shared `users` table that stores users across all tenants).
 
 ### 2. Set the tenant ID per request
 
@@ -37,7 +48,7 @@ app.use((req, res, next) => {
 ```
 
 > [!IMPORTANT]
-> If `setTenantId` is not called for a request, Zen will throw an error when a SQL query is executed.
+> If `setTenantId` is not called for a request, Zen will throw an `Error` when a SQL query is executed.
 
 ### 3. Bypass for specific queries (optional)
 
@@ -54,7 +65,8 @@ const result = await Zen.withoutIdorProtection(async () => {
 
 ## Error examples
 
-**Missing tenant filter:**
+<details>
+<summary>Missing tenant filter</summary>
 
 ```
 Zen IDOR protection: query on table 'orders' is missing a filter on column 'tenant_id'
@@ -62,7 +74,10 @@ Zen IDOR protection: query on table 'orders' is missing a filter on column 'tena
 
 This means you have a query like `SELECT * FROM orders WHERE status = 'active'` that doesn't filter on `tenant_id`. The same check applies to `UPDATE` and `DELETE` queries.
 
-**Wrong tenant ID value:**
+</details>
+
+<details>
+<summary>Wrong tenant ID value</summary>
 
 ```
 Zen IDOR protection: query on table 'orders' filters 'tenant_id' with value '456' but tenant ID is '123'
@@ -70,7 +85,10 @@ Zen IDOR protection: query on table 'orders' filters 'tenant_id' with value '456
 
 This means the query filters on `tenant_id`, but the value doesn't match the tenant ID set via `setTenantId`.
 
-**Missing tenant column in INSERT:**
+</details>
+
+<details>
+<summary>Missing tenant column in INSERT</summary>
 
 ```
 Zen IDOR protection: INSERT on table 'orders' is missing column 'tenant_id'
@@ -78,7 +96,10 @@ Zen IDOR protection: INSERT on table 'orders' is missing column 'tenant_id'
 
 This means an `INSERT` statement doesn't include the tenant column. Every INSERT must include the tenant column with the correct tenant ID value.
 
-**Wrong tenant ID in INSERT:**
+</details>
+
+<details>
+<summary>Wrong tenant ID in INSERT</summary>
 
 ```
 Zen IDOR protection: INSERT on table 'orders' sets 'tenant_id' to '456' but tenant ID is '123'
@@ -86,26 +107,35 @@ Zen IDOR protection: INSERT on table 'orders' sets 'tenant_id' to '456' but tena
 
 This means the INSERT includes the tenant column, but the value doesn't match the tenant ID set via `setTenantId`.
 
-**Missing setTenantId call:**
+</details>
+
+<details>
+<summary>Missing setTenantId call</summary>
 
 ```
 Zen IDOR protection: setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled.
 ```
+
+</details>
 
 ## Supported databases
 
 - MySQL (via `mysql` and `mysql2` packages)
 - PostgreSQL (via `pg` package)
 
+Any ORM or query builder that uses these database packages under the hood is supported (e.g. Drizzle, Knex, Sequelize, TypeORM). ORMs that use their own database engine (e.g. Prisma) are not supported unless configured to use a supported driver adapter.
+
+> [!NOTE]
+> If you're using ESM, check the [ESM caveats](esm.md) — queries inside uninstrumented ESM sub-dependencies cannot be checked by Zen.
+
 ## Supported SQL statements
 
-- `SELECT` — checks that the WHERE clause filters on the tenant column
+- `SELECT` — checks that the WHERE clause filters on the tenant column with the correct value
 - `INSERT` — checks that the tenant column is included with the correct value
-- `UPDATE` — checks that the WHERE clause filters on the tenant column
-- `DELETE` — checks that the WHERE clause filters on the tenant column
+- `UPDATE` — checks that the WHERE clause filters on the tenant column with the correct value
+- `DELETE` — checks that the WHERE clause filters on the tenant column with the correct value
 
-> [!WARNING]
-> Unsupported statement types (e.g. DDL like `CREATE TABLE`) will throw an error. Use `withoutIdorProtection()` to bypass the check for those queries.
+Other statement types (DDL like `CREATE TABLE`, session commands like `SET`, etc.) are safely ignored.
 
 ## Limitations
 
@@ -166,29 +196,17 @@ connection.query("INSERT INTO orders (name, tenant_id) VALUES (?, ?)", [
 ]);
 ```
 
-### OR clauses (not yet supported)
+### `withoutIdorProtection()` requires `await` inside the callback
 
-Zen checks that a query filters on the tenant column, but does not yet verify that the filter cannot be bypassed with an `OR` clause. For example:
-
-```sql
-SELECT * FROM orders WHERE tenant_id = $1 OR public = true
-```
-
-This query passes the IDOR check because `tenant_id` is present as a filter, but the `OR public = true` condition could return rows from other tenants.
-
-### Async callbacks must use `await`
-
-If your callback returns a Promise (e.g. from an ORM like Drizzle), you must use an `async` callback with `await`. Otherwise the query executes outside the protected context and IDOR protection won't be disabled:
+When using `withoutIdorProtection` with async code, you must use an `async` callback and `await` the query inside it. Otherwise the query completes after the callback exits and IDOR protection won't be disabled:
 
 ```js
-// Does NOT work — the Promise is awaited outside withoutIdorProtection
+// Does NOT work — missing async/await, the query resolves after the callback exits
 await Zen.withoutIdorProtection(() =>
   db.query.orders.findFirst({ columns: { id: true } })
 );
-```
 
-```js
-// Works — the query is awaited inside withoutIdorProtection
+// Works — async callback with await ensures the query completes before the callback exits
 await Zen.withoutIdorProtection(async () => {
   return await db.query.orders.findFirst({ columns: { id: true } });
 });
@@ -197,18 +215,3 @@ await Zen.withoutIdorProtection(async () => {
 > [!NOTE]
 > Zen will log a warning to the console if it detects this pattern.
 
-### CTEs (WITH clauses) (not yet supported)
-
-Queries using Common Table Expressions (WITH clauses) are not yet supported and will throw an error. Wrap these calls with `withoutIdorProtection()` for now:
-
-```js
-await Zen.withoutIdorProtection(async () => {
-  return db.query(
-    `
-    WITH active_orders AS (SELECT * FROM orders WHERE status = 'active')
-    SELECT * FROM active_orders WHERE tenant_id = $1
-  `,
-    [tenantId]
-  );
-});
-```

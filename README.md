@@ -145,7 +145,10 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
-For ESM applications, see [docs/esm.md](docs/esm.md).
+## Additional setup
+
+- **ESM applications** — If your app uses `import` instead of `require`, follow the [ESM setup guide](docs/esm.md).
+- **IDOR protection** — Opt-in protection that ensures every SQL query filters on a tenant column, preventing data leaks between tenants. See [IDOR protection](docs/idor-protection.md).
 
 ## Reporting to your Aikido Security dashboard
 
