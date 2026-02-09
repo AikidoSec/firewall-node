@@ -138,8 +138,8 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
 
     await t.test("allows queries inside withoutIdorProtection", async () => {
       const result = await runWithContext(context, () => {
-        return withoutIdorProtection(() => {
-          return client.query("SELECT count(*) FROM cats_pg_idor");
+        return withoutIdorProtection(async () => {
+          return await client.query("SELECT count(*) FROM cats_pg_idor");
         });
       });
 
@@ -329,15 +329,21 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
       }
     });
 
+    await t.test("allows TRUNCATE statement", async () => {
+      await runWithContext(context, () => {
+        return client.query("TRUNCATE cats_pg_idor");
+      });
+    });
+
     await t.test("blocks unsupported statement types", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return client.query("TRUNCATE cats_pg_idor");
+          return client.query("DEALLOCATE ALL");
         });
       });
 
       if (error instanceof Error) {
-        t.match(error.message, "Unsupported SQL statement type");
+        t.match(error.message, "Unrecognized SQL statement");
       }
     });
 
@@ -345,8 +351,8 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
       "allows unsupported statements inside withoutIdorProtection",
       async () => {
         await runWithContext(context, () => {
-          return withoutIdorProtection(() => {
-            return client.query("TRUNCATE cats_pg_idor");
+          return withoutIdorProtection(async () => {
+            return await client.query("DEALLOCATE ALL");
           });
         });
       }
@@ -386,6 +392,77 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
         await runWithContext(context, () => {
           return client.query(
             "WITH active AS (SELECT * FROM cats_pg_idor) SELECT * FROM active"
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test("blocks SELECT with tenant filter inside OR", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return client.query(
+            "SELECT * FROM cats_pg_idor WHERE tenant_id = $1 OR petname = $2",
+            ["org_123", "Mittens"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test(
+      "allows SELECT with tenant filter in AND around OR",
+      async () => {
+        t.same(
+          (
+            await runWithContext(context, () => {
+              return client.query(
+                "SELECT * FROM cats_pg_idor WHERE tenant_id = $1 AND (petname = $2 OR petname = $3)",
+                ["org_123", "Mittens", "Felix"]
+              );
+            })
+          ).rows,
+          []
+        );
+      }
+    );
+
+    await t.test("blocks UPDATE with tenant filter inside OR", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return client.query(
+            "UPDATE cats_pg_idor SET petname = $1 WHERE tenant_id = $2 OR petname = $3",
+            ["Rex", "org_123", "Mittens"]
+          );
+        });
+      });
+
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
+        );
+      }
+    });
+
+    await t.test("blocks DELETE with tenant filter inside OR", async () => {
+      const error = await t.rejects(async () => {
+        await runWithContext(context, () => {
+          return client.query(
+            "DELETE FROM cats_pg_idor WHERE tenant_id = $1 OR petname = $2",
+            ["org_123", "Mittens"]
           );
         });
       });

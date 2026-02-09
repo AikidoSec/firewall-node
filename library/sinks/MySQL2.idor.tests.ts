@@ -137,8 +137,8 @@ export function createMySQL2IdorTests(versionPkgName: string) {
 
       await t.test("allows queries inside withoutIdorProtection", async () => {
         const result = await runWithContext(context, () => {
-          return withoutIdorProtection(() => {
-            return connection.query("SELECT count(*) FROM cats_idor2");
+          return withoutIdorProtection(async () => {
+            return await connection.query("SELECT count(*) FROM cats_idor2");
           });
         });
 
@@ -342,8 +342,8 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         "allows unsupported statements inside withoutIdorProtection",
         async () => {
           await runWithContext(context, () => {
-            return withoutIdorProtection(() => {
-              return connection.query("TRUNCATE cats_idor2");
+            return withoutIdorProtection(async () => {
+              return await connection.query("ANALYZE TABLE cats_idor2");
             });
           });
         }
@@ -379,6 +379,73 @@ export function createMySQL2IdorTests(versionPkgName: string) {
           await runWithContext(context, () => {
             return connection.query(
               "WITH active AS (SELECT * FROM cats_idor2) SELECT * FROM active"
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
+          );
+        }
+      });
+
+      await t.test("blocks SELECT with tenant filter inside OR", async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return connection.query(
+              "SELECT * FROM cats_idor2 WHERE tenant_id = ? OR petname = ?",
+              ["org_123", "Mittens"]
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
+          );
+        }
+      });
+
+      await t.test(
+        "allows SELECT with tenant filter in AND around OR",
+        async () => {
+          const [rows] = await runWithContext(context, () => {
+            return connection.query(
+              "SELECT * FROM cats_idor2 WHERE tenant_id = ? AND (petname = ? OR petname = ?)",
+              ["org_123", "Mittens", "Felix"]
+            );
+          });
+          t.same(rows, []);
+        }
+      );
+
+      await t.test("blocks UPDATE with tenant filter inside OR", async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return connection.query(
+              "UPDATE cats_idor2 SET petname = ? WHERE tenant_id = ? OR petname = ?",
+              ["Rex", "org_123", "Mittens"]
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor2' is missing a filter on column 'tenant_id'"
+          );
+        }
+      });
+
+      await t.test("blocks DELETE with tenant filter inside OR", async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return connection.query(
+              "DELETE FROM cats_idor2 WHERE tenant_id = ? OR petname = ?",
+              ["org_123", "Mittens"]
             );
           });
         });
