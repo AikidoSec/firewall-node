@@ -56,7 +56,7 @@ import Zen from "@aikidosec/firewall";
 
 // IDOR checks are skipped for queries inside this callback
 const result = await Zen.withoutIdorProtection(async () => {
-  return db.query("SELECT count(*) FROM agents WHERE status = 'running'");
+  return await db.query("SELECT count(*) FROM agents WHERE status = 'running'");
 });
 ```
 
