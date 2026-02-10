@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 ```
 
 > [!WARNING]
-> Do not call `setUser` with a shared user ID for unauthenticated or anonymous users (e.g. `setUser({ id: "anonymous" })`). When a user is set, rate limiting is applied per user ID and IP-based rate limiting is skipped entirely. This means all anonymous users would share a single rate limit bucket and be blocked as a group. For unauthenticated users, simply don't call `setUser` — rate limiting will automatically fall back to per-IP limiting.
+> Do not call `setUser` with a shared user ID for unauthenticated or anonymous users (e.g. `setUser({ id: "unauthenticated" })`). When a user is set, rate limiting is applied per user ID and IP-based rate limiting is skipped entirely. This means all anonymous users would share a single rate limit bucket and be blocked as a group. For unauthenticated users, simply don't call `setUser` — rate limiting will automatically fall back to per-IP limiting.
 
 Using `setUser` has the following benefits:
 
