@@ -1,3 +1,4 @@
+import { containsUnsafePathParts } from "../path-traversal/containsUnsafePathParts";
 import { containsShellSyntax } from "./containsShellSyntax";
 import { isSafelyEncapsulated } from "./isSafelyEncapsulated";
 
@@ -26,6 +27,10 @@ export function detectShellInjection(
 
   if (!command.includes(userInput)) {
     return false;
+  }
+
+  if (containsUnsafePathParts(userInput) && containsUnsafePathParts(command)) {
+    return true;
   }
 
   if (isSafelyEncapsulated(command, userInput)) {
