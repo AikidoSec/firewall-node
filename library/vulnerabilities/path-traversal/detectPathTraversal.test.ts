@@ -175,6 +175,26 @@ t.test("absolute macOS path", async () => {
   );
 });
 
+t.test("container /app/ directory", async () => {
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/config"), true);
+  t.same(
+    detectPathTraversal("/app/config/secret.yml", "/app/config/secret.yml"),
+    true
+  );
+  t.same(detectPathTraversal("/app/test.txt", "/app/"), false);
+  t.same(detectPathTraversal("/app/test.txt", "/app"), false);
+});
+
+t.test("container /code/ directory", async () => {
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src"), true);
+  t.same(
+    detectPathTraversal("/code/src/index.js", "/code/src/index.js"),
+    true
+  );
+  t.same(detectPathTraversal("/code/test.txt", "/code/"), false);
+  t.same(detectPathTraversal("/code/test.txt", "/code"), false);
+});
+
 t.test("AWS credentials protection", async () => {
   t.same(
     detectPathTraversal(
