@@ -187,10 +187,7 @@ t.test("container /app/ directory", async () => {
 
 t.test("container /code/ directory", async () => {
   t.same(detectPathTraversal("/code/src/index.js", "/code/src"), true);
-  t.same(
-    detectPathTraversal("/code/src/index.js", "/code/src/index.js"),
-    true
-  );
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src/index.js"), true);
   t.same(detectPathTraversal("/code/test.txt", "/code/"), false);
   t.same(detectPathTraversal("/code/test.txt", "/code"), false);
 });
