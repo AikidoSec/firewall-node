@@ -329,7 +329,7 @@ export function createMySQL2IdorTests(versionPkgName: string) {
       await t.test("blocks unsupported statement types", async () => {
         const error = await t.rejects(async () => {
           await runWithContext(context, () => {
-            return connection.query("ANALYZE TABLE cats_idor2");
+            return connection.query("UNLOCK TABLES");
           });
         });
 
@@ -343,7 +343,7 @@ export function createMySQL2IdorTests(versionPkgName: string) {
         async () => {
           await runWithContext(context, () => {
             return withoutIdorProtection(async () => {
-              return await connection.query("ANALYZE TABLE cats_idor2");
+              return await connection.query("UNLOCK TABLES");
             });
           });
         }

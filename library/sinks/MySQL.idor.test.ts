@@ -475,7 +475,7 @@ t.test("IDOR protection for MySQL", async (t) => {
     await t.test("blocks unsupported statement types", async () => {
       const error = await t.rejects(async () => {
         await runWithContext(context, () => {
-          return query("ANALYZE TABLE cats_idor", connection);
+          return query("UNLOCK TABLES", connection);
         });
       });
 
@@ -489,7 +489,7 @@ t.test("IDOR protection for MySQL", async (t) => {
       async () => {
         await runWithContext(context, () => {
           return withoutIdorProtection(async () => {
-            return await query("ANALYZE TABLE cats_idor", connection);
+            return await query("UNLOCK TABLES", connection);
           });
         });
       }
