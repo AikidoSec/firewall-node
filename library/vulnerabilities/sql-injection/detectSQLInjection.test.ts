@@ -24,11 +24,14 @@ t.test("It ignores safely escaped backslash", async () => {
 });
 
 t.test("is not", async () => {
-  isNotSqlInjection("select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc", "is not");
+  isNotSqlInjection(
+    "select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc",
+    "is not"
+  );
 });
 
 t.test("short strings with space", async () => {
-  isNotSqlInjection("select * from \"a\" where \"id\" = $1 limit $2", "1 li");
+  isNotSqlInjection('select * from "a" where "id" = $1 limit $2', "1 li");
 });
 
 t.test("2 chars partial match", async () => {
