@@ -52,12 +52,7 @@ export function shouldRateLimitRequest(
     isLocalhostIP(context.remoteAddress) &&
     isProduction;
 
-  // Allow requests from allowed IPs, e.g. never rate limit office IPs
-  const isBypassedIP =
-    context.remoteAddress &&
-    agent.getConfig().isBypassedIP(context.remoteAddress);
-
-  if (isFromLocalhostInProduction || isBypassedIP) {
+  if (isFromLocalhostInProduction) {
     return { block: false };
   }
 
