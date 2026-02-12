@@ -31,7 +31,7 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
+          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
         )
       );
     }
