@@ -181,6 +181,17 @@ function wrapDNSLookupCallback(
       }
     }
 
+    const isBypassedIP =
+      context &&
+      context.remoteAddress &&
+      agent.getConfig().isBypassedIP(context.remoteAddress);
+
+    if (isBypassedIP) {
+      // If the IP address is allowed, we don't need to block the request
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
+    }
+
     if (!found) {
       if (imdsIpResult.isIMDS) {
         // Stored SSRF attack executed during another request (context set)
@@ -205,17 +216,6 @@ function wrapDNSLookupCallback(
       }
 
       // If we can't find the hostname in the context, it's not an SSRF attack
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    const isBypassedIP =
-      context &&
-      context.remoteAddress &&
-      agent.getConfig().isBypassedIP(context.remoteAddress);
-
-    if (isBypassedIP) {
-      // If the IP address is allowed, we don't need to block the request
       // Just call the original callback to allow the DNS lookup
       return callback(err, addresses, family);
     }

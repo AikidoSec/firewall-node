@@ -36,6 +36,7 @@ import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/Att
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
+import { domainToUnicode } from "node:url";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -584,6 +585,14 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number) {
+    try {
+      // new URL(...) always converts hostnames to punycode
+      // When reporting them in heartbeats, we want to send the unicode version
+      hostname = domainToUnicode(hostname);
+    } catch {
+      // Ignore - use original hostname
+    }
+
     this.hostnames.add(hostname, port);
   }
 
