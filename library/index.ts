@@ -26,7 +26,7 @@ if (!isNewHookSystemUsed()) {
   const notAlreadyImported = checkIndexImportGuard();
 
   if (supported && shouldEnable && notAlreadyImported) {
-    if (isESM()) {
+    if (isESM() === true) {
       // oxlint-disable-next-line no-console
       console.warn(
         colorText(

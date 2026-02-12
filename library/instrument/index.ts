@@ -7,6 +7,9 @@ import { protectWithNewInstrumentation } from "../agent/protect";
 import { setIsNewHookSystemUsed } from "../agent/isNewHookSystemUsed";
 import { checkIndexImportGuard } from "../helpers/indexImportGuard";
 import { isMainThread } from "node:worker_threads";
+import { isESM } from "../helpers/isESM";
+import { isPreloaded } from "../helpers/isPreloaded";
+import { colorText } from "../helpers/colorText";
 
 setIsNewHookSystemUsed(true);
 
@@ -21,7 +24,10 @@ function start() {
 
   if (!("registerHooks" in mod) || typeof mod.registerHooks !== "function") {
     console.error(
-      "AIKIDO: Error: Zen requires that your Node.js version supports the `module.registerHooks` API. Please upgrade to a newer version of Node.js."
+      colorText(
+        "red",
+        "AIKIDO: Error: Zen requires that your Node.js version supports the `module.registerHooks` API. Please upgrade to a newer version of Node.js."
+      )
     );
     return;
   }
@@ -31,6 +37,15 @@ function start() {
       "AIKIDO: Zen does not instrument worker threads. Zen will only be active in the main thread."
     );
     return;
+  }
+
+  if (isESM() === true && !isPreloaded()) {
+    console.error(
+      colorText(
+        "red",
+        "AIKIDO: Error: Your application seems to be running in ESM mode without preloading the library. Please use --require to preload the library. See our ESM documentation for setup instructions."
+      )
+    );
   }
 
   protectWithNewInstrumentation();
