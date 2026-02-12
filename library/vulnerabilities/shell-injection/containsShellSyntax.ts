@@ -27,6 +27,8 @@ const dangerousChars = [
   "\n",
   "\t",
   "~",
+  "\r",
+  "\f",
 ];
 
 const commands = [
@@ -106,7 +108,20 @@ const pathPrefixes = [
   "/usr/local/sbin/",
 ];
 
-const separators = [" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">"];
+const separators = [
+  " ",
+  "\t",
+  "\n",
+  ";",
+  "&",
+  "|",
+  "(",
+  ")",
+  "<",
+  ">",
+  "\r",
+  "\f",
+];
 
 // "killall" should be matched before "kill"
 function byLength(a: string, b: string) {
