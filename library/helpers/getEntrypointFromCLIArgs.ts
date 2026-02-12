@@ -1,9 +1,13 @@
-import { isAbsolute, resolve } from "path";
+import { getBuiltinModuleWithoutPatching } from "../agent/hooks/instrumentation/processGetBuiltin";
 
 /**
  * Determins the absolute path to the entrypoint of the application by parsing the CLI arguments passed to the process.
  */
 export function getEntrypointFromCLIArgs(): string | undefined {
+  const { isAbsolute, resolve } = getBuiltinModuleWithoutPatching(
+    "path"
+  ) as typeof import("path");
+
   const argv = process.argv;
   if (argv.length < 2) {
     return undefined;
