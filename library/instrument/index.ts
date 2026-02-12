@@ -43,7 +43,7 @@ function start() {
     console.error(
       colorText(
         "red",
-        "AIKIDO: Error: Your application seems to be running in ESM mode without preloading the library. Please use --require to preload the library. See our ESM documentation for setup instructions."
+        "AIKIDO: Error: Your application seems to be running in ESM mode without preloading the library. Please use --require to preload the library. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
       )
     );
   }
