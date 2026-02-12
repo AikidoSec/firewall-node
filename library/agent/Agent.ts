@@ -1,9 +1,11 @@
-/* eslint-disable max-lines-per-function, no-console */
+/* oxlint-disable no-console */
+
 import { hostname, platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
+import { colorText } from "../helpers/colorText";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import type {
@@ -33,6 +35,7 @@ import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUni
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
+import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -62,6 +65,7 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
+  private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
 
   constructor(
     private block: boolean,
@@ -100,6 +104,14 @@ export class Agent {
 
   getAIStatistics() {
     return this.aiStatistics;
+  }
+
+  setIdorProtectionConfig(config: IdorProtectionConfig) {
+    this.idorProtectionConfig = config;
+  }
+
+  getIdorProtectionConfig(): IdorProtectionConfig | undefined {
+    return this.idorProtectionConfig;
   }
 
   unableToPreventPrototypePollution(
@@ -425,6 +437,7 @@ export class Agent {
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
+      // oxlint-disable-next-line no-console
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
   }
@@ -559,9 +572,15 @@ export class Agent {
       if (details.supported) {
         this.logger.log(`${name}@${details.version} is supported!`);
       } else {
-        this.logger.log(`${name}@${details.version} is not supported!`);
+        this.logger.log(
+          colorText("red", `${name}@${details.version} is not supported!`)
+        );
       }
     }
+  }
+
+  onBuiltinWrapped(name: string) {
+    this.logger.log(`node:${name} is supported!`);
   }
 
   onConnectHostname(hostname: string, port: number) {

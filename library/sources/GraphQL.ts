@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Context, getContext, updateContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";

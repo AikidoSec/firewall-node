@@ -23,12 +23,12 @@ async function execAsyncWithPipe(command, options) {
 }
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.56";
+const INTERNALS_VERSION = "v0.1.60";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
 // ---
 
 // Node Internals configuration
-const NODE_INTERNALS_VERSION = "1.0.0";
+const NODE_INTERNALS_VERSION = "1.0.1";
 const NODE_INTERNALS_URL = `https://github.com/AikidoSec/zen-internals-node/releases/download/${NODE_INTERNALS_VERSION}`;
 // 17 is not included on purpose
 const NODE_VERSIONS = [16, 18, 19, 20, 21, 22, 23, 24, 25];
@@ -141,6 +141,16 @@ async function dlNodeInternals() {
           `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch}...`
         );
         downloads.push(downloadFile(url, destPath));
+
+        // zen-internals-node-linux-x64-musl-node20.node
+        const muslFilename = `zen-internals-node-${platform}-${arch}-musl-node${nodeVersion}.node`;
+        const muslUrl = `${NODE_INTERNALS_URL}/${muslFilename}`;
+        const muslDestPath = join(nodeInternalsDir, muslFilename);
+
+        console.log(
+          `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch} (musl)...`
+        );
+        downloads.push(downloadFile(muslUrl, muslDestPath));
       }
     }
   }

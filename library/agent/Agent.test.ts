@@ -18,6 +18,7 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
+import { colorText } from "../helpers/colorText";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -109,7 +110,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -148,7 +149,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "shell-quote@1.8.1 is not supported!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
   ]);
 });
 

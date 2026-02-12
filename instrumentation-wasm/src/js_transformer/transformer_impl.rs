@@ -194,7 +194,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
         node: &mut oxc_ast::ast::VariableDeclarator<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
-        if !node.id.kind.is_binding_identifier() || node.init.is_none() {
+        if !node.id.is_binding_identifier() || node.init.is_none() {
             return;
         }
 

@@ -12,13 +12,16 @@ functions.http("handler", async (req, res) => {
 });
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import "@aikidosec/firewall/cloud-function";
 
 // ...
 ```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
 
 If you're using the `exports.handler` style, you'll need to wrap your handler manually.
 
@@ -35,7 +38,7 @@ exports.handler = protect(async (event, context) => {
 });
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import protect from "@aikidosec/firewall/cloud-function";

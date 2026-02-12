@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";

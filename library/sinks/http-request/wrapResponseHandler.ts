@@ -37,7 +37,6 @@ export function wrapResponseHandler(
       onHTTPResponse(args, module, res, context);
     }
 
-    // eslint-disable-next-line prefer-rest-params
     fn(...arguments);
   };
 }
