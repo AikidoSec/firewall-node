@@ -17,6 +17,7 @@ import { isLibBundled } from "./helpers/isLibBundled";
 import { setTenantId } from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
+import { colorText } from "./helpers/colorText";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -28,14 +29,20 @@ if (!isNewHookSystemUsed()) {
     if (isESM()) {
       // oxlint-disable-next-line no-console
       console.warn(
-        "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
+        colorText(
+          "red",
+          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions."
+        )
       );
     }
 
     if (isLibBundled()) {
       // oxlint-disable-next-line no-console
       console.warn(
-        "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+        colorText(
+          "red",
+          "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+        )
       );
     }
 
