@@ -238,6 +238,7 @@ for await (const entry of testFiles) {
               break;
             case "throws":
             case "match":
+            case "notMatch":
             case "pass":
             case "rejects":
             case "same":
