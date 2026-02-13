@@ -179,6 +179,35 @@ export class BetterSQLite3 implements Wrapper {
       }));
 
     wrapperFunctionsInstructions.push({
+      name: "exports.prepare",
+      operationKind: "sql_op",
+      nodeType: "FunctionAssignment",
+      modifyReturnValue: (args, statement) => {
+        for (const func of statementSqlFunctions) {
+          wrapExport(
+            statement,
+            func,
+            {
+              name: "better-sqlite3",
+              type: "external",
+            },
+            {
+              kind: "sql_op",
+              inspectArgs: (args, _, statement) => {
+                return this.inspectStatementOperation(
+                  `better-sqlite3.prepare(...).${func}`,
+                  args,
+                  statement
+                );
+              },
+            }
+          );
+        }
+        return statement;
+      },
+    });
+
+    wrapperFunctionsInstructions.push({
       name: "exports.loadExtension",
       operationKind: "fs_op",
       nodeType: "FunctionAssignment",
