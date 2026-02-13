@@ -232,3 +232,61 @@ t.test("it handles deeply nested JWT without stack overflow", async () => {
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
 });
+
+t.test("it ignores URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example.com",
+    test: "xyz",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  const result = extractStringsFromUserInput(input);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+  t.ok(!result.has("https://example.com"));
+  t.ok(result.has("John Doe"));
+  t.ok(result.has("xyz"));
+});
+
+t.test("it does not ignore invalid URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example .com/invalid",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  const result = extractStringsFromUserInput(input);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+  t.ok(result.has("https://example .com/invalid"));
+  t.ok(result.has("John Doe"));
+});
+
+t.test("it does not ignore URLs outside of JWT payload", async () => {
+  const input = {
+    url: "https://example.com",
+    name: "Test'), ('Test2');--",
+  };
+
+  const result = extractStringsFromUserInput(input);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+  t.ok(result.has("https://example.com"));
+});
