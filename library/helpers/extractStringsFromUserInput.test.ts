@@ -232,3 +232,18 @@ t.test("it handles deeply nested JWT without stack overflow", async () => {
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
 });
+
+t.test("it does not use JWT claims that are URLs", async () => {
+  /**
+   * {
+   *   "a": "b",
+   *   "https://api.whatever.io/customer_id": "customer_id"
+   * }
+   */
+  const jwt =
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImE3MzlmNGQxYTc1Njk2MzFjM2Q3ODRiZTgwZWMwM2RmIn0.eyJhIjoiYiIsImh0dHBzOi8vYXBpLndoYXRldmVyLmlvL2N1c3RvbWVyX2lkIjoiY3VzdG9tZXJfaWQifQ.eYnGoRZaxXkGUlkrWQ9Y2X6J0SMiddjc68K2b0R7nFaDHCasLArZc4095Oo0oHaJwf-R6f3T0Y_UNAe4Wmk7Tlv441SiCTd27bsNpdx0wvtiz2dew7PkbLy9YKKdH-liAa1musOHoG9oDF9MctYGQuC4_HscAgO1qB_syXz2NPFeHdvMN0GZHcFkxXdOL-DUg6D_tkG0RrfWTwyU8uFn6rImOh9_c4TRsmTSGDJ4pVY5jO6tci1dkGY_990ekRDLLxzN3hxA1zQX_tkFjqtJ8y4Bhei_FVi5C64pY41mf44V-qyHU0vy7mGbECqTtNsEqW_zLZGbyBt4Nna2Hc4q6BOiMBleWakcRV5A1cRyMruErn368nO5o9ZeWb2c8nSC5S-T9noWaF3AOkS00gj-Rqmwxk_j6kk4cC0ev3xjXKWmQCsoSvA3pBahXSpcYLwxa2J-LuEvQPNzP9GGFvZ0_ta4_iKD21_a49otfSRRu3ZZByRGryZ88UQpdNsWYXU-";
+  t.same(
+    extractStringsFromUserInput(jwt),
+    fromArr([jwt, "a", "b", "customer_id"])
+  );
+});
