@@ -1,6 +1,7 @@
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryParseURL } from "./tryParseURL";
 
 type UserString = string;
 
@@ -61,6 +62,11 @@ export function extractStringsFromUserInput(
         delete jwt.object.iss;
       }
       extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
+        if (value.startsWith("http") && tryParseURL(value)) {
+          // Do not add URLs as strings because they can contain domains and produce false positives
+          return;
+        }
+
         results.add(value);
       });
     }
