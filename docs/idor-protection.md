@@ -119,6 +119,7 @@ Zen IDOR protection: setTenantId() was not called for this request. Every reques
 
 - MySQL (via `mysql` and `mysql2` packages)
 - PostgreSQL (via `pg` package)
+- SQLite (via `better-sqlite3` package)
 
 Any ORM or query builder that uses these database packages under the hood is supported (e.g. Drizzle, Knex, Sequelize, TypeORM). ORMs that use their own database engine (e.g. Prisma) are not supported unless configured to use a supported driver adapter.
 

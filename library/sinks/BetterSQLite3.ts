@@ -1,9 +1,10 @@
-import { getContext } from "../agent/Context";
+import { Context, getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
 import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -21,13 +22,71 @@ export class BetterSQLite3 implements Wrapper {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         const sql = args[0];
+        return this.inspectSQLCommand(sql, context, operation);
+      }
+    }
 
-        return checkContextForSqlInjection({
-          operation: operation,
-          sql: sql,
-          context: context,
-          dialect: this.dialect,
-        });
+    return undefined;
+  }
+
+  private inspectStatementOperation(
+    operation: string,
+    args: unknown[],
+    statement: unknown
+  ) {
+    const context = getContext();
+    if (!context) {
+      return undefined;
+    }
+
+    if (
+      statement &&
+      typeof statement === "object" &&
+      "source" in statement &&
+      typeof statement.source === "string"
+    ) {
+      const sql = statement.source;
+      const params =
+        args.length > 0 && Array.isArray(args[0]) ? args[0] : undefined;
+
+      return this.inspectSQLCommand(sql, context, operation, params);
+    }
+  }
+
+  private inspectSQLCommand(
+    sql: string,
+    context: Context,
+    operation: string,
+    params?: unknown[]
+  ) {
+    const sqlResult = checkContextForSqlInjection({
+      operation: operation,
+      sql: sql,
+      context: context,
+      dialect: this.dialect,
+    });
+
+    if (sqlResult) {
+      return sqlResult;
+    }
+
+    return checkContextForIdor({
+      sql,
+      context,
+      dialect: this.dialect,
+      resolvePlaceholder: (placeholder, placeholderNumber) =>
+        this.resolvePlaceholder(placeholder, placeholderNumber, params),
+    });
+  }
+
+  private resolvePlaceholder(
+    placeholder: string,
+    placeholderNumber: number | undefined,
+    params: unknown[] | undefined
+  ): unknown {
+    if (placeholder === "?" && placeholderNumber !== undefined && params) {
+      if (placeholderNumber < params.length) {
+        return params[placeholderNumber];
       }
     }
 
@@ -63,8 +122,9 @@ export class BetterSQLite3 implements Wrapper {
   }
 
   wrap(hooks: Hooks) {
-    const sqlFunctions = ["prepare", "exec", "pragma"];
+    const sqlFunctions = ["exec", "pragma"];
     const fsPathFunctions = ["backup", "loadExtension"];
+    const statementSqlFunctions = ["run", "get", "all", "iterate", "bind"];
 
     const pkg = hooks
       .addPackage("better-sqlite3")
@@ -87,6 +147,25 @@ export class BetterSQLite3 implements Wrapper {
           },
         });
       }
+
+      wrapExport(exports.prototype, "prepare", pkgInfo, {
+        kind: "sql_op",
+        modifyReturnValue: (args, statement) => {
+          for (const func of statementSqlFunctions) {
+            wrapExport(statement, func, pkgInfo, {
+              kind: "sql_op",
+              inspectArgs: (args, _, statement) => {
+                return this.inspectStatementOperation(
+                  `better-sqlite3.prepare(...).${func}`,
+                  args,
+                  statement
+                );
+              },
+            });
+          }
+          return statement;
+        },
+      });
     });
 
     const wrapperFunctionsInstructions: PackageFunctionInstrumentationInstruction[] =
