@@ -88,6 +88,14 @@ function wrapDNSLookupCallback(
     }
 
     const context = getContext();
+    const resolvedIPAddresses = getResolvedIPAddresses(addresses);
+
+    const privateIP = resolvedIPAddresses.find(isPrivateIP);
+    if (!privateIP) {
+      // If the hostname doesn't resolve to a private IP address, it's not an SSRF attack
+      // Just call the original callback to allow the DNS lookup
+      return callback(err, addresses, family);
+    }
 
     if (context) {
       const matches = agent.getConfig().getEndpoints(context);
@@ -97,19 +105,102 @@ function wrapDNSLookupCallback(
         // Just call the original callback to allow the DNS lookup
         return callback(err, addresses, family);
       }
+
+      const isBypassedIP =
+        context.remoteAddress &&
+        agent.getConfig().isBypassedIP(context.remoteAddress);
+
+      if (isBypassedIP) {
+        // If the IP address is allowed, we don't need to block the request
+        // Just call the original callback to allow the DNS lookup
+        return callback(err, addresses, family);
+      }
+
+      // This is set if this resolve is part of an outgoing request that we are inspecting
+      const requestContext = RequestContextStorage.getStore();
+      const port = urlArg ? getPortFromURL(urlArg) : requestContext?.port;
+
+      let found = findHostnameInContext(hostname, context, port);
+
+      // The hostname is not found in the context, check if it's a redirect
+      if (!found && context.outgoingRequestRedirects) {
+        let url: URL | undefined;
+        // Url arg is passed when wrapping node:http(s), but not for undici / fetch because of the way they are wrapped
+        // For undici / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
+        // not to be confused with the "normal" context used in wide parts of this library
+        if (urlArg) {
+          url = urlArg;
+        } else if (requestContext) {
+          url = new URL(requestContext.url);
+        }
+
+        if (url) {
+          // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
+          const redirectOrigin = getRedirectOrigin(
+            context.outgoingRequestRedirects,
+            url
+          );
+
+          // If the URL is the result of a redirect, get the origin of the redirect chain for reporting the attack source
+          if (redirectOrigin) {
+            found = findHostnameInContext(
+              redirectOrigin.hostname,
+              context,
+              getPortFromURL(redirectOrigin)
+            );
+          }
+        }
+      }
+
+      if (found) {
+        // Used to get the stack trace of the calling location
+        // We don't throw the error, we just use it to get the stack trace
+        const stackTraceError = callingLocationStackTrace || new Error();
+
+        agent.onDetectedAttack({
+          module: module,
+          operation: operation,
+          kind: "ssrf",
+          source: found.source,
+          blocked: agent.shouldBlock(),
+          stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+          paths: found.pathsToPayload,
+          metadata: getMetadataForSSRFAttack({ hostname, port, privateIP }),
+          request: context,
+          payload: found.payload,
+        });
+
+        if (agent.shouldBlock()) {
+          return callback(
+            cleanError(
+              new Error(
+                `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
+              )
+            )
+          );
+        }
+      }
     }
 
-    const resolvedIPAddresses = getResolvedIPAddresses(addresses);
-
+    // Check for stored IMDS SSRF attack
     const imdsIpResult = resolvesToIMDSIP(resolvedIPAddresses, hostname);
-    if (!context && imdsIpResult.isIMDS) {
-      reportStoredImdsIpSSRF({
-        agent,
-        module,
-        operation,
-        hostname,
-        privateIp: imdsIpResult.ip,
-        callingLocationStackTrace,
+    if (imdsIpResult.isIMDS) {
+      const stackTraceError = callingLocationStackTrace || new Error();
+      agent.onDetectedAttack({
+        module: module,
+        operation: operation,
+        kind: "stored_ssrf",
+        source: undefined,
+        blocked: agent.shouldBlock(),
+        stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
+        paths: [],
+        metadata: getMetadataForSSRFAttack({
+          hostname,
+          port: undefined,
+          privateIP: imdsIpResult.ip,
+        }),
+        request: undefined,
+        payload: undefined,
       });
 
       // Block stored SSRF attack that target IMDS IP addresses
@@ -122,129 +213,6 @@ function wrapDNSLookupCallback(
           )
         );
       }
-    }
-
-    if (!context) {
-      // If there's no context, we can't check if the hostname is in the context
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    // This is set if this resolve is part of an outgoing request that we are inspecting
-    const requestContext = RequestContextStorage.getStore();
-
-    let port: number | undefined;
-
-    if (urlArg) {
-      port = getPortFromURL(urlArg);
-    } else if (requestContext) {
-      port = requestContext.port;
-    }
-
-    const privateIP = resolvedIPAddresses.find(isPrivateIP);
-
-    if (!privateIP) {
-      // If the hostname doesn't resolve to a private IP address, it's not an SSRF attack
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    let found = findHostnameInContext(hostname, context, port);
-
-    // The hostname is not found in the context, check if it's a redirect
-    if (!found && context.outgoingRequestRedirects) {
-      let url: URL | undefined;
-      // Url arg is passed when wrapping node:http(s), but not for undici / fetch because of the way they are wrapped
-      // For undici / fetch we need to get the url from the request context, which is an additional async context for outgoing requests,
-      // not to be confused with the "normal" context used in wide parts of this library
-      if (urlArg) {
-        url = urlArg;
-      } else if (requestContext) {
-        url = new URL(requestContext.url);
-      }
-
-      if (url) {
-        // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
-        const redirectOrigin = getRedirectOrigin(
-          context.outgoingRequestRedirects,
-          url
-        );
-
-        // If the URL is the result of a redirect, get the origin of the redirect chain for reporting the attack source
-        if (redirectOrigin) {
-          found = findHostnameInContext(
-            redirectOrigin.hostname,
-            context,
-            getPortFromURL(redirectOrigin)
-          );
-        }
-      }
-    }
-
-    if (!found) {
-      if (imdsIpResult.isIMDS) {
-        // Stored SSRF attack executed during another request (context set)
-        reportStoredImdsIpSSRF({
-          agent,
-          module,
-          operation,
-          hostname,
-          privateIp: imdsIpResult.ip,
-          callingLocationStackTrace,
-        });
-
-        // Block stored SSRF attack that target IMDS IP addresses
-        // An attacker could have stored a hostname in a database that points to an IMDS IP address
-        if (agent.shouldBlock()) {
-          return callback(
-            new Error(
-              `Zen has blocked ${attackKindHumanName("stored_ssrf")}: ${operation}(...) originating from unknown source`
-            )
-          );
-        }
-      }
-
-      // If we can't find the hostname in the context, it's not an SSRF attack
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    const isBypassedIP =
-      context &&
-      context.remoteAddress &&
-      agent.getConfig().isBypassedIP(context.remoteAddress);
-
-    if (isBypassedIP) {
-      // If the IP address is allowed, we don't need to block the request
-      // Just call the original callback to allow the DNS lookup
-      return callback(err, addresses, family);
-    }
-
-    // Used to get the stack trace of the calling location
-    // We don't throw the error, we just use it to get the stack trace
-    const stackTraceError = callingLocationStackTrace || new Error();
-
-    agent.onDetectedAttack({
-      module: module,
-      operation: operation,
-      kind: "ssrf",
-      source: found.source,
-      blocked: agent.shouldBlock(),
-      stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
-      paths: found.pathsToPayload,
-      metadata: getMetadataForSSRFAttack({ hostname, port, privateIP }),
-      request: context,
-      payload: found.payload,
-    });
-
-    if (agent.shouldBlock()) {
-      return callback(
-        cleanError(
-          new Error(
-            `Zen has blocked ${attackKindHumanName("ssrf")}: ${operation}(...) originating from ${found.source}${escapeHTML((found.pathsToPayload || []).join())}`
-          )
-        )
-      );
     }
 
     // If the attack should not be blocked
@@ -292,38 +260,4 @@ function resolvesToIMDSIP(
   return {
     isIMDS: false,
   };
-}
-
-function reportStoredImdsIpSSRF({
-  agent,
-  callingLocationStackTrace,
-  module,
-  operation,
-  hostname,
-  privateIp,
-}: {
-  agent: Agent;
-  callingLocationStackTrace?: Error;
-  module: string;
-  operation: string;
-  hostname: string;
-  privateIp: string;
-}) {
-  const stackTraceError = callingLocationStackTrace || new Error();
-  agent.onDetectedAttack({
-    module: module,
-    operation: operation,
-    kind: "stored_ssrf",
-    source: undefined,
-    blocked: agent.shouldBlock(),
-    stack: cleanupStackTrace(stackTraceError.stack!, getLibraryRoot()),
-    paths: [],
-    metadata: getMetadataForSSRFAttack({
-      hostname,
-      port: undefined,
-      privateIP: privateIp,
-    }),
-    request: undefined,
-    payload: undefined,
-  });
 }
