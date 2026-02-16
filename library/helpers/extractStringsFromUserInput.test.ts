@@ -249,12 +249,22 @@ t.test("it ignores URLs in JWT payload", async () => {
     name: "Test'), ('Test2');--",
   };
 
-  const result = extractStringsFromUserInput(input);
-  t.ok(result.size > 0);
-  t.ok(result.has("Test'), ('Test2');--"));
-  t.ok(!result.has("https://example.com"));
-  t.ok(result.has("John Doe"));
-  t.ok(result.has("xyz"));
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "test",
+      "xyz",
+      "iat",
+    ])
+  );
 });
 
 t.test("it does not ignore invalid URLs in JWT payload", async () => {
@@ -272,11 +282,21 @@ t.test("it does not ignore invalid URLs in JWT payload", async () => {
     name: "Test'), ('Test2');--",
   };
 
-  const result = extractStringsFromUserInput(input);
-  t.ok(result.size > 0);
-  t.ok(result.has("Test'), ('Test2');--"));
-  t.ok(result.has("https://example .com/invalid"));
-  t.ok(result.has("John Doe"));
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "https://example .com/invalid",
+      "iat",
+    ])
+  );
 });
 
 t.test("it does not ignore URLs outside of JWT payload", async () => {
@@ -285,8 +305,8 @@ t.test("it does not ignore URLs outside of JWT payload", async () => {
     name: "Test'), ('Test2');--",
   };
 
-  const result = extractStringsFromUserInput(input);
-  t.ok(result.size > 0);
-  t.ok(result.has("Test'), ('Test2');--"));
-  t.ok(result.has("https://example.com"));
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
+  );
 });
