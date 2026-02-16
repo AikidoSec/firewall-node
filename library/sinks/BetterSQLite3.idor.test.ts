@@ -322,6 +322,16 @@ t.test("IDOR protection for BetterSQLite3", async (t) => {
       }
     );
 
+    await t.test("allows DDL statements without tenant filter", async () => {
+      runWithContext(context, () => {
+        db.exec("CREATE TABLE IF NOT EXISTS temp_idor_test (id int)");
+      });
+      runWithContext(context, () => {
+        db.exec("DROP TABLE IF EXISTS temp_idor_test");
+      });
+      t.pass();
+    });
+
     await t.test("allows transaction queries", async () => {
       runWithContext(context, () => {
         return db.exec("BEGIN");
