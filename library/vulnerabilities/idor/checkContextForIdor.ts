@@ -120,16 +120,27 @@ function checkWhereFilters(
       tenantFilter.value,
       tenantFilter.placeholder_number
     );
-    if (
-      context.tenantId !== undefined &&
-      (typeof resolvedValue === "string" || typeof resolvedValue === "number")
-    ) {
-      const tenantIdStr = context.tenantId.toString();
-      const resolvedStr = String(resolvedValue);
 
-      if (resolvedStr !== tenantIdStr) {
+    if (context.tenantId !== undefined) {
+      const isPlaceholder =
+        tenantFilter.placeholder_number !== undefined ||
+        isPlaceholderValue(tenantFilter.value);
+      const resolved =
+        typeof resolvedValue === "string" || typeof resolvedValue === "number";
+
+      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+      if (isPlaceholder && !resolved) {
         return violation(
-          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${resolvedStr}' but tenant ID is '${tenantIdStr}'`
+          `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+        );
+      }
+
+      const value = resolved ? String(resolvedValue) : tenantFilter.value;
+      const tenantIdStr = context.tenantId.toString();
+
+      if (value !== tenantIdStr) {
+        return violation(
+          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
         );
       }
     }
@@ -228,4 +239,11 @@ function getAnalysisResults(
 
 function violation(message: string): IdorViolationResult {
   return { idorViolation: true, message };
+}
+
+// Matches ? (MySQL/SQLite) and $1, $2, etc. (PostgreSQL)
+const placeholderPattern = /^(\?|\$\d+)$/;
+
+function isPlaceholderValue(value: string): boolean {
+  return placeholderPattern.test(value);
 }

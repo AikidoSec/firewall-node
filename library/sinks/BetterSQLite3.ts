@@ -46,8 +46,12 @@ export class BetterSQLite3 implements Wrapper {
       typeof statement.source === "string"
     ) {
       const sql = statement.source;
-      const params =
-        args.length > 0 && Array.isArray(args[0]) ? args[0] : undefined;
+      // better-sqlite3 accepts params as an array: .all([v1, v2])
+      // or as individual arguments: .all(v1, v2)
+      let params: unknown[] | undefined;
+      if (args.length > 0) {
+        params = Array.isArray(args[0]) ? args[0] : args;
+      }
 
       return this.inspectSQLCommand(sql, context, operation, params);
     }
