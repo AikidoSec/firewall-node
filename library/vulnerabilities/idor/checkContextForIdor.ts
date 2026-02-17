@@ -122,14 +122,11 @@ function checkWhereFilters(
     );
 
     if (context.tenantId !== undefined) {
-      const isPlaceholder =
-        tenantFilter.placeholder_number !== undefined ||
-        isPlaceholderValue(tenantFilter.value);
       const resolved =
         typeof resolvedValue === "string" || typeof resolvedValue === "number";
 
       // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
-      if (isPlaceholder && !resolved) {
+      if (tenantFilter.is_placeholder && !resolved) {
         return violation(
           `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
         );
@@ -184,23 +181,24 @@ function checkInsert(
         tenantCol.placeholder_number
       );
 
-      let value = tenantCol.value;
+      if (context.tenantId !== undefined) {
+        const resolved =
+          typeof resolvedValue === "string" ||
+          typeof resolvedValue === "number";
 
-      // Replace value with resolved placeholder if possible
-      if (
-        typeof resolvedValue === "string" ||
-        typeof resolvedValue === "number"
-      ) {
-        value = String(resolvedValue);
-      }
-
-      if (context.tenantId !== undefined && value !== undefined) {
-        const tenantIdStr = context.tenantId.toString();
-        const resolvedStr = String(value);
-
-        if (resolvedStr !== tenantIdStr) {
+        // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+        if (tenantCol.is_placeholder && !resolved) {
           return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${resolvedStr}' but tenant ID is '${tenantIdStr}'`
+            `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+          );
+        }
+
+        const value = resolved ? String(resolvedValue) : tenantCol.value;
+        const tenantIdStr = context.tenantId.toString();
+
+        if (value !== tenantIdStr) {
+          return violation(
+            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
           );
         }
       }
@@ -239,11 +237,4 @@ function getAnalysisResults(
 
 function violation(message: string): IdorViolationResult {
   return { idorViolation: true, message };
-}
-
-// Matches ? (MySQL/SQLite) and $1, $2, etc. (PostgreSQL)
-const placeholderPattern = /^(\?|\$\d+)$/;
-
-function isPlaceholderValue(value: string): boolean {
-  return placeholderPattern.test(value);
 }

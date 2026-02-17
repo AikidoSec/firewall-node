@@ -121,4 +121,86 @@ t.test("checkContextForIdor", async (t) => {
 
     t.equal(result, undefined);
   });
+
+  await t.test(
+    "blocks INSERT when ? placeholder could not be resolved",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
+        context,
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "has a placeholder for 'tenant_id' that could not be resolved"
+      );
+    }
+  );
+
+  await t.test(
+    "blocks INSERT when resolved placeholder does not match tenant ID",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
+        context,
+        dialect: sqlite,
+        resolvePlaceholder: () => "org_456",
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows INSERT when resolved placeholder matches tenant ID",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
+        context,
+        dialect: sqlite,
+        resolvePlaceholder: () => "org_123",
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks INSERT when literal value does not match tenant ID",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_456')",
+        context,
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "sets 'tenant_id' to 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
+    "allows INSERT when literal value matches tenant ID",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_123')",
+        context,
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
 });

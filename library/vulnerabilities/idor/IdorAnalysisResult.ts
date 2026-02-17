@@ -9,6 +9,8 @@ export type FilterColumn = {
   value: string;
   /** 0-based position of a `?` placeholder in the query (MySQL-style) */
   placeholder_number?: number;
+  /** Whether the value is a placeholder (e.g. `?`, `$1`) rather than a literal */
+  is_placeholder: boolean;
 };
 
 export type InsertColumn = {
@@ -16,6 +18,8 @@ export type InsertColumn = {
   value: string;
   /** 0-based position of a `?` placeholder in the query (MySQL-style) */
   placeholder_number?: number;
+  /** Whether the value is a placeholder (e.g. `?`, `$1`) rather than a literal */
+  is_placeholder: boolean;
 };
 
 export type SqlQueryResult = {
