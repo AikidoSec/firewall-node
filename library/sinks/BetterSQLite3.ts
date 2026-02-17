@@ -4,6 +4,7 @@ import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/i
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
@@ -46,8 +47,12 @@ export class BetterSQLite3 implements Wrapper {
       typeof statement.source === "string"
     ) {
       const sql = statement.source;
-      const params =
-        args.length > 0 && Array.isArray(args[0]) ? args[0] : undefined;
+      // better-sqlite3 accepts params as an array: .all([v1, v2])
+      // or as individual arguments: .all(v1, v2)
+      let params: unknown[] | undefined;
+      if (args.length > 0) {
+        params = Array.isArray(args[0]) ? args[0] : args;
+      }
 
       return this.inspectSQLCommand(sql, context, operation, params);
     }
@@ -84,9 +89,26 @@ export class BetterSQLite3 implements Wrapper {
     placeholderNumber: number | undefined,
     params: unknown[] | undefined
   ): unknown {
+    // ? placeholder (positional)
     if (placeholder === "?" && placeholderNumber !== undefined && params) {
       if (placeholderNumber < params.length) {
         return params[placeholderNumber];
+      }
+    }
+
+    // Named params (:name, @name, $name) — better-sqlite3 accepts an object
+    if (
+      params &&
+      params.length === 1 &&
+      isPlainObject(params[0]) &&
+      placeholder.length > 1
+    ) {
+      const prefix = placeholder[0];
+      if (prefix === ":" || prefix === "@" || prefix === "$") {
+        const key = placeholder.substring(1);
+        if (Object.hasOwn(params[0], key)) {
+          return params[0][key];
+        }
       }
     }
 

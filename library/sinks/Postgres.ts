@@ -18,8 +18,9 @@ export class Postgres implements Wrapper {
     params: unknown[] | undefined
   ): unknown {
     // Postgres uses $1, $2, etc. (1-based)
-    if (placeholder.startsWith("$") && params) {
-      const index = parseInt(placeholder.substring(1), 10) - 1;
+    const match = placeholder.match(/^\$(\d+)$/);
+    if (match && params) {
+      const index = parseInt(match[1], 10) - 1;
       if (index >= 0 && index < params.length) {
         return params[index];
       }
