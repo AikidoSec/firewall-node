@@ -10,6 +10,7 @@ import {
   isAttackResult,
   isBlockOutboundConnectionResult,
   isIdorViolationResult,
+  isShellViolationResult,
 } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
@@ -45,6 +46,10 @@ export function onInspectionInterceptorResult(
     agent.getConfig().isBypassedIP(context.remoteAddress);
 
   if (isIdorViolationResult(result) && !isBypassedIP) {
+    throw cleanError(new Error(result.message));
+  }
+
+  if (isShellViolationResult(result) && !isBypassedIP) {
     throw cleanError(new Error(result.message));
   }
 
