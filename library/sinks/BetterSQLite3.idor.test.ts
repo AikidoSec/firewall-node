@@ -111,6 +111,68 @@ t.test("IDOR protection for BetterSQLite3", async (t) => {
       }
     );
 
+    await t.test(
+      "allows query with tenant filter using :name param",
+      async () => {
+        const rows = runWithContext(context, () => {
+          return db
+            .prepare(
+              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = :tenant_id"
+            )
+            .all({ tenant_id: "org_123" });
+        });
+        t.same(rows, []);
+      }
+    );
+
+    await t.test("blocks query with wrong :name param", async () => {
+      const error = t.throws(() => {
+        runWithContext(context, () => {
+          return db
+            .prepare(
+              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = :tenant_id"
+            )
+            .all({ tenant_id: "org_456" });
+        });
+      });
+
+      t.ok(error instanceof Error);
+      if (error instanceof Error) {
+        t.match(
+          error.message,
+          "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+        );
+      }
+    });
+
+    await t.test(
+      "allows query with tenant filter using @name param",
+      async () => {
+        const rows = runWithContext(context, () => {
+          return db
+            .prepare(
+              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = @tenant_id"
+            )
+            .all({ tenant_id: "org_123" });
+        });
+        t.same(rows, []);
+      }
+    );
+
+    await t.test(
+      "allows query with tenant filter using $name param",
+      async () => {
+        const rows = runWithContext(context, () => {
+          return db
+            .prepare(
+              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = $tenant_id"
+            )
+            .all({ tenant_id: "org_123" });
+        });
+        t.same(rows, []);
+      }
+    );
+
     await t.test("blocks query without tenant filter", async () => {
       const error = t.throws(() => {
         runWithContext(context, () => {
