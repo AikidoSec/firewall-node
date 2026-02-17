@@ -106,7 +106,7 @@ export class BetterSQLite3 implements Wrapper {
       const prefix = placeholder[0];
       if (prefix === ":" || prefix === "@" || prefix === "$") {
         const key = placeholder.substring(1);
-        if (key in params[0]) {
+        if (Object.hasOwn(params[0], key)) {
           return params[0][key];
         }
       }
