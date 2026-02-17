@@ -131,7 +131,8 @@ t.test("it wraps the createServer function of http2 module", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "http://localhost:3415/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -312,7 +313,8 @@ t.test("it works then using the on request event", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "http://localhost:3423/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -345,7 +347,8 @@ t.test("it works then using the on stream event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/?test=abc",
+          url: "http://localhost:3424/?test=abc",
+          urlPath: "/",
           method: "GET",
           headers: {
             ":path": "/?test=abc",
@@ -445,7 +448,8 @@ t.test("it wraps the createSecureServer function of http2 module", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "https://localhost:3427/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -485,7 +489,8 @@ t.test("it wraps the createSecureServer on request event", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "https://localhost:3428/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -525,7 +530,8 @@ t.test("it wraps the createSecureServer stream event", async () => {
         ({ body }) => {
           const context = JSON.parse(body);
           t.match(context, {
-            url: "/",
+            url: "https://localhost:3429/",
+            urlPath: "/",
             method: "GET",
             headers: {
               ":path": "/",
@@ -641,7 +647,8 @@ t.test("it works then using the on stream end event", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.match(context, {
-          url: "/?test=abc",
+          url: "http://localhost:3433/?test=abc",
+          urlPath: "/",
           method: "POST",
           headers: {
             ":path": "/?test=abc",
@@ -821,3 +828,114 @@ t.test("invalid Multipart body results in empty body", async () => {
     });
   });
 });
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Proto headers",
+  async () => {
+    const server = createMinimalTestServer();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3438, () => {
+        http2Request(new URL("http://localhost:3438/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Proto": "https",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "https://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/test",
+              ":method": "GET",
+              ":authority": "localhost:3438",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/test",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Proto headers (stream)",
+  async () => {
+    const server = createMinimalTestServerWithStream();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3439, () => {
+        http2Request(new URL("http://localhost:3439/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Proto": "https",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "https://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/test",
+              ":method": "GET",
+              ":authority": "localhost:3439",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/test",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "it respects X-Forwarded-Host and X-Forwarded-Protocol headers (stream)",
+  async () => {
+    const server = createMinimalTestServerWithStream();
+
+    await new Promise<void>((resolve) => {
+      server.listen(3440, () => {
+        http2Request(new URL("http://localhost:3440/test"), "GET", {
+          "X-Forwarded-Host": "example.com",
+          "X-Forwarded-Protocol": "http",
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.match(context, {
+            url: "http://example.com/test",
+            urlPath: "/test",
+            method: "GET",
+            headers: {
+              ":path": "/test",
+              ":method": "GET",
+              ":authority": "localhost:3440",
+              ":scheme": "http",
+            },
+            query: {},
+            route: "/test",
+            source: "http2.createServer",
+            routeParams: {},
+            cookies: {},
+          });
+          t.ok(isLocalhostIP(context.remoteAddress));
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);

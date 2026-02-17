@@ -4,6 +4,8 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { parse } from "../../helpers/parseCookies";
 import { tryParseURLParams } from "../../helpers/tryParseURLParams";
+import { getRequestUrl } from "../../helpers/getRequestUrl";
+import { getRawRequestPath } from "../../helpers/getRawRequestPath";
 
 export function contextFromRequest(
   req: IncomingMessage,
@@ -19,7 +21,8 @@ export function contextFromRequest(
   }
 
   return {
-    url: req.url,
+    url: getRequestUrl(req),
+    urlPath: getRawRequestPath(req.url || ""),
     method: req.method,
     headers: req.headers,
     route: req.url ? buildRouteFromURL(req.url) : undefined,

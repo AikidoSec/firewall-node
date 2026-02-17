@@ -185,7 +185,6 @@ t.test("it adds context from request for all", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/?title[$ne]=null",
     remoteAddress: "127.0.0.1",
     method: "GET",
     query: { "title[$ne]": "null" },
@@ -203,6 +202,9 @@ t.test("it adds context from request for all", opts, async (t) => {
     },
     executedMiddleware: true,
   });
+
+  // Url is absolute and includes query parameters
+  t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
 });
 
 t.test(
@@ -224,7 +226,6 @@ t.test(
 
     const json = await response.json();
     t.match(json, {
-      url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
       query: { "title[$ne]": "null" },
@@ -241,6 +242,9 @@ t.test(
         session: "123",
       },
     });
+
+    // Url is absolute and includes query parameters
+    t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
   }
 );
 
@@ -263,7 +267,6 @@ t.test(
 
     const json = await response.json();
     t.match(json, {
-      url: "/?title[$ne]=null",
       remoteAddress: "127.0.0.1",
       method: "GET",
       query: { "title[$ne]": "null" },
@@ -280,6 +283,9 @@ t.test(
         session: "123",
       },
     });
+
+    // Url is absolute and includes query parameters
+    t.match(json.url, /^http:\/\/.*\/\?title\[\$ne\]=null$/);
   }
 );
 
@@ -299,7 +305,6 @@ t.test("it adds context from request for all", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
     query: {},
@@ -316,6 +321,9 @@ t.test("it adds context from request for all", opts, async (t) => {
       session: "123",
     },
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/context$/);
 });
 
 t.test("it adds body to context", opts, async (t) => {
@@ -336,7 +344,6 @@ t.test("it adds body to context", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/context",
     remoteAddress: "127.0.0.1",
     method: "POST",
     query: {},
@@ -355,6 +362,9 @@ t.test("it adds body to context", opts, async (t) => {
     route: "/context",
     cookies: {},
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/context$/);
 });
 
 t.test("it blocks request in on-request hook", opts, async (t) => {
@@ -475,7 +485,6 @@ t.test("It works with route params", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/hello/123",
     remoteAddress: "127.0.0.1",
     method: "GET",
     query: {},
@@ -491,6 +500,9 @@ t.test("It works with route params", opts, async (t) => {
     route: "/hello/:number",
     cookies: {},
   });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/hello\/123$/);
 });
 
 t.test(
@@ -537,7 +549,6 @@ t.test("it works with addHttpMethod", opts, async (t) => {
 
   const json = await response.json();
   t.match(json, {
-    url: "/testurl",
     remoteAddress: "127.0.0.1",
     method: "MKCOL",
     query: {},
@@ -549,5 +560,47 @@ t.test("it works with addHttpMethod", opts, async (t) => {
     source: "fastify",
     route: "/testurl",
     cookies: {},
+  });
+
+  // Url is absolute
+  t.match(json.url, /^http:\/\/.*\/testurl$/);
+});
+
+t.test("it adds context from request for all", opts, async (t) => {
+  const app = await getApp();
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/?title[$ne]=null",
+    headers: {
+      accept: "application/json",
+      cookie: "session=123",
+      "X-Forwarded-Host": "example.com",
+      "X-Forwarded-Proto": "http",
+    },
+  });
+
+  t.same(response.statusCode, 200);
+
+  const json = await response.json();
+  t.match(json, {
+    url: "http://example.com/?title[$ne]=null",
+    urlPath: "/",
+    remoteAddress: "127.0.0.1",
+    method: "GET",
+    query: { "title[$ne]": "null" },
+    headers: {
+      accept: "application/json",
+      cookie: "session=123",
+      "user-agent": "lightMyRequest",
+      host: "localhost:80",
+    },
+    routeParams: {},
+    source: "fastify",
+    route: "/",
+    cookies: {
+      session: "123",
+    },
+    executedMiddleware: true,
   });
 });

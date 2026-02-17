@@ -9,6 +9,7 @@ export const SOURCES = [
   "subdomains",
   "markUnsafe",
   "url",
+  "urlPath",
   "rawBody",
 ] as const;
 

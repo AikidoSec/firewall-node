@@ -8,7 +8,8 @@ import { Source, SOURCES } from "./Source";
 export type User = { id: string; name?: string };
 
 export type Context = {
-  url: string | undefined;
+  url: string | undefined; // Full URL including protocol and host, if available
+  urlPath?: string | undefined; // The path part of the URL (e.g. /api/user)
   method: string | undefined;
   query: ParsedQs;
   headers: Record<string, string | string[] | undefined>;
@@ -82,6 +83,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
   // In this way we don't lose the `attackDetected` flag
   if (current) {
     current.url = context.url;
+    current.urlPath = context.urlPath;
     current.method = context.method;
     current.query = context.query;
     current.headers = context.headers;

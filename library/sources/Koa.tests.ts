@@ -140,6 +140,9 @@ export async function createKoaTests(koaPackageName: string) {
     t.match(response.headers, {
       "x-powered-by": "aikido",
     });
+
+    // Url is absolute and includes query parameters
+    t.match(response.body.url, /^http:\/\/.*\/context\?title=test&a=1$/);
   });
 
   t.test("it sets the user", async (t) => {
@@ -223,6 +226,32 @@ export async function createKoaTests(koaPackageName: string) {
       source: "koa",
       route: "/context",
       subdomains: [],
+    });
+  });
+
+  t.test("it respects forwarded host header", async (t) => {
+    const app = getApp();
+    const response = await request(app.callback())
+      .get("/context?title=test&a=1")
+      .set("Cookie", "session=123")
+      .set("Accept", "application/json")
+      .set("X-Forwarded-Host", "example.com")
+      .set("X-Forwarded-Proto", "https");
+
+    t.equal(response.status, 200);
+    t.match(response.body, {
+      url: "https://example.com/context?title=test&a=1",
+      method: "GET",
+      query: { title: "test", a: "1" },
+      cookies: { session: "123" },
+      headers: { accept: "application/json", cookie: "session=123" },
+      source: "koa",
+      route: "/context",
+      subdomains: [],
+    });
+    t.ok(isLocalhostIP(response.body.remoteAddress));
+    t.match(response.headers, {
+      "x-powered-by": "aikido",
     });
   });
 }
