@@ -2,7 +2,8 @@ import * as t from "tap";
 import { warnIfTsxIsUsed } from "./warnIfTsxIsUsed";
 
 const logs: string[] = [];
-console.warn = function (message: string) {
+// oxlint-disable-next-line no-console
+console.warn = function warn(message: string) {
   logs.push(message);
 };
 
