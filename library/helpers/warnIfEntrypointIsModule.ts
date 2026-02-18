@@ -2,13 +2,13 @@ import { colorText } from "./colorText";
 import { getEntrypointFromCLIArgs } from "./getEntrypointFromCLIArgs";
 import { looksLikeModuleSyntax } from "./looksLikeModuleSyntax";
 
-export async function warnIfEntrypointIsModule() {
+export function warnIfEntrypointIsModule() {
   const entrypoint = getEntrypointFromCLIArgs();
   if (!entrypoint) {
     return;
   }
 
-  const looksLikeModule = await looksLikeModuleSyntax(entrypoint);
+  const looksLikeModule = looksLikeModuleSyntax(entrypoint);
   if (looksLikeModule) {
     // oxlint-disable-next-line no-console
     console.warn(
