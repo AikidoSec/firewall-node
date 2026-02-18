@@ -37,7 +37,8 @@ t.test("it works", async (t) => {
 
   require("../index");
 
-  t.match(logs, [
-    "AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time.",
-  ]);
+  t.match(
+    logs,
+    /AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time/
+  );
 });
