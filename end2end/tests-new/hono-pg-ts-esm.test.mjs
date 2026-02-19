@@ -11,6 +11,7 @@ const pathToAppDir = resolve(
 );
 const port = await getRandomPort();
 const port2 = await getRandomPort();
+const port3 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -145,6 +146,60 @@ test("it does not block request in monitoring mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     doesNotMatch(stderr, /Zen has blocked an SQL injection/);
+    doesNotMatch(
+      stderr,
+      /Your application entrypoint appears to be using ESM syntax. You need to use the new hook system to enable Zen./
+    );
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("it prints warning if CJS instrumentation is used with an ESM app", async () => {
+  const server = spawn(
+    `node`,
+    [
+      "--require",
+      "@aikidosec/firewall",
+      "--experimental-strip-types",
+      "./app.ts",
+      port2,
+    ],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    await timeout(4000);
+
+    match(stdout, /Starting agent/);
+    match(
+      stderr,
+      /Your application entrypoint appears to be using ESM syntax. You need to use the new hook system to enable Zen./
+    );
   } catch (err) {
     fail(err);
   } finally {

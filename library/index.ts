@@ -18,6 +18,8 @@ import { setTenantId } from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
+import { isPreloaded } from "./helpers/isPreloaded";
+import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -44,6 +46,10 @@ if (!isNewHookSystemUsed()) {
           "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
         )
       );
+    }
+
+    if (isPreloaded()) {
+      warnIfEntrypointIsModule();
     }
 
     require("./agent/protect").protect();
