@@ -111,7 +111,7 @@ async function main(port) {
       // This is just a sample app to demonstrate the vulnerability
       // Do not use this code in production
       // Always validate and sanitize user input!
-      const title = req.query.title;
+      const title = req.query.title.toString();
       if (!title) {
         return res.status(400).send("title parameter is required");
       }
