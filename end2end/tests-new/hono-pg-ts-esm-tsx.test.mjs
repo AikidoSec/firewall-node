@@ -18,7 +18,8 @@ test("it blocks request in blocking mode", async () => {
     [
       "--require",
       "@aikidosec/firewall/instrument",
-      "--experimental-strip-types",
+      "--import",
+      "tsx/esm",
       "./app.ts",
       port,
     ],
@@ -73,7 +74,7 @@ test("it blocks request in blocking mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
-    doesNotMatch(
+    match(
       stderr,
       /You are using tsx to run your code. Zen might not fully work when using tsx./
     );
@@ -90,7 +91,8 @@ test("it does not block request in monitoring mode", async () => {
     [
       "--require",
       "@aikidosec/firewall/instrument",
-      "--experimental-strip-types",
+      "--import",
+      "tsx/esm",
       "./app.ts",
       port2,
     ],
