@@ -201,6 +201,15 @@ t.test("it works using injected functions", async (t) => {
   t.equal(pkgInspectArgsCalled, false);
   t.equal(pkgModifyArgsCalled, false);
   t.equal(pkgModifyReturnValueCalled, false);
+  t.same(
+    __instrumentModifyReturnValue(
+      "foo.bar.js.baz.MethodDefinition.^1.0.0",
+      [1, 2, 3],
+      "42",
+      this
+    ),
+    "42"
+  );
 
   // Without agent
   t.same(wrapBuiltinExports("http", { a: 1 }), { a: 1 });
