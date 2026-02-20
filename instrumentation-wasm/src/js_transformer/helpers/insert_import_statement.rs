@@ -1,10 +1,7 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
     AstBuilder, NONE,
-    ast::{
-        Argument, BindingProperty, ImportDeclarationSpecifier, ImportOrExportKind, Statement,
-        VariableDeclarationKind,
-    },
+    ast::{Argument, ImportOrExportKind, Statement, VariableDeclarationKind},
 };
 use oxc_span::{SPAN, SourceType};
 
