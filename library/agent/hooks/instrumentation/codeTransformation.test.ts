@@ -2321,6 +2321,120 @@ t.test("Test codegen comment behavior", async (t) => {
   );
 });
 
+t.test("it works with mts extension (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.mts",
+    `
+        import { test } from "test";
+        class Test {
+
+            private testValue: number = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.mts",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.mts.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.mts.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+     import { test } from "test";
+     class Test {
+        private testValue: number = 42;
+        constructor() {
+            this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.mts.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+        }
+    }`
+  );
+});
+
+t.test("it works with cts extension (ESM)", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.cts",
+    `
+        require("test");
+        class Test {
+
+            private testValue: number = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.cts",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.cts.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.cts.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+     require("test");
+     class Test {
+        private testValue: number = 42;
+        constructor() {
+                this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+                __instrumentInspectArgs("testpkg.test.cts.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+                console.log("test");
+        }
+    }`
+  );
+});
+
 t.test("Inject package wrapped in bundling mode (CJS)", async (t) => {
   const result = transformCode(
     "testpkg",

@@ -27,6 +27,7 @@ Zen will autonomously protect your Node.js applications against:
 - 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 - 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 - 🛡️ JS injection
+- 🛡️ [IDOR attacks](./docs/idor-protection.md) (opt-in, see setup guide)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -55,7 +56,7 @@ Zen for Node.js 16+ is compatible with:
 
 ### Database drivers
 
-- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
+- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x, 6.x and 7.x _(npm package versions, not MongoDB server versions)_
 - ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) 8.x, 7.x and 6.x
 - ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 - ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
@@ -70,7 +71,7 @@ Zen for Node.js 16+ is compatible with:
 
 ### Cloud providers
 
-- ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 4.x, 3.x
+- ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 5.x, 4.x and 3.x
 - ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
 - ✅ Google Cloud Functions
 - ✅ AWS Lambda
@@ -84,6 +85,7 @@ See list above for supported database drivers.
 - ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 - ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 - ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
+- ✅ [`kysely`](https://www.npmjs.com/package/kysely)
 
 ### API tools
 
@@ -143,8 +145,17 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
-If you are using a bundler, please refer to [Installing Zen in a Node.js Application that uses a bundler](./docs/bundler.md).
-For ESM applications, see [docs/esm.md](docs/esm.md).
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup in the framework docs above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](docs/esm.md) for additional steps. If you are using a bundler, please refer to [Installing Zen in a Node.js Application that uses a bundler](./docs/bundler.md).
+
+## Guides
+
+- [Troubleshooting](docs/troubleshooting.md) — common issues and how to debug Zen
+- [ESM support](docs/esm.md) — setup for native ECMAScript module apps
+- [Bundlers](docs/bundler.md) — using Zen with esbuild and other bundlers
+- [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
+- [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
+- [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
 
 ## Reporting to your Aikido Security dashboard
 

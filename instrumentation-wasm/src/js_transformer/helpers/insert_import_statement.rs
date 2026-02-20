@@ -1,7 +1,10 @@
 use oxc_allocator::{Allocator, Vec as OxcVec};
 use oxc_ast::{
     AstBuilder, NONE,
-    ast::{Argument, BindingPatternKind, ImportOrExportKind, Statement, VariableDeclarationKind},
+    ast::{
+        Argument, BindingProperty, ImportDeclarationSpecifier, ImportOrExportKind, Statement,
+        VariableDeclarationKind,
+    },
 };
 use oxc_span::{SPAN, SourceType};
 
@@ -35,7 +38,7 @@ const IMPORT_METHODS: [(&str, ImportMethodPredicate); 3] = [
 ];
 
 fn is_common_js(source_type: &SourceType, has_module_syntax: bool) -> bool {
-    if source_type.is_script() {
+    if source_type.is_commonjs() {
         return true;
     }
     if source_type.is_unambiguous() && !has_module_syntax {
@@ -68,11 +71,7 @@ pub fn insert_import_statement<'a>(
             binding_properties.push(builder.binding_property(
                 SPAN,
                 builder.property_key_static_identifier(SPAN, *method_name),
-                builder.binding_pattern(
-                    builder.binding_pattern_kind_binding_identifier(SPAN, *method_name),
-                    NONE,
-                    false,
-                ),
+                builder.binding_pattern_binding_identifier(SPAN, *method_name),
                 true,
                 false,
             ));
@@ -87,15 +86,8 @@ pub fn insert_import_statement<'a>(
         declarations.push(builder.variable_declarator(
             SPAN,
             VariableDeclarationKind::Const,
-            builder.binding_pattern(
-                BindingPatternKind::ObjectPattern(builder.alloc_object_pattern(
-                    SPAN,
-                    binding_properties,
-                    NONE,
-                )),
-                NONE,
-                false,
-            ),
+            builder.binding_pattern_object_pattern(SPAN, binding_properties, NONE),
+            NONE,
             Some(builder.expression_call(
                 SPAN,
                 builder.expression_identifier(SPAN, "require"),

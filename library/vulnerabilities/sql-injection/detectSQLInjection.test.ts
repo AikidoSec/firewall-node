@@ -23,6 +23,21 @@ t.test("It ignores safely escaped backslash", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
 });
 
+t.test("is not", async () => {
+  isNotSqlInjection(
+    "select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc",
+    "is not"
+  );
+});
+
+t.test("short strings with space", async () => {
+  isNotSqlInjection('select * from "a" where "id" = $1 limit $2', "1 li");
+});
+
+t.test("2 chars partial match", async () => {
+  isNotSqlInjection("UPDATE a SET b=b+1, c=NOW() WHERE (id=:parentid)", ":p");
+});
+
 t.test("It allows escape sequences", async (t) => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
