@@ -1,0 +1,20 @@
+{
+  "name": "tsup-bundle",
+  "scripts": {
+    "build:cjs": "tsup --config tsup.config.cjs.ts",
+    "build:esm": "tsup --config tsup.config.esm.ts",
+    "build": "npm run build:cjs && npm run build:esm"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "@hono/node-server": "^1.18.1",
+    "better-sqlite3": "^12.6.2",
+    "hono": "^4.8.12"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}
