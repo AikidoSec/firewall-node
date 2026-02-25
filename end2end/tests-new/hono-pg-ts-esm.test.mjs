@@ -76,7 +76,7 @@ test("it blocks request in blocking mode", async () => {
     match(stderr, /Zen has blocked an SQL injection/);
     doesNotMatch(
       stderr,
-      /You are using tsx to run your code. Zen might not fully work when using tsx./
+      /You are using tsx to run your code. Zen might not fully protect your app when using tsx./
     );
   } catch (err) {
     fail(err);
