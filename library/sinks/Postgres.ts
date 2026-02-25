@@ -1,7 +1,7 @@
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import { getContext } from "../agent/Context";
+import { bindContext, getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
@@ -48,7 +48,6 @@ export class Postgres implements Wrapper {
 
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
-
     if (!context) {
       return undefined;
     }
@@ -109,6 +108,18 @@ export class Postgres implements Wrapper {
     return undefined;
   }
 
+  // This is needed as the AsyncContext is not properly working under high concurrency with pg Pool,
+  // as pg Pool executes queries in parallel and the context can get mixed up between different queries.
+  // By binding the context to the callback passed to pool.connect(), we ensure that the correct context is available when the query is executed.
+  private modifyPoolConnectArgs(args: unknown[]): unknown[] {
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return bindContext(arg as () => unknown);
+      }
+      return arg;
+    });
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("pg")
@@ -128,6 +139,27 @@ export class Postgres implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
+      });
+
+    hooks
+      .addPackage("pg-pool")
+      .withVersion("^3.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports.prototype, "connect", pkgInfo, {
+          kind: "sql_op",
+          modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+        });
+      })
+      .addFileInstrumentation({
+        path: "index.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "connect",
+            operationKind: "sql_op",
+            modifyArgs: (args) => this.modifyPoolConnectArgs(args),
           },
         ],
       });
