@@ -66,7 +66,7 @@ t.test("it detects SQL injections", async () => {
     }
 
     const undefinedQueryError = await t.rejects(async () => {
-      await runWithContext(context, () => {
+      runWithContext(context, () => {
         // @ts-expect-error Testing with invalid query
         return client.query(null);
       });
