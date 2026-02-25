@@ -6,6 +6,34 @@ import { createTestAgent } from "../../helpers/createTestAgent";
 
 const logger = new LoggerForTesting();
 
+t.test("Use without agent", async (t) => {
+  const exports = {
+    test: class Test {
+      constructor(private input: string) {}
+
+      getInput() {
+        return this.input;
+      }
+    },
+  };
+
+  wrapNewInstance(
+    exports,
+    "test",
+    { name: "test", type: "external" },
+    (exports) => {
+      exports.testMethod = function test() {
+        return "aikido";
+      };
+    }
+  );
+
+  const instance = new exports.test("input");
+  t.same(instance.getInput(), "input");
+  // @ts-expect-error Test method is added by interceptor
+  t.same(instance.testMethod(), "aikido");
+});
+
 createTestAgent({
   logger,
   token: new Token("123"),

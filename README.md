@@ -146,7 +146,7 @@ For framework- and provider- specific instructions, check out our docs:
 - [Google Cloud Pub/Sub](docs/pubsub.md)
 
 > [!NOTE]
-> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup in the framework docs above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](docs/esm.md) for additional steps.
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup in the framework docs above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](docs/esm.md) for additional steps. If you are using a bundler, please refer to [Installing Zen in a Node.js Application that uses a bundler](./docs/bundler.md).
 
 ## Guides
 
