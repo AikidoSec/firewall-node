@@ -14,7 +14,7 @@ t.test("warnIfTsxIsUsed should warn when tsx is used", async (t) => {
   warnIfTsxIsUsed();
 
   t.match(logs, [
-    "AIKIDO: You are using tsx to run your code. Zen might not fully work when using tsx. In production you should always use node to run your code.",
+    "AIKIDO: You are using tsx to run your code. Zen might not fully protect your app when using tsx. In production you should always use node to run your code.",
   ]);
 
   // Clean up

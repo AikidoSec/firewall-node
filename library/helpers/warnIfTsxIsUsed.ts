@@ -9,7 +9,7 @@ export function warnIfTsxIsUsed() {
   console.warn(
     colorText(
       "red",
-      "AIKIDO: You are using tsx to run your code. Zen might not fully work when using tsx. In production you should always use node to run your code."
+      "AIKIDO: You are using tsx to run your code. Zen might not fully protect your app when using tsx. In production you should always use node to run your code."
     )
   );
 }
