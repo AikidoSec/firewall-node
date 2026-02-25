@@ -8,8 +8,12 @@ import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { isIdorProtectionIgnored } from "../agent/context/withoutIdorProtection";
 
 const poolQueryContextSymbol = Symbol.for("zen.pg.pool.query.context");
+const poolQueryIgnoreIdorContextSymbol = Symbol.for(
+  "zen.pg.pool.query.ignoreIdorContext"
+);
 
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -88,6 +92,7 @@ export class Postgres implements Wrapper {
       const text = args[0].text;
       const params = this.findParams(args);
 
+      // For pg Pool, we attach the context to the query object in modifyPoolQuery, so we can retrieve it here for analysis.
       const context =
         Reflect.get(args[0], poolQueryContextSymbol) || getContext();
 
@@ -106,18 +111,29 @@ export class Postgres implements Wrapper {
         return sqlInjectionResult;
       }
 
+      const ignoreIdorContext = Reflect.get(
+        args[0],
+        poolQueryIgnoreIdorContextSymbol
+      );
+
       return checkContextForIdor({
         sql: text,
         context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
+        ignoreIdorContext,
       });
     }
 
     return undefined;
   }
 
+  // We modify the query arguments for pg Pool to attach the context to the query object.
+  // This is needed as the AsyncContext is not properly working under high concurrency with pg Pool,
+  // as pg Pool executes queries in parallel and the context can get mixed up between different queries.
+  // By attaching the context directly to the query object, we can ensure that the correct context is used
+  // for each query analysis, even under high concurrency.
   private modifyPoolQuery(args: unknown[]): unknown[] {
     if (typeof args[0] === "string") {
       args[0] = {
@@ -127,6 +143,13 @@ export class Postgres implements Wrapper {
 
     Object.defineProperty(args[0], poolQueryContextSymbol, {
       value: getContext(),
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+
+    Object.defineProperty(args[0], poolQueryIgnoreIdorContextSymbol, {
+      value: isIdorProtectionIgnored(),
       configurable: false,
       enumerable: false,
       writable: false,

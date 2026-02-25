@@ -13,6 +13,7 @@ export function checkContextForIdor({
   context,
   dialect,
   resolvePlaceholder,
+  ignoreIdorContext,
 }: {
   sql: string;
   context: Context;
@@ -21,6 +22,7 @@ export function checkContextForIdor({
     placeholder: string,
     placeholderNumber: number | undefined
   ) => unknown;
+  ignoreIdorContext?: boolean;
 }): IdorViolationResult | undefined {
   const agent = getInstance();
   if (!agent) {
@@ -32,7 +34,7 @@ export function checkContextForIdor({
     return undefined;
   }
 
-  if (isIdorProtectionIgnored()) {
+  if (isIdorProtectionIgnored(ignoreIdorContext)) {
     return undefined;
   }
 
