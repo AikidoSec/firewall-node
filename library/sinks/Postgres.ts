@@ -1,19 +1,13 @@
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import { getContext } from "../agent/Context";
+import { bindContext, getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
-import { isIdorProtectionIgnored } from "../agent/context/withoutIdorProtection";
-
-const poolQueryContextSymbol = Symbol.for("zen.pg.pool.query.context");
-const poolQueryIgnoreIdorContextSymbol = Symbol.for(
-  "zen.pg.pool.query.ignoreIdorContext"
-);
 
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -53,13 +47,12 @@ export class Postgres implements Wrapper {
   }
 
   private inspectQuery(args: unknown[]): InterceptorResult {
+    const context = getContext();
+    if (!context) {
+      return undefined;
+    }
+
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
-      const context = getContext();
-
-      if (!context) {
-        return undefined;
-      }
-
       const sql: string = args[0];
       const params = this.findParams(args);
 
@@ -92,14 +85,6 @@ export class Postgres implements Wrapper {
       const text = args[0].text;
       const params = this.findParams(args);
 
-      // For pg Pool, we attach the context to the query object in modifyPoolQuery, so we can retrieve it here for analysis.
-      const context =
-        Reflect.get(args[0], poolQueryContextSymbol) || getContext();
-
-      if (!context) {
-        return undefined;
-      }
-
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
       const sqlInjectionResult = checkContextForSqlInjection({
         sql: text,
@@ -111,51 +96,28 @@ export class Postgres implements Wrapper {
         return sqlInjectionResult;
       }
 
-      const ignoreIdorContext = Reflect.get(
-        args[0],
-        poolQueryIgnoreIdorContextSymbol
-      );
-
       return checkContextForIdor({
         sql: text,
         context,
         dialect: this.dialect,
         resolvePlaceholder: (placeholder, placeholderNumber) =>
           this.resolvePlaceholder(placeholder, placeholderNumber, params),
-        ignoreIdorContext,
       });
     }
 
     return undefined;
   }
 
-  // We modify the query arguments for pg Pool to attach the context to the query object.
   // This is needed as the AsyncContext is not properly working under high concurrency with pg Pool,
   // as pg Pool executes queries in parallel and the context can get mixed up between different queries.
-  // By attaching the context directly to the query object, we can ensure that the correct context is used
-  // for each query analysis, even under high concurrency.
-  private modifyPoolQuery(args: unknown[]): unknown[] {
-    if (typeof args[0] === "string") {
-      args[0] = {
-        text: args[0],
-      };
-    }
-
-    Object.defineProperty(args[0], poolQueryContextSymbol, {
-      value: getContext(),
-      configurable: false,
-      enumerable: false,
-      writable: false,
+  // By binding the context to the callback passed to pool.connect(), we ensure that the correct context is available when the query is executed.
+  private modifyPoolConnectArgs(args: unknown[]): unknown[] {
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return bindContext(arg as () => unknown);
+      }
+      return arg;
     });
-
-    Object.defineProperty(args[0], poolQueryIgnoreIdorContextSymbol, {
-      value: isIdorProtectionIgnored(),
-      configurable: false,
-      enumerable: false,
-      writable: false,
-    });
-
-    return args;
   }
 
   wrap(hooks: Hooks) {
@@ -185,9 +147,9 @@ export class Postgres implements Wrapper {
       .addPackage("pg-pool")
       .withVersion("^3.0.0")
       .onRequire((exports, pkgInfo) => {
-        wrapExport(exports.prototype, "query", pkgInfo, {
+        wrapExport(exports.prototype, "connect", pkgInfo, {
           kind: "sql_op",
-          modifyArgs: (args) => this.modifyPoolQuery(args),
+          modifyArgs: (args) => this.modifyPoolConnectArgs(args),
         });
       })
       .addFileInstrumentation({
@@ -195,9 +157,9 @@ export class Postgres implements Wrapper {
         functions: [
           {
             nodeType: "MethodDefinition",
-            name: "query",
+            name: "connect",
             operationKind: "sql_op",
-            modifyArgs: (args) => this.modifyPoolQuery(args),
+            modifyArgs: (args) => this.modifyPoolConnectArgs(args),
           },
         ],
       });

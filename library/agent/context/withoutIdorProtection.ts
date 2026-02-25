@@ -29,9 +29,5 @@ export function withoutIdorProtection<T>(fn: () => T): T {
 }
 
 export function isIdorProtectionIgnored(ignoreIdorContext?: boolean): boolean {
-  if (typeof ignoreIdorContext === "boolean") {
-    return ignoreIdorContext;
-  }
-
   return idorIgnoredStorage.getStore() === true;
 }
