@@ -28,6 +28,6 @@ export function withoutIdorProtection<T>(fn: () => T): T {
   }) as T;
 }
 
-export function isIdorProtectionIgnored(ignoreIdorContext?: boolean): boolean {
+export function isIdorProtectionIgnored(): boolean {
   return idorIgnoredStorage.getStore() === true;
 }
