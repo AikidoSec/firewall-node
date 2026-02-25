@@ -9,6 +9,8 @@ import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQ
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
+const poolQueryContextSymbol = Symbol.for("zen.pg.pool.query.context");
+
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
 
@@ -47,13 +49,13 @@ export class Postgres implements Wrapper {
   }
 
   private inspectQuery(args: unknown[]): InterceptorResult {
-    const context = getContext();
-
-    if (!context) {
-      return undefined;
-    }
-
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
+      const context = getContext();
+
+      if (!context) {
+        return undefined;
+      }
+
       const sql: string = args[0];
       const params = this.findParams(args);
 
@@ -86,6 +88,13 @@ export class Postgres implements Wrapper {
       const text = args[0].text;
       const params = this.findParams(args);
 
+      const context =
+        Reflect.get(args[0], poolQueryContextSymbol) || getContext();
+
+      if (!context) {
+        return undefined;
+      }
+
       // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
       const sqlInjectionResult = checkContextForSqlInjection({
         sql: text,
@@ -109,6 +118,23 @@ export class Postgres implements Wrapper {
     return undefined;
   }
 
+  private modifyPoolQuery(args: unknown[]): unknown[] {
+    if (typeof args[0] === "string") {
+      args[0] = {
+        text: args[0],
+      };
+    }
+
+    Object.defineProperty(args[0], poolQueryContextSymbol, {
+      value: getContext(),
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+
+    return args;
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("pg")
@@ -128,6 +154,27 @@ export class Postgres implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
+      });
+
+    hooks
+      .addPackage("pg-pool")
+      .withVersion("^3.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports.prototype, "query", pkgInfo, {
+          kind: "sql_op",
+          modifyArgs: (args) => this.modifyPoolQuery(args),
+        });
+      })
+      .addFileInstrumentation({
+        path: "index.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "query",
+            operationKind: "sql_op",
+            modifyArgs: (args) => this.modifyPoolQuery(args),
           },
         ],
       });
