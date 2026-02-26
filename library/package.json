@@ -123,6 +123,7 @@
     "mysql": "^2.18.1",
     "mysql2-v3.10": "npm:mysql2@3.10",
     "mysql2-v3.12": "npm:mysql2@3.12",
+    "mysql2-v3.18": "npm:mysql2@3.18",
     "needle": "^3.3.1",
     "node-fetch": "^2",
     "openai-v4": "npm:openai@^4.104.0",
