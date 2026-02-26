@@ -125,8 +125,44 @@ export class MySQL2 implements Wrapper {
     return connectionPrototype;
   }
 
-  private getFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
+  private getConnectionFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
     return [
+      {
+        nodeType: "MethodDefinition",
+        name: "query",
+        inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+        operationKind: "sql_op",
+        bindContext: true,
+      },
+      {
+        nodeType: "MethodDefinition",
+        name: "execute",
+        inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+        operationKind: "sql_op",
+        bindContext: true,
+      },
+      {
+        nodeType: "MethodDefinition",
+        name: "prepare",
+        inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
+        operationKind: "sql_op",
+        bindContext: true,
+      },
+    ];
+  }
+
+  private getPoolFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
+    return [
+      {
+        nodeType: "MethodDefinition",
+        name: "getConnection",
+        // This is required to bind the context, so that we do not loose context
+        // on pool operations like pool.query or pool.execute which internally call getConnection
+        // with a callback function
+        inspectArgs: () => {},
+        operationKind: "sql_op",
+        bindContext: true,
+      },
       {
         nodeType: "MethodDefinition",
         name: "query",
@@ -234,9 +270,12 @@ export class MySQL2 implements Wrapper {
       )
       .addFileInstrumentation({
         path: "lib/connection.js",
-        functions: this.getFunctionInstructions(),
+        functions: this.getConnectionFunctionInstructions(),
+      })
+      .addFileInstrumentation({
+        path: "lib/pool.js",
+        functions: this.getPoolFunctionInstructions(),
       });
-    // Todo ESM
 
     // For all versions of mysql2 newer than / equal 3.11.5
     // Reason: https://github.com/sidorares/node-mysql2/pull/3081
@@ -247,8 +286,11 @@ export class MySQL2 implements Wrapper {
       })
       .addFileInstrumentation({
         path: "lib/base/connection.js",
-        functions: this.getFunctionInstructions(),
+        functions: this.getConnectionFunctionInstructions(),
+      })
+      .addFileInstrumentation({
+        path: "lib/base/pool.js",
+        functions: this.getPoolFunctionInstructions(),
       });
-    // TODO ESM
   }
 }
