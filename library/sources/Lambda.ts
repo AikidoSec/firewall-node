@@ -145,7 +145,6 @@ export function getTimeoutInMS(): number {
   return 1000; // 1 second
 }
 
-// eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
@@ -153,7 +152,6 @@ export function createLambdaWrapper(handler: Handler): Handler {
   let lastFlushStatsAt: number | undefined = undefined;
   let startupEventSent = false;
 
-  // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
     // Send startup event on first invocation
     if (agent && !startupEventSent) {
@@ -161,7 +159,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       try {
         await agent.onStart(getTimeoutInMS());
       } catch (err: any) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       }
     }
@@ -282,7 +280,7 @@ function logWarningUnsupportedTrigger() {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.warn(
     "Zen detected a lambda function call with an unsupported trigger. Only API Gateway and SQS triggers are currently supported."
   );

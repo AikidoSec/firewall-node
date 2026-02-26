@@ -9,7 +9,7 @@ export function wrapNewInstance(
   subject: unknown,
   className: string | undefined,
   pkgInfo: PartialWrapPackageInfo,
-  interceptor: (exports: any) => unknown
+  interceptor: (instance: any, constructorArgs: unknown[]) => unknown
 ) {
   const agent = getInstance();
   if (!agent) {
@@ -22,14 +22,13 @@ export function wrapNewInstance(
       className,
       function wrap(original: Function) {
         return function wrap() {
-          // eslint-disable-next-line prefer-rest-params
           const args = Array.from(arguments);
 
           // @ts-expect-error It's a constructor
           const newInstance = new original(...args);
 
           try {
-            const returnVal = interceptor(newInstance);
+            const returnVal = interceptor(newInstance, args);
             if (returnVal) {
               return returnVal;
             }

@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import * as t from "tap";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
@@ -232,4 +231,82 @@ t.test("it handles deeply nested JWT without stack overflow", async () => {
   const result = extractStringsFromUserInput(input);
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it ignores URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example.com",
+    test: "xyz",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "test",
+      "xyz",
+      "iat",
+    ])
+  );
+});
+
+t.test("it does not ignore invalid URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example .com/invalid",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "https://example .com/invalid",
+      "iat",
+    ])
+  );
+});
+
+t.test("it does not ignore URLs outside of JWT payload", async () => {
+  const input = {
+    url: "https://example.com",
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
+  );
 });

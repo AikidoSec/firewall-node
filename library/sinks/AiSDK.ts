@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorObject, wrapExport } from "../agent/hooks/wrapExport";

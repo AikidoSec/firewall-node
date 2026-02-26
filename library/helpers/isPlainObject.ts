@@ -22,12 +22,10 @@ export function isPlainObject(o: unknown): o is Record<string, unknown> {
   if (isObject(o) === false) return false;
 
   // It has modified constructor
-  // eslint-disable-next-line prefer-const
   ctor = (o as any).constructor;
   if (ctor === undefined) return true;
 
   // It has modified prototype
-  // eslint-disable-next-line prefer-const
   prot = ctor.prototype;
   if (isObject(prot) === false) return false;
 

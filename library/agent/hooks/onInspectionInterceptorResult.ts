@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { resolve } from "path";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
@@ -10,6 +9,7 @@ import {
   InterceptorResult,
   isAttackResult,
   isBlockOutboundConnectionResult,
+  isIdorViolationResult,
 } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { cleanError } from "../../helpers/cleanError";
@@ -43,6 +43,10 @@ export function onInspectionInterceptorResult(
     context &&
     context.remoteAddress &&
     agent.getConfig().isBypassedIP(context.remoteAddress);
+
+  if (isIdorViolationResult(result) && !isBypassedIP) {
+    throw cleanError(new Error(result.message));
+  }
 
   if (isBlockOutboundConnectionResult(result) && !isBypassedIP) {
     throw cleanError(
