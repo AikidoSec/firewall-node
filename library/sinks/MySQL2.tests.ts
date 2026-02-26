@@ -2,6 +2,7 @@ import * as t from "tap";
 import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
 import { startTestAgent } from "../helpers/startTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 export function createMySQL2Tests(versionPkgName: string) {
   const dangerousContext: Context = {
@@ -31,6 +32,8 @@ export function createMySQL2Tests(versionPkgName: string) {
     source: "express",
     route: "/posts/:id",
   };
+
+  const [major, minor] = versionPkgName.split("-v")[1].split(".").map(Number);
 
   t.test("it detects SQL injections", async (t) => {
     startTestAgent({
@@ -277,62 +280,93 @@ export function createMySQL2Tests(versionPkgName: string) {
         );
       }
 
-      const numberOfQueries = 50;
-
-      const results = await Promise.allSettled(
-        Array.from({ length: numberOfQueries }, (_, index) => {
-          const contextKey = `myKey${index}`;
-          const injection = `abc' OR 1=1; -- should be blocked ${index}`;
-
-          return runWithContext(
+      // Added in newer versions of mysql2, but not available in all versions we test against
+      if (typeof pool.prepare === "function") {
+        const error3 = await t.rejects(async () => {
+          await runWithContext(
             {
-              remoteAddress: "::1",
-              method: "POST",
-              url: "http://localhost:4000",
-              query: {},
-              headers: {},
+              ...dangerousContext,
               body: {
-                [contextKey]: injection,
+                myTitle: "1' OR 1=1 -- ",
               },
-              cookies: {},
-              routeParams: {},
-              source: "hono",
-              route: "/posts/:id",
             },
-            async () => {
-              try {
-                await pool.execute(
-                  `SELECT id FROM cats WHERE petname = '${injection}'`
-                );
-                return {
-                  index,
-                  error: null,
-                };
-              } catch (error: any) {
-                return {
-                  index,
-                  error,
-                };
-              }
+            () => {
+              return pool!.prepare(
+                "SELECT * FROM cats WHERE petname = '1' OR 1=1 -- '"
+              );
             }
           );
-        })
-      );
+        });
 
-      t.equal(results.length, numberOfQueries);
+        t.ok(error3 instanceof Error);
+        if (error3 instanceof Error) {
+          t.same(
+            error3.message,
+            "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
+          );
+        }
+      }
 
-      for (const result of results) {
-        t.equal(result.status, "fulfilled");
+      // Not possible to fix in old version because of circular dependency issues:
+      // https://github.com/sidorares/node-mysql2/pull/3081
+      if (major >= 3 && minor >= 12 && !isEsmUnitTest()) {
+        const numberOfQueries = 50;
 
-        if (result.status === "fulfilled") {
-          const { index, error } = result.value;
-          t.ok(error instanceof Error);
+        const results = await Promise.allSettled(
+          Array.from({ length: numberOfQueries }, (_, index) => {
+            const contextKey = `myKey${index}`;
+            const injection = `abc' OR 1=1; -- should be blocked ${index}`;
 
-          if (error instanceof Error) {
-            t.same(
-              error.message,
-              `Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myKey${index}`
+            return runWithContext(
+              {
+                remoteAddress: "::1",
+                method: "POST",
+                url: "http://localhost:4000",
+                query: {},
+                headers: {},
+                body: {
+                  [contextKey]: injection,
+                },
+                cookies: {},
+                routeParams: {},
+                source: "hono",
+                route: "/posts/:id",
+              },
+              async () => {
+                try {
+                  await pool.execute(
+                    `SELECT id FROM cats WHERE petname = '${injection}'`
+                  );
+                  return {
+                    index,
+                    error: null,
+                  };
+                } catch (error: any) {
+                  return {
+                    index,
+                    error,
+                  };
+                }
+              }
             );
+          })
+        );
+
+        t.equal(results.length, numberOfQueries);
+
+        for (const result of results) {
+          t.equal(result.status, "fulfilled");
+
+          if (result.status === "fulfilled") {
+            const { index, error } = result.value;
+            t.ok(error instanceof Error);
+
+            if (error instanceof Error) {
+              t.same(
+                error.message,
+                `Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myKey${index}`
+              );
+            }
           }
         }
       }

@@ -190,13 +190,37 @@ export class MySQL2 implements Wrapper {
       );
 
       if (!isWrapped(poolPrototype.getConnection)) {
-        // Wrap connection.prepare
+        // Wrap pool.getConnection
         wrapExport(poolPrototype, "getConnection", pkgInfo, {
           kind: "sql_op",
           // This is required to bind the context, so that we do not loose context
           // on pool operations like pool.query or pool.execute which internally call getConnection
           // with a callback function
           inspectArgs: () => {},
+        });
+      }
+
+      if (!isWrapped(poolPrototype.query)) {
+        // Wrap pool.query
+        wrapExport(poolPrototype, "query", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+        });
+      }
+
+      if (!isWrapped(poolPrototype.execute)) {
+        // Wrap pool.execute
+        wrapExport(poolPrototype, "execute", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+        });
+      }
+
+      if (!isWrapped(poolPrototype.prepare)) {
+        // Wrap pool.prepare
+        wrapExport(poolPrototype, "prepare", pkgInfo, {
+          kind: "sql_op",
+          inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
         });
       }
     };
@@ -225,6 +249,6 @@ export class MySQL2 implements Wrapper {
         path: "lib/base/connection.js",
         functions: this.getFunctionInstructions(),
       });
-    // TODO
+    // TODO ESM
   }
 }
