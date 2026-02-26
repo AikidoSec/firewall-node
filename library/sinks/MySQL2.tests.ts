@@ -2,7 +2,6 @@ import * as t from "tap";
 import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
 import { startTestAgent } from "../helpers/startTestAgent";
-import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 export function createMySQL2Tests(versionPkgName: string) {
   const dangerousContext: Context = {
@@ -280,22 +279,13 @@ export function createMySQL2Tests(versionPkgName: string) {
         );
       }
 
-      // Added in newer versions of mysql2, but not available in all versions we test against
-      if (typeof pool.prepare === "function") {
+      // Not possible to fix in old version because of circular dependency issues:
+      // https://github.com/sidorares/node-mysql2/pull/3081
+      if (major >= 3 && minor >= 12) {
         const error3 = await t.rejects(async () => {
-          await runWithContext(
-            {
-              ...dangerousContext,
-              body: {
-                myTitle: "1' OR 1=1 -- ",
-              },
-            },
-            () => {
-              return pool!.prepare(
-                "SELECT * FROM cats WHERE petname = '1' OR 1=1 -- '"
-              );
-            }
-          );
+          await runWithContext(dangerousContext, () => {
+            return pool!.pool.execute("-- should be blocked");
+          });
         });
 
         t.ok(error3 instanceof Error);
@@ -305,11 +295,7 @@ export function createMySQL2Tests(versionPkgName: string) {
             "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
           );
         }
-      }
 
-      // Not possible to fix in old version because of circular dependency issues:
-      // https://github.com/sidorares/node-mysql2/pull/3081
-      if (major >= 3 && minor >= 12 && !isEsmUnitTest()) {
         const numberOfQueries = 50;
 
         const results = await Promise.allSettled(

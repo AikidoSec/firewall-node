@@ -177,13 +177,6 @@ export class MySQL2 implements Wrapper {
         operationKind: "sql_op",
         bindContext: true,
       },
-      {
-        nodeType: "MethodDefinition",
-        name: "prepare",
-        inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
-        operationKind: "sql_op",
-        bindContext: true,
-      },
     ];
   }
 
@@ -249,14 +242,6 @@ export class MySQL2 implements Wrapper {
         wrapExport(poolPrototype, "execute", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
-        });
-      }
-
-      if (!isWrapped(poolPrototype.prepare)) {
-        // Wrap pool.prepare
-        wrapExport(poolPrototype, "prepare", pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => this.inspectQuery("mysql2.prepare", args),
         });
       }
     };
