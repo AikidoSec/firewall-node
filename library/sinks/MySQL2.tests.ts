@@ -283,7 +283,7 @@ export function createMySQL2Tests(versionPkgName: string) {
       // https://github.com/sidorares/node-mysql2/pull/3081
       if (major >= 3 && minor >= 12) {
         const error3 = await t.rejects(async () => {
-          await runWithContext(dangerousContext, () => {
+          runWithContext(dangerousContext, () => {
             return pool!.pool.execute("-- should be blocked");
           });
         });
