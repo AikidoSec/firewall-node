@@ -31,6 +31,8 @@ export class ServiceConfig {
   private blockNewOutgoingRequests = false;
   private domains = new Map<string, Domain["mode"]>();
 
+  private enablePromptProtection = false;
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -304,5 +306,13 @@ export class ServiceConfig {
 
     // Only block outgoing requests if the mode is "block"
     return mode === "block";
+  }
+
+  setEnablePromptProtection(enabled: boolean) {
+    this.enablePromptProtection = enabled;
+  }
+
+  isPromptProtectionEnabled() {
+    return this.enablePromptProtection;
   }
 }

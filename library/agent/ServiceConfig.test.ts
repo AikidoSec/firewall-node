@@ -425,3 +425,15 @@ t.test("outbound request blocking", async (t) => {
   t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
   t.same(config.shouldBlockOutgoingRequest("unknown.com"), false);
 });
+
+t.test("prompt protection", async (t) => {
+  const config = new ServiceConfig([], 0, [], [], [], []);
+
+  t.same(config.isPromptProtectionEnabled(), false);
+
+  config.setEnablePromptProtection(true);
+  t.same(config.isPromptProtectionEnabled(), true);
+
+  config.setEnablePromptProtection(false);
+  t.same(config.isPromptProtectionEnabled(), false);
+});

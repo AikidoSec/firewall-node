@@ -31,4 +31,5 @@ export type Config = {
   block?: boolean;
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
+  enablePromptProtection?: boolean;
 };
