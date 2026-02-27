@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
-import { Prisma } from "./Prisma";
+import { Prisma as PrismaSink } from "./Prisma";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
@@ -31,7 +31,7 @@ t.test("it works with sqlite", testOpts, async (t) => {
 
   await lock.withLock(async () => {
     const agent = createTestAgent();
-    agent.start([new Prisma()]);
+    agent.start([new PrismaSink()]);
 
     process.env.DATABASE_URL = "file:./dev.db";
 
@@ -43,7 +43,7 @@ t.test("it works with sqlite", testOpts, async (t) => {
       }
     );
 
-    const { PrismaClient } = require("@prisma/client");
+    const { PrismaClient, Prisma } = require("@prisma/client");
 
     const client = new PrismaClient();
 
@@ -61,6 +61,35 @@ t.test("it works with sqlite", testOpts, async (t) => {
         email: "alice@example.com",
       },
     ]);
+
+    t.same(await client.$queryRaw(Prisma.raw('SELECT * FROM "USER";')), [
+      {
+        id: 1,
+        name: "Alice",
+        email: "alice@example.com",
+      },
+    ]);
+
+    t.same(
+      await client.$queryRaw`SELECT * FROM "USER" WHERE name = ${"Alice"};`,
+      [
+        {
+          id: 1,
+          name: "Alice",
+          email: "alice@example.com",
+        },
+      ]
+    );
+    t.same(
+      await client.$queryRaw`SELECT * FROM "USER" WHERE name = ${"Alice"}; ${Prisma.raw("-- should not be blocked")}`,
+      [
+        {
+          id: 1,
+          name: "Alice",
+          email: "alice@example.com",
+        },
+      ]
+    );
 
     await runWithContext(context, async () => {
       t.same(await client.$queryRawUnsafe("SELECT * FROM USER"), [
@@ -80,6 +109,34 @@ t.test("it works with sqlite", testOpts, async (t) => {
           t.same(
             error.message,
             "Zen has blocked an SQL injection: prisma.$queryRawUnsafe(...) originating from body.myTitle"
+          );
+        }
+      }
+
+      try {
+        await client.$queryRaw(
+          Prisma.raw('SELECT * FROM "USER" -- should be blocked')
+        );
+        t.fail("Query should be blocked");
+      } catch (error) {
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Zen has blocked an SQL injection: prisma.$queryRaw(...) originating from body.myTitle"
+          );
+        }
+      }
+
+      try {
+        await client.$queryRaw`SELECT * FROM "USER" WHERE name = ${"Alice"}; ${Prisma.raw("-- should be blocked")}`;
+        t.fail("Query should be blocked");
+      } catch (error) {
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.same(
+            error.message,
+            "Zen has blocked an SQL injection: prisma.$queryRaw(...) originating from body.myTitle"
           );
         }
       }
