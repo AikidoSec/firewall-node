@@ -3,7 +3,6 @@ import { attackKindHumanName } from "../../agent/Attack";
 import { getContext, updateContext } from "../../agent/Context";
 import { cleanError } from "../../helpers/cleanError";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
-import { isFeatureEnabled } from "../../helpers/featureFlags";
 import { getLibraryRoot } from "../../helpers/getLibraryRoot";
 import { AiMessage } from "./messages";
 
@@ -17,7 +16,7 @@ export async function checkForPromptInjection(
   block: boolean;
   error?: Error;
 }> {
-  if (!isFeatureEnabled("PROMPT_PROTECTION")) {
+  if (!agent.getConfig().isPromptProtectionEnabled()) {
     return { success: false, block: false };
   }
 

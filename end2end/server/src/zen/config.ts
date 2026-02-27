@@ -12,6 +12,7 @@ type AppConfig = {
   domains: any[];
   failureRate?: number;
   timeout?: number;
+  enablePromptProtection: boolean;
 };
 
 const configs: AppConfig[] = [];
@@ -26,6 +27,7 @@ export function generateConfig(app: App): AppConfig {
     blockedUserIds: [],
     allowedIPAddresses: [],
     blockNewOutgoingRequests: false,
+    enablePromptProtection: false,
     domains: [],
   };
 }

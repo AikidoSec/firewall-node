@@ -342,6 +342,12 @@ export class Agent {
         );
         this.serviceConfig.updateDomains(response.domains);
       }
+
+      if (typeof response.enablePromptProtection === "boolean") {
+        this.serviceConfig.setEnablePromptProtection(
+          response.enablePromptProtection
+        );
+      }
     }
   }
 
