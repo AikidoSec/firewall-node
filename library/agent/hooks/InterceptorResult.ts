@@ -21,10 +21,16 @@ export type IdorViolationResult = {
   message: string;
 };
 
+export type ShellViolationResult = {
+  shellViolation: true;
+  message: string;
+};
+
 export type InterceptorResult =
   | AttackResult
   | BlockOutboundConnectionResult
   | IdorViolationResult
+  | ShellViolationResult
   | void;
 
 export function isBlockOutboundConnectionResult(
@@ -43,4 +49,10 @@ export function isIdorViolationResult(
   result: InterceptorResult
 ): result is IdorViolationResult {
   return isPlainObject(result) && "idorViolation" in result;
+}
+
+export function isShellViolationResult(
+  result: InterceptorResult
+): result is ShellViolationResult {
+  return isPlainObject(result) && "shellViolation" in result;
 }

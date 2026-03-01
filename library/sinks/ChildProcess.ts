@@ -4,8 +4,10 @@ import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
+import { isShellInjectionStrictMode } from "../helpers/isShellInjectionStrictMode";
 import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/checkContextForPathTraversal";
 import { checkContextForShellInjection } from "../vulnerabilities/shell-injection/checkContextForShellInjection";
+import { isUnsupportedShell } from "../vulnerabilities/shell-injection/isUnsupportedShell";
 
 const PATH_PREFIXES = [
   "/bin/",
@@ -90,6 +92,11 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
+    const shellViolation = this.checkShellViolation(args);
+    if (shellViolation) {
+      return shellViolation;
+    }
+
     if (args.length > 0 && typeof args[0] === "string") {
       let command = args[0];
 
@@ -116,6 +123,11 @@ export class ChildProcess implements Wrapper {
       return undefined;
     }
 
+    const shellViolation = this.checkShellViolation(args);
+    if (shellViolation) {
+      return shellViolation;
+    }
+
     if (args.length > 0 && typeof args[0] === "string") {
       let command = args[0];
 
@@ -136,6 +148,11 @@ export class ChildProcess implements Wrapper {
 
     if (!context) {
       return undefined;
+    }
+
+    const shellViolation = this.checkShellViolation(args);
+    if (shellViolation) {
+      return shellViolation;
     }
 
     if (args.length > 0 && typeof args[0] === "string") {
@@ -181,5 +198,36 @@ export class ChildProcess implements Wrapper {
         "shell" in arg &&
         (arg.shell === true || typeof arg.shell === "string")
     );
+  }
+
+  private getShellOption(args: unknown[]): string | true | undefined {
+    for (const arg of args) {
+      if (
+        isPlainObject(arg) &&
+        "shell" in arg &&
+        (arg.shell === true || typeof arg.shell === "string")
+      ) {
+        return arg.shell as string | true;
+      }
+    }
+
+    return undefined;
+  }
+
+  private checkShellViolation(args: unknown[]) {
+    if (!isShellInjectionStrictMode()) {
+      return undefined;
+    }
+
+    const shell = this.getShellOption(args);
+
+    if (shell && isUnsupportedShell(shell)) {
+      return {
+        shellViolation: true as const,
+        message: `Zen strict mode: shell "${shell}" is not supported. Only /bin/sh is allowed when AIKIDO_SHELL_INJECTION_STRICT_MODE is enabled.`,
+      };
+    }
+
+    return undefined;
   }
 }
