@@ -22,6 +22,8 @@ export type Endpoint = Omit<EndpointConfig, "allowedIPAddresses"> & {
 
 export type Domain = { hostname: string; mode: "allow" | "block" };
 
+export type PromptProtectionMode = "disabled" | "monitor" | "block";
+
 export type Config = {
   endpoints: EndpointConfig[];
   heartbeatIntervalInMS: number;
@@ -31,5 +33,5 @@ export type Config = {
   block?: boolean;
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
-  enablePromptProtection?: boolean;
+  promptProtectionMode?: PromptProtectionMode;
 };

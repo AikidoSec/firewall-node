@@ -429,11 +429,14 @@ t.test("outbound request blocking", async (t) => {
 t.test("prompt protection", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);
 
-  t.same(config.isPromptProtectionEnabled(), false);
+  t.same(config.getPromptProtectionMode(), "disabled");
 
-  config.setEnablePromptProtection(true);
-  t.same(config.isPromptProtectionEnabled(), true);
+  config.setPromptProtectionMode("block");
+  t.same(config.getPromptProtectionMode(), "block");
 
-  config.setEnablePromptProtection(false);
-  t.same(config.isPromptProtectionEnabled(), false);
+  config.setPromptProtectionMode("monitor");
+  t.same(config.getPromptProtectionMode(), "monitor");
+
+  config.setPromptProtectionMode("disabled");
+  t.same(config.getPromptProtectionMode(), "disabled");
 });

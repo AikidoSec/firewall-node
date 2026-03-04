@@ -421,7 +421,7 @@ t.test(
       allowedIPAddresses: [],
       block: true,
       blockNewOutgoingRequests: false,
-      enablePromptProtection: false,
+      promptProtectionMode: "disabled",
     });
     const agent = createTestAgent({
       api,
@@ -1084,7 +1084,7 @@ t.test("it fetches blocked lists", async () => {
 
   await setTimeout(0);
 
-  t.same(agent.getConfig().isPromptProtectionEnabled(), false);
+  t.same(agent.getConfig().getPromptProtectionMode(), "disabled");
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
     reason: "Description",
@@ -1370,7 +1370,7 @@ t.test("it fetches prompt protection status", async () => {
     allowedIPAddresses: [],
     block: true,
     blockNewOutgoingRequests: false,
-    enablePromptProtection: true,
+    promptProtectionMode: "monitor",
   });
   const agent = createTestAgent({
     api,
@@ -1380,9 +1380,11 @@ t.test("it fetches prompt protection status", async () => {
   });
   agent.start([]);
 
+  t.same(agent.getConfig().getPromptProtectionMode(), "disabled");
+
   await agent.flushStats(1000);
 
-  t.same(agent.getConfig().isPromptProtectionEnabled(), true);
+  t.same(agent.getConfig().getPromptProtectionMode(), "monitor");
 
   clock.uninstall();
 });

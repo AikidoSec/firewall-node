@@ -2,7 +2,12 @@ import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
-import type { Endpoint, EndpointConfig, Domain } from "./Config";
+import type {
+  Endpoint,
+  EndpointConfig,
+  Domain,
+  PromptProtectionMode,
+} from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 
@@ -31,7 +36,7 @@ export class ServiceConfig {
   private blockNewOutgoingRequests = false;
   private domains = new Map<string, Domain["mode"]>();
 
-  private enablePromptProtection = false;
+  private promptProtectionMode: PromptProtectionMode = "disabled";
 
   constructor(
     endpoints: EndpointConfig[],
@@ -308,11 +313,11 @@ export class ServiceConfig {
     return mode === "block";
   }
 
-  setEnablePromptProtection(enabled: boolean) {
-    this.enablePromptProtection = enabled;
+  setPromptProtectionMode(mode: PromptProtectionMode) {
+    this.promptProtectionMode = mode;
   }
 
-  isPromptProtectionEnabled() {
-    return this.enablePromptProtection;
+  getPromptProtectionMode(): PromptProtectionMode {
+    return this.promptProtectionMode;
   }
 }

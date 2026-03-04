@@ -16,7 +16,8 @@ export async function checkForPromptInjection(
   block: boolean;
   error?: Error;
 }> {
-  if (!agent.getConfig().isPromptProtectionEnabled()) {
+  const mode = agent.getConfig().getPromptProtectionMode();
+  if (mode === "disabled") {
     return { success: false, block: false };
   }
 
@@ -53,12 +54,14 @@ export async function checkForPromptInjection(
       updateContext(context, "attackDetected", true);
     }
 
+    const shouldBlock = mode === "block";
+
     agent.onDetectedAttack({
       module: pkgName,
       operation: operation,
       kind: "prompt_injection",
       source: undefined,
-      blocked: agent.shouldBlock(),
+      blocked: shouldBlock,
       stack: cleanupStackTrace(new Error().stack!, getLibraryRoot()),
       paths: [],
       metadata: {
@@ -68,7 +71,7 @@ export async function checkForPromptInjection(
       payload: undefined,
     });
 
-    if (!agent.shouldBlock()) {
+    if (!shouldBlock) {
       return {
         success: result.success,
         block: false,
