@@ -11,7 +11,7 @@ const dangerousContext: Context = {
   query: {},
   headers: {},
   body: {
-    myTitle: `-- should be blocked`,
+    myTitle: `kitty' OR 1=1; --`,
   },
   cookies: {},
   routeParams: {},
@@ -50,7 +50,8 @@ t.test(
     const agent = createTestAgent();
     agent.start([new NodeSQLite()]);
 
-    const { DatabaseSync } = require("node:sqlite");
+    const { DatabaseSync } =
+      require("node:sqlite") as typeof import("node:sqlite");
 
     const db = new DatabaseSync(":memory:");
 
@@ -61,7 +62,9 @@ t.test(
 
       runWithContext(dangerousContext, () => {
         try {
-          db.exec("SELECT 1;-- should be blocked");
+          db.exec(
+            "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+          );
           t.fail("Expected an error");
         } catch (error: any) {
           t.match(
@@ -72,30 +75,95 @@ t.test(
       });
 
       runWithContext(safeContext, () => {
-        db.exec("SELECT 1;-- This is a comment");
+        db.exec(
+          "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+        );
       });
 
       runWithContext(dangerousContext, () => {
         try {
-          db.prepare("SELECT 1;-- should be blocked");
+          db.prepare(
+            "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+          ).get();
           t.fail("Expected an error");
         } catch (error: any) {
           t.match(
             error.message,
-            /Zen has blocked an SQL injection: node:sqlite.prepare/
+            /Zen has blocked an SQL injection: node:sqlite.StatementSync.get\(\.\.\.\)/
+          );
+        }
+
+        try {
+          db.prepare(
+            "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+          ).all();
+          t.fail("Expected an error");
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Zen has blocked an SQL injection: node:sqlite.StatementSync.all\(\.\.\.\)/
+          );
+        }
+
+        try {
+          db.prepare(
+            "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+          ).run();
+          t.fail("Expected an error");
+        } catch (error: any) {
+          t.match(
+            error.message,
+            /Zen has blocked an SQL injection: node:sqlite.StatementSync.run\(\.\.\.\)/
           );
         }
       });
 
       runWithContext(safeContext, () => {
-        db.prepare("SELECT 1;-- This is a comment");
+        db.prepare(
+          "SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';"
+        ).get();
 
         try {
+          // @ts-expect-error - testing behavior when no SQL query is provided
           db.exec();
         } catch (error: any) {
           t.match(error.message, /The "sql" argument must be a string./);
         }
       });
+
+      // Not supported in some Node.js versions
+      if (typeof db.createTagStore === "function") {
+        const tagStore = db.createTagStore();
+
+        runWithContext(dangerousContext, () => {
+          try {
+            const result = tagStore.get`SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';`;
+            t.same(result, undefined); // Ignore unused result
+            t.fail("Expected an error");
+          } catch (error: any) {
+            t.match(
+              error.message,
+              /Zen has blocked an SQL injection: node:sqlite.SQLTagStore.get\(\.\.\.\)/
+            );
+          }
+
+          try {
+            const result = tagStore.all`SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';`;
+            t.same(result, undefined); // Ignore unused result
+            t.fail("Expected an error");
+          } catch (error: any) {
+            t.match(
+              error.message,
+              /Zen has blocked an SQL injection: node:sqlite.SQLTagStore.all\(\.\.\.\)/
+            );
+          }
+        });
+
+        runWithContext(safeContext, () => {
+          const result = tagStore.get`SELECT petname FROM cats WHERE petname = 'kitty' OR 1=1; --';`;
+          t.same(result, undefined);
+        });
+      }
     } catch (error: any) {
       t.fail(error);
     } finally {
