@@ -310,3 +310,13 @@ t.test("it does not ignore URLs outside of JWT payload", async () => {
     fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
   );
 });
+
+t.test("it works with objects containing constructor key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      constructor: "constructor value",
+    }),
+    fromArr(["test", "value", "constructor", "constructor value"])
+  );
+});
