@@ -242,11 +242,11 @@ export class NodeSQLite implements Wrapper {
       return undefined;
     }
 
-    if (args.length === 0 || !this.isTaggedTemplate(args[0])) {
+    const { sql, params } =
+      this.extractSqlAndParamsFromTaggedTemplate(args) || {};
+    if (typeof sql !== "string") {
       return undefined;
     }
-
-    const sql = args[0].join("?");
 
     const sqlResult = checkContextForSqlInjection({
       operation: operation,
@@ -259,6 +259,40 @@ export class NodeSQLite implements Wrapper {
       return sqlResult;
     }
 
-    // Todo idor
+    return checkContextForIdor({
+      sql: sql,
+      context,
+      dialect: this.dialect,
+      resolvePlaceholder: (placeholder, placeholderNumber) => {
+        if (placeholder === "?" && placeholderNumber !== undefined && params) {
+          if (placeholderNumber < params.length) {
+            return params[placeholderNumber];
+          }
+        }
+
+        return undefined;
+      },
+    });
+  }
+
+  private extractSqlAndParamsFromTaggedTemplate(
+    args: unknown[]
+  ): { sql: string; params: unknown[] } | undefined {
+    if (args.length === 0 || !this.isTaggedTemplate(args[0])) {
+      return undefined;
+    }
+
+    const strings = args[0] as TemplateStringsArray;
+    const values = args.slice(1);
+
+    let sql = "";
+    for (let i = 0; i < strings.length; i++) {
+      sql += strings[i];
+      if (i < values.length) {
+        sql += "?";
+      }
+    }
+
+    return { sql, params: values };
   }
 }

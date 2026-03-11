@@ -113,6 +113,29 @@ t.test(
       );
 
       await t.test(
+        "throws error for query with tenant filter using named params with wrong prefixed key",
+        async () => {
+          const error = t.throws(() => {
+            runWithContext(context, () => {
+              return db
+                .prepare(
+                  "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = :tenant_id"
+                )
+                .get({ "!tenant_id": "org_123" });
+            });
+          });
+
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "query on table 'cats_idor_sqlite' has a placeholder for 'tenant_id' that could not be resolved"
+            );
+          }
+        }
+      );
+
+      await t.test(
         "allows query with tenant filter using named param with @ prefix",
         async () => {
           const row = runWithContext(context, () => {
@@ -155,12 +178,10 @@ t.test(
       );
 
       await t.test("allows query with tenant filter using exec", async () => {
-        t.doesNotThrow(() => {
-          runWithContext(context, () => {
-            return db.exec(
-              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = 'org_123'"
-            );
-          });
+        await runWithContext(context, async () => {
+          return db.exec(
+            "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = 'org_123'"
+          );
         });
       });
 
@@ -205,6 +226,24 @@ t.test(
         }
       });
 
+      await t.test("blocks query with no tenant ID in context", async () => {
+        const error = t.throws(() => {
+          runWithContext(contextWithoutTenantId, () => {
+            return db.exec(
+              "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = 'org_456'"
+            );
+          });
+        });
+
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
+          );
+        }
+      });
+
       await t.test(
         "blocks query with wrong tenant ID using anonymous param",
         async () => {
@@ -215,6 +254,32 @@ t.test(
                   "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
                 )
                 .get({}, "org_456");
+            });
+          });
+
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+            );
+          }
+        }
+      );
+
+      await t.test(
+        "blocks query with wrong tenant ID using anonymous param",
+        async () => {
+          const error = t.throws(() => {
+            runWithContext(context, () => {
+              return (
+                db
+                  .prepare(
+                    "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
+                  )
+                  // @ts-expect-error Testing behavior with invalid args
+                  .get(undefined, "org_456")
+              );
             });
           });
 
@@ -292,6 +357,191 @@ t.test(
           }
         }
       );
+
+      await t.test(
+        "does not block query when IDOR protection is disabled",
+        async () => {
+          runWithContext(context, () => {
+            withoutIdorProtection(() => {
+              return db
+                .prepare(
+                  "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
+                )
+                .get();
+            });
+          });
+        }
+      );
+
+      await t.test("allows transaction queries", async () => {
+        runWithContext(context, () => {
+          return db.exec("BEGIN");
+        });
+        runWithContext(context, () => {
+          return db.exec("COMMIT");
+        });
+        runWithContext(context, () => {
+          return db.exec("BEGIN");
+        });
+        runWithContext(context, () => {
+          return db.exec("ROLLBACK");
+        });
+        t.pass();
+      });
+
+      await t.test("blocks UPDATE without tenant filter", async () => {
+        const error = t.throws(() => {
+          runWithContext(context, () => {
+            return db
+              .prepare("UPDATE cats_idor_sqlite SET petname = ?")
+              .run("Fluffy");
+          });
+        });
+
+        t.ok(error instanceof Error);
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_idor_sqlite' is missing a filter on column 'tenant_id'"
+          );
+        }
+      });
+
+      // Not supported in some Node.js versions
+      if (typeof db.createTagStore === "function") {
+        const tagStore = db.createTagStore();
+
+        await t.test("allows tagged query with no context", async () => {
+          const result = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ${"org_123"}`;
+          t.same(result, undefined);
+        });
+
+        await t.test(
+          "allows tagged query with tenant filter using template literal",
+          async () => {
+            runWithContext(context, () => {
+              const result = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ${"org_123"}`;
+              t.same(result, undefined);
+            });
+          }
+        );
+
+        await t.test(
+          "blocks tagged query with wrong tenant ID using template literal",
+          async () => {
+            const error = t.throws(() => {
+              runWithContext(context, () => {
+                const _r = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ${"org_456"}`;
+              });
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(
+                error.message,
+                "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+              );
+            }
+          }
+        );
+
+        await t.test(
+          "blocks tagged query with wrong tenant ID using template literal with multiple placeholders",
+          async () => {
+            const error = t.throws(() => {
+              runWithContext(context, () => {
+                const _r = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE petname = ${"Fluffy"} AND tenant_id = ${"org_456"}`;
+              });
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(
+                error.message,
+                "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+              );
+            }
+          }
+        );
+
+        await t.test(
+          "query fails when tenant ID placeholder can not be resolved in tagged query",
+          async () => {
+            const error = t.throws(() => {
+              runWithContext(context, () => {
+                const _r = tagStore.get(
+                  // @ts-expect-error Testing behavior with invalid args
+                  [
+                    "SELECT petname FROM cats_idor_sqlite WHERE petname = ",
+                    " AND tenant_id = ",
+                    "",
+                  ],
+                  "org_456"
+                );
+              });
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(error.message, "incomplete input");
+            }
+          }
+        );
+
+        await t.test(
+          "blocks tagged query with unresolved named tenant placeholder",
+          async () => {
+            const error = t.throws(() => {
+              runWithContext(context, () => {
+                const _r = tagStore.get`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = :tenant_id`;
+              });
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(
+                error.message,
+                "query on table 'cats_idor_sqlite' has a placeholder for 'tenant_id' that could not be resolved"
+              );
+            }
+          }
+        );
+
+        await t.test("blocks query with no tenant ID in context", async () => {
+          const error = t.throws(() => {
+            runWithContext(contextWithoutTenantId, () => {
+              return tagStore.all`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = 'org_456'`;
+            });
+          });
+
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
+            );
+          }
+        });
+
+        await t.test(
+          "blocks query with hardcoded wrong tenant ID in tagged query",
+          async () => {
+            const error = t.throws(() => {
+              runWithContext(context, () => {
+                return tagStore.all`SELECT petname FROM cats_idor_sqlite WHERE tenant_id = 'org_456'`;
+              });
+            });
+
+            t.ok(error instanceof Error);
+            if (error instanceof Error) {
+              t.match(
+                error.message,
+                "query on table 'cats_idor_sqlite' filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+              );
+            }
+          }
+        );
+      }
     } catch (error: any) {
       t.fail(error);
     } finally {

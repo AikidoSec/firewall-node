@@ -39,6 +39,23 @@ t.test("does not break when the Node.js version is too low", async (t) => {
   t.end();
 });
 
+t.test("covers internal helper fallbacks", async (t) => {
+  const sqlite = new NodeSQLite() as any;
+  const statement = {};
+
+  t.equal(sqlite.addRawQueryToStatement(statement, []), statement);
+  t.equal(sqlite.addRawQueryToStatement(statement, [123]), statement);
+
+  const unresolved = sqlite.resolvePlaceholder(
+    "tenant_id",
+    undefined,
+    { tenant_id: "org_123" },
+    []
+  );
+
+  t.equal(unresolved, undefined);
+});
+
 t.test(
   "it detects SQL injections",
   {
@@ -59,6 +76,8 @@ t.test(
       db.exec("CREATE TABLE IF NOT EXISTS cats (petname varchar(255));");
       // Does not detect SQL injection, function does not return anything
       db.exec("SELECT petname FROM `cats`;");
+
+      db.prepare("DELETE FROM cats;").run();
 
       runWithContext(dangerousContext, () => {
         try {
@@ -156,6 +175,14 @@ t.test(
               error.message,
               /Zen has blocked an SQL injection: node:sqlite.SQLTagStore.all\(\.\.\.\)/
             );
+          }
+
+          try {
+            // @ts-expect-error - testing behavior when no SQL query is provided
+            db.prepare(undefined).all();
+            t.fail("Expected an error");
+          } catch (error: any) {
+            t.match(error.message, /argument must be a string/);
           }
         });
 
