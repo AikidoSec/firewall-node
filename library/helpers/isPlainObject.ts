@@ -29,7 +29,7 @@ export function isPlainObject(o: unknown): o is Record<string, unknown> {
     return true;
   }
 
-  // Prototype object associated with that constructor function.
+  // Check the constructor's prototype to distinguish plain objects from custom class instances.
   const constructorPrototype = constructorFromPrototype.prototype;
   if (isObject(constructorPrototype) === false) return false;
 
