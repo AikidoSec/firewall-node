@@ -258,6 +258,30 @@ export function createMongoDBTests(
           return collection.find({ title: { $ne: null } }).toArray();
         }
       );
+
+      const constructorError = await t.rejects(async () => {
+        await runWithContext(
+          {
+            ...unsafeContext,
+            body: {
+              name: {
+                $ne: null,
+                constructor: "bypass",
+              },
+            },
+          },
+          () => {
+            return collection.find({ title: { $ne: null } }).toArray();
+          }
+        );
+      });
+      t.ok(constructorError instanceof Error);
+      if (constructorError instanceof Error) {
+        t.same(
+          constructorError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.name"
+        );
+      }
     } catch (error: any) {
       t.fail(error.message);
     } finally {
