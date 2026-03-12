@@ -165,3 +165,11 @@ t.test(
     t.equal(outgoingDomains.shouldBlockOutgoingRequest("example.com"), true);
   }
 );
+
+t.test("it does not match root domains with wildcard entries", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "*.example.com", mode: "block" },
+  ]);
+
+  t.equal(outgoingDomains.shouldBlockOutgoingRequest("example.com"), false);
+});
