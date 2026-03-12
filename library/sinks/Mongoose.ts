@@ -2,6 +2,7 @@ import { getContext, updateContext } from "../agent/Context";
 import type { Hooks } from "../agent/hooks/Hooks";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
+import { clone } from "../helpers/clone";
 
 export class Mongoose implements Wrapper {
   #inspectFilter(args: unknown[]): void {
@@ -17,7 +18,7 @@ export class Mongoose implements Wrapper {
     }
 
     // We need to clone the filter because mongoose modifies it in place
-    const filter = structuredClone(args[1]);
+    const filter = clone(args[1]);
 
     // Save the original, not normalized filter in the context, as we might not be able to match the normalized filter with the payload
     // It is then also checked in the MongoDB sink when we inspect the filter
