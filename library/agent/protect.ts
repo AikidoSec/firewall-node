@@ -61,6 +61,7 @@ import { FunctionSink } from "../sinks/FunctionSink";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
 import shouldEnableFirewall from "../helpers/shouldEnableFirewall";
+import { Mongoose } from "../sinks/Mongoose";
 
 function getLogger(): Logger {
   if (isDebugging()) {
@@ -175,6 +176,7 @@ export function getWrappers() {
     new AwsSDKVersion2(),
     new AiSDK(),
     new GoogleGenAi(),
+    new Mongoose(),
   ];
 }
 
