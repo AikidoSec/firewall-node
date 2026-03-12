@@ -400,26 +400,38 @@ t.test("outbound request blocking", async (t) => {
 
   t.same(config.shouldBlockOutgoingRequest("example.com"), false);
 
-  config.setBlockNewOutgoingRequests(true);
+  config.updateDomains([], true);
   t.same(config.shouldBlockOutgoingRequest("example.com"), true);
 
-  config.updateDomains([
-    { hostname: "example.com", mode: "allow" },
-    { hostname: "aikido.dev", mode: "block" },
-  ]);
+  config.updateDomains(
+    [
+      { hostname: "example.com", mode: "allow" },
+      { hostname: "aikido.dev", mode: "block" },
+    ],
+    true
+  );
   t.same(config.shouldBlockOutgoingRequest("example.com"), false);
   t.same(config.shouldBlockOutgoingRequest("aikido.dev"), true);
   t.same(config.shouldBlockOutgoingRequest("unknown.com"), true);
 
-  config.updateDomains([
-    { hostname: "example.com", mode: "block" },
-    { hostname: "aikido.dev", mode: "allow" },
-  ]);
+  config.updateDomains(
+    [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    true
+  );
   t.same(config.shouldBlockOutgoingRequest("example.com"), true);
   t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
   t.same(config.shouldBlockOutgoingRequest("unknown.com"), true);
 
-  config.setBlockNewOutgoingRequests(false);
+  config.updateDomains(
+    [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    false
+  );
 
   t.same(config.shouldBlockOutgoingRequest("example.com"), true);
   t.same(config.shouldBlockOutgoingRequest("aikido.dev"), false);
