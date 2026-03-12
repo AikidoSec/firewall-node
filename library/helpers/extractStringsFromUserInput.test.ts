@@ -230,10 +230,7 @@ t.test("it handles deeply nested arrays without stack overflow", async () => {
   const body = buildNestedArrayIterative(10_000);
   body.push("Test'), ('Test2');--");
 
-  let result: Set<string> | undefined;
-  t.doesNotThrow(() => {
-    result = extractStringsFromUserInput(body);
-  });
+  const result = extractStringsFromUserInput(body);
 
   t.ok(result);
   if (result) {
