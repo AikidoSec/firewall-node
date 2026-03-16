@@ -48,6 +48,7 @@ import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { Restify } from "../sources/Restify";
+import { ReactRouter } from "../sources/ReactRouter";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
@@ -168,6 +169,7 @@ export function getWrappers() {
     new Fastify(),
     new Koa(),
     new Restify(),
+    new ReactRouter(),
     new ClickHouse(),
     new Prisma(),
     new AwsSDKVersion3(),

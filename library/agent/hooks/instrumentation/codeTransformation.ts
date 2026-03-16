@@ -5,6 +5,13 @@ import { join } from "path";
 import { isNewInstrumentationUnitTest } from "../../../helpers/isNewInstrumentationUnitTest";
 import { isEsmUnitTest } from "../../../helpers/isEsmUnitTest";
 
+// path can also be a RegExp, this results in an empty object when serialized to JSON
+// serde will try to parse it and crash, so we need to set it to the actual file path
+type PackageFileInstrumentationInstructionWASM = Omit<
+  PackageFileInstrumentationInstructionJSON,
+  "path"
+> & { path: string };
+
 export function transformCode(
   pkgName: string,
   pkgVersion: string,
@@ -13,12 +20,17 @@ export function transformCode(
   pkgLoadFormat: PackageLoadFormat,
   fileInstructions: PackageFileInstrumentationInstructionJSON
 ): string {
+  let wasmInstructions: PackageFileInstrumentationInstructionWASM = {
+    ...fileInstructions,
+    path: path,
+  };
+
   try {
     const result = wasm_transform_code_str(
       pkgName,
       pkgVersion,
       code,
-      JSON.stringify(fileInstructions),
+      JSON.stringify(wasmInstructions),
       getSourceType(path, pkgLoadFormat)
     );
 
