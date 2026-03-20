@@ -93,7 +93,7 @@ export class SQLite3 implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("sqlite3")
-      .withVersion("^5.0.0")
+      .withVersion("^5.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         const db = exports.Database.prototype;
         this.wrapDatabasePrototype(db, pkgInfo);
