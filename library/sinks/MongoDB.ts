@@ -43,11 +43,18 @@ export class MongoDB implements Wrapper {
   private inspectFilter(
     db: string,
     collection: string,
-    request: Context,
+    context: Context,
     filter: unknown,
     operation: string
   ): InterceptorResult {
-    const result = detectNoSQLInjection(request, filter);
+    let result = detectNoSQLInjection(context, filter);
+
+    if (!result.injection && context.notNormalizedNoSqlFilter) {
+      // Also check the original, not normalized filter in the context, if set
+      // Mongoose modifies the filter object in-place and we might not be able to match the normalized filter
+      // with the payload, so we need to check the original filter as well
+      result = detectNoSQLInjection(context, context.notNormalizedNoSqlFilter);
+    }
 
     if (result.injection) {
       return {
