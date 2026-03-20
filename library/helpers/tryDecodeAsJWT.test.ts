@@ -16,13 +16,13 @@ t.test("it returns payload for invalid JWT", async () => {
   // According to the JWT spec, the payload is not valid, but we'll extract the payload anyway
 
   // e30= is a base64 encoded string of '{}'
-  t.same(tryDecodeAsJWT("/;ping%20localhost;.e30=."), {
+  t.same(tryDecodeAsJWT("/;ping%20localhost---;.e30=."), {
     jwt: true,
     object: {},
   });
 
   // W10= is a base64 encoded string of '[]'
-  t.same(tryDecodeAsJWT("/;ping%20localhost;.W10=."), {
+  t.same(tryDecodeAsJWT("/;ping%20localhost---;.W10=."), {
     jwt: true,
     object: [],
   });
@@ -66,3 +66,18 @@ t.test(
     );
   }
 );
+
+t.test("it ignores jwts shorter than possible", async (t) => {
+  t.same(tryDecodeAsJWT("a.a.a"), { jwt: false });
+  t.same(tryDecodeAsJWT("aaaaaaaa.eyJhIjoxfQ==.aaa"), { jwt: false });
+  t.same(tryDecodeAsJWT("aaaaaaaa.eyJhIjoxfQ==.aaaaaaaaa"), {
+    jwt: true,
+    object: { a: 1 },
+  });
+});
+
+t.test("invalid json", async (t) => {
+  t.same(tryDecodeAsJWT("aaaaaaaa.einvalidyJhIjoxfQ==.aaaa"), {
+    jwt: false,
+  });
+});
