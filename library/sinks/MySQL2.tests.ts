@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { runWithContext, type Context } from "../agent/Context";
+import { getContext, runWithContext, type Context } from "../agent/Context";
 import { MySQL2 } from "./MySQL2";
 import { startTestAgent } from "../helpers/startTestAgent";
 
@@ -32,6 +32,8 @@ export function createMySQL2Tests(versionPkgName: string) {
     route: "/posts/:id",
   };
 
+  const [major, minor] = versionPkgName.split("-v")[1].split(".").map(Number);
+
   t.test("it detects SQL injections", async (t) => {
     startTestAgent({
       wrappers: [new MySQL2()],
@@ -42,7 +44,7 @@ export function createMySQL2Tests(versionPkgName: string) {
 
     const mysql = require(
       `${versionPkgName}/promise`
-    ) as typeof import("mysql2-v3.12/promise");
+    ) as typeof import("mysql2-v3.18/promise");
 
     const connection = await mysql.createConnection({
       host: "localhost",
@@ -54,7 +56,7 @@ export function createMySQL2Tests(versionPkgName: string) {
     });
 
     let connection2:
-      | ReturnType<typeof import("mysql2-v3.12").createConnection>
+      | ReturnType<typeof import("mysql2-v3.18").createConnection>
       | undefined;
 
     try {
@@ -97,6 +99,40 @@ export function createMySQL2Tests(versionPkgName: string) {
         );
       }
 
+      const error3 = await t.rejects(async () => {
+        await runWithContext(dangerousContext, () => {
+          return connection.execute("-- should be blocked");
+        });
+      });
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
+        );
+      }
+
+      const error4 = await t.rejects(async () => {
+        await runWithContext(
+          {
+            ...dangerousContext,
+            body: {
+              myTitle: "1' OR 1=1 -- ",
+            },
+          },
+          () => {
+            return connection.prepare(
+              "SELECT * FROM cats WHERE petname = '1' OR 1=1 -- '"
+            );
+          }
+        );
+      });
+      if (error4 instanceof Error) {
+        t.same(
+          error4.message,
+          "Zen has blocked an SQL injection: mysql2.prepare(...) originating from body.myTitle"
+        );
+      }
+
       const undefinedQueryError = await t.rejects(async () => {
         await runWithContext(dangerousContext, () => {
           // @ts-expect-error Testing invalid args
@@ -123,7 +159,7 @@ export function createMySQL2Tests(versionPkgName: string) {
       // Because the connection of mysql2/promises will also be wrapped and possible test failures if only /promise is imported will be hidden
       const mysqlCallback = require(
         versionPkgName
-      ) as typeof import("mysql2-v3.12");
+      ) as typeof import("mysql2-v3.18");
       connection2 = mysqlCallback.createConnection({
         host: "localhost",
         user: "root",
@@ -133,7 +169,7 @@ export function createMySQL2Tests(versionPkgName: string) {
         multipleStatements: true,
       });
 
-      const error3 = await t.rejects(async () => {
+      const error5 = await t.rejects(async () => {
         await runWithContext(dangerousContext, () => {
           return new Promise((resolve, reject) => {
             connection2!.query(
@@ -149,12 +185,25 @@ export function createMySQL2Tests(versionPkgName: string) {
           });
         });
       });
-      if (error3 instanceof Error) {
+      if (error5 instanceof Error) {
         t.same(
-          error3.message,
+          error5.message,
           "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
         );
       }
+
+      await runWithContext(dangerousContext, () => {
+        return new Promise<void>((resolve) => {
+          connection2!.query("SELECT 1", (error: any, results: any) => {
+            // Ensure that the context is properly propagated to the callback of mysql2 queries
+            t.match(getContext(), {
+              remoteAddress: "::1",
+              method: "POST",
+            });
+            resolve();
+          });
+        });
+      });
 
       runWithContext(safeContext, () => {
         connection2!.query("-- This is a comment");
@@ -162,7 +211,7 @@ export function createMySQL2Tests(versionPkgName: string) {
     } catch (error: any) {
       t.fail(error);
     } finally {
-      await connection.end();
+      await connection?.end();
 
       await new Promise<void>((resolve, reject) => {
         if (!connection2) {
@@ -177,6 +226,140 @@ export function createMySQL2Tests(versionPkgName: string) {
           }
         });
       });
+    }
+  });
+
+  t.test("it detects SQL injections when using pools", async (t) => {
+    startTestAgent({
+      wrappers: [new MySQL2()],
+      rewrite: {
+        mysql2: versionPkgName,
+      },
+    });
+
+    const mysql = require(
+      `${versionPkgName}/promise`
+    ) as typeof import("mysql2-v3.18/promise");
+
+    const pool = mysql.createPool({
+      host: "localhost",
+      user: "root",
+      password: "mypassword",
+      database: "catsdb",
+      port: 27015,
+      multipleStatements: true,
+    });
+
+    try {
+      const error1 = await t.rejects(async () => {
+        await runWithContext(dangerousContext, async () => {
+          return await pool!.query("-- should be blocked");
+        });
+      });
+
+      t.ok(error1 instanceof Error);
+      if (error1 instanceof Error) {
+        t.same(
+          error1.message,
+          "Zen has blocked an SQL injection: mysql2.query(...) originating from body.myTitle"
+        );
+      }
+
+      const error2 = await t.rejects(async () => {
+        await runWithContext(dangerousContext, () => {
+          return pool!.execute("-- should be blocked");
+        });
+      });
+
+      t.ok(error2 instanceof Error);
+      if (error2 instanceof Error) {
+        t.same(
+          error2.message,
+          "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
+        );
+      }
+
+      // Not possible to fix in old version because of circular dependency issues:
+      // https://github.com/sidorares/node-mysql2/pull/3081
+      if (major >= 3 && minor >= 12) {
+        const error3 = await t.rejects(async () => {
+          runWithContext(dangerousContext, () => {
+            return pool!.pool.execute("-- should be blocked");
+          });
+        });
+
+        t.ok(error3 instanceof Error);
+        if (error3 instanceof Error) {
+          t.same(
+            error3.message,
+            "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
+          );
+        }
+
+        const numberOfQueries = 50;
+
+        const results = await Promise.allSettled(
+          Array.from({ length: numberOfQueries }, (_, index) => {
+            const contextKey = `myKey${index}`;
+            const injection = `abc' OR 1=1; -- should be blocked ${index}`;
+
+            return runWithContext(
+              {
+                remoteAddress: "::1",
+                method: "POST",
+                url: "http://localhost:4000",
+                query: {},
+                headers: {},
+                body: {
+                  [contextKey]: injection,
+                },
+                cookies: {},
+                routeParams: {},
+                source: "hono",
+                route: "/posts/:id",
+              },
+              async () => {
+                try {
+                  await pool.execute(
+                    `SELECT id FROM cats WHERE petname = '${injection}'`
+                  );
+                  return {
+                    index,
+                    error: null,
+                  };
+                } catch (error: any) {
+                  return {
+                    index,
+                    error,
+                  };
+                }
+              }
+            );
+          })
+        );
+
+        t.equal(results.length, numberOfQueries);
+
+        for (const result of results) {
+          t.equal(result.status, "fulfilled");
+
+          if (result.status === "fulfilled") {
+            const { index, error } = result.value;
+            t.ok(error instanceof Error);
+
+            if (error instanceof Error) {
+              t.same(
+                error.message,
+                `Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myKey${index}`
+              );
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      t.fail(error);
+    } finally {
+      await pool.end();
     }
   });
 }
