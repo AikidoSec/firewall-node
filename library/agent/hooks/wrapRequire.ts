@@ -10,6 +10,7 @@ import type { PackageJson } from "type-fest";
 import { isMainJsFile } from "./isMainJsFile";
 import { WrapPackageInfo } from "./WrapPackageInfo";
 import { getInstance } from "../AgentSingleton";
+import { cleanError } from "../../helpers/cleanError";
 
 const originalRequire = mod.prototype?.require;
 let isRequireWrapped = false;
@@ -44,6 +45,7 @@ export function wrapRequire() {
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
   if (typeof process.getBuiltinModule === "function") {
+    // @ts-expect-error We don't know what we return
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
       return patchedRequire.call(this, arguments);
     };
@@ -74,11 +76,16 @@ export function setBuiltinModulesToPatch(
  * Our custom require function that intercepts require calls.
  */
 function patchedRequire(this: mod | NodeJS.Process, args: IArguments) {
-  // Apply the original require function
-  const originalExports = originalRequire.apply(
-    this,
-    args as unknown as [string]
-  );
+  let originalExports: unknown;
+  try {
+    // Apply the original require function
+    originalExports = originalRequire.apply(this, args as unknown as [string]);
+  } catch (err) {
+    if (!(err instanceof Error)) {
+      throw err;
+    }
+    throw cleanError(err);
+  }
 
   if (!args.length || typeof args[0] !== "string") {
     return originalExports;
