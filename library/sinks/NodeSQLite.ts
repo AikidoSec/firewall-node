@@ -185,11 +185,11 @@ export class NodeSQLite implements Wrapper {
       };
     }
 
-    // node:sqlite treats the first argument as the optional named-parameters position.
-    // For non-object first arguments, placeholders like '?' are not bound from that slot.
+    // When the first argument is not an object, node:sqlite binds all arguments as anonymous parameters.
+    // See anon_start in https://github.com/nodejs/node/blob/main/src/node_sqlite.cc
     return {
       namedParameters: undefined,
-      anonymousParameters: args.slice(1),
+      anonymousParameters: args,
     };
   }
 

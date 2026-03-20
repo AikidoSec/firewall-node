@@ -85,6 +85,45 @@ t.test(
       );
 
       await t.test(
+        "allows query with multiple positional-only params without leading object",
+        async () => {
+          // node:sqlite treats all args as anonymous params when the first arg is not an object
+          // See anon_start in https://github.com/nodejs/node/blob/main/src/node_sqlite.cc
+          const row = runWithContext(context, () => {
+            return db
+              .prepare(
+                "SELECT petname FROM cats_idor_sqlite WHERE petname = ? AND tenant_id = ?"
+              )
+              .get("Fluffy", "org_123");
+          });
+          t.equal(row, undefined);
+        }
+      );
+
+      await t.test(
+        "blocks query with wrong tenant ID using positional-only params without leading object",
+        async () => {
+          const error = t.throws(() => {
+            runWithContext(context, () => {
+              return db
+                .prepare(
+                  "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
+                )
+                .get("org_456");
+            });
+          });
+
+          t.ok(error instanceof Error);
+          if (error instanceof Error) {
+            t.match(
+              error.message,
+              "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+            );
+          }
+        }
+      );
+
+      await t.test(
         "allows query with tenant filter using named params",
         async () => {
           const row = runWithContext(context, () => {
@@ -254,32 +293,6 @@ t.test(
                   "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
                 )
                 .get({}, "org_456");
-            });
-          });
-
-          t.ok(error instanceof Error);
-          if (error instanceof Error) {
-            t.match(
-              error.message,
-              "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
-            );
-          }
-        }
-      );
-
-      await t.test(
-        "blocks query with wrong tenant ID using anonymous param",
-        async () => {
-          const error = t.throws(() => {
-            runWithContext(context, () => {
-              return (
-                db
-                  .prepare(
-                    "SELECT petname FROM cats_idor_sqlite WHERE tenant_id = ?"
-                  )
-                  // @ts-expect-error Testing behavior with invalid args
-                  .get(undefined, "org_456")
-              );
             });
           });
 
