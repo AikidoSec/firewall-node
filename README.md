@@ -62,7 +62,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 - ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
 - ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x
-- ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
+- ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 6.x and 5.x
 - ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 - ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
