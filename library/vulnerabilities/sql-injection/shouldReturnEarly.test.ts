@@ -62,10 +62,7 @@ t.test("should return early - true cases", async (t) => {
   t.equal(shouldReturnEarly("SELECT    FROM users", "  "), false);
 
   // User input contains a newline (not a valid number list)
-  t.equal(
-    shouldReturnEarly("SELECT * WHERE id IN (1,\n2)", "1,\n2"),
-    false
-  );
+  t.equal(shouldReturnEarly("SELECT * WHERE id IN (1,\n2)", "1,\n2"), false);
 });
 
 t.test("should return early - false cases", async (t) => {
