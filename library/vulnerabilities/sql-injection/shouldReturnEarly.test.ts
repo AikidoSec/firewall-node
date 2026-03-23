@@ -43,6 +43,10 @@ t.test("should return early - true cases", async (t) => {
 
   // User input is a valid number with commas
   t.equal(shouldReturnEarly("SELECT * FROM users", "1, 2, 3"), true);
+
+  // User input is only commas (no digits, not a number list)
+  t.equal(shouldReturnEarly("SELECT ,, FROM users", ",,"), false);
+  t.equal(shouldReturnEarly("SELECT ,,, FROM users", ",,,"), false);
 });
 
 t.test("should return early - false cases", async (t) => {
