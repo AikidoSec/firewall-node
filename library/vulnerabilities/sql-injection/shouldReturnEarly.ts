@@ -19,11 +19,7 @@ export function shouldReturnEarly(query: string, userInput: string) {
   }
 
   // Check if user input is a valid comma-separated list of numbers
-  const cleanedInputForList = userInputLowercase
-    .replace(/ /g, "")
-    .replace(/,/g, "");
-
-  if (/^\d+$/.test(cleanedInputForList)) {
+  if (/^[\s,\d]+$/.test(userInput)) {
     return true;
   }
 
