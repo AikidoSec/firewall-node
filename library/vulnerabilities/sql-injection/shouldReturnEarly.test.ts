@@ -53,7 +53,9 @@ t.test("should return early - true cases", async (t) => {
 
   // User input has extra commas but contains digits
   t.equal(shouldReturnEarly("SELECT * WHERE id IN (,1,,)", ",1,,"), true);
+});
 
+t.test("should return early - false cases", async (t) => {
   // User input is only commas (no digits)
   t.equal(shouldReturnEarly("SELECT ,, FROM users", ",,"), false);
   t.equal(shouldReturnEarly("SELECT ,,, FROM users", ",,,"), false);
@@ -63,9 +65,7 @@ t.test("should return early - true cases", async (t) => {
 
   // User input contains a newline (not a valid number list)
   t.equal(shouldReturnEarly("SELECT * WHERE id IN (1,\n2)", "1,\n2"), false);
-});
 
-t.test("should return early - false cases", async (t) => {
   // User input is in query
   t.equal(shouldReturnEarly("SELECT * FROM users", " users"), false);
 
