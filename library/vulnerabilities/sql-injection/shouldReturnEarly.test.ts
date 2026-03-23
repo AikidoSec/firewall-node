@@ -32,21 +32,49 @@ t.test("should return early - true cases", async (t) => {
     true
   );
 
-  // User input is a valid comma-separated number list
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1,2,3"), true);
+  // User input is a comma-separated number list
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id IN (1,2,3)", "1,2,3"),
+    true
+  );
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id IN (1, 2, 3)", "1, 2, 3"),
+    true
+  );
 
-  // User input is a valid number
-  t.equal(shouldReturnEarly("SELECT * FROM users", "123"), true);
+  // User input is a single number
+  t.equal(shouldReturnEarly("SELECT * WHERE id = 123", "123"), true);
 
-  // User input is a valid number with spaces
-  t.equal(shouldReturnEarly("SELECT * FROM users", "  123  "), true);
+  // User input is a number with surrounding spaces
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id =   123  ", "  123  "),
+    true
+  );
 
-  // User input is a valid number with commas
-  t.equal(shouldReturnEarly("SELECT * FROM users", "1, 2, 3"), true);
+  // User input has leading/trailing spaces
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id IN ( 1, 2, 3 )", " 1, 2, 3 "),
+    true
+  );
 
-  // User input is only commas (no digits, not a number list)
+  // User input has multiple spaces between numbers
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id IN (1,  2)", "1,  2"),
+    true
+  );
+
+  // User input has extra commas but contains digits
+  t.equal(
+    shouldReturnEarly("SELECT * WHERE id IN (,1,,)", ",1,,"),
+    true
+  );
+
+  // User input is only commas (no digits)
   t.equal(shouldReturnEarly("SELECT ,, FROM users", ",,"), false);
   t.equal(shouldReturnEarly("SELECT ,,, FROM users", ",,,"), false);
+
+  // User input is only spaces (no digits)
+  t.equal(shouldReturnEarly("SELECT    FROM users", "  "), false);
 });
 
 t.test("should return early - false cases", async (t) => {

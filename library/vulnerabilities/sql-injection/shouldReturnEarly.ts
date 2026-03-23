@@ -19,7 +19,7 @@ export function shouldReturnEarly(query: string, userInput: string) {
   }
 
   // Check if user input is a valid comma-separated list of numbers
-  if (/^[\s,\d]+$/.test(userInput) && /\d+/.test(userInput)) {
+  if (/^[ ,]*\d[ ,\d]*$/.test(userInput)) {
     return true;
   }
 
