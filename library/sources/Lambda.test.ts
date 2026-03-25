@@ -9,20 +9,24 @@ import { getContext } from "../agent/Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { wrap } from "../helpers/wrap";
 import {
-  APIGatewayProxyEvent,
   createLambdaWrapper,
   getFlushEveryMS,
   getTimeoutInMS,
   SQSEvent,
 } from "./Lambda";
+import type {
+  APIGatewayProxyEventV1,
+  APIGatewayProxyEventV2,
+} from "./lambda/gateway";
 
 t.beforeEach(async () => {
   delete process.env.AIKIDO_LAMBDA_FLUSH_EVERY_MS;
   delete process.env.AIKIDO_LAMBDA_TIMEOUT_MS;
 });
 
-const gatewayEvent: APIGatewayProxyEvent = {
+const gatewayEvent: APIGatewayProxyEventV1 = {
   resource: "/dev/{proxy+}",
+  path: "/dev/some/path",
   body: "body",
   httpMethod: "GET",
   queryStringParameters: {
@@ -38,6 +42,31 @@ const gatewayEvent: APIGatewayProxyEvent = {
   requestContext: {
     identity: {
       sourceIp: "1.2.3.4",
+    },
+  },
+};
+
+const gatewayEventV2: APIGatewayProxyEventV2 = {
+  rawPath: "/dev/some/path",
+  body: "body",
+  rawQueryString: "query=value",
+  queryStringParameters: {
+    query: "value",
+  },
+  pathParameters: {
+    parameter: "value",
+  },
+  headers: {
+    "content-type": "application/json",
+    cookie: "cookie=value",
+  },
+  requestContext: {
+    http: {
+      path: "/dev/some/path",
+      protocol: "HTTP/1.1",
+      userAgent: "agent",
+      sourceIp: "1.2.3.4",
+      method: "GET",
     },
   },
 };
@@ -73,6 +102,7 @@ t.test("it transforms callback handler to async handler", async (t) => {
 
   t.same(JSON.parse(result.body), {
     method: "GET",
+    url: "/dev/some/path?query=value",
     remoteAddress: "1.2.3.4",
     headers: {
       "content-type": "application/json",
@@ -89,6 +119,42 @@ t.test("it transforms callback handler to async handler", async (t) => {
     },
     source: "lambda/gateway",
     route: "/dev/{proxy+}",
+  });
+});
+
+t.test("it also works with event v2", async (t) => {
+  const handler = createLambdaWrapper((event, context, callback) => {
+    callback(null, {
+      body: JSON.stringify(getContext()),
+      statusCode: 200,
+    });
+  });
+
+  const result = (await handler(
+    gatewayEventV2,
+    lambdaContext,
+    () => {}
+  )) as unknown as { body: string };
+
+  t.same(JSON.parse(result.body), {
+    method: "GET",
+    url: "/dev/some/path?query=value",
+    remoteAddress: "1.2.3.4",
+    headers: {
+      "content-type": "application/json",
+      cookie: "cookie=value",
+    },
+    query: {
+      query: "value",
+    },
+    cookies: {
+      cookie: "value",
+    },
+    routeParams: {
+      parameter: "value",
+    },
+    source: "lambda/gateway",
+    route: "/dev/some/path",
   });
 });
 
@@ -141,6 +207,7 @@ t.test("json header is missing for gateway event", async (t) => {
 
   t.same(JSON.parse(result.body), {
     method: "GET",
+    url: "/dev/some/path?query=value",
     remoteAddress: "1.2.3.4",
     headers: {},
     query: { query: "value" },
@@ -435,7 +502,7 @@ t.test("undefined values", async () => {
   );
 
   t.same(result, {
-    url: undefined,
+    url: "/dev/some/path",
     route: undefined,
     method: "GET",
     remoteAddress: undefined,
@@ -630,5 +697,191 @@ t.test("getTimeoutInMS", async (t) => {
     getTimeoutInMS(),
     1000,
     "should return 1 second at minimum threshold"
+  );
+});
+
+t.test("it detects attack waves", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api,
+  });
+  agent.start([]);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const paths = [
+    "/.env",
+    "/wp-config.php",
+    "/.git/config",
+    "/.htaccess",
+    "/.aws/credentials",
+    "/docker-compose.yml",
+    "/../etc/passwd",
+    "/.bash_history",
+    "/config/.env",
+    "/app/docker-compose.yml",
+    "/.gitignore",
+    "/.ssh/id_rsa",
+    "/../.env",
+    "/.htpasswd",
+    "/.vscode/settings.json",
+    "/config.php",
+    "/.idea/workspace.xml",
+    "/.DS_Store",
+    "/.env.local",
+    "/secrets/.env",
+  ];
+
+  for (const path of paths) {
+    const attackWaveEvent: APIGatewayProxyEventV1 = {
+      resource: path,
+      body: "",
+      path: path,
+      httpMethod: "GET",
+      queryStringParameters: {},
+      pathParameters: {},
+      headers: {},
+      requestContext: {
+        identity: {
+          sourceIp: "4.3.2.1",
+        },
+      },
+    };
+
+    const result = await handler(attackWaveEvent, lambdaContext, () => {});
+
+    t.same(result, {
+      url: path,
+      method: "GET",
+      remoteAddress: "4.3.2.1",
+      body: undefined,
+      headers: {},
+      query: {},
+      cookies: {},
+      routeParams: {},
+      source: "lambda/gateway",
+      route: path,
+    });
+  }
+
+  const event = api
+    .getEvents()
+    .filter((e: Event) => e.type === "detected_attack_wave")[0];
+
+  t.match(
+    event,
+
+    {
+      type: "detected_attack_wave",
+      request: {
+        ipAddress: "4.3.2.1",
+        userAgent: undefined,
+        source: "lambda/gateway",
+      },
+    }
+  );
+
+  t.ok(
+    event.attack.metadata.samples.includes("/.git/config"),
+    "should include one of the attack paths"
+  );
+});
+
+t.test("it detects attack waves using Gateway Event v2", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    block: false,
+    token: new Token("token"),
+    serverless: "lambda",
+    api,
+  });
+  agent.start([]);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  const paths = [
+    "/.env",
+    "/wp-config.php",
+    "/.git/config",
+    "/.htaccess",
+    "/.aws/credentials",
+    "/docker-compose.yml",
+    "/../etc/passwd",
+    "/.bash_history",
+    "/config/.env",
+    "/app/docker-compose.yml",
+    "/.gitignore",
+    "/.ssh/id_rsa",
+    "/../.env",
+    "/.htpasswd",
+    "/.vscode/settings.json",
+    "/config.php",
+    "/.idea/workspace.xml",
+    "/.DS_Store",
+    "/.env.local",
+    "/secrets/.env",
+  ];
+
+  for (const path of paths) {
+    const attackWaveEvent: APIGatewayProxyEventV2 = {
+      body: "",
+      rawPath: path,
+      rawQueryString: "",
+      queryStringParameters: {},
+      pathParameters: {},
+      headers: {},
+      requestContext: {
+        http: {
+          path: path,
+          protocol: "HTTP/1.1",
+          userAgent: "agent",
+          method: "GET",
+          sourceIp: "4.3.2.2",
+        },
+      },
+    };
+
+    const result = await handler(attackWaveEvent, lambdaContext, () => {});
+
+    t.match(result, {
+      url: path,
+      method: "GET",
+      remoteAddress: "4.3.2.2",
+      body: undefined,
+      headers: {},
+      query: {},
+      cookies: {},
+      routeParams: {},
+      source: "lambda/gateway",
+    });
+  }
+
+  const event = api
+    .getEvents()
+    .filter((e: Event) => e.type === "detected_attack_wave")[0];
+
+  t.match(
+    event,
+
+    {
+      type: "detected_attack_wave",
+      request: {
+        ipAddress: "4.3.2.2",
+        userAgent: undefined,
+        source: "lambda/gateway",
+      },
+    }
+  );
+
+  t.ok(
+    event.attack.metadata.samples.includes("/.git/config"),
+    "should include one of the attack paths"
   );
 });
