@@ -204,6 +204,19 @@ function buildNestedDictIterative(depth: number): Record<string, unknown> {
   return result;
 }
 
+function buildNestedArrayIterative(depth: number): unknown[] {
+  const result: unknown[] = [];
+  let current: unknown[] = result;
+
+  for (let i = 1; i <= depth; i++) {
+    const nextLevel: unknown[] = [];
+    current.push(nextLevel);
+    current = nextLevel;
+  }
+
+  return result;
+}
+
 t.test("it handles deeply nested objects without stack overflow", async () => {
   const body = buildNestedDictIterative(10_000);
   body.name = "Test'), ('Test2');--";
@@ -211,6 +224,18 @@ t.test("it handles deeply nested objects without stack overflow", async () => {
   const result = extractStringsFromUserInput(body);
   t.ok(result.size > 0);
   t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it handles deeply nested arrays without stack overflow", async () => {
+  const body = buildNestedArrayIterative(10_000);
+  body.push("Test'), ('Test2');--");
+
+  const result = extractStringsFromUserInput(body);
+
+  t.ok(result);
+  if (result) {
+    t.ok(result.has("Test'), ('Test2');--"));
+  }
 });
 
 t.test("it handles deeply nested JWT without stack overflow", async () => {
@@ -308,5 +333,15 @@ t.test("it does not ignore URLs outside of JWT payload", async () => {
   t.same(
     extractStringsFromUserInput(input),
     fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
+  );
+});
+
+t.test("it works with objects containing constructor key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      constructor: "constructor value",
+    }),
+    fromArr(["test", "value", "constructor", "constructor value"])
   );
 });
