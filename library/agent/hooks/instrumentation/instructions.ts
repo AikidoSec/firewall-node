@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Package } from "../Package";
 import { BuiltinModule } from "../BuiltinModule";
 import type {

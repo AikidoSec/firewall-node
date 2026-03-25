@@ -24,7 +24,6 @@ type Result =
       endpoint: Endpoint;
     };
 
-// eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent

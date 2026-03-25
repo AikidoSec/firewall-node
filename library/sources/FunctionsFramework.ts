@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { Context, getContext, runWithContext } from "../agent/Context";
@@ -51,7 +50,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
       try {
         await agent.onStart(getTimeoutInMS());
       } catch (err: any) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       }
     }
@@ -153,7 +152,7 @@ export class FunctionsFramework implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google-cloud/functions-framework")
-      .withVersion("^4.0.0 || ^3.0.0")
+      .withVersion("^5.0.0 || ^4.0.0 || ^3.0.0")
       .onRequire((exports, pkgInfo) => {
         this.onRequire(exports, pkgInfo);
       })

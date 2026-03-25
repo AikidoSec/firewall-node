@@ -80,7 +80,6 @@ export function shouldRateLimitOperation(
   return { block: false };
 }
 
-// eslint-disable-next-line max-lines-per-function
 function shouldRateLimitField(
   agent: Agent,
   context: Context,

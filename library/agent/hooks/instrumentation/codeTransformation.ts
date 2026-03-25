@@ -1,5 +1,4 @@
 import type { PackageFileInstrumentationInstructionJSON } from "./types";
-// eslint-disable-next-line camelcase
 import { wasm_transform_code_str } from "./wasm/node_code_instrumentation";
 import { getSourceType, PackageLoadFormat } from "./getSourceType";
 import { join } from "path";

@@ -37,7 +37,7 @@ In addition the output contains the name and version of each supported and instr
 
 ## Bundlers & ECMAScript modules (ESM)
 
-If you are using a bundler like esbuild or a framework that uses bundling please ensure to follow the steps described in the [bundler](./bundler.md) docs. Applications using ESM at runtime are not supported yet. TypeScript code is often translated to CommonJS.
+If you are using a bundler like esbuild or a framework that uses bundling please ensure to follow the steps described in the [bundler](./bundler.md) docs. If your application uses native ESM at runtime, see [ESM setup](./esm.md). Note that many TypeScript projects use `import` syntax but still compile to CommonJS — in that case no extra steps are needed.
 
 ## Disable code generation hook
 

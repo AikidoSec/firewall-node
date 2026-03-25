@@ -13,11 +13,11 @@ const port = await getRandomPort();
 const port2 = await getRandomPort();
 
 before(() => {
-  const { stderr } = spawnSync(`npm`, ["run", "build"], {
+  const { status, stderr } = spawnSync(`npm`, ["run", "build"], {
     cwd: pathToAppDir,
   });
 
-  if (stderr && stderr.toString().length > 0) {
+  if (status !== 0) {
     throw new Error(`Failed to build: ${stderr.toString()}`);
   }
 });

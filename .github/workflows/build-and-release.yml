@@ -12,6 +12,7 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
     permissions:
       contents: read
+      id-token: write
   run-end-to-end-tests:
     needs: build-artifacts
     uses: ./.github/workflows/end-to-end-tests.yml

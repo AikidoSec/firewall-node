@@ -12,7 +12,6 @@ export type FastifyDone = () => void;
 
 // Can't use `any` because it might cause issues with type checking
 // e.g. if `skipLibChecks` is false
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type FastifyRequest = {};
 
 // Can't use `onRequestHookHandler` type from fastify because it uses `import("fastify")` in the type,

@@ -1,8 +1,8 @@
 {
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "@google-cloud/functions-framework": "^4.0.0",
-    "better-sqlite3": "^11.10.0"
+    "@google-cloud/functions-framework": "^5.0.0",
+    "better-sqlite3": "^12.6.2"
   },
   "scripts": {
     "start": "functions-framework --target=main --port 4000"

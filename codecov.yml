@@ -1,0 +1,7 @@
+ignore:
+  - "library/helpers/form-parsing"
+  - "library/sinks/AiSDK.ts"
+  - "library/sinks/Anthropic.ts"
+  - "library/sinks/GoogleGenAi.ts"
+  - "library/sinks/Mistral.ts"
+  - "library/sinks/OpenAI.ts"

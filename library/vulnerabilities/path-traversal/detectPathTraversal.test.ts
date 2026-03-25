@@ -175,6 +175,23 @@ t.test("absolute macOS path", async () => {
   );
 });
 
+t.test("container /app/ directory", async () => {
+  t.same(detectPathTraversal("/app/config/secret.yml", "/app/config"), true);
+  t.same(
+    detectPathTraversal("/app/config/secret.yml", "/app/config/secret.yml"),
+    true
+  );
+  t.same(detectPathTraversal("/app/test.txt", "/app/"), false);
+  t.same(detectPathTraversal("/app/test.txt", "/app"), false);
+});
+
+t.test("container /code/ directory", async () => {
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src"), true);
+  t.same(detectPathTraversal("/code/src/index.js", "/code/src/index.js"), true);
+  t.same(detectPathTraversal("/code/test.txt", "/code/"), false);
+  t.same(detectPathTraversal("/code/test.txt", "/code"), false);
+});
+
 t.test("AWS credentials protection", async () => {
   t.same(
     detectPathTraversal(
@@ -184,3 +201,27 @@ t.test("AWS credentials protection", async () => {
     true
   );
 });
+
+t.test("current directory references (/./) are normalized", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./passwd"), true);
+  t.same(detectPathTraversal("/./etc/./passwd", "/./etc/./passwd"), true);
+  // Multiple /./ sequences
+  t.same(detectPathTraversal("/././etc/passwd", "/././etc"), true);
+  t.same(detectPathTraversal("/etc/././passwd", "/etc/././passwd"), true);
+});
+
+t.test("paths with multiple slashes are normalized", async () => {
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc"), true);
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc/passwd"), true);
+});
+
+t.test(
+  "normalized paths still trigger false positive prevention for bare root dirs",
+  async () => {
+    // User input that resolves to just a root dir should still be safe
+    t.same(detectPathTraversal("/etc/./passwd", "/etc"), false);
+    t.same(detectPathTraversal("//etc//passwd", "/etc"), false);
+  }
+);

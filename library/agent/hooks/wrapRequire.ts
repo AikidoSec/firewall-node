@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as mod from "module";
 import { BuiltinModule } from "./BuiltinModule";
 import { isBuiltinModule } from "./isBuiltinModule";
@@ -40,14 +39,12 @@ export function wrapRequire() {
   isRequireWrapped = true;
 
   mod.prototype.require = function wrapped() {
-    // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
   if (typeof process.getBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
-      // eslint-disable-next-line prefer-rest-params
       return patchedRequire.call(this, arguments);
     };
   }
