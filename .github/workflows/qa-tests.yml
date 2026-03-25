@@ -49,7 +49,7 @@ jobs:
           cp firewall-node/.github/workflows/Dockerfile.qa zen-demo-nodejs/Dockerfile
 
       - name: Run Firewall QA Tests
-        uses: AikidoSec/firewall-tester-action@releases/v1
+        uses: AikidoSec/firewall-tester-action@d6ce69ab0d6b52cac12d01be9b25603de492bfc5 # v1 branch
         with:
           dockerfile_path: ./zen-demo-nodejs/Dockerfile
           app_port: 3000
