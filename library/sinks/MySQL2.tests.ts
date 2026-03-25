@@ -32,6 +32,12 @@ export function createMySQL2Tests(versionPkgName: string) {
     route: "/posts/:id",
   };
 
+  const warningLogs: string[] = [];
+  // oxlint-disable-next-line no-console
+  console.warn = (...args) => {
+    warningLogs.push(args.join(" "));
+  };
+
   const [major, minor] = versionPkgName.split("-v")[1].split(".").map(Number);
 
   t.test("it detects SQL injections", async (t) => {
@@ -45,6 +51,15 @@ export function createMySQL2Tests(versionPkgName: string) {
     const mysql = require(
       `${versionPkgName}/promise`
     ) as typeof import("mysql2-v3.18/promise");
+
+    if (major >= 3 && minor >= 12) {
+      t.same(warningLogs, []);
+    } else {
+      t.match(
+        warningLogs,
+        /Aikido: Warning: You are using an outdated version of mysql2/
+      );
+    }
 
     const connection = await mysql.createConnection({
       host: "localhost",

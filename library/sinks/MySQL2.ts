@@ -10,6 +10,7 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
+import { getPackageVersion } from "../helpers/getPackageVersion";
 
 export class MySQL2 implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
@@ -180,6 +181,27 @@ export class MySQL2 implements Wrapper {
     ];
   }
 
+  private printOutdatedWarningIfNeeded(pkgName: string) {
+    const version = getPackageVersion(pkgName);
+    if (!version) {
+      return;
+    }
+
+    const parsedVersion = version.split(".").map((part) => parseInt(part, 10));
+    if (
+      parsedVersion[0] < 3 ||
+      (parsedVersion[0] === 3 && parsedVersion[1] < 11) ||
+      (parsedVersion[0] === 3 &&
+        parsedVersion[1] === 11 &&
+        parsedVersion[2] < 5)
+    ) {
+      // oxlint-disable-next-line no-console
+      console.warn(
+        "Aikido: Warning: You are using an outdated version of mysql2 which can not be fully protected by Zen. Please upgrade to mysql2 version 3.11.5 or newer to ensure full protection against SQL injection and IDOR vulnerabilities."
+      );
+    }
+  }
+
   wrap(hooks: Hooks) {
     const wrapConnectionAndPool = (
       exports: any,
@@ -250,12 +272,18 @@ export class MySQL2 implements Wrapper {
     // For all versions of mysql2 newer than 3.0.0
     pkg
       .withVersion("^3.0.0")
-      .onRequire((exports, pkgInfo) =>
-        wrapConnectionAndPool(exports, pkgInfo, false)
-      )
+      .onRequire((exports, pkgInfo) => {
+        this.printOutdatedWarningIfNeeded(pkgInfo.name);
+        return wrapConnectionAndPool(exports, pkgInfo, false);
+      })
       .addFileInstrumentation({
         path: "lib/connection.js",
         functions: this.getConnectionFunctionInstructions(),
+        accessLocalVariables: {
+          names: ["globalThis"], // Placeholder to run code on file load
+          cb: (_vars, pkgInfo) =>
+            this.printOutdatedWarningIfNeeded(pkgInfo.name),
+        },
       })
       .addFileInstrumentation({
         path: "lib/pool.js",
