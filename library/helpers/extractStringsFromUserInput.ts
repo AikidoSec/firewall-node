@@ -1,6 +1,7 @@
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryParseURL } from "./tryParseURL";
 
 type UserString = string;
 
@@ -39,7 +40,12 @@ export function extractStringsFromUserInput(
     // This prevents bypassing the firewall by HTTP Parameter Pollution
     // Example: ?param=value1&param=value2 will be treated as array by express
     // If its used inside a string, it will be converted to a comma separated string
-    results.add(obj.join());
+    try {
+      results.add(obj.join());
+    } catch {
+      // Ignore deeply nested/cyclic arrays that can overflow during native join recursion.
+      // We still keep strings gathered from traversed elements above.
+    }
   }
 
   if (typeof obj === "string" && obj.length > 0) {
@@ -61,6 +67,11 @@ export function extractStringsFromUserInput(
         delete jwt.object.iss;
       }
       extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
+        if (value.startsWith("http") && tryParseURL(value)) {
+          // Do not add URLs as strings because they can contain domains and produce false positives
+          return;
+        }
+
         results.add(value);
       });
     }

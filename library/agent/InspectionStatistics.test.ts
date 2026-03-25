@@ -706,7 +706,6 @@ t.test("it keeps track of matched IPs and user agents", async () => {
     },
     userAgents: {
       breakdown: {
-        // eslint-disable-next-line camelcase
         ai_data_scrapers: 1,
       },
     },
@@ -740,7 +739,6 @@ t.test("it keeps track of matched IPs and user agents", async () => {
     },
     userAgents: {
       breakdown: {
-        // eslint-disable-next-line camelcase
         ai_data_scrapers: 2,
       },
     },

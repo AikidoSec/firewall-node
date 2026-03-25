@@ -5,11 +5,34 @@ import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
+import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
 
 export class MySQL implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
+
+  private resolvePlaceholder(
+    placeholder: string,
+    placeholderNumber: number | undefined,
+    params: unknown[] | undefined
+  ): unknown {
+    if (placeholder === "?" && placeholderNumber !== undefined && params) {
+      if (placeholderNumber < params.length) {
+        return params[placeholderNumber];
+      }
+    }
+
+    return undefined;
+  }
+
+  private findParams(args: unknown[]): unknown[] | undefined {
+    if (args.length >= 2 && Array.isArray(args[1])) {
+      return args[1];
+    }
+
+    return undefined;
+  }
 
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
@@ -20,12 +43,25 @@ export class MySQL implements Wrapper {
 
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql = args[0];
+      const params = this.findParams(args);
 
-      return checkContextForSqlInjection({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
         sql: sql,
         context: context,
         operation: "MySQL.query",
         dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
+        sql,
+        context,
+        dialect: this.dialect,
+        resolvePlaceholder: (placeholder, placeholderNumber) =>
+          this.resolvePlaceholder(placeholder, placeholderNumber, params),
       });
     }
 
@@ -36,12 +72,25 @@ export class MySQL implements Wrapper {
       typeof args[0].sql === "string"
     ) {
       const sql = args[0].sql;
+      const params = this.findParams(args);
 
-      return checkContextForSqlInjection({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
         sql: sql,
         context: context,
         operation: "MySQL.query",
         dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
+        sql,
+        context,
+        dialect: this.dialect,
+        resolvePlaceholder: (placeholder, placeholderNumber) =>
+          this.resolvePlaceholder(placeholder, placeholderNumber, params),
       });
     }
 

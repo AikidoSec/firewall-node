@@ -71,6 +71,7 @@ t.test("it detects JS injections using Function", async (t) => {
   runWithContext(safeContext, () => {
     t.same(new Function("1 + 1")(), undefined);
     t.same(new Function("const x = 1 + 1; return x")(), 2);
+    t.same(new Function("<!--\nreturn 1 + 1\n-->")(), 2);
   });
 
   runWithContext(dangerousContext, () => {
@@ -156,6 +157,62 @@ t.test("it detects JS injections using Function", async (t) => {
     if (error6 instanceof Error) {
       t.same(
         error6.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Also block with HTML-like Comments
+    // https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-html-like-comments
+    const error7 = t.throws(() => eval("<!--\n1 + 1; console.log('hello')"));
+    t.ok(error7 instanceof Error);
+    if (error7 instanceof Error) {
+      t.same(
+        error7.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Block injection even when code contains "return" (which is invalid syntax for eval)
+    // eval('return 42') throws "SyntaxError: Illegal return statement" because return
+    // is only valid inside a function. However, the parser uses CommonJS mode which
+    // allows top-level return, so we can still detect the injection.
+    const error8 = t.throws(() => eval("return 1 + 1; console.log('hello')"));
+    t.ok(error8 instanceof Error);
+    if (error8 instanceof Error) {
+      t.same(
+        error8.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Strict mode directive should not bypass detection
+    const error9 = t.throws(() =>
+      eval("'use strict'; 1 + 1; console.log('hello')")
+    );
+    t.ok(error9 instanceof Error);
+    if (error9 instanceof Error) {
+      t.same(
+        error9.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Block statement wrapping should not bypass detection
+    const error10 = t.throws(() => eval("{ 1 + 1; console.log('hello') }"));
+    t.ok(error10 instanceof Error);
+    if (error10 instanceof Error) {
+      t.same(
+        error10.message,
+        "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
+      );
+    }
+
+    // Labeled statement should not bypass detection
+    const error11 = t.throws(() => eval("label: 1 + 1; console.log('hello')"));
+    t.ok(error11 instanceof Error);
+    if (error11 instanceof Error) {
+      t.same(
+        error11.message,
         "Zen has blocked a JavaScript injection: new Function/eval(...) originating from body.calc"
       );
     }
