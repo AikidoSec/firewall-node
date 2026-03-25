@@ -65,6 +65,14 @@ function matchFilterPartInUser(
     return matchFilterPartInUser(userInput.join(), filterPart, pathToPayload);
   }
 
+  if (userInput instanceof Map) {
+    return matchFilterPartInUser(
+      mapToPlainObject(userInput),
+      filterPart,
+      pathToPayload
+    );
+  }
+
   return {
     match: false,
   };
@@ -127,6 +135,13 @@ function findFilterPartWithOperators(
     }
   }
 
+  if (partOfFilter instanceof Map) {
+    return findFilterPartWithOperators(
+      userInput,
+      mapToPlainObject(partOfFilter)
+    );
+  }
+
   return { found: false };
 }
 
@@ -143,6 +158,10 @@ export function detectNoSQLInjection(
   request: Context,
   filter: unknown
 ): DetectionResult {
+  if (filter instanceof Map) {
+    return detectNoSQLInjection(request, mapToPlainObject(filter));
+  }
+
   if (!isPlainObject(filter) && !Array.isArray(filter)) {
     return { injection: false };
   }
@@ -163,4 +182,14 @@ export function detectNoSQLInjection(
   }
 
   return { injection: false };
+}
+
+function mapToPlainObject(map: Map<unknown, unknown>): Record<string, unknown> {
+  const obj: Record<string, unknown> = {};
+  for (const [key, value] of map.entries()) {
+    if (typeof key === "string") {
+      obj[key] = value;
+    }
+  }
+  return obj;
 }

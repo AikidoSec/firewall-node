@@ -282,6 +282,117 @@ export function createMongoDBTests(
           "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.name"
         );
       }
+
+      await collection.insertMany([
+        { title: "abc" },
+        { title: "another title" },
+        { title: "yet another title" },
+      ]);
+
+      {
+        // Confirms that filtering with Maps is possible
+        const mapFilter = new Map<string, string>();
+        mapFilter.set("title", "abc");
+        const mapFilteredDocuments = await collection.find(mapFilter).toArray();
+        t.same(
+          mapFilteredDocuments.map((document) => document.title),
+          ["abc"]
+        );
+
+        // Confirms that filtering with nested Maps is possible
+        const mapSubFilter = new Map<string, any>();
+        mapSubFilter.set("$ne", "abc");
+        const mainMapFilter = new Map<string, any>();
+        mainMapFilter.set("title", mapSubFilter);
+        const mapSubFilteredDocuments = await collection
+          .find(mainMapFilter)
+          .toArray();
+        t.same(
+          mapSubFilteredDocuments.map((document) => document.title),
+          ["another title", "yet another title"]
+        );
+
+        // Confirms that map inside plain object is also working
+        const plainObjectWithMapFilter = {
+          title: new Map<string, any>([["$ne", "abc"]]),
+        };
+        const plainObjectWithMapFilteredDocuments = await collection
+          .find(plainObjectWithMapFilter)
+          .toArray();
+        t.same(
+          plainObjectWithMapFilteredDocuments.map((document) => document.title),
+          ["another title", "yet another title"]
+        );
+      }
+
+      const mapError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          const filter = new Map<string, any>();
+          filter.set("title", { $ne: null });
+          return collection.find(filter).toArray();
+        });
+      });
+      t.ok(mapError instanceof Error);
+      if (mapError instanceof Error) {
+        t.same(
+          mapError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
+
+      const mapError2 = await t.rejects(async () => {
+        await runWithContext(
+          {
+            ...unsafeContext,
+            body: {
+              title: new Map<string, any>([["$ne", null]]),
+            },
+          },
+          () => {
+            const filter = new Map<string, any>();
+            filter.set("title", { $ne: null });
+            return collection.find(filter).toArray();
+          }
+        );
+      });
+      t.ok(mapError2 instanceof Error);
+      if (mapError2 instanceof Error) {
+        t.same(
+          mapError2.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.title"
+        );
+      }
+
+      const mapError3 = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          const filter = {
+            title: new Map<string, any>([["$ne", null]]),
+          };
+          return collection.find(filter).toArray();
+        });
+      });
+      t.ok(mapError3 instanceof Error);
+      if (mapError3 instanceof Error) {
+        t.same(
+          mapError3.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
+
+      const mapError4 = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          const filter = new Map<string, any>();
+          filter.set("title", new Map<string, any>([["$ne", null]]));
+          return collection.find(filter).toArray();
+        });
+      });
+      t.ok(mapError4 instanceof Error);
+      if (mapError4 instanceof Error) {
+        t.same(
+          mapError4.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
     } catch (error: any) {
       t.fail(error.message);
     } finally {

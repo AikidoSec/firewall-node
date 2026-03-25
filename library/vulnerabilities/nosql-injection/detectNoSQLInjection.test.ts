@@ -879,3 +879,32 @@ t.test("not a valid injection attempt", async (t) => {
     }
   );
 });
+
+t.test("it works with Maps", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: new Map<string, any>([
+          ["username", "admin"],
+          [
+            "test",
+            new Map<string, any>([
+              ["$ne", ""],
+              ["hello", "world"],
+            ]),
+          ],
+        ]),
+      }),
+      {
+        username: "admin",
+        test: { $ne: "", hello: "world" },
+      }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".test"],
+      payload: { $ne: "" },
+    }
+  );
+});
