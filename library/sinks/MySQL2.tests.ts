@@ -52,7 +52,7 @@ export function createMySQL2Tests(versionPkgName: string) {
       `${versionPkgName}/promise`
     ) as typeof import("mysql2-v3.18/promise");
 
-    if (major >= 3 && minor >= 12) {
+    if (major > 3 || (major === 3 && minor >= 12)) {
       t.same(warningLogs, []);
     } else {
       t.match(
@@ -296,7 +296,7 @@ export function createMySQL2Tests(versionPkgName: string) {
 
       // Not possible to fix in old version because of circular dependency issues:
       // https://github.com/sidorares/node-mysql2/pull/3081
-      if (major >= 3 && minor >= 12) {
+      if (major > 3 || (major === 3 && minor >= 12)) {
         const error3 = await t.rejects(async () => {
           runWithContext(dangerousContext, () => {
             return pool!.pool.execute("-- should be blocked");
