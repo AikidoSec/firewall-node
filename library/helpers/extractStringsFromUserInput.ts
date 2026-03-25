@@ -30,6 +30,48 @@ export function extractStringsFromUserInput(
     }
   }
 
+  if (obj instanceof Map) {
+    for (const [key, value] of obj.entries()) {
+      if (typeof key === "string") {
+        results.add(key);
+      }
+      extractStringsFromUserInput(value, depth + 1).forEach((v) =>
+        results.add(v)
+      );
+    }
+  }
+
+  if (obj instanceof Set) {
+    for (const value of obj.values()) {
+      extractStringsFromUserInput(value, depth + 1).forEach((v) =>
+        results.add(v)
+      );
+    }
+  }
+
+  if (obj instanceof URLSearchParams) {
+    for (const [key, value] of obj.entries()) {
+      results.add(key);
+      results.add(value);
+    }
+  }
+
+  if (globalThis.FormData && obj instanceof globalThis.FormData) {
+    obj.forEach((value, key) => {
+      results.add(key);
+      if (typeof value === "string") {
+        results.add(value);
+      }
+    });
+  }
+
+  if (globalThis.Headers && obj instanceof globalThis.Headers) {
+    obj.forEach((value, key) => {
+      results.add(key);
+      results.add(value);
+    });
+  }
+
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
       extractStringsFromUserInput(obj[i], depth + 1).forEach((value) =>

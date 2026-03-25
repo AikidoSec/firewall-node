@@ -345,3 +345,100 @@ t.test("it works with objects containing constructor key", async () => {
     fromArr(["test", "value", "constructor", "constructor value"])
   );
 });
+
+t.test("it works with objects containing prototype key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      prototype: "prototype value",
+    }),
+    fromArr(["test", "value", "prototype", "prototype value"])
+  );
+
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      __proto__: { protoKey: "protoValue" },
+    }),
+    fromArr(["test", "value", "protoKey", "protoValue"])
+  );
+});
+
+t.test("it works with Map objects", async () => {
+  const map = new Map<string | number, string | object>();
+  map.set("key1", "value1");
+  map.set("key2", { nestedKey: "nestedValue" });
+  map.set(5, "value3");
+
+  t.same(
+    extractStringsFromUserInput(map),
+    fromArr(["key1", "value1", "key2", "nestedKey", "nestedValue", "value3"])
+  );
+});
+
+t.test("it works with Sets", async () => {
+  const set = new Set<string | object>();
+  set.add("value1");
+  set.add({ nestedKey: "nestedValue" });
+
+  t.same(
+    extractStringsFromUserInput(set),
+    fromArr(["value1", "nestedKey", "nestedValue"])
+  );
+});
+
+t.test("it works with URLSearchParams", async () => {
+  const params = new URLSearchParams();
+  params.append("key1", "value1");
+  params.append("key2", "value2");
+
+  t.same(
+    extractStringsFromUserInput(params),
+    fromArr(["key1", "value1", "key2", "value2"])
+  );
+});
+
+t.test(
+  "it works with FormData",
+  {
+    skip:
+      typeof globalThis.FormData === "undefined"
+        ? "FormData is not supported in this environment"
+        : false,
+  },
+  async () => {
+    const formData = new globalThis.FormData();
+    formData.append("key1", "value1");
+    formData.append("key2", "value2");
+
+    t.same(
+      extractStringsFromUserInput(formData),
+      fromArr(["key1", "value1", "key2", "value2"])
+    );
+  }
+);
+
+t.test(
+  "it works with headers object",
+  {
+    skip:
+      typeof Headers === "undefined"
+        ? "Headers is not supported in this environment"
+        : false,
+  },
+  async () => {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", "Bearer token");
+
+    t.same(
+      extractStringsFromUserInput(headers),
+      fromArr([
+        "content-type",
+        "application/json",
+        "authorization",
+        "Bearer token",
+      ])
+    );
+  }
+);
