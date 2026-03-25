@@ -134,7 +134,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
 
       await request({
         protocol: "http:",
-        hostname: "ssrf-redirects.testssandbox.com",
+        hostname: "ssrf-redirects.TESTSsandbox.com",
         port: undefined,
       });
       t.same(agent.getHostnames().asArray(), [
@@ -231,6 +231,18 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
           await request(`http://localhost:${port}/api/internal`);
         }
       );
+
+      // Hostname is lowercased
+      agent.getHostnames().clear();
+      await request(`https://SSRF-redirects.TESTssandbox.com`);
+      t.same(agent.getHostnames().asArray(), [
+        {
+          hostname: "ssrf-redirects.testssandbox.com",
+          port: 443,
+          hits: 1,
+        },
+      ]);
+      agent.getHostnames().clear();
     }
   );
 
