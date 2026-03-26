@@ -1,3 +1,4 @@
+import type { PromptProtectionApi } from "../agent/api/PromptProtectionAPI";
 import type { ReportingAPI } from "../agent/api/ReportingAPI";
 import type { Token } from "../agent/api/Token";
 import { __internalRewritePackageNamesForTesting } from "../agent/hooks/instrumentation/instructions";
@@ -20,6 +21,7 @@ export function startTestAgent(opts: {
   serverless?: string;
   wrappers: Wrapper[];
   rewrite: Record<PackageName, AliasToRequire>;
+  promptProtectionAPI?: PromptProtectionApi;
 }) {
   const agent = createTestAgent(opts);
 

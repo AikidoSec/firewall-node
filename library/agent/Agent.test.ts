@@ -421,6 +421,7 @@ t.test(
       allowedIPAddresses: [],
       block: true,
       blockNewOutgoingRequests: false,
+      promptProtectionMode: "disabled",
     });
     const agent = createTestAgent({
       api,
@@ -1083,6 +1084,7 @@ t.test("it fetches blocked lists", async () => {
 
   await setTimeout(0);
 
+  t.same(agent.getConfig().getPromptProtectionMode(), "disabled");
   t.same(agent.getConfig().isIPAddressBlocked("1.3.2.4"), {
     blocked: true,
     reason: "Description",
@@ -1354,3 +1356,35 @@ t.test(
     clock.uninstall();
   }
 );
+
+t.test("it fetches prompt protection status", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    blockNewOutgoingRequests: false,
+    promptProtectionMode: "monitor",
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.same(agent.getConfig().getPromptProtectionMode(), "disabled");
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().getPromptProtectionMode(), "monitor");
+
+  clock.uninstall();
+});
