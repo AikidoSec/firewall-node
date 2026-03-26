@@ -1,10 +1,10 @@
 const t = require("tap");
-const { spawnSync, spawn, execSync } = require("child_process");
+const { spawnSync, spawn } = require("child_process");
 const { resolve, join } = require("path");
 const timeout = require("../timeout");
 const { cpSync, writeFileSync } = require("fs");
 
-const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
+const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone-v16");
 
 t.setTimeout(2 * 60 * 1000);
 
@@ -37,15 +37,19 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
-    env: {
-      ...process.env,
-      AIKIDO_DEBUG: "true",
-      AIKIDO_BLOCK: "true",
-      PORT: 4000,
-    },
-    cwd: join(pathToApp, ".next/standalone"),
-  });
+  const server = spawn(
+    `node`,
+    ["-r", "@aikidosec/firewall/instrument", "server.js"],
+    {
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+        PORT: 4000,
+      },
+      cwd: join(pathToApp, ".next/standalone"),
+    }
+  );
 
   server.on("close", () => {
     t.end();
@@ -57,11 +61,13 @@ t.test("it blocks in blocking mode", (t) => {
 
   let stdout = "";
   server.stdout.on("data", (data) => {
+    console.log(data.toString());
     stdout += data.toString();
   });
 
   let stderr = "";
   server.stderr.on("data", (data) => {
+    console.error(data.toString());
     stderr += data.toString();
   });
 
