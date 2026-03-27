@@ -8,6 +8,8 @@ const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone-v16");
 
 t.setTimeout(2 * 60 * 1000);
 
+const majorNodeVersion = parseInt(process.versions.node.split(".")[0], 10);
+
 t.before(() => {
   const { stderr } = spawnSync(`npm`, ["run", "build"], {
     cwd: pathToApp,
@@ -36,161 +38,193 @@ t.before(() => {
   );
 });
 
-t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["-r", "@aikidosec/firewall/instrument", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "true",
-        PORT: 4000,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
-
-  server.on("close", () => {
-    t.end();
-  });
-
-  server.on("error", (err) => {
-    t.fail(err.message);
-  });
-
-  let stdout = "";
-  server.stdout.on("data", (data) => {
-    stdout += data.toString();
-  });
-
-  let stderr = "";
-  server.stderr.on("data", (data) => {
-    stderr += data.toString();
-  });
-
-  // Wait for the server to start
-  timeout(5000)
-    .then((a) => {
-      return Promise.all([
-        fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
-          method: "GET",
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch("http://127.0.0.1:4000/files", {
-          method: "POST",
-          signal: AbortSignal.timeout(5000),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ path: `.';env'` }),
-        }),
-        fetch("http://127.0.0.1:4000/files", {
-          method: "GET",
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch("http://127.0.0.1:4000/cats", {
-          method: "POST",
-          body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: AbortSignal.timeout(5000),
-        }),
-      ]);
-    })
-    .then(
-      ([shellInjectionGet, shellInjectionPost, noInjection, sqlInjection]) => {
-        t.equal(shellInjectionGet.status, 500);
-        t.equal(shellInjectionPost.status, 500);
-        t.equal(noInjection.status, 200);
-        t.equal(sqlInjection.status, 500);
-        t.match(stdout, /Starting agent/);
-        t.match(stderr, /Zen has blocked a shell injection/);
-        t.match(stderr, /Zen has blocked an SQL injection/);
+t.test(
+  "it blocks in blocking mode",
+  {
+    skip:
+      majorNodeVersion < 24
+        ? "Node.js v24 or higher is required for the new instrumentation system"
+        : false,
+  },
+  (t) => {
+    const server = spawn(
+      `node`,
+      ["-r", "@aikidosec/firewall/instrument", "server.js"],
+      {
+        env: {
+          ...process.env,
+          AIKIDO_DEBUG: "true",
+          AIKIDO_BLOCK: "true",
+          PORT: 4000,
+        },
+        cwd: join(pathToApp, ".next/standalone"),
       }
-    )
-    .catch((error) => {
-      t.fail(error.message);
-    })
-    .finally(() => {
-      server.kill();
+    );
+
+    server.on("close", () => {
+      t.end();
     });
-});
 
-t.test("it does not block in dry mode", (t) => {
-  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
-    env: {
-      ...process.env,
-      AIKIDO_DEBUG: "true",
-      PORT: 4001,
-    },
-    cwd: join(pathToApp, ".next/standalone"),
-  });
+    server.on("error", (err) => {
+      t.fail(err.message);
+    });
 
-  server.on("close", () => {
-    t.end();
-  });
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
 
-  server.on("error", (err) => {
-    t.fail(err.message);
-  });
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
 
-  let stdout = "";
-  server.stdout.on("data", (data) => {
-    stdout += data.toString();
-  });
+    // Wait for the server to start
+    timeout(5000)
+      .then((a) => {
+        return Promise.all([
+          fetch("http://127.0.0.1:4000/files?path=.%27;env%27", {
+            method: "GET",
+            signal: AbortSignal.timeout(5000),
+          }),
+          fetch("http://127.0.0.1:4000/files", {
+            method: "POST",
+            signal: AbortSignal.timeout(5000),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ path: `.';env'` }),
+          }),
+          fetch("http://127.0.0.1:4000/files", {
+            method: "GET",
+            signal: AbortSignal.timeout(5000),
+          }),
+          fetch("http://127.0.0.1:4000/cats", {
+            method: "POST",
+            body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: AbortSignal.timeout(5000),
+          }),
+        ]);
+      })
+      .then(
+        ([
+          shellInjectionGet,
+          shellInjectionPost,
+          noInjection,
+          sqlInjection,
+        ]) => {
+          t.equal(shellInjectionGet.status, 500);
+          t.equal(shellInjectionPost.status, 500);
+          t.equal(noInjection.status, 200);
+          t.equal(sqlInjection.status, 500);
+          t.match(stdout, /Starting agent/);
+          t.match(stderr, /Zen has blocked a shell injection/);
+          t.match(stderr, /Zen has blocked an SQL injection/);
+        }
+      )
+      .catch((error) => {
+        t.fail(error.message);
+      })
+      .finally(() => {
+        server.kill();
+      });
+  }
+);
 
-  let stderr = "";
-  server.stderr.on("data", (data) => {
-    stderr += data.toString();
-  });
-
-  // Wait for the server to start
-  timeout(5000)
-    .then((a) => {
-      return Promise.all([
-        fetch("http://127.0.0.1:4001/files?path=.%27;env%27", {
-          method: "GET",
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch("http://127.0.0.1:4001/files", {
-          method: "POST",
-          signal: AbortSignal.timeout(5000),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ path: `.';env'` }),
-        }),
-        fetch("http://127.0.0.1:4001/files", {
-          method: "GET",
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch("http://127.0.0.1:4001/cats", {
-          method: "POST",
-          body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: AbortSignal.timeout(5000),
-        }),
-      ]);
-    })
-    .then(
-      ([shellInjectionGet, shellInjectionPost, noInjection, sqlInjection]) => {
-        t.equal(shellInjectionGet.status, 200);
-        t.equal(shellInjectionPost.status, 200);
-        t.equal(noInjection.status, 200);
-        t.equal(sqlInjection.status, 200);
-        t.match(stdout, /Starting agent/);
-        t.notMatch(stderr, /Zen has blocked a shell injection/);
-        t.notMatch(stderr, /Zen has blocked an SQL injection/);
+t.test(
+  "it does not block in dry mode",
+  {
+    skip:
+      majorNodeVersion < 24
+        ? "Node.js v24 or higher is required for the new instrumentation system"
+        : false,
+  },
+  (t) => {
+    const server = spawn(
+      `node`,
+      ["-r", "@aikidosec/firewall/instrument", "server.js"],
+      {
+        env: {
+          ...process.env,
+          AIKIDO_DEBUG: "true",
+          PORT: 4001,
+        },
+        cwd: join(pathToApp, ".next/standalone"),
       }
-    )
-    .catch((error) => {
-      t.fail(error.message);
-    })
-    .finally(() => {
-      server.kill();
+    );
+
+    server.on("close", () => {
+      t.end();
     });
-});
+
+    server.on("error", (err) => {
+      t.fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    timeout(5000)
+      .then((a) => {
+        return Promise.all([
+          fetch("http://127.0.0.1:4001/files?path=.%27;env%27", {
+            method: "GET",
+            signal: AbortSignal.timeout(5000),
+          }),
+          fetch("http://127.0.0.1:4001/files", {
+            method: "POST",
+            signal: AbortSignal.timeout(5000),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ path: `.';env'` }),
+          }),
+          fetch("http://127.0.0.1:4001/files", {
+            method: "GET",
+            signal: AbortSignal.timeout(5000),
+          }),
+          fetch("http://127.0.0.1:4001/cats", {
+            method: "POST",
+            body: JSON.stringify({ name: "Kitty'); DELETE FROM cats;-- H" }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: AbortSignal.timeout(5000),
+          }),
+        ]);
+      })
+      .then(
+        ([
+          shellInjectionGet,
+          shellInjectionPost,
+          noInjection,
+          sqlInjection,
+        ]) => {
+          t.equal(shellInjectionGet.status, 200);
+          t.equal(shellInjectionPost.status, 200);
+          t.equal(noInjection.status, 200);
+          t.equal(sqlInjection.status, 200);
+          t.match(stdout, /Starting agent/);
+          t.notMatch(stderr, /Zen has blocked a shell injection/);
+          t.notMatch(stderr, /Zen has blocked an SQL injection/);
+        }
+      )
+      .catch((error) => {
+        t.fail(error.message);
+      })
+      .finally(() => {
+        server.kill();
+      });
+  }
+);

@@ -21,6 +21,10 @@ After building your Next.js app, you can run the standalone server with the foll
 node -r @aikidosec/firewall/instrument .next/standalone/server.js
 ```
 
+Please note that this requires a recent version of Node.js, we recommend to use Node.js 24 or higher.
+If you are using an older version of Node.js and you are still using Next.js 14, you can start the server with the following command: `node -r @aikidosec/firewall .next/standalone/server.js`.
+This method is no longer recommended for newer versions of Next.js, so please update to the latest version of Node.js.
+
 If you're using Docker:
 
 ```Dockerfile

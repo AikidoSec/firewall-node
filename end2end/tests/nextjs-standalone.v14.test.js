@@ -37,19 +37,15 @@ t.before(() => {
 });
 
 t.test("it blocks in blocking mode", (t) => {
-  const server = spawn(
-    `node`,
-    ["-r", "@aikidosec/firewall/instrument", "server.js"],
-    {
-      env: {
-        ...process.env,
-        AIKIDO_DEBUG: "true",
-        AIKIDO_BLOCK: "true",
-        PORT: 4000,
-      },
-      cwd: join(pathToApp, ".next/standalone"),
-    }
-  );
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      PORT: 4000,
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
 
   server.on("close", () => {
     t.end();
