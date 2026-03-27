@@ -1,6 +1,10 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import type { ClientHttp2Stream, IncomingHttpHeaders, ServerHttp2Stream } from "http2";
+import type {
+  ClientHttp2Stream,
+  IncomingHttpHeaders,
+  ServerHttp2Stream,
+} from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
