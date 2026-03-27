@@ -100,12 +100,10 @@ t.test("it decodes JWTs", async () => {
     }),
     fromArr([
       "token",
-      "iat",
-      "username",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
       "sub",
       "1234567890",
       "$ne",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNlcm5hbWUiOnsiJG5lIjpudWxsfSwiaWF0IjoxNTE2MjM5MDIyfQ._jhGJw9WzB6gHKPSozTFHDo9NOHs3CNOlvJ8rWy6VrQ",
       "username",
       "iat",
     ])
@@ -344,4 +342,158 @@ t.test("it works with objects containing constructor key", async () => {
     }),
     fromArr(["test", "value", "constructor", "constructor value"])
   );
+});
+
+t.test("it works with objects containing prototype key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      prototype: "prototype value",
+    }),
+    fromArr(["test", "value", "prototype", "prototype value"])
+  );
+
+  t.same(
+    extractStringsFromUserInput(
+      JSON.parse('{"test":"value","__proto__":{"protoKey":"protoValue"}}')
+    ),
+    fromArr(["test", "value", "__proto__", "protoKey", "protoValue"])
+  );
+});
+
+t.test("it works with Map objects", async () => {
+  const map = new Map<string | number, string | object>();
+  map.set("key1", "value1");
+  map.set("key2", { nestedKey: "nestedValue" });
+  map.set(5, "value3");
+
+  t.same(
+    extractStringsFromUserInput(map),
+    fromArr(["key1", "value1", "key2", "nestedKey", "nestedValue", "value3"])
+  );
+});
+
+t.test("it works with Sets", async () => {
+  const set = new Set<string | object>();
+  set.add("value1");
+  set.add({ nestedKey: "nestedValue" });
+
+  t.same(
+    extractStringsFromUserInput(set),
+    fromArr(["value1", "nestedKey", "nestedValue"])
+  );
+});
+
+t.test("it works with URLSearchParams", async () => {
+  const params = new URLSearchParams();
+  params.append("key1", "value1");
+  params.append("key2", "value2");
+
+  t.same(
+    extractStringsFromUserInput(params),
+    fromArr(["key1", "value1", "key2", "value2"])
+  );
+});
+
+t.test(
+  "it works with FormData",
+  {
+    skip:
+      typeof globalThis.FormData === "undefined"
+        ? "FormData is not supported in this environment"
+        : false,
+  },
+  async () => {
+    const formData = new globalThis.FormData();
+    formData.append("key1", "value1");
+    formData.append("key2", "value2");
+
+    t.same(
+      extractStringsFromUserInput(formData),
+      fromArr(["key1", "value1", "key2", "value2"])
+    );
+  }
+);
+
+t.test(
+  "it works with headers object",
+  {
+    skip:
+      typeof Headers === "undefined"
+        ? "Headers is not supported in this environment"
+        : false,
+  },
+  async () => {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("Authorization", "Bearer token");
+
+    t.same(
+      extractStringsFromUserInput(headers),
+      fromArr([
+        "content-type",
+        "application/json",
+        "authorization",
+        "Bearer token",
+      ])
+    );
+  }
+);
+
+t.test("it works with class instances", async () => {
+  class Foo {
+    bar = "baz";
+    num = 42;
+  }
+  t.same(
+    extractStringsFromUserInput(new Foo()),
+    fromArr(["bar", "baz", "num"])
+  );
+
+  class Nested {
+    key = "value";
+    child = { nested: "data" };
+  }
+  t.same(
+    extractStringsFromUserInput(new Nested()),
+    fromArr(["key", "value", "child", "nested", "data"])
+  );
+});
+
+t.test("it works with wrongly used WeakMap", async () => {
+  const weakMap = new WeakMap();
+  // @ts-expect-error Ignore
+  weakMap["key1"] = "value1";
+  // @ts-expect-error Ignore
+  weakMap["key2"] = { nestedKey: "nestedValue" };
+
+  t.same(
+    extractStringsFromUserInput(weakMap),
+    fromArr(["key1", "value1", "key2", "nestedKey", "nestedValue"])
+  );
+});
+
+t.test("it does not call getters", async () => {
+  const obj = {
+    get secret() {
+      return "should not be called";
+    },
+    normalKey: "normalValue",
+  };
+
+  t.same(
+    extractStringsFromUserInput(obj),
+    fromArr(["normalKey", "normalValue"])
+  );
+});
+
+t.test("it does not call toString methods", async () => {
+  const obj = {
+    key: "value",
+    toString() {
+      throw new Error("toString should not be called");
+    },
+  };
+
+  t.same(extractStringsFromUserInput(obj), fromArr(["key", "value"]));
 });
