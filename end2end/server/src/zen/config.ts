@@ -9,7 +9,6 @@ type AppConfig = {
   blockedUserIds: number[];
   allowedIPAddresses: string[];
   blockNewOutgoingRequests: boolean;
-  blockInvalidSqlQueries?: boolean;
   domains: any[];
   failureRate?: number;
   timeout?: number;

@@ -66,7 +66,6 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
-  private blockInvalidSqlQueries = false;
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
 
   constructor(
@@ -89,10 +88,6 @@ export class Agent {
 
   shouldBlock() {
     return this.block;
-  }
-
-  shouldBlockInvalidSqlQueries() {
-    return this.blockInvalidSqlQueries;
   }
 
   isServerless() {
@@ -302,15 +297,6 @@ export class Agent {
           this.block = response.block;
           this.logger.log(
             `Block mode has been set to ${this.block ? "on" : "off"}`
-          );
-        }
-      }
-
-      if (typeof response.blockInvalidSqlQueries === "boolean") {
-        if (response.blockInvalidSqlQueries !== this.blockInvalidSqlQueries) {
-          this.blockInvalidSqlQueries = response.blockInvalidSqlQueries;
-          this.logger.log(
-            `Block invalid SQL queries has been set to ${this.blockInvalidSqlQueries ? "on" : "off"}`
           );
         }
       }

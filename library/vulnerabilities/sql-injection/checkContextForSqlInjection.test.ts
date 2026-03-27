@@ -1,11 +1,11 @@
 import * as t from "tap";
-import { setTimeout } from "node:timers/promises";
 import { checkContextForSqlInjection } from "./checkContextForSqlInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
 import { Context } from "../../agent/Context";
-import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
-import { Token } from "../../agent/api/Token";
-import { createTestAgent } from "../../helpers/createTestAgent";
+
+t.beforeEach(() => {
+  delete process.env.AIKIDO_BLOCK_INVALID_SQL;
+});
 
 t.test("it returns correct path", async () => {
   t.same(
@@ -63,10 +63,33 @@ function createFailingContext(): Context {
   };
 }
 
+t.test("it blocks failed tokenization by default", async () => {
+  t.same(
+    checkContextForSqlInjection({
+      sql: failingSQL,
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: createFailingContext(),
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "body",
+      pathsToPayload: [".comment"],
+      metadata: {
+        sql: failingSQL,
+        dialect: "MySQL",
+        failedToTokenize: "true",
+      },
+      payload: failingInput,
+    }
+  );
+});
+
 t.test(
-  "it does not block failed tokenization when blockInvalidSqlQueries is disabled",
+  "it does not block failed tokenization when AIKIDO_BLOCK_INVALID_SQL is false",
   async () => {
-    createTestAgent();
+    process.env.AIKIDO_BLOCK_INVALID_SQL = "false";
 
     t.same(
       checkContextForSqlInjection({
@@ -76,48 +99,6 @@ t.test(
         context: createFailingContext(),
       }),
       undefined
-    );
-  }
-);
-
-t.test(
-  "it blocks failed tokenization when blockInvalidSqlQueries is enabled",
-  async () => {
-    const api = new ReportingAPIForTesting({
-      success: true,
-      endpoints: [],
-      configUpdatedAt: 0,
-      heartbeatIntervalInMS: 10 * 60 * 1000,
-      blockedUserIds: [],
-      allowedIPAddresses: [],
-      blockInvalidSqlQueries: true,
-    });
-    const agent = createTestAgent({
-      api,
-      token: new Token("test"),
-    });
-    agent.start([]);
-    await setTimeout(0);
-
-    t.same(
-      checkContextForSqlInjection({
-        sql: failingSQL,
-        operation: "mysql.query",
-        dialect: new SQLDialectMySQL(),
-        context: createFailingContext(),
-      }),
-      {
-        operation: "mysql.query",
-        kind: "sql_injection",
-        source: "body",
-        pathsToPayload: [".comment"],
-        metadata: {
-          sql: failingSQL,
-          dialect: "MySQL",
-          failedToTokenize: "true",
-        },
-        payload: failingInput,
-      }
     );
   }
 );

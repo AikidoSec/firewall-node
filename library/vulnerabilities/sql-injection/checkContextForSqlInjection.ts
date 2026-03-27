@@ -1,7 +1,7 @@
-import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { getPathsToPayload } from "../../helpers/attackPath";
+import { envToBool } from "../../helpers/envToBool";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import {
@@ -9,6 +9,18 @@ import {
   SQLInjectionDetectionResult,
 } from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
+
+/**
+ * Block SQL queries that fail tokenization by default.
+ * Set AIKIDO_BLOCK_INVALID_SQL=false to disable.
+ */
+function shouldBlockInvalidSqlQueries(): boolean {
+  if (process.env.AIKIDO_BLOCK_INVALID_SQL === undefined) {
+    return true;
+  }
+
+  return envToBool(process.env.AIKIDO_BLOCK_INVALID_SQL);
+}
 
 /**
  * This function goes over all the different input types in the context and checks
@@ -49,7 +61,7 @@ export function checkContextForSqlInjection({
       // If our tokenizer can't handle the query, we can't detect SQL injection.
       // Attackers can exploit this (e.g. ClickHouse ignores invalid SQL after `;`,
       // SQLite allows `/*` without closing `*/`).
-      if (getInstance()?.shouldBlockInvalidSqlQueries()) {
+      if (shouldBlockInvalidSqlQueries()) {
         const source = getSourceForUserString(context, str);
         if (source) {
           return {
