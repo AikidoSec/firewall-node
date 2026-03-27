@@ -2,6 +2,7 @@ import * as t from "tap";
 import { setTimeout } from "node:timers/promises";
 import { checkContextForSqlInjection } from "./checkContextForSqlInjection";
 import { SQLDialectMySQL } from "./dialects/SQLDialectMySQL";
+import { Context } from "../../agent/Context";
 import { ReportingAPIForTesting } from "../../agent/api/ReportingAPIForTesting";
 import { Token } from "../../agent/api/Token";
 import { createTestAgent } from "../../helpers/createTestAgent";
@@ -45,20 +46,22 @@ t.test("it returns correct path", async () => {
 const failingSQL = `SELECT * FROM comments WHERE comment = 'I'm writting you'`;
 const failingInput = "I'm writting you";
 
-const failingContext = {
-  cookies: {},
-  headers: {},
-  remoteAddress: "ip",
-  method: "POST" as const,
-  url: "url",
-  query: {},
-  body: {
-    comment: failingInput,
-  },
-  source: "express" as const,
-  route: "/",
-  routeParams: {},
-};
+function createFailingContext(): Context {
+  return {
+    cookies: {},
+    headers: {},
+    remoteAddress: "ip",
+    method: "POST",
+    url: "url",
+    query: {},
+    body: {
+      comment: failingInput,
+    },
+    source: "express",
+    route: "/",
+    routeParams: {},
+  };
+}
 
 t.test(
   "it does not block failed tokenization when blockInvalidSqlQueries is disabled",
@@ -70,7 +73,7 @@ t.test(
         sql: failingSQL,
         operation: "mysql.query",
         dialect: new SQLDialectMySQL(),
-        context: failingContext,
+        context: createFailingContext(),
       }),
       undefined
     );
@@ -101,7 +104,7 @@ t.test(
         sql: failingSQL,
         operation: "mysql.query",
         dialect: new SQLDialectMySQL(),
-        context: failingContext,
+        context: createFailingContext(),
       }),
       {
         operation: "mysql.query",
@@ -111,6 +114,7 @@ t.test(
         metadata: {
           sql: failingSQL,
           dialect: "MySQL",
+          failedToTokenize: "true",
         },
         payload: failingInput,
       }

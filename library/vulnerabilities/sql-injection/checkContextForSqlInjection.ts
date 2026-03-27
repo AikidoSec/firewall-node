@@ -60,6 +60,7 @@ export function checkContextForSqlInjection({
             metadata: {
               sql: sql,
               dialect: dialect.getHumanReadableName(),
+              failedToTokenize: "true",
             },
             payload: str,
           };
