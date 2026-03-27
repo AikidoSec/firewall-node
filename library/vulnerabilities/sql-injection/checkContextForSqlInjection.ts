@@ -10,10 +10,6 @@ import {
 } from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
 
-/**
- * Block SQL queries that fail tokenization by default.
- * Set AIKIDO_BLOCK_INVALID_SQL=false to disable.
- */
 function shouldBlockInvalidSqlQueries(): boolean {
   if (process.env.AIKIDO_BLOCK_INVALID_SQL === undefined) {
     return true;
