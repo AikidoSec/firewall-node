@@ -1,4 +1,3 @@
-import type { LoadFunction } from "./types";
 import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
@@ -11,7 +10,11 @@ import {
 } from "./instructions";
 import { removeNodePrefix } from "../../../helpers/removeNodePrefix";
 import { getInstance } from "../../AgentSingleton";
-import { syncBuiltinESMExports } from "module";
+import {
+  type LoadFnOutput,
+  type LoadHookContext,
+  syncBuiltinESMExports,
+} from "module";
 import { getBuiltinModuleWithoutPatching } from "./processGetBuiltin";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
 
@@ -19,9 +22,9 @@ const builtinPatchedSymbol = Symbol("zen.instrumentation.builtin.patched");
 
 export function onModuleLoad(
   path: string,
-  context: Parameters<LoadFunction>[1],
-  previousLoadResult: ReturnType<LoadFunction>
-): ReturnType<LoadFunction> {
+  _context: LoadHookContext,
+  previousLoadResult: LoadFnOutput
+): LoadFnOutput {
   try {
     // Ignore unsupported formats, e.g. wasm, native addons or json
     if (
@@ -65,10 +68,7 @@ export function onModuleLoad(
   }
 }
 
-function patchPackage(
-  path: string,
-  previousLoadResult: ReturnType<LoadFunction>
-) {
+function patchPackage(path: string, previousLoadResult: LoadFnOutput) {
   const moduleInfo = getModuleInfoFromPath(path);
   if (!moduleInfo) {
     // This is e.g. the case for user code (not a dependency)
@@ -144,10 +144,7 @@ function patchPackage(
   };
 }
 
-function patchBuiltin(
-  builtinName: string,
-  previousLoadResult: ReturnType<LoadFunction>
-) {
+function patchBuiltin(builtinName: string, previousLoadResult: LoadFnOutput) {
   const builtinNameWithoutPrefix = removeNodePrefix(builtinName);
 
   const builtin = shouldPatchBuiltin(builtinNameWithoutPrefix);
@@ -188,7 +185,7 @@ function isSelfCheckImport(path: string) {
     .includes("hooks/instrumentation/zenHooksCheckImport."); // .js or .ts
 }
 
-function updateSelfCheckSource(previousLoadResult: ReturnType<LoadFunction>) {
+function updateSelfCheckSource(previousLoadResult: LoadFnOutput) {
   const sourceString =
     typeof previousLoadResult.source === "string"
       ? previousLoadResult.source
