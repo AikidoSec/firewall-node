@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
@@ -79,13 +79,13 @@ jobs:
         run: npm run containers
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: firewall-node-library-${{ github.sha }}
 
       - name: Run tests with current instrumentation (max 3 attempts)
         if: ${{ matrix.instrumentation == 'current' }}
-        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -93,7 +93,7 @@ jobs:
 
       - name: Run tests with new instrumentation in CJS mode (max 3 attempts)
         if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'cjs' }}
-        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -101,14 +101,14 @@ jobs:
 
       - name: Run tests in ESM mode (max 3 attempts)
         if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'esm' }}
-        uses: nick-fields/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           timeout_minutes: 15
           max_attempts: 3
           command: npm run test:esm
 
       - name: Upload coverage
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
         with:
           files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
           use_oidc: true
