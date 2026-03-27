@@ -156,19 +156,65 @@ t.test("it does not block in dry mode", (t) => {
     });
 });
 
-t.setTimeout(80000);
+t.test("it blocks invalid SQL queries by default", (t) => {
+  const server = spawn(`node`, [pathToApp, "4003"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCKING: "true",
+    },
+  });
+
+  server.on("close", () => {
+    t.end();
+  });
+
+  server.on("error", (err) => {
+    t.fail(err.message);
+  });
+
+  let stdout = "";
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  let stderr = "";
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  // Wait for the server to start
+  timeout(2000)
+    .then(() => {
+      return fetch(
+        `http://localhost:4003/invalid-query?sql=${encodeURIComponent("I'm a test")}`,
+        {
+          signal: AbortSignal.timeout(5000),
+          method: "POST",
+        }
+      );
+    })
+    .then((response) => {
+      t.equal(response.status, 500);
+      t.match(stdout, /Zen has blocked an SQL injection/);
+    })
+    .catch((error) => {
+      t.fail(error.message);
+    })
+    .finally(() => {
+      server.kill();
+    });
+});
 
 t.test(
-  "it increments sqlTokenizationFailures counter for invalid SQL queries",
+  "it does not block invalid SQL queries when AIKIDO_BLOCK_INVALID_SQL is false",
   (t) => {
-    const server = spawn(`node`, [pathToApp, "4003"], {
+    const server = spawn(`node`, [pathToApp, "4004"], {
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
         AIKIDO_BLOCKING: "true",
-        AIKIDO_TOKEN: token,
-        AIKIDO_ENDPOINT: testServerUrl,
-        AIKIDO_REALTIME_ENDPOINT: testServerUrl,
+        AIKIDO_BLOCK_INVALID_SQL: "false",
       },
     });
 
@@ -177,7 +223,7 @@ t.test(
     });
 
     server.on("error", (err) => {
-      t.fail(err);
+      t.fail(err.message);
     });
 
     let stdout = "";
@@ -194,7 +240,7 @@ t.test(
     timeout(2000)
       .then(() => {
         return fetch(
-          `http://localhost:4003/invalid-query?sql=${encodeURIComponent("SELECT * FROM test")}`,
+          `http://localhost:4004/invalid-query?sql=${encodeURIComponent("SELECT * FROM test")}`,
           {
             signal: AbortSignal.timeout(5000),
             method: "POST",
@@ -202,36 +248,11 @@ t.test(
         );
       })
       .then((response) => {
-        return response.text();
-      })
-      .then((responseText) => {
-        t.match(responseText, /You have an error in your SQL syntax/);
-
-        // Wait for the heartbeat event to be sent
-        return timeout(60000);
-      })
-      .then(() => {
-        return fetch(`${testServerUrl}/api/runtime/events`, {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-          signal: AbortSignal.timeout(5000),
-        });
-      })
-      .then((response) => {
-        return response.json();
-      })
-      .then((events) => {
-        const heartbeatEvents = events.filter(
-          (event) => event.type === "heartbeat"
-        );
-        t.same(heartbeatEvents.length, 1);
-        const [heartbeat] = heartbeatEvents;
-        t.equal(heartbeat.stats.sqlTokenizationFailures, 1);
+        t.equal(response.status, 500);
+        t.notMatch(stdout, /Zen has blocked an SQL injection/);
       })
       .catch((error) => {
-        t.error(error);
+        t.fail(error.message);
       })
       .finally(() => {
         server.kill();
