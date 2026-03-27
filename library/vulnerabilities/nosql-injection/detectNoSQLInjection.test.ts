@@ -908,3 +908,111 @@ t.test("it works with Maps", async (t) => {
     }
   );
 });
+
+t.test("it works with non plain object filter", async (t) => {
+  class Filter {
+    username = "admin";
+    test = { $ne: "", hello: "world" };
+  }
+
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          test: { $ne: "", hello: "world" },
+        },
+      }),
+      new Filter()
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".test"],
+      payload: { $ne: "" },
+    }
+  );
+
+  class Operators {
+    $gt = "21";
+    $lt = "100";
+  }
+
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { age: { $gt: "21", $lt: "100" } },
+      }),
+      {
+        age: new Operators(),
+      }
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".age"],
+      payload: { $gt: "21", $lt: "100" },
+    }
+  );
+});
+
+t.test(
+  "it ignores inherited properties on non plain object filter",
+  async (t) => {
+    const inherited = {
+      test: { $ne: "" },
+    };
+
+    const filter = Object.create(inherited) as {
+      username: string;
+    };
+    filter.username = "admin";
+
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: {
+            username: "admin",
+            test: { $ne: "" },
+          },
+        }),
+        filter
+      ),
+      {
+        injection: false,
+      }
+    );
+  }
+);
+
+t.test("it ignores getter properties on non plain object filter", async (t) => {
+  const filter: Record<string, unknown> = {
+    username: "admin",
+    test: { $ne: "" },
+  };
+
+  Object.defineProperty(filter, "throwing", {
+    enumerable: true,
+    get() {
+      throw new Error("getter should not be executed");
+    },
+  });
+
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: {
+          username: "admin",
+          test: { $ne: "" },
+        },
+      }),
+      filter
+    ),
+    {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".test"],
+      payload: { $ne: "" },
+    }
+  );
+});

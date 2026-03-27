@@ -393,6 +393,22 @@ export function createMongoDBTests(
           "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
         );
       }
+
+      const weakMapError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          const filter = new WeakMap();
+          // @ts-expect-error Wrongly used WeakMap
+          filter["title"] = { $ne: null };
+          return collection.find(filter).toArray();
+        });
+      });
+      t.ok(weakMapError instanceof Error);
+      if (weakMapError instanceof Error) {
+        t.same(
+          weakMapError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.find(...) originating from body.myTitle"
+        );
+      }
     } catch (error: any) {
       t.fail(error.message);
     } finally {
