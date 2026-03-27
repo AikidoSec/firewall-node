@@ -90,6 +90,79 @@ t.test("it blocks in blocking mode", (t) => {
     });
 });
 
+t.test(
+  "it blocks invalid SQL queries when blockInvalidSqlQueries is enabled",
+  (t) => {
+    const server = spawn(`node`, [pathToApp, "4003"], {
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCKING: "true",
+        AIKIDO_TOKEN: token,
+        AIKIDO_ENDPOINT: testServerUrl,
+        AIKIDO_REALTIME_ENDPOINT: testServerUrl,
+      },
+    });
+
+    server.on("close", () => {
+      t.end();
+    });
+
+    server.on("error", (err) => {
+      t.fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start
+    timeout(2000)
+      .then(() => {
+        // Enable blockInvalidSqlQueries via the config endpoint
+        return fetch(`${testServerUrl}/api/runtime/config`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+          body: JSON.stringify({
+            blockInvalidSqlQueries: true,
+          }),
+        });
+      })
+      .then(() => {
+        // Wait for the agent to pick up the new config
+        return timeout(5000);
+      })
+      .then(() => {
+        return fetch(
+          `http://localhost:4003/invalid-query?sql=${encodeURIComponent("SELECT * FROM test")}`,
+          {
+            signal: AbortSignal.timeout(5000),
+            method: "POST",
+          }
+        );
+      })
+      .then((response) => {
+        t.equal(response.status, 500);
+        t.match(stderr, /Zen has blocked an SQL injection/);
+      })
+      .catch((error) => {
+        t.fail(error.message);
+      })
+      .finally(() => {
+        server.kill();
+      });
+  }
+);
+
 t.test("it does not block in dry mode", (t) => {
   const server = spawn(`node`, [pathToApp, "4001"], {
     env: { ...process.env, AIKIDO_DEBUG: "true" },
