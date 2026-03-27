@@ -1,6 +1,5 @@
 import { onModuleLoad } from "./loadHook";
 import * as mod from "node:module";
-import type { RegisterHookFunction } from "./types";
 import { patchProcessGetBuiltinModule } from "./processGetBuiltin";
 import { checkHooks } from "./checkHooks";
 
@@ -19,7 +18,7 @@ export function registerNodeHooks() {
 
   // Hook into the ESM & CJS module loading process
   // Types are required because official Node.js typings are not up-to-date
-  (mod.registerHooks as RegisterHookFunction)({
+  mod.registerHooks({
     load(url, context, nextLoad) {
       const result = nextLoad(url, context);
       return onModuleLoad(url, context, result);

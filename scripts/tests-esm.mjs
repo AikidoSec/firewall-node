@@ -88,7 +88,7 @@ for await (const entry of testFiles) {
   const newFilename = filename.replace(/ts$/, "js");
 
   // --------------- Transform TS to JS and parse to AST ----------------
-  let { code, errors } = transform(filename, sourceText, {
+  let { code, errors } = await transform(filename, sourceText, {
     target: "es2022",
     typescript: {
       rewriteImportExtensions: "rewrite",
