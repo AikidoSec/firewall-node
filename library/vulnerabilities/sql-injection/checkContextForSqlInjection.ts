@@ -46,9 +46,25 @@ export function checkContextForSqlInjection({
     }
 
     if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
-      // We don't want to block queries that fail to tokenize.
-      // This counter helps us monitor how often our SQL tokenizer fails.
-      getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
+      // If our tokenizer can't handle the query, we can't detect SQL injection.
+      // Attackers can exploit this (e.g. ClickHouse ignores invalid SQL after `;`,
+      // SQLite allows `/*` without closing `*/`).
+      if (getInstance()?.shouldBlockInvalidSqlQueries()) {
+        const source = getSourceForUserString(context, str);
+        if (source) {
+          return {
+            operation: operation,
+            kind: "sql_injection",
+            source: source,
+            pathsToPayload: getPathsToPayload(str, context[source]),
+            metadata: {
+              sql: sql,
+              dialect: dialect.getHumanReadableName(),
+            },
+            payload: str,
+          };
+        }
+      }
     }
   }
 }

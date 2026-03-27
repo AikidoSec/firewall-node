@@ -29,6 +29,7 @@ export type Config = {
   blockedUserIds: string[];
   allowedIPAddresses: string[];
   block?: boolean;
+  blockInvalidSqlQueries?: boolean;
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
 };
