@@ -175,7 +175,6 @@ export type TrackedEvent = {
   event: {
     name: string;
     userId: string | undefined;
-    metadata: Record<string, string>;
     ipAddress: string | undefined;
     userAgent: string | undefined;
   };
