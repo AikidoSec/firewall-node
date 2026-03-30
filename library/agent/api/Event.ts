@@ -170,21 +170,4 @@ export type DetectedAttackWave = {
   time: number;
 };
 
-export type TrackedEvent = {
-  type: "tracked_event";
-  event: {
-    name: string;
-    userId: string | undefined;
-    ipAddress: string | undefined;
-    userAgent: string | undefined;
-  };
-  agent: AgentInfo;
-  time: number;
-};
-
-export type Event =
-  | Started
-  | DetectedAttack
-  | Heartbeat
-  | DetectedAttackWave
-  | TrackedEvent;
+export type Event = Started | DetectedAttack | Heartbeat | DetectedAttackWave;
