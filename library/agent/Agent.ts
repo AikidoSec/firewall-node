@@ -12,8 +12,8 @@ import type {
   AgentInfo,
   DetectedAttack,
   DetectedAttackWave,
-  TrackedEvent,
 } from "./api/Event";
+import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { type Config, Endpoint } from "./Config";
@@ -789,23 +789,14 @@ export class Agent {
     }
   }
 
-  onTrackEvent(event: TrackedEvent["event"]) {
+  onTrackEvent(event: UserEvent) {
     if (!this.token) {
       return;
     }
 
-    const tracked: TrackedEvent = {
-      type: "tracked_event",
-      event,
-      agent: this.getAgentInfo(),
-      time: Date.now(),
-    };
-
-    const promise = this.api
-      .report(this.token, tracked, this.timeoutInMS)
-      .catch(() => {
-        this.logger.log("Failed to report tracked event");
-      });
+    const promise = sendUserEvent(this.token, event).catch(() => {
+      this.logger.log("Failed to report tracked event");
+    });
     this.pendingEvents.onAPICall(promise);
   }
 
