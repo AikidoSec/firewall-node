@@ -27,7 +27,6 @@ export function track(eventName: string): void {
   agent.onTrackEvent({
     name: eventName,
     userId: context.user?.id,
-    metadata: {},
     ipAddress: context.remoteAddress,
     userAgent,
   });
