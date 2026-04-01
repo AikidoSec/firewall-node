@@ -4,6 +4,7 @@ import { createTestAgent } from "../../helpers/createTestAgent";
 import type { Context } from "../../agent/Context";
 import { SQLDialectSQLite } from "../sql-injection/dialects/SQLDialectSQLite";
 import { SQLDialectPostgres } from "../sql-injection/dialects/SQLDialectPostgres";
+import { SQLDialectMySQL } from "../sql-injection/dialects/SQLDialectMySQL";
 
 const context: Context = {
   remoteAddress: "::1",
@@ -21,6 +22,7 @@ const context: Context = {
 
 const sqlite = new SQLDialectSQLite();
 const postgres = new SQLDialectPostgres();
+const mysql = new SQLDialectMySQL();
 
 t.test("checkContextForIdor", async (t) => {
   const agent = createTestAgent();
@@ -203,4 +205,29 @@ t.test("checkContextForIdor", async (t) => {
       t.equal(result, undefined);
     }
   );
+
+  await t.test("cache is not reused across dialects", async () => {
+    const postgresResult = checkContextForIdor({
+      sql: "SELECT * FROM orders WHERE tenant_id = $1",
+      context,
+      dialect: postgres,
+      resolvePlaceholder: () => "org_123",
+    });
+    t.equal(
+      postgresResult,
+      undefined,
+      "postgres: allowed when $1 resolves to tenant ID"
+    );
+
+    const mysqlResult = checkContextForIdor({
+      sql: "SELECT * FROM orders WHERE tenant_id = $1",
+      context,
+      dialect: mysql,
+      resolvePlaceholder: () => "org_123",
+    });
+    t.ok(
+      mysqlResult,
+      "mysql: blocked because $1 is a literal, not a placeholder"
+    );
+  });
 });

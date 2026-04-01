@@ -214,7 +214,8 @@ function getAnalysisResults(
   sql: string,
   dialect: SQLDialect
 ): { results: SqlQueryResult[] } | { error: string } | undefined {
-  const cached = cache.get(sql);
+  const cacheKey = `${dialect.getWASMDialectInt()}:${sql}`;
+  const cached = cache.get(cacheKey);
   if (cached) {
     return { results: cached };
   }
@@ -230,7 +231,7 @@ function getAnalysisResults(
   }
 
   const results = result as SqlQueryResult[];
-  cache.set(sql, results);
+  cache.set(cacheKey, results);
 
   return { results };
 }
