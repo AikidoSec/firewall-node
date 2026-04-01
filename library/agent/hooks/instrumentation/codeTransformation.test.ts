@@ -2354,6 +2354,7 @@ t.test("it works with mts extension (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          className: undefined,
         },
       ],
       accessLocalVariables: [],
@@ -2662,6 +2663,221 @@ t.test(
           }
       };
     `
+    );
+  }
+);
+
+t.test(
+  "It does instrument class assignment expression if class name is not set",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.cjs",
+      `
+        const TestClass = class {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: undefined,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        const TestClass = class {
+          private testValue = 42;
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+          }
+      };
+    `
+    );
+  }
+);
+
+t.test(
+  "It does instrument anonymous class expression assigned to a property",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.cjs",
+      `
+        const internals = {};
+        internals.Server = class {
+            route(options) {
+                console.log("route", options);
+            }
+        };
+        `,
+      "commonjs",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "route",
+            identifier: "testpkg.test.js.route.MethodDefinition.^1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        const internals = {};
+        internals.Server = class {
+          route(options) {
+            __instrumentInspectArgs("testpkg.test.js.route.MethodDefinition.^1.0.0", arguments, "1.0.0", this);
+            console.log("route", options);
+          }
+        };`
+    );
+  }
+);
+
+t.test("It does instrument private methods in classes", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.cjs",
+    `
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            #testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+          className: undefined,
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        class Test {
+          private testValue = 42;
+          constructor() {
+            this.testFunction(testValue);
+          }
+          #testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+          }
+      }
+    `
+  );
+});
+
+t.test(
+  "It does instrument named class expression assigned to module.exports",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.cjs",
+      `
+        module.exports = class Application extends Emitter {
+            use(fn) {
+                console.log("use", fn);
+            }
+        }
+        `,
+      "commonjs",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "use",
+            identifier: "testpkg.test.js.use.MethodDefinition.^1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+        module.exports = class Application extends Emitter {
+          use(fn) {
+            __instrumentInspectArgs("testpkg.test.js.use.MethodDefinition.^1.0.0", arguments, "1.0.0", this);
+            console.log("use", fn);
+          }
+        };`
     );
   }
 );

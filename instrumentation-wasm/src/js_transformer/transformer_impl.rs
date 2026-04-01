@@ -1,5 +1,9 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType};
+use oxc_ast::AstBuilder;
+use oxc_ast::ast::{
+    AssignmentExpression, AssignmentOperator, Class, ClassElement, Expression, Function,
+    FunctionBody, FunctionType, VariableDeclarator,
+};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use super::helpers::{
@@ -13,7 +17,7 @@ pub struct Transformer<'a> {
     pub allocator: &'a Allocator,
     pub file_instructions: &'a FileInstructions,
     pub pkg_version: &'a str,
-    pub ast_builder: &'a oxc_ast::AstBuilder<'a>,
+    pub ast_builder: &'a AstBuilder<'a>,
 }
 
 pub struct TraverseState {}
@@ -21,7 +25,7 @@ pub struct TraverseState {}
 impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
     fn enter_assignment_expression(
         &mut self,
-        node: &mut oxc_ast::ast::AssignmentExpression<'a>,
+        node: &mut AssignmentExpression<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if node.operator != AssignmentOperator::Assign {
@@ -68,12 +72,11 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> =
-            match &mut node.right {
-                Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
-                Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
-                _ => return,
-            };
+        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match &mut node.right {
+            Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+            _ => return,
+        };
 
         insert_instrument_method_calls(
             self.allocator,
@@ -88,7 +91,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
     fn enter_function(
         &mut self,
-        node: &mut oxc_ast::ast::Function<'a>,
+        node: &mut Function<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         let node_type = match node.r#type {
@@ -143,7 +146,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
     fn enter_variable_declarator(
         &mut self,
-        node: &mut oxc_ast::ast::VariableDeclarator<'a>,
+        node: &mut VariableDeclarator<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if !node.id.is_binding_identifier() || node.init.is_none() {
@@ -183,7 +186,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> = match expr {
+        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match expr {
             Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
             Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
             _ => return,
@@ -200,33 +203,26 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
         );
     }
 
-    fn enter_class(
-        &mut self,
-        node: &mut oxc_ast::ast::Class<'a>,
-        ctx: &mut TraverseCtx<'a, TraverseState>,
-    ) {
-        let class_name: String = if node.is_declaration() {
-            match node.name() {
-                Some(name) => name.to_string(),
-                None => return,
-            }
+    fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a, TraverseState>) {
+        let class_name: Option<String> = if let Some(name) = node.name() {
+            Some(name.to_string())
+        } else if node.is_declaration() {
+            // Unnamed class declaration — class name is unknown
+            None
         } else {
-            // It is a expression
-            // e.g. const Test = class {}
+            // Anonymous class expression, e.g. const Test = class {}
             match ctx.parent() {
                 Ancestor::VariableDeclaratorInit(declarator) => {
-                    match declarator.id().get_identifier_name() {
-                        Some(name) => name.to_string(),
-                        None => return,
-                    }
+                    declarator.id().get_identifier_name().map(|n| n.to_string())
                 }
-                _ => return,
+                // e.g. internals.Server = class {} — class name is unknown
+                _ => None,
             }
         };
 
         for class_element in node.body.body.iter_mut() {
             let method_def = match class_element {
-                oxc_ast::ast::ClassElement::MethodDefinition(method_def) => method_def,
+                ClassElement::MethodDefinition(method_def) => method_def,
                 _ => continue,
             };
 
@@ -235,7 +231,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
                 continue;
             }
 
-            let method_name = match method_def.key.static_name() {
+            let method_name = match method_def.key.name() {
                 Some(name) => name.to_string(),
                 None => continue,
             };
@@ -243,8 +239,12 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             let instruction = self.file_instructions.functions.iter().find(|f| {
                 f.node_type == "MethodDefinition"
                     && f.name == method_name
-                    // For backwards compatibility reasons, we allow instructions without a class name to match
-                    && f.class_name.as_ref().is_none_or(|cn| cn == &class_name)
+                    && match &f.class_name {
+                        // No class name filter — match any class (backwards compatibility)
+                        None => true,
+                        // Class name filter specified — only match if class name is known and matches
+                        Some(cn) => class_name.as_ref().is_some_and(|actual| actual == cn),
+                    }
             });
 
             if instruction.is_none() {
