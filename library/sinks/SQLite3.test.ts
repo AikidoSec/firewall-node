@@ -130,6 +130,7 @@ t.test("it detects SQL injections", async () => {
 
     // Query with syntax error and user input should be blocked by Zen
     // because the SQL tokenizer can't parse the query (unclosed quote)
+    process.env.AIKIDO_BLOCK_INVALID_SQL = "true";
     const syntaxError = await t.rejects(async () => {
       await runWithContext(
         { ...dangerousContext, body: { name: "SELECT * FROM test" } },
@@ -144,6 +145,7 @@ t.test("it detects SQL injections", async () => {
         "Zen has blocked an SQL injection: sqlite3.run(...) originating from body.name"
       );
     }
+    delete process.env.AIKIDO_BLOCK_INVALID_SQL;
   } catch (error: any) {
     t.fail(error);
   } finally {

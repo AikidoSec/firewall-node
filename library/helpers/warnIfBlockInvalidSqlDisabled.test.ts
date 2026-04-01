@@ -12,10 +12,13 @@ t.beforeEach(() => {
   logs.length = 0;
 });
 
+const expectedMessage =
+  "AIKIDO: We recommend setting AIKIDO_BLOCK_INVALID_SQL=true. See https://github.com/AikidoSec/firewall-node/blob/main/docs/invalid-sql-queries.md";
+
 t.test("it warns when AIKIDO_BLOCK_INVALID_SQL is not set", async (t) => {
   warnIfBlockInvalidSqlDisabled();
 
-  t.match(logs, [/AIKIDO_BLOCK_INVALID_SQL=true/]);
+  t.same(logs, [expectedMessage]);
 });
 
 t.test("it does not warn when AIKIDO_BLOCK_INVALID_SQL is true", async (t) => {
@@ -31,5 +34,5 @@ t.test("it warns when AIKIDO_BLOCK_INVALID_SQL is false", async (t) => {
 
   warnIfBlockInvalidSqlDisabled();
 
-  t.match(logs, [/AIKIDO_BLOCK_INVALID_SQL=true/]);
+  t.same(logs, [expectedMessage]);
 });
