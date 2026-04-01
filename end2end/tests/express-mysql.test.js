@@ -156,7 +156,7 @@ t.test("it does not block in dry mode", (t) => {
     });
 });
 
-t.test("it blocks invalid SQL queries by default", (t) => {
+t.test("it does not block invalid SQL queries by default", (t) => {
   const server = spawn(`node`, [pathToApp, "4003"], {
     env: {
       ...process.env,
@@ -187,7 +187,7 @@ t.test("it blocks invalid SQL queries by default", (t) => {
   timeout(2000)
     .then(() => {
       return fetch(
-        `http://localhost:4003/invalid-query?sql=${encodeURIComponent("I'm a test")}`,
+        `http://localhost:4003/invalid-query?sql=${encodeURIComponent("SELECT * FROM test")}`,
         {
           signal: AbortSignal.timeout(5000),
           method: "POST",
@@ -196,7 +196,7 @@ t.test("it blocks invalid SQL queries by default", (t) => {
     })
     .then((response) => {
       t.equal(response.status, 500);
-      t.match(stdout, /Zen has blocked an SQL injection/);
+      t.notMatch(stdout, /Zen has blocked an SQL injection/);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -207,14 +207,14 @@ t.test("it blocks invalid SQL queries by default", (t) => {
 });
 
 t.test(
-  "it does not block invalid SQL queries when AIKIDO_BLOCK_INVALID_SQL is false",
+  "it blocks invalid SQL queries when AIKIDO_BLOCK_INVALID_SQL is true",
   (t) => {
     const server = spawn(`node`, [pathToApp, "4004"], {
       env: {
         ...process.env,
         AIKIDO_DEBUG: "true",
         AIKIDO_BLOCKING: "true",
-        AIKIDO_BLOCK_INVALID_SQL: "false",
+        AIKIDO_BLOCK_INVALID_SQL: "true",
       },
     });
 
@@ -240,7 +240,7 @@ t.test(
     timeout(2000)
       .then(() => {
         return fetch(
-          `http://localhost:4004/invalid-query?sql=${encodeURIComponent("SELECT * FROM test")}`,
+          `http://localhost:4004/invalid-query?sql=${encodeURIComponent("I'm a test")}`,
           {
             signal: AbortSignal.timeout(5000),
             method: "POST",
@@ -249,7 +249,7 @@ t.test(
       })
       .then((response) => {
         t.equal(response.status, 500);
-        t.notMatch(stdout, /Zen has blocked an SQL injection/);
+        t.match(stdout, /Zen has blocked an SQL injection/);
       })
       .catch((error) => {
         t.fail(error.message);
