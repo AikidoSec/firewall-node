@@ -36,6 +36,7 @@ import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/Att
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
+import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 
 type WrappedPackage = { version: string | null; supported: boolean };
 
@@ -369,7 +370,6 @@ export class Agent {
             requests: stats.requests,
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
-            sqlTokenizationFailures: stats.sqlTokenizationFailures,
           },
           ai: aiStats,
           packages,
@@ -520,6 +520,8 @@ export class Agent {
         );
       }
     }
+
+    warnIfTsxIsUsed();
 
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually

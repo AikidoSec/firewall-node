@@ -120,16 +120,24 @@ function checkWhereFilters(
       tenantFilter.value,
       tenantFilter.placeholder_number
     );
-    if (
-      context.tenantId !== undefined &&
-      (typeof resolvedValue === "string" || typeof resolvedValue === "number")
-    ) {
-      const tenantIdStr = context.tenantId.toString();
-      const resolvedStr = String(resolvedValue);
 
-      if (resolvedStr !== tenantIdStr) {
+    if (context.tenantId !== undefined) {
+      const resolved =
+        typeof resolvedValue === "string" || typeof resolvedValue === "number";
+
+      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+      if (tenantFilter.is_placeholder && !resolved) {
         return violation(
-          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${resolvedStr}' but tenant ID is '${tenantIdStr}'`
+          `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+        );
+      }
+
+      const value = resolved ? String(resolvedValue) : tenantFilter.value;
+      const tenantIdStr = context.tenantId.toString();
+
+      if (value !== tenantIdStr) {
+        return violation(
+          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
         );
       }
     }
@@ -173,23 +181,24 @@ function checkInsert(
         tenantCol.placeholder_number
       );
 
-      let value = tenantCol.value;
+      if (context.tenantId !== undefined) {
+        const resolved =
+          typeof resolvedValue === "string" ||
+          typeof resolvedValue === "number";
 
-      // Replace value with resolved placeholder if possible
-      if (
-        typeof resolvedValue === "string" ||
-        typeof resolvedValue === "number"
-      ) {
-        value = String(resolvedValue);
-      }
-
-      if (context.tenantId !== undefined && value !== undefined) {
-        const tenantIdStr = context.tenantId.toString();
-        const resolvedStr = String(value);
-
-        if (resolvedStr !== tenantIdStr) {
+        // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+        if (tenantCol.is_placeholder && !resolved) {
           return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${resolvedStr}' but tenant ID is '${tenantIdStr}'`
+            `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+          );
+        }
+
+        const value = resolved ? String(resolvedValue) : tenantCol.value;
+        const tenantIdStr = context.tenantId.toString();
+
+        if (value !== tenantIdStr) {
+          return violation(
+            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
           );
         }
       }

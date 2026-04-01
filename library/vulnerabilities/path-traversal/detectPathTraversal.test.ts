@@ -201,3 +201,27 @@ t.test("AWS credentials protection", async () => {
     true
   );
 });
+
+t.test("current directory references (/./) are normalized", async () => {
+  t.same(detectPathTraversal("/./etc/passwd", "/./etc"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./"), true);
+  t.same(detectPathTraversal("/etc/./passwd", "/etc/./passwd"), true);
+  t.same(detectPathTraversal("/./etc/./passwd", "/./etc/./passwd"), true);
+  // Multiple /./ sequences
+  t.same(detectPathTraversal("/././etc/passwd", "/././etc"), true);
+  t.same(detectPathTraversal("/etc/././passwd", "/etc/././passwd"), true);
+});
+
+t.test("paths with multiple slashes are normalized", async () => {
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc"), true);
+  t.same(detectPathTraversal("///.///etc/passwd", "///.///etc/passwd"), true);
+});
+
+t.test(
+  "normalized paths still trigger false positive prevention for bare root dirs",
+  async () => {
+    // User input that resolves to just a root dir should still be safe
+    t.same(detectPathTraversal("/etc/./passwd", "/etc"), false);
+    t.same(detectPathTraversal("//etc//passwd", "/etc"), false);
+  }
+);

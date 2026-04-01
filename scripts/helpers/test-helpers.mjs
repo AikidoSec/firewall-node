@@ -115,3 +115,27 @@ export function rejects(...args) {
       });
   });
 }
+
+export function notMatch(actual, expected, message) {
+  if (typeof expected === "string") {
+    expected = new RegExp(RegExp.escape(expected));
+  }
+
+  if (expected instanceof RegExp) {
+    if (typeof actual !== "string") {
+      actual = String(actual);
+    }
+
+    assert.doesNotMatch(actual, expected, message);
+    return;
+  }
+
+  try {
+    assert.partialDeepStrictEqual(actual, expected);
+  } catch {
+    // If they are not deeply equal, the assertion will throw, which means the test should pass
+    return;
+  }
+
+  assert.fail(message || "Values are deeply equal");
+}

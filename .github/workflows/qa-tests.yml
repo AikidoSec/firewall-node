@@ -12,24 +12,24 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout firewall-node
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: firewall-node
 
       - name: Checkout zen-demo-nodejs
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: Aikido-demo-apps/zen-demo-nodejs
           path: zen-demo-nodejs
           submodules: true
 
       - name: Use Node.js 24.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: "24.x"
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: firewall-node-library-${{ github.sha }}
           path: firewall-node
@@ -49,7 +49,7 @@ jobs:
           cp firewall-node/.github/workflows/Dockerfile.qa zen-demo-nodejs/Dockerfile
 
       - name: Run Firewall QA Tests
-        uses: AikidoSec/firewall-tester-action@releases/v1
+        uses: AikidoSec/firewall-tester-action@d6ce69ab0d6b52cac12d01be9b25603de492bfc5 # v1 branch
         with:
           dockerfile_path: ./zen-demo-nodejs/Dockerfile
           app_port: 3000
