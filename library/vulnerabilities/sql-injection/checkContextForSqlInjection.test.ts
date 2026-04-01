@@ -63,7 +63,7 @@ function createFailingContext(): Context {
   };
 }
 
-t.test("it blocks failed tokenization by default", async () => {
+t.test("it does not block failed tokenization by default", async () => {
   t.same(
     checkContextForSqlInjection({
       sql: failingSQL,
@@ -71,25 +71,14 @@ t.test("it blocks failed tokenization by default", async () => {
       dialect: new SQLDialectMySQL(),
       context: createFailingContext(),
     }),
-    {
-      operation: "mysql.query",
-      kind: "sql_injection",
-      source: "body",
-      pathsToPayload: [".comment"],
-      metadata: {
-        sql: failingSQL,
-        dialect: "MySQL",
-        failedToTokenize: "true",
-      },
-      payload: failingInput,
-    }
+    undefined
   );
 });
 
 t.test(
-  "it does not block failed tokenization when AIKIDO_BLOCK_INVALID_SQL is false",
+  "it blocks failed tokenization when AIKIDO_BLOCK_INVALID_SQL is true",
   async () => {
-    process.env.AIKIDO_BLOCK_INVALID_SQL = "false";
+    process.env.AIKIDO_BLOCK_INVALID_SQL = "true";
 
     t.same(
       checkContextForSqlInjection({
@@ -98,7 +87,18 @@ t.test(
         dialect: new SQLDialectMySQL(),
         context: createFailingContext(),
       }),
-      undefined
+      {
+        operation: "mysql.query",
+        kind: "sql_injection",
+        source: "body",
+        pathsToPayload: [".comment"],
+        metadata: {
+          sql: failingSQL,
+          dialect: "MySQL",
+          failedToTokenize: "true",
+        },
+        payload: failingInput,
+      }
     );
   }
 );

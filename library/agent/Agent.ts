@@ -36,6 +36,7 @@ import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/Att
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
+import { warnIfBlockInvalidSqlDisabled } from "../helpers/warnIfBlockInvalidSqlDisabled";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 
 type WrappedPackage = { version: string | null; supported: boolean };
@@ -521,6 +522,7 @@ export class Agent {
       }
     }
 
+    warnIfBlockInvalidSqlDisabled();
     warnIfTsxIsUsed();
 
     // When our library is required, we are not intercepting `require` calls yet

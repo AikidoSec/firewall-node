@@ -1,22 +1,14 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { getPathsToPayload } from "../../helpers/attackPath";
-import { envToBool } from "../../helpers/envToBool";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
+import { shouldBlockInvalidSqlQueries } from "../../helpers/shouldBlockInvalidSqlQueries";
 import {
   detectSQLInjection,
   SQLInjectionDetectionResult,
 } from "./detectSQLInjection";
 import { SQLDialect } from "./dialects/SQLDialect";
-
-function shouldBlockInvalidSqlQueries(): boolean {
-  if (process.env.AIKIDO_BLOCK_INVALID_SQL === undefined) {
-    return true;
-  }
-
-  return envToBool(process.env.AIKIDO_BLOCK_INVALID_SQL);
-}
 
 /**
  * This function goes over all the different input types in the context and checks
