@@ -37,12 +37,7 @@ t.test(
     if (event.type !== "heartbeat") {
       throw new Error("Expected heartbeat");
     }
-    const expectedPackages = [
-      "fastify",
-      "@fastify/ajv-compiler",
-      "semver",
-      "express",
-    ];
+    const expectedPackages = ["fastify", "@fastify/error", "semver", "express"];
     for (const pkg of expectedPackages) {
       t.ok(
         event.packages.find((p) => p.name === pkg),

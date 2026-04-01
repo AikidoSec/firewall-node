@@ -61,6 +61,8 @@ function matchFilterPartInUser(
         return match;
       }
     }
+
+    return matchFilterPartInUser(userInput.join(), filterPart, pathToPayload);
   }
 
   return {

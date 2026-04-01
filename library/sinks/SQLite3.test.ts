@@ -128,8 +128,8 @@ t.test("it detects SQL injections", async () => {
       );
     }
 
-    // Check if queries with syntax errors are thrown as usual
-    // We count how many times our SQL tokenizer fails
+    // Query with syntax error and user input should be blocked by Zen
+    // because the SQL tokenizer can't parse the query (unclosed quote)
     const syntaxError = await t.rejects(async () => {
       await runWithContext(
         { ...dangerousContext, body: { name: "SELECT * FROM test" } },
@@ -141,7 +141,7 @@ t.test("it detects SQL injections", async () => {
     if (syntaxError instanceof Error) {
       t.same(
         syntaxError.message,
-        'SQLITE_ERROR: unrecognized token: "\' SELECT * FROM test"'
+        "Zen has blocked an SQL injection: sqlite3.run(...) originating from body.name"
       );
     }
   } catch (error: any) {
