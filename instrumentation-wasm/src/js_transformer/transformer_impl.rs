@@ -244,7 +244,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
                 f.node_type == "MethodDefinition"
                     && f.name == method_name
                     // For backwards compatibility reasons, we allow instructions without a class name to match
-                    && f.class_name.as_ref().map_or(true, |cn| cn == &class_name)
+                    && f.class_name.as_ref().is_none_or(|cn| cn == &class_name)
             });
 
             if instruction.is_none() {
