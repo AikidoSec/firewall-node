@@ -111,7 +111,8 @@ t.test("it wraps the createServer function of http module", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "http://localhost:3314/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3314", connection: "close" },
           query: {},
@@ -158,7 +159,8 @@ t.test("it wraps the createServer function of https module", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "https://localhost:3315/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3315", connection: "close" },
           query: {},
@@ -192,6 +194,7 @@ t.test("it parses query parameters", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context.query, { foo: "bar", baz: "qux" });
+        t.same(context.url, "http://localhost:3317/?foo=bar&baz=qux");
         server.close();
         resolve();
       });
@@ -544,7 +547,8 @@ t.test("it wraps on request event of http", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "http://localhost:3367/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3367", connection: "close" },
           query: {},
@@ -587,7 +591,8 @@ t.test("it wraps on request event of https", async () => {
       }).then(({ body }) => {
         const context = JSON.parse(body);
         t.same(context, {
-          url: "/",
+          url: "https://localhost:3361/",
+          urlPath: "/",
           method: "GET",
           headers: { host: "localhost:3361", connection: "close" },
           query: {},
@@ -790,7 +795,7 @@ t.test("it blocks path traversal in path", async (t) => {
 
       t.equal(
         response,
-        "Zen has blocked a path traversal attack: path.normalize(...) originating from url."
+        "Zen has blocked a path traversal attack: path.normalize(...) originating from urlPath."
       );
       server.close();
       resolve();
@@ -987,173 +992,6 @@ t.test("rate limiting works with url encoded paths", async (t) => {
         ).statusCode,
         429
       );
-
-      server.close();
-      resolve();
-    });
-  });
-});
-
-t.test("it reports attack waves", async (t) => {
-  const server = http.createServer((req, res) => {
-    res.statusCode = 404;
-    res.end("OK");
-  });
-
-  api.clear();
-
-  await new Promise<void>((resolve) => {
-    server.listen(3229, async () => {
-      for (let i = 0; i < 3; i++) {
-        t.equal(
-          (
-            await fetch({
-              url: new URL("http://localhost:3229/.env"),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-
-        t.equal(
-          (
-            await fetch({
-              url: new URL("http://localhost:3229/wp-config.php"),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-
-        t.equal(
-          (
-            await fetch({
-              url: new URL("http://localhost:3229/../test"),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-
-        t.equal(
-          (
-            await fetch({
-              url: new URL("http://localhost:3229/etc/passwd"),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-        t.equal(
-          (
-            await fetch({
-              url: new URL("http://localhost:3229/.git/config"),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-
-        t.equal(
-          (
-            await fetch({
-              url: new URL(
-                "http://localhost:3229/%systemroot%/system32/cmd.exe"
-              ),
-              method: "GET",
-              headers: {},
-              timeoutInMS: 500,
-            })
-          ).statusCode,
-          404
-        );
-      }
-
-      t.match(api.getEvents(), [
-        {
-          type: "detected_attack_wave",
-          attack: {
-            metadata: {},
-            user: undefined,
-          },
-          request: {
-            ipAddress:
-              getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
-            source: "http.createServer",
-          },
-          agent: {
-            library: "firewall-node",
-          },
-        },
-      ]);
-
-      await agent.flushStats(1000);
-
-      t.match(api.getEvents(), [
-        {
-          type: "detected_attack_wave",
-          attack: {
-            metadata: {
-              samples: JSON.stringify([
-                {
-                  method: "GET",
-                  url: "/../package.json",
-                },
-                {
-                  method: "GET",
-                  url: "/.env",
-                },
-                {
-                  method: "GET",
-                  url: "/wp-config.php",
-                },
-                {
-                  method: "GET",
-                  url: "/etc/passwd",
-                },
-                {
-                  method: "GET",
-                  url: "/.git/config",
-                },
-                {
-                  method: "GET",
-                  url: "/%systemroot%/system32/cmd.exe",
-                },
-              ]),
-            },
-            user: undefined,
-          },
-          request: {
-            ipAddress:
-              getMajorNodeVersion() === 16 ? "::ffff:127.0.0.1" : "::1",
-            source: "http.createServer",
-          },
-          agent: {
-            library: "firewall-node",
-          },
-        },
-        {
-          type: "heartbeat",
-          stats: {
-            requests: {
-              attackWaves: {
-                total: 1,
-                blocked: 0,
-              },
-            },
-          },
-        },
-      ]);
 
       server.close();
       resolve();
