@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType, MethodDefinition};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use super::helpers::{
     get_arg_names::get_function_or_method_arg_names,
@@ -19,54 +19,6 @@ pub struct Transformer<'a> {
 pub struct TraverseState {}
 
 impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
-    fn enter_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a, TraverseState>,
-    ) {
-        if !node.key.is_identifier() || node.value.body.is_none() || node.key.name().is_none() {
-            return;
-        }
-
-        if !node.kind.is_method() && !node.kind.is_constructor() {
-            // Ignore getters and setters for now
-            return;
-        }
-
-        let method_name = node.key.name().unwrap().to_string();
-
-        let matching_instruction = self
-            .file_instructions
-            .functions
-            .iter()
-            .find(|f| f.node_type == "MethodDefinition" && f.name == method_name);
-
-        if matching_instruction.is_none() {
-            return;
-        }
-
-        let instruction = matching_instruction.unwrap();
-
-        // We need to collect the arg names before we make the body mutable
-        let arg_names = if instruction.modify_args {
-            get_function_or_method_arg_names(&node.value.params)
-        } else {
-            Vec::new()
-        };
-
-        let body = node.value.body.as_mut().unwrap();
-
-        insert_instrument_method_calls(
-            self.allocator,
-            self.ast_builder,
-            instruction,
-            &arg_names,
-            self.pkg_version,
-            body,
-            node.kind.is_constructor(),
-        );
-    }
-
     fn enter_assignment_expression(
         &mut self,
         node: &mut oxc_ast::ast::AssignmentExpression<'a>,
@@ -246,5 +198,83 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             body,
             false,
         );
+    }
+
+    fn enter_class(
+        &mut self,
+        node: &mut oxc_ast::ast::Class<'a>,
+        ctx: &mut TraverseCtx<'a, TraverseState>,
+    ) {
+        let class_name: String = if node.is_declaration() {
+            match node.name() {
+                Some(name) => name.to_string(),
+                None => return,
+            }
+        } else {
+            // It is a expression
+            // e.g. const Test = class {}
+            match ctx.parent() {
+                Ancestor::VariableDeclaratorInit(declarator) => {
+                    match declarator.id().get_identifier_name() {
+                        Some(name) => name.to_string(),
+                        None => return,
+                    }
+                }
+                _ => return,
+            }
+        };
+
+        for class_element in node.body.body.iter_mut() {
+            let method_def = match class_element {
+                oxc_ast::ast::ClassElement::MethodDefinition(method_def) => method_def,
+                _ => continue,
+            };
+
+            if !method_def.kind.is_method() && !method_def.kind.is_constructor() {
+                // Ignore getters and setters for now
+                continue;
+            }
+
+            let method_name = match method_def.key.static_name() {
+                Some(name) => name.to_string(),
+                None => continue,
+            };
+
+            let instruction = self.file_instructions.functions.iter().find(|f| {
+                f.node_type == "MethodDefinition"
+                    && f.name == method_name
+                    // For backwards compatibility reasons, we allow instructions without a class name to match
+                    && f.class_name.as_ref().map_or(true, |cn| cn == &class_name)
+            });
+
+            if instruction.is_none() {
+                continue;
+            }
+            let instruction = instruction.unwrap();
+
+            let is_constructor = method_def.kind.is_constructor();
+
+            let arg_names = if instruction.modify_args {
+                get_function_or_method_arg_names(&method_def.value.params)
+            } else {
+                Vec::new()
+            };
+
+            if method_def.value.body.is_none() {
+                continue;
+            }
+
+            let body = method_def.value.body.as_mut().unwrap();
+
+            insert_instrument_method_calls(
+                self.allocator,
+                self.ast_builder,
+                instruction,
+                &arg_names,
+                self.pkg_version,
+                body,
+                is_constructor,
+            );
+        }
     }
 }

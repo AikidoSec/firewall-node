@@ -2434,3 +2434,234 @@ t.test("it works with cts extension (ESM)", async (t) => {
     }`
   );
 });
+
+t.test("Does not instrument if class name does not match", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+          className: "NonMatchingClassName",
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      class Test {
+        private testValue = 42;
+        constructor() {
+                this.testFunction(testValue);
+        }
+        testFunction(arg1) {
+                console.log("test");
+        }
+      }`
+  );
+});
+
+t.test("It does instrument if class name matches", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        class Test {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "testFunction",
+          identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+          className: "Test",
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      class Test {
+          private testValue = 42;
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+              console.log("test");
+          }
+      }
+    `
+  );
+});
+
+t.test(
+  "It does instrument class assignment expression if class name matches",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        const TestClass = class {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "TestClass",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+        const TestClass = class {
+          private testValue = 42;
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(arg1) {
+            __instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("test");
+          }
+      };
+    `
+    );
+  }
+);
+
+t.test(
+  "It does not instrument class assignment expression if class name does not match",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        const Test = class {
+
+            private testValue = 42;
+
+            constructor() {
+                this.testFunction(testValue);
+            }
+            testFunction(arg1) {
+                console.log("test");
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "TestNonMatching",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+        const Test = class {
+          private testValue = 42;
+          constructor() {
+            this.testFunction(testValue);
+          }
+          testFunction(arg1) {
+            console.log("test");
+          }
+      };
+    `
+    );
+  }
+);
