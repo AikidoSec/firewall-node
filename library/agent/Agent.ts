@@ -38,7 +38,7 @@ import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 
-type WrappedPackage = { version: string | null; supported: boolean };
+type WrappedPackage = { version: string; supported: boolean };
 
 export class Agent {
   private started = false;
@@ -49,7 +49,7 @@ export class Agent {
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
-  private wrappedPackages: Record<string, WrappedPackage> = {};
+  private wrappedPackages = new Map<string, WrappedPackage[]>();
   private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
@@ -465,11 +465,12 @@ export class Agent {
       library: "firewall-node",
       /* c8 ignore next */
       ipAddress: ip() || "",
-      packages: Object.keys(this.wrappedPackages).reduce(
-        (packages: Record<string, string>, pkg) => {
-          const details = this.wrappedPackages[pkg];
-          if (details.version && details.supported) {
-            packages[pkg] = details.version;
+      packages: Array.from(this.wrappedPackages.entries()).reduce(
+        (packages: Record<string, string>, [pkg, details]) => {
+          // Take the first supported version if there are multiple versions
+          const supportedVersion = details.find((d) => d.supported)?.version;
+          if (supportedVersion) {
+            packages[pkg] = supportedVersion;
           }
 
           return packages;
@@ -482,7 +483,7 @@ export class Agent {
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
       serverless: !!this.serverless,
-      stack: Object.keys(this.wrappedPackages).concat(
+      stack: Array.from(this.wrappedPackages.keys()).concat(
         this.serverless ? [this.serverless] : []
       ),
       os: {
@@ -563,21 +564,23 @@ export class Agent {
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {
-    if (this.wrappedPackages[name]) {
-      // Already reported as wrapped
+    if (!this.wrappedPackages.has(name)) {
+      this.wrappedPackages.set(name, []);
+    }
+
+    const versions = this.wrappedPackages.get(name)!;
+    if (versions.some((d) => d.version === details.version)) {
       return;
     }
 
-    this.wrappedPackages[name] = details;
+    versions.push(details);
 
-    if (details.version) {
-      if (details.supported) {
-        this.logger.log(`${name}@${details.version} is supported!`);
-      } else {
-        this.logger.log(
-          colorText("red", `${name}@${details.version} is not supported!`)
-        );
-      }
+    if (details.supported) {
+      this.logger.log(`${name}@${details.version} is supported!`);
+    } else {
+      this.logger.log(
+        colorText("red", `${name}@${details.version} is not supported!`)
+      );
     }
   }
 
