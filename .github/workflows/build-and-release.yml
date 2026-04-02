@@ -46,9 +46,7 @@ jobs:
           rustup default stable
           cargo install wasm-pack
       - name: Setup Aikido safe-chain
-        run: |
-          npm i -g @aikidosec/safe-chain
-          safe-chain setup-ci
+        run: curl -fsSL https://github.com/AikidoSec/safe-chain/releases/latest/download/install-safe-chain.sh | sh -s -- --ci
       - name: Downgrade npm
         # https://github.com/npm/cli/issues/8669
         run: npm i -g npm@11.6.0
