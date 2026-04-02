@@ -568,10 +568,13 @@ t.test(
     );
 
     agent.getHostnames().clear();
-    agent.getConfig().updateDomains([
-      { hostname: "aikido.dev", mode: "block" },
-      { hostname: "app.aikido.dev", mode: "allow" },
-    ]);
+    agent.getConfig().updateDomains(
+      [
+        { hostname: "aikido.dev", mode: "block" },
+        { hostname: "app.aikido.dev", mode: "allow" },
+      ],
+      false
+    );
 
     const blockedError1 = await t.rejects(() =>
       fetch("https://aikido.dev/block")
@@ -591,7 +594,13 @@ t.test(
       { hostname: "app.aikido.dev", port: 443, hits: 1 },
     ]);
 
-    agent.getConfig().setBlockNewOutgoingRequests(true);
+    agent.getConfig().updateDomains(
+      [
+        { hostname: "aikido.dev", mode: "block" },
+        { hostname: "app.aikido.dev", mode: "allow" },
+      ],
+      true
+    );
 
     const blockedError2 = await t.rejects(() => fetch("https://example.com"));
     t.ok(blockedError2 instanceof Error);
@@ -608,6 +617,30 @@ t.test(
       { hostname: "aikido.dev", port: 443, hits: 1 },
       { hostname: "app.aikido.dev", port: 443, hits: 2 },
       { hostname: "example.com", port: 443, hits: 1 },
+    ]);
+
+    agent
+      .getConfig()
+      .updateDomains([{ hostname: "*.example.com", mode: "block" }], false);
+
+    const blockedError3 = await t.rejects(() =>
+      fetch("https://sub.example.com")
+    );
+    t.ok(blockedError3 instanceof Error);
+    if (blockedError3 instanceof Error) {
+      t.same(
+        blockedError3.message,
+        "Zen has blocked an outbound connection: fetch(...) to sub.example.com"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 3 },
+      { hostname: "example.com", port: 443, hits: 1 },
+      { hostname: "sub.example.com", port: 443, hits: 1 },
     ]);
   }
 );
