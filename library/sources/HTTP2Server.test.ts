@@ -1,6 +1,10 @@
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
-import type { IncomingHttpHeaders } from "http2";
+import type {
+  ClientHttp2Stream,
+  IncomingHttpHeaders,
+  ServerHttp2Stream,
+} from "http2";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { getContext } from "../agent/Context";
 import { HTTPServer } from "./HTTPServer";
@@ -115,7 +119,7 @@ function createMinimalTestServer() {
 
 function createMinimalTestServerWithStream() {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.respond({ ":status": 200 });
     stream.end(JSON.stringify(getContext()));
   });
@@ -401,7 +405,7 @@ t.test("it discovers routes using stream event", async () => {
 
 t.test("it does not discover routes with 404 status code", async () => {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.respond({ ":status": 404 });
     stream.end();
   });
@@ -514,7 +518,7 @@ t.test("it wraps the createSecureServer stream event", async () => {
     cert: readFileSync(resolve(__dirname, "fixtures/cert.pem")),
   });
 
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.respond({ ":status": 200 });
     stream.end(JSON.stringify(getContext()));
   });
@@ -550,7 +554,7 @@ t.test("it wraps the createSecureServer stream event", async () => {
 
 t.test("real injection test", async (t) => {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     const url = new URL(headers[":path"] as string, "http://localhost");
     const path = url.searchParams.get("path");
     if (!path) {
@@ -583,7 +587,7 @@ t.test("real injection test", async (t) => {
 
 t.test("using http2 push still works", async (t) => {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.pushStream({ ":path": "/pushed" }, (err, pushStream) => {
       pushStream.respond({ ":status": 200 });
       pushStream.end("pushed");
@@ -596,7 +600,7 @@ t.test("using http2 push still works", async (t) => {
     server.listen(3432, () => {
       const client = connect("http://localhost:3432");
 
-      client.on("stream", (pushedStream, requestHeaders) => {
+      client.on("stream", (pushedStream: ClientHttp2Stream, requestHeaders) => {
         pushedStream.on("data", (chunk) => {
           t.same(chunk.toString(), "pushed");
         });
@@ -627,7 +631,7 @@ t.test("using http2 push still works", async (t) => {
 
 t.test("it works then using the on stream end event", async () => {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.on("end", () => {
       stream.respond({ ":status": 200 });
       stream.end(JSON.stringify(getContext()));
@@ -665,7 +669,7 @@ t.test("it works then using the on stream end event", async () => {
 
 t.test("it reports attack waves", async (t) => {
   const server = http2.createServer();
-  server.on("stream", (stream, headers) => {
+  server.on("stream", (stream: ServerHttp2Stream, headers) => {
     stream.respond({ ":status": 404 });
     stream.end("Not found");
   });

@@ -1,11 +1,11 @@
 import { RequestContextStorage } from "./RequestContextStorage";
 import { parseHeaders } from "./parseHeaders";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
-import type { Dispatcher } from "undici-v6";
+import type { Dispatcher } from "undici-v7";
 import { Context } from "../../agent/Context";
 import { onRedirect } from "./onRedirect";
 
-type OnHeaders = Dispatcher.DispatchHandlers["onHeaders"];
+type OnHeaders = Dispatcher.DispatchHandler["onHeaders"];
 
 /**
  * Wrap the onHeaders function and check if the response is a redirect. If yes, determine the destination URL and call onRedirect.

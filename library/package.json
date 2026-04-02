@@ -84,7 +84,7 @@
     "@types/koa__router": "^12.0.4",
     "@types/mysql": "^2.15.25",
     "@types/needle": "^3.3.0",
-    "@types/node": "^24.11.0",
+    "@types/node": "^25.5.0",
     "@types/pg": "^8.11.0",
     "@types/qs": "^6.9.11",
     "@types/shell-quote": "^1.7.5",
@@ -129,8 +129,8 @@
     "openai-v4": "npm:openai@^4.104.0",
     "openai-v5": "npm:openai@^5.8.2",
     "openai-v6": "npm:openai@^6.15.0",
-    "oxlint": "^1.35.0",
-    "oxlint-tsgolint": "^0.11.0",
+    "oxlint": "^1.57.0",
+    "oxlint-tsgolint": "^0.17.4",
     "percentile": "^1.6.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.4",
@@ -155,6 +155,9 @@
     "xml-js": "^1.6.11",
     "xml2js": "^0.6.2",
     "zod": "^3.25.63"
+  },
+  "overrides": {
+    "gcp-metadata": "^7.0.1"
   },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
