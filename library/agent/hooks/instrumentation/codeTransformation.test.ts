@@ -2945,3 +2945,128 @@ t.test(
     );
   }
 );
+
+t.test(
+  "Two classes with same name assigned to different variables",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        const A = class Server {
+            handle(req) {
+                console.log("A handle");
+            }
+        };
+        const B = class Server {
+            handle(req) {
+                console.log("B handle");
+            }
+        };
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "handle",
+            identifier: "testpkg.test.js.Server.handle.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "Server",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+        const A = class Server {
+          handle(req) {
+            __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("A handle");
+          }
+        };
+        const B = class Server {
+          handle(req) {
+            __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("B handle");
+          }
+        };`
+    );
+  }
+);
+
+t.test("Two classes with same name in different block scopes", async (t) => {
+  const result = transformCode(
+    "testpkg",
+    "1.0.0",
+    "test.js",
+    `
+        {
+            class Server {
+                handle(req) {
+                    console.log("first handle");
+                }
+            }
+        }
+        {
+            class Server {
+                handle(req) {
+                    console.log("second handle");
+                }
+            }
+        }
+        `,
+    "module",
+    {
+      path: "test.js",
+      versionRange: "^1.0.0",
+      identifier: "testpkg.test.js.^1.0.0",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "handle",
+          identifier: "testpkg.test.js.Server.handle.MethodDefinition.v1.0.0",
+          inspectArgs: true,
+          modifyArgs: false,
+          modifyReturnValue: false,
+          modifyArgumentsObject: false,
+          className: "Server",
+        },
+      ],
+      accessLocalVariables: [],
+    }
+  );
+
+  isSameCode(
+    t,
+    result,
+    `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+        {
+          class Server {
+            handle(req) {
+              __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+              console.log("first handle");
+            }
+          }
+        }
+        {
+          class Server {
+            handle(req) {
+              __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+              console.log("second handle");
+            }
+          }
+        }`
+  );
+});
