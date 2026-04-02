@@ -2881,3 +2881,67 @@ t.test(
     );
   }
 );
+
+t.test(
+  "Nested classes with same name: instruments method in both classes",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        class Server {
+            handle(req) {
+                console.log("outer handle");
+            }
+            createInner() {
+                return class Server {
+                    handle(req) {
+                        console.log("inner handle");
+                    }
+                };
+            }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "handle",
+            identifier: "testpkg.test.js.Server.handle.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "Server",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+        class Server {
+          handle(req) {
+            __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+            console.log("outer handle");
+          }
+          createInner() {
+            return class Server {
+              handle(req) {
+                __instrumentInspectArgs("testpkg.test.js.Server.handle.MethodDefinition.v1.0.0", arguments, "1.0.0", this);
+                console.log("inner handle");
+              }
+            };
+          }
+        }`
+    );
+  }
+);
