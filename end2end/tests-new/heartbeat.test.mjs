@@ -133,7 +133,6 @@ test("It reports own http requests in heartbeat events", async () => {
             rateLimited: 0,
             total: 1,
           },
-          sqlTokenizationFailures: 0,
         },
         routes: [
           {
