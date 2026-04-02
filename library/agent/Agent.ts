@@ -565,21 +565,16 @@ export class Agent {
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {
-    if (this.wrappedPackages.has(name)) {
-      // Check if version matches
-      const existingDetails = this.wrappedPackages.get(name);
-      if (
-        existingDetails &&
-        existingDetails.some((d) => d.version === details.version)
-      ) {
-        // Version already reported as wrapped, no need to report again
-        return;
-      }
-
-      this.wrappedPackages.get(name)?.push(details);
-    } else {
-      this.wrappedPackages.set(name, [details]);
+    if (!this.wrappedPackages.has(name)) {
+      this.wrappedPackages.set(name, []);
     }
+
+    const versions = this.wrappedPackages.get(name)!;
+    if (versions.some((d) => d.version === details.version)) {
+      return;
+    }
+
+    versions.push(details);
 
     if (details.supported) {
       this.logger.log(`${name}@${details.version} is supported!`);
