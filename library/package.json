@@ -156,6 +156,9 @@
     "xml2js": "^0.6.2",
     "zod": "^3.25.63"
   },
+  "overrides": {
+    "gcp-metadata": "^7.0.1"
+  },
   "scripts": {
     "test": "node ../scripts/run-tap.js",
     "test:ci": "CI=true node ../scripts/run-tap.js",

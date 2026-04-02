@@ -72,6 +72,7 @@ async function main() {
     await readFile(join(rootDir, "library", "package.json"), "utf8")
   );
   delete packageJson.devDependencies;
+  delete packageJson.overrides;
   delete packageJson.scripts;
   await writeFile(
     join(buildDir, "package.json"),
