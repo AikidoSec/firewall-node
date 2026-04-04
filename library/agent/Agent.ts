@@ -18,6 +18,7 @@ import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { Context } from "./Context";
+import { setWafRules } from "../waf/waf";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
 import { Logger } from "./logger/Logger";
@@ -337,6 +338,15 @@ export class Agent {
           response.blockNewOutgoingRequests
         );
         this.serviceConfig.updateDomains(response.domains);
+      }
+
+      if (response.wafRules && Array.isArray(response.wafRules)) {
+        const wafResult = setWafRules(response.wafRules);
+        if (!wafResult.success) {
+          this.logger.log(
+            `Failed to compile WAF rule ${wafResult.rule_id}: ${wafResult.error}`
+          );
+        }
       }
     }
   }

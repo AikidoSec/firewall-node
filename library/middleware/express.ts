@@ -27,6 +27,11 @@ export function addExpressMiddleware(app: Express | Router) {
         res.status(403).type("text").send("You are blocked by Zen.");
         return;
       }
+
+      if (result.type === "waf") {
+        res.status(403).type("text").send("You are blocked by Zen.");
+        return;
+      }
     }
 
     next();

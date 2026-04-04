@@ -3,11 +3,12 @@
 import { getInstance } from "../agent/AgentSingleton";
 import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
+import { evaluateWafRules } from "../waf/waf";
 
 type Result = {
   block: boolean;
-  type?: "ratelimited" | "blocked";
-  trigger?: "ip" | "user" | "group";
+  type?: "ratelimited" | "blocked" | "waf";
+  trigger?: "ip" | "user" | "group" | "waf";
   ip?: string;
 };
 
@@ -37,6 +38,17 @@ export function shouldBlockRequest(): Result {
 
   if (context.user && agent.getConfig().isUserBlocked(context.user.id)) {
     return { block: true, type: "blocked", trigger: "user" };
+  }
+
+  // WAF rule evaluation
+  const wafResult = evaluateWafRules(context);
+  if (wafResult.matched && wafResult.action === "block") {
+    return {
+      block: true,
+      type: "waf",
+      trigger: "waf",
+      ip: context.remoteAddress,
+    };
   }
 
   const rateLimitResult = shouldRateLimitRequest(context, agent);

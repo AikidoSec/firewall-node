@@ -1,5 +1,11 @@
 import type { App } from "./apps.ts";
 
+type WafRule = {
+  id: string;
+  expression: string;
+  action?: string;
+};
+
 type AppConfig = {
   success: boolean;
   serviceId: number;
@@ -10,6 +16,7 @@ type AppConfig = {
   allowedIPAddresses: string[];
   blockNewOutgoingRequests: boolean;
   domains: any[];
+  wafRules?: WafRule[];
   failureRate?: number;
   timeout?: number;
 };

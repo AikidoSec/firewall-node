@@ -1,4 +1,5 @@
 import type { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
+import type { WafRule } from "../waf/WafRule";
 
 export type EndpointConfig = {
   method: string;
@@ -31,4 +32,5 @@ export type Config = {
   block?: boolean;
   blockNewOutgoingRequests?: boolean;
   domains?: Domain[];
+  wafRules?: WafRule[];
 };

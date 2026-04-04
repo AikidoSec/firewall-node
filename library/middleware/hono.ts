@@ -29,6 +29,10 @@ export function addHonoMiddleware<
       if (result.type === "blocked") {
         return c.text("You are blocked by Zen.", 403);
       }
+
+      if (result.type === "waf") {
+        return c.text("You are blocked by Zen.", 403);
+      }
     }
 
     await next();
