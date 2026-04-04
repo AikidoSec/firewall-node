@@ -31,30 +31,30 @@
     "#config/*": "./config/*.js"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^7.8.2",
-    "@adonisjs/eslint-config": "^2.0.0",
-    "@adonisjs/tsconfig": "^1.4.0",
-    "@japa/api-client": "^3.1.0",
-    "@japa/assert": "^4.0.1",
-    "@japa/plugin-adonisjs": "^4.0.0",
-    "@japa/runner": "^4.2.0",
+    "@adonisjs/assembler": "7.8.2",
+    "@adonisjs/eslint-config": "2.1.2",
+    "@adonisjs/tsconfig": "1.4.1",
+    "@japa/api-client": "3.1.0",
+    "@japa/assert": "4.1.1",
+    "@japa/plugin-adonisjs": "4.0.0",
+    "@japa/runner": "4.4.0",
     "@swc/core": "1.11.24",
-    "@types/luxon": "^3.7.1",
-    "@types/node": "^22.15.18",
-    "hot-hook": "^0.4.0",
-    "pino-pretty": "^13.0.0",
-    "ts-node-maintained": "^10.9.5",
-    "typescript": "~5.8"
+    "@types/luxon": "3.7.1",
+    "@types/node": "22.18.12",
+    "hot-hook": "0.4.0",
+    "pino-pretty": "13.1.2",
+    "ts-node-maintained": "10.9.6",
+    "typescript": "5.8"
   },
   "dependencies": {
-    "@adonisjs/auth": "^9.4.0",
-    "@adonisjs/core": "^6.18.0",
-    "@adonisjs/cors": "^2.2.1",
-    "@adonisjs/lucid": "^21.6.1",
+    "@adonisjs/auth": "9.5.1",
+    "@adonisjs/core": "6.19.0",
+    "@adonisjs/cors": "2.2.1",
+    "@adonisjs/lucid": "21.8.0",
     "@aikidosec/firewall": "file:../../build",
-    "better-sqlite3": "^12.4.1",
-    "luxon": "^3.7.2",
-    "reflect-metadata": "^0.2.2"
+    "better-sqlite3": "12.4.1",
+    "luxon": "3.7.2",
+    "reflect-metadata": "0.2.2"
   },
   "hotHook": {
     "boundaries": [

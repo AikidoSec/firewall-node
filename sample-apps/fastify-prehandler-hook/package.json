@@ -2,6 +2,6 @@
   "name": "sample-fastify-prehandler-hook",
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "fastify": "^4.28.1"
+    "fastify": "4.29.1"
   }
 }

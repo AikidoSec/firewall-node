@@ -6,8 +6,8 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "dotenv": "^16.4.1",
-    "restify": "^8.6.0",
-    "pg": "^8.11.3"
+    "dotenv": "16.6.1",
+    "restify": "8.6.1",
+    "pg": "8.16.3"
   }
 }

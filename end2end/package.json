@@ -2,8 +2,8 @@
   "name": "end2end",
   "private": true,
   "dependencies": {
-    "@supercharge/promise-pool": "^3.1.1",
-    "tap": "^20.0.3"
+    "@supercharge/promise-pool": "3.2.0",
+    "tap": "20.0.3"
   },
   "scripts": {
     "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1",

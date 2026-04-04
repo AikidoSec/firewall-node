@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "fastify": "^4.28.0",
-    "mysql2": "^3.10.1"
+    "fastify": "4.29.1",
+    "mysql2": "3.14.0"
   }
 }

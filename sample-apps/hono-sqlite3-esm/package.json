@@ -3,8 +3,8 @@
   "type": "module",
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "@hono/node-server": "^1.11.2",
-    "hono": "^4.4.2",
-    "sqlite3": "^5.1.7"
+    "@hono/node-server": "1.19.5",
+    "hono": "4.10.4",
+    "sqlite3": "5.1.7"
   }
 }

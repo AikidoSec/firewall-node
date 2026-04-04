@@ -6,8 +6,8 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "express": "^5.0.0",
-    "express-async-handler": "^1.2.0",
-    "morgan": "^1.10.0"
+    "express": "5.1.0",
+    "express-async-handler": "1.2.0",
+    "morgan": "1.10.1"
   }
 }

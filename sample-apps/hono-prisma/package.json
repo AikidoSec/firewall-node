@@ -2,11 +2,11 @@
   "name": "hono-prisma",
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "@hono/node-server": "^1.11.2",
-    "@prisma/client": "^6.0.1",
-    "hono": "^4.6.8"
+    "@hono/node-server": "1.14.3",
+    "@prisma/client": "6.0.1",
+    "hono": "4.10.2"
   },
   "devDependencies": {
-    "prisma": "^6.0.1"
+    "prisma": "6.0.1"
   }
 }

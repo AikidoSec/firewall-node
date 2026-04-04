@@ -6,11 +6,11 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "graphql": "^16.8.2",
-    "graphql-http": "^1.22.1",
-    "morgan": "^1.10.0",
-    "mysql2": "^3.10.0"
+    "dotenv": "16.5.0",
+    "express": "4.21.2",
+    "graphql": "16.10.0",
+    "graphql-http": "1.22.4",
+    "morgan": "1.10.1",
+    "mysql2": "3.14.0"
   }
 }

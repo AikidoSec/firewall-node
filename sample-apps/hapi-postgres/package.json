@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {
     "@aikidosec/firewall": "file:../../build",
-    "@hapi/hapi": "^21.3.10",
-    "pg": "^8.11.3"
+    "@hapi/hapi": "21.4.0",
+    "pg": "8.14.1"
   }
 }
