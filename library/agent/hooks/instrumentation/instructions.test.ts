@@ -64,6 +64,7 @@ t.test("it works", async (t) => {
         modifyArgs: false,
         modifyReturnValue: false,
         modifyArgumentsObject: false,
+        className: undefined,
       },
     ],
     accessLocalVariables: [],
@@ -539,3 +540,74 @@ t.test("addFileInstrumentation checks path", async (t) => {
     t.same(error3.message, "Relative paths with '..' are not allowed");
   }
 });
+
+t.test(
+  "use className to limit instrumentation to specific method of a class",
+  async (t) => {
+    let callbackCalledCount = 0;
+
+    const pkg = new Package("foo");
+    pkg.withVersion("^1.0.0").addFileInstrumentation({
+      path: "dist/test.mjs",
+      functions: [
+        {
+          nodeType: "MethodDefinition",
+          name: "abc",
+          className: "MyClass",
+          operationKind: "sql_op",
+          inspectArgs: () => {
+            ++callbackCalledCount;
+          },
+        },
+      ],
+    });
+
+    setPackagesToInstrument([pkg]);
+    createTestAgent();
+
+    t.equal(callbackCalledCount, 0);
+
+    __instrumentInspectArgs(
+      "foo.dist/test.mjs.abc.MethodDefinition.^1.0.0",
+      [],
+      "1.0.0",
+      this
+    );
+    t.equal(callbackCalledCount, 0);
+
+    __instrumentInspectArgs(
+      "foo.dist/test.mjs.MyClass.abc.MethodDefinition.^1.0.0",
+      [],
+      "1.0.0",
+      this
+    );
+
+    t.equal(callbackCalledCount, 1);
+
+    t.same(
+      getPackageFileInstrumentationInstructions(
+        "foo",
+        "1.0.0",
+        "dist/test.mjs"
+      ),
+      {
+        path: "dist/test.mjs",
+        identifier: "foo.dist/test.mjs.^1.0.0",
+        versionRange: "^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "abc",
+            identifier: "foo.dist/test.mjs.MyClass.abc.MethodDefinition.^1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            className: "MyClass",
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+  }
+);

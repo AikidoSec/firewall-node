@@ -67,10 +67,15 @@ async function main() {
     cwd: libDir,
   });
 
-  // Copy additional files to build directory
-  await copyFile(
-    join(rootDir, "library", "package.json"),
-    join(buildDir, "package.json")
+  // Copy package.json to build directory without devDependencies
+  const packageJson = JSON.parse(
+    await readFile(join(rootDir, "library", "package.json"), "utf8")
+  );
+  delete packageJson.devDependencies;
+  delete packageJson.scripts;
+  await writeFile(
+    join(buildDir, "package.json"),
+    JSON.stringify(packageJson, null, 2) + "\n"
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));

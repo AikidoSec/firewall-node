@@ -205,7 +205,6 @@ function generateHeartbeatEvent(): Event {
       ipAddresses: {
         breakdown: {},
       },
-      sqlTokenizationFailures: 0,
     },
     agent: {
       version: "1.0.0",
