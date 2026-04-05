@@ -6,7 +6,6 @@ export type UserEvent = {
   name: string;
   userId: string | undefined;
   ipAddress: string | undefined;
-  userAgent: string | undefined;
 };
 
 export async function sendUserEvent(
@@ -14,7 +13,7 @@ export async function sendUserEvent(
   event: UserEvent
 ): Promise<void> {
   await fetch({
-    url: new URL(`${getRealtimeURL().toString()}api/runtime/events/user`),
+    url: new URL(`${getRealtimeURL().toString()}api/runtime/events`),
     method: "POST",
     headers: {
       "Content-Type": "application/json",
