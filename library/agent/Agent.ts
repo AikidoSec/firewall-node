@@ -13,6 +13,7 @@ import type {
   DetectedAttack,
   DetectedAttackWave,
 } from "./api/Event";
+import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
@@ -713,5 +714,16 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: UserEvent) {
+    if (!this.token) {
+      return;
+    }
+
+    const promise = sendUserEvent(this.token, event).catch(() => {
+      this.logger.log("Failed to report tracked event");
+    });
+    this.pendingEvents.onAPICall(promise);
   }
 }
