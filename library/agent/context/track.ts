@@ -19,16 +19,10 @@ export function track(eventName: string): void {
     return;
   }
 
-  const userAgent =
-    typeof context.headers["user-agent"] === "string"
-      ? context.headers["user-agent"]
-      : undefined;
-
   agent.onTrackEvent({
     name: eventName,
     userId: context.user?.id,
     ipAddress: context.remoteAddress,
-    userAgent,
   });
 }
 
