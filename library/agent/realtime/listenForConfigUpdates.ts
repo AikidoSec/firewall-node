@@ -1,9 +1,9 @@
+import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
 import { Token } from "../api/Token";
 import { Config } from "../Config";
 import { Logger } from "../logger/Logger";
 import { connectToSSE } from "./connectToSSE";
 import { getConfig } from "./getConfig";
-import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 
 type OnConfigUpdate = (config: Config) => void;
 
@@ -24,50 +24,16 @@ export function listenForConfigUpdates({
   }
 
   const validToken = token;
+  const debugSSE = isDebuggingSSE();
   let currentLastUpdatedAt = lastUpdatedAt;
-  let pollingInterval: NodeJS.Timeout | null = null;
-
-  function startPolling() {
-    if (pollingInterval) {
-      return;
-    }
-
-    pollingInterval = setInterval(() => {
-      checkForUpdates().catch((error) => {
-        logger.log(`Failed to check for config updates: ${error.message}`);
-      });
-    }, 60 * 1000);
-
-    pollingInterval.unref();
-  }
-
-  function stopPolling() {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      pollingInterval = null;
-    }
-  }
-
-  async function checkForUpdates() {
-    const configLastUpdatedAt = await getConfigLastUpdatedAt(validToken);
-
-    if (configLastUpdatedAt > currentLastUpdatedAt) {
-      const config = await getConfig(validToken);
-      currentLastUpdatedAt = config.configUpdatedAt;
-      onConfigUpdate(config);
-    }
-  }
 
   connectToSSE({
     token,
     logger,
-    onConnect() {
-      stopPolling();
-    },
-    onDisconnect() {
-      startPolling();
-    },
     onEvent(event) {
+      if (debugSSE) {
+        logger.log(`SSE event received: ${event.event}`);
+      }
       if (event.event !== "config-updated") {
         return;
       }
@@ -81,8 +47,17 @@ export function listenForConfigUpdates({
         // If we can't parse the payload, fetch the config anyway
       }
 
+      if (debugSSE) {
+        logger.log("SSE config-updated event, fetching new config");
+      }
+
       getConfig(validToken)
         .then((config) => {
+          if (debugSSE) {
+            logger.log(
+              `SSE config fetched, configUpdatedAt: ${config.configUpdatedAt}`
+            );
+          }
           currentLastUpdatedAt = config.configUpdatedAt;
           onConfigUpdate(config);
         })
@@ -93,6 +68,4 @@ export function listenForConfigUpdates({
         });
     },
   });
-
-  startPolling();
 }
