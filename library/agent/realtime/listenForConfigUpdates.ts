@@ -7,10 +7,6 @@ import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 
 type OnConfigUpdate = (config: Config) => void;
 
-type ConfigListener = {
-  stop(): void;
-};
-
 export function listenForConfigUpdates({
   onConfigUpdate,
   token,
@@ -21,12 +17,13 @@ export function listenForConfigUpdates({
   token: Token | undefined;
   logger: Logger;
   lastUpdatedAt: number;
-}): ConfigListener {
+}) {
   if (!token) {
     logger.log("No token provided, not listening for config updates");
-    return { stop() {} };
+    return;
   }
 
+  const validToken = token;
   let currentLastUpdatedAt = lastUpdatedAt;
   let pollingInterval: NodeJS.Timeout | null = null;
 
@@ -52,17 +49,16 @@ export function listenForConfigUpdates({
   }
 
   async function checkForUpdates() {
-    const configLastUpdatedAt = await getConfigLastUpdatedAt(token!);
+    const configLastUpdatedAt = await getConfigLastUpdatedAt(validToken);
 
     if (configLastUpdatedAt > currentLastUpdatedAt) {
-      const config = await getConfig(token!);
+      const config = await getConfig(validToken);
       currentLastUpdatedAt = config.configUpdatedAt;
       onConfigUpdate(config);
     }
   }
 
-  // Start SSE connection for near-instant config updates
-  const sse = connectToSSE({
+  connectToSSE({
     token,
     logger,
     onConnect() {
@@ -85,7 +81,7 @@ export function listenForConfigUpdates({
         // If we can't parse the payload, fetch the config anyway
       }
 
-      getConfig(token!)
+      getConfig(validToken)
         .then((config) => {
           currentLastUpdatedAt = config.configUpdatedAt;
           onConfigUpdate(config);
@@ -98,13 +94,5 @@ export function listenForConfigUpdates({
     },
   });
 
-  // Start polling as fallback until SSE connects
   startPolling();
-
-  return {
-    stop() {
-      sse.close();
-      stopPolling();
-    },
-  };
 }

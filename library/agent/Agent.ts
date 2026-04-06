@@ -67,7 +67,6 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
-  private configListener: { stop(): void } | undefined = undefined;
   private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
 
   constructor(
@@ -445,7 +444,7 @@ export class Agent {
   }
 
   private startListeningForConfigUpdates() {
-    this.configListener = listenForConfigUpdates({
+    listenForConfigUpdates({
       token: this.token,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),

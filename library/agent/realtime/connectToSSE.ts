@@ -9,10 +9,6 @@ import { getRealtimeURL } from "./getRealtimeURL";
 const INITIAL_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 60 * 1000;
 
-type SSEConnection = {
-  close(): void;
-};
-
 export function connectToSSE({
   token,
   logger,
@@ -25,20 +21,18 @@ export function connectToSSE({
   onEvent: (event: EventSourceMessage) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
-}): SSEConnection {
-  let closed = false;
+}) {
   let reconnectMs = INITIAL_RECONNECT_MS;
   let reconnectTimer: NodeJS.Timeout | null = null;
   let currentRequest: ReturnType<typeof requestHttp> | null = null;
 
   function connect() {
-    if (closed) {
-      return;
+    if (currentRequest) {
+      currentRequest.destroy();
+      currentRequest = null;
     }
 
-    const url = new URL(
-      `${getRealtimeURL().toString()}api/runtime/stream`
-    );
+    const url = new URL(`${getRealtimeURL().toString()}api/runtime/stream`);
 
     const requestFn = url.protocol === "https:" ? requestHttps : requestHttp;
 
@@ -53,11 +47,6 @@ export function connectToSSE({
         },
       },
       (response) => {
-        if (closed) {
-          response.destroy();
-          return;
-        }
-
         if (response.statusCode !== 200) {
           logger.log(
             `SSE connection failed with status ${response.statusCode}`
@@ -67,7 +56,6 @@ export function connectToSSE({
           return;
         }
 
-        // Successfully connected, reset backoff
         reconnectMs = INITIAL_RECONNECT_MS;
         if (onConnect) {
           onConnect();
@@ -86,40 +74,34 @@ export function connectToSSE({
         });
 
         response.on("end", () => {
-          if (!closed) {
-            logger.log("SSE connection closed by server, reconnecting");
-            parser.reset();
-            scheduleReconnect();
-          }
+          logger.log("SSE connection closed by server, reconnecting");
+          parser.reset();
+          scheduleReconnect();
         });
 
         response.on("error", (error) => {
-          if (!closed) {
-            logger.log(`SSE stream error: ${error.message}`);
-            parser.reset();
-            scheduleReconnect();
-          }
+          logger.log(`SSE stream error: ${error.message}`);
+          parser.reset();
+          scheduleReconnect();
         });
       }
     );
 
     currentRequest = req;
 
+    req.on("socket", (socket) => {
+      socket.unref();
+    });
+
     req.on("error", (error) => {
-      if (!closed) {
-        logger.log(`SSE connection error: ${error.message}`);
-        scheduleReconnect();
-      }
+      logger.log(`SSE connection error: ${error.message}`);
+      scheduleReconnect();
     });
 
     req.end();
   }
 
   function scheduleReconnect() {
-    if (closed) {
-      return;
-    }
-
     if (onDisconnect) {
       onDisconnect();
     }
@@ -133,21 +115,5 @@ export function connectToSSE({
     reconnectTimer.unref();
   }
 
-  function close() {
-    closed = true;
-
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-      reconnectTimer = null;
-    }
-
-    if (currentRequest) {
-      currentRequest.destroy();
-      currentRequest = null;
-    }
-  }
-
   connect();
-
-  return { close };
 }
