@@ -108,6 +108,10 @@ export function connectToSSE({
   }
 
   function scheduleReconnect() {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+    }
+
     // Exponential backoff with jitter
     const jitter = Math.random() * 0.5 + 0.75; // 0.75 - 1.25
     const delay = Math.min(reconnectMs * jitter, MAX_RECONNECT_MS);
