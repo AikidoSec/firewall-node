@@ -218,14 +218,13 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     (pkg) => satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
-  // Report to the agent that the package was wrapped or not if it's version is not supported
-  agent?.onPackageWrapped(moduleName, {
-    version: installedPkgVersion,
-    supported: !!matchingVersionedPackages.length,
-  });
-
   if (!matchingVersionedPackages.length) {
     // We don't want to patch this package version
+    // Report to the agent that the package version is not supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: false,
+    });
     return originalExports;
   }
 
@@ -243,6 +242,16 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
+  }
+
+  if (interceptors.length) {
+    // Report to the agent that the package was wrapped
+    // We don't want to report a package as supported if there are no matching hooks for the required file,
+    // even if the package version is supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: true,
+    });
   }
 
   return executeInterceptors(
