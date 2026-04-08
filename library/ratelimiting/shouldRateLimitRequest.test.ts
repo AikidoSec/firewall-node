@@ -51,6 +51,7 @@ async function createAgent(
       blockedUserIds: [],
       configUpdatedAt: 0,
       endpoints: endpoints,
+      excludedUserIdsFromRateLimiting: ["excluded-user-id"],
     }),
   });
 
@@ -751,3 +752,103 @@ t.test("it rate limits by group if user is not set", async (t) => {
     }
   );
 });
+
+t.test("it does not rate limit excluded users", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 3,
+        windowSizeInMS: 1000,
+      },
+    },
+  ]);
+
+  for (let i = 0; i < 5; i++) {
+    t.same(
+      shouldRateLimitRequest(
+        createContext(
+          "4.3.2.1",
+          "excluded-user-id",
+          "/login",
+          "POST",
+          undefined
+        ),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+  }
+});
+
+t.test(
+  "it does rate limit users if they are part of a rate limit group even if they are excluded from user rate limiting",
+  async (t) => {
+    const agent = await createAgent([
+      {
+        method: "POST",
+        route: "/login",
+        forceProtectionOff: false,
+        rateLimiting: {
+          enabled: true,
+          maxRequests: 2,
+          windowSizeInMS: 1000,
+        },
+      },
+    ]);
+
+    t.same(
+      shouldRateLimitRequest(
+        createContext(
+          "4.3.2.1",
+          "excluded-user-id",
+          "/login",
+          "POST",
+          "group1"
+        ),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+
+    t.same(
+      shouldRateLimitRequest(
+        createContext(
+          "4.3.2.1",
+          "excluded-user-id",
+          "/login",
+          "POST",
+          "group1"
+        ),
+        agent
+      ),
+      {
+        block: false,
+      }
+    );
+
+    t.match(
+      shouldRateLimitRequest(
+        createContext(
+          "4.3.2.1",
+          "excluded-user-id",
+          "/login",
+          "POST",
+          "group1"
+        ),
+        agent
+      ),
+      {
+        block: true,
+        trigger: "group",
+      }
+    );
+  }
+);
