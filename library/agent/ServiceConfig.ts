@@ -31,6 +31,8 @@ export class ServiceConfig {
   private blockNewOutgoingRequests = false;
   private domains = new Map<string, Domain["mode"]>();
 
+  private excludedUserIdsFromRateLimiting = new Set<string>();
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -304,5 +306,13 @@ export class ServiceConfig {
 
     // Only block outgoing requests if the mode is "block"
     return mode === "block";
+  }
+
+  updateUsersExcludedFromRateLimiting(userIds: string[]) {
+    this.excludedUserIdsFromRateLimiting = new Set(userIds);
+  }
+
+  isUserExcludedFromRateLimiting(userId: string): boolean {
+    return this.excludedUserIdsFromRateLimiting.has(userId);
   }
 }

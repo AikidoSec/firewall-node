@@ -421,6 +421,7 @@ t.test(
       allowedIPAddresses: [],
       block: true,
       blockNewOutgoingRequests: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -489,6 +490,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -998,6 +1000,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     token: new Token("123"),
@@ -1025,6 +1028,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: false,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1299,6 +1303,7 @@ t.test("it blocks new outgoing requests if config says so", async () => {
       { hostname: "example.com", mode: "block" },
       { hostname: "aikido.dev", mode: "allow" },
     ],
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1336,6 +1341,7 @@ t.test(
         { hostname: "example.com", mode: "block" },
         { hostname: "aikido.dev", mode: "allow" },
       ],
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,

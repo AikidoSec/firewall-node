@@ -81,6 +81,10 @@ export function shouldRateLimitRequest(
   }
 
   if (context.user) {
+    if (agent.getConfig().isUserExcludedFromRateLimiting(context.user.id)) {
+      return { block: false };
+    }
+
     const allowed = agent
       .getRateLimiter()
       .isAllowed(

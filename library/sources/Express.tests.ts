@@ -66,6 +66,7 @@ export async function createExpressTests(expressPackageName: string) {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       allowedIPAddresses: ["4.3.2.1"],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
     wrappers: [new Express(), new FileSystem(), new HTTPServer()],

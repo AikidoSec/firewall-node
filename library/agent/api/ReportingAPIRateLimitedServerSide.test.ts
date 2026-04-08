@@ -102,6 +102,7 @@ t.test("it stops sending requests if rate limited", async (t) => {
     configUpdatedAt: 0,
     blockedUserIds: [],
     allowedIPAddresses: [],
+    excludedUserIdsFromRateLimiting: [],
   });
   t.same(await rateLimitedAPI.report(token, generateStartedEvent(), 5000), {
     success: true,
