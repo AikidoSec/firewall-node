@@ -663,10 +663,43 @@ t.test("it rate limits based on group", opts, async (t) => {
   t.match(await response3.text(), "You are rate limited by Zen.");
 });
 
+t.test("it rate limits users", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response.status, 200);
+  t.match(await response.text(), "OK");
+
+  const response2 = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response2.status, 200);
+  t.match(await response2.text(), "OK");
+
+  const response3 = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response3.status, 429);
+  t.match(await response3.text(), "You are rate limited by Zen.");
+});
+
 t.test("it does not rate limit excluded users", opts, async (t) => {
   const app = await getApp();
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 10; i++) {
     const response = await app.request("/rate-limited-2", {
       method: "GET",
       headers: {
