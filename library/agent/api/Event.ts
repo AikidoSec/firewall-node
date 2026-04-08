@@ -74,7 +74,8 @@ export type OperationKind =
   | "deserialize_op"
   | "graphql_op"
   | "eval_op"
-  | "ai_op";
+  | "ai_op"
+  | "import_op";
 
 type OperationStats = {
   kind: OperationKind;
