@@ -13,10 +13,11 @@ import type {
   DetectedAttack,
   DetectedAttackWave,
 } from "./api/Event";
+import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
-import { pollForChanges } from "./realtime/pollForChanges";
+import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -442,8 +443,8 @@ export class Agent {
     }
   }
 
-  private startPollingForConfigChanges() {
-    pollForChanges({
+  private startListeningForConfigUpdates() {
+    listenForConfigUpdates({
       token: this.token,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
@@ -539,7 +540,7 @@ export class Agent {
     this.onStart()
       .then(() => {
         this.startHeartbeats();
-        this.startPollingForConfigChanges();
+        this.startListeningForConfigUpdates();
       })
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
@@ -713,5 +714,16 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: UserEvent) {
+    if (!this.token) {
+      return;
+    }
+
+    const promise = sendUserEvent(this.token, event).catch(() => {
+      this.logger.log("Failed to report tracked event");
+    });
+    this.pendingEvents.onAPICall(promise);
   }
 }
