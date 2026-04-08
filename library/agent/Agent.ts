@@ -333,10 +333,10 @@ export class Agent {
         response.domains &&
         Array.isArray(response.domains)
       ) {
-        this.serviceConfig.setBlockNewOutgoingRequests(
+        this.serviceConfig.updateDomains(
+          response.domains,
           response.blockNewOutgoingRequests
         );
-        this.serviceConfig.updateDomains(response.domains);
       }
 
       if (
