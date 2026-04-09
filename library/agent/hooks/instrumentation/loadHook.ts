@@ -3,6 +3,7 @@ import { getModuleInfoFromPath } from "../getModuleInfoFromPath";
 import { isBuiltinModule } from "../isBuiltinModule";
 import { getPackageVersionFromPath } from "./getPackageVersionFromPath";
 import { transformCode } from "./codeTransformation";
+import { transformUserCode } from "./userCodeTransformation";
 import {
   getPackageFileInstrumentationInstructions,
   shouldPatchBuiltin,
@@ -71,9 +72,8 @@ function patchPackage(
 ) {
   const moduleInfo = getModuleInfoFromPath(path);
   if (!moduleInfo) {
-    // This is e.g. the case for user code (not a dependency)
-    // We don't want to modify user code yet
-    return previousLoadResult;
+    // User code (not a dependency) — apply taint tracking transformation
+    return patchUserCode(path, previousLoadResult);
   }
 
   // Check if the version of the package is supported
@@ -186,6 +186,32 @@ function isSelfCheckImport(path: string) {
   return path
     .replace(/\\/g, "/")
     .includes("hooks/instrumentation/zenHooksCheckImport."); // .js or .ts
+}
+
+function patchUserCode(
+  path: string,
+  previousLoadResult: ReturnType<LoadFunction>
+) {
+  const loadFormat =
+    (previousLoadResult.format as "commonjs" | "module" | undefined) ??
+    "unambiguous";
+
+  const sourceString =
+    typeof previousLoadResult.source === "string"
+      ? previousLoadResult.source
+      : new TextDecoder("utf-8").decode(previousLoadResult.source);
+
+  const newSource = transformUserCode(path, sourceString, loadFormat);
+
+  if (!newSource || newSource === sourceString) {
+    return previousLoadResult;
+  }
+
+  return {
+    format: previousLoadResult.format,
+    shortCircuit: previousLoadResult.shortCircuit,
+    source: newSource,
+  };
 }
 
 function updateSelfCheckSource(previousLoadResult: ReturnType<LoadFunction>) {
