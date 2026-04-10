@@ -787,7 +787,7 @@ t.test("it does not rate limit excluded users", async (t) => {
 });
 
 t.test(
-  "it does rate limit users if they are part of a rate limit group even if they are excluded from user rate limiting",
+  "it does not rate limit users if they are part of a rate limit group",
   async (t) => {
     const agent = await createAgent([
       {
@@ -802,53 +802,22 @@ t.test(
       },
     ]);
 
-    t.same(
-      shouldRateLimitRequest(
-        createContext(
-          "4.3.2.1",
-          "excluded-user-id",
-          "/login",
-          "POST",
-          "group1"
+    for (let i = 0; i < 5; i++) {
+      t.same(
+        shouldRateLimitRequest(
+          createContext(
+            "4.3.2.1",
+            "excluded-user-id",
+            "/login",
+            "POST",
+            "group1"
+          ),
+          agent
         ),
-        agent
-      ),
-      {
-        block: false,
-      }
-    );
-
-    t.same(
-      shouldRateLimitRequest(
-        createContext(
-          "4.3.2.1",
-          "excluded-user-id",
-          "/login",
-          "POST",
-          "group1"
-        ),
-        agent
-      ),
-      {
-        block: false,
-      }
-    );
-
-    t.match(
-      shouldRateLimitRequest(
-        createContext(
-          "4.3.2.1",
-          "excluded-user-id",
-          "/login",
-          "POST",
-          "group1"
-        ),
-        agent
-      ),
-      {
-        block: true,
-        trigger: "group",
-      }
-    );
+        {
+          block: false,
+        }
+      );
+    }
   }
 );

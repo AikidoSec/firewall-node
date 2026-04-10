@@ -61,6 +61,13 @@ export function shouldRateLimitRequest(
     return { block: false };
   }
 
+  if (
+    context.user &&
+    agent.getConfig().isUserExcludedFromRateLimiting(context.user.id)
+  ) {
+    return { block: false };
+  }
+
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (context.rateLimitGroup) {
@@ -81,10 +88,6 @@ export function shouldRateLimitRequest(
   }
 
   if (context.user) {
-    if (agent.getConfig().isUserExcludedFromRateLimiting(context.user.id)) {
-      return { block: false };
-    }
-
     const allowed = agent
       .getRateLimiter()
       .isAllowed(
