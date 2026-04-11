@@ -1,4 +1,3 @@
-import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
 import { tryParseURL } from "./tryParseURL";
@@ -21,13 +20,51 @@ export function extractStringsFromUserInput(
     return results;
   }
 
-  if (isPlainObject(obj)) {
-    for (const key in obj) {
-      results.add(key);
-      extractStringsFromUserInput(obj[key], depth + 1).forEach((value) => {
-        results.add(value);
-      });
+  if (obj instanceof Map) {
+    for (const [key, value] of obj.entries()) {
+      if (typeof key === "string") {
+        results.add(key);
+      }
+      extractStringsFromUserInput(value, depth + 1).forEach((v) =>
+        results.add(v)
+      );
     }
+    return results;
+  }
+
+  if (obj instanceof Set) {
+    for (const value of obj.values()) {
+      extractStringsFromUserInput(value, depth + 1).forEach((v) =>
+        results.add(v)
+      );
+    }
+    return results;
+  }
+
+  if (obj instanceof URLSearchParams) {
+    for (const [key, value] of obj.entries()) {
+      results.add(key);
+      results.add(value);
+    }
+    return results;
+  }
+
+  if (globalThis.FormData && obj instanceof globalThis.FormData) {
+    obj.forEach((value, key) => {
+      results.add(key);
+      if (typeof value === "string") {
+        results.add(value);
+      }
+    });
+    return results;
+  }
+
+  if (globalThis.Headers && obj instanceof globalThis.Headers) {
+    obj.forEach((value, key) => {
+      results.add(key);
+      results.add(value);
+    });
+    return results;
   }
 
   if (Array.isArray(obj)) {
@@ -46,6 +83,7 @@ export function extractStringsFromUserInput(
       // Ignore deeply nested/cyclic arrays that can overflow during native join recursion.
       // We still keep strings gathered from traversed elements above.
     }
+    return results;
   }
 
   if (typeof obj === "string" && obj.length > 0) {
@@ -74,6 +112,35 @@ export function extractStringsFromUserInput(
 
         results.add(value);
       });
+    }
+    return results;
+  }
+
+  if (typeof obj === "object" && obj !== null && !Array.isArray(obj)) {
+    try {
+      for (const key of Reflect.ownKeys(obj)) {
+        const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+        if (!descriptor || !("value" in descriptor)) {
+          continue;
+        }
+
+        // Ignore function names
+        if (typeof descriptor.value === "function") {
+          continue;
+        }
+
+        if (typeof key === "string" && key.length > 0) {
+          results.add(key);
+        }
+
+        extractStringsFromUserInput(descriptor.value, depth + 1).forEach(
+          (value) => {
+            results.add(value);
+          }
+        );
+      }
+    } catch {
+      // Ignore errors
     }
   }
 
