@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import * as mod from "module";
 import { BuiltinModule } from "./BuiltinModule";
 import { isBuiltinModule } from "./isBuiltinModule";
@@ -40,14 +39,12 @@ export function wrapRequire() {
   isRequireWrapped = true;
 
   mod.prototype.require = function wrapped() {
-    // eslint-disable-next-line prefer-rest-params
     return patchedRequire.call(this, arguments);
   };
 
   // Wrap process.getBuiltinModule, which allows requiring builtin modules (since Node.js v22.3.0)
   if (typeof process.getBuiltinModule === "function") {
     process.getBuiltinModule = function wrappedGetBuiltinModule() {
-      // eslint-disable-next-line prefer-rest-params
       return patchedRequire.call(this, arguments);
     };
   }
@@ -134,6 +131,8 @@ function patchBuiltinModule(id: string, originalExports: unknown) {
     return originalExports;
   }
 
+  getInstance()?.onBuiltinWrapped(moduleName);
+
   // Get interceptors from all matching builtin modules
   const interceptors = matchingBuiltins
     .map((m) => m.getRequireInterceptors())
@@ -219,14 +218,13 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     (pkg) => satisfiesVersion(pkg.getRange(), installedPkgVersion)
   );
 
-  // Report to the agent that the package was wrapped or not if it's version is not supported
-  agent?.onPackageWrapped(moduleName, {
-    version: installedPkgVersion,
-    supported: !!matchingVersionedPackages.length,
-  });
-
   if (!matchingVersionedPackages.length) {
     // We don't want to patch this package version
+    // Report to the agent that the package version is not supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: false,
+    });
     return originalExports;
   }
 
@@ -244,6 +242,16 @@ function patchPackage(this: mod, id: string, originalExports: unknown) {
     interceptors = matchingVersionedPackages
       .map((pkg) => pkg.getRequireFileInterceptor(pathInfo.path) || [])
       .flat();
+  }
+
+  if (interceptors.length) {
+    // Report to the agent that the package was wrapped
+    // We don't want to report a package as supported if there are no matching hooks for the required file,
+    // even if the package version is supported
+    agent?.onPackageWrapped(moduleName, {
+      version: installedPkgVersion,
+      supported: true,
+    });
   }
 
   return executeInterceptors(

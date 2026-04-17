@@ -8,11 +8,11 @@ type AppConfig = {
   endpoints: any[];
   blockedUserIds: number[];
   allowedIPAddresses: string[];
-  receivedAnyStats: boolean;
   blockNewOutgoingRequests: boolean;
   domains: any[];
   failureRate?: number;
   timeout?: number;
+  excludedUserIdsFromRateLimiting?: string[];
 };
 
 const configs: AppConfig[] = [];
@@ -26,9 +26,9 @@ export function generateConfig(app: App): AppConfig {
     endpoints: [],
     blockedUserIds: [],
     allowedIPAddresses: [],
-    receivedAnyStats: false,
     blockNewOutgoingRequests: false,
     domains: [],
+    excludedUserIdsFromRateLimiting: [],
   };
 }
 

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
 import { Token } from "../agent/api/Token";
@@ -85,7 +84,7 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(createContext(), () => {
-    const aikido = https.request("https://aikido.dev");
+    const aikido = https.request("https://AIKIDO.dev");
     aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [

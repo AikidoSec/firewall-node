@@ -1,16 +1,17 @@
+import { addIPv4MappedAddresses } from "../../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../../helpers/ip-matcher/IPMatcher";
-import mapIPv4ToIPv6 from "../../helpers/mapIPv4ToIPv6";
 
-const IMDSAddresses = new IPMatcher();
-
-// This IP address is used by AWS EC2 instances to access the instance metadata service (IMDS)
+// These IP addresses are used to access the instance metadata service (IMDS)
 // We should block any requests to these IP addresses
 // This prevents STORED SSRF attacks that try to access the instance metadata service
-IMDSAddresses.add("169.254.169.254");
-IMDSAddresses.add(mapIPv4ToIPv6("169.254.169.254"));
-IMDSAddresses.add("fd00:ec2::254");
-IMDSAddresses.add("100.100.100.200"); // Alibaba Cloud
-IMDSAddresses.add(mapIPv4ToIPv6("100.100.100.200"));
+// Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
+const IMDSAddresses = new IPMatcher(
+  addIPv4MappedAddresses([
+    "169.254.169.254",
+    "fd00:ec2::254",
+    "100.100.100.200",
+  ])
+);
 
 export function isIMDSIPAddress(ip: string): boolean {
   return IMDSAddresses.has(ip);

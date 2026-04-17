@@ -1,8 +1,9 @@
 import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { Wrapper } from "../agent/Wrapper";
-import { getContext } from "../agent/Context";
+import { bindContext, getContext } from "../agent/Context";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
+import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { isPlainObject } from "../helpers/isPlainObject";
@@ -11,21 +12,67 @@ import { wrapExport } from "../agent/hooks/wrapExport";
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
 
+  private resolvePlaceholder(
+    placeholder: string,
+    _placeholderNumber: number | undefined,
+    params: unknown[] | undefined
+  ): unknown {
+    // Postgres uses $1, $2, etc. (1-based)
+    const match = placeholder.match(/^\$(\d+)$/);
+    if (match && params) {
+      const index = parseInt(match[1], 10) - 1;
+      if (index >= 0 && index < params.length) {
+        return params[index];
+      }
+    }
+
+    return undefined;
+  }
+
+  private findParams(args: unknown[]): unknown[] | undefined {
+    if (args.length >= 2 && Array.isArray(args[1])) {
+      return args[1];
+    }
+
+    // Object format: query({ text: "...", values: [...] })
+    if (
+      args.length > 0 &&
+      isPlainObject(args[0]) &&
+      Array.isArray(args[0].values)
+    ) {
+      return args[0].values;
+    }
+
+    return undefined;
+  }
+
   private inspectQuery(args: unknown[]): InterceptorResult {
     const context = getContext();
-
     if (!context) {
       return undefined;
     }
 
     if (args.length > 0 && typeof args[0] === "string" && args[0].length > 0) {
       const sql: string = args[0];
+      const params = this.findParams(args);
 
-      return checkContextForSqlInjection({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
         sql: sql,
         context: context,
         operation: "pg.query",
         dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
+        sql,
+        context,
+        dialect: this.dialect,
+        resolvePlaceholder: (placeholder, placeholderNumber) =>
+          this.resolvePlaceholder(placeholder, placeholderNumber, params),
       });
     }
 
@@ -36,16 +83,41 @@ export class Postgres implements Wrapper {
       typeof args[0].text === "string"
     ) {
       const text = args[0].text;
+      const params = this.findParams(args);
 
-      return checkContextForSqlInjection({
+      // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+      const sqlInjectionResult = checkContextForSqlInjection({
         sql: text,
         context: context,
         operation: "pg.query",
         dialect: this.dialect,
       });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
+
+      return checkContextForIdor({
+        sql: text,
+        context,
+        dialect: this.dialect,
+        resolvePlaceholder: (placeholder, placeholderNumber) =>
+          this.resolvePlaceholder(placeholder, placeholderNumber, params),
+      });
     }
 
     return undefined;
+  }
+
+  // This is needed as the AsyncContext is not properly working under high concurrency with pg Pool,
+  // as pg Pool executes queries in parallel and the context can get mixed up between different queries.
+  // By binding the context to the callback passed to pool.connect(), we ensure that the correct context is available when the query is executed.
+  private modifyPoolConnectArgs(args: unknown[]): unknown[] {
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return bindContext(arg as () => unknown);
+      }
+      return arg;
+    });
   }
 
   wrap(hooks: Hooks) {
@@ -67,6 +139,27 @@ export class Postgres implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+          },
+        ],
+      });
+
+    hooks
+      .addPackage("pg-pool")
+      .withVersion("^3.0.0")
+      .onRequire((exports, pkgInfo) => {
+        wrapExport(exports.prototype, "connect", pkgInfo, {
+          kind: "sql_op",
+          modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+        });
+      })
+      .addFileInstrumentation({
+        path: "index.js",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "connect",
+            operationKind: "sql_op",
+            modifyArgs: (args) => this.modifyPoolConnectArgs(args),
           },
         ],
       });

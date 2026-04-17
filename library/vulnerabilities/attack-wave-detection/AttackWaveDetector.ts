@@ -8,8 +8,13 @@ export type SuspiciousRequest = {
 };
 
 export class AttackWaveDetector {
-  private suspiciousRequestsCounts: LRUMap<string, number>;
-  private suspiciousRequestsSamples: LRUMap<string, SuspiciousRequest[]>;
+  private suspiciousRequests: LRUMap<
+    string,
+    {
+      count: number;
+      samples: SuspiciousRequest[];
+    }
+  >;
   private sentEventsMap: LRUMap<string, number>;
 
   // How many suspicious requests are allowed before triggering an alert
@@ -38,11 +43,7 @@ export class AttackWaveDetector {
     this.maxLRUEntries = options.maxLRUEntries ?? 10_000; // Default: 10,000 entries
     this.maxSamplesPerIP = options.maxSamplesPerIP ?? 15; // Default: 15 samples
 
-    this.suspiciousRequestsCounts = new LRUMap(
-      this.maxLRUEntries,
-      this.attackWaveTimeFrame
-    );
-    this.suspiciousRequestsSamples = new LRUMap(
+    this.suspiciousRequests = new LRUMap(
       this.maxLRUEntries,
       this.attackWaveTimeFrame
     );
@@ -80,15 +81,24 @@ export class AttackWaveDetector {
       return false;
     }
 
-    const suspiciousRequests = (this.suspiciousRequestsCounts.get(ip) || 0) + 1;
-    this.suspiciousRequestsCounts.set(ip, suspiciousRequests);
+    const suspiciousRequests = this.suspiciousRequests.get(ip) || {
+      count: 0,
+      samples: [],
+    };
 
-    this.trackSample(ip, {
-      method: context.method,
-      url: context.url,
-    });
+    suspiciousRequests.count += 1;
 
-    if (suspiciousRequests < this.attackWaveThreshold) {
+    suspiciousRequests.samples = this.trackSample(
+      {
+        method: context.method,
+        url: context.url,
+      },
+      suspiciousRequests.samples
+    );
+
+    this.suspiciousRequests.set(ip, suspiciousRequests);
+
+    if (suspiciousRequests.count < this.attackWaveThreshold) {
       return false;
     }
 
@@ -98,13 +108,15 @@ export class AttackWaveDetector {
   }
 
   getSamplesForIP(ip: string): SuspiciousRequest[] {
-    return this.suspiciousRequestsSamples.get(ip) || [];
+    return this.suspiciousRequests.get(ip)?.samples || [];
   }
 
-  trackSample(ip: string, request: SuspiciousRequest) {
-    const samples = this.suspiciousRequestsSamples.get(ip) || [];
+  trackSample(
+    request: SuspiciousRequest,
+    samples: SuspiciousRequest[]
+  ): SuspiciousRequest[] {
     if (samples.length >= this.maxSamplesPerIP) {
-      return;
+      return [...samples];
     }
 
     // Only store unique samples
@@ -115,9 +127,9 @@ export class AttackWaveDetector {
           sample.method === request.method && sample.url === request.url
       )
     ) {
-      return;
+      return [...samples];
     }
-    samples.push(request);
-    this.suspiciousRequestsSamples.set(ip, samples);
+
+    return [...samples, request];
   }
 }

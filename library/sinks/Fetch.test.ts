@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -99,7 +98,7 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://app.aikido.dev"));
+    await fetch(new URL("https://app.AIKIDO.dev"));
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 443, hits: 1 },

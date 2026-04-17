@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as dns from "dns";
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
@@ -96,7 +95,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         blockedUserIds: [],
         allowedIPAddresses: ["1.2.3.4"],
         block: true,
-        receivedAnyStats: false,
+        excludedUserIdsFromRateLimiting: [],
       });
       const agent = startTestAgent({
         api,

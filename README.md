@@ -27,6 +27,7 @@ Zen will autonomously protect your Node.js applications against:
 - 🛡️ [Server-side request forgery (SSRF)](./docs/ssrf.md)
 - 🛡️ [Attack wave detection](https://help.aikido.dev/zen-firewall/zen-features/attack-wave-protection)
 - 🛡️ JS injection
+- 🛡️ [IDOR attacks](./docs/idor-protection.md) (opt-in, see setup guide)
 
 Zen operates autonomously on the same server as your Node.js app to:
 
@@ -55,13 +56,13 @@ Zen for Node.js 16+ is compatible with:
 
 ### Database drivers
 
-- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x and 6.x _(npm package versions, not MongoDB server versions)_
+- ✅ [`mongodb`](https://www.npmjs.com/package/mongodb) 4.x, 5.x, 6.x and 7.x _(npm package versions, not MongoDB server versions)_
 - ✅ [`mongoose`](https://www.npmjs.com/package/mongoose) 8.x, 7.x and 6.x
 - ✅ [`pg`](https://www.npmjs.com/package/pg) 8.x and 7.x
 - ✅ [`mysql`](https://www.npmjs.com/package/mysql) 2.x
 - ✅ [`mysql2`](https://www.npmjs.com/package/mysql2) 3.x
-- ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x
-- ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 5.x
+- ✅ [`mariadb`](https://www.npmjs.com/package/mariadb) 3.x (3.5+ requires ESM instrumentation)
+- ✅ [`sqlite3`](https://www.npmjs.com/package/sqlite3) 6.x and 5.x
 - ✅ [`node:sqlite`](https://nodejs.org/api/sqlite.html)
 - ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
@@ -70,7 +71,7 @@ Zen for Node.js 16+ is compatible with:
 
 ### Cloud providers
 
-- ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 4.x, 3.x
+- ✅ [`@google-cloud/functions-framework`](https://www.npmjs.com/package/@google-cloud/functions-framework) 5.x, 4.x and 3.x
 - ✅ [`@google-cloud/pubsub`](https://www.npmjs.com/package/@google-cloud/pubsub) 5.x, 4.x
 - ✅ Google Cloud Functions
 - ✅ AWS Lambda
@@ -84,6 +85,7 @@ See list above for supported database drivers.
 - ✅ [`typeorm`](https://www.npmjs.com/package/typeorm)
 - ✅ [`bookshelf`](https://www.npmjs.com/package/bookshelf)
 - ✅ [`drizzle-orm`](https://www.npmjs.com/package/drizzle-orm)
+- ✅ [`kysely`](https://www.npmjs.com/package/kysely)
 
 ### API tools
 
@@ -107,11 +109,11 @@ See list above for supported database drivers.
 
 Zen instruments the following AI SDKs to track which models are used and how many tokens are consumed, allowing you to monitor your AI usage and costs:
 
-- ✅ [`openai`](https://www.npmjs.com/package/openai) 5.x, 4.x
+- ✅ [`openai`](https://www.npmjs.com/package/openai) 6.x, 5.x, 4.x
 - ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x
 - ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 - ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
-- ✅ [`ai`](https://www.npmjs.com/package/ai) 5.x, 4.x
+- ✅ [`ai`](https://www.npmjs.com/package/ai) 6.x, 5.x, 4.x
 - ✅ [`@google/genai`](https://www.npmjs.com/package/@google/genai) ^1.6.0
 
 _Note: Prompt injection attacks are currently not covered by Zen._
@@ -142,6 +144,18 @@ For framework- and provider- specific instructions, check out our docs:
 - [AWS Lambda](docs/lambda.md)
 - [Google Cloud Functions](docs/cloud-functions.md)
 - [Google Cloud Pub/Sub](docs/pubsub.md)
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup in the framework docs above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](docs/esm.md) for additional steps.
+
+## Guides
+
+- [Troubleshooting](docs/troubleshooting.md) — common issues and how to debug Zen
+- [ESM support](docs/esm.md) — setup for native ECMAScript module apps
+- [Bundlers](docs/bundler.md) — using Zen with esbuild and other bundlers
+- [Proxy / IP headers](docs/proxy.md) — configure client IP detection behind load balancers
+- [Set the current user](docs/user.md) — identify users for rate limiting, blocking, and attack reports
+- [IDOR protection](docs/idor-protection.md) — prevent data leaks in multi-tenant apps
 
 ## Reporting to your Aikido Security dashboard
 

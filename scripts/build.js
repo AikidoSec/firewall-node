@@ -1,4 +1,4 @@
-const { rm, copyFile, mkdir, readFile, writeFile } = require("fs/promises");
+const { rm, copyFile, cp, mkdir, readFile, writeFile } = require("fs/promises");
 const { join } = require("path");
 const { exec } = require("child_process");
 const { fileExists, findFilesWithExtension } = require("./helpers/fs");
@@ -23,14 +23,22 @@ async function execAsyncWithPipe(command, options) {
 }
 
 // Zen Internals configuration
-const INTERNALS_VERSION = "v0.1.56";
+const INTERNALS_VERSION = "v0.1.61";
 const INTERNALS_URL = `https://github.com/AikidoSec/zen-internals/releases/download/${INTERNALS_VERSION}`;
+// ---
+
+// Node Internals configuration
+const NODE_INTERNALS_VERSION = "1.0.1";
+const NODE_INTERNALS_URL = `https://github.com/AikidoSec/zen-internals-node/releases/download/${NODE_INTERNALS_VERSION}`;
+// 17 is not included on purpose
+const NODE_VERSIONS = [16, 18, 19, 20, 21, 22, 23, 24, 25];
 // ---
 
 const rootDir = join(__dirname, "..");
 const buildDir = join(rootDir, "build");
 const libDir = join(rootDir, "library");
 const internalsDir = join(libDir, "internals");
+const nodeInternalsDir = join(libDir, "node_internals");
 const instrumentationWasmDir = join(rootDir, "instrumentation-wasm");
 const instrumentationWasmOutDir = join(
   libDir,
@@ -48,6 +56,7 @@ async function main() {
 
   await dlZenInternals();
   await buildInstrumentationWasm();
+  await dlNodeInternals();
 
   if (process.argv.includes("--only-wasm")) {
     console.log("Built only WASM files as requested.");
@@ -58,10 +67,15 @@ async function main() {
     cwd: libDir,
   });
 
-  // Copy additional files to build directory
-  await copyFile(
-    join(rootDir, "library", "package.json"),
-    join(buildDir, "package.json")
+  // Copy package.json to build directory without devDependencies
+  const packageJson = JSON.parse(
+    await readFile(join(rootDir, "library", "package.json"), "utf8")
+  );
+  delete packageJson.devDependencies;
+  delete packageJson.scripts;
+  await writeFile(
+    join(buildDir, "package.json"),
+    JSON.stringify(packageJson, null, 2) + "\n"
   );
   await copyFile(join(rootDir, "README.md"), join(buildDir, "README.md"));
   await copyFile(join(rootDir, "LICENSE"), join(buildDir, "LICENSE"));
@@ -73,6 +87,12 @@ async function main() {
     join(internalsDir, "zen_internals_bg.wasm"),
     join(buildDir, "internals", "zen_internals_bg.wasm")
   );
+  await cp(nodeInternalsDir, join(buildDir, "node_internals"), {
+    recursive: true,
+  });
+  // Remove .gitignore so npm doesn't exclude .node files during publish
+  await rm(join(buildDir, "node_internals", ".gitignore"));
+  await rm(join(buildDir, "node_internals", ".installed_version"));
   await copyFile(
     join(instrumentationWasmOutDir, "node_code_instrumentation_bg.wasm"),
     join(
@@ -89,6 +109,60 @@ async function main() {
 
   console.log("Build successful");
   process.exit(0);
+}
+
+async function dlNodeInternals() {
+  await mkdir(nodeInternalsDir, { recursive: true });
+
+  // Check if the wanted version of Node Internals is already installed
+  const versionCacheFile = join(nodeInternalsDir, ".installed_version");
+  const installedVersion = (await fileExists(versionCacheFile))
+    ? await readFile(versionCacheFile, "utf8")
+    : null;
+  if (installedVersion === NODE_INTERNALS_VERSION) {
+    console.log("Node Internals already installed. Skipping download.");
+    return;
+  }
+
+  const downloads = [];
+  for (const nodeVersion of NODE_VERSIONS) {
+    for (const platform of ["linux", "darwin", "win32"]) {
+      let archs = ["x64", "arm64"];
+      if (platform === "win32") {
+        // Only x64 builds are available for Windows
+        archs = ["x64"];
+      }
+      if (nodeVersion === 16) {
+        // Only x64 builds are available for Node 16
+        archs = ["x64"];
+      }
+      for (const arch of archs) {
+        // zen-internals-node-linux-x64-node20.node
+        const filename = `zen-internals-node-${platform}-${arch}-node${nodeVersion}.node`;
+        const url = `${NODE_INTERNALS_URL}/${filename}`;
+        const destPath = join(nodeInternalsDir, filename);
+
+        console.log(
+          `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch}...`
+        );
+        downloads.push(downloadFile(url, destPath));
+
+        // zen-internals-node-linux-x64-musl-node20.node
+        const muslFilename = `zen-internals-node-${platform}-${arch}-musl-node${nodeVersion}.node`;
+        const muslUrl = `${NODE_INTERNALS_URL}/${muslFilename}`;
+        const muslDestPath = join(nodeInternalsDir, muslFilename);
+
+        console.log(
+          `Downloading Node Internals for Node ${nodeVersion} ${platform} ${arch} (musl)...`
+        );
+        downloads.push(downloadFile(muslUrl, muslDestPath));
+      }
+    }
+  }
+
+  await Promise.all(downloads);
+
+  await writeFile(versionCacheFile, NODE_INTERNALS_VERSION);
 }
 
 // Download Zen Internals tarball and verify checksum

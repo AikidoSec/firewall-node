@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import { Agent } from "../agent/Agent";
 import { Hooks } from "../agent/hooks/Hooks";
 import { Wrapper } from "../agent/Wrapper";
@@ -194,7 +193,7 @@ export class OpenAI implements Wrapper {
     // Note: Streaming is not supported yet
     hooks
       .addPackage("openai")
-      .withVersion("^5.0.0 || ^4.0.0")
+      .withVersion("^5.0.0 || ^4.0.0 || ^6.0.0")
       .onRequire((exports, pkgInfo) => {
         const responsesClass = this.getResponsesClass(exports);
         if (responsesClass) {

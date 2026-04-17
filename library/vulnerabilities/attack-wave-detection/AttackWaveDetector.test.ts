@@ -203,3 +203,40 @@ t.test("it limits samples correctly", async (t) => {
     "should have collected the correct samples"
   );
 });
+
+t.test("it does not delete samples too early", async (t) => {
+  const clock = FakeTimers.install();
+  const detector = newAttackWaveDetector();
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.ok(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.notOk(detector.check(getTestContext("::1", "/.env", "GET")));
+  clock.tick(10 * 1000);
+
+  t.same(
+    detector.getSamplesForIP("::1"),
+    [{ method: "GET", url: "http://localhost:4000/.env" }],
+    "should still have the sample stored"
+  );
+
+  clock.uninstall();
+});

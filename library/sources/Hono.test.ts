@@ -38,11 +38,22 @@ const agent = createTestAgent({
           enabled: true,
         },
       },
+      {
+        method: "GET",
+        route: "/rate-limited-2",
+        forceProtectionOff: false,
+        rateLimiting: {
+          windowSizeInMS: 2000,
+          maxRequests: 2,
+          enabled: true,
+        },
+      },
     ],
     blockedUserIds: ["567"],
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
+    excludedUserIdsFromRateLimiting: ["excluded-user-id"],
   }),
   fetchListsAPI: new FetchListsAPIForTesting({
     blockedIPAddresses: [
@@ -96,6 +107,11 @@ async function getApp() {
       const rateLimitGroup = c.req.header("X-Rate-Limit-Group") || "default";
       setRateLimitGroup({ id: rateLimitGroup });
     }
+
+    if (c.req.header("x-user-id")) {
+      setUser({ id: c.req.header("x-user-id")! });
+    }
+
     await next();
   });
 
@@ -136,6 +152,10 @@ async function getApp() {
   });
 
   app.get("/rate-limited-group", (c) => {
+    return c.text("OK");
+  });
+
+  app.get("/rate-limited-2", (c) => {
     return c.text("OK");
   });
 
@@ -641,4 +661,53 @@ t.test("it rate limits based on group", opts, async (t) => {
 
   t.match(response3.status, 429);
   t.match(await response3.text(), "You are rate limited by Zen.");
+});
+
+t.test("it rate limits users", opts, async (t) => {
+  const app = await getApp();
+  const response = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response.status, 200);
+  t.match(await response.text(), "OK");
+
+  const response2 = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response2.status, 200);
+  t.match(await response2.text(), "OK");
+
+  const response3 = await app.request("/rate-limited-2", {
+    method: "GET",
+    headers: {
+      "X-Forwarded-For": "1.2.3.4",
+      "X-User-Id": "user-id",
+    },
+  });
+  t.match(response3.status, 429);
+  t.match(await response3.text(), "You are rate limited by Zen.");
+});
+
+t.test("it does not rate limit excluded users", opts, async (t) => {
+  const app = await getApp();
+
+  for (let i = 0; i < 10; i++) {
+    const response = await app.request("/rate-limited-2", {
+      method: "GET",
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+        "X-User-Id": "excluded-user-id",
+      },
+    });
+    t.match(response.status, 200);
+    t.match(await response.text(), "OK");
+  }
 });

@@ -14,6 +14,8 @@ export function wrapBuiltinExports(id: string, exports: unknown): unknown {
     return exports;
   }
 
+  agent.onBuiltinWrapped(id);
+
   const pkgInfo: WrapPackageInfo = {
     name: id,
     type: "builtin",

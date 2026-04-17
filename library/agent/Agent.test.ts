@@ -18,6 +18,7 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
+import { colorText } from "../helpers/colorText";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -109,7 +110,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -148,7 +149,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "shell-quote@1.8.1 is not supported!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
   ]);
 });
 
@@ -419,8 +420,8 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
       blockNewOutgoingRequests: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -489,7 +490,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -999,6 +1000,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     token: new Token("123"),
@@ -1026,6 +1028,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: false,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1295,12 +1298,12 @@ t.test("it blocks new outgoing requests if config says so", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
-    receivedAnyStats: false,
     blockNewOutgoingRequests: true,
     domains: [
       { hostname: "example.com", mode: "block" },
       { hostname: "aikido.dev", mode: "allow" },
     ],
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1333,12 +1336,12 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
       blockNewOutgoingRequests: false,
       domains: [
         { hostname: "example.com", mode: "block" },
         { hostname: "aikido.dev", mode: "allow" },
       ],
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -1357,3 +1360,55 @@ t.test(
     clock.uninstall();
   }
 );
+
+t.test("Wrapped packages is working correctly", async () => {
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It does not log again if the same package is wrapped again
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It logs again if the same package is wrapped with different version
+  agent.onPackageWrapped("shell-quote", { version: "4.3.2", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+    "shell-quote@4.3.2 is supported!",
+  ]);
+});

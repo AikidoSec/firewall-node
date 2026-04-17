@@ -24,7 +24,6 @@ type Result =
       endpoint: Endpoint;
     };
 
-// eslint-disable-next-line max-lines-per-function
 export function shouldRateLimitRequest(
   context: Readonly<Context>,
   agent: Agent
@@ -59,6 +58,13 @@ export function shouldRateLimitRequest(
     agent.getConfig().isBypassedIP(context.remoteAddress);
 
   if (isFromLocalhostInProduction || isBypassedIP) {
+    return { block: false };
+  }
+
+  if (
+    context.user &&
+    agent.getConfig().isUserExcludedFromRateLimiting(context.user.id)
+  ) {
     return { block: false };
   }
 

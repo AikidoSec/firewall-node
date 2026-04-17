@@ -1,0 +1,27 @@
+name: 🏔️ Alpine test
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  alpine-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [16, 18, 20, 22, 24, 25]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Test Zen on Alpine (Node.js ${{ matrix.node-version }})
+        run: bash scripts/test-alpine.sh ${{ matrix.node-version }}

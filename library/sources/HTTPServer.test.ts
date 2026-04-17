@@ -1160,3 +1160,104 @@ t.test("it reports attack waves", async (t) => {
     });
   });
 });
+
+t.test("It decodes multipart form data and sets body in context", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3230, () => {
+      fetch({
+        url: new URL("http://localhost:3230"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalue1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "value1" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("It ignores multipart form data files", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3231, () => {
+      fetch({
+        url: new URL("http://localhost:3231"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="file1"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nThis is the content of the file.\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ body }) => {
+        const context = JSON.parse(body);
+        t.same(context.body, {
+          fields: [
+            { name: "field1", value: "valueabc" },
+            { name: "field2", value: { abc: "test", arr: ["c"] } },
+          ],
+        });
+        server.close();
+        resolve();
+      });
+    });
+  });
+});
+
+t.test("Invalid multipart form data is ignored", async (t) => {
+  // Enables body parsing
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(getContext()));
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3232, () => {
+      fetch({
+        url: new URL("http://localhost:3232"),
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "multipart/form-data; boundary=----WebKitFormBoundaryABCDEFGHIJ",
+        },
+        body: '------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field1"\r\n\r\nvalueabc\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name="field2"\r\n\r\n{"abc": "test", "arr": ["c"]}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--',
+        timeoutInMS: 500,
+      }).then(({ statusCode, body }) => {
+        t.same(statusCode, 200);
+        const context = JSON.parse(body);
+        t.same(context.body, undefined);
+        server.close();
+        resolve();
+      });
+    });
+  });
+});

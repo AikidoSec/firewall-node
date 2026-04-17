@@ -185,6 +185,19 @@ t.test("it blocks non-allowed IP addresses", (t) => {
         signal: AbortSignal.timeout(5000),
       });
       t.same(resp8.status, 403);
+
+      // IPv4-mapped IPv6 address should also be allowed (matches 4.3.2.1/32)
+      const resp9 = await fetch("http://127.0.0.1:4002/add", {
+        method: "POST",
+        body: "<cat><name>Mapped</name></cat>",
+        headers: {
+          "Content-Type": "application/xml",
+          "X-Forwarded-For": "::ffff:4.3.2.1",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      t.same(resp9.status, 200);
+      t.same(await resp9.text(), JSON.stringify({ success: true }));
     })
     .catch((error) => {
       t.fail(error);

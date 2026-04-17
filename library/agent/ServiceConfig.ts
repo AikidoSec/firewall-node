@@ -1,3 +1,4 @@
+import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
@@ -30,12 +31,13 @@ export class ServiceConfig {
   private blockNewOutgoingRequests = false;
   private domains = new Map<string, Domain["mode"]>();
 
+  private excludedUserIdsFromRateLimiting = new Set<string>();
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
     blockedUserIds: string[],
     bypassedIPAddresses: string[],
-    private receivedAnyStats: boolean,
     blockedIPAddresses: IPList[],
     allowedIPAddresses: IPList[]
   ) {
@@ -51,12 +53,15 @@ export class ServiceConfig {
     this.graphqlFields = [];
 
     for (const endpoint of endpointConfigs) {
-      let allowedIPAddresses = undefined;
+      let allowedIPAddresses: IPMatcher | undefined = undefined;
       if (
         Array.isArray(endpoint.allowedIPAddresses) &&
         endpoint.allowedIPAddresses.length > 0
       ) {
-        allowedIPAddresses = new IPMatcher(endpoint.allowedIPAddresses);
+        // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
+        allowedIPAddresses = new IPMatcher(
+          addIPv4MappedAddresses(endpoint.allowedIPAddresses)
+        );
       }
 
       const endpointConfig = { ...endpoint, allowedIPAddresses };
@@ -99,7 +104,10 @@ export class ServiceConfig {
       this.bypassedIPAddresses = undefined;
       return;
     }
-    this.bypassedIPAddresses = new IPMatcher(ipAddresses);
+    // Small list, frequently accessed: add IPv4-mapped versions at creation time for fast lookups
+    this.bypassedIPAddresses = new IPMatcher(
+      addIPv4MappedAddresses(ipAddresses)
+    );
   }
 
   isBypassedIP(ip: string) {
@@ -120,8 +128,8 @@ export class ServiceConfig {
   isIPAddressBlocked(
     ip: string
   ): { blocked: true; reason: string } | { blocked: false } {
-    const blocklist = this.blockedIPAddresses.find((blocklist) =>
-      blocklist.blocklist.has(ip)
+    const blocklist = this.blockedIPAddresses.find((list) =>
+      list.blocklist.hasWithMappedCheck(ip)
     );
 
     if (blocklist) {
@@ -137,6 +145,7 @@ export class ServiceConfig {
     for (const source of blockedIPAddresses) {
       this.blockedIPAddresses.push({
         key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
         blocklist: new IPMatcher(source.ips),
         description: source.description,
       });
@@ -153,6 +162,7 @@ export class ServiceConfig {
     for (const source of monitoredIPAddresses) {
       this.monitoredIPAddresses.push({
         key: source.key,
+        // Large list: IPv4-mapped checked at lookup time to save memory
         list: new IPMatcher(source.ips),
       });
     }
@@ -214,13 +224,13 @@ export class ServiceConfig {
 
   getMatchingBlockedIPListKeys(ip: string): string[] {
     return this.blockedIPAddresses
-      .filter((list) => list.blocklist.has(ip))
+      .filter((list) => list.blocklist.hasWithMappedCheck(ip))
       .map((list) => list.key);
   }
 
   getMatchingMonitoredIPListKeys(ip: string): string[] {
     return this.monitoredIPAddresses
-      .filter((list) => list.list.has(ip))
+      .filter((list) => list.list.hasWithMappedCheck(ip))
       .map((list) => list.key);
   }
 
@@ -233,6 +243,7 @@ export class ServiceConfig {
         continue;
       }
       this.allowedIPAddresses.push({
+        // Large list: IPv4-mapped checked at lookup time to save memory
         allowlist: new IPMatcher(source.ips),
         description: source.description,
       });
@@ -254,7 +265,7 @@ export class ServiceConfig {
     }
 
     const allowlist = this.allowedIPAddresses.find((list) =>
-      list.allowlist.has(ip)
+      list.allowlist.hasWithMappedCheck(ip)
     );
 
     return { allowed: !!allowlist };
@@ -264,22 +275,16 @@ export class ServiceConfig {
     endpoints: EndpointConfig[],
     lastUpdatedAt: number,
     blockedUserIds: string[],
-    bypassedIPAddresses: string[],
-    hasReceivedAnyStats: boolean
+    bypassedIPAddresses: string[]
   ) {
     this.setEndpoints(endpoints);
     this.setBlockedUserIds(blockedUserIds);
     this.setBypassedIPAddresses(bypassedIPAddresses);
     this.lastUpdatedAt = lastUpdatedAt;
-    this.receivedAnyStats = hasReceivedAnyStats;
   }
 
   getLastUpdatedAt() {
     return this.lastUpdatedAt;
-  }
-
-  hasReceivedAnyStats() {
-    return this.receivedAnyStats;
   }
 
   setBlockNewOutgoingRequests(block: boolean) {
@@ -301,5 +306,13 @@ export class ServiceConfig {
 
     // Only block outgoing requests if the mode is "block"
     return mode === "block";
+  }
+
+  updateUsersExcludedFromRateLimiting(userIds: string[]) {
+    this.excludedUserIdsFromRateLimiting = new Set(userIds);
+  }
+
+  isUserExcludedFromRateLimiting(userId: string): boolean {
+    return this.excludedUserIdsFromRateLimiting.has(userId);
   }
 }

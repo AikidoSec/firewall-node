@@ -1,6 +1,10 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{AssignmentOperator, Expression, FunctionType, MethodDefinition};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_ast::AstBuilder;
+use oxc_ast::ast::{
+    AssignmentExpression, AssignmentOperator, Class, ClassElement, Expression, Function,
+    FunctionBody, FunctionType, VariableDeclarator,
+};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use super::helpers::{
     get_arg_names::get_function_or_method_arg_names,
@@ -13,63 +17,15 @@ pub struct Transformer<'a> {
     pub allocator: &'a Allocator,
     pub file_instructions: &'a FileInstructions,
     pub pkg_version: &'a str,
-    pub ast_builder: &'a oxc_ast::AstBuilder<'a>,
+    pub ast_builder: &'a AstBuilder<'a>,
 }
 
 pub struct TraverseState {}
 
 impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
-    fn enter_method_definition(
-        &mut self,
-        node: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a, TraverseState>,
-    ) {
-        if !node.key.is_identifier() || node.value.body.is_none() || node.key.name().is_none() {
-            return;
-        }
-
-        if !node.kind.is_method() && !node.kind.is_constructor() {
-            // Ignore getters and setters for now
-            return;
-        }
-
-        let method_name = node.key.name().unwrap().to_string();
-
-        let matching_instruction = self
-            .file_instructions
-            .functions
-            .iter()
-            .find(|f| f.node_type == "MethodDefinition" && f.name == method_name);
-
-        if matching_instruction.is_none() {
-            return;
-        }
-
-        let instruction = matching_instruction.unwrap();
-
-        // We need to collect the arg names before we make the body mutable
-        let arg_names = if instruction.modify_args {
-            get_function_or_method_arg_names(&node.value.params)
-        } else {
-            Vec::new()
-        };
-
-        let body = node.value.body.as_mut().unwrap();
-
-        insert_instrument_method_calls(
-            self.allocator,
-            self.ast_builder,
-            instruction,
-            &arg_names,
-            self.pkg_version,
-            body,
-            node.kind.is_constructor(),
-        );
-    }
-
     fn enter_assignment_expression(
         &mut self,
-        node: &mut oxc_ast::ast::AssignmentExpression<'a>,
+        node: &mut AssignmentExpression<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         if node.operator != AssignmentOperator::Assign {
@@ -116,12 +72,11 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> =
-            match &mut node.right {
-                Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
-                Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
-                _ => return,
-            };
+        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match &mut node.right {
+            Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
+            Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
+            _ => return,
+        };
 
         insert_instrument_method_calls(
             self.allocator,
@@ -136,7 +91,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
     fn enter_function(
         &mut self,
-        node: &mut oxc_ast::ast::Function<'a>,
+        node: &mut Function<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
         let node_type = match node.r#type {
@@ -191,10 +146,10 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
 
     fn enter_variable_declarator(
         &mut self,
-        node: &mut oxc_ast::ast::VariableDeclarator<'a>,
+        node: &mut VariableDeclarator<'a>,
         _ctx: &mut TraverseCtx<'a, TraverseState>,
     ) {
-        if !node.id.kind.is_binding_identifier() || node.init.is_none() {
+        if !node.id.is_binding_identifier() || node.init.is_none() {
             return;
         }
 
@@ -231,7 +186,7 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             Vec::new()
         };
 
-        let body: &mut oxc_allocator::Box<'_, oxc_ast::ast::FunctionBody<'_>> = match expr {
+        let body: &mut oxc_allocator::Box<'_, FunctionBody<'_>> = match expr {
             Expression::FunctionExpression(func_expr) => func_expr.body.as_mut().unwrap(),
             Expression::ArrowFunctionExpression(arrow_func_expr) => &mut arrow_func_expr.body,
             _ => return,
@@ -246,5 +201,80 @@ impl<'a> Traverse<'a, TraverseState> for Transformer<'a> {
             body,
             false,
         );
+    }
+
+    fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a, TraverseState>) {
+        let class_name: Option<String> = if let Some(name) = node.name() {
+            Some(name.to_string())
+        } else if node.is_declaration() {
+            // Unnamed class declaration — class name is unknown
+            None
+        } else {
+            // Anonymous class expression, e.g. const Test = class {}
+            match ctx.parent() {
+                Ancestor::VariableDeclaratorInit(declarator) => {
+                    declarator.id().get_identifier_name().map(|n| n.to_string())
+                }
+                // e.g. internals.Server = class {} — class name is unknown
+                _ => None,
+            }
+        };
+
+        for class_element in node.body.body.iter_mut() {
+            let method_def = match class_element {
+                ClassElement::MethodDefinition(method_def) => method_def,
+                _ => continue,
+            };
+
+            if !method_def.kind.is_method() && !method_def.kind.is_constructor() {
+                // Ignore getters and setters for now
+                continue;
+            }
+
+            let method_name = match method_def.key.name() {
+                Some(name) => name.to_string(),
+                None => continue,
+            };
+
+            let instruction = self.file_instructions.functions.iter().find(|f| {
+                f.node_type == "MethodDefinition"
+                    && f.name == method_name
+                    && match &f.class_name {
+                        // No class name filter — match any class (backwards compatibility)
+                        None => true,
+                        // Class name filter specified — only match if class name is known and matches
+                        Some(cn) => class_name.as_ref().is_some_and(|actual| actual == cn),
+                    }
+            });
+
+            if instruction.is_none() {
+                continue;
+            }
+            let instruction = instruction.unwrap();
+
+            let is_constructor = method_def.kind.is_constructor();
+
+            let arg_names = if instruction.modify_args {
+                get_function_or_method_arg_names(&method_def.value.params)
+            } else {
+                Vec::new()
+            };
+
+            if method_def.value.body.is_none() {
+                continue;
+            }
+
+            let body = method_def.value.body.as_mut().unwrap();
+
+            insert_instrument_method_calls(
+                self.allocator,
+                self.ast_builder,
+                instruction,
+                &arg_names,
+                self.pkg_version,
+                body,
+                is_constructor,
+            );
+        }
     }
 }

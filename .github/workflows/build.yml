@@ -15,20 +15,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Use Node.js ${{ env.node_version }}
 
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.node_version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
       - name: Setup Aikido safe-chain
-        run: |
-          npm i -g @aikidosec/safe-chain
-          safe-chain setup-ci
+        run: curl -fsSL https://github.com/AikidoSec/safe-chain/releases/latest/download/install-safe-chain.sh | sh -s -- --ci
 
       - name: Downgrade npm for v24 and v25
         # https://github.com/npm/cli/issues/8669
@@ -50,7 +48,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: firewall-node-library-${{ github.sha }}
           if-no-files-found: error
@@ -58,4 +56,5 @@ jobs:
           path: |
             build/
             library/internals/
+            library/node_internals/
             library/agent/hooks/instrumentation/wasm/
