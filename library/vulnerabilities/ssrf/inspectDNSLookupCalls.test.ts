@@ -190,6 +190,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       configUpdatedAt: 0,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       token: new Token("123"),
@@ -414,6 +415,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       configUpdatedAt: 0,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       token: new Token("123"),

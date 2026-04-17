@@ -41,6 +41,7 @@ const api = new ReportingAPIForTesting({
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
 const agent = createTestAgent({
   token: new Token("123"),

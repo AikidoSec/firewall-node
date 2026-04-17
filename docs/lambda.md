@@ -89,19 +89,42 @@ This will output debug information to the console (e.g. if the agent failed to s
 
 ## Data reporting
 
-To minimize impact on Lambda execution time, Zen reports data to the Aikido platform on the first invocation and then every 10 minutes.
+Zen periodically flushes collected data (request stats, etc.) to the Aikido dashboard. By default this happens on the first invocation and then every 10 minutes.
 
-Attack events are reported immediately when they occur.
+Attack events are sent right away. In Lambda, Zen awaits these before your handler returns so they don't get lost when AWS freezes the instance.
+
+Since Lambda instances can be killed at any time by AWS, you may want a shorter flush interval so less data is lost. Set `AIKIDO_LAMBDA_FLUSH_EVERY_MS` (minimum 60000):
+
+```bash
+AIKIDO_LAMBDA_FLUSH_EVERY_MS=300000  # 5 minutes (default: 600000)
+```
+
+A shorter interval means data shows up faster. Once every interval, a single invocation takes a bit longer because the flush happens inline.
 
 ## Timeout configuration
 
-By default, Zen uses a 1-second timeout for API requests to minimize impact on Lambda execution time.
+On cold start, Zen fetches its configuration from the Aikido API. It also makes API calls during each flush. These calls have a timeout to avoid slowing down your Lambda.
 
-If you're experiencing timeout errors (e.g., due to slow network connections or specific AWS regions), you can increase the timeout using the `AIKIDO_LAMBDA_TIMEOUT_MS` environment variable:
+The default is 1 second. If you see timeout errors in your logs, increase it:
 
 ```bash
-AIKIDO_LAMBDA_TIMEOUT_MS=5000  # 5 seconds
+AIKIDO_LAMBDA_TIMEOUT_MS=5000  # 5 seconds (default: 1000)
 ```
+
+This is not related to your Lambda's own timeout in AWS. It only controls how long Zen waits for its own API calls.
+
+## Unsupported features
+
+The following features are not available in serverless environments:
+
+- Rate limiting
+- Tor traffic blocking
+- Bot blocking
+- IP blocking by known threat actors
+- Blocking by country
+- Manual user/IP blocking
+
+See the [serverless feature limitations](https://help.aikido.dev/zen-firewall/zen-installation-instructions/setup-and-installation-of-zen-firewall-for-serverless-environments#feature-limitations) for more details.
 
 ## Preventing prototype pollution
 
