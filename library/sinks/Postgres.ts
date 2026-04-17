@@ -128,6 +128,7 @@ export class Postgres implements Wrapper {
         wrapExport(exports.Client.prototype, "query", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(args),
+          callbackOnBlock: true,
         });
       })
       .addFileInstrumentation({

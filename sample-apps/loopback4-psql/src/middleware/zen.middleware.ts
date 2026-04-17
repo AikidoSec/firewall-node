@@ -2,8 +2,6 @@ import { shouldBlockRequest } from "@aikidosec/firewall";
 import { HttpErrors, type Middleware } from "@loopback/rest";
 
 export const zenMiddleware: Middleware = async (middlewareCtx, next) => {
-  const { request } = middlewareCtx;
-
   const result = shouldBlockRequest();
 
   if (result.block) {

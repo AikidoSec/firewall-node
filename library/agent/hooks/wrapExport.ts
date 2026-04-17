@@ -34,6 +34,11 @@ export type InterceptorObject = {
   // This will be used to collect stats
   // For sources, this will often be undefined
   kind: OperationKind | undefined;
+  // When true, if blocking is triggered and the last argument is a function,
+  // call it with the error instead of throwing synchronously.
+  // Needed for callback-based APIs (e.g. pg.Client.query(sql, params, cb))
+  // where a synchronous throw escapes Promise chains and crashes the process.
+  callbackOnBlock?: boolean;
 };
 
 /**
@@ -69,17 +74,31 @@ export function wrapExport(
               }
             }
 
-            inspectArgs.call(
-              // @ts-expect-error We don't now the type of this
-              this,
-              args,
-              interceptors.inspectArgs,
-              context,
-              agent,
-              pkgInfo,
-              methodName || "",
-              interceptors.kind
-            );
+            try {
+              inspectArgs.call(
+                // @ts-expect-error We don't now the type of this
+                this,
+                args,
+                interceptors.inspectArgs,
+                context,
+                agent,
+                pkgInfo,
+                methodName || "",
+                interceptors.kind
+              );
+            } catch (blockError) {
+              if (interceptors.callbackOnBlock) {
+                // Find the last function argument and call it with the error.
+                for (let i = args.length - 1; i >= 0; i--) {
+                  if (typeof args[i] === "function") {
+                    const cb = args[i] as Function;
+                    process.nextTick(() => cb(blockError));
+                    return undefined;
+                  }
+                }
+              }
+              throw blockError;
+            }
           }
 
           // Run modifyArgs interceptor if provided
