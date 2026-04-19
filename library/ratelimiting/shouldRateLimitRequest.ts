@@ -80,7 +80,9 @@ export function shouldRateLimitRequest(
       .isAllowed(key, windowSizeInMS, maxRequests);
 
     if (!allowed) {
-      const retryAfterMs = agent.getRateLimiter().getRetryAfterMs(key, windowSizeInMS);
+      const retryAfterMs = agent
+        .getRateLimiter()
+        .getRetryAfterMs(key, windowSizeInMS);
       return { block: true, trigger: "group", endpoint, retryAfterMs };
     }
 
@@ -95,7 +97,9 @@ export function shouldRateLimitRequest(
       .isAllowed(key, windowSizeInMS, maxRequests);
 
     if (!allowed) {
-      const retryAfterMs = agent.getRateLimiter().getRetryAfterMs(key, windowSizeInMS);
+      const retryAfterMs = agent
+        .getRateLimiter()
+        .getRetryAfterMs(key, windowSizeInMS);
       return { block: true, trigger: "user", endpoint, retryAfterMs };
     }
 
@@ -110,7 +114,9 @@ export function shouldRateLimitRequest(
       .isAllowed(key, windowSizeInMS, maxRequests);
 
     if (!allowed) {
-      const retryAfterMs = agent.getRateLimiter().getRetryAfterMs(key, windowSizeInMS);
+      const retryAfterMs = agent
+        .getRateLimiter()
+        .getRetryAfterMs(key, windowSizeInMS);
       return { block: true, trigger: "ip", endpoint, retryAfterMs };
     }
   }
