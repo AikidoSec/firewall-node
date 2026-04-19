@@ -23,7 +23,11 @@ export function addHonoMiddleware<
           message += ` (Your IP: ${escapeHTML(result.ip)})`;
         }
 
-        return c.text(message, 429);
+        const headers: Record<string, string> = {};
+        if (result.retryAfterSeconds !== undefined) {
+          headers["Retry-After"] = String(result.retryAfterSeconds);
+        }
+        return c.text(message, 429, headers);
       }
 
       if (result.type === "blocked") {
