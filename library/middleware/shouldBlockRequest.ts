@@ -45,12 +45,16 @@ export function shouldBlockRequest(): Result {
     // Mark the request as rate limited in the context
     updateContext(context, "rateLimitedEndpoint", rateLimitResult.endpoint);
 
+    const { retryAfterMs } = rateLimitResult;
+    const retryAfterSeconds =
+      retryAfterMs !== undefined ? Math.ceil(retryAfterMs / 1000) : undefined;
+
     return {
       block: true,
       type: "ratelimited",
       trigger: rateLimitResult.trigger,
       ip: context.remoteAddress,
-      retryAfterSeconds: Math.ceil(rateLimitResult.retryAfterMs / 1000),
+      retryAfterSeconds,
     };
   }
 
