@@ -9,6 +9,7 @@ type Result = {
   type?: "ratelimited" | "blocked";
   trigger?: "ip" | "user" | "group";
   ip?: string;
+  retryAfterSeconds?: number;
 };
 
 export function shouldBlockRequest(): Result {
@@ -49,6 +50,7 @@ export function shouldBlockRequest(): Result {
       type: "ratelimited",
       trigger: rateLimitResult.trigger,
       ip: context.remoteAddress,
+      retryAfterSeconds: Math.ceil(rateLimitResult.retryAfterMs / 1000),
     };
   }
 
