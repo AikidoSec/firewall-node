@@ -12,19 +12,19 @@ type Result =
       block: true;
       trigger: "ip";
       endpoint: Endpoint;
-      retryAfterMs: number;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
       trigger: "user";
       endpoint: Endpoint;
-      retryAfterMs: number;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
       trigger: "group";
       endpoint: Endpoint;
-      retryAfterMs: number;
+      retryAfterSeconds: number;
     };
 
 export function shouldRateLimitRequest(
@@ -87,7 +87,7 @@ export function shouldRateLimitRequest(
         block: true,
         trigger: "group",
         endpoint,
-        retryAfterMs: result.retryAfterMs,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
 
@@ -109,7 +109,7 @@ export function shouldRateLimitRequest(
         block: true,
         trigger: "user",
         endpoint,
-        retryAfterMs: result.retryAfterMs,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
 
@@ -131,7 +131,7 @@ export function shouldRateLimitRequest(
         block: true,
         trigger: "ip",
         endpoint,
-        retryAfterMs: result.retryAfterMs,
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }

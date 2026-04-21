@@ -283,7 +283,7 @@ t.test("should handle sliding window with burst requests", async (t) => {
   );
 });
 
-t.test("should return retryAfterMs when rate limited", async (t) => {
+t.test("should return retryAfterSeconds when rate limited", async (t) => {
   const windowSize = 10000;
   const max = 2;
   const limiter = new RateLimiter(max, windowSize);
@@ -299,14 +299,12 @@ t.test("should return retryAfterMs when rate limited", async (t) => {
   const result = limiter.isAllowed(key, windowSize, max);
   t.equal(result.allowed, false);
   if (!result.allowed) {
-    // Oldest timestamp is at t=0, window is 10000ms, current time is 5000ms
-    // retryAfterMs = 0 + 10000 - 5000 = 5000
-    t.equal(result.retryAfterMs, 5000);
+    t.equal(result.retryAfterSeconds, 5);
   }
 });
 
 t.test(
-  "retryAfterMs decreases as time passes towards window expiry",
+  "retryAfterSeconds decreases as time passes towards window expiry",
   async (t) => {
     const windowSize = 10000;
     const max = 1;
@@ -319,7 +317,7 @@ t.test(
     const result = limiter.isAllowed(key, windowSize, max);
     t.equal(result.allowed, false);
     if (!result.allowed) {
-      t.equal(result.retryAfterMs, 6000);
+      t.equal(result.retryAfterSeconds, 6);
     }
 
     clock.tick(3000);
@@ -327,7 +325,7 @@ t.test(
     const result2 = limiter.isAllowed(key, windowSize, max);
     t.equal(result2.allowed, false);
     if (!result2.allowed) {
-      t.equal(result2.retryAfterMs, 3000);
+      t.equal(result2.retryAfterSeconds, 3);
     }
   }
 );

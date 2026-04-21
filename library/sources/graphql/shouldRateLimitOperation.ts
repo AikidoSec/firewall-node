@@ -126,7 +126,7 @@ function shouldRateLimitField(
         remoteAddress: context.remoteAddress,
         operationType: operationType,
         endpoint: match,
-        retryAfterSeconds: Math.ceil(result.retryAfterMs / 1000),
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }
@@ -148,7 +148,7 @@ function shouldRateLimitField(
         groupId: context.rateLimitGroup,
         operationType: operationType,
         endpoint: match,
-        retryAfterSeconds: Math.ceil(result.retryAfterMs / 1000),
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }
@@ -170,7 +170,7 @@ function shouldRateLimitField(
         userId: context.user.id,
         operationType: operationType,
         endpoint: match,
-        retryAfterSeconds: Math.ceil(result.retryAfterMs / 1000),
+        retryAfterSeconds: result.retryAfterSeconds,
       };
     }
   }

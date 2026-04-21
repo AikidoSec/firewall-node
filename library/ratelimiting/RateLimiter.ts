@@ -2,7 +2,7 @@ import { LRUMap } from "./LRUMap";
 
 export type RateLimitResult =
   | { allowed: true }
-  | { allowed: false; retryAfterMs: number };
+  | { allowed: false; retryAfterSeconds: number };
 
 /**
  * Sliding window rate limiter implementation
@@ -53,6 +53,6 @@ export class RateLimiter {
       filteredTimestamps[0] + windowSizeInMS - currentTime
     );
 
-    return { allowed: false, retryAfterMs };
+    return { allowed: false, retryAfterSeconds: Math.ceil(retryAfterMs / 1000) };
   }
 }
