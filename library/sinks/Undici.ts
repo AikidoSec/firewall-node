@@ -147,7 +147,7 @@ export class Undici implements Wrapper {
 
     hooks
       .addPackage("undici")
-      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0")
+      .withVersion("^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0")
       .onRequire((exports, pkgInfo) => this.patchExports(exports, pkgInfo))
       .addFileInstrumentation({
         path: "./index.js",

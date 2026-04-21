@@ -32,6 +32,7 @@ export async function createRestifyTests(restifyPackageName: string) {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       allowedIPAddresses: ["4.3.2.1"],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
     serverless: undefined,

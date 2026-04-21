@@ -339,6 +339,15 @@ export class Agent {
         );
         this.serviceConfig.updateDomains(response.domains);
       }
+
+      if (
+        response.excludedUserIdsFromRateLimiting &&
+        Array.isArray(response.excludedUserIdsFromRateLimiting)
+      ) {
+        this.serviceConfig.updateUsersExcludedFromRateLimiting(
+          response.excludedUserIdsFromRateLimiting
+        );
+      }
     }
   }
 
