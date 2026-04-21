@@ -12,19 +12,19 @@ type Result =
       block: true;
       trigger: "ip";
       endpoint: Endpoint;
-      retryAfterMs: number | undefined;
+      retryAfterMs: number;
     }
   | {
       block: true;
       trigger: "user";
       endpoint: Endpoint;
-      retryAfterMs: number | undefined;
+      retryAfterMs: number;
     }
   | {
       block: true;
       trigger: "group";
       endpoint: Endpoint;
-      retryAfterMs: number | undefined;
+      retryAfterMs: number;
     };
 
 export function shouldRateLimitRequest(
@@ -74,16 +74,21 @@ export function shouldRateLimitRequest(
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (context.rateLimitGroup) {
-    const key = `${endpoint.method}:${endpoint.route}:group:${context.rateLimitGroup}`;
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
-      .isAllowed(key, windowSizeInMS, maxRequests);
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:group:${context.rateLimitGroup}`,
+        windowSizeInMS,
+        maxRequests
+      );
 
-    if (!allowed) {
-      const retryAfterMs = agent
-        .getRateLimiter()
-        .getRetryAfterMs(key, windowSizeInMS);
-      return { block: true, trigger: "group", endpoint, retryAfterMs };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "group",
+        endpoint,
+        retryAfterMs: result.retryAfterMs,
+      };
     }
 
     // Do not check IP or User rate limit if rateLimitGroup is set
@@ -91,16 +96,21 @@ export function shouldRateLimitRequest(
   }
 
   if (context.user) {
-    const key = `${endpoint.method}:${endpoint.route}:user:${context.user.id}`;
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
-      .isAllowed(key, windowSizeInMS, maxRequests);
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
+        windowSizeInMS,
+        maxRequests
+      );
 
-    if (!allowed) {
-      const retryAfterMs = agent
-        .getRateLimiter()
-        .getRetryAfterMs(key, windowSizeInMS);
-      return { block: true, trigger: "user", endpoint, retryAfterMs };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "user",
+        endpoint,
+        retryAfterMs: result.retryAfterMs,
+      };
     }
 
     // Do not check IP rate limit if user is set
@@ -108,16 +118,21 @@ export function shouldRateLimitRequest(
   }
 
   if (context.remoteAddress) {
-    const key = `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`;
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
-      .isAllowed(key, windowSizeInMS, maxRequests);
+      .isAllowed(
+        `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
+        windowSizeInMS,
+        maxRequests
+      );
 
-    if (!allowed) {
-      const retryAfterMs = agent
-        .getRateLimiter()
-        .getRetryAfterMs(key, windowSizeInMS);
-      return { block: true, trigger: "ip", endpoint, retryAfterMs };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "ip",
+        endpoint,
+        retryAfterMs: result.retryAfterMs,
+      };
     }
   }
 

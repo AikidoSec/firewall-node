@@ -33,6 +33,8 @@ function onRequest(...) {
         }
 
         // Block the request and send a http 429 status code
+        // Set the Retry-After header to tell the client how long to wait (in seconds)
+        setHeader("Retry-After", result.retryAfterSeconds.toString());
         return ...;
       }
 

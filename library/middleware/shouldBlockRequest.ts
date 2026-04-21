@@ -4,13 +4,20 @@ import { getInstance } from "../agent/AgentSingleton";
 import { getContext, updateContext } from "../agent/Context";
 import { shouldRateLimitRequest } from "../ratelimiting/shouldRateLimitRequest";
 
-type Result = {
-  block: boolean;
-  type?: "ratelimited" | "blocked";
-  trigger?: "ip" | "user" | "group";
-  ip?: string;
-  retryAfterSeconds?: number;
-};
+type Result =
+  | { block: false }
+  | {
+      block: true;
+      type: "ratelimited";
+      trigger: "ip" | "user" | "group";
+      ip?: string;
+      retryAfterSeconds: number;
+    }
+  | {
+      block: true;
+      type: "blocked";
+      trigger: "user";
+    };
 
 export function shouldBlockRequest(): Result {
   const context = getContext();
@@ -45,16 +52,12 @@ export function shouldBlockRequest(): Result {
     // Mark the request as rate limited in the context
     updateContext(context, "rateLimitedEndpoint", rateLimitResult.endpoint);
 
-    const { retryAfterMs } = rateLimitResult;
-    const retryAfterSeconds =
-      retryAfterMs !== undefined ? Math.ceil(retryAfterMs / 1000) : undefined;
-
     return {
       block: true,
       type: "ratelimited",
       trigger: rateLimitResult.trigger,
       ip: context.remoteAddress,
-      retryAfterSeconds,
+      retryAfterSeconds: Math.ceil(rateLimitResult.retryAfterMs / 1000),
     };
   }
 

@@ -1,5 +1,9 @@
 import { LRUMap } from "./LRUMap";
 
+export type RateLimitResult =
+  | { allowed: true }
+  | { allowed: false; retryAfterMs: number };
+
 /**
  * Sliding window rate limiter implementation
  */
@@ -13,23 +17,11 @@ export class RateLimiter {
     this.rateLimitedItems = new LRUMap(maxItems, timeToLiveInMS);
   }
 
-  getRetryAfterMs(key: string, windowSizeInMS: number): number | undefined {
-    const currentTime = performance.now();
-    const requestTimestamps = this.rateLimitedItems.get(key) ?? [];
-    const filteredTimestamps = requestTimestamps.filter(
-      (timestamp) => currentTime - timestamp <= windowSizeInMS
-    );
-
-    if (filteredTimestamps.length === 0) {
-      return undefined;
-    }
-
-    // filteredTimestamps[0] is the oldest request in the window; once it expires, a slot opens up
-    const msUntilReset = filteredTimestamps[0] + windowSizeInMS - currentTime;
-    return Math.max(0, msUntilReset);
-  }
-
-  isAllowed(key: string, windowSizeInMS: number, maxRequests: number): boolean {
+  isAllowed(
+    key: string,
+    windowSizeInMS: number,
+    maxRequests: number
+  ): RateLimitResult {
     const currentTime = performance.now();
     const requestTimestamps = this.rateLimitedItems.get(key) || [];
 
@@ -52,7 +44,15 @@ export class RateLimiter {
     // Update the list of timestamps for the key
     this.rateLimitedItems.set(key, filteredTimestamps);
 
-    // Check if the number of requests is less or equal to the maxRequests
-    return filteredTimestamps.length <= maxRequests;
+    if (filteredTimestamps.length <= maxRequests) {
+      return { allowed: true };
+    }
+
+    const retryAfterMs = Math.max(
+      0,
+      filteredTimestamps[0] + windowSizeInMS - currentTime
+    );
+
+    return { allowed: false, retryAfterMs };
   }
 }
