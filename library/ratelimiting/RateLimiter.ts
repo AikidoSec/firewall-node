@@ -53,6 +53,9 @@ export class RateLimiter {
       filteredTimestamps[0] + windowSizeInMS - currentTime
     );
 
-    return { allowed: false, retryAfterSeconds: Math.ceil(retryAfterMs / 1000) };
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
+    };
   }
 }
