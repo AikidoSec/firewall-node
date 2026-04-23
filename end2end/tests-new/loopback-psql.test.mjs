@@ -1,9 +1,10 @@
 import { spawn } from "child_process";
 import { resolve } from "path";
-import { test } from "node:test";
+import { before, test } from "node:test";
 import { equal, match, doesNotMatch } from "node:assert";
 import { getRandomPort } from "./utils/get-port.mjs";
 import { timeout } from "./utils/timeout.mjs";
+import { spawnSync } from "node:child_process";
 
 const pathToAppDir = resolve(
   import.meta.dirname,
@@ -12,6 +13,16 @@ const pathToAppDir = resolve(
 
 const port = await getRandomPort();
 const port2 = await getRandomPort();
+
+before(async () => {
+  const { stderr } = spawnSync(`npm`, ["run", "build"], {
+    cwd: pathToAppDir,
+  });
+
+  if (stderr && stderr.toString().length > 0) {
+    throw new Error(`Failed to build: ${stderr.toString()}`);
+  }
+});
 
 test("it blocks SQL injection from request body in blocking mode", async () => {
   const server = spawn(`node`, ["dist/index.js"], {
