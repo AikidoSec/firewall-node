@@ -1,4 +1,5 @@
 import * as t from "tap";
+import * as FakeTimers from "@sinonjs/fake-timers";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { EndpointConfig } from "../agent/Config";
@@ -821,3 +822,35 @@ t.test(
     }
   }
 );
+
+t.test("it includes retryAfterSeconds when rate limited", async (t) => {
+  const agent = await createAgent([
+    {
+      method: "POST",
+      route: "/login",
+      forceProtectionOff: false,
+      rateLimiting: {
+        enabled: true,
+        maxRequests: 1,
+        windowSizeInMS: 60000,
+      },
+    },
+  ]);
+
+  const clock = FakeTimers.install();
+
+  t.same(shouldRateLimitRequest(createContext("1.2.3.4"), agent), {
+    block: false,
+  });
+
+  clock.tick(10000);
+
+  const result = shouldRateLimitRequest(createContext("1.2.3.4"), agent);
+  t.equal(result.block, true);
+  if (result.block) {
+    t.equal(result.trigger, "ip");
+    t.equal(result.retryAfterSeconds, 50);
+  }
+
+  clock.uninstall();
+});

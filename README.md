@@ -48,7 +48,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [Hono](docs/hono.md) 4.x
 - ✅ [hapi](docs/hapi.md) 21.x
 - ✅ [micro](docs/micro.md) 10.x
-- ✅ [Next.js](docs/next.md) 12.x, 13.x and 14.x
+- ✅ [Next.js](docs/next.md) 12.x, 13.x, 14.x and v16.x
 - ✅ [Fastify](docs/fastify.md) 4.x and 5.x
 - ✅ [Koa](docs/koa.md) 3.x and 2.x
 - ✅ [NestJS](docs/nestjs.md) 10.x and 11.x
@@ -68,7 +68,8 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) 12.x, 11.x, 10.x, 9.x and 8.x
 - ✅ [`postgres`](https://www.npmjs.com/package/postgres) 3.x
 - ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
-- ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 5.x
+- ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 6.x and 5.x
+- ✅ [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) 7.x
 
 ### Cloud providers
 
@@ -111,7 +112,7 @@ See list above for supported database drivers.
 Zen instruments the following AI SDKs to track which models are used and how many tokens are consumed, allowing you to monitor your AI usage and costs:
 
 - ✅ [`openai`](https://www.npmjs.com/package/openai) 6.x, 5.x, 4.x
-- ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x
+- ✅ [`@mistralai/mistralai`](https://www.npmjs.com/package/@mistralai/mistralai) 1.x and 2.x (2.x+ requires ESM instrumentation)
 - ✅ [`@anthropic-ai/sdk`](https://www.npmjs.com/package/@anthropic-ai/sdk) ^0.40.x
 - ✅ [`@aws-sdk/client-bedrock-runtime`](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime) 3.x
 - ✅ [`ai`](https://www.npmjs.com/package/ai) 6.x, 5.x, 4.x
