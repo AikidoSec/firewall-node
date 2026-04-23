@@ -19,6 +19,7 @@ export function addRestifyMiddleware(server: any) {
 
         res.status(429);
         res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Retry-After", result.retryAfterSeconds.toString());
         res.send(message);
 
         return next(false);
