@@ -408,6 +408,7 @@ t.test("it rate limits requests by ip address", opts, async (t) => {
   });
 
   t.same(response4.statusCode, 429);
+  t.ok(parseInt(response4.headers["retry-after"] as string) > 0);
 });
 
 t.test(
