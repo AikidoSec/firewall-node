@@ -6,15 +6,16 @@ import { Wrapper } from "../agent/Wrapper";
 export class LoopBack implements Wrapper {
   private setBodyFromRequestBody(requestBody: unknown) {
     const context = getContext();
-    if (
-      context &&
-      requestBody !== null &&
-      typeof requestBody === "object" &&
-      "value" in requestBody &&
-      requestBody.value
-    ) {
-      updateContext(context, "body", requestBody.value);
+    if (!context) {
+      return;
     }
+    if (requestBody === null || typeof requestBody !== "object") {
+      return;
+    }
+    if (!("value" in requestBody) || !requestBody.value) {
+      return;
+    }
+    updateContext(context, "body", requestBody.value);
   }
 
   private onBodyParsed(_args: unknown[], returnValue: unknown) {
