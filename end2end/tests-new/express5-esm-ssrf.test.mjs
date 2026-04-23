@@ -48,7 +48,7 @@ test("it blocks SSRF via http.request in ESM mode", async () => {
         signal: AbortSignal.timeout(5000),
       }),
       fetch(
-        `http://127.0.0.1:${port}/http-request?url=${encodeURIComponent("https://ssrf-redirects.testssandbox.com/")}`,
+        `http://127.0.0.1:${port}/http-request?url=${encodeURIComponent("http://local.aikido.io:5875")}`,
         { signal: AbortSignal.timeout(5000) }
       ),
     ]);
