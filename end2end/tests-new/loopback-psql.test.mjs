@@ -15,13 +15,11 @@ const port = await getRandomPort();
 const port2 = await getRandomPort();
 
 before(async () => {
-  const { stderr } = spawnSync(`npm`, ["run", "build"], {
+  spawnSync(`npm`, ["run", "migrate"], {
     cwd: pathToAppDir,
+    stdio: "inherit",
+    stderr: "inherit",
   });
-
-  if (stderr && stderr.toString().length > 0) {
-    throw new Error(`Failed to build: ${stderr.toString()}`);
-  }
 });
 
 test("it blocks SQL injection in blocking mode", async () => {
