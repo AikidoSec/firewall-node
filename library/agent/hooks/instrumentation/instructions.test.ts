@@ -20,6 +20,7 @@ import {
 import { createTestAgent } from "../../../helpers/createTestAgent";
 import { wrapBuiltinExports } from "./wrapBuiltinExports";
 import { Agent } from "../../Agent";
+import { Hooks } from "../Hooks";
 
 t.test("it works", async (t) => {
   let pkgInspectArgsCalled = false;
@@ -503,6 +504,40 @@ t.test("test local variable access", async (t) => {
 
   t.equal(callbackCalledCount, 2);
 });
+
+t.test(
+  "it collects interceptors when multiple wrappers register the same builtin",
+  async (t) => {
+    let firstInterceptorCalled = false;
+    let secondInterceptorCalled = false;
+
+    const hooks = new Hooks();
+
+    hooks.addBuiltinModule("http").onRequire(() => {
+      firstInterceptorCalled = true;
+    });
+
+    hooks.addBuiltinModule("http").onRequire(() => {
+      secondInterceptorCalled = true;
+    });
+
+    t.same(hooks.getBuiltInModules().length, 1);
+
+    setBuiltinsToInstrument(hooks.getBuiltInModules());
+
+    t.equal(shouldPatchBuiltin("http"), true);
+    t.same(getBuiltinInterceptors("http").length, 2);
+
+    getBuiltinInterceptors("http")[0]({}, { name: "http", type: "builtin" });
+    t.equal(firstInterceptorCalled, true);
+    t.equal(secondInterceptorCalled, false);
+
+    getBuiltinInterceptors("http")[1]({}, { name: "http", type: "builtin" });
+    t.equal(secondInterceptorCalled, true);
+
+    setBuiltinsToInstrument([]);
+  }
+);
 
 t.test("addFileInstrumentation checks path", async (t) => {
   const pkg = new Package("foo").withVersion("^1.0.0");
