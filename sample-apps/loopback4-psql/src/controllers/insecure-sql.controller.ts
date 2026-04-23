@@ -41,4 +41,13 @@ export class InsecureSqlController {
     const sql = `SELECT * FROM users WHERE username = '${username}'`;
     return this.dataSource.execute(sql);
   }
+
+  @get("/insecure-sql/{username}")
+  async insecureSqlPath(
+    @param.path.string("username") username: string
+  ): Promise<object[]> {
+    // WARNING: This is intentionally vulnerable for testing purposes
+    const sql = `SELECT * FROM users WHERE username = '${username}'`;
+    return this.dataSource.execute(sql);
+  }
 }

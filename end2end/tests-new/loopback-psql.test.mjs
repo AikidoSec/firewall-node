@@ -24,7 +24,7 @@ before(async () => {
   }
 });
 
-test("it blocks SQL injection from request body in blocking mode", async () => {
+test("it blocks SQL injection in blocking mode", async () => {
   const server = spawn(`node`, ["dist/index.js"], {
     cwd: pathToAppDir,
     env: {
@@ -53,25 +53,35 @@ test("it blocks SQL injection from request body in blocking mode", async () => {
 
     await timeout(3000);
 
-    const [sqlInjection, normalRequest] = await Promise.all([
-      fetch(`http://127.0.0.1:${port}/insecure-sql`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: "admin'); DROP TABLE users;-- -",
+    const [sqlInjection, normalRequest, sqlInjectionPath, normalRequestPath] =
+      await Promise.all([
+        fetch(`http://127.0.0.1:${port}/insecure-sql`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: "admin'); DROP TABLE users;-- -",
+          }),
+          signal: AbortSignal.timeout(5000),
         }),
-        signal: AbortSignal.timeout(5000),
-      }),
-      fetch(`http://127.0.0.1:${port}/insecure-sql`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin" }),
-        signal: AbortSignal.timeout(5000),
-      }),
-    ]);
+        fetch(`http://127.0.0.1:${port}/insecure-sql`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin" }),
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch(
+          `http://127.0.0.1:${port}/insecure-sql/${encodeURIComponent("admin' OR '1'='1")}`,
+          { signal: AbortSignal.timeout(5000) }
+        ),
+        fetch(`http://127.0.0.1:${port}/insecure-sql/admin`, {
+          signal: AbortSignal.timeout(5000),
+        }),
+      ]);
 
     equal(sqlInjection.status, 500);
     equal(normalRequest.status, 200);
+    equal(sqlInjectionPath.status, 500);
+    equal(normalRequestPath.status, 200);
     match(stdout, /Starting agent/);
 
     match(stderr, /Zen has blocked an SQL injection/);
@@ -80,7 +90,7 @@ test("it blocks SQL injection from request body in blocking mode", async () => {
   }
 });
 
-test("it does not block SQL injection from request body in monitoring mode", async () => {
+test("it does not block SQL injection in monitoring mode", async () => {
   const server = spawn(`node`, ["dist/index.js"], {
     cwd: pathToAppDir,
     env: {
@@ -109,17 +119,27 @@ test("it does not block SQL injection from request body in monitoring mode", asy
 
     await timeout(3000);
 
-    const sqlInjection = await fetch(`http://127.0.0.1:${port2}/insecure-sql`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: "admin'); DROP TABLE users;-- -",
+    const [sqlInjection, sqlInjectionPath] = await Promise.all([
+      fetch(`http://127.0.0.1:${port2}/insecure-sql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "admin'); DROP TABLE users;-- -",
+        }),
+        signal: AbortSignal.timeout(5000),
       }),
-      signal: AbortSignal.timeout(5000),
-    });
+      fetch(
+        `http://127.0.0.1:${port2}/insecure-sql/${encodeURIComponent("admin' OR '1'='1")}`,
+        { signal: AbortSignal.timeout(5000) }
+      ),
+    ]);
 
     match(stdout, /Starting agent/);
     doesNotMatch(await sqlInjection.text(), /Zen has blocked an SQL injection/);
+    doesNotMatch(
+      await sqlInjectionPath.text(),
+      /Zen has blocked an SQL injection/
+    );
   } finally {
     server.kill();
   }

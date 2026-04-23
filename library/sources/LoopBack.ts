@@ -33,6 +33,30 @@ export class LoopBack implements Wrapper {
     return returnValue;
   }
 
+  private onParseOperationArgs(args: unknown[]) {
+    const context = getContext();
+    if (!context || args.length < 2) {
+      return args;
+    }
+
+    const route = args[1];
+    if (
+      route !== null &&
+      typeof route === "object" &&
+      "pathParams" in route &&
+      route.pathParams !== null &&
+      typeof route.pathParams === "object"
+    ) {
+      updateContext(
+        context,
+        "routeParams",
+        route.pathParams as Record<string, string>
+      );
+    }
+
+    return args;
+  }
+
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@loopback/rest")
@@ -49,6 +73,12 @@ export class LoopBack implements Wrapper {
           }
         );
       })
+      .onFileRequire("dist/parser.js", (exports, pkgInfo) => {
+        wrapExport(exports, "parseOperationArgs", pkgInfo, {
+          kind: undefined,
+          modifyArgs: (args) => this.onParseOperationArgs(args),
+        });
+      })
       .addFileInstrumentation({
         path: "dist/body-parsers/body-parser.js",
         functions: [
@@ -58,6 +88,17 @@ export class LoopBack implements Wrapper {
             operationKind: undefined,
             modifyReturnValue: (args, returnValue) =>
               this.onBodyParsed(args, returnValue),
+          },
+        ],
+      })
+      .addFileInstrumentation({
+        path: "dist/parser.js",
+        functions: [
+          {
+            name: "parseOperationArgs",
+            nodeType: "FunctionDeclaration",
+            operationKind: undefined,
+            modifyArgs: (args) => this.onParseOperationArgs(args),
           },
         ],
       });
