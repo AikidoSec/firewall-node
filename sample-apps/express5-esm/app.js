@@ -13,16 +13,6 @@ app.get("/", (req, res) => {
   res.send("Hello, world!");
 });
 
-app.get("/fetch", async (req, res) => {
-  const url = req.query.url;
-  if (!url) {
-    return res.status(400).send("Missing 'url' parameter");
-  }
-
-  const response = await fetch(url);
-  res.json({ method: "fetch", status: response.status });
-});
-
 app.get("/http-request", async (req, res) => {
   const url = req.query.url;
   if (!url) {
