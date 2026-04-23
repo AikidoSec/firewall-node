@@ -4,32 +4,31 @@ import { wrapExport } from "../agent/hooks/wrapExport";
 import { Wrapper } from "../agent/Wrapper";
 
 export class LoopBack implements Wrapper {
+  private setBodyFromRequestBody(requestBody: unknown) {
+    const context = getContext();
+    if (
+      context &&
+      requestBody !== null &&
+      typeof requestBody === "object" &&
+      "value" in requestBody &&
+      requestBody.value
+    ) {
+      updateContext(context, "body", requestBody.value);
+    }
+  }
+
   private onBodyParsed(_args: unknown[], returnValue: unknown) {
-    if (!(returnValue instanceof Promise)) {
+    if (returnValue instanceof Promise) {
+      returnValue
+        .then((requestBody) => this.setBodyFromRequestBody(requestBody))
+        .catch(() => {
+          // Ignore errors
+        });
+
       return returnValue;
     }
 
-    returnValue
-      .then((requestBody: unknown) => {
-        const context = getContext();
-        if (!context) {
-          return;
-        }
-
-        if (
-          requestBody !== null &&
-          typeof requestBody === "object" &&
-          "value" in requestBody
-        ) {
-          if (requestBody.value) {
-            updateContext(context, "body", requestBody.value);
-          }
-        }
-      })
-      .catch(() => {
-        // Ignore errors
-      });
-
+    this.setBodyFromRequestBody(returnValue);
     return returnValue;
   }
 

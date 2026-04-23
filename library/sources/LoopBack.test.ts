@@ -123,27 +123,30 @@ t.test("it does not modify non-promise return values", async (t) => {
   t.match(result, { value: undefined });
 });
 
-t.test("it sets route params in context when parseOperationArgs is called", async (t) => {
-  const { parseOperationArgs } = require("@loopback/rest");
+t.test(
+  "it sets route params in context when parseOperationArgs is called",
+  async (t) => {
+    const { parseOperationArgs } = require("@loopback/rest");
 
-  const mockRequest = {
-    get: (_header: string) => undefined,
-    query: {},
-    headers: {},
-  };
+    const mockRequest = {
+      get: (_header: string) => undefined,
+      query: {},
+      headers: {},
+    };
 
-  const mockRoute = {
-    pathParams: { username: "alice" },
-    spec: { parameters: [] },
-    schemas: {},
-    describe: () => "GET /insecure-sql/{username}",
-  };
+    const mockRoute = {
+      pathParams: { username: "alice" },
+      spec: { parameters: [] },
+      schemas: {},
+      describe: () => "GET /insecure-sql/{username}",
+    };
 
-  await runWithContext(buildContext(), async () => {
-    await parseOperationArgs(mockRequest, mockRoute);
-    t.same(getContext()?.routeParams, { username: "alice" });
-  });
-});
+    await runWithContext(buildContext(), async () => {
+      await parseOperationArgs(mockRequest, mockRoute);
+      t.same(getContext()?.routeParams, { username: "alice" });
+    });
+  }
+);
 
 t.test("it does not set route params when no context is active", async (t) => {
   const { parseOperationArgs } = require("@loopback/rest");
