@@ -121,8 +121,10 @@ export async function createExpressTests(expressPackageName: string) {
     });
 
     app.use("/attack-in-middleware", (req, res, next) => {
-      readdir(req.query.directory as string, () => {});
-      next();
+      readdir(req.query.directory as string, (err) => {
+        if (err) return next(err);
+        next();
+      });
     });
 
     function apiMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -189,16 +191,18 @@ export async function createExpressTests(expressPackageName: string) {
       res.send(context);
     });
 
-    app.get("/files", (req, res) => {
-      readdir(req.query.directory as string, () => {});
-
-      res.send(getContext());
+    app.get("/files", (req, res, next) => {
+      readdir(req.query.directory as string, (err) => {
+        if (err) return next(err);
+        res.send(getContext());
+      });
     });
 
-    app.get("/files-subdomains", (req, res) => {
-      readdir(req.subdomains[2], () => {});
-
-      res.send(getContext());
+    app.get("/files-subdomains", (req, res, next) => {
+      readdir(req.subdomains[2], (err) => {
+        if (err) return next(err);
+        res.send(getContext());
+      });
     });
 
     app.get("/attack-in-middleware", (req, res) => {
@@ -778,16 +782,20 @@ export async function createExpressTests(expressPackageName: string) {
   t.test("it detects path traversal with double encoding", async (t) => {
     const app = express();
 
-    app.get("/search", (req, res) => {
+    app.get("/search", (req, res, next) => {
       const searchTerm = req.query.q as string;
       const fileUrl = new URL(`file:///public/${searchTerm}`);
 
       readFile(fileUrl, "utf-8", (err, data) => {
         if (err) {
-          return res.status(500).send("Error reading file");
+          return next(err);
         }
         res.send(`File content of /public/${searchTerm} : ${data}`);
       });
+    });
+
+    app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+      res.status(500).send(String(error));
     });
 
     const blockedResponse = await request(app).get(
