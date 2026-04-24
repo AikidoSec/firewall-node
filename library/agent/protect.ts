@@ -48,6 +48,7 @@ import { Postgresjs } from "../sinks/Postgresjs";
 import { Fastify } from "../sources/Fastify";
 import { Koa } from "../sources/Koa";
 import { Restify } from "../sources/Restify";
+import { LoopBack } from "../sources/LoopBack";
 import { ClickHouse } from "../sinks/ClickHouse";
 import { Prisma } from "../sinks/Prisma";
 import { AwsSDKVersion2 } from "../sinks/AwsSDKVersion2";
@@ -175,6 +176,7 @@ export function getWrappers() {
     new AwsSDKVersion2(),
     new AiSDK(),
     new GoogleGenAi(),
+    new LoopBack(),
   ];
 }
 
