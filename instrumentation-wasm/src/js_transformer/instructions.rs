@@ -21,4 +21,5 @@ pub struct FunctionInstructions {
     pub modify_return_value: bool,
     pub modify_arguments_object: bool,
     pub class_name: Option<String>,
+    pub callback_on_block: bool,
 }

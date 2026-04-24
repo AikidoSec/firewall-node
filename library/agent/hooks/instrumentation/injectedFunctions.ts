@@ -1,42 +1,60 @@
 import { getInstance } from "../../AgentSingleton";
 import { bindContext, getContext } from "../../Context";
+import { getCallbackFunctionFromArgs } from "../../../helpers/getCallbackFunctionFromArgs";
 import { inspectArgs } from "../wrapExport";
 import { getFileCallbackInfo, getFunctionCallbackInfo } from "./instructions";
 
+/**
+ * Returns false when a block was handled via callback (caller should return early), true otherwise.
+ * Throws when blocking and callbackOnBlock is false.
+ */
 export function __instrumentInspectArgs(
   id: string,
   args: IArguments | unknown[],
   pkgVersion: string,
   subject: unknown // "This" of the method being called
-) {
+): boolean {
   const agent = getInstance();
   if (!agent) {
-    return;
+    return true;
   }
 
   const context = getContext();
 
   const cbInfo = getFunctionCallbackInfo(id);
   if (!cbInfo) {
-    return;
+    return true;
   }
 
   if (typeof cbInfo.funcs.inspectArgs === "function") {
-    inspectArgs.call(
-      subject,
-      Array.from(args),
-      cbInfo.funcs.inspectArgs,
-      context,
-      agent,
-      {
-        name: cbInfo.pkgName,
-        version: pkgVersion,
-        type: "external",
-      },
-      cbInfo.methodName,
-      cbInfo.operationKind
-    );
+    try {
+      inspectArgs.call(
+        subject,
+        Array.from(args),
+        cbInfo.funcs.inspectArgs,
+        context,
+        agent,
+        {
+          name: cbInfo.pkgName,
+          version: pkgVersion,
+          type: "external",
+        },
+        cbInfo.methodName,
+        cbInfo.operationKind
+      );
+    } catch (error) {
+      if (cbInfo.funcs.callbackOnBlock) {
+        const cbFunc = getCallbackFunctionFromArgs(Array.from(args));
+        if (cbFunc) {
+          process.nextTick(() => cbFunc(error));
+          return false;
+        }
+      }
+      throw error;
+    }
   }
+
+  return true;
 }
 
 export function __instrumentModifyArgs(
