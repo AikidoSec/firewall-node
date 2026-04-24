@@ -94,14 +94,23 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeContext, () => {
     throws(
-      () => exec("ls `echo .`", (err, stdout, stderr) => {}).unref(),
-      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
-    );
-
-    throws(
       () => execSync("ls `echo .`"),
       "Zen has blocked a shell injection: child_process.execSync(...) originating from body.file.matches"
     );
+  });
+
+  await runWithContext(unsafeContext, async () => {
+    await new Promise<void>((resolve) => {
+      exec("ls `echo .`", (err) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error)
+          t.match(
+            err.message,
+            "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
+          );
+        resolve();
+      });
+    });
   });
 
   runWithContext(unsafeContext, () => {
@@ -157,46 +166,8 @@ t.test("it works", async (t) => {
 
   runWithContext(unsafeContext, () => {
     throws(
-      () =>
-        execFile(
-          "ls `echo .`",
-          [],
-          { shell: true },
-          (err, stdout, stderr) => {}
-        ).unref(),
-      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
-    );
-
-    throws(
       () => execFileSync("ls `echo .`", [], { shell: true }),
       "Zen has blocked a shell injection: child_process.execFileSync(...) originating from body.file.matches"
-    );
-
-    throws(
-      () =>
-        execFile(
-          "ls",
-          ["`echo .`"],
-          { shell: true },
-          (err, stdout, stderr) => {}
-        ).unref(),
-      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
-    );
-
-    throws(
-      () =>
-        execFile("sh", ["-c", "`echo .`"], (err, stdout, stderr) => {}).unref(),
-      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
-    );
-
-    throws(
-      () =>
-        execFile(
-          "/bin/sh",
-          ["-c", "`echo .`"],
-          (err, stdout, stderr) => {}
-        ).unref(),
-      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches"
     );
 
     throws(
@@ -208,6 +179,43 @@ t.test("it works", async (t) => {
       () => execFileSync("ls", ["`echo .`"], { shell: true }),
       "Zen has blocked a shell injection: child_process.execFileSync(...) originating from body.file.matches"
     );
+  });
+
+  await runWithContext(unsafeContext, async () => {
+    const msg =
+      "Zen has blocked a shell injection: child_process.execFile(...) originating from body.file.matches";
+
+    await new Promise<void>((resolve) => {
+      execFile("ls `echo .`", [], { shell: true }, (err) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      execFile("ls", ["`echo .`"], { shell: true }, (err) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      execFile("sh", ["-c", "`echo .`"], (err) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
+
+    await new Promise<void>((resolve) => {
+      execFile("/bin/sh", ["-c", "`echo .`"], (err) => {
+        t.ok(err instanceof Error);
+        if (err instanceof Error) t.match(err.message, msg);
+        resolve();
+      });
+    });
   });
 
   runWithContext(

@@ -12,6 +12,7 @@ type FileSystemFunction = {
   pathsArgs: number; // The amount of arguments that are paths
   sync: boolean; // Whether the function has a synchronous version (e.g. fs.accessSync)
   promise: boolean; // Whether the function has a promise version (e.g. fs.promises.access)
+  callback: boolean; // Whether the async version accepts an error-first callback as last arg
 };
 
 export class FileSystem implements Wrapper {
@@ -51,44 +52,64 @@ export class FileSystem implements Wrapper {
 
   private getFunctions(): Record<string, FileSystemFunction> {
     const functions: Record<string, FileSystemFunction> = {
-      appendFile: { pathsArgs: 1, sync: true, promise: true },
-      chmod: { pathsArgs: 1, sync: true, promise: true },
-      chown: { pathsArgs: 1, sync: true, promise: true },
-      createReadStream: { pathsArgs: 1, sync: false, promise: false },
-      createWriteStream: { pathsArgs: 1, sync: false, promise: false },
-      lchown: { pathsArgs: 1, sync: true, promise: true },
-      lutimes: { pathsArgs: 1, sync: true, promise: true },
-      mkdir: { pathsArgs: 1, sync: true, promise: true },
-      open: { pathsArgs: 1, sync: true, promise: true },
-      opendir: { pathsArgs: 1, sync: true, promise: true },
-      readdir: { pathsArgs: 1, sync: true, promise: true },
-      readFile: { pathsArgs: 1, sync: true, promise: true },
-      readlink: { pathsArgs: 1, sync: true, promise: true },
-      unlink: { pathsArgs: 1, sync: true, promise: true },
-      realpath: { pathsArgs: 1, sync: true, promise: true },
-      rename: { pathsArgs: 2, sync: true, promise: true },
-      rmdir: { pathsArgs: 1, sync: true, promise: true },
-      rm: { pathsArgs: 1, sync: true, promise: true },
-      symlink: { pathsArgs: 2, sync: true, promise: true },
-      truncate: { pathsArgs: 1, sync: true, promise: true },
-      utimes: { pathsArgs: 1, sync: true, promise: true },
-      writeFile: { pathsArgs: 1, sync: true, promise: true },
-      copyFile: { pathsArgs: 2, sync: true, promise: true },
-      cp: { pathsArgs: 2, sync: true, promise: true },
-      link: { pathsArgs: 2, sync: true, promise: true },
-      watch: { pathsArgs: 1, sync: false, promise: false },
-      watchFile: { pathsArgs: 1, sync: false, promise: false },
-      mkdtemp: { pathsArgs: 1, sync: true, promise: true },
+      appendFile: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      chmod: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      chown: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      createReadStream: {
+        pathsArgs: 1,
+        sync: false,
+        promise: false,
+        callback: false,
+      },
+      createWriteStream: {
+        pathsArgs: 1,
+        sync: false,
+        promise: false,
+        callback: false,
+      },
+      lchown: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      lutimes: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      mkdir: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      open: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      opendir: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      readdir: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      readFile: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      readlink: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      unlink: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      realpath: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      rename: { pathsArgs: 2, sync: true, promise: true, callback: true },
+      rmdir: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      rm: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      symlink: { pathsArgs: 2, sync: true, promise: true, callback: true },
+      truncate: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      utimes: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      writeFile: { pathsArgs: 1, sync: true, promise: true, callback: true },
+      copyFile: { pathsArgs: 2, sync: true, promise: true, callback: true },
+      cp: { pathsArgs: 2, sync: true, promise: true, callback: true },
+      link: { pathsArgs: 2, sync: true, promise: true, callback: true },
+      watch: { pathsArgs: 1, sync: false, promise: false, callback: false },
+      watchFile: { pathsArgs: 1, sync: false, promise: false, callback: false },
+      mkdtemp: { pathsArgs: 1, sync: true, promise: true, callback: true },
     };
 
     // Added in v19.8.0
     if (isVersionGreaterOrEqual("19.8.0", getSemverNodeVersion())) {
-      functions.openAsBlob = { pathsArgs: 1, sync: false, promise: false };
+      functions.openAsBlob = {
+        pathsArgs: 1,
+        sync: false,
+        promise: false,
+        callback: false,
+      };
     }
 
     // Only available on macOS
     if (process.platform === "darwin") {
-      functions.lchmod = { pathsArgs: 1, sync: true, promise: true };
+      functions.lchmod = {
+        pathsArgs: 1,
+        sync: true,
+        promise: true,
+        callback: true,
+      };
     }
 
     return functions;
@@ -121,13 +142,14 @@ export class FileSystem implements Wrapper {
       const functions = this.getFunctions();
 
       Object.keys(functions).forEach((name) => {
-        const { pathsArgs, sync } = functions[name];
+        const { pathsArgs, sync, callback } = functions[name];
 
         wrapExport(exports, name, pkgInfo, {
           kind: "fs_op",
           inspectArgs: (args) => {
             return this.inspectPath(args, name, pathsArgs);
           },
+          callbackOnBlock: callback,
         });
 
         if (sync) {
@@ -146,6 +168,7 @@ export class FileSystem implements Wrapper {
         inspectArgs: (args) => {
           return this.inspectPath(args, "realpath.native", 1);
         },
+        callbackOnBlock: true,
       });
 
       wrapExport(exports.realpathSync, "native", pkgInfo, {

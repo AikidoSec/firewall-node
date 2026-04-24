@@ -64,6 +64,7 @@ export class MariaDB implements Wrapper {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
         inspectArgs: (args) => this.inspectQuery(args, fn),
+        callbackOnBlock: true,
       });
     }
   }
@@ -73,6 +74,7 @@ export class MariaDB implements Wrapper {
       wrapExport(exports.prototype, fn, pkgInfo, {
         kind: "sql_op",
         inspectArgs: (args) => this.inspectQuery(args, fn),
+        callbackOnBlock: true,
       });
     }
   }
@@ -101,6 +103,7 @@ export class MariaDB implements Wrapper {
           operationKind: "sql_op",
           bindContext: true,
           inspectArgs: (args) => this.inspectQuery(args, fn),
+          callbackOnBlock: true,
         }))
       )
       .addMultiFileInstrumentation(
@@ -111,6 +114,7 @@ export class MariaDB implements Wrapper {
           operationKind: "sql_op",
           bindContext: true,
           inspectArgs: (args) => this.inspectQuery(args, fn),
+          callbackOnBlock: true,
         }))
       );
   }

@@ -129,6 +129,7 @@ export class Postgres implements Wrapper {
         wrapExport(exports.Client.prototype, "query", pkgInfo, {
           kind: "sql_op",
           inspectArgs: (args) => this.inspectQuery(args),
+          callbackOnBlock: true,
         });
       })
       .addFileInstrumentation({
@@ -140,6 +141,7 @@ export class Postgres implements Wrapper {
             operationKind: "sql_op",
             bindContext: true,
             inspectArgs: (args) => this.inspectQuery(args),
+            callbackOnBlock: true,
           },
         ],
       });
@@ -205,6 +207,7 @@ export class Postgres implements Wrapper {
               wrapExport(pool.Client.prototype, "query", pkgInfo, {
                 kind: "sql_op",
                 inspectArgs: (args) => this.inspectQuery(args),
+                callbackOnBlock: true,
               });
 
               return args;

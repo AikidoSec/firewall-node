@@ -152,6 +152,19 @@ t.test(
         );
       }
       delete process.env.AIKIDO_BLOCK_INVALID_SQL;
+
+      await new Promise<void>((resolve) => {
+        runWithContext(dangerousContext, () => {
+          db.run("SELECT 1;-- should be blocked", (err: Error | null) => {
+            t.ok(err instanceof Error);
+            t.same(
+              err?.message,
+              "Zen has blocked an SQL injection: sqlite3.run(...) originating from body.myTitle"
+            );
+            resolve();
+          });
+        });
+      });
     } catch (error: any) {
       t.fail(error);
     } finally {

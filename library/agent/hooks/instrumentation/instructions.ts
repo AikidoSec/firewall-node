@@ -81,6 +81,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                     modifyArgs: func.modifyArgs,
                     modifyReturnValue: func.modifyReturnValue,
                     bindContext: func.bindContext ?? false,
+                    callbackOnBlock: func.callbackOnBlock ?? false,
                   },
                 });
 
@@ -92,6 +93,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   modifyArgs: !!func.modifyArgs,
                   modifyReturnValue: !!func.modifyReturnValue,
                   modifyArgumentsObject: func.modifyArgumentsObject ?? false,
+                  callbackOnBlock: func.callbackOnBlock ?? false,
                   className: func.className,
                 };
               }),

@@ -51,6 +51,7 @@ t.test("add inspectArgs to method definition (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -109,6 +110,7 @@ t.test("add inspectArgs to method definition (CJS)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -167,6 +169,7 @@ t.test("wrong function name", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -224,6 +227,7 @@ t.test("typescript code", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -283,6 +287,7 @@ t.test("typescript code in a js file", async (t) => {
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -315,6 +320,7 @@ t.test("empty code", async (t) => {
         modifyArgs: false,
         modifyReturnValue: false,
         modifyArgumentsObject: false,
+        callbackOnBlock: false,
       },
     ],
     accessLocalVariables: [],
@@ -360,6 +366,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
           modifyArgs: true,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -420,6 +427,7 @@ t.test(
             modifyArgs: true,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -477,6 +485,7 @@ t.test("modify rest parameter args", async (t) => {
           modifyArgs: true,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -523,6 +532,7 @@ t.test("modify rest parameter args", async (t) => {
           modifyArgs: true,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -578,6 +588,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -634,6 +645,7 @@ t.test("add inspectArgs to method definition (unambiguous)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -687,6 +699,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -736,6 +749,7 @@ t.test(
             modifyArgs: true,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -786,6 +800,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -837,6 +852,7 @@ t.test(
             modifyArgs: true,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -888,6 +904,7 @@ t.test(
             modifyArgs: true,
             modifyReturnValue: false,
             modifyArgumentsObject: true,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -936,6 +953,7 @@ t.test("does not modify code if function name is not found", async (t) => {
           modifyArgs: true,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -990,6 +1008,7 @@ t.test("add modifyArgs to method definition (ESM)", async (t) => {
             modifyArgs: false,
             modifyReturnValue: true,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -1411,6 +1430,7 @@ t.test("it adds all imports if necessary (CJS)", async (t) => {
           modifyArgs: true,
           modifyReturnValue: true,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1448,6 +1468,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -1481,6 +1502,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -1524,6 +1546,7 @@ t.test("Modify function declaration (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: true,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1579,6 +1602,7 @@ t.test("Modify function declaration (CJS)", async (t) => {
           modifyArgs: true,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1629,6 +1653,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -1683,6 +1708,7 @@ t.test("Modify function expression (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: true,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1735,6 +1761,7 @@ t.test("Modify constructor (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1784,6 +1811,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -1834,6 +1862,7 @@ t.test("Modify constructor with super (ESM)", async (t) => {
           modifyArgs: true,
           modifyReturnValue: true,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2026,6 +2055,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -2075,6 +2105,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -2122,6 +2153,7 @@ t.test("Modify async return value (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: true,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2165,6 +2197,7 @@ t.test("Modify async arrow function variable declaration (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2209,6 +2242,7 @@ t.test("Modify function variable declaration (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2253,6 +2287,7 @@ t.test("Do not modify function variable declaration (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2300,6 +2335,7 @@ t.test("Test codegen comment behavior", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2354,6 +2390,7 @@ t.test("it works with mts extension (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
           className: undefined,
         },
       ],
@@ -2412,6 +2449,7 @@ t.test("it works with cts extension (ESM)", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
         },
       ],
       accessLocalVariables: [],
@@ -2468,6 +2506,7 @@ t.test("Does not instrument if class name does not match", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
           className: "NonMatchingClassName",
         },
       ],
@@ -2523,6 +2562,7 @@ t.test("It does instrument if class name matches", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
           className: "Test",
         },
       ],
@@ -2582,6 +2622,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
             className: "TestClass",
           },
         ],
@@ -2642,6 +2683,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
             className: "TestNonMatching",
           },
         ],
@@ -2701,6 +2743,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
             className: undefined,
           },
         ],
@@ -2756,6 +2799,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -2809,6 +2853,7 @@ t.test("It does instrument private methods in classes", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
           className: undefined,
         },
       ],
@@ -2862,6 +2907,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
           },
         ],
         accessLocalVariables: [],
@@ -2917,6 +2963,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
             className: "Server",
           },
         ],
@@ -2979,6 +3026,7 @@ t.test(
             modifyArgs: false,
             modifyReturnValue: false,
             modifyArgumentsObject: false,
+            callbackOnBlock: false,
             className: "Server",
           },
         ],
@@ -3041,6 +3089,7 @@ t.test("Two classes with same name in different block scopes", async (t) => {
           modifyArgs: false,
           modifyReturnValue: false,
           modifyArgumentsObject: false,
+          callbackOnBlock: false,
           className: "Server",
         },
       ],
@@ -3070,3 +3119,317 @@ t.test("Two classes with same name in different block scopes", async (t) => {
         }`
   );
 });
+
+t.test(
+  "use inspectArgs with callbackOnBlock for method definition (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+          const { test } = require("test");
+          class Test {
+  
+              private testValue = 42;
+  
+              constructor() {
+                  this.testFunction(testValue);
+              }
+              testFunction(arg1, cb) {
+                  cb(arg1);
+              }
+          }
+          `,
+      "commonjs",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+      const { test } = require("test");
+      class Test {
+          private testValue = 42;
+  
+          constructor() {
+              this.testFunction(testValue);
+          }
+          testFunction(arg1, cb) {
+              if (!__instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this)) return;
+              cb(arg1);
+          }
+      }`
+    );
+  }
+);
+
+t.test(
+  "use inspectArgs with callbackOnBlock for function declaration (ESM)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+          import { test } from "test";
+
+          export function testFunction(arg1, cb) {
+
+            try {
+              someFunctionThatMightThrow(arg1);
+              cb(arg1);
+            } catch (e) {
+              cb(e);
+            }
+          }
+          `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionDeclaration",
+            name: "testFunction",
+            identifier:
+              "testpkg.test.js.testFunction.FunctionDeclaration.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      import { test } from "test";
+
+      export function testFunction(arg1, cb) {
+        if (!__instrumentInspectArgs("testpkg.test.js.testFunction.FunctionDeclaration.v1.0.0", arguments, "1.0.0", this)) return;
+        try {
+          someFunctionThatMightThrow(arg1);
+          cb(arg1);
+        } catch (e) {
+          cb(e);
+        }
+      }`
+    );
+  }
+);
+
+t.test(
+  "use inspectArgs with callbackOnBlock for method definition (ESM)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "test.js",
+      `
+        import { test } from "test";
+        class Test {
+          testFunction(arg1, cb) {
+            cb(arg1);
+          }
+        }
+        `,
+      "module",
+      {
+        path: "test.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            name: "testFunction",
+            identifier: "testpkg.test.js.testFunction.MethodDefinition.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      import { test } from "test";
+      class Test {
+        testFunction(arg1, cb) {
+          if (!__instrumentInspectArgs("testpkg.test.js.testFunction.MethodDefinition.v1.0.0", arguments, "1.0.0", this)) return;
+          cb(arg1);
+        }
+      }`
+    );
+  }
+);
+
+t.test(
+  "use inspectArgs with callbackOnBlock for function assignment (CJS)",
+  async (t) => {
+    const result = transformCode(
+      "express",
+      "1.0.0",
+      "application.js",
+      `
+        const app = require("example");
+        app.use = function (fn, cb) {
+          console.log("test");
+        };
+        `,
+      "commonjs",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionAssignment",
+            name: "app.use",
+            identifier:
+              "express.application.js.app.use.FunctionAssignment.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `const { __instrumentInspectArgs } = require("@aikidosec/firewall/instrument/internals");
+      const app = require("example");
+      app.use = function (fn, cb) {
+        if (!__instrumentInspectArgs("express.application.js.app.use.FunctionAssignment.v1.0.0", arguments, "1.0.0", this)) return;
+        console.log("test");
+      };`
+    );
+  }
+);
+
+t.test(
+  "use inspectArgs with callbackOnBlock for function expression (ESM)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "application.js",
+      `
+        const y = function testFunction(arg1, cb) {
+          console.log("test");
+        }
+        `,
+      "module",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionExpression",
+            name: "testFunction",
+            identifier:
+              "testpkg.application.js.testFunction.FunctionExpression.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      const y = function testFunction(arg1, cb) {
+        if (!__instrumentInspectArgs("testpkg.application.js.testFunction.FunctionExpression.v1.0.0", arguments, "1.0.0", this)) return;
+        console.log("test");
+      };`
+    );
+  }
+);
+
+t.test(
+  "use inspectArgs with callbackOnBlock for function variable declaration (ESM)",
+  async (t) => {
+    const result = transformCode(
+      "testpkg",
+      "1.0.0",
+      "application.js",
+      `
+        const test = function (arg1, cb) {
+          console.log("test");
+        }
+        `,
+      "module",
+      {
+        path: "application.js",
+        versionRange: "^1.0.0",
+        identifier: "testpkg.test.js.^1.0.0",
+        functions: [
+          {
+            nodeType: "FunctionVariableDeclaration",
+            name: "test",
+            identifier:
+              "testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0",
+            inspectArgs: true,
+            modifyArgs: false,
+            modifyReturnValue: false,
+            modifyArgumentsObject: false,
+            callbackOnBlock: true,
+          },
+        ],
+        accessLocalVariables: [],
+      }
+    );
+
+    isSameCode(
+      t,
+      result,
+      `import { __instrumentInspectArgs } from "@aikidosec/firewall/instrument/internals";
+      const test = function(arg1, cb) {
+        if (!__instrumentInspectArgs("testpkg.application.js.test.FunctionVariableDeclaration.v1.0.0", arguments, "1.0.0", this)) return;
+        console.log("test");
+      };`
+    );
+  }
+);
