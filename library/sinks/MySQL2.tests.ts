@@ -159,6 +159,19 @@ export function createMySQL2Tests(versionPkgName: string) {
       runWithContext(safeContext, () => {
         connection2!.query("-- This is a comment");
       });
+
+      await new Promise<void>((resolve) => {
+        runWithContext(dangerousContext, () => {
+          connection2!.execute("-- should be blocked", (err: any) => {
+            t.ok(err instanceof Error);
+            t.same(
+              err?.message,
+              "Zen has blocked an SQL injection: mysql2.execute(...) originating from body.myTitle"
+            );
+            resolve();
+          });
+        });
+      });
     } catch (error: any) {
       t.fail(error);
     } finally {

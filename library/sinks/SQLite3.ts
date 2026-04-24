@@ -79,6 +79,7 @@ export class SQLite3 implements Wrapper {
         inspectArgs: (args) => {
           return this.inspectQuery(`sqlite3.${func}`, args);
         },
+        callbackOnBlock: true,
       });
     }
 
@@ -87,6 +88,7 @@ export class SQLite3 implements Wrapper {
       inspectArgs: (args) => {
         return this.inspectPath(`sqlite3.backup`, args);
       },
+      callbackOnBlock: true,
     });
   }
 

@@ -117,19 +117,24 @@ t.test("it inspects query method calls and blocks if needed", async (t) => {
       }
     );
 
-    // Check if context is available in the callback
-    runWithContext(context, () => {
-      client.query("SELECT petname FROM cats;", (error, result) => {
-        t.match(getContext(), context);
-
-        try {
-          client.query("-- should be blocked", () => {});
-        } catch (error: any) {
-          t.match(
-            error.message,
-            /Zen has blocked an SQL injection: pg.query\(\.\.\.\) originating from body\.myTitle/
-          );
-        }
+    // Check that context is available in callback and error is routed to callback on block
+    await new Promise<void>((resolve, reject) => {
+      runWithContext(context, () => {
+        client.query("SELECT petname FROM cats;", (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          t.match(getContext(), context);
+          client.query("-- should be blocked", (err: Error | null) => {
+            t.ok(err instanceof Error);
+            t.match(
+              err?.message,
+              /Zen has blocked an SQL injection: pg\.query\(\.\.\.\) originating from body\.myTitle/
+            );
+            resolve();
+          });
+        });
       });
     });
   } catch (error: any) {

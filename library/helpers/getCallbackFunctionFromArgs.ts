@@ -1,9 +1,5 @@
-// Finds the last function argument in the provided array and returns it. If no function is found, it returns undefined.
+// Returns the last argument if it is a function, otherwise undefined.
 export function getCallbackFunctionFromArgs(args: any[]): Function | undefined {
-  for (let i = args.length - 1; i >= 0; i--) {
-    if (typeof args[i] === "function") {
-      return args[i] as Function;
-    }
-  }
-  return undefined;
+  const last = args[args.length - 1];
+  return typeof last === "function" ? last : undefined;
 }
