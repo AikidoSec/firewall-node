@@ -1,0 +1,13 @@
+{
+  "name": "express5-esm",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import @aikidosec/firewall/instrument ./app.js"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "express": "^5.1.0"
+  }
+}
