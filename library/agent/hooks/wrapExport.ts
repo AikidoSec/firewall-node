@@ -6,6 +6,7 @@ import type { InterceptorResult } from "./InterceptorResult";
 import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
+import { getCallbackFunctionFromArgs } from "../../helpers/getCallbackFunctionFromArgs";
 
 export type InspectArgsInterceptor = (
   args: unknown[],
@@ -86,18 +87,16 @@ export function wrapExport(
                 methodName || "",
                 interceptors.kind
               );
-            } catch (blockError) {
+            } catch (error) {
               if (interceptors.callbackOnBlock) {
                 // Find the last function argument and call it with the error.
-                for (let i = args.length - 1; i >= 0; i--) {
-                  if (typeof args[i] === "function") {
-                    const cb = args[i] as Function;
-                    process.nextTick(() => cb(blockError));
-                    return undefined;
-                  }
+                const cbFunc = getCallbackFunctionFromArgs(args);
+                if (cbFunc) {
+                  process.nextTick(() => cbFunc(error));
+                  return undefined;
                 }
               }
-              throw blockError;
+              throw error;
             }
           }
 
