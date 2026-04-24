@@ -9,6 +9,8 @@ use oxc_ast::{
 use oxc_span::SPAN;
 
 // Add a statement to the beginning of the function: __instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this);
+// In case of callback_on_block being true, we add an if statement that checks the result of the callback and returns early if the callback returns false:
+// if (!__instrumentInspectArgs('function_identifier', arguments, "{pkg_version}", this)) return;
 pub fn insert_inspect_args<'a>(
     allocator: &'a Allocator,
     builder: &'a AstBuilder,
