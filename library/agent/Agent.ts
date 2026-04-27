@@ -13,10 +13,12 @@ import type {
   DetectedAttack,
   DetectedAttackWave,
 } from "./api/Event";
+import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
 import { Endpoint } from "./Config";
-import { pollForChanges } from "./realtime/pollForChanges";
+import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
+import type { ConfigUpdateOptions } from "./realtime/ConfigUpdateOptions";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -37,6 +39,7 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
+import { pollForChanges } from "./realtime/pollForChanges";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -451,8 +454,8 @@ export class Agent {
     }
   }
 
-  private startPollingForConfigChanges() {
-    pollForChanges({
+  private startCheckingForConfigUpdates() {
+    const options: ConfigUpdateOptions = {
       token: this.token,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
@@ -462,7 +465,10 @@ export class Agent {
           this.logger.log(`Failed to update blocked lists: ${error.message}`);
         });
       },
-    });
+    };
+
+    listenForConfigUpdates(options);
+    pollForChanges(options);
   }
 
   private getAgentInfo(): AgentInfo {
@@ -548,7 +554,7 @@ export class Agent {
     this.onStart()
       .then(() => {
         this.startHeartbeats();
-        this.startPollingForConfigChanges();
+        this.startCheckingForConfigUpdates();
       })
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
@@ -722,5 +728,16 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  onTrackEvent(event: UserEvent) {
+    if (!this.token) {
+      return;
+    }
+
+    const promise = sendUserEvent(this.token, event).catch(() => {
+      this.logger.log("Failed to report tracked event");
+    });
+    this.pendingEvents.onAPICall(promise);
   }
 }
