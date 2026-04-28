@@ -55,6 +55,21 @@ export class XmlMinusJs implements Wrapper {
             return result;
           },
         });
+      })
+      // We don't need to wrap xml2json file with the new hook system, as it uses xml2js internally.
+      .addFileInstrumentation({
+        path: "lib/xml2js.js",
+        functions: [
+          {
+            name: "module.exports",
+            nodeType: "FunctionAssignment",
+            operationKind: "deserialize_op",
+            modifyReturnValue: (args, result) => {
+              this.inspectParse(args, result, false);
+              return result;
+            },
+          },
+        ],
       });
   }
 }

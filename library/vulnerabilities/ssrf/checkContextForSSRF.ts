@@ -1,8 +1,8 @@
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
-import { SOURCES } from "../../agent/Source";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
+import { getSourceForUserString } from "../../helpers/getSourceForUserString";
 import { containsPrivateIPAddress } from "./containsPrivateIPAddress";
 import { findHostnameInUserInput } from "./findHostnameInUserInput";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
@@ -44,15 +44,11 @@ export function checkContextForSSRF({
     return undefined;
   }
 
-  for (const source of SOURCES) {
-    const userInput = extractStringsFromUserInputCached(context, source);
-    if (!userInput) {
-      continue;
-    }
-
-    for (const str of userInput) {
-      const found = findHostnameInUserInput(str, hostname, port);
-      if (found) {
+  for (const str of extractStringsFromUserInputCached(context)) {
+    const found = findHostnameInUserInput(str, hostname, port);
+    if (found) {
+      const source = getSourceForUserString(context, str);
+      if (source) {
         const paths = getPathsToPayload(str, context[source]);
 
         return {

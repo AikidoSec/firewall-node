@@ -15,13 +15,16 @@ const server = restify.createServer({
 // ...
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import "@aikidosec/firewall";
 
 // ...
 ```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
 
 ## Blocking mode
 
@@ -60,7 +63,7 @@ server.use((req, res, next) => {
   return next();
 });
 
-// Call this after your auth middleware, before other middleware
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addRestifyMiddleware(server);
 
 server.get("/", (req, res, next) => {

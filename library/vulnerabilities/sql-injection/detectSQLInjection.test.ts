@@ -23,6 +23,21 @@ t.test("It ignores safely escaped backslash", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'users\\\\'", "users\\\\");
 });
 
+t.test("is not", async () => {
+  isNotSqlInjection(
+    "select * from `a` where `a`.`b` = ? and `a`.`b` is not null and `a`.`c` is null order by `id` asc",
+    "is not"
+  );
+});
+
+t.test("short strings with space", async () => {
+  isNotSqlInjection('select * from "a" where "id" = $1 limit $2', "1 li");
+});
+
+t.test("2 chars partial match", async () => {
+  isNotSqlInjection("UPDATE a SET b=b+1, c=NOW() WHERE (id=:parentid)", ":p");
+});
+
 t.test("It allows escape sequences", async (t) => {
   isNotSqlInjection("SELECT * FROM users WHERE id = '\nusers'", "\nusers");
   isNotSqlInjection("SELECT * FROM users WHERE id = '\rusers'", "\rusers");
@@ -211,6 +226,21 @@ t.test("It does not flag key keyword as SQL injection", async () => {
   isNotSqlInjection(query, "UPDATE");
   isNotSqlInjection(query, "INSERT");
   isNotSqlInjection(query, "INTO");
+  isNotSqlInjection(
+    `
+    SELECT * FROM users u
+    WHERE u.status NOT IN ('active', 'pending')
+  `,
+    "not in"
+  );
+  isNotSqlInjection(
+    `SELECT *::timestamptz AT TIME ZONE 'UTC' AS created_at_utc FROM events`,
+    "TIME ZONE"
+  );
+});
+
+t.test("short string of letters, digits and spaces", async () => {
+  isNotSqlInjection(`select * from "table" where "id" = $1 limit $2`, "1 l");
 });
 
 t.test("It flags function calls as SQL injections", async () => {
@@ -334,7 +364,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }
@@ -350,7 +380,7 @@ for (const file of files) {
             sql,
             new SQLDialectMySQL()
           ),
-          false,
+          0,
           `${sql} (mysql)`
         );
       }

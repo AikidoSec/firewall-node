@@ -1,6 +1,5 @@
 import { SQLDialect } from "./dialects/SQLDialect";
 import { shouldReturnEarly } from "./shouldReturnEarly";
-// eslint-disable-next-line camelcase
 import { wasm_detect_sql_injection } from "../../internals/zen_internals";
 
 export const SQLInjectionDetectionResult = {

@@ -27,16 +27,19 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   token: new Token("123"),
 });
 agent.start([new Hapi(), new FileSystem(), new HTTPServer()]);
 
-import * as hapi from "@hapi/hapi";
 import * as request from "supertest";
 import { getContext } from "../agent/Context";
 
-function getServer(onRequestExt = true) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+async function getServer(onRequestExt = true) {
+  const hapi = require("@hapi/hapi") as typeof import("@hapi/hapi");
+
   const server = hapi.server({
     port: 4567,
     host: "127.0.0.1",
@@ -128,7 +131,7 @@ function getServer(onRequestExt = true) {
 }
 
 t.test("it adds context from request for GET", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/?title=test")
     .set("Accept", "application/json")
     .set("Cookie", "session=123")
@@ -146,7 +149,7 @@ t.test("it adds context from request for GET", async (t) => {
 });
 
 t.test("it adds context from POST with JSON body", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .post("/context")
     .set("Accept", "application/json")
     .set("Content-Type", "application/json")
@@ -166,7 +169,7 @@ t.test("it adds context from POST with JSON body", async (t) => {
 });
 
 t.test("it wraps options.handler", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/options-handler?title=test")
     .set("Accept", "application/json")
     .set("X-Forwarded-For", "1.2.3.4");
@@ -182,7 +185,7 @@ t.test("it wraps options.handler", async (t) => {
 });
 
 t.test("it adds context from POST with form body", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .post("/context")
     .set("Accept", "application/json")
     .set("Content-Type", "application/x-www-form-urlencoded")
@@ -202,27 +205,28 @@ t.test("it adds context from POST with form body", async (t) => {
 });
 
 t.test("it rate limits based on IP address", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 200);
   t.match(response.text, "OK");
 
-  const response2 = await request(getServer().listener)
+  const response2 = await request((await getServer()).listener)
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response2.status, 200);
   t.match(response2.text, "OK");
 
-  const response3 = await request(getServer().listener)
+  const response3 = await request((await getServer()).listener)
     .get("/rate-limited")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response3.status, 429);
   t.match(response3.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
+  t.ok(parseInt(response3.headers["retry-after"]) > 0);
 });
 
 t.test("it blocks based on user ID", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/blocked-user")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.status, 403);
@@ -230,7 +234,7 @@ t.test("it blocks based on user ID", async (t) => {
 });
 
 t.test("it gets context from decorate handler", async (t) => {
-  const response = await request(getServer().listener)
+  const response = await request((await getServer()).listener)
     .get("/decorate-handler?query=123")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.body, {
@@ -245,7 +249,7 @@ t.test("it gets context from decorate handler", async (t) => {
 });
 
 t.test("it gets context from decorate handler", async (t) => {
-  const response = await request(getServer(false).listener)
+  const response = await request((await getServer(false)).listener)
     .get("/decorate-handler?query=123")
     .set("X-Forwarded-For", "1.2.3.4");
   t.match(response.body, {
@@ -260,6 +264,6 @@ t.test("it gets context from decorate handler", async (t) => {
 });
 
 t.test("toolkit decorator success works", async (t) => {
-  const response = await request(getServer().listener).get("/success");
+  const response = await request((await getServer()).listener).get("/success");
   t.match(response.body, { status: "ok" });
 });

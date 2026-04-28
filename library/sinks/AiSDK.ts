@@ -6,9 +6,12 @@ import { isPlainObject } from "../helpers/isPlainObject";
 
 type PartialAiResponse = {
   usage: {
-    completionTokens: number;
-    promptTokens: number;
-    totalTokens: number;
+    completionTokens?: number;
+    promptTokens?: number;
+    totalTokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+    reasoningTokens?: number;
   };
   response: {
     modelId: string;
@@ -28,12 +31,17 @@ export class AiSDK implements Wrapper {
 
     const modelName = this.getModelName(response);
 
+    const usage = this.getUsage(response.usage);
+    if (!usage) {
+      return;
+    }
+
     const aiStats = agent.getAIStatistics();
     aiStats.onAICall({
       provider: provider,
       model: modelName,
-      inputTokens: response.usage.promptTokens,
-      outputTokens: response.usage.completionTokens,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
     });
   }
 
@@ -44,9 +52,6 @@ export class AiSDK implements Wrapper {
       !Array.isArray(result) &&
       "usage" in result &&
       isPlainObject(result.usage) &&
-      typeof result.usage.completionTokens === "number" &&
-      typeof result.usage.promptTokens === "number" &&
-      typeof result.usage.totalTokens === "number" &&
       "response" in result &&
       result.response &&
       isPlainObject(result.response) &&
@@ -111,26 +116,64 @@ export class AiSDK implements Wrapper {
     return modelName;
   }
 
-  private getInterceptors(): InterceptorObject {
+  private getUsage(usage: PartialAiResponse["usage"]):
+    | {
+        inputTokens: number;
+        outputTokens: number;
+      }
+    | undefined {
+    const inputTokens =
+      (usage.inputTokens ?? 0) +
+      (usage.promptTokens ?? 0) +
+      (usage.reasoningTokens ?? 0);
+
+    const outputTokens =
+      (usage.outputTokens ?? 0) + (usage.completionTokens ?? 0);
+
+    if (inputTokens === 0 && outputTokens === 0) {
+      return undefined;
+    }
+
+    return {
+      inputTokens,
+      outputTokens,
+    };
+  }
+
+  private getInterceptors(methodName: string): InterceptorObject {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
         if (returnValue instanceof Promise) {
           // Inspect the response after the promise resolves, it won't change the original promise
-          returnValue.then((response) => {
-            try {
+          returnValue
+            .then((response) => {
               this.inspectAiCall(agent, args, response);
-            } catch {
-              // If we don't catch these errors, it will result in an unhandled promise rejection!
-            }
-          });
+            })
+            .catch((error) => {
+              agent.onErrorThrownByInterceptor({
+                error: error,
+                method: `${methodName}.<promise>`,
+                module: "ai",
+              });
+            });
+        } else {
+          try {
+            this.inspectAiCall(agent, args, returnValue);
+          } catch (error) {
+            agent.onErrorThrownByInterceptor({
+              error: error instanceof Error ? error : new Error(String(error)),
+              method: methodName,
+              module: "ai",
+            });
+          }
         }
         return returnValue;
       },
     };
   }
 
-  private getStreamInterceptors(): InterceptorObject {
+  private getStreamInterceptors(methodName: string): InterceptorObject {
     return {
       kind: "ai_op",
       modifyReturnValue: (args, returnValue, agent) => {
@@ -145,8 +188,8 @@ export class AiSDK implements Wrapper {
           return returnValue;
         }
 
-        Promise.allSettled([returnValue.response, returnValue.usage]).then(
-          (promiseResults) => {
+        Promise.allSettled([returnValue.response, returnValue.usage])
+          .then((promiseResults) => {
             const response =
               promiseResults[0].status === "fulfilled"
                 ? promiseResults[0].value
@@ -160,16 +203,18 @@ export class AiSDK implements Wrapper {
               return;
             }
 
-            try {
-              this.inspectAiCall(agent, args, {
-                response,
-                usage,
-              });
-            } catch {
-              // If we don't catch these errors, it will result in an unhandled promise rejection!
-            }
-          }
-        );
+            this.inspectAiCall(agent, args, {
+              response,
+              usage,
+            });
+          })
+          .catch((error) => {
+            agent.onErrorThrownByInterceptor({
+              error: error,
+              method: `${methodName}.<promise>`,
+              module: "ai",
+            });
+          });
 
         return returnValue;
       },
@@ -179,7 +224,7 @@ export class AiSDK implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("ai")
-      .withVersion("^4.0.0")
+      .withVersion("^6.0.0 || ^5.0.0 || ^4.0.0")
       .onRequire((exports, pkgInfo) => {
         // Can't wrap it directly because it's a readonly proxy
         const generateTextFunc = exports.generateText;
@@ -187,36 +232,66 @@ export class AiSDK implements Wrapper {
         const streamTextFunc = exports.streamText;
         const streamObjectFunc = exports.streamObject;
 
-        const interceptors = this.getInterceptors();
-        const streamInterceptors = this.getStreamInterceptors();
-
         return {
           ...exports,
           generateText: wrapExport(
             generateTextFunc,
             undefined,
             pkgInfo,
-            interceptors
+            this.getInterceptors("generateText")
           ),
           generateObject: wrapExport(
             generateObjectFunc,
             undefined,
             pkgInfo,
-            interceptors
+            this.getInterceptors("generateObject")
           ),
           streamText: wrapExport(
             streamTextFunc,
             undefined,
             pkgInfo,
-            streamInterceptors
+            this.getStreamInterceptors("streamText")
           ),
           streamObject: wrapExport(
             streamObjectFunc,
             undefined,
             pkgInfo,
-            streamInterceptors
+            this.getStreamInterceptors("streamObject")
           ),
         };
-      });
+      })
+      .addMultiFileInstrumentation(
+        ["dist/index.js", "dist/index.mjs"],
+        [
+          {
+            name: "generateText",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getInterceptors("generateText").modifyReturnValue,
+          },
+          {
+            name: "generateObject",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getInterceptors("generateObject").modifyReturnValue,
+          },
+          {
+            name: "streamText",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getStreamInterceptors("streamText").modifyReturnValue,
+          },
+          {
+            name: "streamObject",
+            nodeType: "FunctionDeclaration",
+            operationKind: "ai_op",
+            modifyReturnValue:
+              this.getStreamInterceptors("streamObject").modifyReturnValue,
+          },
+        ]
+      );
   }
 }

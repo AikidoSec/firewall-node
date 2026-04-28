@@ -11,26 +11,17 @@ let currentLastUpdatedAt: number | null = null;
 
 export function pollForChanges({
   onConfigUpdate,
-  serverless,
   token,
   logger,
   lastUpdatedAt,
 }: {
   onConfigUpdate: OnConfigUpdate;
   token: Token | undefined;
-  serverless: string | undefined;
   logger: Logger;
   lastUpdatedAt: number;
 }) {
   if (!token) {
     logger.log("No token provided, not polling for config updates");
-    return;
-  }
-
-  if (serverless) {
-    logger.log(
-      "Running in serverless environment, not polling for config updates"
-    );
     return;
   }
 

@@ -18,16 +18,24 @@ export class Path implements Wrapper {
       return undefined;
     }
 
-    for (const path of args) {
+    for (let i = 0; i < args.length; i++) {
+      const path = args[i];
       if (typeof path === "string") {
         const result = checkContextForPathTraversal({
           filename: path,
           operation: `path.${operation}`,
           context: context,
-          /* Only check the first arg for absolute path traversal.
-             If an insecure absolute path is passed as the second argument,
-             it can not be an absolute path because it is not the start of the resulting path. */
-          checkPathStart: path === args[0],
+          // Only check the first argument for absolute paths, unless the operation is `resolve`.
+          //
+          // For most path operations (join, normalize), only the first argument matters
+          // because subsequent absolute paths are treated as relative components.
+          // However, path.resolve() is special: ANY absolute path in ANY position
+          // becomes the new resolved path, discarding all previous arguments.
+          //
+          // Examples:
+          // - path.join('/tmp', '/etc/passwd') → '/tmp/etc/passwd'
+          // - path.resolve('/tmp', '/etc/passwd') → '/etc/passwd'
+          checkPathStart: i === 0 || operation === "resolve",
         });
 
         if (result) {
@@ -40,7 +48,8 @@ export class Path implements Wrapper {
   }
 
   private wrapFunctions(exports: unknown, pkgInfo: WrapPackageInfo) {
-    const functions = ["join", "resolve", "normalize"];
+    // `.join` is not wrapped because it uses `.normalize` under the hood
+    const functions = ["resolve", "normalize"];
 
     for (const func of functions) {
       wrapExport(exports, func, pkgInfo, {

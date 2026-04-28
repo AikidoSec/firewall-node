@@ -1,3 +1,5 @@
+// oxlint-disable no-control-regex
+// oxlint-disable no-useless-escape
 /**
  * Based on https://github.com/validatorjs/validator.js/blob/master/src/lib/isEmail.js
  * MIT License - Copyright (c) 2018 Chris O'Hara

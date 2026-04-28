@@ -56,7 +56,7 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
   await runWithContext(
     {
       ...context,
-      ...{ body: { image: `${redirectTestUrl}/ssrf-test-domain` } },
+      body: { image: `${redirectTestUrl}/ssrf-test-domain` },
     },
     async () => {
       await new Promise<void>((resolve) => {
@@ -65,7 +65,6 @@ t.test("it works", { skip: "SSRF redirect check disabled atm" }, async (t) => {
           `${redirectTestUrl}/ssrf-test-domain`,
           {},
           {
-            // eslint-disable-next-line camelcase
             follow_max: 1,
           },
           (error, response) => {

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -19,7 +18,11 @@ wrap(dns, "lookup", function lookup(original) {
 
     calls[hostname]++;
 
-    if (hostname === "thisdomainpointstointernalip.com") {
+    if (
+      hostname === "thisdomainpointstointernalip.com" ||
+      hostname === "my-service-hostname" ||
+      hostname === "metadata"
+    ) {
       return original.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
@@ -95,7 +98,7 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://app.aikido.dev"));
+    await fetch(new URL("https://app.AIKIDO.dev"));
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 443, hits: 1 },
@@ -133,7 +136,8 @@ t.test(
       );
       if (error instanceof Error) {
         t.same(
-          error.message,
+          // @ts-expect-error Type is not defined
+          error.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -144,7 +148,8 @@ t.test(
       t.same(events.length, 1);
       t.same(events[0].attack.metadata, {
         hostname: "localhost",
-        port: 4000,
+        port: "4000",
+        privateIP: "::1",
       });
 
       const error2 = await t.rejects(() =>
@@ -152,7 +157,8 @@ t.test(
       );
       if (error2 instanceof Error) {
         t.same(
-          error2.message,
+          // @ts-expect-error Type is not defined
+          error2.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -163,7 +169,8 @@ t.test(
       );
       if (error3 instanceof Error) {
         t.same(
-          error3.message,
+          // @ts-expect-error Type is not defined
+          error3.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -173,7 +180,8 @@ t.test(
       );
       if (error4 instanceof Error) {
         t.same(
-          error4.message,
+          // @ts-expect-error Type is not defined
+          error4.cause.message,
           "Zen has blocked a server-side request forgery: fetch(...) originating from body.image"
         );
       }
@@ -182,14 +190,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image2: [
-              "http://example",
-              "prefix.thisdomainpointstointernalip.com",
-            ],
-            image: "http://thisdomainpointstointernalip.com/path",
-          },
+        body: {
+          image2: ["http://example", "prefix.thisdomainpointstointernalip.com"],
+          image: "http://thisdomainpointstointernalip.com/path",
         },
       },
       async () => {
@@ -225,7 +228,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ip));
@@ -242,7 +245,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -261,7 +264,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.domain));
@@ -278,7 +281,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -297,7 +300,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipTwice } },
+        body: { image: redirectUrl.ipTwice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipTwice));
@@ -314,7 +317,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-twice` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-twice` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -333,7 +336,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domainTwice } },
+        body: { image: redirectUrl.domainTwice },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -352,7 +355,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` } },
+        body: { image: `${redirectTestUrl3}/ssrf-test-domain-twice` },
       },
       async () => {
         const error = await t.rejects(() =>
@@ -371,7 +374,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6 } },
+        body: { image: redirectUrl.ipv6 },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6));
@@ -388,7 +391,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ipv6Twice } },
+        body: { image: redirectUrl.ipv6Twice },
       },
       async () => {
         const error = await t.rejects(() => fetch(redirectUrl.ipv6Twice));
@@ -405,10 +408,8 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -428,10 +429,8 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
-          },
+        body: {
+          image: `${redirectTestUrl3}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -452,7 +451,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.ip } },
+        body: { image: redirectUrl.ip },
       },
       async () => {
         const response = await fetch(redirectUrl.ip, {
@@ -476,7 +475,7 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{ body: { image: redirectUrl.domain } },
+        body: { image: redirectUrl.domain },
       },
       async () => {
         const response = await fetch(redirectUrl.domain, {
@@ -501,10 +500,9 @@ t.test(
     await runWithContext(
       {
         ...createContext(),
-        ...{
-          body: {
-            image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
-          },
+
+        body: {
+          image: `${redirecTestUrl2}/ssrf-test-absolute-domain`,
         },
       },
       async () => {
@@ -527,5 +525,89 @@ t.test(
         }
       }
     );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { serviceHostname: "my-service-hostname" },
+      },
+      async () => {
+        // This should NOT throw an error because my-service-hostname is a service hostname
+        const error = await t.rejects(() =>
+          fetch("http://my-service-hostname")
+        );
+        if (error instanceof Error) {
+          // @ts-expect-error Type is not defined
+          t.same(error.cause.code, "ECONNREFUSED");
+          // ^ means it tried to connect to the hostname
+        } else {
+          t.fail("Expected an error to be thrown");
+        }
+      }
+    );
+
+    await runWithContext(
+      {
+        ...createContext(),
+        body: { metadataHost: "metadata" },
+      },
+      async () => {
+        const error = await t.rejects(() =>
+          fetch("http://metadata/computeMetadata/v1/instance/")
+        );
+        if (error instanceof Error) {
+          t.same(
+            // @ts-expect-error Type is not defined
+            error.cause.message,
+            "Zen has blocked a server-side request forgery: fetch(...) originating from body.metadataHost"
+          );
+        } else {
+          t.fail("Expected an error to be thrown");
+        }
+      }
+    );
+
+    agent.getHostnames().clear();
+    agent.getConfig().updateDomains([
+      { hostname: "aikido.dev", mode: "block" },
+      { hostname: "app.aikido.dev", mode: "allow" },
+    ]);
+
+    const blockedError1 = await t.rejects(() =>
+      fetch("https://aikido.dev/block")
+    );
+    t.ok(blockedError1 instanceof Error);
+    if (blockedError1 instanceof Error) {
+      t.same(
+        blockedError1.message,
+        "Zen has blocked an outbound connection: fetch(...) to aikido.dev"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
+    ]);
+
+    agent.getConfig().setBlockNewOutgoingRequests(true);
+
+    const blockedError2 = await t.rejects(() => fetch("https://example.com"));
+    t.ok(blockedError2 instanceof Error);
+    if (blockedError2 instanceof Error) {
+      t.same(
+        blockedError2.message,
+        "Zen has blocked an outbound connection: fetch(...) to example.com"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 2 },
+      { hostname: "example.com", port: 443, hits: 1 },
+    ]);
   }
 );

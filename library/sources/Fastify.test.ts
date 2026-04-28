@@ -12,6 +12,8 @@ import type { FastifyInstance } from "fastify";
 import { getContext } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { addFastifyHook } from "../middleware/fastify";
+import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const agent = new Agent(
   true,
@@ -54,27 +56,37 @@ const agent = new Agent(
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   new Token("123"),
-  undefined
+  undefined,
+  false,
+  new FetchListsAPIForTesting()
 );
 agent.start([new Fastify(), new HTTPServer(), new FileSystem()]);
 setInstance(agent);
 
-function getApp(
+async function getApp(
   importType: "default" | "fastify" | "defaultNamed" = "default",
   withoutHooks = false
 ) {
   let app: FastifyInstance;
 
   if (importType === "default") {
-    app = require("fastify")();
+    if (isEsmUnitTest()) {
+      app = require("fastify").default();
+    } else {
+      app = require("fastify")();
+    }
   } else if (importType === "fastify") {
     const { fastify } = require("fastify");
     app = fastify();
   } else if (importType === "defaultNamed") {
-    const fastify = require("fastify").default;
-    app = fastify();
+    if (isEsmUnitTest()) {
+      app = require("fastify").default.default();
+    } else {
+      app = require("fastify").default();
+    }
   } else {
     throw new Error("Unknown import type");
   }
@@ -159,7 +171,7 @@ const opts = {
 };
 
 t.test("it adds context from request for all", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "GET",
@@ -198,7 +210,7 @@ t.test(
   "it adds context from request by using default import",
   opts,
   async (t) => {
-    const app = getApp("default");
+    const app = await getApp("default");
 
     const response = await app.inject({
       method: "GET",
@@ -237,7 +249,7 @@ t.test(
   "it adds context from request by using .default named import",
   opts,
   async (t) => {
-    const app = getApp("defaultNamed");
+    const app = await getApp("defaultNamed");
 
     const response = await app.inject({
       method: "GET",
@@ -273,7 +285,7 @@ t.test(
 );
 
 t.test("it adds context from request for all", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "POST",
@@ -308,7 +320,7 @@ t.test("it adds context from request for all", opts, async (t) => {
 });
 
 t.test("it adds body to context", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "POST",
@@ -347,7 +359,7 @@ t.test("it adds body to context", opts, async (t) => {
 });
 
 t.test("it blocks request in on-request hook", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "GET",
@@ -367,7 +379,7 @@ t.test("it blocks request in on-request hook", opts, async (t) => {
 });
 
 t.test("it rate limits requests by ip address", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = await app.inject({
     method: "GET",
@@ -396,6 +408,7 @@ t.test("it rate limits requests by ip address", opts, async (t) => {
   });
 
   t.same(response4.statusCode, 429);
+  t.ok(parseInt(response4.headers["retry-after"] as string) > 0);
 });
 
 t.test(
@@ -407,7 +420,7 @@ t.test(
         : false,
   },
   async (t) => {
-    const app = getApp();
+    const app = await getApp();
     await app.listen({ port: 4123 });
     await app.ready();
 
@@ -419,7 +432,7 @@ t.test(
 );
 
 t.test("does ignore invalid route usage", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   try {
     // @ts-expect-error wrong usage
@@ -445,7 +458,7 @@ t.test("does ignore invalid route usage", opts, async (t) => {
 });
 
 t.test("It works with route params", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   app.get("/hello/:test", (request, reply) => {
     const context = getContext();
@@ -486,7 +499,7 @@ t.test(
   "it rate limits requests by ip address in app withouth hooks",
   opts,
   async (t) => {
-    const app = getApp("default", false);
+    const app = await getApp("default", false);
 
     const response = await app.inject({
       method: "GET",
@@ -512,7 +525,7 @@ t.test(
 );
 
 t.test("it works with addHttpMethod", opts, async (t) => {
-  const app = getApp();
+  const app = await getApp();
 
   const response = (await app.inject({
     // @ts-expect-error not typed yet correctly after v5 release

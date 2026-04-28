@@ -1,22 +1,25 @@
-/* eslint-disable max-lines-per-function */
 import type { Agent } from "../Agent";
 import { getInstance } from "../AgentSingleton";
 import { OperationKind } from "../api/Event";
 import { bindContext, getContext } from "../Context";
 import type { InterceptorResult } from "./InterceptorResult";
-import type { WrapPackageInfo } from "./WrapPackageInfo";
+import type { PartialWrapPackageInfo } from "./WrapPackageInfo";
 import { wrapDefaultOrNamed } from "./wrapDefaultOrNamed";
 import { onInspectionInterceptorResult } from "./onInspectionInterceptorResult";
 
-type InspectArgsInterceptor = (
+export type InspectArgsInterceptor = (
   args: unknown[],
   agent: Agent,
   subject: unknown
 ) => InterceptorResult | void;
 
-type ModifyArgsInterceptor = (args: unknown[], agent: Agent) => unknown[];
+export type ModifyArgsInterceptor = (
+  args: unknown[],
+  agent: Agent,
+  subject: unknown
+) => unknown[];
 
-type ModifyReturnValueInterceptor = (
+export type ModifyReturnValueInterceptor = (
   args: unknown[],
   returnValue: unknown,
   agent: Agent,
@@ -40,7 +43,7 @@ export type InterceptorObject = {
 export function wrapExport(
   subject: unknown,
   methodName: string | undefined,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   interceptors: InterceptorObject
 ) {
   const agent = getInstance();
@@ -54,7 +57,6 @@ export function wrapExport(
       methodName,
       function wrap(original: Function) {
         return function wrap() {
-          // eslint-disable-next-line prefer-rest-params
           let args = Array.from(arguments);
           const context = getContext();
 
@@ -83,7 +85,12 @@ export function wrapExport(
           // Run modifyArgs interceptor if provided
           if (typeof interceptors.modifyArgs === "function") {
             try {
-              args = interceptors.modifyArgs(args, agent);
+              args = interceptors.modifyArgs(
+                args,
+                agent,
+                // @ts-expect-error We don't now the type of
+                this
+              );
             } catch (error: any) {
               agent.onErrorThrownByInterceptor({
                 error: error,
@@ -133,12 +140,12 @@ export function wrapExport(
   }
 }
 
-function inspectArgs(
+export function inspectArgs(
   args: unknown[],
   interceptor: InspectArgsInterceptor,
   context: ReturnType<typeof getContext>,
   agent: Agent,
-  pkgInfo: WrapPackageInfo,
+  pkgInfo: PartialWrapPackageInfo,
   methodName: string,
   kind: OperationKind | undefined
 ) {

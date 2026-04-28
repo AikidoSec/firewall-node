@@ -18,7 +18,7 @@ export function createStreamListener(
   module: string,
   agent: Agent
 ) {
-  return async function requestListener(
+  return function requestListener(
     stream: ServerHttp2Stream,
     headers: IncomingHttpHeaders,
     flags: number,
@@ -53,7 +53,18 @@ function discoverRouteFromStream(
   stream: ServerHttp2Stream,
   agent: Agent
 ) {
-  if (context && context.route && context.method) {
+  if (!context) {
+    return;
+  }
+
+  if (
+    context.remoteAddress &&
+    agent.getConfig().isBypassedIP(context.remoteAddress)
+  ) {
+    return;
+  }
+
+  if (context.route && context.method) {
     const statusCode = parseInt(stream.sentHeaders[":status"] as string);
 
     if (!isNaN(statusCode)) {
@@ -75,6 +86,16 @@ function discoverRouteFromStream(
         agent.getInspectionStatistics().onRateLimitedRequest();
         agent.onRouteRateLimited(context.rateLimitedEndpoint);
       }
+
+      if (
+        context.remoteAddress &&
+        agent.getAttackWaveDetector().check(context)
+      ) {
+        agent.onDetectedAttackWave({
+          request: context,
+        });
+        agent.getInspectionStatistics().onAttackWaveDetected();
+      }
     }
   }
 }
@@ -84,13 +105,11 @@ function discoverRouteFromStream(
  */
 function wrapStreamEvent(orig: Function) {
   return function wrap() {
-    // eslint-disable-next-line prefer-rest-params
     const args = Array.from(arguments);
     if (args.length < 2 || typeof args[1] !== "function") {
       return orig.apply(
         // @ts-expect-error We don't know the type of `this`
         this,
-        // eslint-disable-next-line prefer-rest-params
         arguments
       );
     }

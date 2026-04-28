@@ -106,6 +106,10 @@ export class Network {
     // handle edge case where our next network address overflows
     if (!next.isValid()) return true;
 
+    // handle edge case where other network's next address overflows
+    // (it extends to end of address space, but we don't, so we can't contain it)
+    if (!otherNext.isValid()) return false;
+
     // our address should be more than or equal to the other address
     if (next.addr.compare(otherNext.addr) === BEFORE) return false;
 
@@ -121,7 +125,7 @@ export class Network {
     if (this.addr.bytes().length !== network.addr.bytes().length) return false;
 
     // handle edge cases
-    if (this.netbits === 0 || network.netbits == 0) return true;
+    if (this.netbits === 0 || network.netbits === 0) return true;
     const cmp = this.addr.compare(network.addr);
     if (cmp === EQUALS) return false;
 
@@ -132,8 +136,7 @@ export class Network {
       bravo = network;
     } else {
       alpha = network.duplicate().next();
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      bravo = this;
+      bravo = this; // oxlint-disable-line no-this-alias
     }
 
     // if alpha overflows then an adjacency is not possible

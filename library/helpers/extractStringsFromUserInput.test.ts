@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import * as t from "tap";
 import { extractStringsFromUserInput } from "./extractStringsFromUserInput";
 
@@ -8,6 +7,10 @@ function fromArr(arr: string[]): Set<string> {
 
 t.test("empty object returns empty array", async () => {
   t.same(extractStringsFromUserInput({}), fromArr([]));
+});
+
+t.test("empty strings are ignored", async () => {
+  t.same(extractStringsFromUserInput({ abc: "" }), fromArr(["abc"]));
 });
 
 t.test("it can extract query objects", async () => {
@@ -187,5 +190,158 @@ t.test("it decodes uri encoded strings", async () => {
       "%2E%2E/%2E%2Fetc%2Fpasswd",
       ".././etc/passwd",
     ])
+  );
+});
+
+function buildNestedDictIterative(depth: number): Record<string, unknown> {
+  let result: Record<string, unknown> = { a: "b" };
+  for (let i = 1; i <= depth; i++) {
+    const newLevel: Record<string, unknown> = {};
+    newLevel[`key${i}`] = result;
+    result = newLevel;
+  }
+
+  return result;
+}
+
+function buildNestedArrayIterative(depth: number): unknown[] {
+  const result: unknown[] = [];
+  let current: unknown[] = result;
+
+  for (let i = 1; i <= depth; i++) {
+    const nextLevel: unknown[] = [];
+    current.push(nextLevel);
+    current = nextLevel;
+  }
+
+  return result;
+}
+
+t.test("it handles deeply nested objects without stack overflow", async () => {
+  const body = buildNestedDictIterative(10_000);
+  body.name = "Test'), ('Test2');--";
+
+  const result = extractStringsFromUserInput(body);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it handles deeply nested arrays without stack overflow", async () => {
+  const body = buildNestedArrayIterative(10_000);
+  body.push("Test'), ('Test2');--");
+
+  const result = extractStringsFromUserInput(body);
+
+  t.ok(result);
+  if (result) {
+    t.ok(result.has("Test'), ('Test2');--"));
+  }
+});
+
+t.test("it handles deeply nested JWT without stack overflow", async () => {
+  // Create deeply nested data for JWT payload - JSON.stringify would fail on this depth
+  let nestedJson = '{"a":"b"}';
+  for (let i = 1; i <= 10_000; i++) {
+    nestedJson = `{"key${i}":${nestedJson}}`;
+  }
+
+  const payload = Buffer.from(nestedJson).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    a: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  const result = extractStringsFromUserInput(input);
+  t.ok(result.size > 0);
+  t.ok(result.has("Test'), ('Test2');--"));
+});
+
+t.test("it ignores URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example.com",
+    test: "xyz",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "test",
+      "xyz",
+      "iat",
+    ])
+  );
+});
+
+t.test("it does not ignore invalid URLs in JWT payload", async () => {
+  const payloadObj = {
+    sub: "1234567890",
+    name: "John Doe",
+    service: "https://example .com/invalid",
+    iat: 1516239022,
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+  const jwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.1234567890`;
+
+  const input = {
+    token: jwt,
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr([
+      "token",
+      jwt,
+      "name",
+      "Test'), ('Test2');--",
+      "sub",
+      "1234567890",
+      "John Doe",
+      "service",
+      "https://example .com/invalid",
+      "iat",
+    ])
+  );
+});
+
+t.test("it does not ignore URLs outside of JWT payload", async () => {
+  const input = {
+    url: "https://example.com",
+    name: "Test'), ('Test2');--",
+  };
+
+  t.same(
+    extractStringsFromUserInput(input),
+    fromArr(["url", "https://example.com", "name", "Test'), ('Test2');--"])
+  );
+});
+
+t.test("it works with objects containing constructor key", async () => {
+  t.same(
+    extractStringsFromUserInput({
+      test: "value",
+      constructor: "constructor value",
+    }),
+    fromArr(["test", "value", "constructor", "constructor value"])
   );
 });

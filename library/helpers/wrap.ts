@@ -1,5 +1,8 @@
+export const wrappedSymbol = Symbol.for("zen.function.wrapped");
+export const originalSymbol = Symbol.for("zen.function.original");
+
 type WrappedFunction<T> = T & {
-  __original: T;
+  [originalSymbol]: T;
 };
 
 export function wrap(
@@ -31,8 +34,8 @@ export function createWrappedFunction(
 ): Function {
   const wrapped = wrapper(original);
 
-  defineProperty(wrapped, "__original", original);
-  defineProperty(wrapped, "__wrapped", true);
+  defineProperty(wrapped, originalSymbol, original);
+  defineProperty(wrapped, wrappedSymbol, true);
 
   // Copy over all properties from the original function to the wrapped one.
   // e.g. fs.realpath.native
@@ -60,7 +63,7 @@ export function createWrappedFunction(
 
 // Sets a property on an object, preserving its enumerability.
 // This function assumes that the property is already writable.
-function defineProperty(obj: unknown, name: string, value: unknown) {
+function defineProperty(obj: unknown, name: PropertyKey, value: unknown) {
   const enumerable =
     // @ts-expect-error We don't know the type of obj
     !!obj[name] && Object.prototype.propertyIsEnumerable.call(obj, name);
@@ -78,9 +81,9 @@ function defineProperty(obj: unknown, name: string, value: unknown) {
 export function isWrapped<T>(fn: T): fn is WrappedFunction<T> {
   return (
     fn instanceof Function &&
-    "__wrapped" in fn &&
-    fn.__wrapped === true &&
-    "__original" in fn &&
-    fn.__original instanceof Function
+    wrappedSymbol in fn &&
+    fn[wrappedSymbol] === true &&
+    originalSymbol in fn &&
+    fn[originalSymbol] instanceof Function
   );
 }

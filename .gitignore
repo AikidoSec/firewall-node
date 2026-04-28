@@ -33,3 +33,6 @@ library/test2.txt
 
 # Rust build files
 instrumentation-wasm/target/
+
+# Temp esm test directory
+.esm-tests/

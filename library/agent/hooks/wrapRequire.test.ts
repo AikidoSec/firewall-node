@@ -8,6 +8,8 @@ import {
 import { Package } from "./Package";
 import { BuiltinModule } from "./BuiltinModule";
 
+// @esm-tests-skip
+
 t.test("Wrap require does not throw an error", async (t) => {
   wrapRequire();
   t.pass();
@@ -22,12 +24,14 @@ t.test("Can wrap external package", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "sqlite3");
     t.same(pkgInfo.type, "external");
-    t.ok(pkgInfo.path?.base.endsWith("node_modules/sqlite3"));
-    t.same(pkgInfo.path?.relative, "lib/sqlite3.js");
+    if (pkgInfo.type === "external") {
+      t.ok(pkgInfo.path.base.endsWith("node_modules/sqlite3"));
+      t.same(pkgInfo.path.relative, "lib/sqlite3.js");
+    }
   });
   setPackagesToPatch([pkg]);
 
@@ -56,8 +60,10 @@ t.test("Can wrap file of external package", async (t) => {
       exports._test = "aikido";
       t.same(pkgInfo.name, "hono");
       t.same(pkgInfo.type, "external");
-      t.ok(pkgInfo.path?.base.endsWith("node_modules/hono"));
-      t.same(pkgInfo.path?.relative, "dist/cjs/hono-base.js");
+      if (pkgInfo.type === "external") {
+        t.ok(pkgInfo.path.base.endsWith("node_modules/hono"));
+        t.same(pkgInfo.path.relative, "dist/cjs/hono-base.js");
+      }
     });
   setPackagesToPatch([pkg]);
 
@@ -79,6 +85,7 @@ t.test("Can wrap builtin module", async (t) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "fs");
     t.same(pkgInfo.type, "builtin");
+    // @ts-expect-error Test to ensure types are correct
     t.same(pkgInfo.path, undefined);
   });
   setBuiltinModulesToPatch([module]);
@@ -115,7 +122,7 @@ t.test("Does not wrap package with no interceptors", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0");
+  pkg.withVersion("^5.0.0 || ^6.0.0");
   setPackagesToPatch([pkg]);
 
   // Require original sqlite3
@@ -138,7 +145,7 @@ t.test("Replace default export", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     return "aikido";
   });
   setPackagesToPatch([pkg]);
@@ -158,7 +165,7 @@ t.test("Confirm its caching the exports", async (t) => {
   let counter = 0;
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     counter++;
     return "aikido";
   });
@@ -179,7 +186,7 @@ t.test("Returns original exports on exception", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     throw new Error("Test error");
   });
@@ -293,11 +300,11 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
 t.test("Add two packages with same name", async (t) => {
   let intercepted = 0;
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire(() => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
   const pkg2 = new Package("sqlite3");
-  pkg2.withVersion("^5.0.0").onRequire(() => {
+  pkg2.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
 

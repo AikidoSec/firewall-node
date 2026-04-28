@@ -61,7 +61,7 @@ t.test("package.json main: is main file", async (t) => {
       // @ts-expect-error main can not be undefined in types
       {
         ...basePackageJson,
-        ...{ main: undefined },
+        main: undefined,
       }
     )
   );
@@ -94,7 +94,7 @@ t.test("package.json main: is not main file", async (t) => {
       // @ts-expect-error main can not be undefined in types
       {
         ...basePackageJson,
-        ...{ main: undefined },
+        main: undefined,
       }
     )
   );
@@ -113,7 +113,8 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: "index.cjs" },
+        main: "index.mjs",
+        exports: "index.cjs",
       }
     )
   );
@@ -129,7 +130,8 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: "./index.cjs" },
+        main: "index.mjs",
+        exports: "./index.cjs",
       }
     )
   );
@@ -145,7 +147,8 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: "test/index.cjs" },
+        main: "index.mjs",
+        exports: "test/index.cjs",
       }
     )
   );
@@ -161,7 +164,8 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: ["test/index.cjs"] },
+        main: "index.mjs",
+        exports: ["test/index.cjs"],
       }
     )
   );
@@ -177,12 +181,10 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{
-          main: "index.mjs",
-          exports: {
-            ".": "./index.cjs",
-            "./test": "./test/abc.cjs",
-          },
+        main: "index.mjs",
+        exports: {
+          ".": "./index.cjs",
+          "./test": "./test/abc.cjs",
         },
       }
     )
@@ -199,15 +201,13 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{
-          main: "index.mjs",
-          exports: {
-            ".": {
-              require: "./index.cjs",
-              import: "./index.mjs",
-            },
-            "./test": "./test/abc.cjs",
+        main: "index.mjs",
+        exports: {
+          ".": {
+            require: "./index.cjs",
+            import: "./index.mjs",
           },
+          "./test": "./test/abc.cjs",
         },
       }
     )
@@ -224,15 +224,13 @@ t.test("package.json exports: is main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{
-          main: "index.mjs",
-          exports: {
-            ".": {
-              node: "./index.cjs",
-              import: "./index.mjs",
-            },
-            "./test": "./test/abc.cjs",
+        main: "index.mjs",
+        exports: {
+          ".": {
+            node: "./index.cjs",
+            import: "./index.mjs",
           },
+          "./test": "./test/abc.cjs",
         },
       }
     )
@@ -252,7 +250,7 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs" },
+        main: "index.mjs",
       }
     )
   );
@@ -268,7 +266,8 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: "test/index.cjs" },
+        main: "index.mjs",
+        exports: "test/index.cjs",
       }
     )
   );
@@ -284,7 +283,8 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: [] },
+        main: "index.mjs",
+        exports: [],
       }
     )
   );
@@ -300,7 +300,8 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{ main: "index.mjs", exports: null },
+        main: "index.mjs",
+        exports: null,
       }
     )
   );
@@ -316,12 +317,10 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{
-          main: "index.mjs",
-          exports: {
-            "./abc": "./index.cjs",
-            "./test": "./test/abc.cjs",
-          },
+        main: "index.mjs",
+        exports: {
+          "./abc": "./index.cjs",
+          "./test": "./test/abc.cjs",
         },
       }
     )
@@ -338,15 +337,13 @@ t.test("package.json exports: is not main file", async (t) => {
       // @ts-expect-error Merge
       {
         ...basePackageJson,
-        ...{
-          main: "index.mjs",
-          exports: {
-            ".": {
-              browser: "./index.cjs",
-              import: "./index.mjs",
-            },
-            "./test": "./test/abc.cjs",
+        main: "index.mjs",
+        exports: {
+          ".": {
+            browser: "./index.cjs",
+            import: "./index.mjs",
           },
+          "./test": "./test/abc.cjs",
         },
       }
     )

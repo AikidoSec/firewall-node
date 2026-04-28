@@ -1,5 +1,6 @@
 import { getContext } from "../agent/Context";
 import { Hooks } from "../agent/hooks/Hooks";
+import { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
 import { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
@@ -7,11 +8,34 @@ import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { isWrapped } from "../helpers/wrap";
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
+import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
 
 export class MySQL2 implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
+
+  private resolvePlaceholder(
+    placeholder: string,
+    placeholderNumber: number | undefined,
+    params: unknown[] | undefined
+  ): unknown {
+    if (placeholder === "?" && placeholderNumber !== undefined && params) {
+      if (placeholderNumber < params.length) {
+        return params[placeholderNumber];
+      }
+    }
+
+    return undefined;
+  }
+
+  private findParams(args: unknown[]): unknown[] | undefined {
+    if (args.length >= 2 && Array.isArray(args[1])) {
+      return args[1];
+    }
+
+    return undefined;
+  }
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
@@ -23,12 +47,25 @@ export class MySQL2 implements Wrapper {
     if (args.length > 0) {
       if (typeof args[0] === "string" && args[0].length > 0) {
         const sql = args[0];
+        const params = this.findParams(args);
 
-        return checkContextForSqlInjection({
+        // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+        const sqlInjectionResult = checkContextForSqlInjection({
           operation: operation,
           sql: sql,
           context: context,
           dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
+
+        return checkContextForIdor({
+          sql,
+          context,
+          dialect: this.dialect,
+          resolvePlaceholder: (placeholder, placeholderNumber) =>
+            this.resolvePlaceholder(placeholder, placeholderNumber, params),
         });
       }
 
@@ -38,12 +75,25 @@ export class MySQL2 implements Wrapper {
         typeof args[0].sql === "string"
       ) {
         const sql = args[0].sql;
+        const params = this.findParams(args);
 
-        return checkContextForSqlInjection({
+        // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
+        const sqlInjectionResult = checkContextForSqlInjection({
           operation: operation,
           sql: sql,
           context: context,
           dialect: this.dialect,
+        });
+        if (sqlInjectionResult) {
+          return sqlInjectionResult;
+        }
+
+        return checkContextForIdor({
+          sql,
+          context,
+          dialect: this.dialect,
+          resolvePlaceholder: (placeholder, placeholderNumber) =>
+            this.resolvePlaceholder(placeholder, placeholderNumber, params),
         });
       }
     }
@@ -70,6 +120,25 @@ export class MySQL2 implements Wrapper {
 
     // otherwise instrument the connection directly.
     return connectionPrototype;
+  }
+
+  private getFunctionInstructions(): PackageFunctionInstrumentationInstruction[] {
+    return [
+      {
+        nodeType: "MethodDefinition",
+        name: "query",
+        inspectArgs: (args) => this.inspectQuery("mysql2.query", args),
+        operationKind: "sql_op",
+        bindContext: true,
+      },
+      {
+        nodeType: "MethodDefinition",
+        name: "execute",
+        inspectArgs: (args) => this.inspectQuery("mysql2.execute", args),
+        operationKind: "sql_op",
+        bindContext: true,
+      },
+    ];
   }
 
   wrap(hooks: Hooks) {
@@ -103,7 +172,11 @@ export class MySQL2 implements Wrapper {
     // For all versions of mysql2 newer than 3.0.0
     pkg
       .withVersion("^3.0.0")
-      .onRequire((exports, pkgInfo) => wrapConnection(exports, pkgInfo, false));
+      .onRequire((exports, pkgInfo) => wrapConnection(exports, pkgInfo, false))
+      .addFileInstrumentation({
+        path: "lib/connection.js",
+        functions: this.getFunctionInstructions(),
+      });
 
     // For all versions of mysql2 newer than / equal 3.11.5
     // Reason: https://github.com/sidorares/node-mysql2/pull/3081
@@ -111,6 +184,10 @@ export class MySQL2 implements Wrapper {
       .withVersion("^3.11.5")
       .onFileRequire("promise.js", (exports, pkgInfo) => {
         return wrapConnection(exports, pkgInfo, true);
+      })
+      .addFileInstrumentation({
+        path: "lib/base/connection.js",
+        functions: this.getFunctionInstructions(),
       });
   }
 }

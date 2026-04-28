@@ -39,7 +39,6 @@ export class InspectionStatistics {
   private operations: Record<string, OperationStats> = {};
   private readonly maxPerfSamplesInMemory: number;
   private readonly maxCompressedStatsInMemory: number;
-  private sqlTokenizationFailures: number = 0;
   private requests: {
     total: number;
     aborted: number;
@@ -48,11 +47,19 @@ export class InspectionStatistics {
       total: number;
       blocked: number;
     };
+    attackWaves: {
+      total: number;
+      blocked: number;
+    };
   } = {
     total: 0,
     aborted: 0,
     rateLimited: 0,
     attacksDetected: { total: 0, blocked: 0 },
+    attackWaves: {
+      total: 0,
+      blocked: 0,
+    },
   };
   private userAgents: UserAgentStats = {
     breakdown: {},
@@ -93,6 +100,10 @@ export class InspectionStatistics {
       aborted: 0,
       rateLimited: 0,
       attacksDetected: { total: 0, blocked: 0 },
+      attackWaves: {
+        total: 0,
+        blocked: 0,
+      },
     };
     this.userAgents = {
       breakdown: {},
@@ -101,18 +112,20 @@ export class InspectionStatistics {
       breakdown: {},
     };
     this.startedAt = Date.now();
-    this.sqlTokenizationFailures = 0;
   }
 
   getStats(): {
     operations: Record<string, OperationStatsWithoutTimings>;
     startedAt: number;
-    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
       rateLimited: number;
       attacksDetected: {
+        total: number;
+        blocked: number;
+      };
+      attackWaves: {
         total: number;
         blocked: number;
       };
@@ -143,7 +156,6 @@ export class InspectionStatistics {
     return {
       operations: operations,
       startedAt: this.startedAt,
-      sqlTokenizationFailures: this.sqlTokenizationFailures,
       requests: this.requests,
       userAgents: this.userAgents,
       ipAddresses: this.ipAddresses,
@@ -262,6 +274,10 @@ export class InspectionStatistics {
     this.requests.rateLimited += 1;
   }
 
+  onAttackWaveDetected() {
+    this.requests.attackWaves.total += 1;
+  }
+
   onInspectedCall({
     operation,
     kind,
@@ -310,9 +326,5 @@ export class InspectionStatistics {
     for (const kind in this.operations) {
       this.compressPerfSamples(kind as OperationKind);
     }
-  }
-
-  onSqlTokenizationFailure() {
-    this.sqlTokenizationFailures += 1;
   }
 }

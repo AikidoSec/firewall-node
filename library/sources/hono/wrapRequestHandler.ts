@@ -7,7 +7,7 @@ export function wrapRequestHandler(
   handler: Handler | MiddlewareHandler
 ): MiddlewareHandler {
   return async (c, next) => {
-    const context = await contextFromRequest(c);
+    const context = contextFromRequest(c);
 
     return await runWithContext(context, async () => {
       wrapRequestBodyParsing(c.req);

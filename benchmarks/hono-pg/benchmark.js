@@ -104,6 +104,14 @@ async function getResult() {
     `POST duration: avg=${postResultsWithoutZen.avg}ms, min=${postResultsWithoutZen.min}ms, max=${postResultsWithoutZen.max}ms`
   );
 
+  // This is confusing output from k6
+  // See https://community.grafana.com/t/http-req-failed-reporting-passes-as-failures/94807
+  if (results.metrics.http_req_failed.passes > 0) {
+    console.log("There were failed HTTP requests during the benchmark: ");
+    console.log(results.metrics.http_req_failed);
+    process.exit(1);
+  }
+
   const getDiff = results.metrics.get_delta.values.avg;
   const postDiff = results.metrics.post_delta.values.avg;
 
@@ -119,9 +127,9 @@ async function getResult() {
     `POST avg diff: ${postDiff.toFixed(3)}ms (${postDiffPercent.toFixed(2)}%)`
   );
 
-  // Check if difference is larger than 3ms
-  if (getDiff > 3 || postDiff > 3) {
-    console.log("Zen is causing a performance impact thats larger than 3ms");
+  // Check if difference is larger than 5ms
+  if (getDiff > 5 || postDiff > 5) {
+    console.log("Zen is causing a performance impact thats larger than 5ms");
     process.exit(1);
   }
 

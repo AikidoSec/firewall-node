@@ -1,30 +1,40 @@
-import { request as requestHttp } from "http";
+import { request as requestHttp, type Agent } from "http";
 import { request as requestHttps } from "https";
 import { type Readable } from "stream";
 import { createGunzip } from "zlib";
+import { getInstance } from "../agent/AgentSingleton";
+import { getPortFromURL } from "./getPortFromURL";
 
-async function request({
+function request({
   url,
   method,
   body,
   headers,
   signal,
+  agent,
 }: {
   url: URL;
   method: string;
   headers: Record<string, string>;
   signal: AbortSignal;
   body: string;
+  agent?: Agent;
 }): Promise<{ body: string; statusCode: number }> {
   const request = url.protocol === "https:" ? requestHttps : requestHttp;
 
+  trackRequest(url);
+
   return new Promise((resolve, reject) => {
+    // Convert URL object to string for compatibility with old https-proxy-agent versions
+    // Old agent-base library (used by https-proxy-agent) only works with string URLs
+    // and fails when passed URL objects, causing communication with our dashboard to fail
     const req = request(
-      url,
+      url.toString(),
       {
         method,
         headers,
         signal,
+        agent,
       },
       (response) => {
         let stream: Readable = response;
@@ -64,12 +74,14 @@ export async function fetch({
   headers = {},
   body = "",
   timeoutInMS = 5000,
+  agent,
 }: {
   url: URL;
   method?: string;
   headers?: Record<string, string>;
   body?: string;
   timeoutInMS?: number;
+  agent?: Agent;
 }): Promise<{ body: string; statusCode: number }> {
   const abort = new AbortController();
 
@@ -80,6 +92,7 @@ export async function fetch({
       headers,
       signal: abort.signal,
       body,
+      agent,
     }),
     new Promise<{
       body: string;
@@ -98,4 +111,29 @@ export async function fetch({
       timeout.unref();
     }),
   ]);
+}
+
+// Add our own requests as outbound connections (Heartbeats, realtime polling, etc.)
+// Only for new instrumentation (see below)
+function trackRequest(url: URL) {
+  const agent = getInstance();
+  if (!agent) {
+    // This should not happen
+    return;
+  }
+
+  // If the old (non ESM) hook system is used, the fetch function used
+  // here is already a patched version that tracks requests.
+  // If the new hook system is used, the import is executed before
+  // the hooks are applied, so we need to track the request here.
+  if (!agent.isUsingNewInstrumentation()) {
+    return;
+  }
+
+  const port = getPortFromURL(url);
+  if (!port) {
+    return;
+  }
+
+  agent.onConnectHostname(url.hostname, port);
 }

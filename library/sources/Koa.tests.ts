@@ -1,10 +1,7 @@
 import * as t from "tap";
-import { Agent } from "../agent/Agent";
-import { setInstance } from "../agent/AgentSingleton";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { setUser } from "../agent/context/user";
-import { LoggerNoop } from "../agent/logger/LoggerNoop";
 import { Koa } from "./Koa";
 import { HTTPServer } from "./HTTPServer";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
@@ -12,8 +9,10 @@ import * as request from "supertest";
 import { getContext } from "../agent/Context";
 import { addKoaMiddleware } from "../middleware/koa";
 import { startTestAgent } from "../helpers/startTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
-export function createKoaTests(koaPackageName: string) {
+// Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
+export async function createKoaTests(koaPackageName: string) {
   const agent = startTestAgent({
     block: true,
     api: new ReportingAPIForTesting({
@@ -34,6 +33,7 @@ export function createKoaTests(koaPackageName: string) {
       configUpdatedAt: 0,
       heartbeatIntervalInMS: 10 * 60 * 1000,
       allowedIPAddresses: ["4.3.2.1"],
+      excludedUserIdsFromRateLimiting: [],
     }),
     token: new Token("123"),
     serverless: undefined,
@@ -43,7 +43,13 @@ export function createKoaTests(koaPackageName: string) {
     },
   });
 
-  const koa = require(koaPackageName) as typeof import("koa");
+  let koa = require(koaPackageName) as typeof import("koa");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error default export missing types
+    koa = koa.default;
+  }
+
   const { bodyParser } =
     require("@koa/bodyparser") as typeof import("@koa/bodyparser");
 
@@ -188,6 +194,7 @@ export function createKoaTests(koaPackageName: string) {
 
     t.equal(response.status, 429);
     t.match(response.text, "You are rate limited by Zen.");
+    t.ok(parseInt(response.headers["retry-after"]) > 0);
   });
 
   t.test("test legacy generator function middleware", async (t) => {

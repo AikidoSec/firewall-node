@@ -44,7 +44,7 @@ function parseIntRange(old: string, min: number, max: number) {
 }
 
 export function v4AddrToBytes(old: string) {
-  const bytes = new Array(4) as number[];
+  const bytes = Array.from({ length: 4 }) as number[];
   const parts = old.split(".");
   if (parts.length === 4) {
     for (let i = 0; i < parts.length; i++) {
@@ -60,7 +60,7 @@ export function v4AddrToBytes(old: string) {
   return null;
 }
 
-/* 
+/*
   https://tools.ietf.org/html/rfc4291
   https://tools.ietf.org/html/rfc5952#section-4
   https://tools.ietf.org/html/rfc3986
@@ -75,7 +75,7 @@ export function v4AddrToBytes(old: string) {
 */
 
 export function v6AddrToBytes(s: string) {
-  const bytes = new Array(16).fill(0) as number[];
+  const bytes = Array.from({ length: 16 }).fill(0) as number[];
   if (s.length === 0) return null;
   s = removeBrackets(s);
   if (s === "::") return bytes;

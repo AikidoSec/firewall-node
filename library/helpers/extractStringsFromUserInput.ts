@@ -1,16 +1,30 @@
 import { isPlainObject } from "./isPlainObject";
 import { safeDecodeURIComponent } from "./safeDecodeURIComponent";
 import { tryDecodeAsJWT } from "./tryDecodeAsJWT";
+import { tryParseURL } from "./tryParseURL";
 
 type UserString = string;
 
-export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
+// Prevent stack overflow from deeply nested objects
+// An attacker can include a large nested payload as part of a normal body
+// extractStringsFromUserInput will trigger a max call stack size,
+// the error will be caught, but it stops our inspection
+const MAX_DEPTH = 1024;
+
+export function extractStringsFromUserInput(
+  obj: unknown,
+  depth: number = 0
+): Set<UserString> {
   const results: Set<UserString> = new Set();
+
+  if (depth >= MAX_DEPTH) {
+    return results;
+  }
 
   if (isPlainObject(obj)) {
     for (const key in obj) {
       results.add(key);
-      extractStringsFromUserInput(obj[key]).forEach((value) => {
+      extractStringsFromUserInput(obj[key], depth + 1).forEach((value) => {
         results.add(value);
       });
     }
@@ -18,7 +32,7 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
 
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      extractStringsFromUserInput(obj[i]).forEach((value) =>
+      extractStringsFromUserInput(obj[i], depth + 1).forEach((value) =>
         results.add(value)
       );
     }
@@ -26,10 +40,15 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
     // This prevents bypassing the firewall by HTTP Parameter Pollution
     // Example: ?param=value1&param=value2 will be treated as array by express
     // If its used inside a string, it will be converted to a comma separated string
-    results.add(obj.join());
+    try {
+      results.add(obj.join());
+    } catch {
+      // Ignore deeply nested/cyclic arrays that can overflow during native join recursion.
+      // We still keep strings gathered from traversed elements above.
+    }
   }
 
-  if (typeof obj == "string") {
+  if (typeof obj === "string" && obj.length > 0) {
     results.add(obj);
 
     if (obj.includes("%") && obj.length >= 3) {
@@ -47,7 +66,12 @@ export function extractStringsFromUserInput(obj: unknown): Set<UserString> {
       if (jwt.object && typeof jwt.object === "object" && "iss" in jwt.object) {
         delete jwt.object.iss;
       }
-      extractStringsFromUserInput(jwt.object).forEach((value) => {
+      extractStringsFromUserInput(jwt.object, depth + 1).forEach((value) => {
+        if (value.startsWith("http") && tryParseURL(value)) {
+          // Do not add URLs as strings because they can contain domains and produce false positives
+          return;
+        }
+
         results.add(value);
       });
     }

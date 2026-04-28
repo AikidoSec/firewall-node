@@ -56,7 +56,7 @@ function getAvgBenchmark() {
     sqlite: new SQLDialectSQLite(),
   };
   let avgTime = 0;
-  let amount = 1000;
+  let amount = 100_000;
   for (let i = 0; i < amount; i++) {
     const sql = randomEntry(sqlQueries);
     const input = randomEntry(userInputStrings);

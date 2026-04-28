@@ -1,7 +1,6 @@
-import { join, normalize, resolve } from "path/posix";
 import * as t from "tap";
 import { isWindows } from "../helpers/isWindows";
-import { isWrapped } from "../helpers/wrap";
+import { isWrapped, originalSymbol } from "../helpers/wrap";
 import { Path } from "./Path";
 import { createTestAgent } from "../helpers/createTestAgent";
 
@@ -20,7 +19,7 @@ t.test(
 
     const checkForDoubleWrapping = [join, resolve, normalize];
     for (const fn of checkForDoubleWrapping) {
-      if (isWrapped(fn) && isWrapped(fn.__original)) {
+      if (isWrapped(fn) && isWrapped(fn[originalSymbol])) {
         t.fail(`${fn.name} is double wrapped!`);
       }
     }
@@ -42,7 +41,7 @@ t.test(
 
     const checkForDoubleWrapping = [join, resolve, normalize];
     for (const fn of checkForDoubleWrapping) {
-      if (isWrapped(fn) && isWrapped(fn.__original)) {
+      if (isWrapped(fn) && isWrapped(fn[originalSymbol])) {
         t.fail(`${fn.name} is double wrapped!`);
       }
     }

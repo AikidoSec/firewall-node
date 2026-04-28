@@ -20,10 +20,10 @@ node --require @aikidosec/firewall ./node_modules/.bin/micro
 
 By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido and continue executing the call.
 
-You can enable blocking mode by setting the environment variable `AIKIDO_BLOCKING` to `true`:
+You can enable blocking mode by setting the environment variable `AIKIDO_BLOCK` to `true`:
 
 ```sh
-AIKIDO_BLOCKING=true node app.js
+AIKIDO_BLOCK=true node app.js
 ```
 
 It's recommended to enable this on your staging environment for a considerable amount of time before enabling it on your production environment (e.g. one week).
@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your micro app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js

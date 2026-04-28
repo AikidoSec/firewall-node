@@ -14,8 +14,8 @@ const completion = await openai.chat.completions.create({
   messages: [
     {
       role: "user",
-      content: "Read the contents of the config file"
-    }
+      content: "Read the contents of the config file",
+    },
   ],
   tools: [
     {
@@ -28,14 +28,14 @@ const completion = await openai.chat.completions.create({
           properties: {
             filepath: {
               type: "string",
-              description: "The path to the file to read"
-            }
+              description: "The path to the file to read",
+            },
           },
-          required: ["filepath"]
-        }
-      }
-    }
-  ]
+          required: ["filepath"],
+        },
+      },
+    },
+  ],
 });
 
 const toolCall = completion.choices[0].message.tool_calls[0];

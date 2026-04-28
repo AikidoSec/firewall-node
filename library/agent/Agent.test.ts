@@ -1,7 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -18,50 +17,33 @@ import { Wrapper } from "./Wrapper";
 import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
-import type { Response } from "./api/fetchBlockedLists";
+import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
+import { colorText } from "../helpers/colorText";
 import { shutdown } from "./shutdown";
 
-let shouldOnlyAllowSomeIPAddresses = false;
-
-wrap(fetch, "fetch", function mock() {
-  return async function mock() {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        blockedIPAddresses: [
-          {
-            key: "some/key",
-            source: "name",
-            description: "Description",
-            ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
-          },
-        ],
-        blockedUserAgents: "AI2Bot|Bytespider",
-        allowedIPAddresses: shouldOnlyAllowSomeIPAddresses
-          ? [
-              {
-                key: "some/key",
-                source: "name",
-                description: "Description",
-                ips: ["4.3.2.1"],
-              },
-            ]
-          : [],
-        monitoredIPAddresses: [],
-        monitoredUserAgents: "",
-        userAgentDetails: [
-          {
-            key: "AI2Bot",
-            pattern: "AI2Bot",
-          },
-          {
-            key: "Bytespider",
-            pattern: "Bytespider",
-          },
-        ],
-      } satisfies Response),
-    };
-  };
+const mockedFetchListAPI = new FetchListsAPIForTesting({
+  blockedIPAddresses: [
+    {
+      key: "some/key",
+      source: "name",
+      description: "Description",
+      ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+    },
+  ],
+  blockedUserAgents: "AI2Bot|Bytespider",
+  allowedIPAddresses: [],
+  monitoredIPAddresses: [],
+  monitoredUserAgents: "",
+  userAgentDetails: [
+    {
+      key: "AI2Bot",
+      pattern: "AI2Bot",
+    },
+    {
+      key: "Bytespider",
+      pattern: "Bytespider",
+    },
+  ],
 });
 
 let logs: string[] = [];
@@ -79,7 +61,9 @@ t.test("it throws error if serverless is empty string", async () => {
         new LoggerNoop(),
         new ReportingAPIForTesting(),
         undefined,
-        ""
+        "",
+        false,
+        new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
   );
@@ -127,7 +111,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.18.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -166,7 +150,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "shell-quote@1.8.1 is not supported!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
   ]);
 });
 
@@ -197,7 +181,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     logger,
     token: new Token("123"),
     suppressConsoleLog: false,
-    serverless: "lambda",
   });
   agent.onPrototypePollutionPrevented();
   agent.start([]);
@@ -205,7 +188,6 @@ t.test("when prevent prototype pollution is enabled", async (t) => {
     {
       agent: {
         preventedPrototypePollution: true,
-        stack: ["lambda"],
       },
     },
   ]);
@@ -289,8 +271,6 @@ t.test("when attack detected in blocking mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -361,8 +341,6 @@ t.test("when attack detected in detection only mode", async () => {
         ipAddress: "::1",
         userAgent: "agent",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
         route: "/posts/:id",
       },
     },
@@ -424,8 +402,6 @@ t.test("it checks if user agent is a string", async () => {
         method: "POST",
         ipAddress: "::1",
         url: "http://localhost:4000",
-        headers: {},
-        body: "{}",
       },
     },
   ]);
@@ -445,7 +421,8 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -514,7 +491,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -628,7 +605,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -647,7 +624,7 @@ t.test("it sends heartbeat when reached max timings", async () => {
   ]);
 
   // Every 10 minutes, another heartbeat should be sent
-  clock.tick(10 * 60 * 1000);
+  clock.tick(11 * 60 * 1000);
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -1024,6 +1001,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     token: new Token("123"),
@@ -1051,6 +1029,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: false,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1102,6 +1081,7 @@ t.test("it fetches blocked lists", async () => {
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: mockedFetchListAPI,
   });
 
   agent.start([]);
@@ -1172,10 +1152,40 @@ t.test("it does not fetch blocked IPs if serverless", async () => {
 });
 
 t.test("it only allows some IP addresses", async () => {
-  shouldOnlyAllowSomeIPAddresses = true;
   const agent = createTestAgent({
     token: new Token("123"),
     suppressConsoleLog: false,
+    fetchListsAPI: new FetchListsAPIForTesting({
+      blockedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["1.3.2.0/24", "fe80::1234:5678:abcd:ef12/64"],
+        },
+      ],
+      blockedUserAgents: "AI2Bot|Bytespider",
+      allowedIPAddresses: [
+        {
+          key: "some/key",
+          source: "name",
+          description: "Description",
+          ips: ["4.3.2.1"],
+        },
+      ],
+      monitoredIPAddresses: [],
+      monitoredUserAgents: "",
+      userAgentDetails: [
+        {
+          key: "AI2Bot",
+          pattern: "AI2Bot",
+        },
+        {
+          key: "Bytespider",
+          pattern: "Bytespider",
+        },
+      ],
+    }),
   });
 
   agent.start([]);
@@ -1232,7 +1242,179 @@ t.test("it includes agent's own package in heartbeat", async () => {
   clock.uninstall();
 });
 
-t.test("it sends heartbeat when onShutdown handler is called", async () => {
+t.test("attack wave detected event", async (t) => {
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+    block: true,
+  });
+
+  agent.onDetectedAttackWave({
+    request: {
+      method: "POST",
+      cookies: {},
+      query: {},
+      headers: {
+        "user-agent": "agent",
+      },
+      body: {},
+      url: "http://localhost:4000",
+      remoteAddress: "::1",
+      source: "express",
+      route: "/posts/:id",
+      routeParams: {},
+    },
+  });
+
+  t.match(api.getEvents(), [
+    {
+      type: "detected_attack_wave",
+      attack: {
+        metadata: {
+          samples: "[]",
+        },
+      },
+      request: {
+        ipAddress: "::1",
+        userAgent: "agent",
+        source: "express",
+      },
+    },
+  ]);
+});
+
+t.test("it blocks new outgoing requests if config says so", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    excludedUserIdsFromRateLimiting: [],
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it does not block new outgoing requests if config says so",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
+      excludedUserIdsFromRateLimiting: [],
+    });
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    await agent.flushStats(1000);
+
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+    clock.uninstall();
+  }
+);
+
+t.test("Wrapped packages is working correctly", async () => {
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It does not log again if the same package is wrapped again
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It logs again if the same package is wrapped with different version
+  agent.onPackageWrapped("shell-quote", { version: "4.3.2", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+    "shell-quote@4.3.2 is supported!",
+  ]);
+});
+
+t.test("it sends heartbeat when shutdown is called", async () => {
   const clock = FakeTimers.install();
 
   const logger = new LoggerNoop();
@@ -1245,7 +1427,6 @@ t.test("it sends heartbeat when onShutdown handler is called", async () => {
   });
   agent.start([]);
 
-  // After 5 seconds, nothing should happen
   clock.tick(1000 * 5);
 
   t.match(api.getEvents(), [
@@ -1253,9 +1434,6 @@ t.test("it sends heartbeat when onShutdown handler is called", async () => {
       type: "started",
     },
   ]);
-
-  clock.tick(1 * 90 * 1000);
-  await clock.nextAsync();
 
   await shutdown();
 

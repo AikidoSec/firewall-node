@@ -25,6 +25,8 @@ export function getBodyDataType(headers: Context["headers"]): BodyDataType {
     contentType = contentType[0];
   }
 
+  contentType = contentType.toLowerCase().trim();
+
   if (isJsonContentType(contentType)) {
     return "json";
   }
@@ -37,9 +39,21 @@ export function getBodyDataType(headers: Context["headers"]): BodyDataType {
     return "form-data";
   }
 
-  if (contentType.includes("xml")) {
+  if (isXMLContentType(contentType)) {
     return "xml";
   }
 
   return undefined;
+}
+
+function isXMLContentType(contentType: string): boolean {
+  if (contentType.startsWith("application/xml")) {
+    return true;
+  }
+
+  if (contentType.startsWith("text/xml")) {
+    return true;
+  }
+
+  return contentType.includes("+xml");
 }

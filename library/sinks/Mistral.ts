@@ -50,9 +50,27 @@ export class Mistral implements Wrapper {
     });
   }
 
+  private inspectPromise(returnValue: unknown, agent: Agent) {
+    if (returnValue instanceof Promise) {
+      // Inspect the response after the promise resolves
+      returnValue
+        .then((response) => {
+          this.inspectResponse(agent, response);
+        })
+        .catch((error) => {
+          agent.onErrorThrownByInterceptor({
+            error: error,
+            method: "complete.<promise>",
+            module: "@mistralai/mistralai",
+          });
+        });
+    }
+  }
+
   wrap(hooks: Hooks) {
-    hooks
-      .addPackage("@mistralai/mistralai")
+    const pkg = hooks.addPackage("@mistralai/mistralai");
+
+    pkg
       .withVersion("^1.0.0")
       .onRequire((exports, pkgInfo) => {
         if (
@@ -63,21 +81,40 @@ export class Mistral implements Wrapper {
           wrapExport(exports.Mistral.prototype.chat, "complete", pkgInfo, {
             kind: "ai_op",
             modifyReturnValue: (_, returnValue, agent) => {
-              if (returnValue instanceof Promise) {
-                // Inspect the response after the promise resolves
-                returnValue.then((response) => {
-                  try {
-                    this.inspectResponse(agent, response);
-                  } catch {
-                    // If we don't catch these errors, it will result in an unhandled promise rejection!
-                  }
-                });
-              }
-
+              this.inspectPromise(returnValue, agent);
               return returnValue;
             },
           });
         }
+      })
+      .addFileInstrumentation({
+        path: "sdk/chat.js",
+        functions: [
+          {
+            name: "complete",
+            operationKind: "ai_op",
+            nodeType: "MethodDefinition",
+            modifyReturnValue: (_, returnValue, agent) => {
+              this.inspectPromise(returnValue, agent);
+              return returnValue;
+            },
+          },
+        ],
       });
+
+    pkg.withVersion("^2.0.0").addFileInstrumentation({
+      path: "esm/sdk/chat.js",
+      functions: [
+        {
+          name: "complete",
+          operationKind: "ai_op",
+          nodeType: "MethodDefinition",
+          modifyReturnValue: (_, returnValue, agent) => {
+            this.inspectPromise(returnValue, agent);
+            return returnValue;
+          },
+        },
+      ],
+    });
   }
 }

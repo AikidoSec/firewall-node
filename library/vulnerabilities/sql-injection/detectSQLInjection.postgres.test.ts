@@ -57,9 +57,9 @@ t.test("It flags CLIENT_ENCODING as SQL injection", async () => {
 });
 
 function isSqlInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectPostgres()), true, sql);
+  t.same(detectSQLInjection(sql, input, new SQLDialectPostgres()), 1, sql);
 }
 
 function isNotSQLInjection(sql: string, input: string) {
-  t.same(detectSQLInjection(sql, input, new SQLDialectPostgres()), false, sql);
+  t.same(detectSQLInjection(sql, input, new SQLDialectPostgres()), 0, sql);
 }

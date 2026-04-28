@@ -1,10 +1,15 @@
 const jsonContentTypes = [
   "application/json",
-  "application/vnd.api+json",
   "application/csp-report",
   "application/x-json",
 ];
 
 export function isJsonContentType(contentType: string) {
-  return jsonContentTypes.some((type) => contentType.includes(type));
+  const normalized = contentType.toLowerCase().trim();
+
+  if (jsonContentTypes.some((type) => normalized.startsWith(type))) {
+    return true;
+  }
+
+  return normalized.includes("+json");
 }

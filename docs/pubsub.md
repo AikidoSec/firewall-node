@@ -19,13 +19,16 @@ subscription.on("message", (message) => {
 // ...
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import "@aikidosec/firewall";
 
 // ...
 ```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
 
 That's it! Your app is now protected by Aikido guard.
 

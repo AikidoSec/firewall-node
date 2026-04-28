@@ -114,7 +114,7 @@ t.test("it prefers non-null type", async (t) => {
 t.test("empty array", async (t) => {
   t.same(mergeDataSchemas(getDataSchema([]), getDataSchema([])), {
     type: "array",
-    items: undefined,
+    items: null,
   });
 });
 

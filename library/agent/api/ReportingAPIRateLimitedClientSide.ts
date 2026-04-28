@@ -22,7 +22,10 @@ export class ReportingAPIRateLimitedClientSide implements ReportingAPI {
     event: Event,
     timeoutInMS: number
   ): Promise<ReportingAPIResponse> {
-    if (event.type === "detected_attack") {
+    if (
+      event.type === "detected_attack" ||
+      event.type === "detected_attack_wave"
+    ) {
       const currentTime = Date.now();
 
       // Filter out events that are outside the current interval

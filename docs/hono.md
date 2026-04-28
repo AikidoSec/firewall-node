@@ -14,13 +14,16 @@ const app = Hono();
 // ...
 ```
 
-or ESM import style:
+or using `import` syntax:
 
 ```js
 import "@aikidosec/firewall";
 
 // ...
 ```
+
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
 
 ## Blocking mode
 
@@ -55,7 +58,7 @@ app.use(async (c, next) => {
   await next();
 });
 
-// Call this as early as possible, before other middleware
+// Call this after auth middleware, as early as possible in the middleware stack
 Zen.addHonoMiddleware(app);
 
 app.get(...);
@@ -63,7 +66,7 @@ app.get(...);
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your Hono app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true node app.js

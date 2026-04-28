@@ -10,6 +10,9 @@ import "@aikidosec/firewall"; // <-- Include this before any other code or impor
 // ...
 ```
 
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
+
 ## Blocking mode
 
 By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido if the environment variable `AIKIDO_TOKEN` is set and continue executing the call.
@@ -76,7 +79,7 @@ app.useGlobalGuards(new ZenGuard());
 
 ## Debug mode
 
-If you need to debug the firewall, you can run your express app with the environment variable `AIKIDO_DEBUG` set to `true`:
+If you need to debug the firewall, you can run your NestJS app with the environment variable `AIKIDO_DEBUG` set to `true`:
 
 ```sh
 AIKIDO_DEBUG=true npm start
