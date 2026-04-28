@@ -1,5 +1,5 @@
 import { getInstance } from "./AgentSingleton";
 
-export async function shutdown(): Promise<void> {
-  await getInstance()?.shutdown();
+export async function shutdown(timeoutInMS?: number): Promise<void> {
+  await getInstance()?.shutdown(timeoutInMS);
 }

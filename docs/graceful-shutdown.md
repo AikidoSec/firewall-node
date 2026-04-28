@@ -21,3 +21,5 @@ process.on("SIGINT", onShutdown);
 `SIGTERM` is the signal sent by most process managers (Docker, Kubernetes, systemd) when stopping your app. `SIGINT` fires when you press Ctrl+C.
 
 The `process.exit()` call is needed because Node.js [no longer exits by default](https://nodejs.org/api/process.html#signal-events) once you install a signal listener.
+
+`Zen.shutdown()` accepts an optional timeout in milliseconds (default: 1000). If flushing stats takes longer than the timeout, it gives up and lets the process exit.

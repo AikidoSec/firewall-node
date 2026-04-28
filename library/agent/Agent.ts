@@ -724,8 +724,8 @@ export class Agent {
     }
   }
 
-  public async shutdown(): Promise<void> {
+  public async shutdown(timeoutInMS = 1000): Promise<void> {
     this.logger.log("Shutting down agent...");
-    await this.flushStats(1000);
+    await this.flushStats(timeoutInMS);
   }
 }
