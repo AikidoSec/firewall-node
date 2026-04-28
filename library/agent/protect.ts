@@ -186,7 +186,7 @@ export function protect() {
 }
 
 export function lambda(): (handler: Handler) => Handler {
-  if (!shouldEnableFirewall()) {
+  if (!getInstance() && !shouldEnableFirewall()) {
     return (handler: Handler) => handler;
   }
 
@@ -199,7 +199,7 @@ export function lambda(): (handler: Handler) => Handler {
 }
 
 export function cloudFunction(): (handler: HttpFunction) => HttpFunction {
-  if (!shouldEnableFirewall()) {
+  if (!getInstance() && !shouldEnableFirewall()) {
     return (handler: HttpFunction) => handler;
   }
 
@@ -216,4 +216,46 @@ export function protectWithNewInstrumentation() {
     serverless: undefined,
     newInstrumentation: true,
   });
+}
+
+export function prepare() {
+  startAgent({
+    serverless: undefined,
+    newInstrumentation: false,
+  });
+}
+
+export function prepareWithNewInstrumentation() {
+  startAgent({
+    serverless: undefined,
+    newInstrumentation: true,
+  });
+}
+
+export function setToken(token: string) {
+  if (token.length === 0) {
+    // oxlint-disable-next-line no-console
+    console.warn("AIKIDO: setToken called with an empty string, ignoring.");
+    return;
+  }
+
+  const agent = getInstance();
+
+  if (!agent) {
+    // oxlint-disable-next-line no-console
+    console.warn(
+      "AIKIDO: setToken called but the agent is not running. Call prepare() first."
+    );
+    return;
+  }
+
+  if (agent.hasToken()) {
+    // oxlint-disable-next-line no-console
+    console.warn(
+      "AIKIDO: setToken called but the agent already has a token, ignoring."
+    );
+    return;
+  }
+
+  agent.setToken(new Token(token));
 }

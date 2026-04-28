@@ -72,7 +72,7 @@ export class Agent {
     private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
-    private readonly token: Token | undefined,
+    private token: Token | undefined,
     private readonly serverless: string | undefined,
     private readonly newInstrumentation: boolean = false,
     private readonly fetchListsAPI: FetchListsAPI
@@ -544,6 +544,24 @@ export class Agent {
     if (this.serverless) {
       return;
     }
+
+    this.onStart()
+      .then(() => {
+        this.startHeartbeats();
+        this.startPollingForConfigChanges();
+      })
+      .catch((err) => {
+        console.error(`Aikido: Failed to start agent: ${err.message}`);
+      });
+  }
+
+  hasToken() {
+    return this.token !== undefined;
+  }
+
+  setToken(token: Token) {
+    this.token = token;
+    this.logger.log("Token set, enabling reporting.");
 
     this.onStart()
       .then(() => {

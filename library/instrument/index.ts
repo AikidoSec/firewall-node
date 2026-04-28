@@ -10,11 +10,13 @@ import { isMainThread } from "node:worker_threads";
 import { isESM } from "../helpers/isESM";
 import { isPreloaded } from "../helpers/isPreloaded";
 import { colorText } from "../helpers/colorText";
+import { getInstance } from "../agent/AgentSingleton";
 
 setIsNewHookSystemUsed(true);
 
 const isSupported = isFirewallSupported();
-const shouldEnable = shouldEnableFirewall();
+const alreadyRunning = !!getInstance();
+const shouldEnable = alreadyRunning || shouldEnableFirewall();
 const notAlreadyImported = checkIndexImportGuard();
 
 function start() {
@@ -52,3 +54,8 @@ function start() {
 }
 
 start();
+
+export {
+  prepareWithNewInstrumentation as prepare,
+  setToken,
+} from "../agent/protect";
