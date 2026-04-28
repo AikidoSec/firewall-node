@@ -1,20 +1,23 @@
-# Graceful Shutdown
+# Graceful shutdown
 
-If you already registered a shutdown handler, e.g. using `process.on('SIGTERM', ...)`, you can call `await Zen.shutdown()` to ensure the latest stats are sent before the process exits.
-See the example below for how to implement this, if you don't already have a shutdown handler in place.
-Please note that this might not work correctly on Windows, due to [differences in how signals like SIGTERM and SIGINT are handled](https://nodejs.org/api/process.html#signal-events).
+When your app shuts down, Zen might not have sent its latest stats to the server yet. Call `await Zen.shutdown()` before exiting to make sure nothing gets lost.
+
+If you already have a shutdown handler (like `process.on('SIGTERM', ...)`), add `await Zen.shutdown()` to it.
+
+If you don't have one yet:
 
 ```js
 const Zen = require("@aikidosec/firewall");
 
-async function shutdownHandler() {
-  // Perform any cleanup or final tasks here
+async function onShutdown() {
   await Zen.shutdown();
-
   process.exit(process.exitCode || 0);
 }
 
-process.on("SIGTERM", shutdownHandler);
-process.on("SIGINT", shutdownHandler);
-// Handle other signals as needed
+process.on("SIGTERM", onShutdown);
+process.on("SIGINT", onShutdown);
 ```
+
+`SIGTERM` is the signal sent by most process managers (Docker, Kubernetes, systemd) when stopping your app. `SIGINT` fires when you press Ctrl+C.
+
+The `process.exit()` call is needed because Node.js [no longer exits by default](https://nodejs.org/api/process.html#signal-events) once you install a signal listener.
