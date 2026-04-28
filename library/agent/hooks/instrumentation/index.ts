@@ -17,7 +17,6 @@ export function registerNodeHooks() {
   hooksRegistered = true;
 
   // Hook into the ESM & CJS module loading process
-  // Types are required because official Node.js typings are not up-to-date
   mod.registerHooks({
     load(url, context, nextLoad) {
       const result = nextLoad(url, context);
