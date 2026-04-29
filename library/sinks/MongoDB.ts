@@ -3,7 +3,6 @@ import { Hooks } from "../agent/hooks/Hooks";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import type { WrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { detectNoSQLInjection } from "../vulnerabilities/nosql-injection/detectNoSQLInjection";
-import { isPlainObject } from "../helpers/isPlainObject";
 import { Context, getContext } from "../agent/Context";
 import { Wrapper } from "../agent/Wrapper";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -147,7 +146,7 @@ export class MongoDB implements Wrapper {
       return undefined;
     }
 
-    if (args.length > 0 && isPlainObject(args[0])) {
+    if (args.length > 0) {
       const filter = args[0];
 
       return this.inspectFilter(
@@ -172,7 +171,7 @@ export class MongoDB implements Wrapper {
       return undefined;
     }
 
-    if (args.length > 1 && isPlainObject(args[1])) {
+    if (args.length > 1) {
       const filter = args[1];
 
       return this.inspectFilter(

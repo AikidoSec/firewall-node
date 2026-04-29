@@ -2,9 +2,46 @@ import { isDeepStrictEqual } from "util";
 import { Context } from "../../agent/Context";
 import { Source, SOURCES } from "../../agent/Source";
 import { buildPathToPayload, PathPart } from "../../helpers/attackPath";
-import { isPlainObject } from "../../helpers/isPlainObject";
 import { tryDecodeAsJWT } from "../../helpers/tryDecodeAsJWT";
 import { detectDbJsInjection } from "../js-injection/detectDbJsInjection";
+
+function isObjectLike(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    !(value instanceof Map)
+  );
+}
+
+function getOwnStringDataProperties(
+  obj: Record<string, unknown>
+): Array<{ key: string; value: unknown }> {
+  const properties: Array<{ key: string; value: unknown }> = [];
+
+  try {
+    for (const key of Reflect.ownKeys(obj)) {
+      if (typeof key !== "string") {
+        continue;
+      }
+
+      const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+      if (!descriptor || !("value" in descriptor)) {
+        continue;
+      }
+
+      if (typeof descriptor.value === "function") {
+        continue;
+      }
+
+      properties.push({ key, value: descriptor.value });
+    }
+  } catch {
+    return properties;
+  }
+
+  return properties;
+}
 
 function matchFilterPartInUser(
   userInput: unknown,
@@ -30,17 +67,17 @@ function matchFilterPartInUser(
     }
   }
 
-  if (isPlainObject(userInput)) {
+  if (isObjectLike(userInput)) {
     const filteredInput = removeKeysThatDontStartWithDollarSign(userInput);
     if (isDeepStrictEqual(filteredInput, filterPart)) {
       return { match: true, pathToPayload: buildPathToPayload(pathToPayload) };
     }
 
-    for (const key in userInput) {
+    for (const property of getOwnStringDataProperties(userInput)) {
       const match = matchFilterPartInUser(
-        userInput[key],
+        property.value,
         filterPart,
-        pathToPayload.concat([{ type: "object", key: key }])
+        pathToPayload.concat([{ type: "object", key: property.key }])
       );
 
       if (match.match) {
@@ -65,6 +102,14 @@ function matchFilterPartInUser(
     return matchFilterPartInUser(userInput.join(), filterPart, pathToPayload);
   }
 
+  if (userInput instanceof Map) {
+    return matchFilterPartInUser(
+      mapToPlainObject(userInput),
+      filterPart,
+      pathToPayload
+    );
+  }
+
   return {
     match: false,
   };
@@ -73,9 +118,10 @@ function matchFilterPartInUser(
 function removeKeysThatDontStartWithDollarSign(
   filter: Record<string, unknown>
 ): Record<string, unknown> {
-  return Object.keys(filter).reduce((acc, key) => {
+  return getOwnStringDataProperties(filter).reduce((acc, property) => {
+    const key = property.key;
     if (key.startsWith("$")) {
-      return { ...acc, [key]: filter[key] };
+      return { ...acc, [key]: property.value };
     }
 
     return acc;
@@ -86,7 +132,7 @@ function findFilterPartWithOperators(
   userInput: unknown,
   partOfFilter: unknown
 ): { found: false } | { found: true; pathToPayload: string; payload: unknown } {
-  if (isPlainObject(partOfFilter)) {
+  if (isObjectLike(partOfFilter)) {
     const object = removeKeysThatDontStartWithDollarSign(partOfFilter);
     if (Object.keys(object).length > 0) {
       const result = matchFilterPartInUser(userInput, object);
@@ -100,8 +146,8 @@ function findFilterPartWithOperators(
       }
     }
 
-    for (const key in partOfFilter) {
-      const result = findFilterPartWithOperators(userInput, partOfFilter[key]);
+    for (const property of getOwnStringDataProperties(partOfFilter)) {
+      const result = findFilterPartWithOperators(userInput, property.value);
 
       if (result.found) {
         return {
@@ -127,6 +173,13 @@ function findFilterPartWithOperators(
     }
   }
 
+  if (partOfFilter instanceof Map) {
+    return findFilterPartWithOperators(
+      userInput,
+      mapToPlainObject(partOfFilter)
+    );
+  }
+
   return { found: false };
 }
 
@@ -143,7 +196,11 @@ export function detectNoSQLInjection(
   request: Context,
   filter: unknown
 ): DetectionResult {
-  if (!isPlainObject(filter) && !Array.isArray(filter)) {
+  if (filter instanceof Map) {
+    return detectNoSQLInjection(request, mapToPlainObject(filter));
+  }
+
+  if (!isObjectLike(filter) && !Array.isArray(filter)) {
     return { injection: false };
   }
 
@@ -163,4 +220,14 @@ export function detectNoSQLInjection(
   }
 
   return { injection: false };
+}
+
+function mapToPlainObject(map: Map<unknown, unknown>): Record<string, unknown> {
+  const obj: Record<string, unknown> = {};
+  for (const [key, value] of map.entries()) {
+    if (typeof key === "string") {
+      obj[key] = value;
+    }
+  }
+  return obj;
 }
