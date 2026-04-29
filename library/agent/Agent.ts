@@ -723,4 +723,9 @@ export class Agent {
       this.pendingEvents.onAPICall(promise);
     }
   }
+
+  public async shutdown(timeoutInMS = 1000): Promise<void> {
+    this.logger.log("Shutting down agent...");
+    await this.flushStats(timeoutInMS);
+  }
 }

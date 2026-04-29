@@ -19,6 +19,7 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 import { colorText } from "../helpers/colorText";
+import { shutdown } from "./shutdown";
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -1411,4 +1412,39 @@ t.test("Wrapped packages is working correctly", async () => {
     "shell-quote@3.0.0 is supported!",
     "shell-quote@4.3.2 is supported!",
   ]);
+});
+
+t.test("it sends heartbeat when shutdown is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  await shutdown();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  clock.uninstall();
 });
