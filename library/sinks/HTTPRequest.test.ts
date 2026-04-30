@@ -376,10 +376,13 @@ t.test("it works", (t) => {
   );
 
   agent.getHostnames().clear();
-  agent.getConfig().updateDomains([
-    { hostname: "aikido.dev", mode: "block" },
-    { hostname: "app.aikido.dev", mode: "allow" },
-  ]);
+  agent.getConfig().updateDomains(
+    [
+      { hostname: "aikido.dev", mode: "block" },
+      { hostname: "app.aikido.dev", mode: "allow" },
+    ],
+    false
+  );
 
   const blockedError1 = t.throws(() =>
     https.request("https://aikido.dev/block")
@@ -399,7 +402,13 @@ t.test("it works", (t) => {
     { hostname: "app.aikido.dev", port: 443, hits: 1 },
   ]);
 
-  agent.getConfig().setBlockNewOutgoingRequests(true);
+  agent.getConfig().updateDomains(
+    [
+      { hostname: "aikido.dev", mode: "block" },
+      { hostname: "app.aikido.dev", mode: "allow" },
+    ],
+    true
+  );
 
   const blockedError2 = t.throws(() => https.request("https://example.com"));
   if (blockedError2 instanceof Error) {

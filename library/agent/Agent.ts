@@ -333,10 +333,10 @@ export class Agent {
         response.domains &&
         Array.isArray(response.domains)
       ) {
-        this.serviceConfig.setBlockNewOutgoingRequests(
+        this.serviceConfig.updateDomains(
+          response.domains,
           response.blockNewOutgoingRequests
         );
-        this.serviceConfig.updateDomains(response.domains);
       }
 
       if (
@@ -599,6 +599,14 @@ export class Agent {
 
   onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
+
+    // Also report stats for wildcard domains
+    // e.g. if "sub.example.com" is accessed, we also want to report stats for "*.example.com"
+    const matchingWildcardDomain =
+      this.serviceConfig.getMatchingWildcardDomain(hostname);
+    if (matchingWildcardDomain) {
+      this.hostnames.add(matchingWildcardDomain.domain, port);
+    }
   }
 
   onRouteExecute(context: Context) {

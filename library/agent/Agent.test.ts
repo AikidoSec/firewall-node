@@ -1448,3 +1448,102 @@ t.test("it sends heartbeat when shutdown is called", async () => {
 
   clock.uninstall();
 });
+
+t.test("it sends stats for wildcard routes", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  agent.getConfig().updateDomains(
+    [
+      { hostname: "*.aikido.dev", mode: "allow" },
+      { hostname: "google.com", mode: "block" },
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    false
+  );
+
+  agent.onConnectHostname("aikido.dev", 443);
+  agent.onConnectHostname("aikido.dev", 80);
+  agent.onConnectHostname("google.com", 443);
+  agent.onConnectHostname("example.com", 443);
+  agent.onConnectHostname("test.aikido.dev", 443);
+  agent.onConnectHostname("test.aikido.dev", 80);
+  agent.onConnectHostname("sub.test.aikido.dev", 80);
+  agent.onConnectHostname("sub.test.aikido.dev", 443);
+
+  api.clear();
+
+  await agent.flushStats(1000);
+
+  t.match(api.getEvents(), [
+    {
+      type: "heartbeat",
+      middlewareInstalled: false,
+      hostnames: [
+        {
+          hostname: "aikido.dev",
+          port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "aikido.dev",
+          port: 80,
+          hits: 1,
+        },
+        {
+          hostname: "google.com",
+          port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "example.com",
+          port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "test.aikido.dev",
+          port: 443,
+          hits: 1,
+        },
+        {
+          hostname: "test.aikido.dev",
+          port: 80,
+          hits: 1,
+        },
+        {
+          hostname: "*.aikido.dev",
+          port: 443,
+          hits: 2,
+        },
+        {
+          hostname: "*.aikido.dev",
+          port: 80,
+          hits: 2,
+        },
+        {
+          hostname: "sub.test.aikido.dev",
+          port: 80,
+          hits: 1,
+        },
+        {
+          hostname: "sub.test.aikido.dev",
+          port: 443,
+          hits: 1,
+        },
+      ],
+      routes: [],
+    },
+  ]);
+
+  clock.uninstall();
+});

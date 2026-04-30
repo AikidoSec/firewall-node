@@ -3,6 +3,7 @@ import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
+import { OutgoingDomains } from "./OutgoingDomains";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
 import { safeCreateRegExp } from "./safeCreateRegExp";
 
@@ -28,8 +29,7 @@ export class ServiceConfig {
   private monitoredUserAgentRegex: RegExp | undefined;
   private userAgentDetails: { pattern: RegExp; key: string }[] = [];
 
-  private blockNewOutgoingRequests = false;
-  private domains = new Map<string, Domain["mode"]>();
+  private domains = new OutgoingDomains();
 
   private excludedUserIdsFromRateLimiting = new Set<string>();
 
@@ -287,25 +287,18 @@ export class ServiceConfig {
     return this.lastUpdatedAt;
   }
 
-  setBlockNewOutgoingRequests(block: boolean) {
-    this.blockNewOutgoingRequests = block;
-  }
-
-  updateDomains(domains: Domain[]) {
-    this.domains = new Map(domains.map((i) => [i.hostname, i.mode]));
+  updateDomains(domains: Domain[], blockNewOutgoingRequests: boolean) {
+    this.domains = new OutgoingDomains(domains, blockNewOutgoingRequests);
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    const mode = this.domains.get(hostname);
+    return this.domains.shouldBlockOutgoingRequest(hostname);
+  }
 
-    if (this.blockNewOutgoingRequests) {
-      // Only allow outgoing requests if the mode is "allow"
-      // mode is undefined for unknown hostnames, so they get blocked
-      return mode !== "allow";
-    }
-
-    // Only block outgoing requests if the mode is "block"
-    return mode === "block";
+  getMatchingWildcardDomain(
+    hostname: string
+  ): ReturnType<typeof this.domains.getWildcardMatch> {
+    return this.domains.getWildcardMatch(hostname);
   }
 
   updateUsersExcludedFromRateLimiting(userIds: string[]) {
