@@ -13,6 +13,7 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
 import { setTenantId } from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
@@ -68,6 +69,7 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
@@ -87,6 +89,7 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,

@@ -89,7 +89,7 @@ function parseOptionsObject(obj: any): HostnameAndPort | undefined {
   }
 
   return {
-    hostname: obj.hostname,
+    hostname: obj.hostname.toLowerCase(),
     port,
   };
 }

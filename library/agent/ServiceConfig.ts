@@ -31,6 +31,8 @@ export class ServiceConfig {
 
   private domains = new OutgoingDomains();
 
+  private excludedUserIdsFromRateLimiting = new Set<string>();
+
   constructor(
     endpoints: EndpointConfig[],
     private lastUpdatedAt: number,
@@ -291,5 +293,13 @@ export class ServiceConfig {
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
     return this.domains.shouldBlockOutgoingRequest(hostname);
+  }
+
+  updateUsersExcludedFromRateLimiting(userIds: string[]) {
+    this.excludedUserIdsFromRateLimiting = new Set(userIds);
+  }
+
+  isUserExcludedFromRateLimiting(userId: string): boolean {
+    return this.excludedUserIdsFromRateLimiting.has(userId);
   }
 }
