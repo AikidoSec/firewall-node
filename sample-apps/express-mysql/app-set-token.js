@@ -1,7 +1,5 @@
 const Zen = require("@aikidosec/firewall");
 
-Zen.prepare();
-
 const Cats = require("./Cats");
 const express = require("express");
 const asyncHandler = require("express-async-handler");
@@ -45,7 +43,7 @@ async function main(port) {
 
   // Set the token after startup (simulates fetching from a secrets manager)
   setTimeout(() => {
-    Zen.setToken(process.env.AIKIDO_TOKEN);
+    Zen.setToken(process.env.TEST_AIKIDO_TOKEN);
   }, 500);
 
   return new Promise((resolve, reject) => {

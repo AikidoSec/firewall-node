@@ -45,7 +45,7 @@ export function createCloudFunctionWrapper(fn: HttpFunction): HttpFunction {
 
   return async (req, res) => {
     // Send startup event on first invocation
-    if (agent && !startupEventSent) {
+    if (agent && !startupEventSent && agent.hasToken()) {
       startupEventSent = true;
       try {
         await agent.onStart(getTimeoutInMS());

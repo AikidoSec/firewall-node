@@ -31,7 +31,8 @@ test(
         cwd: pathToAppDir,
         env: {
           ...process.env,
-          AIKIDO_TOKEN: token,
+          AIKIDO_INSTRUMENT: "true",
+          TEST_AIKIDO_TOKEN: token,
           AIKIDO_ENDPOINT: testServerUrl,
           AIKIDO_REALTIME_ENDPOINT: testServerUrl,
           AIKIDO_DEBUG: "true",

@@ -115,7 +115,7 @@ t.test("it does not block in dry mode", (t) => {
       );
       t.notMatch(
         stdout,
-        /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
+        /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG, AIKIDO_INSTRUMENT/
       );
     })
     .catch((error) => {
@@ -171,7 +171,7 @@ t.test("it does not enable Zen when no environment variables are set", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(
         stdout,
-        /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
+        /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG, AIKIDO_INSTRUMENT/
       );
     })
     .catch((error) => {

@@ -218,22 +218,22 @@ export function protectWithNewInstrumentation() {
   });
 }
 
-export function prepare() {
+export function lambdaWithNewInstrumentation() {
   startAgent({
-    serverless: undefined,
-    newInstrumentation: false,
-  });
-}
-
-export function prepareWithNewInstrumentation() {
-  startAgent({
-    serverless: undefined,
+    serverless: "lambda",
     newInstrumentation: true,
   });
 }
 
-export function setToken(token: string) {
-  if (token.length === 0) {
+export function cloudFunctionWithNewInstrumentation() {
+  startAgent({
+    serverless: "gcp",
+    newInstrumentation: true,
+  });
+}
+
+export function setToken(token: string | undefined) {
+  if (typeof token !== "string" || token.trim().length === 0) {
     // oxlint-disable-next-line no-console
     console.warn("AIKIDO: setToken called with an empty string, ignoring.");
     return;
@@ -244,7 +244,7 @@ export function setToken(token: string) {
   if (!agent) {
     // oxlint-disable-next-line no-console
     console.warn(
-      "AIKIDO: setToken called but the agent is not running. Call prepare() first."
+      "AIKIDO: setToken called but the agent is not running. Set AIKIDO_INSTRUMENT=true before importing Zen."
     );
     return;
   }

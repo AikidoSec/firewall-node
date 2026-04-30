@@ -208,6 +208,30 @@ t.test("it passes through unknown types of events", async () => {
   t.same(result, undefined);
 });
 
+t.test("it sends startup on first invocation after token is set", async () => {
+  const testing = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    block: false,
+    serverless: "lambda",
+    api: testing,
+  });
+  agent.start([]);
+
+  const handler = createLambdaWrapper(async (event, context) => {
+    return getContext();
+  });
+
+  testing.clear();
+
+  await handler(gatewayEvent, lambdaContext, () => {});
+  t.same(testing.getEvents(), []);
+
+  agent.setToken(new Token("token"));
+
+  await handler(gatewayEvent, lambdaContext, () => {});
+  t.match(testing.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
+});
+
 t.test("it sends heartbeat after first and every 10 minutes", async () => {
   const clock = FakeTimers.install();
 

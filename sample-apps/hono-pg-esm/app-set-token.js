@@ -36,7 +36,7 @@ function getPort() {
 
 // Set the token after startup (simulates fetching from a secrets manager)
 setTimeout(() => {
-  setToken(process.env.AIKIDO_TOKEN);
+  setToken(process.env.TEST_AIKIDO_TOKEN);
 }, 500);
 
 serve(

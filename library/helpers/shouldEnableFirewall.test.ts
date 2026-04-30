@@ -30,6 +30,15 @@ t.test("works with AIKIDO_TOKEN", async () => {
   t.same(shouldEnableFirewall(), false);
 });
 
+t.test("works with AIKIDO_INSTRUMENT", async () => {
+  process.env.AIKIDO_INSTRUMENT = "1";
+  t.same(shouldEnableFirewall(), true);
+  process.env.AIKIDO_INSTRUMENT = "true";
+  t.same(shouldEnableFirewall(), true);
+  process.env.AIKIDO_INSTRUMENT = "";
+  t.same(shouldEnableFirewall(), false);
+});
+
 t.test("it works if multiple are set", async () => {
   process.env.AIKIDO_DEBUG = "1";
   process.env.AIKIDO_BLOCK = "1";

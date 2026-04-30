@@ -13,8 +13,10 @@
     "./instrument/internals": "./instrument/internals.js",
     "./context": "./context/index.js",
     "./lambda": "./lambda/index.js",
+    "./lambda/instrument": "./lambda/instrument.js",
     "./nopp": "./nopp/index.js",
     "./cloud-function": "./cloud-function/index.js",
+    "./cloud-function/instrument": "./cloud-function/instrument.js",
     "./bundler": "./bundler/index.js"
   },
   "homepage": "https://aikido.dev/zen",

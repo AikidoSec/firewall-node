@@ -545,24 +545,27 @@ export class Agent {
       return;
     }
 
-    this.onStart()
-      .then(() => {
-        this.startHeartbeats();
-        this.startPollingForConfigChanges();
-      })
-      .catch((err) => {
-        console.error(`Aikido: Failed to start agent: ${err.message}`);
-      });
+    if (this.token) {
+      this.startReporting();
+    }
   }
 
-  hasToken() {
+  hasToken(): boolean {
     return this.token !== undefined;
   }
 
-  setToken(token: Token) {
+  setToken(token: Token): void {
     this.token = token;
     this.logger.log("Token set, enabling reporting.");
 
+    if (this.serverless) {
+      return;
+    }
+
+    this.startReporting();
+  }
+
+  private startReporting(): void {
     this.onStart()
       .then(() => {
         this.startHeartbeats();

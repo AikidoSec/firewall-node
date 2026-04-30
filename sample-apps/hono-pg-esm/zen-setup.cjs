@@ -1,3 +1,1 @@
-const { prepare } = require("@aikidosec/firewall/instrument");
-
-prepare();
+require("@aikidosec/firewall/instrument");

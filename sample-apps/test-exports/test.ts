@@ -11,5 +11,7 @@ assert.ok(typeof Zen.addExpressMiddleware === "function");
 assert.ok(typeof Zen.setUser === "function");
 assert.ok(typeof context.setUser === "function");
 assert.ok(typeof lambda === "function");
+assert.ok(typeof lambda.setToken === "function");
 assert.ok(typeof cloudFunction === "function");
+assert.ok(typeof cloudFunction.setToken === "function");
 assert.ok(Array.isArray(externals()));

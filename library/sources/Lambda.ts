@@ -154,7 +154,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
 
   return async (event, context) => {
     // Send startup event on first invocation
-    if (agent && !startupEventSent) {
+    if (agent && !startupEventSent && agent.hasToken()) {
       startupEventSent = true;
       try {
         await agent.onStart(getTimeoutInMS());

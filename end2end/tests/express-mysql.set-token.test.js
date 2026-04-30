@@ -27,7 +27,8 @@ t.test(
     const server = spawn(`node`, [pathToApp, "4020"], {
       env: {
         ...process.env,
-        AIKIDO_TOKEN: token,
+        AIKIDO_INSTRUMENT: "true",
+        TEST_AIKIDO_TOKEN: token,
         AIKIDO_ENDPOINT: testServerUrl,
         AIKIDO_REALTIME_ENDPOINT: testServerUrl,
         AIKIDO_DEBUG: "true",

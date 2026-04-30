@@ -20,7 +20,7 @@ import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
-import { prepare, setToken } from "./agent/protect";
+import { setToken } from "./agent/protect";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -72,7 +72,6 @@ export {
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
-  prepare,
   setToken,
 };
 
@@ -93,6 +92,5 @@ export default {
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
-  prepare,
   setToken,
 };
