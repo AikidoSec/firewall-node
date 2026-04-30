@@ -137,6 +137,10 @@ t.test(
       outgoingDomains.shouldBlockOutgoingRequest("sub.sub.example.com"),
       true
     );
+    t.equal(
+      outgoingDomains.shouldBlockOutgoingRequest("sub.sub.sub.example.com"),
+      true
+    );
     t.equal(outgoingDomains.shouldBlockOutgoingRequest("example.com"), false);
   }
 );
@@ -172,4 +176,103 @@ t.test("it does not match root domains with wildcard entries", async (t) => {
   ]);
 
   t.equal(outgoingDomains.shouldBlockOutgoingRequest("example.com"), false);
+});
+
+t.test("allows multiple levels of subdomains within blocklist", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "*.sub.example.com", mode: "block" },
+  ]);
+
+  t.equal(outgoingDomains.shouldBlockOutgoingRequest("example.com"), false);
+  t.equal(
+    outgoingDomains.shouldBlockOutgoingRequest("test.example.com"),
+    false
+  );
+  t.equal(
+    outgoingDomains.shouldBlockOutgoingRequest("sub.sub.example.com"),
+    true
+  );
+  t.equal(
+    outgoingDomains.shouldBlockOutgoingRequest("sub.sub.sub.example.com"),
+    true
+  );
+});
+
+t.test(
+  "getWildcardMatch returns undefined for non-matching hostname",
+  async (t) => {
+    const outgoingDomains = new OutgoingDomains([
+      { hostname: "*.example.com", mode: "block" },
+    ]);
+
+    t.equal(outgoingDomains.getWildcardMatch("example.com"), undefined);
+    t.equal(outgoingDomains.getWildcardMatch("other.com"), undefined);
+    t.equal(outgoingDomains.getWildcardMatch("com"), undefined);
+  }
+);
+
+t.test(
+  "getWildcardMatch returns domain and mode for matching hostname",
+  async (t) => {
+    const outgoingDomains = new OutgoingDomains([
+      { hostname: "*.example.com", mode: "block" },
+    ]);
+
+    t.same(outgoingDomains.getWildcardMatch("sub.example.com"), {
+      domain: "*.example.com",
+      mode: "block",
+    });
+  }
+);
+
+t.test("getWildcardMatch returns most specific wildcard match", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "*.example.com", mode: "block" },
+    { hostname: "*.sub.example.com", mode: "allow" },
+    { hostname: "*.test.example.com", mode: "allow" },
+    { hostname: "*.sub.sub.example.com", mode: "allow" },
+  ]);
+
+  t.same(outgoingDomains.getWildcardMatch("test.sub.sub.example.com"), {
+    domain: "*.sub.sub.example.com",
+    mode: "allow",
+  });
+  t.same(outgoingDomains.getWildcardMatch("api.sub.example.com"), {
+    domain: "*.sub.example.com",
+    mode: "allow",
+  });
+  t.same(outgoingDomains.getWildcardMatch("api.test.example.com"), {
+    domain: "*.test.example.com",
+    mode: "allow",
+  });
+  t.same(outgoingDomains.getWildcardMatch("foo.bar.example.com"), {
+    domain: "*.example.com",
+    mode: "block",
+  });
+  t.same(outgoingDomains.getWildcardMatch("api.example.com"), {
+    domain: "*.example.com",
+    mode: "block",
+  });
+});
+
+t.test("getWildcardMatch returns domain and mode for allow mode", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "*.example.com", mode: "allow" },
+  ]);
+
+  t.same(outgoingDomains.getWildcardMatch("sub.example.com"), {
+    domain: "*.example.com",
+    mode: "allow",
+  });
+});
+
+t.test("getWildcardMatch matches deeply nested subdomains", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "*.example.com", mode: "block" },
+  ]);
+
+  t.same(outgoingDomains.getWildcardMatch("a.b.c.example.com"), {
+    domain: "*.example.com",
+    mode: "block",
+  });
 });

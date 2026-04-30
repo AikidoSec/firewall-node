@@ -20,26 +20,29 @@ export class OutgoingDomains {
     }
   }
 
-  #getWildcardMatch(hostname: string): Domain["mode"] | undefined {
+  getWildcardMatch(
+    hostname: string
+  ): { domain: string; mode: Domain["mode"] } | undefined {
     const parts = hostname.split(".");
     if (parts.length <= 2) {
-      return undefined; // Only check for wildcard matches if there are at least 3 parts (e.g., sub.example.com)
+      // Only check for wildcard matches if there are at least 3 parts (e.g., sub.example.com)
+      return undefined;
     }
 
-    const wildcardMatch = parts
+    return parts
       .slice(1, -1)
-      .map((_, index) =>
-        this.#wildcardDomains.get(parts.slice(index + 1).join("."))
-      )
-      .find((mode) => mode !== undefined);
-
-    return wildcardMatch;
+      .map((_, index) => {
+        const suffix = parts.slice(index + 1).join(".");
+        const mode = this.#wildcardDomains.get(suffix);
+        return mode !== undefined ? { domain: "*." + suffix, mode } : undefined;
+      })
+      .find((match) => match !== undefined);
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    const wildcardMode = this.#getWildcardMatch(hostname);
-    if (wildcardMode !== undefined) {
-      return wildcardMode === "block";
+    const wildcardMatch = this.getWildcardMatch(hostname);
+    if (wildcardMatch !== undefined) {
+      return wildcardMatch.mode === "block";
     }
 
     const mode = this.#domains.get(hostname);

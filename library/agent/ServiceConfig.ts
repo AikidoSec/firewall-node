@@ -295,6 +295,12 @@ export class ServiceConfig {
     return this.domains.shouldBlockOutgoingRequest(hostname);
   }
 
+  getMatchingWildcardDomain(
+    hostname: string
+  ): ReturnType<typeof this.domains.getWildcardMatch> {
+    return this.domains.getWildcardMatch(hostname);
+  }
+
   updateUsersExcludedFromRateLimiting(userIds: string[]) {
     this.excludedUserIdsFromRateLimiting = new Set(userIds);
   }
