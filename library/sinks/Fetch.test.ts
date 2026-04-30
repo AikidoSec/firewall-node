@@ -641,6 +641,7 @@ t.test(
       { hostname: "app.aikido.dev", port: 443, hits: 3 },
       { hostname: "example.com", port: 443, hits: 1 },
       { hostname: "sub.example.com", port: 443, hits: 1 },
+      { hostname: "*.example.com", port: 443, hits: 1 },
     ]);
   }
 );
