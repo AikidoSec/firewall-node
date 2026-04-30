@@ -21,6 +21,7 @@ import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { setToken } from "./agent/protect";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -73,6 +74,7 @@ export {
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  setToken,
 };
 
 // Required for ESM / TypeScript default export support
@@ -93,4 +95,5 @@ export default {
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
+  setToken,
 };

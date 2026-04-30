@@ -1,0 +1,1 @@
+require("@aikidosec/firewall/instrument");

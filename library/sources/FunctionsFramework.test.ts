@@ -203,6 +203,27 @@ t.test("it flushes stats first invoke", async (t) => {
   t.same(api.getEvents().length, 2);
 });
 
+t.test("it sends startup on first request after token is set", async (t) => {
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    serverless: "gcp",
+  });
+  agent.start([]);
+
+  api.clear();
+
+  const app = getExpressApp();
+
+  await request(app).get("/");
+  t.same(api.getEvents(), []);
+
+  agent.setToken(new Token("123"));
+
+  await request(app).get("/");
+  t.match(api.getEvents(), [{ type: "started" }, { type: "heartbeat" }]);
+});
+
 t.test("it hooks into functions framework", async () => {
   const agent = createTestAgent({
     serverless: "gcp",

@@ -72,7 +72,7 @@ export class Agent {
     private block: boolean,
     private readonly logger: Logger,
     private readonly api: ReportingAPI,
-    private readonly token: Token | undefined,
+    private token: Token | undefined,
     private readonly serverless: string | undefined,
     private readonly newInstrumentation: boolean = false,
     private readonly fetchListsAPI: FetchListsAPI
@@ -545,6 +545,27 @@ export class Agent {
       return;
     }
 
+    if (this.token) {
+      this.startReporting();
+    }
+  }
+
+  hasToken(): boolean {
+    return this.token !== undefined;
+  }
+
+  setToken(token: Token): void {
+    this.token = token;
+    this.logger.log("Token set, enabling reporting.");
+
+    if (this.serverless) {
+      return;
+    }
+
+    this.startReporting();
+  }
+
+  private startReporting(): void {
     this.onStart()
       .then(() => {
         this.startHeartbeats();

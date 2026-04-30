@@ -1,3 +1,11 @@
-import { lambda } from "../agent/protect";
+import type { Handler } from "aws-lambda";
+import { lambda, setToken } from "../agent/protect";
 
-export = lambda();
+type LambdaWrapper = ((handler: Handler) => Handler) & {
+  setToken: typeof setToken;
+};
+
+const wrapper = lambda() as LambdaWrapper;
+wrapper.setToken = setToken;
+
+export = wrapper;

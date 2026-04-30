@@ -1,3 +1,11 @@
-import { cloudFunction } from "../agent/protect";
+import type { HttpFunction } from "@google-cloud/functions-framework";
+import { cloudFunction, setToken } from "../agent/protect";
 
-export = cloudFunction();
+type CloudFunctionWrapper = ((handler: HttpFunction) => HttpFunction) & {
+  setToken: typeof setToken;
+};
+
+const wrapper = cloudFunction() as CloudFunctionWrapper;
+wrapper.setToken = setToken;
+
+export = wrapper;

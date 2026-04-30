@@ -72,7 +72,7 @@ t.test(
 
     t.notMatch(
       stdout,
-      /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
+      /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG, AIKIDO_INSTRUMENT/
     );
 
     t.same(getJsonFromLogs(stdout.toString()), {
@@ -102,7 +102,7 @@ t.test("it does not enable if no environment variable is set", async (t) => {
 
   t.match(
     stdout,
-    /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
+    /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG, AIKIDO_INSTRUMENT/
   );
 
   t.same(getJsonFromLogs(stdout.toString()), {
