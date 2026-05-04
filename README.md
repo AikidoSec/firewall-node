@@ -69,6 +69,7 @@ Zen for Node.js 16+ is compatible with:
 - ✅ [`@clickhouse/client`](https://www.npmjs.com/package/@clickhouse/client) 1.x
 - ✅ [`@prisma/client`](https://www.npmjs.com/package/@prisma/client) 6.x and 5.x
 - ✅ [`@prisma/adapter-pg`](https://www.npmjs.com/package/@prisma/adapter-pg) 7.x
+- ✅ [`@prisma/adapter-better-sqlite3`](https://www.npmjs.com/package/@prisma/adapter-better-sqlite3) 7.x
 
 ### Cloud providers
 

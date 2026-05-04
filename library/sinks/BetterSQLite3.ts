@@ -3,6 +3,7 @@ import { Hooks } from "../agent/hooks/Hooks";
 import type { PackageFunctionInstrumentationInstruction } from "../agent/hooks/instrumentation/types";
 import { InterceptorResult } from "../agent/hooks/InterceptorResult";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import type { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 import { Wrapper } from "../agent/Wrapper";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
@@ -10,6 +11,10 @@ import { checkContextForPathTraversal } from "../vulnerabilities/path-traversal/
 import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/checkContextForSqlInjection";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectSQLite } from "../vulnerabilities/sql-injection/dialects/SQLDialectSQLite";
+
+const sqlFunctions = ["exec", "pragma"];
+const fsPathFunctions = ["backup", "loadExtension"];
+const statementSqlFunctions = ["run", "get", "all", "iterate", "bind"];
 
 export class BetterSQLite3 implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectSQLite();
@@ -143,51 +148,51 @@ export class BetterSQLite3 implements Wrapper {
     return undefined;
   }
 
-  wrap(hooks: Hooks) {
-    const sqlFunctions = ["exec", "pragma"];
-    const fsPathFunctions = ["backup", "loadExtension"];
-    const statementSqlFunctions = ["run", "get", "all", "iterate", "bind"];
+  private wrapExports(exports: any, pkgInfo: PartialWrapPackageInfo) {
+    for (const func of sqlFunctions) {
+      wrapExport(exports, func, pkgInfo, {
+        kind: "sql_op",
+        inspectArgs: (args) => {
+          return this.inspectQuery(`better-sqlite3.${func}`, args);
+        },
+      });
+    }
+    for (const func of fsPathFunctions) {
+      wrapExport(exports, func, pkgInfo, {
+        kind: "fs_op",
+        inspectArgs: (args) => {
+          return this.inspectPath(`better-sqlite3.${func}`, args);
+        },
+      });
+    }
 
+    wrapExport(exports, "prepare", pkgInfo, {
+      kind: "sql_op",
+      modifyReturnValue: (args, statement) => {
+        for (const func of statementSqlFunctions) {
+          wrapExport(statement, func, pkgInfo, {
+            kind: "sql_op",
+            inspectArgs: (args, _, statement) => {
+              return this.inspectStatementOperation(
+                `better-sqlite3.prepare(...).${func}`,
+                args,
+                statement
+              );
+            },
+          });
+        }
+        return statement;
+      },
+    });
+  }
+
+  wrap(hooks: Hooks) {
     const pkg = hooks
       .addPackage("better-sqlite3")
       .withVersion("^12.0.0 || ^11.0.0 || ^10.0.0 || ^9.0.0 || ^8.0.0");
 
     pkg.onRequire((exports, pkgInfo) => {
-      for (const func of sqlFunctions) {
-        wrapExport(exports.prototype, func, pkgInfo, {
-          kind: "sql_op",
-          inspectArgs: (args) => {
-            return this.inspectQuery(`better-sqlite3.${func}`, args);
-          },
-        });
-      }
-      for (const func of fsPathFunctions) {
-        wrapExport(exports.prototype, func, pkgInfo, {
-          kind: "fs_op",
-          inspectArgs: (args) => {
-            return this.inspectPath(`better-sqlite3.${func}`, args);
-          },
-        });
-      }
-
-      wrapExport(exports.prototype, "prepare", pkgInfo, {
-        kind: "sql_op",
-        modifyReturnValue: (args, statement) => {
-          for (const func of statementSqlFunctions) {
-            wrapExport(statement, func, pkgInfo, {
-              kind: "sql_op",
-              inspectArgs: (args, _, statement) => {
-                return this.inspectStatementOperation(
-                  `better-sqlite3.prepare(...).${func}`,
-                  args,
-                  statement
-                );
-              },
-            });
-          }
-          return statement;
-        },
-      });
+      this.wrapExports(exports.prototype, pkgInfo);
     });
 
     const wrapperFunctionsInstructions: PackageFunctionInstrumentationInstruction[] =
@@ -257,5 +262,39 @@ export class BetterSQLite3 implements Wrapper {
         },
       ],
     });
+
+    hooks
+      .addPackage("@prisma/adapter-better-sqlite3")
+      .withVersion("^7.0.0")
+      .addFileInstrumentation({
+        // This is not needed for CJS, as we can see sub-imports of CJS packages
+        path: "dist/index.mjs",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            className: "PrismaBetterSqlite3Adapter",
+            name: "constructor",
+            operationKind: undefined,
+            modifyArgs: (args) => {
+              const pkgInfo = {
+                type: "external",
+                name: "@prisma/adapter-better-sqlite3",
+              } satisfies PartialWrapPackageInfo;
+
+              if (
+                !args[0] ||
+                typeof args[0] !== "object" ||
+                !("prepare" in args[0])
+              ) {
+                return args;
+              }
+
+              this.wrapExports(args[0], pkgInfo);
+
+              return args;
+            },
+          },
+        ],
+      });
   }
 }
