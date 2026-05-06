@@ -27,12 +27,12 @@ const envVars = {
 };
 
 before(() => {
-  const { stderr } = spawnSync(`node`, ["ace", "build"], {
+  const { status, stderr } = spawnSync(`node`, ["ace", "build"], {
     cwd: pathToAppDir,
     env: envVars,
   });
 
-  if (stderr && stderr.toString().length > 0) {
+  if (status !== 0) {
     throw new Error(`Failed to build: ${stderr.toString()}`);
   }
 
