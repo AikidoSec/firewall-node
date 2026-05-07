@@ -342,6 +342,7 @@ const imdsMockLookup = (
   if (
     hostname === "imds.test.com" ||
     hostname === "metadata.google.internal" ||
+    hostname === "metadata.google.internal." ||
     hostname === "metadata.goog"
   ) {
     return callback(null, "169.254.169.254", 4);
@@ -483,6 +484,50 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
     }),
   ]);
 });
+
+t.test(
+  "Does not block IMDS SSRF with Google metadata domain with trailing dot",
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+    });
+    agent.start([]);
+
+    const wrappedLookup = inspectDNSLookupCalls(
+      imdsMockLookup,
+      agent,
+      "module",
+      "operation"
+    );
+
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        wrappedLookup(
+          "metadata.google.internal.",
+          { family: 4 },
+          (err, address) => {
+            t.same(err, null);
+            t.same(address, "169.254.169.254");
+            resolve();
+          }
+        );
+      }),
+      new Promise<void>((resolve) => {
+        runWithContext(context, () => {
+          wrappedLookup(
+            "metadata.google.internal.",
+            { family: 4 },
+            (err, address) => {
+              t.same(err, null);
+              t.same(address, "169.254.169.254");
+              resolve();
+            }
+          );
+        });
+      }),
+    ]);
+  }
+);
 
 t.test("it ignores when the argument is an IP address", async (t) => {
   const agent = createTestAgent({

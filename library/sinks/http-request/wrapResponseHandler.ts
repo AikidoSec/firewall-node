@@ -2,6 +2,7 @@ import { IncomingMessage } from "http";
 import { Context, getContext, updateContext } from "../../agent/Context";
 import { getMajorNodeVersion } from "../../helpers/getNodeVersion";
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 import { isRedirectStatusCode } from "../../helpers/isRedirectStatusCode";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { findHostnameInContext } from "../../vulnerabilities/ssrf/findHostnameInContext";
@@ -64,6 +65,10 @@ function onHTTPResponse(
   if (!source) {
     return;
   }
+
+  // Normalize trailing dots
+  source.hostname = normalizeHostname(source.hostname);
+  destination.hostname = normalizeHostname(destination.hostname);
 
   addRedirectToContext(source, destination, context);
 }

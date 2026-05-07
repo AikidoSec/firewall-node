@@ -1,6 +1,7 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
+import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import type { IPList, UserAgentDetails } from "./api/FetchListsAPI";
@@ -296,7 +297,7 @@ export class ServiceConfig {
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    const mode = this.domains.get(hostname);
+    const mode = this.domains.get(normalizeHostname(hostname));
 
     if (this.blockNewOutgoingRequests) {
       // Only allow outgoing requests if the mode is "allow"
