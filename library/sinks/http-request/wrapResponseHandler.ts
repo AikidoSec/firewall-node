@@ -66,7 +66,7 @@ function onHTTPResponse(
     return;
   }
 
-  // Normalize trailing dots
+  // Normalize hostnames to ensure consistent matching for redirect and SSRF detection
   source.hostname = normalizeHostname(source.hostname);
   destination.hostname = normalizeHostname(destination.hostname);
 
