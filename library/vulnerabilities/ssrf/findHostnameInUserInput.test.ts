@@ -101,3 +101,17 @@ t.test("it works with ports", async () => {
     false
   );
 });
+
+t.test("it normalizes trailing dot in hostname parameter", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com", "example.com."), true);
+  t.same(findHostnameInUserInput("example.com", "example.com."), true);
+});
+
+t.test("it normalizes trailing dot in user input", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com.", "example.com"), true);
+  t.same(findHostnameInUserInput("example.com.", "example.com"), true);
+});
+
+t.test("it normalizes trailing dot on both sides", async (t) => {
+  t.same(findHostnameInUserInput("http://example.com.", "example.com."), true);
+});

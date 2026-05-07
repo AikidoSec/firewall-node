@@ -1,3 +1,5 @@
+import { normalizeHostname } from "../helpers/normalizeHostname";
+
 type Ports = Map<number, number>;
 
 export class Hostnames {
@@ -9,6 +11,8 @@ export class Hostnames {
     if (port <= 0) {
       return;
     }
+
+    hostname = normalizeHostname(hostname);
 
     if (!this.map.has(hostname)) {
       this.map.set(hostname, new Map([[port, 1]]));

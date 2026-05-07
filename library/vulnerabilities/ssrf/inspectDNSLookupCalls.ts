@@ -6,6 +6,7 @@ import { getContext } from "../../agent/Context";
 import { cleanupStackTrace } from "../../helpers/cleanupStackTrace";
 import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPlainObject } from "../../helpers/isPlainObject";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 import { getMetadataForSSRFAttack } from "./getMetadataForSSRFAttack";
 import { isPrivateIP } from "./isPrivateIP";
 import { isIMDSIPAddress, isTrustedHostname } from "./imds";
@@ -34,6 +35,9 @@ export function inspectDNSLookupCalls(
       return lookup(...args);
     }
 
+    // Normalize hostname for security checks while preserving original for lookup compatibility
+    const normalizedHostname = normalizeHostname(hostname);
+
     const options = args.find((arg) => isPlainObject(arg)) as
       | Record<string, unknown>
       | undefined;
@@ -44,7 +48,7 @@ export function inspectDNSLookupCalls(
           options,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -56,7 +60,7 @@ export function inspectDNSLookupCalls(
           hostname,
           wrapDNSLookupCallback(
             callback as Function,
-            hostname,
+            normalizedHostname,
             module,
             agent,
             operation,
@@ -164,6 +168,7 @@ function wrapDNSLookupCallback(
       }
 
       if (url) {
+        url.hostname = normalizeHostname(url.hostname);
         // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
         const redirectOrigin = getRedirectOrigin(
           context.outgoingRequestRedirects,
