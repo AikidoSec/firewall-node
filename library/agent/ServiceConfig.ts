@@ -1,6 +1,7 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
+import { normalizeHostname } from "../helpers/normalizeHostname";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import type { Endpoint, EndpointConfig, Domain } from "./Config";
 import { OutgoingDomains } from "./OutgoingDomains";
@@ -292,7 +293,7 @@ export class ServiceConfig {
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    return this.domains.shouldBlockOutgoingRequest(hostname);
+    return this.domains.shouldBlockOutgoingRequest(normalizeHostname(hostname));
   }
 
   getMatchingWildcardDomain(

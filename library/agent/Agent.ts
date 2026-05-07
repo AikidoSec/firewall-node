@@ -465,11 +465,20 @@ export class Agent {
     });
   }
 
+  private getHostname() {
+    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
+    if (instanceName && instanceName.trim().length > 0) {
+      return instanceName.trim();
+    }
+
+    return hostname() || "";
+  }
+
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: hostname() || "",
+      hostname: this.getHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
