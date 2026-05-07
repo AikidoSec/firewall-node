@@ -864,6 +864,29 @@ t.test("$where js inject with array in request in nested field", async (t) => {
   );
 });
 
+t.test(
+  "deeply nested array in body does not cause a stack overflow",
+  async (t) => {
+    let deepNested: unknown = ["x", "y"];
+    for (let i = 0; i < 15000; i++) {
+      deepNested = [deepNested, "z"];
+    }
+
+    const ctx = createContext({
+      body: { nested: deepNested, username: { $ne: null } },
+    });
+    const filter = { username: { $ne: null } };
+
+    t.doesNotThrow(() => detectNoSQLInjection(ctx, filter));
+    t.same(detectNoSQLInjection(ctx, filter), {
+      injection: true,
+      source: "body",
+      pathsToPayload: [".username"],
+      payload: { $ne: null },
+    });
+  }
+);
+
 t.test("not a valid injection attempt", async (t) => {
   t.same(
     detectNoSQLInjection(

@@ -168,6 +168,22 @@ t.test("test max depth", async (t) => {
   t.notOk(JSON.stringify(schema2).includes('"type":"string"'));
 });
 
+t.test("array nesting counts toward max depth", async (t) => {
+  const wrapInArrays = (levels: number): unknown => {
+    let nested: unknown = { value: "leaf" };
+    for (let i = 0; i < levels; i++) {
+      nested = [nested];
+    }
+    return nested;
+  };
+
+  const shallow = getDataSchema(wrapInArrays(19));
+  t.ok(JSON.stringify(shallow).includes('"value"'));
+
+  const deep = getDataSchema(wrapInArrays(21));
+  t.notOk(JSON.stringify(deep).includes('"value"'));
+});
+
 t.test("test max properties", async (t) => {
   const generateObjectWithProperties = (count: number) => {
     const obj: any = {};
