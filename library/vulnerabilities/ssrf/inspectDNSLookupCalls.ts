@@ -35,7 +35,7 @@ export function inspectDNSLookupCalls(
       return lookup(...args);
     }
 
-    // Does not modify the original args
+    // Normalize hostname for security checks while preserving original for lookup compatibility
     const normalizedHostname = normalizeHostname(hostname);
 
     const options = args.find((arg) => isPlainObject(arg)) as
