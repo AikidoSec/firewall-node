@@ -168,6 +168,7 @@ function wrapDNSLookupCallback(
       }
 
       if (url) {
+        url.hostname = normalizeHostname(url.hostname);
         // Get the origin of the redirect chain (the first URL in the chain), if the URL is the result of a redirect
         const redirectOrigin = getRedirectOrigin(
           context.outgoingRequestRedirects,

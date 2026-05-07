@@ -529,6 +529,66 @@ t.test(
   }
 );
 
+t.test(
+  "detects SSRF via redirect chain when urlArg hostname has trailing dot",
+  (t) => {
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({ token: new Token("123"), api });
+    agent.start([]);
+    api.clear();
+
+    const hopMockLookup = (
+      hostname: string,
+      options: any,
+      callback: (
+        err: any,
+        address: string | LookupAddress[],
+        family: number
+      ) => void
+    ) => {
+      if (hostname === "hop.internal" || hostname === "hop.internal.") {
+        return callback(null, "127.0.0.1", 4);
+      }
+      return lookup(hostname, options, callback);
+    };
+
+    const urlArg = new URL("http://hop.internal./");
+    const wrappedLookup = inspectDNSLookupCalls(
+      hopMockLookup as any,
+      agent,
+      "http",
+      "request",
+      urlArg
+    );
+
+    runWithContext(
+      {
+        ...context,
+        body: { image: "http://attacker.com" },
+        outgoingRequestRedirects: [
+          {
+            source: new URL("http://attacker.com/"),
+            destination: new URL("http://hop.internal/"),
+          },
+        ],
+      },
+      () => {
+        wrappedLookup("hop.internal.", {}, (err: any, address: any) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a server-side request forgery: request(...) originating from body.image"
+            );
+          }
+          t.same(address, undefined);
+          t.end();
+        });
+      }
+    );
+  }
+);
+
 t.test("it ignores when the argument is an IP address", async (t) => {
   const agent = createTestAgent({
     token: new Token("123"),
