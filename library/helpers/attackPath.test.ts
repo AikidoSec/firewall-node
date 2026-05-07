@@ -104,7 +104,7 @@ t.test("deeply nested arrays do not cause a stack overflow", async (t) => {
     nested = [nested];
   }
 
-  t.doesNotThrow(() => get("payload", nested));
+  get("payload", nested);
   // Payload is beyond MAX_DEPTH so it should not be found
   t.same(get("payload", nested), []);
 });
@@ -120,7 +120,7 @@ t.test(
     // Place the nested array before the attack payload key so join() is called first.
     const obj = { nested: deepNested, payload: "SELECT 1" };
 
-    t.doesNotThrow(() => get("SELECT 1", obj));
+    get("SELECT 1", obj);
     t.same(get("SELECT 1", obj), [".payload"]);
   }
 );

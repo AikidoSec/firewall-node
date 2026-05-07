@@ -877,7 +877,7 @@ t.test(
     });
     const filter = { username: { $ne: null } };
 
-    t.doesNotThrow(() => detectNoSQLInjection(ctx, filter));
+    detectNoSQLInjection(ctx, filter);
     t.same(detectNoSQLInjection(ctx, filter), {
       injection: true,
       source: "body",
