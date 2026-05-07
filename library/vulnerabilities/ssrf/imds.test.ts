@@ -1,5 +1,5 @@
 import * as t from "tap";
-import { isIMDSIPAddress, isTrustedHostname } from "./imds";
+import { isIMDSIPAddress } from "./imds";
 
 t.test("it returns true for IMDS IP addresses", async (t) => {
   t.same(
