@@ -276,3 +276,12 @@ t.test("getWildcardMatch matches deeply nested subdomains", async (t) => {
     mode: "block",
   });
 });
+
+t.test("wildcard rule overrides exact domain rule", async (t) => {
+  const outgoingDomains = new OutgoingDomains([
+    { hostname: "api.example.com", mode: "allow" },
+    { hostname: "*.example.com", mode: "block" },
+  ]);
+
+  t.equal(outgoingDomains.shouldBlockOutgoingRequest("api.example.com"), true);
+});
