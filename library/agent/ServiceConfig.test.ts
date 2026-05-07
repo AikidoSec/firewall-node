@@ -441,15 +441,25 @@ t.test("outbound request blocking", async (t) => {
 t.test("outbound request blocking normalizes trailing dots", async (t) => {
   const config = new ServiceConfig([], 0, [], [], [], []);
 
-  config.updateDomains([
-    { hostname: "example.com", mode: "block" },
-    { hostname: "aikido.dev", mode: "allow" },
-  ]);
+  config.updateDomains(
+    [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    false
+  );
 
   t.same(config.shouldBlockOutgoingRequest("example.com."), true);
   t.same(config.shouldBlockOutgoingRequest("aikido.dev."), false);
 
-  config.setBlockNewOutgoingRequests(true);
+  config.updateDomains(
+    [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    true
+  );
+
   t.same(config.shouldBlockOutgoingRequest("aikido.dev."), false);
   t.same(config.shouldBlockOutgoingRequest("unknown.com."), true);
 });
