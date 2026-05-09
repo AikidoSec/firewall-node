@@ -1,24 +1,8 @@
-/* eslint-disable max-classes-per-file */
 import * as t from "tap";
 import { wrapNewInstance } from "./wrapNewInstance";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
 import { Token } from "../api/Token";
 import { createTestAgent } from "../../helpers/createTestAgent";
-
-t.test("Agent is not initialized", async (t) => {
-  try {
-    wrapNewInstance({}, "test", { name: "test", type: "external" }, () => {});
-    t.fail();
-  } catch (e: unknown) {
-    t.ok(e instanceof Error);
-    if (e instanceof Error) {
-      t.same(
-        e.message,
-        "Can not wrap new instance if agent is not initialized"
-      );
-    }
-  }
-});
 
 const logger = new LoggerForTesting();
 

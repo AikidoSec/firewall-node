@@ -1,9 +1,9 @@
-import { getInstance } from "../../agent/AgentSingleton";
 import { Context } from "../../agent/Context";
 import { InterceptorResult } from "../../agent/hooks/InterceptorResult";
 import { getPathsToPayload } from "../../helpers/attackPath";
 import { extractStringsFromUserInputCached } from "../../helpers/extractStringsFromUserInputCached";
 import { getSourceForUserString } from "../../helpers/getSourceForUserString";
+import { shouldBlockInvalidSqlQueries } from "../../helpers/shouldBlockInvalidSqlQueries";
 import {
   detectSQLInjection,
   SQLInjectionDetectionResult,
@@ -46,9 +46,26 @@ export function checkContextForSqlInjection({
     }
 
     if (result === SQLInjectionDetectionResult.FAILED_TO_TOKENIZE) {
-      // We don't want to block queries that fail to tokenize.
-      // This counter helps us monitor how often our SQL tokenizer fails.
-      getInstance()?.getInspectionStatistics().onSqlTokenizationFailure();
+      // If our tokenizer can't handle the query, we can't detect SQL injection.
+      // Attackers can exploit this (e.g. ClickHouse ignores invalid SQL after `;`,
+      // SQLite allows `/*` without closing `*/`).
+      if (shouldBlockInvalidSqlQueries()) {
+        const source = getSourceForUserString(context, str);
+        if (source) {
+          return {
+            operation: operation,
+            kind: "sql_injection",
+            source: source,
+            pathsToPayload: getPathsToPayload(str, context[source]),
+            metadata: {
+              sql: sql,
+              dialect: dialect.getHumanReadableName(),
+              failedToTokenize: "true",
+            },
+            payload: str,
+          };
+        }
+      }
     }
   }
 }

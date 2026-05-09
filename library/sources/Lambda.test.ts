@@ -338,7 +338,6 @@ t.test("it sends heartbeat after first and every 10 minutes", async () => {
         ipAddresses: {
           breakdown: {},
         },
-        sqlTokenizationFailures: 0,
       },
       middlewareInstalled: false,
     },
@@ -558,7 +557,6 @@ t.test("it waits for attack events to be sent before returning", async (t) => {
 
     agent.onDetectedAttackWave({
       request: getContext()!,
-      metadata: {},
     });
 
     return { statusCode: 200 };

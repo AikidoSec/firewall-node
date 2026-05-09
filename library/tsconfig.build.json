@@ -4,6 +4,6 @@
     "outDir": "../build",
     "noEmit": false
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "**/*.js"],
   "exclude": ["**/*.test.ts", "**/*.tests.ts"]
 }

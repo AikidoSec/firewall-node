@@ -6,6 +6,8 @@ import { getMajorNodeVersion } from "./getNodeVersion";
 
 let server: Server;
 
+// @esm-tests-skip - Mocking not working as exports are immutable
+
 // Start an HTTP server before running tests
 t.beforeEach(async () => {
   server = createServer((req, res) => {

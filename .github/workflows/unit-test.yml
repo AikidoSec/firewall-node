@@ -1,43 +1,113 @@
 name: 🧪 Unit tests
+
 on:
-  push: {}
   workflow_call: {}
+
 permissions:
   contents: read
+  id-token: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
+
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x, 24.x, 25.x]
-    timeout-minutes: 10
+        include:
+          - node-version: 16.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 18.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 20.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 22.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "cjs"
+          - node-version: 24.x
+            instrumentation: "new"
+            mode: "esm"
+          - node-version: 25.x
+            instrumentation: "current"
+            mode: "cjs"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "cjs"
+          - node-version: 25.x
+            instrumentation: "new"
+            mode: "esm"
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
+
       - name: Setup Aikido safe-chain
-        run: |
-          npm i -g @aikidosec/safe-chain@1.0.24
-          safe-chain setup-ci
+        run: curl -fsSL https://github.com/AikidoSec/safe-chain/releases/latest/download/install-safe-chain.sh | sh -s -- --ci
+
+      - name: Downgrade npm for v24 and v25
+        # https://github.com/npm/cli/issues/8669
+        if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
+        run: npm i -g npm@11.6.0
+
       - name: Add local.aikido.io to /etc/hosts
         run: |
           sudo echo "127.0.0.1 local.aikido.io" | sudo tee -a /etc/hosts
-      - run: npm run install-lib-only
+
+      - name: Install dependencies (library only)
+        run: npm run install-lib-only
+
       - name: Start containers
         run: npm run containers
-      - run: npm run build
-      - run: npm run test:ci
-        env:
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
-      - name: "Upload coverage"
-        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          files: ./library/.tap/report/lcov.info
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          slug: AikidoSec/firewall-node
+          name: firewall-node-library-${{ github.sha }}
+
+      - name: Run tests with current instrumentation (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'current' }}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci
+
+      - name: Run tests with new instrumentation in CJS mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'cjs' }}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:ci:new
+
+      - name: Run tests in ESM mode (max 3 attempts)
+        if: ${{ matrix.instrumentation == 'new' && matrix.mode == 'esm' }}
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run test:esm
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        with:
+          files: ./library/.tap/report/lcov.info,./.esm-tests/tests/lcov.info
+          use_oidc: true
+          fail_ci_if_error: true

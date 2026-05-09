@@ -6,6 +6,7 @@
     "tap": "^20.0.3"
   },
   "scripts": {
-    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1"
+    "test": "AIKIDO_CI=true tap tests/*.js --allow-empty-coverage -j 1",
+    "test:new": "node --test --test-concurrency 4 --test-force-exit tests-new/**/*.test.mjs"
   }
 }

@@ -4,6 +4,7 @@ import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
+import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 
 function createContext(): Context {
   return {
@@ -25,6 +26,15 @@ function createContext(): Context {
 let server: import("http").Server;
 const port = 4131;
 
+const opts = {
+  skip:
+    getMajorNodeVersion() <= 21
+      ? "ESM support required"
+      : getMajorNodeVersion() < 25 && isNewInstrumentationUnitTest()
+        ? "Because got is a ESM only package and Tapjs uses module.register, it triggers ERR_INVALID_RETURN_PROPERTY_VALUE"
+        : undefined,
+};
+
 t.before(async () => {
   const { createServer } = require("http") as typeof import("http");
 
@@ -40,42 +50,38 @@ t.before(async () => {
   });
 });
 
-t.test(
-  "it works",
-  { skip: getMajorNodeVersion() <= 21 ? "ESM support required" : undefined },
-  async (t) => {
-    const agent = createTestAgent({
-      token: new Token("123"),
-    });
-    agent.start([new HTTPRequest()]);
+t.test("it works", opts, async (t) => {
+  const agent = createTestAgent({
+    token: new Token("123"),
+  });
+  agent.start([new HTTPRequest()]);
 
-    t.same(agent.getHostnames().asArray(), []);
+  t.same(agent.getHostnames().asArray(), []);
 
-    const gotModule = require("got");
-    const got = gotModule.default;
+  const gotModule = require("got");
+  const got = gotModule.default;
 
-    await runWithContext(createContext(), async () => {
-      await got("https://www.aikido.dev");
-    });
+  await runWithContext(createContext(), async () => {
+    await got("https://www.aikido.dev");
+  });
 
-    t.same(agent.getHostnames().asArray(), [
-      { hostname: "www.aikido.dev", port: 443, hits: 1 },
-    ]);
-    agent.getHostnames().clear();
+  t.same(agent.getHostnames().asArray(), [
+    { hostname: "www.aikido.dev", port: 443, hits: 1 },
+  ]);
+  agent.getHostnames().clear();
 
-    await runWithContext(createContext(), async () => {
-      const error = await t.rejects(got("http://localhost:4131/api/internal"));
+  await runWithContext(createContext(), async () => {
+    const error = await t.rejects(got("http://localhost:4131/api/internal"));
 
-      t.ok(error instanceof Error);
-      if (error instanceof Error) {
-        t.match(
-          error.message,
-          "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
-        );
-      }
-    });
-  }
-);
+    t.ok(error instanceof Error);
+    if (error instanceof Error) {
+      t.match(
+        error.message,
+        "Zen has blocked a server-side request forgery: http.request(...) originating from body.image"
+      );
+    }
+  });
+});
 
 t.after(async () => {
   return new Promise((resolve) => {

@@ -8,6 +8,11 @@ const asyncPool = require("./helpers/asyncPool");
 const execAsync = promisify(exec);
 
 const projectRoot = join(__dirname, "..");
+const majorNodeVersion = parseInt(process.version.split(".")[0].slice(1), 10);
+
+const skipInstall = [
+  { folder: "sample-apps/n8n", check: (major) => major >= 24 },
+];
 
 // If script is called with arg --ci, set env CI to true
 if (process.argv.includes("--ci")) {
@@ -23,10 +28,25 @@ async function main() {
   await prepareBuildDir();
 
   const libOnly = process.argv.includes("--lib-only");
+  const e2eOnly = process.argv.includes("--end2end-only");
+  const benchmarksOnly = process.argv.includes("--benchmarks-only");
+  const installAll = !libOnly && !e2eOnly && !benchmarksOnly;
 
-  // . is the root directory, npm install is automatically run in the root directory if npm install is used, but not if npm run install-lib-only is executed
-  const installDirs = libOnly ? ["library", "."] : ["library", "end2end"];
-  const scanForSubDirs = libOnly ? [] : ["sample-apps", "benchmarks"];
+  const installDirs = [];
+  const scanForSubDirs = [];
+
+  if (installAll) {
+    installDirs.push("library", "end2end");
+    scanForSubDirs.push("sample-apps", "benchmarks");
+  } else {
+    // . is the root directory, npm install is automatically run in the root directory if npm install is used,
+    // but not if npm run install-xxx is used
+    installDirs.push(".");
+    if (libOnly) installDirs.push("library");
+    if (e2eOnly) installDirs.push("end2end");
+    if (benchmarksOnly) scanForSubDirs.push("benchmarks");
+    if (e2eOnly) scanForSubDirs.push("sample-apps");
+  }
 
   for (const dir of scanForSubDirs) {
     const subDirs = await scanForSubDirsWithPackageJson(dir);
@@ -44,6 +64,17 @@ async function main() {
  */
 async function installDependencies(folder) {
   console.log(`Installing dependencies for ${folder}`);
+
+  if (
+    skipInstall.some(
+      (entry) => entry.folder === folder && entry.check(majorNodeVersion)
+    )
+  ) {
+    console.log(
+      `Skipping installation for ${folder} due to Node.js version check`
+    );
+    return;
+  }
 
   // Don't run potentially unsafe scripts during installation
   const flags = "--ignore-scripts";

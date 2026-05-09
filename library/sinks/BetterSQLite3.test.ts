@@ -2,6 +2,7 @@ import * as t from "tap";
 import { runWithContext, type Context } from "../agent/Context";
 import { BetterSQLite3 } from "./BetterSQLite3";
 import { createTestAgent } from "../helpers/createTestAgent";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 
 const dangerousContext: Context = {
   remoteAddress: "::1",
@@ -50,7 +51,10 @@ t.test("it detects SQL injections", async (t) => {
   const agent = createTestAgent();
   agent.start([new BetterSQLite3()]);
 
-  const betterSqlite3 = require("better-sqlite3");
+  let betterSqlite3 = require("better-sqlite3");
+  if (isEsmUnitTest()) {
+    betterSqlite3 = betterSqlite3.default;
+  }
   const db = new betterSqlite3(":memory:");
 
   try {
@@ -70,13 +74,13 @@ t.test("it detects SQL injections", async (t) => {
       }
 
       const error2 = t.throws(() =>
-        db.prepare("SELECT 1;-- should be blocked")
+        db.prepare("SELECT 1;-- should be blocked").all()
       );
       t.ok(error2 instanceof Error);
       if (error2 instanceof Error) {
         t.same(
           error2.message,
-          "Zen has blocked an SQL injection: better-sqlite3.prepare(...) originating from body.myTitle"
+          "Zen has blocked an SQL injection: better-sqlite3.prepare(...).all(...) originating from body.myTitle"
         );
       }
 
@@ -90,6 +94,17 @@ t.test("it detects SQL injections", async (t) => {
           );
         }
       });
+
+      const error3 = t.throws(() =>
+        db.prepare("SELECT 1;-- should be blocked").get()
+      );
+      t.ok(error3 instanceof Error);
+      if (error3 instanceof Error) {
+        t.same(
+          error3.message,
+          "Zen has blocked an SQL injection: better-sqlite3.prepare(...).get(...) originating from body.myTitle"
+        );
+      }
     });
 
     await runWithContext(safeContext, async () => {
@@ -110,14 +125,16 @@ t.test("it detects SQL injections", async (t) => {
     });
 
     await runWithContext(dangerousPathContext, async () => {
-      const error = t.throws(() => db.backup("/tmp/insecure"));
-      t.ok(error instanceof Error);
-      if (error instanceof Error) {
+      try {
+        await db.backup("/tmp/insecure");
+        t.fail("Expected an error");
+      } catch (error: any) {
         t.same(
           error.message,
           "Zen has blocked a path traversal attack: better-sqlite3.backup(...) originating from body.myTitle"
         );
       }
+
       await db.backup("/tmp/sqlite-test-secure");
     });
 

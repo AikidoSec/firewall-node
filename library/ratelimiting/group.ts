@@ -59,7 +59,7 @@ function logWarningSetRateLimitGroupCalledAfterMiddleware() {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.warn(
     `setRateLimitGroup(...) must be called before the Zen middleware is executed.`
   );
@@ -74,7 +74,7 @@ function logWarningSetRateLimitGroupCalledWithoutContext() {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.warn(
     "setRateLimitGroup(...) was called without a context. Make sure to call setRateLimitGroup(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports)."
   );

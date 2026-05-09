@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { setTimeout } from "timers/promises";
-import { createServer, Server } from "http";
+import type { Server } from "http";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
@@ -30,8 +30,18 @@ function createContext(port: number): Context {
 const port = 1344;
 const serverUrl = `http://localhost:${port}`;
 
+const api = new ReportingAPIForTesting();
+startTestAgent({
+  token: new Token("123"),
+  api,
+  block: false, // Detection mode only
+  wrappers: [new HTTPRequest(), new Fetch(), new Undici()],
+  rewrite: { undici: "undici-v6" },
+});
+
 let server: Server;
 t.before(async () => {
+  const { createServer } = require("http") as typeof import("http");
   server = createServer((_, res) => {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("Hello World\n");
@@ -46,15 +56,6 @@ t.before(async () => {
 t.test(
   "it reports SSRF attack only once in detection mode for localhost",
   async (t) => {
-    const api = new ReportingAPIForTesting();
-    startTestAgent({
-      token: new Token("123"),
-      api,
-      block: false, // Detection mode only
-      wrappers: [new HTTPRequest(), new Fetch(), new Undici()],
-      rewrite: { undici: "undici-v6" },
-    });
-
     const http = require("http") as typeof import("http");
 
     await new Promise<void>((resolve) => {

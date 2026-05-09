@@ -33,6 +33,7 @@ export function createTestAgent(opts?: {
     opts?.api ?? new ReportingAPIForTesting(),
     opts?.token, // Defaults to undefined
     opts?.serverless, // Defaults to undefined
+    false, // During tests this is controlled by the AIKIDO_TEST_NEW_INSTRUMENTATION env var
     opts?.fetchListsAPI ?? new FetchListsAPIForTesting()
   );
 

@@ -1,0 +1,21 @@
+{
+  "name": "fastify-kysely",
+  "version": "1.0.0",
+  "description": "A vulnerable fastify app to test out SQL Injection with kysely",
+  "main": "app.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node -r @aikidosec/firewall/instrument app.ts"
+  },
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build",
+    "fastify": "^5.7.4",
+    "kysely": "^0.28.11",
+    "pg": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.31",
+    "@types/pg": "^8.16.0"
+  }
+}

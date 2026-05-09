@@ -823,3 +823,59 @@ t.test("does not detect if not a string (js injection)", async (t) => {
     }
   );
 });
+
+t.test("$where js inject with array in request", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        query: { name: ["a' /*", "*/ && sleep(2000) && 'b"] },
+      }),
+      {
+        $where: "this.name === 'a' /*,*/ && sleep(2000) && 'b'",
+      }
+    ),
+    {
+      injection: true,
+      source: "query",
+      pathsToPayload: [".name"],
+      payload: { $where: "this.name === 'a' /*,*/ && sleep(2000) && 'b'" },
+    }
+  );
+});
+
+t.test("$where js inject with array in request in nested field", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        query: { name: ["a' /*", "*/ && sleep(2000) && 'b"] },
+      }),
+      {
+        test: {
+          $where: "this.name === 'a' /*,*/ && sleep(2000) && 'b'",
+        },
+      }
+    ),
+    {
+      injection: true,
+      source: "query",
+      pathsToPayload: [".name"],
+      payload: { $where: "this.name === 'a' /*,*/ && sleep(2000) && 'b'" },
+    }
+  );
+});
+
+t.test("not a valid injection attempt", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        query: { name: ["a'", " && sleep(2000) && 'b"] },
+      }),
+      {
+        $where: "this.name === 'a' && sleep(2000) && 'b'",
+      }
+    ),
+    {
+      injection: false,
+    }
+  );
+});

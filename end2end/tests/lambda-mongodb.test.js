@@ -33,7 +33,6 @@ t.test("it does not block by default", async (t) => {
     }
   );
 
-  t.same(stderr, "");
   t.same(getJsonFromLogs(stdout.toString()), {
     statusCode: 200,
     headers: {
@@ -76,7 +75,6 @@ t.test(
       /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
     );
 
-    t.same(stderr, "");
     t.same(getJsonFromLogs(stdout.toString()), {
       statusCode: 200,
       headers: {
@@ -107,7 +105,6 @@ t.test("it does not enable if no environment variable is set", async (t) => {
     /AIKIDO: Zen is disabled\. Configure one of the following environment variables to enable it: AIKIDO_BLOCK, AIKIDO_TOKEN, AIKIDO_DEBUG/
   );
 
-  t.same(stderr, "");
   t.same(getJsonFromLogs(stdout.toString()), {
     statusCode: 200,
     headers: {

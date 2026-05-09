@@ -1,3 +1,5 @@
+/* oxlint-disable no-console */
+
 import { isPlainObject } from "../../helpers/isPlainObject";
 import { getInstance } from "../AgentSingleton";
 import { Context, updateContext } from "../Context";
@@ -18,7 +20,6 @@ export function markUnsafe(...data: unknown[]) {
   }
 
   if (data.length === 0) {
-    // eslint-disable-next-line no-console
     console.warn("markUnsafe(...) was called without any data.");
   }
 
@@ -29,7 +30,6 @@ export function markUnsafe(...data: unknown[]) {
       typeof item !== "string"
     ) {
       const type = item === null ? "null" : typeof item;
-      // eslint-disable-next-line no-console
       console.warn(
         `markUnsafe(...) expects an object, array, or string. Received: ${type}`
       );
@@ -57,7 +57,6 @@ function addPayloadToContext(context: Context, payload: unknown) {
     }
   } catch (e: unknown) {
     if (e instanceof Error) {
-      // eslint-disable-next-line no-console
       console.warn("markUnsafe(...) failed to serialize the data");
     }
   }
@@ -70,7 +69,6 @@ function logWarningMarkUnsafeWithoutContext() {
     return;
   }
 
-  // eslint-disable-next-line no-console
   console.warn(
     "markUnsafe(...) was called without a context. The data will not be tracked. Make sure to call markUnsafe(...) within an HTTP request. If you're using serverless functions, make sure to use the handler wrapper provided by Zen. Also ensure you import Zen at the top of your main app file (before any other imports)."
   );

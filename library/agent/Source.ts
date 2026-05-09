@@ -9,6 +9,7 @@ export const SOURCES = [
   "subdomains",
   "markUnsafe",
   "url",
+  "rawBody",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];

@@ -1,6 +1,8 @@
 import type { Callback, Context, Handler } from "aws-lambda";
+import { Agent } from "../agent/Agent";
 import { getInstance } from "../agent/AgentSingleton";
 import { runWithContext, Context as AgentContext } from "../agent/Context";
+import { envToBool } from "../helpers/envToBool";
 import { isJsonContentType } from "../helpers/isJsonContentType";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { parse } from "../helpers/parseCookies";
@@ -143,7 +145,6 @@ export function getTimeoutInMS(): number {
   return 1000; // 1 second
 }
 
-// eslint-disable-next-line max-lines-per-function
 export function createLambdaWrapper(handler: Handler): Handler {
   const asyncHandler = convertToAsyncFunction(handler);
   const agent = getInstance();
@@ -151,7 +152,6 @@ export function createLambdaWrapper(handler: Handler): Handler {
   let lastFlushStatsAt: number | undefined = undefined;
   let startupEventSent = false;
 
-  // eslint-disable-next-line max-lines-per-function
   return async (event, context) => {
     // Send startup event on first invocation
     if (agent && !startupEventSent) {
@@ -159,7 +159,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       try {
         await agent.onStart(getTimeoutInMS());
       } catch (err: any) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.error(`Aikido: Failed to start agent: ${err.message}`);
       }
     }
@@ -220,25 +220,7 @@ export function createLambdaWrapper(handler: Handler): Handler {
       return result;
     } finally {
       if (agent) {
-        if (
-          isGatewayEvent(event) &&
-          isGatewayResponse(result) &&
-          agentContext.route &&
-          agentContext.method
-        ) {
-          const shouldDiscover = shouldDiscoverRoute({
-            statusCode: result.statusCode,
-            method: agentContext.method,
-            route: agentContext.route,
-          });
-
-          if (shouldDiscover) {
-            agent.onRouteExecute(agentContext);
-          }
-        }
-
-        const stats = agent.getInspectionStatistics();
-        stats.onRequest();
+        incrementStatsAndDiscoverAPISpec(agentContext, agent, event, result);
 
         await agent.getPendingEvents().waitUntilSent(getTimeoutInMS());
 
@@ -254,14 +236,51 @@ export function createLambdaWrapper(handler: Handler): Handler {
   };
 }
 
-let loggedWarningUnsupportedTrigger = false;
-
-function logWarningUnsupportedTrigger() {
-  if (loggedWarningUnsupportedTrigger) {
+function incrementStatsAndDiscoverAPISpec(
+  agentContext: AgentContext,
+  agent: Agent,
+  event: unknown,
+  result: unknown
+) {
+  if (
+    agentContext.remoteAddress &&
+    agent.getConfig().isBypassedIP(agentContext.remoteAddress)
+  ) {
     return;
   }
 
-  // eslint-disable-next-line no-console
+  if (
+    isGatewayEvent(event) &&
+    isGatewayResponse(result) &&
+    agentContext.route &&
+    agentContext.method
+  ) {
+    const shouldDiscover = shouldDiscoverRoute({
+      statusCode: result.statusCode,
+      method: agentContext.method,
+      route: agentContext.route,
+    });
+
+    if (shouldDiscover) {
+      agent.onRouteExecute(agentContext);
+    }
+  }
+
+  const stats = agent.getInspectionStatistics();
+  stats.onRequest();
+}
+
+let loggedWarningUnsupportedTrigger = false;
+
+function logWarningUnsupportedTrigger() {
+  if (
+    loggedWarningUnsupportedTrigger ||
+    envToBool(process.env.AIKIDO_LAMBDA_IGNORE_UNSUPPORTED_TRIGGER_WARNING)
+  ) {
+    return;
+  }
+
+  // oxlint-disable-next-line no-console
   console.warn(
     "Zen detected a lambda function call with an unsupported trigger. Only API Gateway and SQS triggers are currently supported."
   );

@@ -60,7 +60,7 @@ export function v4AddrToBytes(old: string) {
   return null;
 }
 
-/* 
+/*
   https://tools.ietf.org/html/rfc4291
   https://tools.ietf.org/html/rfc5952#section-4
   https://tools.ietf.org/html/rfc3986

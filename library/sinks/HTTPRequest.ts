@@ -9,6 +9,7 @@ import { getPortFromURL } from "../helpers/getPortFromURL";
 import { checkContextForSSRF } from "../vulnerabilities/ssrf/checkContextForSSRF";
 import { inspectDNSLookupCalls } from "../vulnerabilities/ssrf/inspectDNSLookupCalls";
 import { isRedirectToPrivateIP } from "../vulnerabilities/ssrf/isRedirectToPrivateIP";
+import { normalizeHostname } from "../helpers/normalizeHostname";
 import { getUrlFromHTTPRequestArgs } from "./http-request/getUrlFromHTTPRequestArgs";
 import { wrapResponseHandler } from "./http-request/wrapResponseHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
@@ -21,11 +22,21 @@ export class HTTPRequest implements Wrapper {
     port: number | undefined,
     module: "http" | "https"
   ): InterceptorResult {
+    const hostname = normalizeHostname(url.hostname);
+
     // Let the agent know that we are connecting to this hostname
     // This is to build a list of all hostnames that the application is connecting to
     if (typeof port === "number" && port > 0) {
-      agent.onConnectHostname(url.hostname, port);
+      agent.onConnectHostname(hostname, port);
     }
+
+    if (agent.getConfig().shouldBlockOutgoingRequest(hostname)) {
+      return {
+        hostname: hostname,
+        operation: `${module}.request`,
+      };
+    }
+
     const context = getContext();
 
     if (!context) {
@@ -34,7 +45,7 @@ export class HTTPRequest implements Wrapper {
 
     // Check if the hostname is inside the context
     const foundDirectSSRF = checkContextForSSRF({
-      hostname: url.hostname,
+      hostname: hostname,
       operation: `${module}.request`,
       context: context,
       port: port,

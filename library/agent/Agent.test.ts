@@ -1,7 +1,6 @@
 import * as FakeTimers from "@sinonjs/fake-timers";
 import { hostname, platform, release } from "os";
 import * as t from "tap";
-import * as fetch from "../helpers/fetch";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { wrap } from "../helpers/wrap";
@@ -19,7 +18,16 @@ import { Context } from "./Context";
 import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
-import { FetchListsAPINodeHTTP } from "./api/FetchListsAPINodeHTTP";
+import { colorText } from "../helpers/colorText";
+import { shutdown } from "./shutdown";
+
+t.beforeEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
+
+t.afterEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -62,6 +70,7 @@ t.test("it throws error if serverless is empty string", async () => {
         new ReportingAPIForTesting(),
         undefined,
         "",
+        false,
         new FetchListsAPIForTesting()
       ),
     "Serverless cannot be an empty string"
@@ -110,7 +119,7 @@ t.test("it sends started event", async (t) => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "mongodb@6.20.0 is supported!",
+    "mongodb@6.21.0 is supported!",
   ]);
 });
 
@@ -149,7 +158,7 @@ t.test("it logs if package is supported or not", async () => {
   t.same(logger.getMessages(), [
     "Starting agent v0.0.0...",
     "Found token, reporting enabled!",
-    "shell-quote@1.8.1 is not supported!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
   ]);
 });
 
@@ -420,7 +429,8 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      blockNewOutgoingRequests: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -489,7 +499,7 @@ t.test(
       blockedUserIds: [],
       allowedIPAddresses: [],
       block: true,
-      receivedAnyStats: false,
+      excludedUserIdsFromRateLimiting: [],
     });
     const agent = createTestAgent({
       api,
@@ -999,6 +1009,7 @@ t.test("it enables blocking mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: true,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     token: new Token("123"),
@@ -1026,6 +1037,7 @@ t.test("it goes into monitoring mode after sending startup event", async () => {
     blockedUserIds: [],
     allowedIPAddresses: [],
     block: false,
+    excludedUserIdsFromRateLimiting: [],
   });
   const agent = createTestAgent({
     api,
@@ -1264,9 +1276,6 @@ t.test("attack wave detected event", async (t) => {
       route: "/posts/:id",
       routeParams: {},
     },
-    metadata: {
-      x: "test",
-    },
   });
 
   t.match(api.getEvents(), [
@@ -1274,7 +1283,7 @@ t.test("attack wave detected event", async (t) => {
       type: "detected_attack_wave",
       attack: {
         metadata: {
-          x: "test",
+          samples: "[]",
         },
       },
       request: {
@@ -1284,4 +1293,268 @@ t.test("attack wave detected event", async (t) => {
       },
     },
   ]);
+});
+
+t.test("it blocks new outgoing requests if config says so", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting({
+    success: true,
+    endpoints: [],
+    configUpdatedAt: 0,
+    heartbeatIntervalInMS: 10 * 60 * 1000,
+    blockedUserIds: [],
+    allowedIPAddresses: [],
+    block: true,
+    blockNewOutgoingRequests: true,
+    domains: [
+      { hostname: "example.com", mode: "block" },
+      { hostname: "aikido.dev", mode: "allow" },
+    ],
+    excludedUserIdsFromRateLimiting: [],
+  });
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  await agent.flushStats(1000);
+
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+  t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+  clock.uninstall();
+});
+
+t.test(
+  "it does not block new outgoing requests if config says so",
+  async () => {
+    const clock = FakeTimers.install();
+
+    const logger = new LoggerNoop();
+    const api = new ReportingAPIForTesting({
+      success: true,
+      endpoints: [],
+      configUpdatedAt: 0,
+      heartbeatIntervalInMS: 10 * 60 * 1000,
+      blockedUserIds: [],
+      allowedIPAddresses: [],
+      block: true,
+      blockNewOutgoingRequests: false,
+      domains: [
+        { hostname: "example.com", mode: "block" },
+        { hostname: "aikido.dev", mode: "allow" },
+      ],
+      excludedUserIdsFromRateLimiting: [],
+    });
+    const agent = createTestAgent({
+      api,
+      logger,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    await agent.flushStats(1000);
+
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("foo.bar"), false);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("example.com"), true);
+    t.same(agent.getConfig().shouldBlockOutgoingRequest("aikido.dev"), false);
+
+    clock.uninstall();
+  }
+);
+
+t.test("Wrapped packages is working correctly", async () => {
+  const logger = new LoggerForTesting();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "1.8.1", supported: false });
+
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+  ]);
+
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It does not log again if the same package is wrapped again
+  agent.onPackageWrapped("shell-quote", { version: "3.0.0", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+  ]);
+
+  // It logs again if the same package is wrapped with different version
+  agent.onPackageWrapped("shell-quote", { version: "4.3.2", supported: true });
+  t.same(logger.getMessages(), [
+    "Starting agent v0.0.0...",
+    "Found token, reporting enabled!",
+    colorText("red", "shell-quote@1.8.1 is not supported!"),
+    "shell-quote@3.0.0 is supported!",
+    "shell-quote@4.3.2 is supported!",
+  ]);
+});
+
+t.test("getHostname uses AIKIDO_INSTANCE_NAME env var when set", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "my-instance";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test("getHostname trims whitespace from AIKIDO_INSTANCE_NAME", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "  my-instance  ";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is empty",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is whitespace-only",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "   ";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is not set",
+  async (t) => {
+    delete process.env.AIKIDO_INSTANCE_NAME;
+
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test("it sends heartbeat when shutdown is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  await shutdown();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  clock.uninstall();
 });

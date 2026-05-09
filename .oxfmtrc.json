@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "printWidth": 80,
+  "ignorePatterns": [
+    ".tap/",
+    "internals/",
+    "wasm/",
+    ".next/",
+    "out/",
+    "build/",
+    "dist/",
+    "coverage/",
+    ".esm-tests/"
+  ],
+  "experimentalSortPackageJson": false
+}

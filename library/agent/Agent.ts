@@ -1,9 +1,11 @@
-/* eslint-disable max-lines-per-function, no-console */
+/* oxlint-disable no-console */
+
 import { hostname, platform, release } from "os";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
 import { limitLengthMetadata } from "../helpers/limitLengthMetadata";
+import { colorText } from "../helpers/colorText";
 import { RateLimiter } from "../ratelimiting/RateLimiter";
 import { ReportingAPI, ReportingAPIResponse } from "./api/ReportingAPI";
 import type {
@@ -29,11 +31,14 @@ import { isAikidoCI } from "../helpers/isAikidoCI";
 import { AttackLogger } from "./AttackLogger";
 import { Packages } from "./Packages";
 import { AIStatistics } from "./AIStatistics";
+import { isNewInstrumentationUnitTest } from "../helpers/isNewInstrumentationUnitTest";
 import { AttackWaveDetector } from "../vulnerabilities/attack-wave-detection/AttackWaveDetector";
 import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
+import type { IdorProtectionConfig } from "./IdorProtectionConfig";
+import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 
-type WrappedPackage = { version: string | null; supported: boolean };
+type WrappedPackage = { version: string; supported: boolean };
 
 export class Agent {
   private started = false;
@@ -44,20 +49,12 @@ export class Agent {
   private interval: NodeJS.Timeout | undefined = undefined;
   private preventedPrototypePollution = false;
   private incompatiblePackages: Record<string, string> = {};
-  private wrappedPackages: Record<string, WrappedPackage> = {};
+  private wrappedPackages = new Map<string, WrappedPackage[]>();
   private packages = new Packages(5000);
   private timeoutInMS = 30 * 1000;
   private hostnames = new Hostnames(200);
   private users = new Users(1000);
-  private serviceConfig = new ServiceConfig(
-    [],
-    Date.now(),
-    [],
-    [],
-    true,
-    [],
-    []
-  );
+  private serviceConfig = new ServiceConfig([], Date.now(), [], [], [], []);
   private routes: Routes = new Routes(200);
   private rateLimiter: RateLimiter = new RateLimiter(5000, 120 * 60 * 1000);
   private statistics = new InspectionStatistics({
@@ -69,6 +66,7 @@ export class Agent {
   private attackLogger = new AttackLogger(1000);
   private attackWaveDetector = new AttackWaveDetector();
   private pendingEvents = new PendingEvents();
+  private idorProtectionConfig: IdorProtectionConfig | undefined = undefined;
 
   constructor(
     private block: boolean,
@@ -76,10 +74,15 @@ export class Agent {
     private readonly api: ReportingAPI,
     private readonly token: Token | undefined,
     private readonly serverless: string | undefined,
+    private readonly newInstrumentation: boolean = false,
     private readonly fetchListsAPI: FetchListsAPI
   ) {
     if (typeof this.serverless === "string" && this.serverless.length === 0) {
       throw new Error("Serverless cannot be an empty string");
+    }
+
+    if (isNewInstrumentationUnitTest()) {
+      this.newInstrumentation = true;
     }
   }
 
@@ -102,6 +105,14 @@ export class Agent {
 
   getAIStatistics() {
     return this.aiStatistics;
+  }
+
+  setIdorProtectionConfig(config: IdorProtectionConfig) {
+    this.idorProtectionConfig = config;
+  }
+
+  getIdorProtectionConfig(): IdorProtectionConfig | undefined {
+    return this.idorProtectionConfig;
   }
 
   unableToPreventPrototypePollution(
@@ -304,10 +315,7 @@ export class Agent {
           response.allowedIPAddresses &&
             Array.isArray(response.allowedIPAddresses)
             ? response.allowedIPAddresses
-            : [],
-          typeof response.receivedAnyStats === "boolean"
-            ? response.receivedAnyStats
-            : true
+            : []
         );
       }
 
@@ -318,6 +326,26 @@ export class Agent {
         response.heartbeatIntervalInMS >= minimumHeartbeatIntervalMS
       ) {
         this.sendHeartbeatEveryMS = response.heartbeatIntervalInMS;
+      }
+
+      if (
+        typeof response.blockNewOutgoingRequests === "boolean" &&
+        response.domains &&
+        Array.isArray(response.domains)
+      ) {
+        this.serviceConfig.setBlockNewOutgoingRequests(
+          response.blockNewOutgoingRequests
+        );
+        this.serviceConfig.updateDomains(response.domains);
+      }
+
+      if (
+        response.excludedUserIdsFromRateLimiting &&
+        Array.isArray(response.excludedUserIdsFromRateLimiting)
+      ) {
+        this.serviceConfig.updateUsersExcludedFromRateLimiting(
+          response.excludedUserIdsFromRateLimiting
+        );
       }
     }
   }
@@ -351,7 +379,6 @@ export class Agent {
             requests: stats.requests,
             userAgents: stats.userAgents,
             ipAddresses: stats.ipAddresses,
-            sqlTokenizationFailures: stats.sqlTokenizationFailures,
           },
           ai: aiStats,
           packages,
@@ -419,6 +446,7 @@ export class Agent {
       this.serviceConfig.updateMonitoredUserAgents(monitoredUserAgents);
       this.serviceConfig.updateUserAgentDetails(userAgentDetails);
     } catch (error: any) {
+      // oxlint-disable-next-line no-console
       console.error(`Aikido: Failed to update blocked lists: ${error.message}`);
     }
   }
@@ -437,20 +465,30 @@ export class Agent {
     });
   }
 
+  private getHostname() {
+    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
+    if (instanceName && instanceName.trim().length > 0) {
+      return instanceName.trim();
+    }
+
+    return hostname() || "";
+  }
+
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: hostname() || "",
+      hostname: this.getHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
       ipAddress: ip() || "",
-      packages: Object.keys(this.wrappedPackages).reduce(
-        (packages: Record<string, string>, pkg) => {
-          const details = this.wrappedPackages[pkg];
-          if (details.version && details.supported) {
-            packages[pkg] = details.version;
+      packages: Array.from(this.wrappedPackages.entries()).reduce(
+        (packages: Record<string, string>, [pkg, details]) => {
+          // Take the first supported version if there are multiple versions
+          const supportedVersion = details.find((d) => d.supported)?.version;
+          if (supportedVersion) {
+            packages[pkg] = supportedVersion;
           }
 
           return packages;
@@ -463,7 +501,7 @@ export class Agent {
       preventedPrototypePollution: this.preventedPrototypePollution,
       nodeEnv: process.env.NODE_ENV || "",
       serverless: !!this.serverless,
-      stack: Object.keys(this.wrappedPackages).concat(
+      stack: Array.from(this.wrappedPackages.keys()).concat(
         this.serverless ? [this.serverless] : []
       ),
       os: {
@@ -502,11 +540,13 @@ export class Agent {
       }
     }
 
+    warnIfTsxIsUsed();
+
     // When our library is required, we are not intercepting `require` calls yet
     // We need to add our library to the list of packages manually
     this.onPackageRequired("@aikidosec/firewall", getAgentVersion());
 
-    wrapInstalledPackages(wrappers, this.serverless);
+    wrapInstalledPackages(wrappers, this.newInstrumentation, this.serverless);
 
     // In serverless environments, we delay the startup event until the first invocation
     // since some apps take a long time to boot and the init phase has strict timeouts
@@ -542,20 +582,28 @@ export class Agent {
   }
 
   onPackageWrapped(name: string, details: WrappedPackage) {
-    if (this.wrappedPackages[name]) {
-      // Already reported as wrapped
+    if (!this.wrappedPackages.has(name)) {
+      this.wrappedPackages.set(name, []);
+    }
+
+    const versions = this.wrappedPackages.get(name)!;
+    if (versions.some((d) => d.version === details.version)) {
       return;
     }
 
-    this.wrappedPackages[name] = details;
+    versions.push(details);
 
-    if (details.version) {
-      if (details.supported) {
-        this.logger.log(`${name}@${details.version} is supported!`);
-      } else {
-        this.logger.log(`${name}@${details.version} is not supported!`);
-      }
+    if (details.supported) {
+      this.logger.log(`${name}@${details.version} is supported!`);
+    } else {
+      this.logger.log(
+        colorText("red", `${name}@${details.version} is not supported!`)
+      );
     }
+  }
+
+  onBuiltinWrapped(name: string) {
+    this.logger.log(`node:${name} is supported!`);
   }
 
   onConnectHostname(hostname: string, port: number) {
@@ -616,6 +664,10 @@ export class Agent {
     this.middlewareInstalled = true;
   }
 
+  isUsingNewInstrumentation() {
+    return this.newInstrumentation;
+  }
+
   private getHeartbeatInterval(): number {
     switch (this.sentHeartbeatCounter) {
       case 0:
@@ -637,18 +689,27 @@ export class Agent {
   /**
    * This function gets called when an attack wave is detected, it reports this attack wave to the API
    */
-  onDetectedAttackWave({
-    request,
-    metadata,
-  }: {
-    request: Context;
-    metadata: Record<string, string>;
-  }) {
+  onDetectedAttackWave({ request }: { request: Context }) {
+    if (!request.remoteAddress) {
+      // Cannot report attack wave without IP address
+      // Should not happen since AttackWaveDetector checks for remoteAddress
+      return;
+    }
+
+    const samples = this.attackWaveDetector.getSamplesForIP(
+      request.remoteAddress
+    );
+
     const attack: DetectedAttackWave = {
       type: "detected_attack_wave",
       time: Date.now(),
       attack: {
-        metadata: limitLengthMetadata(metadata, 4096),
+        metadata: limitLengthMetadata(
+          {
+            samples: JSON.stringify(samples),
+          },
+          4096
+        ),
         user: request.user,
       },
       request: {
@@ -670,5 +731,10 @@ export class Agent {
         });
       this.pendingEvents.onAPICall(promise);
     }
+  }
+
+  public async shutdown(timeoutInMS = 1000): Promise<void> {
+    this.logger.log("Shutting down agent...");
+    await this.flushStats(timeoutInMS);
   }
 }

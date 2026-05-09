@@ -10,6 +10,9 @@ import "@aikidosec/firewall"; // <-- Include this before any other code or impor
 // ...
 ```
 
+> [!NOTE]
+> Many TypeScript projects use `import` syntax but still compile to CommonJS — in that case, the setup above works as-is. If your app runs as **native ESM** at runtime (e.g. `"type": "module"` in package.json), see [ESM setup](./esm.md) for additional steps.
+
 ## Blocking mode
 
 By default, the firewall will run in non-blocking mode. When it detects an attack, the attack will be reported to Aikido if the environment variable `AIKIDO_TOKEN` is set and continue executing the call.
@@ -92,3 +95,7 @@ Read [Protect against prototype pollution](./prototype-pollution.md) to learn ho
 
 That's it! Your app is now protected by Zen.  
 If you want to see a full example, check our [NestJS sample app](../sample-apps/nestjs-sentry).
+
+## Graceful shutdown
+
+It is recommended to add a shutdown handler to your app to ensure that no statistics are lost when the app is stopped. You can find more information [here](./graceful-shutdown.md).

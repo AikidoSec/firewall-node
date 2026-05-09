@@ -1,10 +1,13 @@
 import * as t from "tap";
 import { Context, runWithContext } from "../agent/Context";
+import { isEsmUnitTest } from "../helpers/isEsmUnitTest";
 import { AwsSDKVersion2 } from "./AwsSDKVersion2";
 import { createTestAgent } from "../helpers/createTestAgent";
 
-// Suppress upgrade to SDK v3 notice
-require("aws-sdk/lib/maintenance_mode_message").suppress = true;
+if (!isEsmUnitTest()) {
+  // Suppress upgrade to SDK v3 notice
+  require("aws-sdk/lib/maintenance_mode_message").suppress = true;
+}
 
 const unsafeContext: Context = {
   remoteAddress: "::1",
@@ -28,7 +31,12 @@ t.test("it works", async (t) => {
 
   agent.start([new AwsSDKVersion2()]);
 
-  const AWS = require("aws-sdk");
+  let AWS = require("aws-sdk") as typeof import("aws-sdk");
+
+  if (isEsmUnitTest()) {
+    // @ts-expect-error in ESM the default export is the AWS object
+    AWS = AWS.default;
+  }
 
   const s3 = new AWS.S3({
     region: "us-east-1",

@@ -17,12 +17,14 @@ export type Context = {
   body: unknown; // Can be an object, string or undefined (the body is parsed by something like body-parser)
   cookies: Record<string, string>;
   attackDetected?: boolean;
+  blockedDueToIPOrBot?: boolean;
   consumedRateLimit?: boolean;
   user?: User;
   source: string;
   route: string | undefined;
   graphql?: string[];
   xml?: unknown[];
+  rawBody?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
   cache?: ReturnType<typeof extractStringsFromUserInput>;
@@ -34,6 +36,7 @@ export type Context = {
   executedMiddleware?: boolean;
   rateLimitGroup?: string; // Used to apply rate limits to a group of users
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
+  tenantId?: string; // Used for IDOR protection - set via setTenantId()
 };
 
 /**
@@ -90,6 +93,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.route = context.route;
     current.graphql = context.graphql;
     current.xml = context.xml;
+    current.rawBody = context.rawBody;
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
     current.markUnsafe = context.markUnsafe;

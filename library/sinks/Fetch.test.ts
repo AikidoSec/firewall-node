@@ -1,4 +1,3 @@
-/* eslint-disable prefer-rest-params */
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
@@ -99,7 +98,7 @@ t.test(
     ]);
     agent.getHostnames().clear();
 
-    await fetch(new URL("https://app.aikido.dev"));
+    await fetch(new URL("https://app.AIKIDO.dev"));
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 443, hits: 1 },
@@ -567,5 +566,48 @@ t.test(
         }
       }
     );
+
+    agent.getHostnames().clear();
+    agent.getConfig().updateDomains([
+      { hostname: "aikido.dev", mode: "block" },
+      { hostname: "app.aikido.dev", mode: "allow" },
+    ]);
+
+    const blockedError1 = await t.rejects(() =>
+      fetch("https://aikido.dev/block")
+    );
+    t.ok(blockedError1 instanceof Error);
+    if (blockedError1 instanceof Error) {
+      t.same(
+        blockedError1.message,
+        "Zen has blocked an outbound connection: fetch(...) to aikido.dev"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 1 },
+    ]);
+
+    agent.getConfig().setBlockNewOutgoingRequests(true);
+
+    const blockedError2 = await t.rejects(() => fetch("https://example.com"));
+    t.ok(blockedError2 instanceof Error);
+    if (blockedError2 instanceof Error) {
+      t.same(
+        blockedError2.message,
+        "Zen has blocked an outbound connection: fetch(...) to example.com"
+      );
+    }
+
+    await fetch("https://app.aikido.dev");
+
+    t.same(agent.getHostnames().asArray(), [
+      { hostname: "aikido.dev", port: 443, hits: 1 },
+      { hostname: "app.aikido.dev", port: 443, hits: 2 },
+      { hostname: "example.com", port: 443, hits: 1 },
+    ]);
   }
 );

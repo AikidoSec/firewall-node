@@ -98,7 +98,6 @@ type Heartbeat = {
     operations: Record<string, OperationStats>;
     startedAt: number;
     endedAt: number;
-    sqlTokenizationFailures: number;
     requests: {
       total: number;
       aborted: number;
@@ -158,7 +157,7 @@ type Heartbeat = {
 export type DetectedAttackWave = {
   type: "detected_attack_wave";
   request: {
-    ipAddress: string | undefined;
+    ipAddress: string;
     userAgent: string | undefined;
     source: string;
   };

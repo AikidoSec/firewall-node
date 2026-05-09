@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 
 export type FastifyReply = {
   status(code: number): FastifyReply;
+  header(key: string, value: string): FastifyReply;
   send(payload: string): FastifyReply;
 };
 
@@ -12,7 +13,6 @@ export type FastifyDone = () => void;
 
 // Can't use `any` because it might cause issues with type checking
 // e.g. if `skipLibChecks` is false
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type FastifyRequest = {};
 
 // Can't use `onRequestHookHandler` type from fastify because it uses `import("fastify")` in the type,
@@ -42,7 +42,10 @@ export const fastifyHook: FastifyHookHandler = (_, reply, done) => {
         message += ` (Your IP: ${escapeHTML(result.ip)})`;
       }
 
-      return reply.status(429).send(message);
+      return reply
+        .status(429)
+        .header("Retry-After", result.retryAfterSeconds.toString())
+        .send(message);
     }
 
     if (result.type === "blocked") {

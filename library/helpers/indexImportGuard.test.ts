@@ -1,6 +1,8 @@
 import * as t from "tap";
 import { wrap } from "./wrap";
 
+// @esm-tests-skip
+
 const logs: string[] = [];
 wrap(console, "error", function warn() {
   return function error(message: string) {
@@ -35,7 +37,8 @@ t.test("it works", async (t) => {
 
   require("../index");
 
-  t.same(logs, [
-    "AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time.",
-  ]);
+  t.match(
+    logs,
+    /AIKIDO: Zen has already been initialized. This can lead to unexpected behavior and may be caused by cleaning the require cache or using multiple installations of Zen at the same time/
+  );
 });

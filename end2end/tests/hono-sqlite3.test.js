@@ -14,10 +14,6 @@ t.test("it blocks in blocking mode", (t) => {
     env: { ...process.env, AIKIDO_DEBUG: "true", AIKIDO_BLOCKING: "true" },
   });
 
-  server.on("close", () => {
-    t.end();
-  });
-
   server.on("error", (err) => {
     t.fail(err.message);
   });
@@ -30,6 +26,11 @@ t.test("it blocks in blocking mode", (t) => {
   let stderr = "";
   server.stderr.on("data", (data) => {
     stderr += data.toString();
+  });
+
+  server.on("close", () => {
+    t.match(stdout, /AIKIDO: Shutting down agent.../);
+    t.end();
   });
 
   // Wait for the server to start
@@ -59,10 +60,7 @@ t.test("it blocks in blocking mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.match(stderr, /Zen has blocked an SQL injection/);
-      t.notMatch(
-        stderr,
-        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
-      );
+      t.notMatch(stderr, /Your application seems to be running in ESM mode\./);
     })
     .catch((error) => {
       t.fail(error.message);
@@ -118,10 +116,7 @@ t.test("it does not block in dry mode", (t) => {
       t.equal(normalAdd.status, 200);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked an SQL injection/);
-      t.notMatch(
-        stderr,
-        /Your application seems to be running in ESM mode\. Zen does not support ESM at runtime yet\./
-      );
+      t.notMatch(stderr, /Your application seems to be running in ESM mode\./);
     })
     .catch((error) => {
       t.fail(error.message);

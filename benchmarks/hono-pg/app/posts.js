@@ -20,7 +20,7 @@ class Posts {
 
   async add(title, text, authors) {
     const articleRes = await this.db.query(
-      'INSERT INTO posts (title, text) VALUES ($1, $2) RETURNING id',
+      "INSERT INTO posts (title, text) VALUES ($1, $2) RETURNING id",
       [title, text]
     );
 
@@ -28,13 +28,13 @@ class Posts {
 
     for (const author of authors) {
       const authorExists = await this.db.query(
-        'SELECT id FROM authors WHERE name = $1',
+        "SELECT id FROM authors WHERE name = $1",
         [author]
       );
       let authorId;
       if (authorExists.rows.length === 0) {
         const authorRes = await this.db.query(
-          'INSERT INTO authors (name) VALUES ($1) RETURNING id',
+          "INSERT INTO authors (name) VALUES ($1) RETURNING id",
           [author]
         );
         authorId = authorRes.rows[0].id;
@@ -43,7 +43,7 @@ class Posts {
       }
 
       await this.db.query(
-        'INSERT INTO post_authors (post_id, author_id) VALUES ($1, $2)',
+        "INSERT INTO post_authors (post_id, author_id) VALUES ($1, $2)",
         [articleId, authorId]
       );
     }
@@ -51,7 +51,7 @@ class Posts {
 
   async find(title) {
     const post = await this.db.query(
-      'SELECT title, text FROM posts WHERE title = $1',
+      "SELECT title, text FROM posts WHERE title = $1",
       [title]
     );
 
