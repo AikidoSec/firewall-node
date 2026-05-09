@@ -16,7 +16,8 @@ export function contextFromEvent(
     method: event.method,
     remoteAddress: getIPAddressFromRequest({
       headers: headers,
-      remoteAddress: event.context.clientAddress || event.node.req.socket.remoteAddress
+      remoteAddress:
+        event.context.clientAddress || event.node.req.socket.remoteAddress,
     }),
     // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
     body:

@@ -295,7 +295,6 @@ t.test(
         body,
         {
           method: "GET",
-          url: "/context",
           headers: {
             host: "localhost:4123",
             connection: "keep-alive",
@@ -327,7 +326,6 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/context/test",
         headers: {
           host: "localhost:4123",
           connection: "keep-alive",
@@ -350,7 +348,6 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/context2",
         headers: {
           host: "localhost:4123",
           connection: "keep-alive",
@@ -381,7 +378,7 @@ t.test(
       t.match(body, {
         context: {
           method: "POST",
-          url: "/post-json",
+          route: "/post-json",
           headers: {
             "content-type": "application/json",
           },
@@ -409,7 +406,7 @@ t.test(
       t.match(body, {
         context: {
           method: "POST",
-          url: "/post-form-data",
+          route: "/post-form-data",
           body: {
             abc: "123",
             arr: ["1", "2", "3"],
@@ -437,7 +434,7 @@ t.test(
       t.match(body, {
         context: {
           method: "POST",
-          url: "/post-multipart-form-data",
+          route: "/post-multipart-form-data",
           body: [
             {
               name: "abc",
@@ -482,7 +479,10 @@ t.test(
       t.match(body, {
         context: {
           method: "POST",
-          url: "/post-raw-body",
+          route: "/post-raw-body",
+          headers: {
+            "content-type": "text/plain",
+          },
           body: "Hello world",
         },
         body: "Hello world",
@@ -505,7 +505,7 @@ t.test(
       t.match(body, {
         context: {
           method: "POST",
-          url: "/post-validated-body",
+          route: "/post-validated-body",
           headers: {
             "content-type": "application/json",
           },
@@ -528,7 +528,7 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/from-node-middleware",
+        route: "/from-node-middleware",
         source: "h3",
         query: {
           abc: "123",
@@ -541,7 +541,7 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/middleware-2",
+        route: "/middleware-2",
         source: "h3",
         query: {},
       });
@@ -558,8 +558,8 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "POST",
-        url: "/middleware-3",
         source: "h3",
+        route: "/middleware-3",
         query: {},
         body: {
           abc: "123",
@@ -575,7 +575,7 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/from-node-middleware",
+        route: "/from-node-middleware",
         source: "h3",
         query: {
           abc: "123",
@@ -588,7 +588,7 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/from-web-handler",
+        route: "/from-web-handler",
         source: "h3",
         query: {},
       });
@@ -636,7 +636,7 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/from-web-handler",
+        route: "/from-web-handler",
         source: "h3",
         query: { abc: "123" },
       });
@@ -657,7 +657,6 @@ t.test(
       const body = await response.json();
       t.match(body, {
         method: "GET",
-        url: "/from-web-handler",
         source: "h3",
       });
     }

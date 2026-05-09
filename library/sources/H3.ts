@@ -153,7 +153,12 @@ export class H3 implements Wrapper {
       names: ["getHeaders", "getRequestURL", "getQuery", "parseCookies"],
       cb: (localVars) => {
         const [getHeaders, getRequestURL, getQuery, parseCookies] = localVars;
-        this.setH3Exports({ getHeaders, getRequestURL, getQuery, parseCookies });
+        this.setH3Exports({
+          getHeaders,
+          getRequestURL,
+          getQuery,
+          parseCookies,
+        });
       },
     };
   }
