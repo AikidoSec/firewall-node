@@ -31,9 +31,35 @@ const agent = createTestAgent({
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1", "123.1.2.0/24"],
+    excludedUserIdsFromRateLimiting: [],
   }),
 });
 agent.start([new H3(), new HTTPServer()]);
+
+t.test(
+  "setH3Exports falls back to undefined if one var is not a function",
+  (t) => {
+    const h3Instance = new H3();
+
+    (h3Instance as any).setH3Exports({
+      getHeaders: () => {},
+      getRequestURL: () => {},
+      getQuery: () => {},
+      parseCookies: () => {},
+    });
+    t.same(typeof (h3Instance as any).h3Exports, "object");
+
+    (h3Instance as any).setH3Exports({
+      getHeaders: () => {},
+      getRequestURL: "not-a-function",
+      getQuery: () => {},
+      parseCookies: () => {},
+    });
+    t.equal((h3Instance as any).h3Exports, undefined);
+
+    t.end();
+  }
+);
 
 t.test(
   "it works ",
@@ -224,12 +250,21 @@ t.test(
       })
     );
 
+    router.get(
+      "/error",
+      defineEventHandler(() => {
+        throw new Error("Test error");
+      })
+    );
+
     app.use(router);
 
     const server = createServer(toNodeListener(app));
     await new Promise<void>((resolve) => {
       server.listen(4123, resolve);
     });
+
+    let onErrorContext: ReturnType<typeof getContext> = undefined;
 
     const app2 = createApp({
       onRequest: (event) => {
@@ -242,7 +277,7 @@ t.test(
         t.same(getContext()?.source, "h3");
       },
       onError: (event, error) => {
-        t.same(getContext()?.source, "h3");
+        onErrorContext = getContext();
       },
     });
 
@@ -256,26 +291,30 @@ t.test(
     {
       const response = await fetch("http://localhost:4123/context?abc=123");
       const body = await response.json();
-      t.match(body, {
-        method: "GET",
-        url: "/context",
-        headers: {
-          host: "localhost:4123",
-          connection: "keep-alive",
-          accept: "*/*",
-          "accept-language": "*",
-          "sec-fetch-mode": "cors",
-          "user-agent": "node",
-          "accept-encoding": "gzip, deflate",
+      t.match(
+        body,
+        {
+          method: "GET",
+          url: "/context",
+          headers: {
+            host: "localhost:4123",
+            connection: "keep-alive",
+            accept: "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "accept-encoding": "gzip, deflate",
+          },
+          route: "/context",
+          query: {
+            abc: "123",
+          },
+          source: "h3",
+          routeParams: {},
+          cookies: {},
         },
-        route: "/context",
-        query: {
-          abc: "123",
-        },
-        source: "h3",
-        routeParams: {},
-        cookies: {},
-      });
+        "Context contains expected properties"
+      );
       t.ok(isLocalhostIP(body.remoteAddress));
     }
 
@@ -573,6 +612,60 @@ t.test(
       t.equal(response.status, 403);
       const text = await response.text();
       t.equal(text, "You are blocked by Zen.");
+    }
+
+    {
+      const response = await fetch("http://localhost:4123/context", {
+        headers: {
+          cookie: "abc=123; xyz=456",
+        },
+      });
+      const body = await response.json();
+      t.match(body, {
+        cookies: {
+          abc: "123",
+          xyz: "456",
+        },
+      });
+    }
+
+    {
+      const response = await fetch(
+        "http://localhost:4123/from-web-handler?abc=123"
+      );
+      const body = await response.json();
+      t.match(body, {
+        method: "GET",
+        url: "/from-web-handler",
+        source: "h3",
+        query: { abc: "123" },
+      });
+    }
+
+    {
+      const headers = { "x-forwarded-for": "4.3.2.1" };
+      const r1 = await fetch("http://localhost:4123/rate-limited", { headers });
+      t.equal(r1.status, 200);
+      const r2 = await fetch("http://localhost:4123/rate-limited", { headers });
+      t.equal(r2.status, 200);
+      const r3 = await fetch("http://localhost:4123/rate-limited", { headers });
+      t.equal(r3.status, 200);
+    }
+
+    {
+      const response = await fetch("http://localhost:4124/from-web-handler");
+      const body = await response.json();
+      t.match(body, {
+        method: "GET",
+        url: "/from-web-handler",
+        source: "h3",
+      });
+    }
+
+    // Trigger onError hook on server2 — verify context was established inside the hook
+    {
+      await fetch("http://localhost:4124/error");
+      t.match(onErrorContext, { source: "h3" });
     }
 
     server.close();

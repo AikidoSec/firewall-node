@@ -2,24 +2,21 @@ import { Context, getContext } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import type { H3Event } from "h3";
+import type { PartialH3Exports } from "../H3";
 
 export function contextFromEvent(
   event: H3Event,
-  h3: typeof import("h3")
+  h3: PartialH3Exports
 ): Context {
   const existingContext = getContext();
-
   const headers = h3.getHeaders(event);
-
   const url = h3.getRequestURL(event).toString();
 
   return {
     method: event.method,
     remoteAddress: getIPAddressFromRequest({
       headers: headers,
-      remoteAddress: h3.getRequestIP(event, {
-        xForwardedFor: false,
-      }),
+      remoteAddress: event.context.clientAddress || event.node.req.socket.remoteAddress
     }),
     // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
     body:
@@ -28,7 +25,7 @@ export function contextFromEvent(
         : undefined,
     url: url,
     headers: headers,
-    routeParams: h3.getRouterParams(event),
+    routeParams: event.context.params,
     query: h3.getQuery(event),
     cookies: h3.parseCookies(event),
     source: "h3",

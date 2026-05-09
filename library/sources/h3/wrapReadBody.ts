@@ -8,7 +8,7 @@ export async function wrapReadBody(_args: unknown[], returnValue: unknown) {
     return returnValue;
   }
 
-  const body = await returnValue;
+  const body = returnValue instanceof Promise ? await returnValue : returnValue;
   if (body) {
     if (body instanceof FormData) {
       updateContext(context, "body", formDataToPlainObject(body));

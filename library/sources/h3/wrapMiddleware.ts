@@ -2,12 +2,13 @@ import type { H3Event } from "h3";
 import { runWithContext } from "../../agent/Context";
 import { contextFromEvent } from "./contextFromEvent";
 import { createWrappedFunction } from "../../helpers/wrap";
+import type { PartialH3Exports } from "../H3";
 
 export type H3Middleware = (...args: unknown[]) => void | Promise<void>;
 
 export function wrapMiddleware(
   middleware: H3Middleware,
-  h3: typeof import("h3")
+  h3: PartialH3Exports
 ): H3Middleware {
   return createWrappedFunction(middleware, (middleware) => {
     return async (...args: unknown[]) => {
