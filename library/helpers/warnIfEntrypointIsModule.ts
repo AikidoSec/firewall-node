@@ -1,4 +1,5 @@
 import { colorText } from "./colorText";
+import { warnBox } from "./warnBox";
 import { getEntrypointFromCLIArgs } from "./getEntrypointFromCLIArgs";
 import { looksLikeModuleSyntax } from "./looksLikeModuleSyntax";
 
@@ -14,7 +15,9 @@ export function warnIfEntrypointIsModule() {
     console.warn(
       colorText(
         "red",
-        "AIKIDO: Your application entrypoint appears to be using ESM syntax. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+        warnBox(
+          "AIKIDO: Zen is NOT protecting your application. Your entrypoint uses ESM syntax, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+        )
       )
     );
   }

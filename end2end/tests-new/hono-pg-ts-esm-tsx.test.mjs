@@ -74,10 +74,7 @@ test("it blocks request in blocking mode", async () => {
     equal(normalAdd.status, 200);
     match(stdout, /Starting agent/);
     match(stderr, /Zen has blocked an SQL injection/);
-    match(
-      stderr,
-      /You are using tsx to run your code. Zen might not fully protect your app when using tsx./
-    );
+    match(stderr, /Zen does NOT work when using tsx/);
   } catch (err) {
     fail(err);
   } finally {
