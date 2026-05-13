@@ -28,7 +28,7 @@ function start() {
       colorText(
         "red",
         warnBox(
-          "AIKIDO: Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js or see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          "Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js or see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
         )
       )
     );
@@ -47,7 +47,7 @@ function start() {
       colorText(
         "red",
         warnBox(
-          "AIKIDO: Zen is NOT protecting your application. Your ESM app needs the library preloaded with --require. See https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          "Zen is NOT protecting your application. Your ESM app needs the library preloaded with --require. See https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
         )
       )
     );

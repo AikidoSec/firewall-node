@@ -36,7 +36,7 @@ if (!isNewHookSystemUsed()) {
         colorText(
           "red",
           warnBox(
-            "AIKIDO: Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
           )
         )
       );
@@ -48,7 +48,7 @@ if (!isNewHookSystemUsed()) {
         colorText(
           "red",
           warnBox(
-            "AIKIDO: Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
           )
         )
       );

@@ -14,9 +14,12 @@ const INNER_WIDTH = TEXT_WIDTH + PADDING * 2;
 export function warnBox(message: string): string {
   const lines = wordWrap(message, TEXT_WIDTH);
 
+  const title = "AIKIDO";
   const top =
     BOX_CHARS.topLeft +
-    BOX_CHARS.horizontal.repeat(INNER_WIDTH) +
+    BOX_CHARS.horizontal.repeat(PADDING) +
+    title +
+    BOX_CHARS.horizontal.repeat(INNER_WIDTH - PADDING - title.length) +
     BOX_CHARS.topRight;
   const bottom =
     BOX_CHARS.bottomLeft +

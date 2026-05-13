@@ -13,7 +13,7 @@ t.test("warnIfTsxIsUsed should warn when tsx is used", async (t) => {
 
   warnIfTsxIsUsed();
 
-  t.match(logs, [/AIKIDO: Zen does NOT work when using tsx/]);
+  t.match(logs, [/Zen is NOT protecting your application when using tsx/]);
 
   // Clean up
   process.execArgv.pop();

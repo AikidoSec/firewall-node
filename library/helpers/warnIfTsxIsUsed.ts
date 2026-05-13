@@ -11,7 +11,7 @@ export function warnIfTsxIsUsed() {
     colorText(
       "red",
       warnBox(
-        "AIKIDO: Zen does NOT work when using tsx. Use node instead of tsx in production."
+        "Zen is NOT protecting your application when using tsx. Use node instead of tsx in production."
       )
     )
   );

@@ -60,7 +60,7 @@ export class FunctionSink implements Wrapper {
         colorText(
           "red",
           warnBox(
-            `AIKIDO: Zen will NOT block code injection attacks (eval, new Function). Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Request support: https://github.com/AikidoSec/firewall-node/issues`
+            `Zen will NOT block code injection attacks (eval, new Function). Cannot find native addon for Node.js ${majorVersion} on ${platform}-${arch}. Request support: https://github.com/AikidoSec/firewall-node/issues`
           )
         )
       );
@@ -80,7 +80,7 @@ export class FunctionSink implements Wrapper {
         colorText(
           "red",
           warnBox(
-            `AIKIDO: Zen will NOT block code injection attacks (eval, new Function). Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${(error as Error).message}`
+            `Zen will NOT block code injection attacks (eval, new Function). Failed to load native addon for Node.js ${majorVersion} on ${platform}-${arch}: ${(error as Error).message}`
           )
         )
       );
@@ -92,7 +92,7 @@ export class FunctionSink implements Wrapper {
         colorText(
           "red",
           warnBox(
-            `AIKIDO: Zen will NOT block code injection attacks (eval, new Function). Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid.`
+            `Zen will NOT block code injection attacks (eval, new Function). Native addon for Node.js ${majorVersion} on ${platform}-${arch} is invalid.`
           )
         )
       );

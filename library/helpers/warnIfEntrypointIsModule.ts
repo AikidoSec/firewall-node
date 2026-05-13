@@ -16,7 +16,7 @@ export function warnIfEntrypointIsModule() {
       colorText(
         "red",
         warnBox(
-          "AIKIDO: Zen is NOT protecting your application. Your entrypoint uses ESM syntax, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          "Zen is NOT protecting your application. Your entrypoint uses ESM syntax, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
         )
       )
     );
