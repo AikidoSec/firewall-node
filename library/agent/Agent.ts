@@ -607,6 +607,10 @@ export class Agent {
   }
 
   hasWrappedWebFramework(): boolean {
+    if (this.serverless) {
+      return true;
+    }
+
     const webFrameworks = [
       "express",
       "fastify",
