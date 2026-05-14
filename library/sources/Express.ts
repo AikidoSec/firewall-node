@@ -83,13 +83,6 @@ export class Express implements Wrapper {
           },
           {
             nodeType: "FunctionAssignment",
-            name: "app[method]",
-            modifyArgumentsObject: true,
-            operationKind: undefined,
-            modifyArgs: (args) => this.wrapArgs(args),
-          },
-          {
-            nodeType: "FunctionAssignment",
             name: "app.param",
             modifyArgumentsObject: false,
             operationKind: undefined,
@@ -107,6 +100,24 @@ export class Express implements Wrapper {
               const router = vars[0];
               for (const method of expressMethodNames) {
                 wrapExport(router.Route.prototype, method, pkgInfo, {
+                  kind: undefined,
+                  modifyArgs: (args) => this.wrapArgs(args),
+                });
+              }
+            }
+          },
+        },
+      })
+      .addFileInstrumentation({
+        path: "lib/router/route.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["Route"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && typeof vars[0] === "function") {
+              const Route = vars[0];
+              for (const method of expressMethodNames) {
+                wrapExport(Route.prototype, method, pkgInfo, {
                   kind: undefined,
                   modifyArgs: (args) => this.wrapArgs(args),
                 });
