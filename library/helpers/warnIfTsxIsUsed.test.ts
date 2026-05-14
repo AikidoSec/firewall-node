@@ -13,7 +13,8 @@ t.test("warnIfTsxIsUsed should warn when tsx is used", async (t) => {
 
   warnIfTsxIsUsed();
 
-  t.match(logs, [/Zen is NOT protecting your application when using tsx/]);
+  t.equal(logs.length, 1);
+  t.match(logs[0], /Zen is NOT protecting your application when using tsx/);
 
   // Clean up
   process.execArgv.pop();
