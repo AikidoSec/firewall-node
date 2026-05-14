@@ -7,12 +7,6 @@ import { test, before, skip } from "node:test";
 import { equal, fail, match, doesNotMatch } from "node:assert";
 import { mkdirSync } from "node:fs";
 
-const majorNodeVersion = parseInt(process.versions.node.split(".")[0], 10);
-if (majorNodeVersion >= 26) {
-  skip("App not working on Node.js v26");
-  process.exit(0);
-}
-
 const pathToAppDir = resolve(
   import.meta.dirname,
   "../../sample-apps/adonis-sqlite"
