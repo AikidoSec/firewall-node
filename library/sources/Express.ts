@@ -103,7 +103,7 @@ export class Express implements Wrapper {
         accessLocalVariables: {
           names: ["Router"],
           cb: (vars, pkgInfo) => {
-            if (vars.length > 0) {
+            if (vars.length > 0 && vars[0]) {
               const router = vars[0];
               for (const method of expressMethodNames) {
                 wrapExport(router.Route.prototype, method, pkgInfo, {
