@@ -166,7 +166,7 @@ export class Fetch implements Wrapper {
         // @ts-expect-error Type is not defined
         globalThis[sym1] = newAgent;
       }
-    } catch (err) {
+    } catch {
       agent.log(
         `Failed to patch global dispatcher for fetch, we can't provide protection!`
       );
