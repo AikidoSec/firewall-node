@@ -90,6 +90,10 @@ export class Express implements Wrapper {
           },
         ],
       })
+      // v5 moved the router into a separate "router" npm package.
+      // We grab Router from lib/express.js (not from "router" directly,
+      // since that package can be used without express).
+      // Router.Route exists in v5 but not in v4 — see below for v4.
       .addFileInstrumentation({
         path: "lib/express.js",
         functions: [],
@@ -108,6 +112,8 @@ export class Express implements Wrapper {
           },
         },
       })
+      // v4 has its own lib/router/route.js where Route is a local variable.
+      // This file doesn't exist in v5, so this is a no-op there.
       .addFileInstrumentation({
         path: "lib/router/route.js",
         functions: [],
