@@ -97,7 +97,7 @@
     "ai-v6": "npm:ai@^6.0.3",
     "aws-sdk": "^2.1595.0",
     "axios": "^1.8.4",
-    "better-sqlite3": "^12.2.0",
+    "better-sqlite3": "^12.10.0",
     "bson-objectid": "^2.0.4",
     "cookie-parser": "^1.4.6",
     "express": "^5.0.0",
