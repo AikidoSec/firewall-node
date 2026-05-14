@@ -96,6 +96,25 @@ export class Express implements Wrapper {
             modifyArgs: (args) => this.wrapParamArgs(args),
           },
         ],
+      })
+      .addFileInstrumentation({
+        path: "lib/express.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["Router"],
+          cb: (vars, pkgInfo) => {
+            if (!vars[0] || !vars[0].Route) {
+              return;
+            }
+            const Router = vars[0];
+            for (const method of expressMethodNames) {
+              wrapExport(Router.Route.prototype, method, pkgInfo, {
+                kind: undefined,
+                modifyArgs: (args) => this.wrapArgs(args),
+              });
+            }
+          },
+        },
       });
   }
 }
