@@ -30,3 +30,20 @@ t.test("it word-wraps long messages", async () => {
 `
   );
 });
+
+t.test("it widens the box for lines longer than TEXT_WIDTH", async () => {
+  t.same(
+    warnBox(
+      "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+    ),
+    `
+┌──AIKIDO────────────────────────────────────────────────────────────────┐
+│                                                                        │
+│  Zen is NOT protecting your application. Your app uses a bundler       │
+│  without externalizing Zen and the packages it needs to protect. See   │
+│  https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md  │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+`
+  );
+});

@@ -9,27 +9,31 @@ const BOX_CHARS = {
 
 const TEXT_WIDTH = 64;
 const PADDING = 2;
-const INNER_WIDTH = TEXT_WIDTH + PADDING * 2;
 
 export function warnBox(message: string): string {
-  const lines = wordWrap(message, TEXT_WIDTH);
+  let lines = wordWrap(message, TEXT_WIDTH);
+  const maxLineLength = Math.max(TEXT_WIDTH, ...lines.map((l) => l.length));
+  if (maxLineLength > TEXT_WIDTH) {
+    lines = wordWrap(message, maxLineLength);
+  }
+  const innerWidth = maxLineLength + PADDING * 2;
 
   const title = "AIKIDO";
   const top =
     BOX_CHARS.topLeft +
     BOX_CHARS.horizontal.repeat(PADDING) +
     title +
-    BOX_CHARS.horizontal.repeat(INNER_WIDTH - PADDING - title.length) +
+    BOX_CHARS.horizontal.repeat(innerWidth - PADDING - title.length) +
     BOX_CHARS.topRight;
   const bottom =
     BOX_CHARS.bottomLeft +
-    BOX_CHARS.horizontal.repeat(INNER_WIDTH) +
+    BOX_CHARS.horizontal.repeat(innerWidth) +
     BOX_CHARS.bottomRight;
   const empty =
-    BOX_CHARS.vertical + " ".repeat(INNER_WIDTH) + BOX_CHARS.vertical;
+    BOX_CHARS.vertical + " ".repeat(innerWidth) + BOX_CHARS.vertical;
 
   const content = lines.map((line) => {
-    const pad = INNER_WIDTH - PADDING - line.length;
+    const pad = innerWidth - PADDING - line.length;
     return (
       BOX_CHARS.vertical +
       " ".repeat(PADDING) +
