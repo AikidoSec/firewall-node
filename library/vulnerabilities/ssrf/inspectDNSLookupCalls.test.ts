@@ -342,6 +342,7 @@ const imdsMockLookup = (
   if (
     hostname === "imds.test.com" ||
     hostname === "metadata.google.internal" ||
+    hostname === "metadata.google.internal." ||
     hostname === "metadata.goog"
   ) {
     return callback(null, "169.254.169.254", 4);
@@ -483,6 +484,110 @@ t.test("Does not block IMDS SSRF with Google metadata domain", async (t) => {
     }),
   ]);
 });
+
+t.test(
+  "Does not block IMDS SSRF with Google metadata domain with trailing dot",
+  async (t) => {
+    const agent = createTestAgent({
+      token: new Token("123"),
+    });
+    agent.start([]);
+
+    const wrappedLookup = inspectDNSLookupCalls(
+      imdsMockLookup,
+      agent,
+      "module",
+      "operation"
+    );
+
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        wrappedLookup(
+          "metadata.google.internal.",
+          { family: 4 },
+          (err, address) => {
+            t.same(err, null);
+            t.same(address, "169.254.169.254");
+            resolve();
+          }
+        );
+      }),
+      new Promise<void>((resolve) => {
+        runWithContext(context, () => {
+          wrappedLookup(
+            "metadata.google.internal.",
+            { family: 4 },
+            (err, address) => {
+              t.same(err, null);
+              t.same(address, "169.254.169.254");
+              resolve();
+            }
+          );
+        });
+      }),
+    ]);
+  }
+);
+
+t.test(
+  "detects SSRF via redirect chain when urlArg hostname has trailing dot",
+  (t) => {
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({ token: new Token("123"), api });
+    agent.start([]);
+    api.clear();
+
+    const hopMockLookup = (
+      hostname: string,
+      options: any,
+      callback: (
+        err: any,
+        address: string | LookupAddress[],
+        family: number
+      ) => void
+    ) => {
+      if (hostname === "hop.internal" || hostname === "hop.internal.") {
+        return callback(null, "127.0.0.1", 4);
+      }
+      return lookup(hostname, options, callback);
+    };
+
+    const urlArg = new URL("http://hop.internal./");
+    const wrappedLookup = inspectDNSLookupCalls(
+      hopMockLookup as any,
+      agent,
+      "http",
+      "request",
+      urlArg
+    );
+
+    runWithContext(
+      {
+        ...context,
+        body: { image: "http://attacker.com" },
+        outgoingRequestRedirects: [
+          {
+            source: new URL("http://attacker.com/"),
+            destination: new URL("http://hop.internal/"),
+          },
+        ],
+      },
+      () => {
+        wrappedLookup("hop.internal.", {}, (err: any, address: any) => {
+          t.same(err instanceof Error, true);
+          if (err instanceof Error) {
+            t.same(
+              err.message,
+              "Zen has blocked a server-side request forgery: request(...) originating from body.image"
+            );
+          }
+          t.same(address, undefined);
+          t.end();
+        });
+      }
+    );
+  }
+);
 
 t.test("it ignores when the argument is an IP address", async (t) => {
   const agent = createTestAgent({

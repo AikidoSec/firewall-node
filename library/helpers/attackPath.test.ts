@@ -97,6 +97,34 @@ t.test("first item in array", async (t) => {
   t.same(get("id = 1", ["id = 1"]), [".[0]"]);
 });
 
+t.test("deeply nested arrays do not cause a stack overflow", async (t) => {
+  // Build a deep pure-array structure: [[[...["payload"]...]]]
+  let nested: unknown = ["payload"];
+  for (let i = 0; i < 15000; i++) {
+    nested = [nested];
+  }
+
+  get("payload", nested);
+  // Payload is beyond MAX_DEPTH so it should not be found
+  t.same(get("payload", nested), []);
+});
+
+t.test(
+  "array join on deeply nested array does not cause a stack overflow",
+  async (t) => {
+    let deepNested: unknown = ["x"];
+    for (let i = 0; i < 15000; i++) {
+      deepNested = [deepNested, "y"];
+    }
+
+    // Place the nested array before the attack payload key so join() is called first.
+    const obj = { nested: deepNested, payload: "SELECT 1" };
+
+    get("SELECT 1", obj);
+    t.same(get("SELECT 1", obj), [".payload"]);
+  }
+);
+
 t.test("it checks max matches when iterating over object props", async (t) => {
   const testObj = {
     a: ["test"],
