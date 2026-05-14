@@ -28,7 +28,7 @@ function start() {
       colorText(
         "red",
         warnBox(
-          "Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js or see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          "Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js and see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
         )
       )
     );
