@@ -606,6 +606,26 @@ export class Agent {
     this.logger.log(`node:${name} is supported!`);
   }
 
+  hasWrappedWebFramework(): boolean {
+    const webFrameworks = [
+      "express",
+      "fastify",
+      "hono",
+      "koa",
+      "@hapi/hapi",
+      "restify",
+    ];
+
+    for (const framework of webFrameworks) {
+      const versions = this.wrappedPackages.get(framework);
+      if (versions && versions.some((v) => v.supported)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
   }

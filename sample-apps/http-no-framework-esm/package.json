@@ -1,0 +1,8 @@
+{
+  "name": "http-no-framework-esm",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@aikidosec/firewall": "file:../../build"
+  }
+}
