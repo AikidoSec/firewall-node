@@ -16,7 +16,7 @@ export class HTTPServer implements Wrapper {
     }
     this.warnedAboutMissingSource = true;
 
-    if (!agent.hasWrappedWebFramework()) {
+    if (!agent.hasWebFrameworkLoaded()) {
       // oxlint-disable-next-line no-console
       console.warn(
         colorText(

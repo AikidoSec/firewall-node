@@ -606,7 +606,10 @@ export class Agent {
     this.logger.log(`node:${name} is supported!`);
   }
 
-  hasWrappedWebFramework(): boolean {
+  // We check this.packages, which tracks every package loaded by the app.
+  // Careful: this.packages gets cleared after the first heartbeat (30s).
+  // This works because HTTP servers are created at startup, well before that.
+  hasWebFrameworkLoaded(): boolean {
     if (this.serverless) {
       return true;
     }
@@ -618,16 +621,13 @@ export class Agent {
       "koa",
       "@hapi/hapi",
       "restify",
+      "next",
+      "@nestjs/core",
+      "micro",
+      "nuxt",
     ];
 
-    for (const framework of webFrameworks) {
-      const versions = this.wrappedPackages.get(framework);
-      if (versions && versions.some((v) => v.supported)) {
-        return true;
-      }
-    }
-
-    return false;
+    return webFrameworks.some((framework) => this.packages.has(framework));
   }
 
   onConnectHostname(hostname: string, port: number) {
