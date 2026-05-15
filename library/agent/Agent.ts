@@ -627,7 +627,10 @@ export class Agent {
       "nuxt",
     ];
 
-    return webFrameworks.some((framework) => this.packages.has(framework));
+    return webFrameworks.some(
+      (framework) =>
+        this.packages.has(framework) || this.wrappedPackages.has(framework)
+    );
   }
 
   onConnectHostname(hostname: string, port: number) {
