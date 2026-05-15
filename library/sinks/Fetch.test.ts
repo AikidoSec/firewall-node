@@ -146,11 +146,14 @@ t.test(
         .getEvents()
         .filter((e) => e.type === "detected_attack");
       t.same(events.length, 1);
-      t.same(events[0].attack.metadata, {
-        hostname: "localhost",
-        port: "4000",
-        privateIP: "::1",
-      });
+      t.same(events[0].attack.metadata.hostname, "localhost");
+      t.same(events[0].attack.metadata.port, "4000");
+      // localhost resolves to ::1 on older Node.js and 127.0.0.1 on Node.js v26+
+      t.ok(
+        events[0].attack.metadata.privateIP === "::1" ||
+          events[0].attack.metadata.privateIP === "127.0.0.1",
+        "privateIP should be a localhost address"
+      );
 
       const error2 = await t.rejects(() =>
         fetch(new URL("http://localhost:4000/api/internal"))
