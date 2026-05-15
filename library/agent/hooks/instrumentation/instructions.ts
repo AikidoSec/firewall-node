@@ -56,7 +56,15 @@ export function setPackagesToInstrument(_packages: Package[]) {
               versionRange: versionedPackage.getRange(),
               identifier: fileIdentifier,
               functions: file.functions.map((func) => {
-                const identifier = `${pkg.getName()}.${file.path}.${func.name}.${func.nodeType}.${versionedPackage.getRange()}`;
+                const identifierParts = [
+                  pkg.getName(),
+                  file.path,
+                  func.className ? `${func.className}.${func.name}` : func.name,
+                  func.nodeType,
+                  versionedPackage.getRange(),
+                ];
+
+                const identifier = identifierParts.join(".");
 
                 // If bindContext is set to true, but no modifyArgs is defined, modifyArgs will be set to a stub function
                 // The reason for this is that the bindContext logic needs to modify the arguments
@@ -84,6 +92,7 @@ export function setPackagesToInstrument(_packages: Package[]) {
                   modifyArgs: !!func.modifyArgs,
                   modifyReturnValue: !!func.modifyReturnValue,
                   modifyArgumentsObject: func.modifyArgumentsObject ?? false,
+                  className: func.className,
                 };
               }),
               accessLocalVariables: file.accessLocalVariables?.names ?? [],

@@ -95,6 +95,7 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         blockedUserIds: [],
         allowedIPAddresses: ["1.2.3.4"],
         block: true,
+        excludedUserIdsFromRateLimiting: [],
       });
       const agent = startTestAgent({
         api,

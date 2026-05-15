@@ -24,7 +24,7 @@ t.test("Can wrap external package", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     t.same(pkgInfo.name, "sqlite3");
     t.same(pkgInfo.type, "external");
@@ -122,7 +122,7 @@ t.test("Does not wrap package with no interceptors", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0");
+  pkg.withVersion("^5.0.0 || ^6.0.0");
   setPackagesToPatch([pkg]);
 
   // Require original sqlite3
@@ -145,7 +145,7 @@ t.test("Replace default export", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     return "aikido";
   });
   setPackagesToPatch([pkg]);
@@ -165,7 +165,7 @@ t.test("Confirm its caching the exports", async (t) => {
   let counter = 0;
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     counter++;
     return "aikido";
   });
@@ -186,7 +186,7 @@ t.test("Returns original exports on exception", async (t) => {
   const initialSqlite3 = require("sqlite3");
 
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire((exports, pkgInfo) => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire((exports, pkgInfo) => {
     exports._test = "aikido";
     throw new Error("Test error");
   });
@@ -300,11 +300,11 @@ t.test("Pass invalid arguments to VersionedPackage", async (t) => {
 t.test("Add two packages with same name", async (t) => {
   let intercepted = 0;
   const pkg = new Package("sqlite3");
-  pkg.withVersion("^5.0.0").onRequire(() => {
+  pkg.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
   const pkg2 = new Package("sqlite3");
-  pkg2.withVersion("^5.0.0").onRequire(() => {
+  pkg2.withVersion("^5.0.0 || ^6.0.0").onRequire(() => {
     intercepted++;
   });
 
