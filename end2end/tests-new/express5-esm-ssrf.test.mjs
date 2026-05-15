@@ -12,6 +12,52 @@ const pathToAppDir = resolve(
 
 const port = await getRandomPort();
 
+test("it blocks path traversal on a Router route in ESM mode", async () => {
+  const server = spawn(
+    `node`,
+    ["--import", "@aikidosec/firewall/instrument", "./app.js", port],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCKING: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    await timeout(2000);
+
+    const response = await fetch(
+      `http://127.0.0.1:${port}/api/files/${encodeURIComponent("../../")}`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+
+    equal(response.status, 500);
+    const text = await response.text();
+    match(text, /Zen has blocked a path traversal attack/);
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
 test("it blocks SSRF via http.request in ESM mode", async () => {
   const server = spawn(
     `node`,

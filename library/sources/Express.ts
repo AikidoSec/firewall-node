@@ -83,19 +83,54 @@ export class Express implements Wrapper {
           },
           {
             nodeType: "FunctionAssignment",
-            name: "app[method]",
-            modifyArgumentsObject: true,
-            operationKind: undefined,
-            modifyArgs: (args) => this.wrapArgs(args),
-          },
-          {
-            nodeType: "FunctionAssignment",
             name: "app.param",
             modifyArgumentsObject: false,
             operationKind: undefined,
             modifyArgs: (args) => this.wrapParamArgs(args),
           },
         ],
+      })
+      // v5 moved the router into a separate "router" npm package.
+      // We grab Router from lib/express.js (not from "router" directly,
+      // since that package can be used without express).
+      // Router.Route exists in v5 but not in v4 — see below for v4.
+      .addFileInstrumentation({
+        path: "lib/express.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["Router"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && vars[0] && vars[0].Route) {
+              const router = vars[0];
+              for (const method of expressMethodNames) {
+                wrapExport(router.Route.prototype, method, pkgInfo, {
+                  kind: undefined,
+                  modifyArgs: (args) => this.wrapArgs(args),
+                });
+              }
+            }
+          },
+        },
+      })
+      // v4 has its own lib/router/route.js where Route is a local variable.
+      // This file doesn't exist in v5, so this is a no-op there.
+      .addFileInstrumentation({
+        path: "lib/router/route.js",
+        functions: [],
+        accessLocalVariables: {
+          names: ["Route"],
+          cb: (vars, pkgInfo) => {
+            if (vars.length > 0 && typeof vars[0] === "function") {
+              const Route = vars[0];
+              for (const method of expressMethodNames) {
+                wrapExport(Route.prototype, method, pkgInfo, {
+                  kind: undefined,
+                  modifyArgs: (args) => this.wrapArgs(args),
+                });
+              }
+            }
+          },
+        },
       });
   }
 }
