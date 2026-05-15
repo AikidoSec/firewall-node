@@ -7,4 +7,5 @@ export type ConfigUpdateOptions = {
   token: Token | undefined;
   logger: Logger;
   lastUpdatedAt: number;
+  realtimeURL: URL;
 };

@@ -15,6 +15,7 @@ t.test("it does not start interval if no token", async (t) => {
     logger: logger,
     token: undefined,
     lastUpdatedAt: 0,
+    realtimeURL: new URL("https://zen.aikido.dev"),
   });
 
   t.same(logger.getMessages(), [
@@ -35,7 +36,7 @@ t.test("it checks for config updates", async () => {
         method: params.method,
       });
 
-      if (params.url.hostname.startsWith("runtime")) {
+      if (params.url.hostname.startsWith("zen")) {
         return {
           body: JSON.stringify({
             configUpdatedAt: configUpdatedAt,
@@ -68,6 +69,7 @@ t.test("it checks for config updates", async () => {
     logger: new LoggerNoop(),
     token: new Token("123"),
     lastUpdatedAt: 0,
+    realtimeURL: new URL("https://zen.aikido.dev"),
   });
 
   t.same(configUpdates, []);
@@ -78,7 +80,7 @@ t.test("it checks for config updates", async () => {
   t.same(configUpdates, []);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
   ]);
@@ -95,11 +97,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
@@ -119,11 +121,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
@@ -131,7 +133,7 @@ t.test("it checks for config updates", async () => {
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
   ]);
@@ -153,11 +155,11 @@ t.test("it checks for config updates", async () => {
   ]);
   t.same(calls, [
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
@@ -165,11 +167,11 @@ t.test("it checks for config updates", async () => {
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
-      url: "https://runtime.aikido.dev/config",
+      url: "https://zen.aikido.dev/config",
       method: "GET",
     },
     {
@@ -200,6 +202,7 @@ t.test("it deals with API throwing errors", async () => {
     logger: logger,
     token: new Token("123"),
     lastUpdatedAt: 0,
+    realtimeURL: new URL("https://zen.aikido.dev"),
   });
 
   t.same(configUpdates, []);

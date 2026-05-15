@@ -40,6 +40,8 @@ import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
+import { getRealtimeURL } from "./realtime/getRealtimeURL";
+import { resolveRealtimeURL } from "./realtime/resolveRealtimeURL";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -454,11 +456,18 @@ export class Agent {
     }
   }
 
-  private startCheckingForConfigUpdates() {
+  private async startCheckingForConfigUpdates() {
+    if (!this.token) {
+      return;
+    }
+
+    const realtimeURL = await resolveRealtimeURL(this.token, this.logger);
+
     const options: ConfigUpdateOptions = {
       token: this.token,
       logger: this.logger,
       lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
+      realtimeURL,
       onConfigUpdate: (config) => {
         this.updateServiceConfig({ success: true, ...config });
         this.updateBlockedLists().catch((error) => {
@@ -467,7 +476,10 @@ export class Agent {
       },
     };
 
-    listenForConfigUpdates(options);
+    if (realtimeURL.hostname !== "runtime.aikido.dev") {
+      listenForConfigUpdates(options);
+    }
+
     pollForChanges(options);
   }
 
@@ -772,7 +784,9 @@ export class Agent {
     }
 
     const promise = sendUserEvent(this.token, event).catch(() => {
-      this.logger.log("Failed to report tracked event");
+      this.logger.log(
+        `Failed to send tracked event, ensure ${getRealtimeURL().hostname} is in your outbound firewall allowlist`
+      );
     });
     this.pendingEvents.onAPICall(promise);
   }

@@ -1,5 +1,4 @@
 import * as t from "tap";
-import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { HTTPRequest } from "./HTTPRequest";
 import { createTestAgent } from "../helpers/createTestAgent";
@@ -51,9 +50,7 @@ t.before(async () => {
 });
 
 t.test("it works", opts, async (t) => {
-  const agent = createTestAgent({
-    token: new Token("123"),
-  });
+  const agent = createTestAgent();
   agent.start([new HTTPRequest()]);
 
   t.same(agent.getHostnames().asArray(), []);
