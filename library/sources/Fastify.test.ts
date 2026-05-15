@@ -56,6 +56,7 @@ const agent = new Agent(
     configUpdatedAt: 0,
     heartbeatIntervalInMS: 10 * 60 * 1000,
     allowedIPAddresses: ["4.3.2.1"],
+    excludedUserIdsFromRateLimiting: [],
   }),
   new Token("123"),
   undefined,
@@ -407,6 +408,7 @@ t.test("it rate limits requests by ip address", opts, async (t) => {
   });
 
   t.same(response4.statusCode, 429);
+  t.ok(parseInt(response4.headers["retry-after"] as string) > 0);
 });
 
 t.test(

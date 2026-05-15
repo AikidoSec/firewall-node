@@ -1,4 +1,5 @@
 import { colorText } from "./colorText";
+import { warnBox } from "./warnBox";
 
 export function warnIfTsxIsUsed() {
   if (!isTsxUsed()) {
@@ -9,7 +10,9 @@ export function warnIfTsxIsUsed() {
   console.warn(
     colorText(
       "red",
-      "AIKIDO: You are using tsx to run your code. Zen might not fully protect your app when using tsx. In production you should always use node to run your code."
+      warnBox(
+        "Zen is NOT protecting your application when using tsx. Use node instead of tsx in production."
+      )
     )
   );
 }

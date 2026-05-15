@@ -8,6 +8,7 @@ import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect
 import { SQLDialectPostgres } from "../vulnerabilities/sql-injection/dialects/SQLDialectPostgres";
 import { isPlainObject } from "../helpers/isPlainObject";
 import { wrapExport } from "../agent/hooks/wrapExport";
+import { PartialWrapPackageInfo } from "../agent/hooks/WrapPackageInfo";
 
 export class Postgres implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectPostgres();
@@ -160,6 +161,54 @@ export class Postgres implements Wrapper {
             name: "connect",
             operationKind: "sql_op",
             modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+          },
+        ],
+      });
+
+    hooks
+      .addPackage("@prisma/adapter-pg")
+      .withVersion("^7.0.0")
+      .addFileInstrumentation({
+        // This is not needed for CJS, as we can see sub-imports of CJS packages
+        path: "dist/index.mjs",
+        functions: [
+          {
+            nodeType: "MethodDefinition",
+            className: "PrismaPgAdapter",
+            name: "constructor",
+            operationKind: undefined,
+            modifyArgs: (args) => {
+              const pkgInfo = {
+                type: "external",
+                name: "@prisma/adapter-pg",
+              } satisfies PartialWrapPackageInfo;
+
+              if (
+                !args[0] ||
+                typeof args[0] !== "object" ||
+                !("connect" in args[0]) ||
+                !("Client" in args[0])
+              ) {
+                return args;
+              }
+
+              const pool = args[0] as {
+                connect: unknown;
+                Client: { prototype: unknown };
+              };
+
+              wrapExport(pool, "connect", pkgInfo, {
+                kind: "sql_op",
+                modifyArgs: (args) => this.modifyPoolConnectArgs(args),
+              });
+
+              wrapExport(pool.Client.prototype, "query", pkgInfo, {
+                kind: "sql_op",
+                inspectArgs: (args) => this.inspectQuery(args),
+              });
+
+              return args;
+            },
           },
         ],
       });

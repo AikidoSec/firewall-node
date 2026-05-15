@@ -32,7 +32,8 @@ function onRequest(...) {
           message += ` (Your IP: ${result.ip})`;
         }
 
-        // Block the request and send a http 429 status code
+        // Return a 429 response with a Retry-After header, e.g.:
+        // res.setHeader("Retry-After", result.retryAfterSeconds.toString());
         return ...;
       }
 
