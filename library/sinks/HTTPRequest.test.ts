@@ -84,7 +84,7 @@ t.test("it works", (t) => {
   agent.getHostnames().clear();
 
   runWithContext(createContext(), () => {
-    const aikido = https.request("https://aikido.dev");
+    const aikido = https.request("https://AIKIDO.dev");
     aikido.end();
   });
   t.same(agent.getHostnames().asArray(), [

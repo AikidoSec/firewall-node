@@ -28,7 +28,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-3-haiku-20240307",
+      model: "claude-haiku-4-5-20251001",
     });
 
     t.same(result.content[0].text, "Paris");
@@ -56,7 +56,7 @@ t.test(
             "What is the capital of France? Answer with just the city name, no punctuation.",
         },
       ],
-      model: "claude-3-haiku-20240307",
+      model: "claude-haiku-4-5-20251001",
       stream: true,
     });
 

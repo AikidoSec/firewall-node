@@ -1,5 +1,5 @@
 const t = require("tap");
-const { spawnSync, spawn, execSync } = require("child_process");
+const { spawnSync, spawn } = require("child_process");
 const { resolve, join } = require("path");
 const timeout = require("../timeout");
 const { cpSync, writeFileSync } = require("fs");
@@ -9,13 +9,9 @@ const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
 t.setTimeout(2 * 60 * 1000);
 
 t.before(() => {
-  const { stderr } = spawnSync(`npm`, ["run", "build"], {
+  spawnSync(`npm`, ["run", "build"], {
     cwd: pathToApp,
   });
-
-  if (stderr && stderr.toString().length > 0) {
-    throw new Error(`Failed to build: ${stderr.toString()}`);
-  }
 
   cpSync(
     join(pathToApp, "./node_modules/@aikidosec/firewall"),

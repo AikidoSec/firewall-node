@@ -42,6 +42,7 @@ const api = new ReportingAPIForTesting({
     },
   ],
   heartbeatIntervalInMS: 10 * 60 * 1000,
+  excludedUserIdsFromRateLimiting: [],
 });
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({

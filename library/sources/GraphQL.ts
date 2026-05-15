@@ -148,6 +148,7 @@ export class GraphQL implements Wrapper {
             extensions: {
               code: "RATE_LIMITED_BY_ZEN",
               ipAddress: context.remoteAddress,
+              retryAfterSeconds: result.retryAfterSeconds,
             },
           }),
         ],
