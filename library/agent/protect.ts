@@ -133,6 +133,7 @@ function startAgent({
   return agent;
 }
 
+// When adding a new web framework, also update the list in Agent.hasWebFrameworkLoaded()
 export function getWrappers() {
   return [
     new Express(),

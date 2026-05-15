@@ -606,6 +606,33 @@ export class Agent {
     this.logger.log(`node:${name} is supported!`);
   }
 
+  // We check this.packages, which tracks every package loaded by the app.
+  // Careful: this.packages gets cleared after the first heartbeat (30s).
+  // This works because HTTP servers are created at startup, well before that.
+  hasWebFrameworkLoaded(): boolean {
+    if (this.serverless) {
+      return true;
+    }
+
+    const webFrameworks = [
+      "express",
+      "fastify",
+      "hono",
+      "koa",
+      "@hapi/hapi",
+      "restify",
+      "next",
+      "@nestjs/core",
+      "micro",
+      "nuxt",
+    ];
+
+    return webFrameworks.some(
+      (framework) =>
+        this.packages.has(framework) || this.wrappedPackages.has(framework)
+    );
+  }
+
   onConnectHostname(hostname: string, port: number) {
     this.hostnames.add(hostname, port);
   }
