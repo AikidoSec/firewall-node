@@ -471,11 +471,20 @@ export class Agent {
     pollForChanges(options);
   }
 
+  private getHostname() {
+    const instanceName = process.env.AIKIDO_INSTANCE_NAME;
+    if (instanceName && instanceName.trim().length > 0) {
+      return instanceName.trim();
+    }
+
+    return hostname() || "";
+  }
+
   private getAgentInfo(): AgentInfo {
     return {
       dryMode: !this.block,
       /* c8 ignore next */
-      hostname: hostname() || "",
+      hostname: this.getHostname(),
       version: getAgentVersion(),
       library: "firewall-node",
       /* c8 ignore next */
@@ -739,5 +748,10 @@ export class Agent {
       this.logger.log("Failed to report tracked event");
     });
     this.pendingEvents.onAPICall(promise);
+  }
+
+  public async shutdown(timeoutInMS = 1000): Promise<void> {
+    this.logger.log("Shutting down agent...");
+    await this.flushStats(timeoutInMS);
   }
 }

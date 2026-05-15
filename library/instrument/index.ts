@@ -10,6 +10,7 @@ import { isMainThread } from "node:worker_threads";
 import { isESM } from "../helpers/isESM";
 import { isPreloaded } from "../helpers/isPreloaded";
 import { colorText } from "../helpers/colorText";
+import { warnBox } from "../helpers/warnBox";
 
 setIsNewHookSystemUsed(true);
 
@@ -26,7 +27,9 @@ function start() {
     console.error(
       colorText(
         "red",
-        "AIKIDO: Error: Zen requires that your Node.js version supports the `module.registerHooks` API. Please upgrade to a newer version of Node.js. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+        warnBox(
+          "Zen is NOT protecting your application. Your Node.js version does not support module.registerHooks. Upgrade Node.js and see https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+        )
       )
     );
     return;
@@ -43,7 +46,9 @@ function start() {
     console.error(
       colorText(
         "red",
-        "AIKIDO: Error: Your application seems to be running in ESM mode without preloading the library. Please use --require to preload the library. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+        warnBox(
+          "Zen is NOT protecting your application. Your ESM app needs the library preloaded with --require. See https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+        )
       )
     );
   }

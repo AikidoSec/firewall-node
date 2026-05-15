@@ -55,7 +55,7 @@ t.test("it logs esm warnings", (t) => {
     .then(([sqlInjection, normalAdd]) => {
       t.equal(sqlInjection.status, 200); // Not blocked
       t.equal(normalAdd.status, 200);
-      t.match(stderr, /Your application seems to be running in ESM mode\./);
+      t.match(stderr, /Zen is NOT protecting your application/);
       t.match(stdout, /Starting agent/);
       t.notMatch(stderr, /Zen has blocked an SQL injection/); // Not supported
     })

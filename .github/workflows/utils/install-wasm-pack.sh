@@ -18,7 +18,7 @@
 
 set -u
 
-UPDATE_ROOT="https://github.com/drager/wasm-pack/releases/download/v0.13.1"
+UPDATE_ROOT="https://github.com/wasm-bindgen/wasm-pack/releases/download/v0.13.1"
 
 main() {
     downloader --check

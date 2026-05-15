@@ -194,6 +194,7 @@ export async function createKoaTests(koaPackageName: string) {
 
     t.equal(response.status, 429);
     t.match(response.text, "You are rate limited by Zen.");
+    t.ok(parseInt(response.headers["retry-after"]) > 0);
   });
 
   t.test("test legacy generator function middleware", async (t) => {

@@ -333,6 +333,7 @@ t.test("it rate limits based on IP address", opts, async (t) => {
     await response3.text(),
     "You are rate limited by Zen. (Your IP: 1.2.3.4)"
   );
+  t.ok(parseInt(response3.headers.get("retry-after")!) > 0);
 
   const response4 = await app.request("/%72ate-limited", {
     method: "GET",

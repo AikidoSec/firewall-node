@@ -1,4 +1,5 @@
 import { getPortFromURL } from "../../helpers/getPortFromURL";
+import { normalizeHostname } from "../../helpers/normalizeHostname";
 import { tryParseURL } from "../../helpers/tryParseURL";
 import { isOptionsObject } from "../http-request/isOptionsObject";
 
@@ -36,7 +37,7 @@ export function getHostnameAndPortFromArgs(
     // If url is not undefined, extract the hostname and port
     if (url && url.hostname.length > 0) {
       return {
-        hostname: url.hostname,
+        hostname: normalizeHostname(url.hostname),
         port: getPortFromURL(url),
       };
     }
@@ -61,7 +62,7 @@ function parseOptionsObject(obj: any): HostnameAndPort | undefined {
     const url = tryParseURL(obj.origin);
     if (url) {
       return {
-        hostname: url.hostname,
+        hostname: normalizeHostname(url.hostname),
         port: getPortFromURL(url),
       };
     }
@@ -89,7 +90,7 @@ function parseOptionsObject(obj: any): HostnameAndPort | undefined {
   }
 
   return {
-    hostname: obj.hostname.toLowerCase(),
+    hostname: normalizeHostname(obj.hostname.toLowerCase()),
     port,
   };
 }

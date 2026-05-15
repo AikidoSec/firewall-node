@@ -19,6 +19,15 @@ import { createTestAgent } from "../helpers/createTestAgent";
 import { setTimeout } from "node:timers/promises";
 import { FetchListsAPIForTesting } from "./api/FetchListsAPIForTesting";
 import { colorText } from "../helpers/colorText";
+import { shutdown } from "./shutdown";
+
+t.beforeEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
+
+t.afterEach(() => {
+  delete process.env.AIKIDO_INSTANCE_NAME;
+});
 
 const mockedFetchListAPI = new FetchListsAPIForTesting({
   blockedIPAddresses: [
@@ -1411,4 +1420,141 @@ t.test("Wrapped packages is working correctly", async () => {
     "shell-quote@3.0.0 is supported!",
     "shell-quote@4.3.2 is supported!",
   ]);
+});
+
+t.test("getHostname uses AIKIDO_INSTANCE_NAME env var when set", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "my-instance";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test("getHostname trims whitespace from AIKIDO_INSTANCE_NAME", async (t) => {
+  process.env.AIKIDO_INSTANCE_NAME = "  my-instance  ";
+
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+      agent: { hostname: "my-instance" },
+    },
+  ]);
+});
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is empty",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is whitespace-only",
+  async (t) => {
+    process.env.AIKIDO_INSTANCE_NAME = "   ";
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test(
+  "getHostname falls back to os.hostname() when AIKIDO_INSTANCE_NAME is not set",
+  async (t) => {
+    delete process.env.AIKIDO_INSTANCE_NAME;
+
+    const api = new ReportingAPIForTesting();
+    const agent = createTestAgent({
+      api,
+      token: new Token("123"),
+      suppressConsoleLog: false,
+    });
+    agent.start([]);
+
+    t.match(api.getEvents(), [
+      {
+        type: "started",
+        agent: { hostname: hostname() },
+      },
+    ]);
+  }
+);
+
+t.test("it sends heartbeat when shutdown is called", async () => {
+  const clock = FakeTimers.install();
+
+  const logger = new LoggerNoop();
+  const api = new ReportingAPIForTesting();
+  const agent = createTestAgent({
+    api,
+    logger,
+    token: new Token("123"),
+    suppressConsoleLog: false,
+  });
+  agent.start([]);
+
+  clock.tick(1000 * 5);
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+  ]);
+
+  await shutdown();
+
+  t.match(api.getEvents(), [
+    {
+      type: "started",
+    },
+    {
+      type: "heartbeat",
+    },
+  ]);
+
+  clock.uninstall();
 });

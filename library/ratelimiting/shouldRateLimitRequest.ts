@@ -12,16 +12,19 @@ type Result =
       block: true;
       trigger: "ip";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
       trigger: "user";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     }
   | {
       block: true;
       trigger: "group";
       endpoint: Endpoint;
+      retryAfterSeconds: number;
     };
 
 export function shouldRateLimitRequest(
@@ -71,7 +74,7 @@ export function shouldRateLimitRequest(
   const { maxRequests, windowSizeInMS } = endpoint.rateLimiting;
 
   if (context.rateLimitGroup) {
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${endpoint.method}:${endpoint.route}:group:${context.rateLimitGroup}`,
@@ -79,8 +82,13 @@ export function shouldRateLimitRequest(
         maxRequests
       );
 
-    if (!allowed) {
-      return { block: true, trigger: "group", endpoint };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "group",
+        endpoint,
+        retryAfterSeconds: result.retryAfterSeconds,
+      };
     }
 
     // Do not check IP or User rate limit if rateLimitGroup is set
@@ -88,7 +96,7 @@ export function shouldRateLimitRequest(
   }
 
   if (context.user) {
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${endpoint.method}:${endpoint.route}:user:${context.user.id}`,
@@ -96,8 +104,13 @@ export function shouldRateLimitRequest(
         maxRequests
       );
 
-    if (!allowed) {
-      return { block: true, trigger: "user", endpoint };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "user",
+        endpoint,
+        retryAfterSeconds: result.retryAfterSeconds,
+      };
     }
 
     // Do not check IP rate limit if user is set
@@ -105,7 +118,7 @@ export function shouldRateLimitRequest(
   }
 
   if (context.remoteAddress) {
-    const allowed = agent
+    const result = agent
       .getRateLimiter()
       .isAllowed(
         `${endpoint.method}:${endpoint.route}:ip:${context.remoteAddress}`,
@@ -113,8 +126,13 @@ export function shouldRateLimitRequest(
         maxRequests
       );
 
-    if (!allowed) {
-      return { block: true, trigger: "ip", endpoint };
+    if (!result.allowed) {
+      return {
+        block: true,
+        trigger: "ip",
+        endpoint,
+        retryAfterSeconds: result.retryAfterSeconds,
+      };
     }
   }
 

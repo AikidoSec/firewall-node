@@ -204,6 +204,7 @@ export async function createRestifyTests(restifyPackageName: string) {
       .set("x-forwarded-for", "1.2.3.4");
     t.same(res2.statusCode, 429);
     t.same(res2.text, "You are rate limited by Zen. (Your IP: 1.2.3.4)");
+    t.ok(parseInt(res2.headers["retry-after"]) > 0);
 
     await sleep(2000);
 

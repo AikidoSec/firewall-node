@@ -14,11 +14,13 @@ import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
+import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
 import { setTenantId } from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
+import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
 
@@ -34,7 +36,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be running in ESM mode. You need to use the new hook system to enable Zen. See our ESM documentation for setup instructions (https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md)."
+          warnBox(
+            "Zen is NOT protecting your application. Your app runs in ESM mode, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+          )
         )
       );
     }
@@ -44,7 +48,9 @@ if (!isNewHookSystemUsed()) {
       console.warn(
         colorText(
           "red",
-          "AIKIDO: Your application seems to be using a bundler without externalizing Zen and the packages that should be protected. Zen will not function as intended. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md for more information."
+          warnBox(
+            "Zen is NOT protecting your application. Your app uses a bundler without externalizing Zen and the packages it needs to protect. See https://github.com/AikidoSec/firewall-node/blob/main/docs/bundler.md"
+          )
         )
       );
     }
@@ -70,6 +76,7 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
@@ -90,6 +97,7 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  shutdown,
   setTenantId,
   enableIdorProtection,
   withoutIdorProtection,
