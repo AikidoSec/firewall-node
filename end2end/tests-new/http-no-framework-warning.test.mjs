@@ -54,6 +54,46 @@ test("CJS: it warns when HTTP server is created without a web framework", async 
   server.kill();
 });
 
+test("CJS: it does not warn when a web framework is loaded", async () => {
+  const port = await getRandomPort();
+  const server = spawn(`node`, ["app.js", port], {
+    cwd: pathToCjsApp,
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      LOAD_FRAMEWORK: "true",
+    },
+  });
+
+  server.on("error", (err) => {
+    fail(`Failed to start subprocess: ${err}`);
+  });
+
+  let stdout = "";
+  let stderr = "";
+
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  await timeout(3000);
+
+  const combined = stdout + stderr;
+
+  doesNotMatch(
+    combined,
+    /Zen detected an HTTP server but no supported web framework/,
+    "Should not warn when a web framework is loaded"
+  );
+
+  server.kill();
+});
+
 test("ESM: it warns when HTTP server is created without a web framework", async () => {
   const port = await getRandomPort();
   const server = spawn(
@@ -92,6 +132,50 @@ test("ESM: it warns when HTTP server is created without a web framework", async 
     combined,
     /Zen detected an HTTP server but no supported web framework/,
     "Expected warning about missing web framework"
+  );
+
+  server.kill();
+});
+
+test("ESM: it does not warn when a web framework is loaded", async () => {
+  const port = await getRandomPort();
+  const server = spawn(
+    `node`,
+    ["-r", "../../build/instrument/index.js", "app.mjs", port],
+    {
+      cwd: pathToEsmApp,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+        LOAD_FRAMEWORK: "true",
+      },
+    }
+  );
+
+  server.on("error", (err) => {
+    fail(`Failed to start subprocess: ${err}`);
+  });
+
+  let stdout = "";
+  let stderr = "";
+
+  server.stdout.on("data", (data) => {
+    stdout += data.toString();
+  });
+
+  server.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+
+  await timeout(3000);
+
+  const combined = stdout + stderr;
+
+  doesNotMatch(
+    combined,
+    /Zen detected an HTTP server but no supported web framework/,
+    "Should not warn when a web framework is loaded"
   );
 
   server.kill();

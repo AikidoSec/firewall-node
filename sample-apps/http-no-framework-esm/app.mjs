@@ -1,5 +1,9 @@
 import http from "node:http";
 
+if (process.env.LOAD_FRAMEWORK) {
+  await import("express");
+}
+
 const port = parseInt(process.argv[2], 10) || 4000;
 
 const server = http.createServer((req, res) => {
