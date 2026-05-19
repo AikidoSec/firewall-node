@@ -476,13 +476,11 @@ export class Agent {
       onConfigUpdate,
     });
 
-    const pollingURL = await resolvePollingURL(this.token, this.logger);
-
     pollForChanges({
       token: this.token,
       logger: this.logger,
       lastUpdatedAt,
-      realtimeURL: pollingURL,
+      realtimeURL: await resolvePollingURL(this.token, this.logger),
       onConfigUpdate,
     });
   }
