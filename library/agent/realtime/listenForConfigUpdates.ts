@@ -1,14 +1,23 @@
+import type { Config } from "../Config";
+import type { Token } from "../api/Token";
+import type { Logger } from "../logger/Logger";
 import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
 import { connectToSSE } from "./connectToSSE";
-import type { ConfigUpdateOptions } from "./ConfigUpdateOptions";
 import { getConfig } from "./getConfig";
+
+type OnConfigUpdate = (config: Config) => void;
 
 export function listenForConfigUpdates({
   onConfigUpdate,
   token,
   logger,
   lastUpdatedAt,
-}: ConfigUpdateOptions) {
+}: {
+  onConfigUpdate: OnConfigUpdate;
+  token: Token | undefined;
+  logger: Logger;
+  lastUpdatedAt: number;
+}) {
   if (!token) {
     logger.log("No token provided, not listening for config updates");
     return;

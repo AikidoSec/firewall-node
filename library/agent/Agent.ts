@@ -16,9 +16,8 @@ import type {
 import { sendUserEvent, type UserEvent } from "./api/UserEventsAPI";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Endpoint } from "./Config";
+import { type Config, Endpoint } from "./Config";
 import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
-import type { ConfigUpdateOptions } from "./realtime/ConfigUpdateOptions";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -461,23 +460,31 @@ export class Agent {
       return;
     }
 
-    const realtimeURL = await resolvePollingURL(this.token, this.logger);
-
-    const options: ConfigUpdateOptions = {
-      token: this.token,
-      logger: this.logger,
-      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
-      realtimeURL,
-      onConfigUpdate: (config) => {
-        this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedLists().catch((error) => {
-          this.logger.log(`Failed to update blocked lists: ${error.message}`);
-        });
-      },
+    const onConfigUpdate = (config: Config) => {
+      this.updateServiceConfig({ success: true, ...config });
+      this.updateBlockedLists().catch((error) => {
+        this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      });
     };
 
-    listenForConfigUpdates(options);
-    pollForChanges(options);
+    const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
+
+    listenForConfigUpdates({
+      token: this.token,
+      logger: this.logger,
+      lastUpdatedAt,
+      onConfigUpdate,
+    });
+
+    const pollingURL = await resolvePollingURL(this.token, this.logger);
+
+    pollForChanges({
+      token: this.token,
+      logger: this.logger,
+      lastUpdatedAt,
+      realtimeURL: pollingURL,
+      onConfigUpdate,
+    });
   }
 
   private getHostname() {

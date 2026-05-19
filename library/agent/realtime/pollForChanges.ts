@@ -1,7 +1,10 @@
+import type { Config } from "../Config";
 import type { Token } from "../api/Token";
-import type { ConfigUpdateOptions } from "./ConfigUpdateOptions";
+import type { Logger } from "../logger/Logger";
 import { getConfig } from "./getConfig";
 import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
+
+type OnConfigUpdate = (config: Config) => void;
 
 let interval: NodeJS.Timeout | null = null;
 let currentLastUpdatedAt: number | null = null;
@@ -12,7 +15,13 @@ export function pollForChanges({
   logger,
   lastUpdatedAt,
   realtimeURL,
-}: ConfigUpdateOptions) {
+}: {
+  onConfigUpdate: OnConfigUpdate;
+  token: Token | undefined;
+  logger: Logger;
+  lastUpdatedAt: number;
+  realtimeURL: URL;
+}) {
   if (!token) {
     logger.log("No token provided, not polling for config updates");
     return;
@@ -36,7 +45,7 @@ export function pollForChanges({
 async function check(
   token: Token,
   realtimeURL: URL,
-  onConfigUpdate: ConfigUpdateOptions["onConfigUpdate"]
+  onConfigUpdate: OnConfigUpdate
 ) {
   const configLastUpdatedAt = await getConfigLastUpdatedAt(token, realtimeURL);
 
