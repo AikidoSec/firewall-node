@@ -9,6 +9,7 @@ import { getRealtimeURL } from "./getRealtimeURL";
 
 const INITIAL_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 60 * 1000;
+const READ_TIMEOUT_MS = 70 * 1000;
 
 export function connectToSSE({
   token,
@@ -96,6 +97,13 @@ export function connectToSSE({
     currentRequest = req;
 
     req.on("socket", (socket) => {
+      socket.setTimeout(READ_TIMEOUT_MS, () => {
+        if (debugSSE) {
+          logger.log("SSE read timeout, reconnecting");
+        }
+        req.destroy();
+        scheduleReconnect();
+      });
       socket.unref();
     });
 
