@@ -5,7 +5,7 @@ import { getRealtimeURL } from "./getRealtimeURL";
 
 const FALLBACK_URL = "https://runtime.aikido.dev";
 
-export async function resolveRealtimeURL(
+export async function resolvePollingURL(
   token: Token,
   logger: Logger
 ): Promise<URL> {

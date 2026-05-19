@@ -5,6 +5,7 @@ import type { EventSourceMessage } from "../../helpers/eventsource-parser/types"
 import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
 import { Token } from "../api/Token";
 import { Logger } from "../logger/Logger";
+import { getRealtimeURL } from "./getRealtimeURL";
 
 const INITIAL_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 60 * 1000;
@@ -12,12 +13,10 @@ const MAX_RECONNECT_MS = 60 * 1000;
 export function connectToSSE({
   token,
   logger,
-  realtimeURL,
   onEvent,
 }: {
   token: Token;
   logger: Logger;
-  realtimeURL: URL;
   onEvent: (event: EventSourceMessage) => void;
 }) {
   let reconnectMs = INITIAL_RECONNECT_MS;
@@ -32,7 +31,7 @@ export function connectToSSE({
       currentRequest = null;
     }
 
-    const url = new URL(`${realtimeURL.toString()}api/runtime/stream`);
+    const url = new URL(`${getRealtimeURL().toString()}api/runtime/stream`);
 
     if (debugSSE) {
       logger.log(`SSE connecting to ${url.toString()}`);

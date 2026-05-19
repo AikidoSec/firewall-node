@@ -8,7 +8,6 @@ export function listenForConfigUpdates({
   token,
   logger,
   lastUpdatedAt,
-  realtimeURL,
 }: ConfigUpdateOptions) {
   if (!token) {
     logger.log("No token provided, not listening for config updates");
@@ -22,7 +21,6 @@ export function listenForConfigUpdates({
   connectToSSE({
     token,
     logger,
-    realtimeURL,
     onEvent(event) {
       if (debugSSE) {
         logger.log(`SSE event received: ${event.event}`);

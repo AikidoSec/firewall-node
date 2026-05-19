@@ -41,7 +41,7 @@ import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { getRealtimeURL } from "./realtime/getRealtimeURL";
-import { resolveRealtimeURL } from "./realtime/resolveRealtimeURL";
+import { resolvePollingURL } from "./realtime/resolvePollingURL";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -461,7 +461,7 @@ export class Agent {
       return;
     }
 
-    const realtimeURL = await resolveRealtimeURL(this.token, this.logger);
+    const realtimeURL = await resolvePollingURL(this.token, this.logger);
 
     const options: ConfigUpdateOptions = {
       token: this.token,
@@ -476,10 +476,7 @@ export class Agent {
       },
     };
 
-    if (realtimeURL.hostname !== "runtime.aikido.dev") {
-      listenForConfigUpdates(options);
-    }
-
+    listenForConfigUpdates(options);
     pollForChanges(options);
   }
 
