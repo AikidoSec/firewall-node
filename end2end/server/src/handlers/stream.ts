@@ -2,12 +2,19 @@ import type { Response } from "express";
 import { getAppConfig, configEvents } from "../zen/config.ts";
 import type { ZenRequest } from "../types.ts";
 
+const connections = new Map<number, Set<Response>>();
+
 export function stream(req: ZenRequest, res: Response) {
   if (!req.zenApp) {
     throw new Error("App is missing");
   }
 
   const app = req.zenApp;
+
+  if (!connections.has(app.id)) {
+    connections.set(app.id, new Set());
+  }
+  connections.get(app.id)!.add(res);
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -31,7 +38,24 @@ export function stream(req: ZenRequest, res: Response) {
   }, 30_000);
 
   req.on("close", () => {
+    connections.get(app.id)?.delete(res);
     configEvents.off(eventName, sendConfig);
     clearInterval(ping);
   });
+}
+
+export function disconnectStreams(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
+    throw new Error("App is missing");
+  }
+
+  const appConnections = connections.get(req.zenApp.id);
+  if (appConnections) {
+    for (const conn of appConnections) {
+      conn.end();
+    }
+    appConnections.clear();
+  }
+
+  res.json({ ok: true });
 }
