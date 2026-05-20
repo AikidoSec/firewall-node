@@ -25,15 +25,20 @@ export function listenForConfigUpdates({
 
   const validToken = token;
   const debugSSE = isDebuggingSSE();
+
+  function logDebug(msg: string) {
+    if (debugSSE) {
+      logger.log(msg);
+    }
+  }
+
   let currentLastUpdatedAt = lastUpdatedAt;
 
   connectToSSE({
     token,
     logger,
     onEvent(event) {
-      if (debugSSE) {
-        logger.log(`SSE event received: ${event.event}`);
-      }
+      logDebug(`SSE event received: ${event.event}`);
       if (event.event !== "config-updated") {
         return;
       }
@@ -47,22 +52,18 @@ export function listenForConfigUpdates({
         // If we can't parse the payload, fetch the config anyway
       }
 
-      if (debugSSE) {
-        logger.log("SSE config-updated event, fetching new config");
-      }
+      logDebug("SSE config-updated event, fetching new config");
 
       getConfig(validToken)
         .then((config) => {
-          if (debugSSE) {
-            logger.log(
-              `SSE config fetched, configUpdatedAt: ${config.configUpdatedAt}`
-            );
-          }
+          logDebug(
+            `SSE config fetched, configUpdatedAt: ${config.configUpdatedAt}`
+          );
           currentLastUpdatedAt = config.configUpdatedAt;
           onConfigUpdate(config);
         })
         .catch((error) => {
-          logger.log(
+          logDebug(
             `Failed to fetch config after SSE event: ${error.message}`
           );
         });

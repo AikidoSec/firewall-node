@@ -26,6 +26,12 @@ export function connectToSSE({
 
   const debugSSE = isDebuggingSSE();
 
+  function logDebug(msg: string) {
+    if (debugSSE) {
+      logger.log(msg);
+    }
+  }
+
   function connect() {
     if (currentRequest) {
       currentRequest.destroy();
@@ -34,9 +40,7 @@ export function connectToSSE({
 
     const url = new URL(`${getRealtimeURL().toString()}api/runtime/stream`);
 
-    if (debugSSE) {
-      logger.log(`SSE connecting to ${url.toString()}`);
-    }
+    logDebug(`SSE connecting to ${url.toString()}`);
 
     const requestFn = url.protocol === "https:" ? requestHttps : requestHttp;
 
@@ -52,18 +56,14 @@ export function connectToSSE({
       },
       (response) => {
         if (response.statusCode !== 200) {
-          logger.log(
-            `SSE connection failed with status ${response.statusCode}`
-          );
+          logDebug(`SSE connection failed with status ${response.statusCode}`);
           response.destroy();
           scheduleReconnect();
           return;
         }
 
         reconnectMs = INITIAL_RECONNECT_MS;
-        if (debugSSE) {
-          logger.log("SSE connected successfully");
-        }
+        logDebug("SSE connected successfully");
 
         const parser = createParser({
           onEvent(event) {
@@ -74,20 +74,18 @@ export function connectToSSE({
         response.setEncoding("utf-8");
 
         response.on("data", (chunk: string) => {
-          if (debugSSE) {
-            logger.log(`SSE received chunk: ${chunk.trimEnd()}`);
-          }
+          logDebug(`SSE received chunk: ${chunk.trimEnd()}`);
           parser.feed(chunk);
         });
 
         response.on("end", () => {
-          logger.log("SSE connection closed by server, reconnecting");
+          logDebug("SSE connection closed by server, reconnecting");
           parser.reset();
           scheduleReconnect();
         });
 
         response.on("error", (error) => {
-          logger.log(`SSE stream error: ${error.message}`);
+          logDebug(`SSE stream error: ${error.message}`);
           parser.reset();
           scheduleReconnect();
         });
@@ -98,17 +96,16 @@ export function connectToSSE({
 
     req.on("socket", (socket) => {
       socket.setTimeout(READ_TIMEOUT_MS, () => {
-        if (debugSSE) {
-          logger.log("SSE read timeout, reconnecting");
-        }
+        logDebug("SSE read timeout, reconnecting");
         req.destroy();
         scheduleReconnect();
       });
+      // Don't keep the process alive just for the SSE connection
       socket.unref();
     });
 
     req.on("error", (error) => {
-      logger.log(`SSE connection error: ${error.message}`);
+      logDebug(`SSE connection error: ${error.message}`);
       scheduleReconnect();
     });
 
@@ -120,12 +117,11 @@ export function connectToSSE({
       clearTimeout(reconnectTimer);
     }
 
-    if (debugSSE) {
-      logger.log(`SSE scheduling reconnect in ${reconnectMs}ms`);
-    }
+    logDebug(`SSE scheduling reconnect in ${reconnectMs}ms`);
 
     reconnectTimer = setTimeout(connect, reconnectMs);
     reconnectMs = Math.min(reconnectMs * 2, MAX_RECONNECT_MS);
+    // Don't keep the process alive just for the reconnect timer
     reconnectTimer.unref();
   }
 
