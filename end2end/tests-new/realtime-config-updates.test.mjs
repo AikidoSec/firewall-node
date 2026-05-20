@@ -135,8 +135,8 @@ test("it reconnects SSE after server disconnects", async () => {
       headers: { Authorization: token },
     });
 
-    // Wait for reconnect (initial reconnect delay is 1s)
-    await timeout(3000);
+    // Wait for reconnect (initial reconnect delay is 5s + jitter)
+    await timeout(9000);
     match(stdout, /SSE connection closed by server, reconnecting/);
 
     // Verify SSE reconnected

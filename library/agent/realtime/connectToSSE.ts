@@ -7,8 +7,9 @@ import { Token } from "../api/Token";
 import { Logger } from "../logger/Logger";
 import { getRealtimeURL } from "./getRealtimeURL";
 
-const INITIAL_RECONNECT_MS = 1000;
+const INITIAL_RECONNECT_MS = 5000;
 const MAX_RECONNECT_MS = 60 * 1000;
+const STABLE_CONNECTION_MS = 30 * 1000;
 const READ_TIMEOUT_MS = 70 * 1000;
 
 export function connectToSSE({
@@ -62,7 +63,7 @@ export function connectToSSE({
           return;
         }
 
-        reconnectMs = INITIAL_RECONNECT_MS;
+        const connectedAt = Date.now();
         logDebug("SSE connected successfully");
 
         const parser = createParser({
@@ -81,12 +82,14 @@ export function connectToSSE({
         response.on("end", () => {
           logDebug("SSE connection closed by server, reconnecting");
           parser.reset();
+          resetBackoffIfStable(connectedAt);
           scheduleReconnect();
         });
 
         response.on("error", (error) => {
           logDebug(`SSE stream error: ${error.message}`);
           parser.reset();
+          resetBackoffIfStable(connectedAt);
           scheduleReconnect();
         });
       }
@@ -112,14 +115,23 @@ export function connectToSSE({
     req.end();
   }
 
+  function resetBackoffIfStable(connectedAt: number) {
+    if (Date.now() - connectedAt >= STABLE_CONNECTION_MS) {
+      reconnectMs = INITIAL_RECONNECT_MS;
+    }
+  }
+
   function scheduleReconnect() {
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
     }
 
-    logDebug(`SSE scheduling reconnect in ${reconnectMs}ms`);
+    const jitter = Math.random() * (reconnectMs / 2);
+    const delay = reconnectMs + jitter;
 
-    reconnectTimer = setTimeout(connect, reconnectMs);
+    logDebug(`SSE scheduling reconnect in ${Math.round(delay)}ms`);
+
+    reconnectTimer = setTimeout(connect, delay);
     reconnectMs = Math.min(reconnectMs * 2, MAX_RECONNECT_MS);
     // Don't keep the process alive just for the reconnect timer
     reconnectTimer.unref();
