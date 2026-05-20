@@ -140,7 +140,8 @@ test("it reconnects SSE after server disconnects", async () => {
     match(stdout, /SSE connection closed by server, reconnecting/);
 
     // Verify SSE reconnected
-    const connectedCount = stdout.split("SSE connected successfully").length - 1;
+    const connectedCount =
+      stdout.split("SSE connected successfully").length - 1;
     equal(connectedCount >= 2, true);
 
     // Block IP 9.8.7.6 after reconnect to verify the new connection works

@@ -64,9 +64,7 @@ export function listenForConfigUpdates({
           onConfigUpdate(config);
         })
         .catch((error) => {
-          logDebug(
-            `Failed to fetch config after SSE event: ${error.message}`
-          );
+          logDebug(`Failed to fetch config after SSE event: ${error.message}`);
         });
     },
   });
