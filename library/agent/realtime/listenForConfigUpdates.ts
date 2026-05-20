@@ -49,7 +49,8 @@ export function listenForConfigUpdates({
           return;
         }
       } catch {
-        // If we can't parse the payload, fetch the config anyway
+        logDebug(`SSE config-updated event has invalid payload: ${event.data}`);
+        return;
       }
 
       logDebug("SSE config-updated event, fetching new config");
