@@ -95,6 +95,7 @@ t.test(
 
     t.same(agent.getHostnames().asArray(), [
       { hostname: "app.aikido.dev", port: 80, hits: 1 },
+      { hostname: "zen.aikido.dev", port: 443, hits: 1 },
     ]);
     agent.getHostnames().clear();
 
