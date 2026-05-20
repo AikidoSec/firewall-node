@@ -1,6 +1,5 @@
 import * as dns from "dns";
 import * as t from "tap";
-import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { HTTPRequest } from "./HTTPRequest";
@@ -61,7 +60,6 @@ t.setTimeout(60 * 1000);
 
 const api = new ReportingAPIForTesting();
 const agent = createTestAgent({
-  token: new Token("123"),
   api,
 });
 agent.start([new HTTPRequest()]);

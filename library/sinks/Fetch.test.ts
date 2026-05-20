@@ -1,6 +1,5 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
 import { wrap } from "../helpers/wrap";
 import { Fetch } from "./Fetch";
@@ -83,7 +82,6 @@ t.test(
   async (t) => {
     const api = new ReportingAPIForTesting();
     const agent = createTestAgent({
-      token: new Token("123"),
       api,
     });
 

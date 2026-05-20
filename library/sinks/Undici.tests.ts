@@ -1,6 +1,6 @@
 import * as t from "tap";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
-import { Token } from "../agent/api/Token";
+
 import { Context, runWithContext } from "../agent/Context";
 import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { startTestAgent } from "../helpers/startTestAgent";
@@ -60,7 +60,6 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       const agent = startTestAgent({
         api,
         logger,
-        token: new Token("123"),
         wrappers: [new Undici()],
         rewrite: {
           undici: undiciPkgName,
