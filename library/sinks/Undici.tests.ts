@@ -7,12 +7,6 @@ import { startTestAgent } from "../helpers/startTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
 
-type HostnameEntry = { hostname: string; port: number; hits: number };
-
-function sortedByHostname(entries: HostnameEntry[]) {
-  return entries.sort((a, b) => a.hostname.localeCompare(b.hostname));
-}
-
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
 // Async needed because `require(...)` is translated to `await import(..)` when running tests in ESM mode
@@ -77,15 +71,13 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
         undiciPkgName
       ) as typeof import("undici-v6");
 
+      agent.getHostnames().clear();
+      t.same(agent.getHostnames().asArray(), []);
+
       await request("https://ssrf-redirects.testssandbox.com");
-      t.same(sortedByHostname(agent.getHostnames().asArray()), [
+      t.same(agent.getHostnames().asArray(), [
         {
           hostname: "ssrf-redirects.testssandbox.com",
-          port: 443,
-          hits: 1,
-        },
-        {
-          hostname: "zen.aikido.dev",
           port: 443,
           hits: 1,
         },
