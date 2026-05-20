@@ -44,18 +44,21 @@ export function stream(req: ZenRequest, res: Response) {
   });
 }
 
-export function disconnectStreams(req: ZenRequest, res: Response) {
-  if (!req.zenApp) {
-    throw new Error("App is missing");
-  }
-
-  const appConnections = connections.get(req.zenApp.id);
+export function closeStreams(appId: number) {
+  const appConnections = connections.get(appId);
   if (appConnections) {
     for (const conn of appConnections) {
       conn.end();
     }
     appConnections.clear();
   }
+}
 
+export function disconnectStreams(req: ZenRequest, res: Response) {
+  if (!req.zenApp) {
+    throw new Error("App is missing");
+  }
+
+  closeStreams(req.zenApp.id);
   res.json({ ok: true });
 }

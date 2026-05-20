@@ -11,6 +11,7 @@ import { lists } from "./src/handlers/lists.ts";
 import { updateIPLists } from "./src/handlers/updateLists.ts";
 import { realtimeConfig } from "./src/handlers/realtimeConfig.ts";
 import { stream, disconnectStreams } from "./src/handlers/stream.ts";
+import { deleteApp } from "./src/handlers/deleteApp.ts";
 
 const app = express();
 app.set("trust proxy", false);
@@ -35,6 +36,7 @@ app.get("/api/runtime/firewall/lists", checkToken, lists);
 app.post("/api/runtime/firewall/lists", checkToken, updateIPLists);
 
 app.post("/api/runtime/apps", createApp);
+app.delete("/api/runtime/apps", checkToken, deleteApp);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

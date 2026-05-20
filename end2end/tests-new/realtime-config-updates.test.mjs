@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import { resolve } from "path";
 import { test } from "node:test";
-import { equal, match, fail } from "node:assert";
+import { equal, doesNotMatch, match, fail } from "node:assert";
 import { getRandomPort } from "./utils/get-port.mjs";
 import { timeout } from "./utils/timeout.mjs";
 
@@ -135,8 +135,8 @@ test("it reconnects SSE after server disconnects", async () => {
       headers: { Authorization: token },
     });
 
-    // Wait for reconnect (initial reconnect delay is 5s + jitter)
-    await timeout(9000);
+    // Wait for reconnect (initial reconnect delay is 5s + jitter up to 7.5s)
+    await timeout(10000);
     match(stdout, /SSE connection closed by server, reconnecting/);
 
     // Verify SSE reconnected
@@ -165,6 +165,56 @@ test("it reconnects SSE after server disconnects", async () => {
       signal: AbortSignal.timeout(5000),
     });
     equal(blocked.status, 403);
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("it stops SSE reconnect on 401", async () => {
+  const response = await fetch(`${testServerUrl}/api/runtime/apps`, {
+    method: "POST",
+  });
+  const body = await response.json();
+  const token = body.token;
+  const port = await getRandomPort();
+
+  const server = spawnApp(token, port);
+
+  try {
+    server.on("error", (err) => {
+      fail(err);
+    });
+
+    let stdout = "";
+    server.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start and SSE to connect
+    await timeout(3000);
+    match(stdout, /SSE connected successfully/);
+
+    // Revoke the token and disconnect SSE so it tries to reconnect with 401
+    await fetch(`${testServerUrl}/api/runtime/apps`, {
+      method: "DELETE",
+      headers: { Authorization: token },
+    });
+
+    // Wait for reconnect attempts (may take multiple due to backoff + jitter)
+    await timeout(15000);
+
+    match(stdout, /SSE connection rejected with status 401, stopping/);
+    // Should not schedule a reconnect after 401
+    const rejectedIndex = stdout.indexOf("SSE connection rejected");
+    const afterRejected = stdout.slice(rejectedIndex);
+    doesNotMatch(afterRejected, /SSE scheduling reconnect/);
   } catch (err) {
     fail(err);
   } finally {

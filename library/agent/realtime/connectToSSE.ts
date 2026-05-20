@@ -56,6 +56,14 @@ export function connectToSSE({
         },
       },
       (response) => {
+        if (response.statusCode === 401 || response.statusCode === 403) {
+          logger.log(
+            `SSE connection rejected with status ${response.statusCode}, stopping`
+          );
+          response.destroy();
+          return;
+        }
+
         if (response.statusCode !== 200) {
           logDebug(`SSE connection failed with status ${response.statusCode}`);
           response.destroy();
@@ -99,6 +107,10 @@ export function connectToSSE({
 
     req.on("socket", (socket) => {
       socket.setTimeout(READ_TIMEOUT_MS, () => {
+        // Timeout can fire after response end/error already triggered reconnect
+        if (socket.destroyed) {
+          return;
+        }
         logDebug("SSE read timeout, reconnecting");
         req.destroy();
         scheduleReconnect();
