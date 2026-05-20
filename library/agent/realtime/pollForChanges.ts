@@ -1,6 +1,6 @@
-import type { Config } from "../Config";
-import type { Token } from "../api/Token";
-import type { Logger } from "../logger/Logger";
+import { Token } from "../api/Token";
+import { Config } from "../Config";
+import { Logger } from "../logger/Logger";
 import { getConfig } from "./getConfig";
 import { getConfigLastUpdatedAt } from "./getConfigLastUpdatedAt";
 

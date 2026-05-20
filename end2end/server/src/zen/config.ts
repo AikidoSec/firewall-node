@@ -1,4 +1,7 @@
+import { EventEmitter } from "node:events";
 import type { App } from "./apps.ts";
+
+export const configEvents = new EventEmitter();
 
 type AppConfig = {
   success: boolean;
@@ -53,6 +56,7 @@ export function updateAppConfig(app: App, newConfig: Partial<AppConfig>) {
     ...newConfig,
     configUpdatedAt: Date.now(),
   };
+  configEvents.emit(`config-updated:${app.id}`);
   return true;
 }
 

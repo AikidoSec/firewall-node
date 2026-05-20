@@ -787,7 +787,7 @@ export class Agent {
 
     const promise = sendUserEvent(this.token, event).catch(() => {
       this.logger.log(
-        `Failed to send tracked event, ensure ${getRealtimeURL().hostname} is in your outbound firewall allowlist`
+        `Can't send tracked event, make sure ${getRealtimeURL().hostname} is in your outbound firewall allowlist`
       );
     });
     this.pendingEvents.onAPICall(promise);

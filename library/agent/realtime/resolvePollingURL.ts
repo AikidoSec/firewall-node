@@ -3,7 +3,6 @@ import type { Token } from "../api/Token";
 import type { Logger } from "../logger/Logger";
 import { getRealtimeURL } from "./getRealtimeURL";
 
-const FALLBACK_URL = "https://runtime.aikido.dev";
 const MAX_RETRIES = 3;
 
 async function probe(url: URL, token: Token): Promise<boolean> {
@@ -46,8 +45,8 @@ export async function resolvePollingURL(
   }
 
   logger.log(
-    `Unable to reach ${realtimeURL.hostname}, falling back to ${FALLBACK_URL}. Realtime updates (SSE) will not be available, using polling instead.`
+    `Can't reach ${realtimeURL.hostname}, make sure it's in your outbound firewall allowlist. Realtime config updates won't be available, switched to polling.`
   );
 
-  return new URL(FALLBACK_URL);
+  return new URL("https://runtime.aikido.dev");
 }
