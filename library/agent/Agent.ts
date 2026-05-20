@@ -40,7 +40,7 @@ import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { getRealtimeURL } from "./realtime/getRealtimeURL";
-import { resolvePollingURL } from "./realtime/resolvePollingURL";
+import { probeRealtimeURL } from "./realtime/probeRealtimeURL";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -469,18 +469,25 @@ export class Agent {
 
     const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
 
-    listenForConfigUpdates({
-      token: this.token,
-      logger: this.logger,
-      lastUpdatedAt,
-      onConfigUpdate,
-    });
+    const { pollingURL, realtimeReachable } = await probeRealtimeURL(
+      this.token,
+      this.logger
+    );
+
+    if (realtimeReachable) {
+      listenForConfigUpdates({
+        token: this.token,
+        logger: this.logger,
+        lastUpdatedAt,
+        onConfigUpdate,
+      });
+    }
 
     pollForChanges({
       token: this.token,
       logger: this.logger,
       lastUpdatedAt,
-      realtimeURL: await resolvePollingURL(this.token, this.logger),
+      realtimeURL: pollingURL,
       onConfigUpdate,
     });
   }
