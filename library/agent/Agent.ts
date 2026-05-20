@@ -1,7 +1,6 @@
 /* oxlint-disable no-console */
 
 import { hostname, platform, release } from "os";
-import { domainToUnicode } from "url";
 import { getAgentVersion } from "../helpers/getAgentVersion";
 import { getSemverNodeVersion } from "../helpers/getNodeVersion";
 import { ip } from "../helpers/ipAddress";
@@ -635,14 +634,6 @@ export class Agent {
   }
 
   onConnectHostname(hostname: string, port: number) {
-    try {
-      // new URL(...) always converts hostnames to punycode
-      // When reporting them in heartbeats, we want to send the unicode version
-      hostname = domainToUnicode(hostname);
-    } catch {
-      // Ignore - use original hostname
-    }
-
     this.hostnames.add(hostname, port);
   }
 
