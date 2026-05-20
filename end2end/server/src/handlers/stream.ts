@@ -17,7 +17,8 @@ export function stream(req: ZenRequest, res: Response) {
 
   function sendConfig() {
     const config = getAppConfig(app);
-    res.write(`event: config-updated\ndata: ${JSON.stringify(config)}\n\n`);
+    const data = { serviceId: app.id, configUpdatedAt: config.configUpdatedAt };
+    res.write(`event: config-updated\ndata: ${JSON.stringify(data)}\n\n`);
   }
 
   sendConfig();
