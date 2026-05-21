@@ -31,9 +31,11 @@ t.test("it stops reconnecting on 401", async (t) => {
     await new Promise((r) => setTimeout(r, 500));
 
     t.equal(connectionCount, 1);
-    t.match(logger.getMessages(), [
-      /SSE connection rejected with status 401, stopping/,
-    ]);
+    t.equal(logger.getMessages().length, 1);
+    t.match(
+      logger.getMessages()[0],
+      /SSE connection rejected with status 401, stopping/
+    );
   } finally {
     server.close();
   }
