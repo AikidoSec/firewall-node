@@ -107,7 +107,7 @@ export class GoogleGenAi implements Wrapper {
   wrap(hooks: Hooks) {
     hooks
       .addPackage("@google/genai")
-      .withVersion("^1.6.0")
+      .withVersion("^1.6.0 || ^2.0.0")
       .onRequire((exports, pkgInfo) => {
         wrapNewInstance(exports, "GoogleGenAI", pkgInfo, (instance) => {
           wrapExport(instance.models, "generateContent", pkgInfo, {
