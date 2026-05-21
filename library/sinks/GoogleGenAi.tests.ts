@@ -122,6 +122,41 @@ export function createGoogleGenAiTests(versionPkgName: string) {
             agent.getAIStatistics().getStats()[1].tokens.output,
           "Total tokens should match input + output"
         );
+
+        await ai.interactions.create({
+          model: "gemini-2.5-flash",
+          input: "Hello, how are you?",
+        });
+
+        t.match(agent.getAIStatistics().getStats(), [
+          {
+            provider: "google",
+            model: "gemini-2.5-flash-lite",
+            calls: 1,
+            tokens: {
+              input: 16,
+            },
+          },
+          {
+            provider: "google",
+            model: "gemini-2.5-flash",
+            calls: 2,
+            tokens: {
+              input: 15,
+            },
+          },
+        ]);
+
+        t.ok(
+          agent.getAIStatistics().getStats()[1].tokens.output > 0,
+          "Output tokens should be greater than 0"
+        );
+        t.equal(
+          agent.getAIStatistics().getStats()[1].tokens.total,
+          agent.getAIStatistics().getStats()[1].tokens.input +
+            agent.getAIStatistics().getStats()[1].tokens.output,
+          "Total tokens should match input + output"
+        );
       });
     }
   );
