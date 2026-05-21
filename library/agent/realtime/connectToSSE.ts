@@ -34,6 +34,8 @@ export function connectToSSE({
   }
 
   function connect() {
+    reconnectScheduled = false;
+
     if (currentRequest) {
       currentRequest.destroy();
       currentRequest = null;
@@ -107,13 +109,11 @@ export function connectToSSE({
 
     req.on("socket", (socket) => {
       socket.setTimeout(READ_TIMEOUT_MS, () => {
-        // Timeout can fire after response end/error already triggered reconnect
         if (socket.destroyed) {
           return;
         }
         logDebug("SSE read timeout, reconnecting");
         req.destroy();
-        scheduleReconnect();
       });
       // Don't keep the process alive just for the SSE connection
       socket.unref();
@@ -133,7 +133,14 @@ export function connectToSSE({
     }
   }
 
+  let reconnectScheduled = false;
+
   function scheduleReconnect() {
+    if (reconnectScheduled) {
+      return;
+    }
+    reconnectScheduled = true;
+
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
     }
