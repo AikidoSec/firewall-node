@@ -173,5 +173,7 @@ export function connectToSSE({
     }
   }
 
-  loop().catch(() => {});
+  loop().catch((error) => {
+    logger.log(`SSE loop error: ${error.message}`);
+  });
 }
