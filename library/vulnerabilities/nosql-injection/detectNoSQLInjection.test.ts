@@ -864,6 +864,67 @@ t.test("$where js inject with array in request in nested field", async (t) => {
   );
 });
 
+t.test(
+  "detects injection when app merges user operators with its own $ keys",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: null } },
+        }),
+        {
+          title: { $ne: null, $exists: true },
+        }
+      ),
+      {
+        injection: true,
+        source: "body",
+        pathsToPayload: [".username"],
+        payload: { $ne: null, $exists: true },
+      }
+    );
+  }
+);
+
+t.test(
+  "detects injection when app prepends its own $ key before user operators",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $gt: "" } },
+        }),
+        {
+          title: { $exists: true, $gt: "" },
+        }
+      ),
+      {
+        injection: true,
+        source: "body",
+        pathsToPayload: [".username"],
+        payload: { $exists: true, $gt: "" },
+      }
+    );
+  }
+);
+
+t.test(
+  "does not flag when user operator value differs from filter operator value",
+  async (t) => {
+    t.same(
+      detectNoSQLInjection(
+        createContext({
+          body: { username: { $ne: "different" } },
+        }),
+        {
+          title: { $ne: null, $exists: true },
+        }
+      ),
+      { injection: false }
+    );
+  }
+);
+
 t.test("not a valid injection attempt", async (t) => {
   t.same(
     detectNoSQLInjection(
