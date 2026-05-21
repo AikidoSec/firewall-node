@@ -45,6 +45,8 @@ export function connectToSSE({
       currentRequest = null;
     }
 
+    let connectedAt: number | undefined;
+
     const url = new URL(`${getRealtimeURL().toString()}api/runtime/stream`);
 
     logDebug(`SSE connecting to ${url.toString()}`);
@@ -77,7 +79,7 @@ export function connectToSSE({
           return;
         }
 
-        const connectedAt = Date.now();
+        connectedAt = Date.now();
         logDebug("SSE connected successfully");
 
         const parser = createParser({
@@ -117,6 +119,9 @@ export function connectToSSE({
           return;
         }
         logDebug("SSE read timeout, reconnecting");
+        if (connectedAt) {
+          resetBackoffIfStable(connectedAt);
+        }
         req.destroy();
       });
       // Don't keep the process alive just for the SSE connection
