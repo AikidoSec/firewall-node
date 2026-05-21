@@ -137,7 +137,7 @@ test("it reconnects SSE after server disconnects", async () => {
 
     // Wait for reconnect (initial reconnect delay is 5s + jitter up to 7.5s)
     await timeout(10000);
-    match(stdout, /SSE connection closed by server, reconnecting/);
+    match(stdout, /SSE connection closed by server/);
 
     // Verify SSE reconnected
     const connectedCount =

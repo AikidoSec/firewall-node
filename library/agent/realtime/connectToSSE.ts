@@ -12,40 +12,38 @@ const MAX_RECONNECT_MS = 60 * 1000;
 const STABLE_CONNECTION_MS = 30 * 1000;
 const READ_TIMEOUT_MS = 70 * 1000;
 
-export function connectToSSE({
+type ConnectResult =
+  | { outcome: "error" }
+  | { outcome: "disconnected"; statusCode: number };
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref();
+  });
+}
+
+function connect({
   token,
-  logger,
   onEvent,
-  initialReconnectMs = INITIAL_RECONNECT_MS,
-  readTimeoutMs = READ_TIMEOUT_MS,
+  readTimeoutMs,
+  logDebug,
 }: {
   token: Token;
-  logger: Logger;
   onEvent: (event: EventSourceMessage) => void;
-  initialReconnectMs?: number;
-  readTimeoutMs?: number;
-}) {
-  let reconnectMs = initialReconnectMs;
-  let reconnectTimer: NodeJS.Timeout | null = null;
-  let currentRequest: ReturnType<typeof requestHttp> | null = null;
+  readTimeoutMs: number;
+  logDebug: (msg: string) => void;
+}): Promise<ConnectResult> {
+  return new Promise<ConnectResult>((resolve) => {
+    let resolved = false;
 
-  const debugSSE = isDebuggingSSE();
-
-  function logDebug(msg: string) {
-    if (debugSSE) {
-      logger.log(msg);
+    function resolveOnce(result: ConnectResult) {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      resolve(result);
     }
-  }
-
-  function connect() {
-    reconnectScheduled = false;
-
-    if (currentRequest) {
-      currentRequest.destroy();
-      currentRequest = null;
-    }
-
-    let connectedAt: number | undefined;
 
     const url = new URL(`${getRealtimeURL().toString()}api/runtime/stream`);
 
@@ -64,22 +62,14 @@ export function connectToSSE({
         },
       },
       (response) => {
-        if (response.statusCode === 401 || response.statusCode === 403) {
-          logger.log(
-            `SSE connection rejected with status ${response.statusCode}, stopping`
-          );
+        const statusCode = response.statusCode!;
+
+        if (statusCode !== 200) {
           response.destroy();
+          resolveOnce({ outcome: "disconnected", statusCode });
           return;
         }
 
-        if (response.statusCode !== 200) {
-          logDebug(`SSE connection failed with status ${response.statusCode}`);
-          response.destroy();
-          scheduleReconnect();
-          return;
-        }
-
-        connectedAt = Date.now();
         logDebug("SSE connected successfully");
 
         const parser = createParser({
@@ -96,74 +86,92 @@ export function connectToSSE({
         });
 
         response.on("end", () => {
-          logDebug("SSE connection closed by server, reconnecting");
+          logDebug("SSE connection closed by server");
           parser.reset();
-          resetBackoffIfStable(connectedAt);
-          scheduleReconnect();
+          resolveOnce({ outcome: "disconnected", statusCode });
         });
 
         response.on("error", (error) => {
           logDebug(`SSE stream error: ${error.message}`);
           parser.reset();
-          resetBackoffIfStable(connectedAt);
-          scheduleReconnect();
+          resolveOnce({ outcome: "disconnected", statusCode });
         });
       }
     );
-
-    currentRequest = req;
 
     req.on("socket", (socket) => {
       socket.setTimeout(readTimeoutMs, () => {
         if (socket.destroyed) {
           return;
         }
-        logDebug("SSE read timeout, reconnecting");
-        if (connectedAt) {
-          resetBackoffIfStable(connectedAt);
-        }
+        logDebug("SSE read timeout");
+        resolveOnce({ outcome: "error" });
         req.destroy();
       });
-      // Don't keep the process alive just for the SSE connection
       socket.unref();
     });
 
     req.on("error", (error) => {
       logDebug(`SSE connection error: ${error.message}`);
-      scheduleReconnect();
+      resolveOnce({ outcome: "error" });
     });
 
     req.end();
-  }
+  });
+}
 
-  function resetBackoffIfStable(connectedAt: number) {
-    if (Date.now() - connectedAt >= STABLE_CONNECTION_MS) {
-      reconnectMs = INITIAL_RECONNECT_MS;
+export function connectToSSE({
+  token,
+  logger,
+  onEvent,
+  initialReconnectMs = INITIAL_RECONNECT_MS,
+  readTimeoutMs = READ_TIMEOUT_MS,
+}: {
+  token: Token;
+  logger: Logger;
+  onEvent: (event: EventSourceMessage) => void;
+  initialReconnectMs?: number;
+  readTimeoutMs?: number;
+}) {
+  let reconnectMs = initialReconnectMs;
+
+  const debugSSE = isDebuggingSSE();
+
+  function logDebug(msg: string) {
+    if (debugSSE) {
+      logger.log(msg);
     }
   }
 
-  let reconnectScheduled = false;
+  async function loop() {
+    while (true) {
+      const start = Date.now();
+      const result = await connect({ token, onEvent, readTimeoutMs, logDebug });
 
-  function scheduleReconnect() {
-    if (reconnectScheduled) {
-      return;
+      if (
+        result.outcome === "disconnected" &&
+        (result.statusCode === 401 || result.statusCode === 403)
+      ) {
+        logger.log(
+          `SSE connection rejected with status ${result.statusCode}, stopping`
+        );
+        return;
+      }
+
+      if (Date.now() - start >= STABLE_CONNECTION_MS) {
+        reconnectMs = initialReconnectMs;
+      }
+
+      const jitter = Math.random() * (reconnectMs / 2);
+      const delayMs = reconnectMs + jitter;
+
+      logDebug(`SSE scheduling reconnect in ${Math.round(delayMs)}ms`);
+
+      reconnectMs = Math.min(reconnectMs * 2, MAX_RECONNECT_MS);
+
+      await delay(delayMs);
     }
-    reconnectScheduled = true;
-
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-    }
-
-    const jitter = Math.random() * (reconnectMs / 2);
-    const delay = reconnectMs + jitter;
-
-    logDebug(`SSE scheduling reconnect in ${Math.round(delay)}ms`);
-
-    reconnectTimer = setTimeout(connect, delay);
-    reconnectMs = Math.min(reconnectMs * 2, MAX_RECONNECT_MS);
-    // Don't keep the process alive just for the reconnect timer
-    reconnectTimer.unref();
   }
 
-  connect();
+  loop().catch(() => {});
 }
