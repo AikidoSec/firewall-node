@@ -16,12 +16,16 @@ export function connectToSSE({
   token,
   logger,
   onEvent,
+  initialReconnectMs = INITIAL_RECONNECT_MS,
+  readTimeoutMs = READ_TIMEOUT_MS,
 }: {
   token: Token;
   logger: Logger;
   onEvent: (event: EventSourceMessage) => void;
+  initialReconnectMs?: number;
+  readTimeoutMs?: number;
 }) {
-  let reconnectMs = INITIAL_RECONNECT_MS;
+  let reconnectMs = initialReconnectMs;
   let reconnectTimer: NodeJS.Timeout | null = null;
   let currentRequest: ReturnType<typeof requestHttp> | null = null;
 
@@ -108,7 +112,7 @@ export function connectToSSE({
     currentRequest = req;
 
     req.on("socket", (socket) => {
-      socket.setTimeout(READ_TIMEOUT_MS, () => {
+      socket.setTimeout(readTimeoutMs, () => {
         if (socket.destroyed) {
           return;
         }
