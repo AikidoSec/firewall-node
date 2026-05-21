@@ -17,6 +17,8 @@ t.test("it reconnects on read timeout", async (t) => {
   });
 
   await new Promise<void>((resolve) => server.listen(0, resolve));
+  server.unref();
+  server.on("connection", (socket) => socket.unref());
   const port = (server.address() as { port: number }).port;
   process.env.AIKIDO_REALTIME_ENDPOINT = `http://localhost:${port}/`;
 
@@ -35,7 +37,6 @@ t.test("it reconnects on read timeout", async (t) => {
     await new Promise((r) => setTimeout(r, 500));
     t.equal(connectionCount, 2);
   } finally {
-    server.closeAllConnections();
     server.close();
   }
 });
