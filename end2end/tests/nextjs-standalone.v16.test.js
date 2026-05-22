@@ -123,7 +123,7 @@ t.test(
           t.match(stdout, /Starting agent/);
           t.match(stderr, /Zen has blocked a shell injection/);
           t.match(stderr, /Zen has blocked an SQL injection/);
-          t.notMatch(stderr, /Zen might not be protecting your application./);
+          t.notMatch(stderr, /Zen is NOT protecting your application./);
         }
       )
       .catch((error) => {
@@ -219,7 +219,7 @@ t.test(
           t.match(stdout, /Starting agent/);
           t.notMatch(stderr, /Zen has blocked a shell injection/);
           t.notMatch(stderr, /Zen has blocked an SQL injection/);
-          t.notMatch(stderr, /Zen might not be protecting your application/);
+          t.notMatch(stderr, /Zen is NOT protecting your application/);
         }
       )
       .catch((error) => {
@@ -274,7 +274,7 @@ t.test(
         t.match(stdout, /Starting agent/);
         t.match(
           stderr,
-          /Zen might not be protecting your application\. Your app is using.*Turbopack, which requires the new hook system/s
+          /Zen is NOT protecting your application\. Your app is using.*Turbopack, which requires the new hook system/s
         );
       })
       .catch((error) => {

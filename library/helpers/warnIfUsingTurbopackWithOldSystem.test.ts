@@ -32,7 +32,7 @@ t.test("it warns when TURBOPACK env variable is set", async (t) => {
 
   console.warn = originalWarn;
   t.equal(warnings.length, 1);
-  t.match(String(warnings[0]), /Zen might not be protecting your application/);
+  t.match(String(warnings[0]), /Zen is NOT protecting your application/);
 });
 
 t.test(
@@ -52,10 +52,7 @@ t.test(
 
     console.warn = originalWarn;
     t.equal(warnings.length, 1);
-    t.match(
-      String(warnings[0]),
-      /Zen might not be protecting your application/
-    );
+    t.match(String(warnings[0]), /Zen is NOT protecting your application/);
   }
 );
 

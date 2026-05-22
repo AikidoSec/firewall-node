@@ -100,7 +100,7 @@ t.test("it blocks in blocking mode", (t) => {
         t.match(stdout, /Starting agent/);
         t.match(stderr, /Zen has blocked a shell injection/);
         t.match(stderr, /Zen has blocked an SQL injection/);
-        t.notMatch(stderr, /Zen might not be protecting your application/);
+        t.notMatch(stderr, /Zen is NOT protecting your application/);
       }
     )
     .catch((error) => {
@@ -178,7 +178,7 @@ t.test("it does not block in dry mode", (t) => {
         t.match(stdout, /Starting agent/);
         t.notMatch(stderr, /Zen has blocked a shell injection/);
         t.notMatch(stderr, /Zen has blocked an SQL injection/);
-        t.notMatch(stderr, /Zen might not be protecting your application/);
+        t.notMatch(stderr, /Zen is NOT protecting your application/);
       }
     )
     .catch((error) => {
