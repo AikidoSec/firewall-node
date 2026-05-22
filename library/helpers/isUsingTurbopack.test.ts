@@ -2,8 +2,7 @@ import * as t from "tap";
 import { isUsingTurbopack } from "./isUsingTurbopack";
 
 const originalEnv = process.env.TURBOPACK;
-const originalStandaloneConfig =
-  process.env.__NEXT_PRIVATE_STANDALONE_CONFIG;
+const originalStandaloneConfig = process.env.__NEXT_PRIVATE_STANDALONE_CONFIG;
 const originalArgv = process.argv.slice();
 
 t.afterEach(() => {
