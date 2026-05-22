@@ -1,5 +1,6 @@
 import { request as requestHttp } from "http";
 import { request as requestHttps } from "https";
+import { setTimeout } from "node:timers/promises";
 import { createParser } from "../../helpers/eventsource-parser/parse";
 import type { EventSourceMessage } from "../../helpers/eventsource-parser/types";
 import { isDebuggingSSE } from "../../helpers/isDebuggingSSE";
@@ -15,13 +16,6 @@ const READ_TIMEOUT_MS = 70 * 1000;
 type ConnectResult =
   | { outcome: "error" }
   | { outcome: "disconnected"; statusCode: number };
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, ms);
-    timer.unref();
-  });
-}
 
 function connect({
   token,
@@ -169,7 +163,8 @@ export function connectToSSE({
 
       reconnectMs = Math.min(reconnectMs * 2, MAX_RECONNECT_MS);
 
-      await delay(delayMs);
+      // ref: false so the timer doesn't keep the process alive
+      await setTimeout(delayMs, undefined, { ref: false });
     }
   }
 

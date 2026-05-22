@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { createServer, type ServerResponse } from "http";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
@@ -43,7 +44,7 @@ t.test(
         },
       });
 
-      await new Promise((r) => setTimeout(r, 200));
+      await setTimeout(200);
 
       t.equal(receivedAuth, "my-secret-token");
       t.equal(events.length, 1);
@@ -56,7 +57,7 @@ t.test(
       const data2 = JSON.stringify({ serviceId: 1, configUpdatedAt: 200 });
       sseRes!.write(`event: config-updated\ndata: ${data2}\n\n`);
 
-      await new Promise((r) => setTimeout(r, 100));
+      await setTimeout(100);
 
       t.equal(events.length, 2);
       t.same(JSON.parse(events[1].data), {

@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { createServer, type ServerResponse } from "http";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
@@ -32,13 +33,13 @@ t.test("it reconnects when server closes connection", async (t) => {
       onEvent() {},
     });
 
-    await new Promise((r) => setTimeout(r, 200));
+    await setTimeout(200);
     t.equal(connectionCount, 1);
 
     sseRes!.end();
 
     // Wait for reconnect (initial delay is 5s + up to 2.5s jitter)
-    await new Promise((r) => setTimeout(r, 8000));
+    await setTimeout(8000);
 
     t.equal(connectionCount, 2);
   } finally {

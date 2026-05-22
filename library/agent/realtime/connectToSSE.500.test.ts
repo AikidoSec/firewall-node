@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { createServer } from "http";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
@@ -36,7 +37,7 @@ t.test("it reconnects on non-200 status", async (t) => {
     });
 
     // Wait for reconnect after 500 (initial delay 5s + up to 2.5s jitter)
-    await new Promise((r) => setTimeout(r, 8000));
+    await setTimeout(8000);
 
     t.equal(connectionCount, 2);
   } finally {

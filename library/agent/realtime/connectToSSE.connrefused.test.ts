@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { createServer } from "http";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
@@ -22,7 +23,7 @@ t.test("it handles connection refused", async (t) => {
     onEvent() {},
   });
 
-  await new Promise((r) => setTimeout(r, 500));
+  await setTimeout(500);
 
   t.ok(logger.getMessages().some((m) => m.includes("SSE connection error:")));
 });

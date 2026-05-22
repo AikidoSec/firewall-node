@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "node:timers/promises";
 import { createServer } from "http";
 import { Token } from "../api/Token";
 import { LoggerForTesting } from "../logger/LoggerForTesting";
@@ -31,10 +32,10 @@ t.test("it reconnects on read timeout", async (t) => {
       initialReconnectMs: 100,
     });
 
-    await new Promise((r) => setTimeout(r, 200));
+    await setTimeout(200);
     t.equal(connectionCount, 1);
 
-    await new Promise((r) => setTimeout(r, 500));
+    await setTimeout(500);
     t.equal(connectionCount, 2);
   } finally {
     server.close();
