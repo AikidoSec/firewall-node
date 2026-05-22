@@ -12,7 +12,7 @@ export function warnIfUsingTurbopackWithOldSystem(): void {
           colorText(
             "red",
             warnBox(
-              "Zen might not be protecting your application. Your app is using Turbopack, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
+              "Zen is NOT protecting your application. Your app is using Turbopack, which requires the new hook system. Setup instructions: https://github.com/AikidoSec/firewall-node/blob/main/docs/esm.md"
             )
           )
         );
