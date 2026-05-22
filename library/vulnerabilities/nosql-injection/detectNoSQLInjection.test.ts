@@ -925,6 +925,34 @@ t.test(
   }
 );
 
+t.test("does not flag when user sends empty object", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { username: {} },
+      }),
+      {
+        title: { $exists: true },
+      }
+    ),
+    { injection: false }
+  );
+});
+
+t.test("does not flag when user object has only non-$ keys", async (t) => {
+  t.same(
+    detectNoSQLInjection(
+      createContext({
+        body: { username: { name: "alice" } },
+      }),
+      {
+        title: { $exists: true },
+      }
+    ),
+    { injection: false }
+  );
+});
+
 t.test("not a valid injection attempt", async (t) => {
   t.same(
     detectNoSQLInjection(
