@@ -225,3 +225,53 @@ t.test(
     t.same(detectPathTraversal("//etc//passwd", "/etc"), false);
   }
 );
+
+t.test(
+  "file URL user input is detected correctly and bypasses length guard",
+  async () => {
+    t.same(
+      detectPathTraversal("/etc/passwd", "file:///etc/passwd", true, true),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/proc/self/environ",
+        "file:///proc/self/environ",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/home/user/secret.txt",
+        "file:///home/user/secret.txt",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/etc/passwd",
+        "file:///../../etc/passwd",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal(
+        "/app/uploads/image.png",
+        "file:///app/uploads/image.png",
+        true,
+        true
+      ),
+      true
+    );
+    t.same(
+      detectPathTraversal("/etc/passwd", "file:///etc/passwd", true, false),
+      false
+    );
+  }
+);
