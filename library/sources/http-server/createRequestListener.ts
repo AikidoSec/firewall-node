@@ -133,7 +133,7 @@ function onFinishRequestHandler(
     if (
       context.remoteAddress &&
       !context.blockedDueToIPOrBot &&
-      agent.getAttackWaveDetector().check(context)
+      agent.getAttackWaveDetector().check(context, res.statusCode)
     ) {
       agent.onDetectedAttackWave({
         request: context,

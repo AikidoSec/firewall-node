@@ -89,7 +89,7 @@ function discoverRouteFromStream(
 
       if (
         context.remoteAddress &&
-        agent.getAttackWaveDetector().check(context)
+        agent.getAttackWaveDetector().check(context, statusCode)
       ) {
         agent.onDetectedAttackWave({
           request: context,
