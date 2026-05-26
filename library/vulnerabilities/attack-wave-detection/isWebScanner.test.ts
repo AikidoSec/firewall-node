@@ -20,21 +20,21 @@ function getTestContext(path: string, method: string, query = {}): Context {
 }
 
 t.test("is a web scanner", async (t) => {
-  t.ok(isWebScanner(getTestContext("/wp-config.php", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/.env", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/test/.env.bak", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/.git/config", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/.aws/config", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/../secret", "GET"), 200));
-  t.ok(isWebScanner(getTestContext("/", "BADMETHOD"), 200));
+  t.ok(isWebScanner(getTestContext("/wp-config.php", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/.env", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/test/.env.bak", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/.git/config", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/.aws/config", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/../secret", "GET"), 404));
+  t.ok(isWebScanner(getTestContext("/", "BADMETHOD"), 404));
   t.ok(
     isWebScanner(
       getTestContext("/", "GET", { test: "SELECT * FROM admin" }),
-      200
+      404
     )
   );
   t.ok(
-    isWebScanner(getTestContext("/", "GET", { test: "../etc/passwd" }), 200)
+    isWebScanner(getTestContext("/", "GET", { test: "../etc/passwd" }), 404)
   );
 });
 
