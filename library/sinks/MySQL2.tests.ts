@@ -55,10 +55,7 @@ export function createMySQL2Tests(versionPkgName: string) {
     if (major > 3 || (major === 3 && minor >= 12)) {
       t.same(warningLogs, []);
     } else {
-      t.match(
-        warningLogs,
-        /Zen can NOT protect your application/
-      );
+      t.match(warningLogs, /Zen can NOT protect your application/);
     }
 
     const connection = await mysql.createConnection({
