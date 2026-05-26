@@ -80,7 +80,7 @@ export class Undici implements Wrapper {
 
   private patchGlobalDispatcher(
     agent: Agent,
-    undiciModule: typeof import("undici-v7")
+    undiciModule: typeof import("undici-v8")
   ) {
     const dispatcher = new undiciModule.Agent({
       connect: {
@@ -101,7 +101,7 @@ export class Undici implements Wrapper {
   }
 
   private patchExports(
-    exports: typeof import("undici-v7"),
+    exports: typeof import("undici-v8"),
     pkgInfo: PartialWrapPackageInfo
   ) {
     const agent = getInstance();

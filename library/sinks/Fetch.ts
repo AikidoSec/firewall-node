@@ -116,41 +116,56 @@ export class Fetch implements Wrapper {
 
   // We'll set a global dispatcher that will allow us to inspect the resolved IPs (and thus preventing TOCTOU attacks)
   private patchGlobalDispatcher(agent: Agent) {
-    const undiciGlobalDispatcherSymbol = Symbol.for(
-      "undici.globalDispatcher.1"
-    );
+    const sym1 = Symbol.for("undici.globalDispatcher.1");
+    // Node.js v26+ introduced a second symbol where the real undici Agent lives.
+    // Symbol 1 becomes a Dispatcher1Wrapper (a compatibility shim)
+    const sym2 = Symbol.for("undici.globalDispatcher.2");
 
     // @ts-expect-error Type is not defined
-    const dispatcher = globalThis[undiciGlobalDispatcherSymbol];
+    const dispatcher1 = globalThis[sym1];
+    // @ts-expect-error Type is not defined
+    const dispatcher2 = globalThis[sym2];
 
-    if (!dispatcher) {
+    // The real undici Agent: prefer sym2 (Node.js v26+), fall back to sym1 (older).
+    const realDispatcher = dispatcher2 || dispatcher1;
+
+    if (!realDispatcher) {
       agent.log(
         `global dispatcher not found for fetch, we can't provide protection!`
       );
       return;
     }
 
-    if (dispatcher.constructor.name !== "Agent") {
+    if (realDispatcher.constructor.name !== "Agent") {
       agent.log(
-        `Expected Agent as global dispatcher for fetch but found ${dispatcher.constructor.name}, we can't provide protection!`
+        `Expected Agent as global dispatcher for fetch but found ${realDispatcher.constructor.name}, we can't provide protection!`
       );
       return;
     }
 
     try {
-      // @ts-expect-error Type is not defined
-      globalThis[undiciGlobalDispatcherSymbol] = new dispatcher.constructor({
-        connect: {
-          lookup: inspectDNSLookupCalls(lookup, agent, "fetch", "fetch"),
-        },
-      });
+      const lookupFn = inspectDNSLookupCalls(lookup, agent, "fetch", "fetch");
 
-      // @ts-expect-error Type is not defined
-      globalThis[undiciGlobalDispatcherSymbol].dispatch = wrapDispatch(
+      // Create a new Agent with our custom DNS lookup interceptor.
+      const newAgent = new realDispatcher.constructor({
+        connect: { lookup: lookupFn },
+      });
+      newAgent.dispatch = wrapDispatch(newAgent.dispatch, agent);
+
+      if (dispatcher2) {
+        // Node.js v26+: replace the Agent at sym2 and wrap the Dispatcher1Wrapper at sym1.
         // @ts-expect-error Type is not defined
-        globalThis[undiciGlobalDispatcherSymbol].dispatch,
-        agent
-      );
+        globalThis[sym2] = newAgent;
+        const newWrapper = new dispatcher1.constructor(newAgent);
+        newWrapper.dispatch = wrapDispatch(newWrapper.dispatch, agent);
+
+        // @ts-expect-error Type is not defined
+        globalThis[sym1] = newWrapper;
+      } else {
+        // Older Node.js: only sym1 exists and it is already an Agent.
+        // @ts-expect-error Type is not defined
+        globalThis[sym1] = newAgent;
+      }
     } catch {
       agent.log(
         `Failed to patch global dispatcher for fetch, we can't provide protection!`

@@ -143,6 +143,10 @@ export async function createExpressTests(expressPackageName: string) {
       res.send(getContext());
     });
 
+    newRouter.get("/nested-router/:id", (req, res) => {
+      res.send(getContext());
+    });
+
     app.use(newRouter);
 
     app.use("/", express.static(__dirname + "/fixtures/public/"));
@@ -653,6 +657,20 @@ export async function createExpressTests(expressPackageName: string) {
       route: "/nested-router",
     });
   });
+
+  t.test(
+    "it sets routeParams in context for routes on a Router instance",
+    async () => {
+      const response = await request(getApp()).get("/nested-router/123");
+
+      t.match(response.body, {
+        method: "GET",
+        source: "express",
+        route: "/nested-router/:number",
+        routeParams: { id: "123" },
+      });
+    }
+  );
 
   t.test("it supports static files", async (t) => {
     const response = await request(getApp()).get("/test.txt");

@@ -24,6 +24,8 @@ jobs:
             mode: "new"
           - node-version: 25.x
             mode: "new"
+          - node-version: 26.x
+            mode: "new"
 
     steps:
       - name: Checkout repository
@@ -41,7 +43,7 @@ jobs:
 
       - name: Downgrade npm for v24 and v25
         # https://github.com/npm/cli/issues/8669
-        if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' }}
+        if: ${{ matrix.node-version == '24.x' || matrix.node-version == '25.x' || matrix.node-version == '26.x' }}
         run: npm i -g npm@11.6.0
 
       - name: Add local.aikido.io to /etc/hosts
