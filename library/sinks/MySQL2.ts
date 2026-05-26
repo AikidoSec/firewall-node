@@ -10,8 +10,10 @@ import { checkContextForSqlInjection } from "../vulnerabilities/sql-injection/ch
 import { checkContextForIdor } from "../vulnerabilities/idor/checkContextForIdor";
 import { SQLDialect } from "../vulnerabilities/sql-injection/dialects/SQLDialect";
 import { SQLDialectMySQL } from "../vulnerabilities/sql-injection/dialects/SQLDialectMySQL";
+import { colorText } from "../helpers/colorText";
 import { getPackageVersion } from "../helpers/getPackageVersion";
 import { isVersionGreaterOrEqual } from "../helpers/isVersionGreaterOrEqual";
+import { warnBox } from "../helpers/warnBox";
 
 export class MySQL2 implements Wrapper {
   private readonly dialect: SQLDialect = new SQLDialectMySQL();
@@ -191,7 +193,12 @@ export class MySQL2 implements Wrapper {
     if (!isVersionGreaterOrEqual("3.11.5", version)) {
       // oxlint-disable-next-line no-console
       console.warn(
-        "Aikido: Warning: You are using an outdated version of mysql2 which can not be fully protected by Zen. Please upgrade to mysql2 version 3.11.5 or newer to ensure full protection against SQL injection and IDOR vulnerabilities."
+        colorText(
+          "red",
+          warnBox(
+            "Zen can NOT protect your application. mysql2 versions older than 3.11.5 have circular dependencies in their internals that prevent Zen from instrumenting pools (https://github.com/sidorares/node-mysql2/pull/3081). Upgrade mysql2 to 3.11.5 or newer."
+          )
+        )
       );
     }
   }

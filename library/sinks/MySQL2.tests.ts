@@ -57,7 +57,7 @@ export function createMySQL2Tests(versionPkgName: string) {
     } else {
       t.match(
         warningLogs,
-        /Aikido: Warning: You are using an outdated version of mysql2/
+        /Zen can NOT protect your application/
       );
     }
 
