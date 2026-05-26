@@ -1,9 +1,10 @@
 import { type Context } from "../../agent/Context";
+import { hasForeignExtension } from "./hasForeignExtension";
 import { queryParamsContainDangerousPayload } from "./queryParamsContainDangerousPayload";
 import { isWebScanMethod } from "./isWebScanMethod";
 import { isWebScanPath } from "./isWebScanPath";
 
-export function isWebScanner(context: Context): boolean {
+export function isWebScanner(context: Context, statusCode: number): boolean {
   if (context.method && isWebScanMethod(context.method)) {
     return true;
   }
@@ -13,6 +14,14 @@ export function isWebScanner(context: Context): boolean {
   }
 
   if (queryParamsContainDangerousPayload(context)) {
+    return true;
+  }
+
+  if (
+    statusCode === 404 &&
+    context.route &&
+    hasForeignExtension(context.route)
+  ) {
     return true;
   }
 
