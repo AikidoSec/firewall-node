@@ -474,6 +474,104 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
         );
       }
     });
+
+    await t.test(
+      "allows SELECT with table-valued function (generate_series) in subquery",
+      async () => {
+        t.same(
+          (
+            await runWithContext(context, () => {
+              return client.query(
+                "SELECT petname, (SELECT COUNT(*) FROM generate_series(1, 5)) AS series_count FROM cats_pg_idor WHERE tenant_id = $1",
+                ["org_123"]
+              );
+            })
+          ).rows,
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "allows SELECT with jsonb_array_elements table-valued function in subquery",
+      async () => {
+        t.same(
+          (
+            await runWithContext(context, () => {
+              return client.query(
+                "SELECT petname, (SELECT string_agg(elem #>> '{}', ' | ') FROM jsonb_array_elements('[1,2,3]'::jsonb) AS elem) AS summary FROM cats_pg_idor WHERE tenant_id = $1",
+                ["org_123"]
+              );
+            })
+          ).rows,
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "allows SELECT from table-valued function only (no real table)",
+      async () => {
+        const result = await runWithContext(context, () => {
+          return client.query("SELECT * FROM generate_series(1, 5) AS s");
+        });
+        t.equal(result.rows.length, 5);
+      }
+    );
+
+    await t.test(
+      "allows SELECT joining real table with table-valued function and tenant filter",
+      async () => {
+        t.same(
+          (
+            await runWithContext(context, () => {
+              return client.query(
+                "SELECT c.petname, s FROM cats_pg_idor c, generate_series(1, 3) AS s WHERE c.tenant_id = $1",
+                ["org_123"]
+              );
+            })
+          ).rows,
+          []
+        );
+      }
+    );
+
+    await t.test(
+      "blocks SELECT joining real table with table-valued function without tenant filter",
+      async () => {
+        const error = await t.rejects(async () => {
+          await runWithContext(context, () => {
+            return client.query(
+              "SELECT c.petname, s FROM cats_pg_idor c, generate_series(1, 3) AS s"
+            );
+          });
+        });
+
+        if (error instanceof Error) {
+          t.match(
+            error.message,
+            "Zen IDOR protection: query on table 'cats_pg_idor' is missing a filter on column 'tenant_id'"
+          );
+        }
+      }
+    );
+
+    await t.test(
+      "allows SELECT with unnest table-valued function in subquery",
+      async () => {
+        t.same(
+          (
+            await runWithContext(context, () => {
+              return client.query(
+                "SELECT petname, (SELECT COUNT(*) FROM unnest(ARRAY[1, 2, 3])) AS n FROM cats_pg_idor WHERE tenant_id = $1",
+                ["org_123"]
+              );
+            })
+          ).rows,
+          []
+        );
+      }
+    );
   } finally {
     await client.end();
   }
