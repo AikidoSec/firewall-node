@@ -60,7 +60,6 @@
     "@aws-sdk/client-bedrock-runtime": "3.929.0",
     "@clickhouse/client": "^1.7.0",
     "@fastify/cookie": "^11.0.2",
-    "@fastify/multipart": "^10.0.0",
     "@google-cloud/functions-framework": "^5.0.0",
     "@google-cloud/pubsub": "^5.0.0",
     "@google/genai-v1": "npm:@google/genai@1.52.0",

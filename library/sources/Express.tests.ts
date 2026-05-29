@@ -76,10 +76,12 @@ export async function createExpressTests(expressPackageName: string) {
   });
 
   let express = require(expressPackageName) as typeof import("express");
+  let multer = require("multer");
 
   if (isEsmUnitTest()) {
     // @ts-expect-error Wrong types
     express = express.default;
+    multer = multer.default;
   }
 
   const { readFile, readdir } = require("fs") as typeof import("fs");
@@ -266,7 +268,6 @@ export async function createExpressTests(expressPackageName: string) {
       res.send({ success: true });
     });
 
-    const multer = require("multer");
     const upload = multer({ storage: multer.memoryStorage() });
 
     app.post("/upload-single", upload.single("avatar"), (req, res) => {

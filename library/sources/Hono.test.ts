@@ -143,6 +143,30 @@ async function getApp() {
     return c.json(getContext());
   });
 
+  app.post("/upload", async (c) => {
+    const body = await c.req.parseBody({ all: true });
+    const value = body["file"];
+
+    const files = Array.isArray(value)
+      ? value.filter((item): item is File => item instanceof File)
+      : value instanceof File
+        ? [value]
+        : [];
+
+    if (files.length === 0) {
+      return c.text("At least one file is required", 400);
+    }
+
+    return c.json({
+      context: getContext(),
+      files: files.map((file) => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      })),
+    });
+  });
+
   app.on(["GET"], ["/user", "/user/blocked"], (c) => {
     return c.json(getContext());
   });
@@ -712,3 +736,112 @@ t.test("it does not rate limit excluded users", opts, async (t) => {
     t.match(await response.text(), "OK");
   }
 });
+
+t.test("it captures single file metadata in context.files", opts, async (t) => {
+  const app = await getApp();
+
+  const formData = new FormData();
+  formData.append(
+    "file",
+    new File(["fake image bytes"], "profile.png", { type: "image/png" })
+  );
+
+  const response = await app.request("/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  t.same(response.status, 200);
+  const body = await response.json();
+  t.same(body.files.length, 1);
+  t.match(body.files[0], { name: "profile.png", type: "image/png" });
+  t.same(Array.isArray(body.context.files), true);
+  t.same(body.context.files.length, 1);
+  t.match(body.context.files[0], {
+    fieldname: "file",
+    filename: "profile.png",
+    mimetype: "image/png",
+  });
+});
+
+t.test(
+  "it captures multiple file metadata in context.files",
+  opts,
+  async (t) => {
+    const app = await getApp();
+
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new File(["pdf content"], "report.pdf", { type: "application/pdf" })
+    );
+    formData.append(
+      "file",
+      new File(["doc content"], "summary.docx", {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      })
+    );
+
+    const response = await app.request("/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    t.same(response.status, 200);
+    const body = await response.json();
+    t.same(body.files.length, 2);
+    t.same(Array.isArray(body.context.files), true);
+    t.same(body.context.files.length, 2);
+    t.match(body.context.files[0], {
+      fieldname: "file",
+      filename: "report.pdf",
+      mimetype: "application/pdf",
+    });
+    t.match(body.context.files[1], {
+      fieldname: "file",
+      filename: "summary.docx",
+      mimetype:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  }
+);
+
+t.test("it captures malicious filename in context.files", opts, async (t) => {
+  const app = await getApp();
+
+  const formData = new FormData();
+  formData.append(
+    "file",
+    new File(["file content"], "' OR '1'='1.txt", { type: "text/plain" })
+  );
+
+  const response = await app.request("/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  t.same(response.status, 200);
+  const body = await response.json();
+  t.same(Array.isArray(body.context.files), true);
+  t.match(body.context.files[0], {
+    fieldname: "file",
+    filename: "' OR '1'='1.txt",
+    mimetype: "text/plain",
+  });
+});
+
+t.test(
+  "it does not set context.files when no files are uploaded",
+  opts,
+  async (t) => {
+    const app = await getApp();
+    const response = await app.request("/form", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "title=test",
+    });
+
+    const body = await response.json();
+    t.same(body.files, undefined);
+  }
+);
