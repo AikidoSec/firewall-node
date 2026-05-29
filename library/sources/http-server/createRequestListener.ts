@@ -28,7 +28,15 @@ export function createRequestListener(
     const readBody = "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
 
     if (!readBody) {
-      return callListenerWithContext(listener, req, res, module, agent, "");
+      return callListenerWithContext(
+        listener,
+        req,
+        res,
+        module,
+        agent,
+        "",
+        undefined
+      );
     }
 
     const result = await readBodyStream(req, res, agent);
@@ -43,7 +51,8 @@ export function createRequestListener(
       res,
       module,
       agent,
-      result.body
+      result.body,
+      result.files
     );
   };
 }
@@ -57,9 +66,10 @@ function callListenerWithContext(
   res: ServerResponse,
   module: string,
   agent: Agent,
-  body: unknown
+  body: unknown,
+  files: unknown
 ) {
-  const context = contextFromRequest(req, body, module);
+  const context = contextFromRequest(req, body, files, module);
 
   return runWithContext(context, () => {
     const context = getContext();
