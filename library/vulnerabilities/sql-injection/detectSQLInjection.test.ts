@@ -329,6 +329,13 @@ t.test("It works with non-UTF-8 characters and emojis", async () => {
   isNotSqlInjection("SELECT * FROM users WHERE id = 'a 🛡️'", "a 🛡️");
 });
 
+t.test("detects injection with trailing spaces in user input", async () => {
+  isSqlInjection(
+    "INSERT INTO pets (name, owner) VALUES ('x', 'dummy'), ('injected', 'hacker'); --', 'owner')",
+    "x', 'dummy'), ('injected', 'hacker'); --    "
+  );
+});
+
 const files = [
   // Taken from https://github.com/payloadbox/sql-injection-payload-list/tree/master
   join(__dirname, "payloads", "Auth_Bypass.txt"),
