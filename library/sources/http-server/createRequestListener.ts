@@ -108,25 +108,17 @@ function callListenerWithContext(
 function applyRateLimiting(res: ServerResponse): boolean {
   const result = shouldBlockRequest();
 
-  if (result.block) {
-    if (result.type === "ratelimited") {
-      let message = "You are rate limited by Zen.";
-      if (result.trigger === "ip" && result.ip) {
-        message += ` (Your IP: ${escapeHTML(result.ip)})`;
-      }
-      res.writeHead(429, {
-        "Content-Type": "text/plain",
-        "Retry-After": result.retryAfterSeconds.toString(),
-      });
-      res.end(message);
-      return true;
+  if (result.block && result.type === "ratelimited") {
+    let message = "You are rate limited by Zen.";
+    if (result.trigger === "ip" && result.ip) {
+      message += ` (Your IP: ${escapeHTML(result.ip)})`;
     }
-
-    if (result.type === "blocked") {
-      res.writeHead(403, { "Content-Type": "text/plain" });
-      res.end("You are blocked by Zen.");
-      return true;
-    }
+    res.writeHead(429, {
+      "Content-Type": "text/plain",
+      "Retry-After": result.retryAfterSeconds.toString(),
+    });
+    res.end(message);
+    return true;
   }
 
   return false;
