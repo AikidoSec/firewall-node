@@ -1231,6 +1231,63 @@ t.test("It ignores multipart form data files", async (t) => {
   });
 });
 
+t.test("rate limits requests when NEXT_DEPLOYMENT_ID is set", async (t) => {
+  process.env.NEXT_DEPLOYMENT_ID = "";
+
+  const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3233, async () => {
+      const req = () =>
+        fetch({
+          url: new URL("http://localhost:3233/rate-limited"),
+          method: "GET",
+          headers: { "x-forwarded-for": "100.0.0.1" },
+          timeoutInMS: 500,
+        });
+
+      t.equal((await req()).statusCode, 200);
+      t.equal((await req()).statusCode, 200);
+
+      const blocked = await req();
+      t.equal(blocked.statusCode, 429);
+      t.match(blocked.body, /You are rate limited by Zen/);
+
+      server.close();
+      resolve();
+    });
+  });
+});
+
+t.test("does not rate limit when NEXT_DEPLOYMENT_ID is not set", async (t) => {
+  const server = http.createServer((req, res) => {
+    res.statusCode = 200;
+    res.end("OK");
+  });
+
+  await new Promise<void>((resolve) => {
+    server.listen(3234, async () => {
+      const req = () =>
+        fetch({
+          url: new URL("http://localhost:3234/rate-limited"),
+          method: "GET",
+          headers: { "x-forwarded-for": "100.0.0.2" },
+          timeoutInMS: 500,
+        });
+
+      t.equal((await req()).statusCode, 200);
+      t.equal((await req()).statusCode, 200);
+      t.equal((await req()).statusCode, 200);
+
+      server.close();
+      resolve();
+    });
+  });
+});
+
 t.test("Invalid multipart form data is ignored", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
