@@ -156,10 +156,6 @@ t.test("it rate limits requests", async (t) => {
     cwd: join(pathToApp, ".next/standalone"),
   });
 
-  server.on("close", () => {
-    t.end();
-  });
-
   server.on("error", (err) => {
     t.fail(err.message);
   });
@@ -170,12 +166,18 @@ t.test("it rate limits requests", async (t) => {
     const resp1 = await fetch("http://127.0.0.1:4003/cats", {
       method: "GET",
       signal: AbortSignal.timeout(5000),
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+      },
     });
     t.not(resp1.status, 429, "first request should not be rate limited");
 
     const resp2 = await fetch("http://127.0.0.1:4003/cats", {
       method: "GET",
       signal: AbortSignal.timeout(5000),
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+      },
     });
     t.equal(resp2.status, 429, "second request should be rate limited");
     t.ok(
