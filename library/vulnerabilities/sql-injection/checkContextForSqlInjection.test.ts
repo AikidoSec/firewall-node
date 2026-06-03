@@ -102,3 +102,44 @@ t.test(
     );
   }
 );
+
+t.test("it detects SQL injection in multipart file metadata", async () => {
+  t.same(
+    checkContextForSqlInjection({
+      sql: "SELECT id, label FROM documents WHERE label = '' OR '1'='1'",
+      operation: "mysql.query",
+      dialect: new SQLDialectMySQL(),
+      context: {
+        cookies: {},
+        headers: {},
+        remoteAddress: "ip",
+        method: "POST",
+        url: "url",
+        query: {},
+        body: undefined,
+        files: [
+          {
+            fieldname: "document",
+            originalname: "' OR '1'='1",
+            encoding: "7bit",
+            mimetype: "application/pdf",
+          },
+        ],
+        source: "express",
+        route: "/",
+        routeParams: {},
+      },
+    }),
+    {
+      operation: "mysql.query",
+      kind: "sql_injection",
+      source: "files",
+      pathsToPayload: [".[0].originalname"],
+      metadata: {
+        sql: "SELECT id, label FROM documents WHERE label = '' OR '1'='1'",
+        dialect: "MySQL",
+      },
+      payload: "' OR '1'='1",
+    }
+  );
+});

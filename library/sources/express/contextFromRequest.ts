@@ -3,7 +3,9 @@ import { Context } from "../../agent/Context";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 
-export function contextFromRequest(req: Request): Context {
+export function contextFromRequest(
+  req: Request & { files?: unknown; file?: unknown }
+): Context {
   const url = req.protocol + "://" + req.get("host") + req.originalUrl;
 
   return {
@@ -22,5 +24,6 @@ export function contextFromRequest(req: Request): Context {
     source: "express",
     route: buildRouteFromURL(url),
     subdomains: req.subdomains,
+    files: req.files ?? req.file,
   };
 }

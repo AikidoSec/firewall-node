@@ -8,6 +8,7 @@ import { tryParseURLParams } from "../../helpers/tryParseURLParams";
 export function contextFromRequest(
   req: IncomingMessage,
   body: unknown,
+  files: unknown,
   module: string
 ): Context {
   const queryObject: Record<string, string> = {};
@@ -28,6 +29,7 @@ export function contextFromRequest(
     routeParams: {},
     cookies: req.headers?.cookie ? parse(req.headers.cookie) : {},
     body: body ? body : undefined,
+    files: files,
     remoteAddress: getIPAddressFromRequest({
       headers: req.headers,
       remoteAddress: req.socket?.remoteAddress,

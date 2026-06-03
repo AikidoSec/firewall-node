@@ -10,6 +10,7 @@ export const SOURCES = [
   "markUnsafe",
   "url",
   "rawBody",
+  "files",
 ] as const;
 
 export type Source = (typeof SOURCES)[number];

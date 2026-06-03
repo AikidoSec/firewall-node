@@ -27,6 +27,7 @@ export type Context = {
   rawBody?: unknown;
   subdomains?: string[]; // https://expressjs.com/en/5x/api.html#req.subdomains
   markUnsafe?: unknown[];
+  files?: unknown; // Multipart file metadata
   cache?: ReturnType<typeof extractStringsFromUserInput>;
   cachePathTraversal?: ReturnType<typeof extractStringsFromUserInput>;
   /**
@@ -97,6 +98,7 @@ export function runWithContext<T>(context: Context, fn: () => T) {
     current.subdomains = context.subdomains;
     current.outgoingRequestRedirects = context.outgoingRequestRedirects;
     current.markUnsafe = context.markUnsafe;
+    current.files = context.files;
 
     // Clear all the cached user input strings
     delete current.cache;

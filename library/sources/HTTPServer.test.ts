@@ -1196,7 +1196,7 @@ t.test("It decodes multipart form data and sets body in context", async (t) => {
   });
 });
 
-t.test("It ignores multipart form data files", async (t) => {
+t.test("It captures multipart form data file metadata", async (t) => {
   // Enables body parsing
   process.env.NEXT_DEPLOYMENT_ID = "";
 
@@ -1224,6 +1224,14 @@ t.test("It ignores multipart form data files", async (t) => {
             { name: "field2", value: { abc: "test", arr: ["c"] } },
           ],
         });
+        t.same(context.files, [
+          {
+            fieldname: "file1",
+            filename: "test.txt",
+            encoding: "7bit",
+            mimeType: "text/plain",
+          },
+        ]);
         server.close();
         resolve();
       });
@@ -1261,3 +1269,156 @@ t.test("Invalid multipart form data is ignored", async (t) => {
     });
   });
 });
+
+t.test(
+  "It captures metadata for multiple files in multipart upload",
+  async (t) => {
+    process.env.NEXT_DEPLOYMENT_ID = "";
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3233, () => {
+        fetch({
+          url: new URL("http://localhost:3233"),
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+          },
+          body: [
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n",
+            'Content-Disposition: form-data; name="file1"; filename="report.pdf"\r\n',
+            "Content-Type: application/pdf\r\n\r\n",
+            "PDF content here.\r\n",
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n",
+            'Content-Disposition: form-data; name="file2"; filename="image.jpg"\r\n',
+            "Content-Type: image/jpeg\r\n\r\n",
+            "JPEG content here.\r\n",
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW--",
+          ].join(""),
+          timeoutInMS: 500,
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.same(context.body, undefined);
+          t.same(context.files, [
+            {
+              fieldname: "file1",
+              filename: "report.pdf",
+              encoding: "7bit",
+              mimeType: "application/pdf",
+            },
+            {
+              fieldname: "file2",
+              filename: "image.jpg",
+              encoding: "7bit",
+              mimeType: "image/jpeg",
+            },
+          ]);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "It captures malicious filename in multipart file metadata",
+  async (t) => {
+    process.env.NEXT_DEPLOYMENT_ID = "";
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3234, () => {
+        fetch({
+          url: new URL("http://localhost:3234"),
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+          },
+          body: [
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n",
+            // SQL injection payload embedded in the filename itself (no path component so busboy preserves it)
+            "Content-Disposition: form-data; name=\"upload\"; filename=\"' OR '1'='1.txt\"\r\n",
+            "Content-Type: text/plain\r\n\r\n",
+            "file content\r\n",
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW--",
+          ].join(""),
+          timeoutInMS: 500,
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.same(context.files, [
+            {
+              fieldname: "upload",
+              filename: "' OR '1'='1.txt",
+              encoding: "7bit",
+              mimeType: "text/plain",
+            },
+          ]);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);
+
+t.test(
+  "It captures files and fields together in multipart upload",
+  async (t) => {
+    process.env.NEXT_DEPLOYMENT_ID = "";
+
+    const server = http.createServer((req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify(getContext()));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(3235, () => {
+        fetch({
+          url: new URL("http://localhost:3235"),
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+          },
+          body: [
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n",
+            'Content-Disposition: form-data; name="label"\r\n\r\n',
+            "my-document\r\n",
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n",
+            'Content-Disposition: form-data; name="attachment"; filename="doc.pdf"\r\n',
+            "Content-Type: application/pdf\r\n\r\n",
+            "PDF bytes.\r\n",
+            "------WebKitFormBoundary7MA4YWxkTrZu0gW--",
+          ].join(""),
+          timeoutInMS: 500,
+        }).then(({ body }) => {
+          const context = JSON.parse(body);
+          t.same(context.body, {
+            fields: [{ name: "label", value: "my-document" }],
+          });
+          t.same(context.files, [
+            {
+              fieldname: "attachment",
+              filename: "doc.pdf",
+              encoding: "7bit",
+              mimeType: "application/pdf",
+            },
+          ]);
+          server.close();
+          resolve();
+        });
+      });
+    });
+  }
+);

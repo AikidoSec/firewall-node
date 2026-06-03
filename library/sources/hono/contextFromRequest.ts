@@ -17,10 +17,15 @@ export function contextFromRequest(c: HonoContext): Context {
       headers: req.header(),
       remoteAddress: getRemoteAddress(c),
     }),
-    // Pass the body from the existing context if it's already set, otherwise the body is set in wrapRequestBodyParsing
+    // Pass body and files from the existing context if already set,
+    // otherwise they are populated in wrapRequestBodyParsing after parseBody() is called.
     body:
       existingContext && existingContext.source === "hono"
         ? existingContext.body
+        : undefined,
+    files:
+      existingContext && existingContext.source === "hono"
+        ? existingContext.files
         : undefined,
     url: req.url,
     headers: req.header(),

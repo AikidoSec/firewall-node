@@ -76,10 +76,12 @@ export async function createExpressTests(expressPackageName: string) {
   });
 
   let express = require(expressPackageName) as typeof import("express");
+  let multer = require("multer");
 
   if (isEsmUnitTest()) {
     // @ts-expect-error Wrong types
     express = express.default;
+    multer = multer.default;
   }
 
   const { readFile, readdir } = require("fs") as typeof import("fs");
@@ -264,6 +266,16 @@ export async function createExpressTests(expressPackageName: string) {
 
     app.get("/param/:file", (req, res) => {
       res.send({ success: true });
+    });
+
+    const upload = multer({ storage: multer.memoryStorage() });
+
+    app.post("/upload-single", upload.single("avatar"), (req, res) => {
+      res.send(getContext());
+    });
+
+    app.post("/upload-multiple", upload.array("docs", 5), (req, res) => {
+      res.send(getContext());
     });
 
     if (expressPackageName.endsWith("v4")) {
@@ -865,4 +877,84 @@ export async function createExpressTests(expressPackageName: string) {
       },
     });
   });
+
+  t.test(
+    "it captures single file metadata in context when using multer",
+    async (t) => {
+      const response = await request(getApp())
+        .post("/upload-single")
+        .attach("avatar", Buffer.from("fake image data"), {
+          filename: "profile.png",
+          contentType: "image/png",
+        });
+
+      t.same(response.statusCode, 200);
+      t.match(response.body, {
+        source: "express",
+        files: {
+          fieldname: "avatar",
+          originalname: "profile.png",
+          mimetype: "image/png",
+          encoding: "7bit",
+        },
+      });
+    }
+  );
+
+  t.test(
+    "it captures multiple file metadata in context when using multer",
+    async (t) => {
+      const response = await request(getApp())
+        .post("/upload-multiple")
+        .attach("docs", Buffer.from("pdf content"), {
+          filename: "report.pdf",
+          contentType: "application/pdf",
+        })
+        .attach("docs", Buffer.from("doc content"), {
+          filename: "summary.docx",
+          contentType:
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+
+      t.same(response.statusCode, 200);
+      t.match(response.body, {
+        source: "express",
+      });
+      t.same(Array.isArray(response.body.files), true);
+      t.same(response.body.files.length, 2);
+      t.match(response.body.files[0], {
+        fieldname: "docs",
+        originalname: "report.pdf",
+        mimetype: "application/pdf",
+      });
+      t.match(response.body.files[1], {
+        fieldname: "docs",
+        originalname: "summary.docx",
+        mimetype:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+    }
+  );
+
+  t.test(
+    "it captures filename in context.files when using multer",
+    async (t) => {
+      const response = await request(getApp())
+        .post("/upload-single")
+        .attach("avatar", Buffer.from("file content"), {
+          filename: "../../etc/passwd",
+          contentType: "text/plain",
+        });
+
+      t.same(response.statusCode, 200);
+      t.match(response.body, {
+        source: "express",
+        files: {
+          fieldname: "avatar",
+          originalname: "passwd", // Already normalized by multer
+          mimetype: "text/plain",
+        },
+      });
+    }
+  );
 }

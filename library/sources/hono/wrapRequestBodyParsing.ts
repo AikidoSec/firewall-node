@@ -9,6 +9,38 @@ export function wrapRequestBodyParsing(req: Context["req"]) {
   req.text = wrapBodyParsingFunction(req.text);
 }
 
+type FileInfo = { fieldname: string; filename: string; mimetype: string };
+
+function extractFilesFromBody(body: unknown): FileInfo[] {
+  const files: FileInfo[] = [];
+
+  if (typeof body !== "object" || body === null) {
+    return files;
+  }
+
+  for (const [key, value] of Object.entries(body)) {
+    if (typeof File !== "undefined" && value instanceof File) {
+      files.push({
+        fieldname: key,
+        filename: value.name,
+        mimetype: value.type,
+      });
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof File !== "undefined" && item instanceof File) {
+          files.push({
+            fieldname: key,
+            filename: item.name,
+            mimetype: item.type,
+          });
+        }
+      }
+    }
+  }
+
+  return files;
+}
+
 function wrapBodyParsingFunction<T extends Function>(func: T) {
   if (isWrapped(func)) {
     return func;
@@ -23,6 +55,11 @@ function wrapBodyParsingFunction<T extends Function>(func: T) {
         const context = getContext();
         if (context) {
           updateContext(context, "body", returnValue);
+
+          const files = extractFilesFromBody(returnValue);
+          if (files.length > 0) {
+            updateContext(context, "files", files);
+          }
         }
       }
 

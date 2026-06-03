@@ -460,3 +460,120 @@ t.test(
     );
   }
 );
+
+t.test(
+  "it detects path traversal from multipart file filename metadata",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: "/uploads/../../etc/passwd",
+        operation: "fs.readFile",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {},
+          body: undefined,
+          files: [
+            {
+              fieldname: "upload",
+              filename: "../../etc/passwd",
+              encoding: "7bit",
+              mimeType: "text/plain",
+            },
+          ],
+          routeParams: {},
+          source: "express",
+          route: "/upload",
+        },
+      }),
+      {
+        operation: "fs.readFile",
+        kind: "path_traversal",
+        source: "files",
+        pathsToPayload: [".[0].filename"],
+        metadata: {
+          filename: "/uploads/../../etc/passwd",
+        },
+        payload: "../../etc/passwd",
+      }
+    );
+  }
+);
+
+t.test(
+  "it detects path traversal from originalname field (multer-style file metadata)",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: "/uploads/../../var/www/shell.php",
+        operation: "fs.writeFile",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {},
+          body: undefined,
+          files: [
+            {
+              fieldname: "avatar",
+              originalname: "../../var/www/shell.php",
+              encoding: "7bit",
+              mimetype: "image/jpeg",
+            },
+          ],
+          routeParams: {},
+          source: "express",
+          route: "/profile",
+        },
+      }),
+      {
+        operation: "fs.writeFile",
+        kind: "path_traversal",
+        source: "files",
+        pathsToPayload: [".[0].originalname"],
+        metadata: {
+          filename: "/uploads/../../var/www/shell.php",
+        },
+        payload: "../../var/www/shell.php",
+      }
+    );
+  }
+);
+
+t.test(
+  "it does not flag path traversal when file metadata is benign",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: "/uploads/report.pdf",
+        operation: "fs.readFile",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "POST",
+          url: "url",
+          query: {},
+          body: undefined,
+          files: [
+            {
+              fieldname: "document",
+              filename: "report.pdf",
+              encoding: "7bit",
+              mimeType: "application/pdf",
+            },
+          ],
+          routeParams: {},
+          source: "express",
+          route: "/upload",
+        },
+      }),
+      undefined
+    );
+  }
+);

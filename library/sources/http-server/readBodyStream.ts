@@ -9,10 +9,18 @@ import { getBodyDataType } from "../../agent/api-discovery/getBodyDataType";
 import { tryParseJSON } from "../../helpers/tryParseJSON";
 import { getInstance } from "../../agent/AgentSingleton";
 
+type BodyFile = {
+  fieldname: string;
+  filename: string;
+  encoding: string;
+  mimeType: string;
+};
+
 type BodyReadResult =
   | {
       success: true;
       body: unknown;
+      files?: BodyFile[];
     }
   | {
       success: false;
@@ -25,6 +33,7 @@ export async function readBodyStream(
 ): Promise<BodyReadResult> {
   let bodyText = "";
   let bodyFields: { name: string; value: unknown }[] = [];
+  const bodyFiles: BodyFile[] = [];
   let bodySize = 0;
   const maxBodySize = getMaxBodySize();
   const stream = new PassThrough();
@@ -59,6 +68,22 @@ export async function readBodyStream(
 
         bodyFields.push({ name: fieldname, value: val });
       });
+
+      busboy.on(
+        "file",
+        (fieldname, fileStream, filename, encoding, mimeType) => {
+          bodyFiles.push({
+            fieldname: typeof fieldname === "string" ? fieldname : "",
+            filename: typeof filename === "string" ? filename : "",
+            encoding: typeof encoding === "string" ? encoding : "",
+            mimeType: typeof mimeType === "string" ? mimeType : "",
+          });
+          // Drain the file stream so busboy doesn't stall waiting for a
+          // consumer. We deliberately do not buffer the contents — only the
+          // metadata is needed for injection detection on filename/mimetype.
+          fileStream.resume();
+        }
+      );
     }
   }
   try {
@@ -106,12 +131,11 @@ export async function readBodyStream(
   // Ensure the body stream can be read again by the application
   replaceRequestBody(req, stream);
 
-  if (bodyFields.length > 0) {
+  if (bodyFields.length > 0 || bodyFiles.length > 0) {
     return {
       success: true,
-      body: {
-        fields: bodyFields,
-      },
+      body: bodyFields.length > 0 ? { fields: bodyFields } : undefined,
+      files: bodyFiles.length > 0 ? bodyFiles : undefined,
     };
   }
 
