@@ -344,7 +344,7 @@ t.test("it uses x-forwarded-for header", async (t) => {
 
 t.test("it sets body in context", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -413,7 +413,7 @@ async function sendUsingCurl({
 
 t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     t.fail();
@@ -450,7 +450,7 @@ t.test("it sends 413 when body is larger than 20 Mb", async (t) => {
 
 t.test("body that is not JSON is ignored", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -479,7 +479,7 @@ t.test("body that is not JSON is ignored", async (t) => {
 
 t.test("it uses limit from AIKIDO_MAX_BODY_SIZE_MB", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.end();
@@ -1163,7 +1163,7 @@ t.test("it reports attack waves", async (t) => {
 
 t.test("It decodes multipart form data and sets body in context", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -1198,7 +1198,7 @@ t.test("It decodes multipart form data and sets body in context", async (t) => {
 
 t.test("It ignores multipart form data files", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -1232,7 +1232,7 @@ t.test("It ignores multipart form data files", async (t) => {
 });
 
 t.test("rate limits requests when NEXT_DEPLOYMENT_ID is set", async (t) => {
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.statusCode = 200;
@@ -1290,7 +1290,7 @@ t.test("does not rate limit when NEXT_DEPLOYMENT_ID is not set", async (t) => {
 
 t.test("Invalid multipart form data is ignored", async (t) => {
   // Enables body parsing
-  process.env.NEXT_DEPLOYMENT_ID = "";
+  process.env.NEXT_DEPLOYMENT_ID = "1";
 
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
