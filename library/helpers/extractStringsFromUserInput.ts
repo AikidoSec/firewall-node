@@ -75,18 +75,19 @@ export function extractStringsFromUserInput(
 }
 
 function addURLDecodedVariants(str: string, results: Set<UserString>) {
+  let current = str;
   for (let i = 0; i < MAX_URL_DECODE_DEPTH; i++) {
-    if (str.length < 3 || !str.includes("%")) {
+    if (current.length < 3 || !current.includes("%")) {
       break;
     }
 
-    const decoded = safeDecodeURIComponent(str);
-    if (!decoded || decoded === str) {
+    const decoded = safeDecodeURIComponent(current);
+    if (!decoded || decoded === current) {
       // If decoding fails or doesn't change the string, stop further attempts to decode
       break;
     }
 
     results.add(decoded);
-    str = decoded;
+    current = decoded;
   }
 }
