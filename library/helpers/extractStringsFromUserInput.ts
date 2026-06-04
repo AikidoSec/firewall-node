@@ -11,6 +11,8 @@ type UserString = string;
 // the error will be caught, but it stops our inspection
 const MAX_DEPTH = 1024;
 
+const MAX_URL_DECODE_DEPTH = 5;
+
 export function extractStringsFromUserInput(
   obj: unknown,
   depth: number = 0
@@ -50,15 +52,7 @@ export function extractStringsFromUserInput(
 
   if (typeof obj === "string" && obj.length > 0) {
     results.add(obj);
-
-    if (obj.includes("%") && obj.length >= 3) {
-      const r = safeDecodeURIComponent(obj);
-      if (r && r !== obj) {
-        // Only add if the decoded value is different from the original, to avoid duplicates in results
-        // This improves the performance of all injection tests
-        results.add(r);
-      }
-    }
+    addURLDecodedVariants(obj, results);
 
     const jwt = tryDecodeAsJWT(obj);
     if (jwt.jwt) {
@@ -78,4 +72,21 @@ export function extractStringsFromUserInput(
   }
 
   return results;
+}
+
+function addURLDecodedVariants(str: string, results: Set<UserString>) {
+  for (let i = 0; i < MAX_URL_DECODE_DEPTH; i++) {
+    if (str.length < 3 || !str.includes("%")) {
+      break;
+    }
+
+    const decoded = safeDecodeURIComponent(str);
+    if (!decoded || decoded === str) {
+      // If decoding fails or doesn't change the string, stop further attempts to decode
+      break;
+    }
+
+    results.add(decoded);
+    str = decoded;
+  }
 }
