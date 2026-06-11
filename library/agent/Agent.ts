@@ -618,6 +618,7 @@ export class Agent {
       "express",
       "fastify",
       "hono",
+      "elysia",
       "koa",
       "@hapi/hapi",
       "restify",
