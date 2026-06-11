@@ -8,7 +8,7 @@ import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { getContext } from "../agent/Context";
 import { isLocalhostIP } from "../helpers/isLocalhostIP";
 import { createTestAgent } from "../helpers/createTestAgent";
-import { addElysiaPlugin } from "../middleware/elysia";
+import { elysiaHandler } from "../middleware/elysia";
 import { fetch } from "../helpers/fetch";
 import { FetchListsAPIForTesting } from "../agent/api/FetchListsAPIForTesting";
 
@@ -58,7 +58,7 @@ const agent = createTestAgent({
 agent.start([new ElysiaInternal(), new HTTPServer()]);
 
 const skip =
-  getMajorNodeVersion() < 18 ? "Elysia does not support Node.js < 18" : false;
+  getMajorNodeVersion() < 20 ? "Elysia does not support Node.js < 20" : false;
 
 const PORT = 9871;
 
@@ -88,7 +88,7 @@ t.before(async () => {
     return app;
   });
 
-  addElysiaPlugin(app);
+  app.onBeforeHandle(elysiaHandler);
 
   app.onRequest((ctx) => {
     const path = new URL(ctx.request.url).pathname;

@@ -1,11 +1,13 @@
 import { Elysia, t } from "elysia";
 import { node } from "@elysia/node";
 import { createConnection } from "./db.ts";
+import Zen from "@aikidosec/firewall";
 
 const db = await createConnection();
 
 new Elysia({ adapter: node() })
   .get("/", () => "Hello world")
+  .onBeforeHandle(Zen.elysiaHandler)
   .post(
     "/add",
     async ({ body, status }) => {
