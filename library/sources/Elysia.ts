@@ -3,19 +3,6 @@ import { Wrapper } from "../agent/Wrapper";
 import { wrapRequestHandler } from "./elysia/wrapRequestHandler";
 import { wrapExport } from "../agent/hooks/wrapExport";
 
-const METHODS = [
-  "get",
-  "post",
-  "put",
-  "delete",
-  "options",
-  "patch",
-  "all",
-  "on",
-  // Include lifecycle hooks so middleware added via onBeforeHandle gets context
-  "onBeforeHandle",
-] as const;
-
 export class Elysia implements Wrapper {
   private wrapArgs(args: unknown[]) {
     return args.map((arg) => {
@@ -26,6 +13,29 @@ export class Elysia implements Wrapper {
       return wrapRequestHandler(
         arg as Parameters<typeof wrapRequestHandler>[0]
       );
+    });
+  }
+
+  private wrapOnArgs(args: unknown[]) {
+    return args.map((arg) => {
+      if (typeof arg === "function") {
+        return wrapRequestHandler(
+          arg as Parameters<typeof wrapRequestHandler>[0]
+        );
+      }
+
+      if (Array.isArray(arg)) {
+        return arg.map((item) => {
+          if (typeof item === "function") {
+            return wrapRequestHandler(
+              item as Parameters<typeof wrapRequestHandler>[0]
+            );
+          }
+          return item;
+        });
+      }
+
+      return arg;
     });
   }
 
@@ -55,13 +65,13 @@ export class Elysia implements Wrapper {
 
             if (!instrumented) {
               instrumented = true;
-              METHODS.forEach((method) => {
-                if (typeof ElysiaClass.prototype[method] === "function") {
-                  wrapExport(ElysiaClass.prototype, method, pkgInfo, {
-                    kind: undefined,
-                    modifyArgs: (args) => this.wrapArgs(args),
-                  });
-                }
+              wrapExport(ElysiaClass.prototype, "add", pkgInfo, {
+                kind: undefined,
+                modifyArgs: (args) => this.wrapArgs(args),
+              });
+              wrapExport(ElysiaClass.prototype, "on", pkgInfo, {
+                kind: undefined,
+                modifyArgs: (args) => this.wrapOnArgs(args),
               });
             }
 
@@ -81,18 +91,13 @@ export class Elysia implements Wrapper {
             nodeType: "MethodDefinition",
             name: "add",
             operationKind: undefined,
-            modifyArgs: (args) => {
-              // args: [method, path, handle, localHook?, options?]
-              // handle is always at index 2
-              return args.map((arg, i) => {
-                if (i === 2 && typeof arg === "function") {
-                  return wrapRequestHandler(
-                    arg as Parameters<typeof wrapRequestHandler>[0]
-                  );
-                }
-                return arg;
-              });
-            },
+            modifyArgs: (args) => this.wrapArgs(args),
+          },
+          {
+            nodeType: "MethodDefinition",
+            name: "on",
+            operationKind: undefined,
+            modifyArgs: (args) => this.wrapOnArgs(args),
           },
         ]
       );

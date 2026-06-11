@@ -6,11 +6,13 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 export function contextFromRequest(ctx: ElysiaContext): Context {
   const existingContext = getContext();
 
-  const cookies = Object.fromEntries(
-    Object.entries(ctx.cookie)
-      .map(([k, v]) => [k, v.value])
-      .filter(([_, v]) => typeof v === "string")
-  );
+  const cookies = ctx.cookie
+    ? Object.fromEntries(
+        Object.entries(ctx.cookie)
+          .map(([k, v]) => [k, v.value])
+          .filter(([_, v]) => typeof v === "string")
+      )
+    : {};
 
   return {
     method: ctx.request.method,

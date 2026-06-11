@@ -207,6 +207,9 @@ for await (const entry of testFiles) {
                 testCb.params.push({ type: "Identifier", name: "t" });
               }
               break;
+            case "teardown":
+              node.callee = { type: "Identifier", name: "after" };
+              break;
             case "beforeEach":
             case "before":
             case "after":

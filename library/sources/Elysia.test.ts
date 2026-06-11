@@ -90,6 +90,20 @@ t.before(async () => {
 
   addElysiaPlugin(app);
 
+  app.onRequest((ctx) => {
+    const path = new URL(ctx.request.url).pathname;
+    if (path === "/test-on-request") {
+      return getContext();
+    }
+  });
+
+  app.on("beforeHandle", ({ request }) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/test-on-before-handle") {
+      return getContext();
+    }
+  });
+
   app.get("/", () => getContext());
   app.post("/json", () => getContext());
   app.post("/text", () => getContext());
@@ -97,11 +111,14 @@ t.before(async () => {
   app.get("/user/blocked", () => getContext());
   app.get("/rate-limited", () => "OK");
   app.get("/cats/:id", () => getContext());
+  app.route("MKCALENDAR", "/calendars", () => getContext());
+
+  app.get("/test-on-before-handle", (ctx) => "Not called");
 
   server = await new Promise<any>((resolve) => app.listen(PORT, resolve));
 });
 
-t.after(async () => {
+t.teardown(async () => {
   await server?.stop();
 });
 
@@ -265,4 +282,305 @@ t.test("it captures route parameters", opts, async (t) => {
     route: "/cats/:number",
     routeParams: { id: "123" },
   });
+});
+
+t.test("it works with custom request methods", opts, async (t) => {
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT}/calendars`),
+    method: "MKCALENDAR",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "MKCALENDAR",
+    source: "elysia",
+    route: "/calendars",
+  });
+});
+
+t.test("it works with on('request') handler", opts, async (t) => {
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT}/test-on-request`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/test-on-request",
+  });
+});
+
+t.test("it returns 404 for non-existent route", opts, async (t) => {
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT}/test-on-request-does-not-exist`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 404);
+});
+
+t.test("it works with on('beforeHandle') handler", opts, async (t) => {
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT}/test-on-before-handle`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/test-on-before-handle",
+  });
+});
+
+t.test("app with prefix", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node(), prefix: "/prefix" });
+
+  app.get("/test", () => getContext());
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 1, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT + 1}/prefix/test`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/prefix/test",
+  });
+
+  await _server?.stop();
+});
+
+t.test("app with only route", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node(), prefix: "/prefix" });
+
+  app.route("MKCALENDAR", "/test", () => getContext());
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 2, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT + 2}/prefix/test`),
+    method: "MKCALENDAR",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "MKCALENDAR",
+    source: "elysia",
+    route: "/prefix/test",
+  });
+
+  await _server?.stop();
+});
+
+t.test("app with only onRequest handler", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node(), prefix: "/prefix" });
+
+  app.onRequest((ctx) => {
+    const path = new URL(ctx.request.url).pathname;
+    if (path === "/prefix/test") {
+      return getContext();
+    }
+  });
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 3, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT + 3}/prefix/test`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/prefix/test",
+  });
+
+  await _server?.stop();
+});
+
+t.test("it supports groups", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node() });
+
+  app.group("/group", (group) => group.get("/test", () => getContext()));
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 4, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.01:${PORT + 4}/group/test?title=test`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/group/test",
+    query: { title: "test" },
+  });
+
+  await _server?.stop();
+});
+
+t.test("it supports streams", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node() });
+
+  app.get("stream", function* test() {
+    yield 1;
+    yield 2;
+    yield "\n";
+    yield getContext();
+  });
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 5, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.01:${PORT + 5}/stream`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body.split("\n").slice(-1)[0]);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/stream",
+    query: {},
+  });
+
+  await _server?.stop();
+});
+
+t.test("it works with .on with multiple handlers", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app = new Elysia({ adapter: node() });
+
+  app.on("request", [
+    (ctx) => {
+      const path = new URL(ctx.request.url).pathname;
+      if (path === "/test-on-request") {
+        return getContext();
+      }
+    },
+    (ctx) => {
+      const path = new URL(ctx.request.url).pathname;
+      if (path === "/test-on-request-2") {
+        return getContext();
+      }
+    },
+  ]);
+
+  const _server = await new Promise<any>((resolve) =>
+    app.listen(PORT + 6, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT + 6}/test-on-request`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/test-on-request",
+  });
+
+  const response2 = await fetch({
+    url: new URL(`http://127.0.0.1:${PORT + 6}/test-on-request-2`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response2.statusCode, 200);
+  const body2 = JSON.parse(response2.body);
+  t.match(body2, {
+    method: "GET",
+    source: "elysia",
+    route: "/test-on-request-2",
+  });
+
+  await _server?.stop();
+});
+
+t.test("it works with app using another", opts, async (t) => {
+  const { Elysia } = require("elysia") as typeof import("elysia");
+  const { node } = require("@elysia/node") as typeof import("@elysia/node");
+
+  const app1 = new Elysia({ adapter: node() }).get("/test", () => getContext());
+
+  const app2 = new Elysia({ adapter: node() }).use(app1);
+
+  const _server = await new Promise<any>((resolve) =>
+    app2.listen(PORT + 7, resolve)
+  );
+
+  const response = await fetch({
+    url: new URL(`http://127.0.01:${PORT + 7}/test`),
+    method: "GET",
+    headers: {},
+    timeoutInMS: 500,
+  });
+  t.equal(response.statusCode, 200);
+  const body = JSON.parse(response.body);
+  t.match(body, {
+    method: "GET",
+    source: "elysia",
+    route: "/test",
+    query: {},
+  });
+
+  await _server?.stop();
 });
