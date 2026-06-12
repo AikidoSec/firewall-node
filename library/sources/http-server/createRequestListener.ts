@@ -97,6 +97,8 @@ function callListenerWithContext(
       return;
     }
 
+    // Rate limiting normally happens in our framework specific middleware (e.g. express)
+    // For certain frameworks, e.g. next.js, we need to do this here so that it works out of the box
     if (shouldRateLimit && applyRateLimiting(res)) {
       return;
     }
@@ -108,6 +110,7 @@ function callListenerWithContext(
 function applyRateLimiting(res: ServerResponse): boolean {
   const result = shouldBlockRequest();
 
+  // We don't support blocked users here because the user's code hasn't been called yet
   if (result.block && result.type === "ratelimited") {
     let message = "You are rate limited by Zen.";
     if (result.trigger === "ip" && result.ip) {
