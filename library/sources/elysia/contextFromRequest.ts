@@ -6,14 +6,6 @@ import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 export function contextFromRequest(ctx: ElysiaContext): Context {
   const existingContext = getContext();
 
-  const cookies = ctx.cookie
-    ? Object.fromEntries(
-        Object.entries(ctx.cookie)
-          .map(([k, v]) => [k, v.value])
-          .filter(([_, v]) => typeof v === "string")
-      )
-    : {};
-
   return {
     method: ctx.request.method,
     remoteAddress:
@@ -27,8 +19,22 @@ export function contextFromRequest(ctx: ElysiaContext): Context {
     headers: ctx.headers,
     routeParams: ctx.params,
     query: ctx.query,
-    cookies: cookies,
+    cookies: convertCookies(ctx.cookie),
     source: "elysia",
     route: buildRouteFromURL(ctx.request.url),
   };
+}
+
+function convertCookies(
+  cookies: ElysiaContext["cookie"]
+): Record<string, string> {
+  if (!cookies) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(cookies)
+      .map(([k, v]) => [k, v.value])
+      .filter(([_, v]) => typeof v === "string")
+  );
 }

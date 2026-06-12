@@ -1,13 +1,11 @@
 import { shouldBlockRequest } from "./shouldBlockRequest";
 import { escapeHTML } from "../helpers/escapeHTML";
-/** TS_EXPECT_TYPES_ERROR_OPTIONAL_DEPENDENCY **/
-import type { OptionalHandler } from "elysia";
 
 /**
  * Adding this handler using app.onBeforeHandle(elysiaHandler) will setup rate limiting and user blocking for the provided Elysia app.
  * Attacks will still be blocked by Zen if you do not add this handler.
  */
-export const elysiaHandler: OptionalHandler = () => {
+export const elysiaHandler: () => Response | void = () => {
   const result = shouldBlockRequest();
 
   if (result.block) {

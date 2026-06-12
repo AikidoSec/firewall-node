@@ -8,8 +8,8 @@ export function wrapRequestHandler(handler: ElysiaHandler): ElysiaHandler {
   return async (ctx: ElysiaContext) => {
     const context = contextFromRequest(ctx);
 
-    return await runWithContext(context, async () => {
-      return await handler(ctx);
+    return await runWithContext(context, () => {
+      return handler(ctx);
     });
   };
 }
