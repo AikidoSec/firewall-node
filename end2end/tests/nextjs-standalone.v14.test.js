@@ -5,6 +5,7 @@ const timeout = require("../timeout");
 const { cpSync, writeFileSync } = require("fs");
 
 const pathToApp = resolve(__dirname, "../../sample-apps/nextjs-standalone");
+const testServerUrl = "http://localhost:5874";
 
 t.setTimeout(2 * 60 * 1000);
 
@@ -109,6 +110,85 @@ t.test("it blocks in blocking mode", (t) => {
     .finally(() => {
       server.kill();
     });
+});
+
+t.test("it rate limits requests", async (t) => {
+  const appResponse = await fetch(`${testServerUrl}/api/runtime/apps`, {
+    method: "POST",
+    signal: AbortSignal.timeout(5000),
+  });
+  const { token } = await appResponse.json();
+
+  const configResponse = await fetch(`${testServerUrl}/api/runtime/config`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({
+      endpoints: [
+        {
+          route: "/cats",
+          method: "GET",
+          forceProtectionOff: false,
+          rateLimiting: {
+            enabled: true,
+            maxRequests: 1,
+            windowSizeInMS: 60 * 1000,
+          },
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(5000),
+  });
+  t.equal(configResponse.status, 200);
+
+  const server = spawn(`node`, ["-r", "@aikidosec/firewall", "server.js"], {
+    env: {
+      ...process.env,
+      AIKIDO_DEBUG: "true",
+      AIKIDO_BLOCK: "true",
+      AIKIDO_TOKEN: token,
+      AIKIDO_ENDPOINT: testServerUrl,
+      AIKIDO_REALTIME_ENDPOINT: testServerUrl,
+      PORT: "4003",
+    },
+    cwd: join(pathToApp, ".next/standalone"),
+  });
+
+  server.on("error", (err) => {
+    t.fail(err.message);
+  });
+
+  await timeout(5000);
+
+  try {
+    const resp1 = await fetch("http://127.0.0.1:4003/cats", {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+      },
+    });
+    t.not(resp1.status, 429, "first request should not be rate limited");
+
+    const resp2 = await fetch("http://127.0.0.1:4003/cats", {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+      headers: {
+        "X-Forwarded-For": "1.2.3.4",
+      },
+    });
+    t.equal(resp2.status, 429, "second request should be rate limited");
+    t.ok(
+      resp2.headers.get("retry-after"),
+      "Retry-After header should be present"
+    );
+  } catch (error) {
+    t.fail(error.message);
+  } finally {
+    server.kill();
+  }
 });
 
 t.test("it does not block in dry mode", (t) => {

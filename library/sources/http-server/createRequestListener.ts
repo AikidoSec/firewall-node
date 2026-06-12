@@ -6,7 +6,9 @@ import {
   runWithContext,
   updateContext,
 } from "../../agent/Context";
+import { escapeHTML } from "../../helpers/escapeHTML";
 import { isPackageInstalled } from "../../helpers/isPackageInstalled";
+import { shouldBlockRequest } from "../../middleware/shouldBlockRequest";
 import { blockIPsAndBots } from "./blockIPsAndBots";
 import { contextFromRequest } from "./contextFromRequest";
 import { readBodyStream } from "./readBodyStream";
@@ -25,10 +27,19 @@ export function createRequestListener(
     // This is tricky, see replaceRequestBody(...)
     // e.g. Hono uses web requests and web streams
     // (uses Readable.toWeb(req) to convert to a web stream)
-    const readBody = "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
+    const readBodyAndRateLimit =
+      "NEXT_DEPLOYMENT_ID" in process.env || isMicroInstalled;
 
-    if (!readBody) {
-      return callListenerWithContext(listener, req, res, module, agent, "");
+    if (!readBodyAndRateLimit) {
+      return callListenerWithContext(
+        listener,
+        req,
+        res,
+        module,
+        agent,
+        "",
+        readBodyAndRateLimit
+      );
     }
 
     const result = await readBodyStream(req, res, agent);
@@ -43,7 +54,8 @@ export function createRequestListener(
       res,
       module,
       agent,
-      result.body
+      result.body,
+      readBodyAndRateLimit
     );
   };
 }
@@ -57,7 +69,8 @@ function callListenerWithContext(
   res: ServerResponse,
   module: string,
   agent: Agent,
-  body: unknown
+  body: unknown,
+  shouldRateLimit: boolean
 ) {
   const context = contextFromRequest(req, body, module);
 
@@ -84,8 +97,34 @@ function callListenerWithContext(
       return;
     }
 
+    // Rate limiting normally happens in our framework specific middleware (e.g. express)
+    // For certain frameworks, e.g. next.js, we need to do this here so that it works out of the box
+    if (shouldRateLimit && applyRateLimiting(res)) {
+      return;
+    }
+
     return listener(req, res);
   });
+}
+
+function applyRateLimiting(res: ServerResponse): boolean {
+  const result = shouldBlockRequest();
+
+  // We don't support blocked users here because the user's code hasn't been called yet
+  if (result.block && result.type === "ratelimited") {
+    let message = "You are rate limited by Zen.";
+    if (result.trigger === "ip" && result.ip) {
+      message += ` (Your IP: ${escapeHTML(result.ip)})`;
+    }
+    res.writeHead(429, {
+      "Content-Type": "text/plain",
+      "Retry-After": result.retryAfterSeconds.toString(),
+    });
+    res.end(message);
+    return true;
+  }
+
+  return false;
 }
 
 function onFinishRequestHandler(
