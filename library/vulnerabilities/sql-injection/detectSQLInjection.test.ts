@@ -331,7 +331,7 @@ t.test("It works with non-UTF-8 characters and emojis", async () => {
 
 t.test("detects injection with trailing spaces in user input", async () => {
   isSqlInjection(
-    "INSERT INTO pets (name, owner) VALUES ('x', 'dummy'), ('injected', 'hacker'); --', 'owner')",
+    "INSERT INTO pets (name, owner) VALUES ('x', 'dummy'), ('injected', 'hacker'); -- ', 'owner')",
     "x', 'dummy'), ('injected', 'hacker'); --    "
   );
 });
