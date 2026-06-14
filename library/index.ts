@@ -11,6 +11,7 @@ import { addKoaMiddleware } from "./middleware/koa";
 import { isNewHookSystemUsed } from "./agent/isNewHookSystemUsed";
 import { addRestifyMiddleware } from "./middleware/restify";
 import { isESM } from "./helpers/isESM";
+import { addH3Middleware } from "./middleware/h3";
 import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { shutdown } from "./agent/shutdown";
@@ -74,6 +75,7 @@ export {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  addH3Middleware,
   shutdown,
   setTenantId,
   enableIdorProtection,
@@ -94,6 +96,7 @@ export default {
   addKoaMiddleware,
   addRestifyMiddleware,
   setRateLimitGroup,
+  addH3Middleware,
   shutdown,
   setTenantId,
   enableIdorProtection,
