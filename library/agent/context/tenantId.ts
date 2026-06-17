@@ -17,7 +17,6 @@ export function getTenantContext(): TenantContext | undefined {
     return scoped;
   }
 
-  // Otherwise use the tenant set on the request context via setTenantId(...).
   const context = ContextStorage.getStore();
   if (context?.tenantId !== undefined) {
     return { tenantId: context.tenantId };

@@ -38,27 +38,35 @@ t.test("runWithTenant sets the tenant inside the callback", async () => {
 });
 
 t.test("runWithTenant stringifies number tenant IDs", async () => {
+  let ran = false;
   runWithTenant(10331, () => {
+    ran = true;
     t.same(getTenantContext(), { tenantId: "10331" });
   });
+  t.ok(ran);
 });
 
 t.test("runWithTenant survives async boundaries", async () => {
+  let ran = false;
   await runWithTenant("org_async", async () => {
     await sleep(1);
     t.same(getTenantContext(), { tenantId: "org_async" });
     await sleep(1);
     t.same(getTenantContext(), { tenantId: "org_async" });
+    ran = true;
   });
+  t.ok(ran);
 });
 
 t.test("runWithTenant nests, inner overrides outer", async () => {
+  let innerRan = false;
   await runWithTenant("outer", async () => {
     t.same(getTenantContext(), { tenantId: "outer" });
 
     await runWithTenant("inner", async () => {
       await sleep(1);
       t.same(getTenantContext(), { tenantId: "inner" });
+      innerRan = true;
     });
 
     t.same(
@@ -67,23 +75,27 @@ t.test("runWithTenant nests, inner overrides outer", async () => {
       "outer tenant restored after inner returns"
     );
   });
+  t.ok(innerRan);
 });
 
 t.test(
   "tenant is available in event-emitter callbacks bound with bindContext",
   async () => {
     const emitter = new EventEmitter();
+    let called = false;
 
     await runWithTenant("org_emit", async () => {
       emitter.on(
         "event",
         bindContext(() => {
+          called = true;
           t.same(getTenantContext(), { tenantId: "org_emit" });
         })
       );
     });
 
     emitter.emit("event");
+    t.ok(called);
   }
 );
 
@@ -97,6 +109,36 @@ t.test(
     try {
       let ran = false;
       const result = runWithTenant("", () => {
+        ran = true;
+        t.equal(
+          getTenantContext(),
+          undefined,
+          "no tenant set for an invalid id"
+        );
+        return "done";
+      });
+
+      t.ok(ran);
+      t.equal(result, "done");
+      t.equal(warnings.length, 1);
+      t.match(warnings[0], "expects a non-empty string or number");
+    } finally {
+      console.warn = originalWarn;
+    }
+  }
+);
+
+t.test(
+  "runWithTenant warns and still runs when tenant is not a string or number",
+  async () => {
+    const originalWarn = console.warn;
+    const warnings: string[] = [];
+    console.warn = (msg: string) => warnings.push(msg);
+
+    try {
+      let ran = false;
+      // @ts-expect-error Testing invalid input
+      const result = runWithTenant(null, () => {
         ran = true;
         t.equal(
           getTenantContext(),
@@ -163,11 +205,14 @@ t.test("runWithTenant does not warn for async callbacks", async () => {
 
 t.test("setTenantId sets the tenant for the current request", async () => {
   createTestAgent();
+  let ran = false;
 
   runWithContext({ ...requestContext }, () => {
     setTenantId("org_req");
     t.same(getTenantContext(), { tenantId: "org_req" });
+    ran = true;
   });
+  t.ok(ran);
 
   t.equal(
     getTenantContext(),
@@ -180,6 +225,7 @@ t.test(
   "runWithTenant overrides the tenant from the request context",
   async () => {
     createTestAgent();
+    let ran = false;
 
     // Mirrors the bug: queued work resumes inside another request's context.
     // The explicit runWithTenant tenant must win over the request's tenant.
@@ -189,6 +235,7 @@ t.test(
 
       runWithTenant("correct", () => {
         t.same(getTenantContext(), { tenantId: "correct" });
+        ran = true;
       });
 
       t.same(
@@ -197,5 +244,6 @@ t.test(
         "request tenant restored after runWithTenant returns"
       );
     });
+    t.ok(ran);
   }
 );

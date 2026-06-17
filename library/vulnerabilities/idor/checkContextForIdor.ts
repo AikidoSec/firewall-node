@@ -40,9 +40,8 @@ export function checkContextForIdor({
 
   const tenant = getTenantContext();
   if (!tenant) {
-    // A request must always set a tenant (existing behaviour). Work that runs
-    // outside a request only needs one when the app opts in with requireTenantId,
-    // otherwise we leave such queries untouched.
+    // A request always needs a tenant. Background work (no request) only needs one
+    // when the app opts in with requireTenantId; otherwise we skip the query.
     if (getContext() || config.requireTenantId) {
       return violation(
         "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
@@ -130,25 +129,23 @@ function checkWhereFilters(
       tenantFilter.placeholder_number
     );
 
-    if (context.tenantId !== undefined) {
-      const resolved =
-        typeof resolvedValue === "string" || typeof resolvedValue === "number";
+    const resolved =
+      typeof resolvedValue === "string" || typeof resolvedValue === "number";
 
-      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
-      if (tenantFilter.is_placeholder && !resolved) {
-        return violation(
-          `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
-        );
-      }
+    // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+    if (tenantFilter.is_placeholder && !resolved) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+      );
+    }
 
-      const value = resolved ? String(resolvedValue) : tenantFilter.value;
-      const tenantIdStr = context.tenantId.toString();
+    const value = resolved ? String(resolvedValue) : tenantFilter.value;
+    const tenantIdStr = context.tenantId.toString();
 
-      if (value !== tenantIdStr) {
-        return violation(
-          `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
-        );
-      }
+    if (value !== tenantIdStr) {
+      return violation(
+        `Zen IDOR protection: query on table '${table.name}' filters '${config.tenantColumnName}' with value '${value}' but tenant ID is '${tenantIdStr}'`
+      );
     }
   }
 
@@ -190,26 +187,23 @@ function checkInsert(
         tenantCol.placeholder_number
       );
 
-      if (context.tenantId !== undefined) {
-        const resolved =
-          typeof resolvedValue === "string" ||
-          typeof resolvedValue === "number";
+      const resolved =
+        typeof resolvedValue === "string" || typeof resolvedValue === "number";
 
-        // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
-        if (tenantCol.is_placeholder && !resolved) {
-          return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
-          );
-        }
+      // Placeholder could not be resolved (missing param or bug in the sink's resolve logic)
+      if (tenantCol.is_placeholder && !resolved) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' has a placeholder for '${config.tenantColumnName}' that could not be resolved`
+        );
+      }
 
-        const value = resolved ? String(resolvedValue) : tenantCol.value;
-        const tenantIdStr = context.tenantId.toString();
+      const value = resolved ? String(resolvedValue) : tenantCol.value;
+      const tenantIdStr = context.tenantId.toString();
 
-        if (value !== tenantIdStr) {
-          return violation(
-            `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
-          );
-        }
+      if (value !== tenantIdStr) {
+        return violation(
+          `Zen IDOR protection: INSERT on table '${table.name}' sets '${config.tenantColumnName}' to '${value}' but tenant ID is '${tenantIdStr}'`
+        );
       }
     }
   }
