@@ -69,7 +69,6 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
-      requireTenantId: true,
     });
 
     await t.test("allows query with tenant filter", async () => {
