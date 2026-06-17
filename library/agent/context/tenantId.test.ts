@@ -2,7 +2,12 @@
 import * as t from "tap";
 import { EventEmitter } from "events";
 import { setTimeout as sleep } from "node:timers/promises";
-import { runWithTenant, getTenantContext, setTenantId } from "./tenantId";
+import {
+  runWithTenant,
+  getTenantContext,
+  getTenantId,
+  setTenantId,
+} from "./tenantId";
 import { runWithContext, bindContext, type Context } from "../Context";
 import { createTestAgent } from "../../helpers/createTestAgent";
 
@@ -22,6 +27,50 @@ const requestContext: Context = {
 t.test("getTenantContext is undefined without a tenant", async () => {
   t.equal(getTenantContext(), undefined);
 });
+
+t.test("getTenantId is undefined without a tenant", async () => {
+  t.equal(getTenantId(), undefined);
+});
+
+t.test("getTenantId returns the tenant set by runWithTenant", async () => {
+  runWithTenant("org_get", () => {
+    t.equal(getTenantId(), "org_get");
+  });
+
+  t.equal(getTenantId(), undefined, "tenant does not leak after the callback");
+});
+
+t.test("getTenantId returns the tenant set by setTenantId", async () => {
+  createTestAgent();
+
+  runWithContext({ ...requestContext }, () => {
+    setTenantId("org_get_req");
+    t.equal(getTenantId(), "org_get_req");
+  });
+
+  t.equal(getTenantId(), undefined, "tenant does not leak outside the request");
+});
+
+t.test(
+  "getTenantId prefers runWithTenant over the request context",
+  async () => {
+    createTestAgent();
+
+    runWithContext({ ...requestContext }, () => {
+      setTenantId("foreign");
+
+      runWithTenant("correct", () => {
+        t.equal(getTenantId(), "correct");
+      });
+
+      t.equal(
+        getTenantId(),
+        "foreign",
+        "request tenant restored after callback"
+      );
+    });
+  }
+);
 
 t.test("runWithTenant sets the tenant inside the callback", async () => {
   const result = runWithTenant("org_1", () => {

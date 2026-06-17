@@ -15,7 +15,11 @@ import { checkIndexImportGuard } from "./helpers/indexImportGuard";
 import { setRateLimitGroup } from "./ratelimiting/group";
 import { shutdown } from "./agent/shutdown";
 import { isLibBundled } from "./helpers/isLibBundled";
-import { setTenantId, runWithTenant } from "./agent/context/tenantId";
+import {
+  setTenantId,
+  runWithTenant,
+  getTenantId,
+} from "./agent/context/tenantId";
 import { enableIdorProtection } from "./agent/idorProtection";
 import { withoutIdorProtection } from "./agent/context/withoutIdorProtection";
 import { colorText } from "./helpers/colorText";
@@ -77,6 +81,7 @@ export {
   shutdown,
   setTenantId,
   runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
 };
@@ -98,6 +103,7 @@ export default {
   shutdown,
   setTenantId,
   runWithTenant,
+  getTenantId,
   enableIdorProtection,
   withoutIdorProtection,
 };

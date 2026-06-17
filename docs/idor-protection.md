@@ -106,7 +106,23 @@ A queue usually runs a job later than when you added it. By then a different web
 > [!NOTE]
 > Use an `async` callback and `await` your queries inside it. If the callback returns a promise without awaiting it, the query runs after the callback ends and the tenant is already gone. Zen logs a warning when it sees this.
 
-### 4. Bypass for specific queries (optional)
+### 4. Read the current tenant ID (optional)
+
+`getTenantId` gives you the tenant that's set right now. It works inside a request (set with `setTenantId`) and inside `runWithTenant`. Use it when you want to pass the tenant on yourself instead of taking it as a function argument:
+
+```js
+import Zen from "@aikidosec/firewall";
+
+function enqueueJob(work) {
+  const tenantId = Zen.getTenantId();
+
+  return queue.add(() => Zen.runWithTenant(tenantId, work));
+}
+```
+
+It returns the tenant ID as a string, or `undefined` if no tenant is set. If both are set, `runWithTenant` wins over `setTenantId`.
+
+### 5. Bypass for specific queries (optional)
 
 Some queries don't need tenant filtering (e.g. aggregations across all tenants for an admin dashboard). Use `withoutIdorProtection` to bypass the check for a specific callback:
 

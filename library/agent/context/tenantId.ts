@@ -23,6 +23,13 @@ export function getTenantContext(): TenantContext | undefined {
   return undefined;
 }
 
+// Returns the tenant ID currently in effect, set via setTenantId() inside a
+// request or runWithTenant() for background work. Lets you forward the active
+// tenant explicitly instead of threading it through function parameters.
+export function getTenantId(): string | undefined {
+  return getTenantContext()?.tenantId;
+}
+
 export function setTenantId(id: string | number) {
   const agent = getInstance();
 
