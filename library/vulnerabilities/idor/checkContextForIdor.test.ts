@@ -2,12 +2,11 @@ import * as t from "tap";
 import { checkContextForIdor } from "./checkContextForIdor";
 import { createTestAgent } from "../../helpers/createTestAgent";
 import { runWithContext, type Context } from "../../agent/Context";
-import { runWithTenant } from "../../agent/context/tenantId";
 import { SQLDialectSQLite } from "../sql-injection/dialects/SQLDialectSQLite";
 import { SQLDialectPostgres } from "../sql-injection/dialects/SQLDialectPostgres";
 import { SQLDialectMySQL } from "../sql-injection/dialects/SQLDialectMySQL";
 
-const requestContext: Context = {
+const context: Context = {
   remoteAddress: "::1",
   method: "GET",
   url: "http://localhost:4000",
@@ -18,18 +17,20 @@ const requestContext: Context = {
   routeParams: {},
   source: "express",
   route: "/orders",
+  tenantId: "org_123",
 };
+
+const contextWithoutTenantId: Context = { ...context, tenantId: undefined };
 
 const sqlite = new SQLDialectSQLite();
 const postgres = new SQLDialectPostgres();
 const mysql = new SQLDialectMySQL();
 
-// Runs the IDOR check with a resolved tenant, mirroring runWithTenant(...) or a
-// request that called setTenantId(...).
-function checkWithTenant(
+// Runs the check inside a request that has the tenant set.
+function check(
   args: Parameters<typeof checkContextForIdor>[0]
 ): ReturnType<typeof checkContextForIdor> {
-  return runWithTenant("org_123", () => checkContextForIdor(args));
+  return runWithContext(context, () => checkContextForIdor(args));
 }
 
 t.test("checkContextForIdor", async (t) => {
@@ -42,7 +43,7 @@ t.test("checkContextForIdor", async (t) => {
   });
 
   await t.test("blocks when ? placeholder could not be resolved", async () => {
-    const result = checkWithTenant({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = ?",
       dialect: sqlite,
       resolvePlaceholder: () => undefined,
@@ -56,7 +57,7 @@ t.test("checkContextForIdor", async (t) => {
   });
 
   await t.test("blocks when $1 placeholder could not be resolved", async () => {
-    const result = checkWithTenant({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
       dialect: postgres,
       resolvePlaceholder: () => undefined,
@@ -72,7 +73,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks when resolved placeholder value does not match tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = ?",
         dialect: sqlite,
         resolvePlaceholder: () => "org_456",
@@ -89,7 +90,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows when resolved placeholder value matches tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = ?",
         dialect: sqlite,
         resolvePlaceholder: () => "org_123",
@@ -102,7 +103,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks when literal value does not match tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = 'org_456'",
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
@@ -117,7 +118,7 @@ t.test("checkContextForIdor", async (t) => {
   );
 
   await t.test("allows when literal value matches tenant ID", async () => {
-    const result = checkWithTenant({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
       dialect: sqlite,
       resolvePlaceholder: () => undefined,
@@ -129,7 +130,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when ? placeholder could not be resolved",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
@@ -146,7 +147,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when resolved placeholder does not match tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
         dialect: sqlite,
         resolvePlaceholder: () => "org_456",
@@ -163,7 +164,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows INSERT when resolved placeholder matches tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
         dialect: sqlite,
         resolvePlaceholder: () => "org_123",
@@ -176,7 +177,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when literal value does not match tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_456')",
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
@@ -193,7 +194,7 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows INSERT when literal value matches tenant ID",
     async () => {
-      const result = checkWithTenant({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_123')",
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
@@ -204,7 +205,7 @@ t.test("checkContextForIdor", async (t) => {
   );
 
   await t.test("cache is not reused across dialects", async () => {
-    const postgresResult = checkWithTenant({
+    const postgresResult = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
       dialect: postgres,
       resolvePlaceholder: () => "org_123",
@@ -215,7 +216,7 @@ t.test("checkContextForIdor", async (t) => {
       "postgres: allowed when $1 resolves to tenant ID"
     );
 
-    const mysqlResult = checkWithTenant({
+    const mysqlResult = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
       dialect: mysql,
       resolvePlaceholder: () => "org_123",
@@ -227,7 +228,7 @@ t.test("checkContextForIdor", async (t) => {
   });
 
   await t.test("blocks a request without a tenant", async () => {
-    const result = runWithContext(requestContext, () =>
+    const result = runWithContext(contextWithoutTenantId, () =>
       checkContextForIdor({
         sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
         dialect: sqlite,
