@@ -40,6 +40,7 @@ t.test("checkContextForIdor", async (t) => {
   agent.setIdorProtectionConfig({
     tenantColumnName: "tenant_id",
     excludedTables: [],
+    requireTenantId: false,
   });
 
   await t.test("blocks when ? placeholder could not be resolved", async () => {
@@ -275,6 +276,7 @@ t.test("checkContextForIdor", async (t) => {
       agent.setIdorProtectionConfig({
         tenantColumnName: "tenant_id",
         excludedTables: [],
+        requireTenantId: false,
       });
     }
   );

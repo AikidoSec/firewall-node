@@ -88,6 +88,7 @@ t.test("IDOR protection for MySQL", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
+      requireTenantId: false,
     });
 
     await t.test("allows query with tenant filter", async () => {

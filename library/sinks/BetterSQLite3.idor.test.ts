@@ -62,6 +62,7 @@ t.test("IDOR protection for BetterSQLite3", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
+      requireTenantId: false,
     });
 
     await t.test(
