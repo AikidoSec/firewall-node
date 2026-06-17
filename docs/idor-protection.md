@@ -108,7 +108,7 @@ A queue usually runs a job later than when you added it. By then a different web
 
 ### 4. Read the current tenant ID (optional)
 
-`getTenantId` gives you the tenant that's set right now. It works inside a request (set with `setTenantId`) and inside `runWithTenant`. Use it when you want to pass the tenant on yourself instead of taking it as a function argument:
+`getTenantId` gives you the tenant that's set right now. It works inside a request (set with `setTenantId`) and inside `runWithTenant`. Use it when you need the tenant deeper in your code but don't want to pass it down through every function call:
 
 ```js
 import Zen from "@aikidosec/firewall";
