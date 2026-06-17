@@ -4,14 +4,12 @@ import { ContextStorage } from "./ContextStorage";
 
 export type TenantContext = { tenantId: string };
 
-// Separate from the request Context so the tenant can be set on the request path
-// (setTenantId) or re-stamped inside background work (runWithTenant) without
-// touching the live request context.
+// Holds the tenant set by runWithTenant, separate from the request Context.
 const tenantIdStorage = new AsyncLocalStorage<TenantContext>();
 
 export function getTenantContext(): TenantContext | undefined {
-  // A tenant set via runWithTenant(...) takes precedence: background work can
-  // re-stamp the tenant even when it resumes inside another request's context.
+  // runWithTenant wins over the request, so background work that resumes inside
+  // another request's context is still checked against its own tenant.
   const scoped = tenantIdStorage.getStore();
   if (scoped) {
     return scoped;
@@ -55,9 +53,9 @@ export function setTenantId(id: string | number) {
   context.tenantId = rawId.toString();
 }
 
-// For deferred / background work (queues, schedulers, workers) that runs outside
-// the originating HTTP request. The tenant travels with the callback across async
-// boundaries, so SQL executed inside is checked against it.
+// Sets the tenant for background work (queues, schedulers, workers) that runs
+// outside an HTTP request. The tenant follows the callback across async
+// boundaries, so every query inside is checked against it.
 export function runWithTenant<T>(tenantId: string | number, fn: () => T): T {
   if (typeof fn !== "function") {
     // eslint-disable-next-line no-console
