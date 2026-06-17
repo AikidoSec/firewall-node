@@ -277,7 +277,10 @@ t.test(
 
         t.ok(error instanceof Error);
         if (error instanceof Error) {
-          t.match(error.message, "setTenantId() was not called");
+          t.match(
+            error.message,
+            "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+          );
         }
       });
 
@@ -431,7 +434,10 @@ t.test(
 
             t.ok(error instanceof Error);
             if (error instanceof Error) {
-              t.match(error.message, "setTenantId() was not called");
+              t.match(
+                error.message,
+                "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+              );
             }
           }
         );
@@ -536,7 +542,10 @@ t.test(
 
           t.ok(error instanceof Error);
           if (error instanceof Error) {
-            t.match(error.message, "setTenantId() was not called");
+            t.match(
+              error.message,
+              "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+            );
           }
         });
 

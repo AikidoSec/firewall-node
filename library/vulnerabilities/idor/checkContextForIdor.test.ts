@@ -238,7 +238,10 @@ t.test("checkContextForIdor", async (t) => {
     );
 
     t.ok(result);
-    t.match(result?.message, "setTenantId() was not called");
+    t.match(
+      result?.message,
+      "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+    );
   });
 
   await t.test(
@@ -270,7 +273,10 @@ t.test("checkContextForIdor", async (t) => {
       });
 
       t.ok(result);
-      t.match(result?.message, "setTenantId() was not called");
+      t.match(
+        result?.message,
+        "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+      );
 
       // Restore the default (no enforcement) for any later tests.
       agent.setIdorProtectionConfig({
