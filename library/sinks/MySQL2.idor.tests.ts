@@ -72,6 +72,7 @@ export function createMySQL2IdorTests(versionPkgName: string) {
       agent.setIdorProtectionConfig({
         tenantColumnName: "tenant_id",
         excludedTables: ["migrations"],
+        requireTenantId: true,
       });
 
       await t.test("allows query with tenant filter", async () => {

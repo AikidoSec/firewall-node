@@ -1,6 +1,10 @@
 import { getInstance } from "../../agent/AgentSingleton";
-import { Context } from "../../agent/Context";
+import { getContext } from "../../agent/Context";
 import { isIdorProtectionIgnored } from "../../agent/context/withoutIdorProtection";
+import {
+  getTenantContext,
+  type TenantContext,
+} from "../../agent/context/tenantId";
 import { IdorViolationResult } from "../../agent/hooks/InterceptorResult";
 import { LRUMap } from "../../ratelimiting/LRUMap";
 import { wasm_idor_analyze_sql } from "../../internals/zen_internals";
@@ -10,12 +14,10 @@ import { IdorProtectionConfig } from "../../agent/IdorProtectionConfig";
 
 export function checkContextForIdor({
   sql,
-  context,
   dialect,
   resolvePlaceholder,
 }: {
   sql: string;
-  context: Context;
   dialect: SQLDialect;
   resolvePlaceholder: (
     placeholder: string,
@@ -36,10 +38,17 @@ export function checkContextForIdor({
     return undefined;
   }
 
-  if (!context.tenantId) {
-    return violation(
-      "Zen IDOR protection: setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled."
-    );
+  const tenant = getTenantContext();
+  if (!tenant) {
+    // A request must always set a tenant (existing behaviour). Work that runs
+    // outside a request only needs one when the app opts in with requireTenantId,
+    // otherwise we leave such queries untouched.
+    if (getContext() || config.requireTenantId) {
+      return violation(
+        "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+      );
+    }
+    return undefined;
   }
 
   const analysis = getAnalysisResults(sql, dialect);
@@ -57,7 +66,7 @@ export function checkContextForIdor({
       const insertViolation = checkInsert(
         queryResult,
         config,
-        context,
+        tenant,
         resolvePlaceholder
       );
       if (insertViolation) {
@@ -67,7 +76,7 @@ export function checkContextForIdor({
       const whereViolation = checkWhereFilters(
         queryResult,
         config,
-        context,
+        tenant,
         resolvePlaceholder
       );
       if (whereViolation) {
@@ -82,7 +91,7 @@ export function checkContextForIdor({
 function checkWhereFilters(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
-  context: Context,
+  context: TenantContext,
   resolvePlaceholder: (
     placeholder: string,
     placeholderNumber: number | undefined
@@ -149,7 +158,7 @@ function checkWhereFilters(
 function checkInsert(
   queryResult: SqlQueryResult,
   config: IdorProtectionConfig,
-  context: Context,
+  context: TenantContext,
   resolvePlaceholder: (
     placeholder: string,
     placeholderNumber: number | undefined

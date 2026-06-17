@@ -78,9 +78,6 @@ export class MySQL2 implements Wrapper {
 
   private inspectQuery(operation: string, args: unknown[]): InterceptorResult {
     const context = getContext();
-    if (!context) {
-      return undefined;
-    }
 
     const { sql, params } = this.getSQLStringFromArgs(args);
 
@@ -89,19 +86,20 @@ export class MySQL2 implements Wrapper {
     }
 
     // Check for SQL injection first to block malicious queries before parsing SQL query for IDOR analysis
-    const sqlInjectionResult = checkContextForSqlInjection({
-      operation: operation,
-      sql: sql,
-      context: context,
-      dialect: this.dialect,
-    });
-    if (sqlInjectionResult) {
-      return sqlInjectionResult;
+    if (context) {
+      const sqlInjectionResult = checkContextForSqlInjection({
+        operation: operation,
+        sql: sql,
+        context: context,
+        dialect: this.dialect,
+      });
+      if (sqlInjectionResult) {
+        return sqlInjectionResult;
+      }
     }
 
     return checkContextForIdor({
       sql,
-      context,
       dialect: this.dialect,
       resolvePlaceholder: (placeholder, placeholderNumber) =>
         this.resolvePlaceholder(placeholder, placeholderNumber, params),
