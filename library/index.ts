@@ -22,6 +22,7 @@ import { colorText } from "./helpers/colorText";
 import { warnBox } from "./helpers/warnBox";
 import { isPreloaded } from "./helpers/isPreloaded";
 import { warnIfEntrypointIsModule } from "./helpers/warnIfEntrypointIsModule";
+import { elysiaHandler } from "./middleware/elysia";
 
 // Prevent logging twice / trying to start agent twice
 if (!isNewHookSystemUsed()) {
@@ -73,6 +74,7 @@ export {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
   shutdown,
   setTenantId,
@@ -93,6 +95,7 @@ export default {
   fastifyHook,
   addKoaMiddleware,
   addRestifyMiddleware,
+  elysiaHandler,
   setRateLimitGroup,
   shutdown,
   setTenantId,
