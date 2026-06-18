@@ -111,7 +111,7 @@ export class MongoDB implements Wrapper {
             collection.dbName,
             collection.collectionName,
             context,
-            options.update,
+            updateContent,
             "bulkWrite"
           );
           if (result) {
