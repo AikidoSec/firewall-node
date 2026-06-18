@@ -297,36 +297,43 @@ t.test("It does not match GROUP keyword", async () => {
 
 t.test("It works with non-UTF-8 characters and emojis", async () => {
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \udce9'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \udce9'\nOR 1=1 -- '",
     "a \udce9'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uD800'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uD800'\nOR 1=1 -- '",
     "a \uD800'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFFF'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFFF'\nOR 1=1 -- '",
     "a \uDFFF'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFFF\uDFFF'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFFF\uDFFF'\nOR 1=1 -- '",
     "a \uDFFF\uDFFF'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a \uDFAB'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a \uDFAB'\nOR 1=1 -- '",
     "a \uDFAB'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a 😀'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a 😀'\nOR 1=1 -- '",
     "a 😀'\nOR 1=1 --"
   );
   isSqlInjection(
-    "SELECT * FROM users WHERE id = 'a 🛡️'\nOR 1=1 --'",
+    "SELECT * FROM users WHERE id = 'a 🛡️'\nOR 1=1 -- '",
     "a 🛡️'\nOR 1=1 --"
   );
 
   isNotSqlInjection("SELECT * FROM users WHERE id = 'a \uD800'", "a \uD800");
   isNotSqlInjection("SELECT * FROM users WHERE id = 'a 🛡️'", "a 🛡️");
+});
+
+t.test("detects injection with trailing spaces in user input", async () => {
+  isSqlInjection(
+    "INSERT INTO pets (name, owner) VALUES ('x', 'dummy'), ('injected', 'hacker'); -- ', 'owner')",
+    "x', 'dummy'), ('injected', 'hacker'); --    "
+  );
 });
 
 const files = [
