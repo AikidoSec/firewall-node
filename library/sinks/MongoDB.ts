@@ -104,18 +104,19 @@ export class MongoDB implements Wrapper {
         }
       }
 
-      // Also scan update (updateOne/updateMany) or replacement (replaceOne).
-      const updateContent = options.update ?? options.replacement;
-      if (isPlainObject(updateContent) || Array.isArray(updateContent)) {
-        const result = this.inspectFilter(
-          collection.dbName,
-          collection.collectionName,
-          context,
-          updateContent,
-          "bulkWrite"
-        );
-        if (result) {
-          return result;
+      // Also scan update (updateOne/updateMany) and replacement (replaceOne).
+      for (const updateContent of [options.update, options.replacement]) {
+        if (isPlainObject(updateContent) || Array.isArray(updateContent)) {
+          const result = this.inspectFilter(
+            collection.dbName,
+            collection.collectionName,
+            context,
+            options.update,
+            "bulkWrite"
+          );
+          if (result) {
+            return result;
+          }
         }
       }
     }
