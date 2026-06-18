@@ -215,6 +215,130 @@ export function createMongoDBTests(
         );
       }
 
+      const updateOneError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.updateOne(
+            { title: "Yet Another Title" },
+            { $set: { title: { $ne: null } } }
+          );
+        });
+      });
+      if (updateOneError instanceof Error) {
+        t.same(
+          updateOneError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.updateOne(...) originating from body.myTitle"
+        );
+      }
+
+      const updateOnePipelineError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.updateOne({ title: "Yet Another Title" }, [
+            { $set: { title: { $ne: null } } },
+          ]);
+        });
+      });
+      if (updateOnePipelineError instanceof Error) {
+        t.same(
+          updateOnePipelineError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.updateOne(...) originating from body.myTitle"
+        );
+      }
+
+      const updateManyError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.updateMany({}, { $set: { title: { $ne: null } } });
+        });
+      });
+      if (updateManyError instanceof Error) {
+        t.same(
+          updateManyError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.updateMany(...) originating from body.myTitle"
+        );
+      }
+
+      const replaceOneError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.replaceOne(
+            { title: "Yet Another Title" },
+            { title: { $ne: null } }
+          );
+        });
+      });
+      if (replaceOneError instanceof Error) {
+        t.same(
+          replaceOneError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.replaceOne(...) originating from body.myTitle"
+        );
+      }
+
+      const findOneAndUpdateError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.findOneAndUpdate(
+            { title: "Yet Another Title" },
+            { $set: { title: { $ne: null } } }
+          );
+        });
+      });
+      if (findOneAndUpdateError instanceof Error) {
+        t.same(
+          findOneAndUpdateError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.findOneAndUpdate(...) originating from body.myTitle"
+        );
+      }
+
+      const findOneAndReplaceError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.findOneAndReplace(
+            { title: "Yet Another Title" },
+            { title: { $ne: null } }
+          );
+        });
+      });
+      if (findOneAndReplaceError instanceof Error) {
+        t.same(
+          findOneAndReplaceError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.findOneAndReplace(...) originating from body.myTitle"
+        );
+      }
+
+      const bulkUpdateError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.bulkWrite([
+            {
+              updateOne: {
+                filter: { title: "Yet Another Title" },
+                update: { $set: { title: { $ne: null } } },
+              },
+            },
+          ]);
+        });
+      });
+      if (bulkUpdateError instanceof Error) {
+        t.same(
+          bulkUpdateError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
+        );
+      }
+
+      const bulkReplaceError = await t.rejects(async () => {
+        await runWithContext(unsafeContext, () => {
+          return collection.bulkWrite([
+            {
+              replaceOne: {
+                filter: { title: "Yet Another Title" },
+                replacement: { title: { $ne: null } },
+              },
+            },
+          ]);
+        });
+      });
+      if (bulkReplaceError instanceof Error) {
+        t.same(
+          bulkReplaceError.message,
+          "Zen has blocked a NoSQL injection: MongoDB.Collection.bulkWrite(...) originating from body.myTitle"
+        );
+      }
+
       await runWithContext(safeContext, async () => {
         // @ts-expect-error Test if it checks arguments
         await t.rejects(async () => collection.bulkWrite());

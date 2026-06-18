@@ -24,6 +24,15 @@ const OPERATIONS_WITH_FILTER = [
   "replaceOne",
 ] as const;
 
+// Write operations that also carry user-controlled content in args[1]
+const OPERATIONS_WITH_UPDATE_ARG = new Set<string>([
+  "findOneAndUpdate",
+  "findOneAndReplace",
+  "updateOne",
+  "updateMany",
+  "replaceOne",
+]);
+
 const BULK_WRITE_OPERATIONS_WITH_FILTER = [
   "replaceOne",
   "updateOne",
@@ -36,7 +45,11 @@ type BulkWriteOperationName =
   (typeof BULK_WRITE_OPERATIONS_WITH_FILTER)[number];
 
 type BulkWriteOperation = {
-  [key in BulkWriteOperationName]?: { filter?: unknown };
+  [key in BulkWriteOperationName]?: {
+    filter?: unknown;
+    update?: unknown;
+    replacement?: unknown;
+  };
 };
 
 export class MongoDB implements Wrapper {
@@ -74,14 +87,37 @@ export class MongoDB implements Wrapper {
     for (const op of BULK_WRITE_OPERATIONS_WITH_FILTER) {
       const options = operation[op];
 
-      if (options && options.filter) {
-        return this.inspectFilter(
+      if (!options) {
+        continue;
+      }
+
+      if (options.filter) {
+        const result = this.inspectFilter(
           collection.dbName,
           collection.collectionName,
           context,
           options.filter,
           "bulkWrite"
         );
+        if (result) {
+          return result;
+        }
+      }
+
+      // Also scan update (updateOne/updateMany) and replacement (replaceOne).
+      for (const updateContent of [options.update, options.replacement]) {
+        if (isPlainObject(updateContent) || Array.isArray(updateContent)) {
+          const result = this.inspectFilter(
+            collection.dbName,
+            collection.collectionName,
+            context,
+            updateContent,
+            "bulkWrite"
+          );
+          if (result) {
+            return result;
+          }
+        }
       }
     }
 
@@ -148,13 +184,28 @@ export class MongoDB implements Wrapper {
     }
 
     if (args.length > 0 && isPlainObject(args[0])) {
-      const filter = args[0];
+      const result = this.inspectFilter(
+        collection.dbName,
+        collection.collectionName,
+        context,
+        args[0],
+        operation
+      );
+      if (result) {
+        return result;
+      }
+    }
 
+    if (
+      OPERATIONS_WITH_UPDATE_ARG.has(operation) &&
+      args.length > 1 &&
+      (isPlainObject(args[1]) || Array.isArray(args[1]))
+    ) {
       return this.inspectFilter(
         collection.dbName,
         collection.collectionName,
         context,
-        filter,
+        args[1],
         operation
       );
     }
