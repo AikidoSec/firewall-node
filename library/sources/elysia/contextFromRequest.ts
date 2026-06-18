@@ -1,19 +1,20 @@
 import type { Context as ElysiaContext } from "elysia";
-import { getContext, type Context } from "../../agent/Context";
+import type { Context } from "../../agent/Context";
 import { getIPAddressFromRequest } from "../../helpers/getIPAddressFromRequest";
 import { buildRouteFromURL } from "../../helpers/buildRouteFromURL";
 
 export function contextFromRequest(ctx: ElysiaContext): Context {
-  const existingContext = getContext();
+  // On Node.js, Elysia uses the srvx library under the hood. srvx adds an `ip`
+  // field to the request that holds the client's address.
+  // https://github.com/h3js/srvx/blob/main/src/adapters/_node/request.ts#L41-L43
+  const ip = (ctx.request as { ip?: unknown }).ip;
 
   return {
     method: ctx.request.method,
-    remoteAddress:
-      existingContext?.remoteAddress ||
-      getIPAddressFromRequest({
-        headers: ctx.headers,
-        remoteAddress: undefined, // Not possible in Node.js with Elysia
-      }),
+    remoteAddress: getIPAddressFromRequest({
+      headers: ctx.headers,
+      remoteAddress: typeof ip === "string" ? ip : undefined,
+    }),
     body: ctx.body,
     url: ctx.request.url,
     headers: ctx.headers,
