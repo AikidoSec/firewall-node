@@ -1,4 +1,5 @@
 import { addIPv4MappedAddresses } from "../helpers/addIPv4MappedAddresses";
+import { hostnameToUnicode } from "../helpers/hostnameToUnicode";
 import { IPMatcher } from "../helpers/ip-matcher/IPMatcher";
 import { LimitedContext, matchEndpoints } from "../helpers/matchEndpoints";
 import { normalizeHostname } from "../helpers/normalizeHostname";
@@ -297,7 +298,9 @@ export class ServiceConfig {
   }
 
   shouldBlockOutgoingRequest(hostname: string): boolean {
-    const mode = this.domains.get(normalizeHostname(hostname));
+    const mode = this.domains.get(
+      hostnameToUnicode(normalizeHostname(hostname))
+    );
 
     if (this.blockNewOutgoingRequests) {
       // Only allow outgoing requests if the mode is "allow"
