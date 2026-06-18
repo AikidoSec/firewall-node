@@ -23,15 +23,24 @@ import Zen from "@aikidosec/firewall";
 Zen.enableIdorProtection({
   tenantColumnName: "tenant_id",
   excludedTables: ["users"],
+  requireTenantId: true,
 });
 ```
 
 - `tenantColumnName` — the column name that identifies the tenant in your database tables (e.g. `account_id`, `organization_id`, `team_id`).
 - `excludedTables` — tables that Zen should skip IDOR checks for, because rows aren't scoped to a single tenant (e.g. a shared `users` table that stores users across all tenants).
+- `requireTenantId` — when `true`, Zen also blocks queries that run outside a web request without a tenant. Defaults to `false`, which skips those queries.
 
-### 2. Set the tenant ID per request
+> [!TIP]
+> We recommend `requireTenantId: true`.
+>
+> Inside a web request, Zen already requires a tenant. If you forget `setTenantId`, the query throws an error. But code that runs on its own (timers, queues, cron jobs) has no request, so by default Zen skips it. If you forget to wrap that code in `runWithTenant`, the query runs with no check and nothing warns you.
+>
+> With `requireTenantId: true`, Zen throws for those queries too, so a missing `runWithTenant` shows up right away. It's `false` by default because turning it on blocks every query that runs without a tenant, which can break existing background code. Turn it on once all your background work uses `runWithTenant`.
 
-Every request must have a tenant ID when IDOR protection is enabled. Call `setTenantId` early in your request handler (e.g. in middleware after authentication):
+### 2. Set the tenant ID for each request
+
+Call `setTenantId` near the start of each request, usually in middleware right after you know who the user is. Zen then checks every query in that request against this tenant:
 
 ```js
 import Zen from "@aikidosec/firewall";
@@ -44,10 +53,76 @@ app.use((req, res, next) => {
 });
 ```
 
-> [!IMPORTANT]
-> If `setTenantId` is not called for a request, Zen will throw an `Error` when a SQL query is executed.
+The tenant stays set for the rest of the request. If a request runs a query without calling `setTenantId` first, Zen throws an `Error`.
 
-### 3. Bypass for specific queries (optional)
+### 3. Set the tenant ID for background work
+
+`setTenantId` only works inside a web request. For code that runs on its own, like timers, cron jobs, and queue workers, use `runWithTenant` instead. Every query inside the callback is checked against the tenant you pass.
+
+A timer that processes jobs for many tenants:
+
+```js
+import Zen from "@aikidosec/firewall";
+
+setInterval(async () => {
+  const jobs = await getPendingJobs(); // jobs from many tenants
+
+  for (const job of jobs) {
+    await Zen.runWithTenant(job.tenantId, async () => {
+      await db.query(
+        "UPDATE jobs SET status = 'done' WHERE id = $1 AND tenant_id = $2",
+        [job.id, job.tenantId]
+      );
+    });
+  }
+}, 60_000);
+```
+
+There is no web request here, so `setTenantId` can't help. If you forget `runWithTenant` and `requireTenantId` is on, Zen throws so you notice the missing tenant.
+
+A job queue (for example [p-queue](https://github.com/sindresorhus/p-queue)):
+
+```js
+import PQueue from "p-queue";
+import Zen from "@aikidosec/firewall";
+
+const queue = new PQueue({ concurrency: 1 });
+
+function schedule(tenantId, work) {
+  // Run the work with its own tenant, no matter when the queue gets to it.
+  return queue.add(() => Zen.runWithTenant(tenantId, work));
+}
+
+schedule(order.tenantId, async () => {
+  await db.query(
+    "UPDATE orders SET status = 'shipped' WHERE id = $1 AND tenant_id = $2",
+    [order.id, order.tenantId]
+  );
+});
+```
+
+A queue usually runs a job later than when you added it. By then a different web request might be the one driving the queue, and that request can belong to another tenant. Without `runWithTenant`, Zen would check your query against that other tenant and throw, even though your code is correct. `runWithTenant` locks the right tenant onto the job, so the check always uses the one you meant.
+
+> [!NOTE]
+> Use an `async` callback and `await` your queries inside it. If the callback returns a promise without awaiting it, the query runs after the callback ends and the tenant is already gone. Zen logs a warning when it sees this.
+
+### 4. Read the current tenant ID (optional)
+
+`getTenantId` gives you the tenant that's set right now. It works inside a request (set with `setTenantId`) and inside `runWithTenant`. Use it when you need the tenant deeper in your code but don't want to pass it down through every function call:
+
+```js
+import Zen from "@aikidosec/firewall";
+
+function enqueueJob(work) {
+  const tenantId = Zen.getTenantId();
+
+  return queue.add(() => Zen.runWithTenant(tenantId, work));
+}
+```
+
+It returns the tenant ID as a string, or `undefined` if no tenant is set. If both are set, `runWithTenant` wins over `setTenantId`.
+
+### 5. Bypass for specific queries (optional)
 
 Some queries don't need tenant filtering (e.g. aggregations across all tenants for an admin dashboard). Use `withoutIdorProtection` to bypass the check for a specific callback:
 
@@ -107,11 +182,13 @@ This means the INSERT includes the tenant column, but the value doesn't match th
 </details>
 
 <details>
-<summary>Missing setTenantId call</summary>
+<summary>Missing tenant ID</summary>
 
 ```
-Zen IDOR protection: setTenantId() was not called for this request. Every request must have a tenant ID when IDOR protection is enabled.
+Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query.
 ```
+
+In a web request, call `setTenantId` before running queries. For background work, wrap it in `runWithTenant`. This error fires for queries outside a request only when `requireTenantId` is enabled.
 
 </details>
 

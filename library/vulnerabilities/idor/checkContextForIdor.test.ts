@@ -1,7 +1,7 @@
 import * as t from "tap";
 import { checkContextForIdor } from "./checkContextForIdor";
 import { createTestAgent } from "../../helpers/createTestAgent";
-import type { Context } from "../../agent/Context";
+import { runWithContext, type Context } from "../../agent/Context";
 import { SQLDialectSQLite } from "../sql-injection/dialects/SQLDialectSQLite";
 import { SQLDialectPostgres } from "../sql-injection/dialects/SQLDialectPostgres";
 import { SQLDialectMySQL } from "../sql-injection/dialects/SQLDialectMySQL";
@@ -20,9 +20,18 @@ const context: Context = {
   tenantId: "org_123",
 };
 
+const contextWithoutTenantId: Context = { ...context, tenantId: undefined };
+
 const sqlite = new SQLDialectSQLite();
 const postgres = new SQLDialectPostgres();
 const mysql = new SQLDialectMySQL();
+
+// Runs the check inside a request that has the tenant set.
+function check(
+  args: Parameters<typeof checkContextForIdor>[0]
+): ReturnType<typeof checkContextForIdor> {
+  return runWithContext(context, () => checkContextForIdor(args));
+}
 
 t.test("checkContextForIdor", async (t) => {
   const agent = createTestAgent();
@@ -31,12 +40,12 @@ t.test("checkContextForIdor", async (t) => {
   agent.setIdorProtectionConfig({
     tenantColumnName: "tenant_id",
     excludedTables: [],
+    requireTenantId: false,
   });
 
   await t.test("blocks when ? placeholder could not be resolved", async () => {
-    const result = checkContextForIdor({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = ?",
-      context,
       dialect: sqlite,
       resolvePlaceholder: () => undefined,
     });
@@ -49,9 +58,8 @@ t.test("checkContextForIdor", async (t) => {
   });
 
   await t.test("blocks when $1 placeholder could not be resolved", async () => {
-    const result = checkContextForIdor({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
-      context,
       dialect: postgres,
       resolvePlaceholder: () => undefined,
     });
@@ -66,9 +74,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks when resolved placeholder value does not match tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = ?",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => "org_456",
       });
@@ -84,9 +91,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows when resolved placeholder value matches tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = ?",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => "org_123",
       });
@@ -98,9 +104,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks when literal value does not match tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "SELECT * FROM orders WHERE tenant_id = 'org_456'",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
       });
@@ -114,9 +119,8 @@ t.test("checkContextForIdor", async (t) => {
   );
 
   await t.test("allows when literal value matches tenant ID", async () => {
-    const result = checkContextForIdor({
+    const result = check({
       sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
-      context,
       dialect: sqlite,
       resolvePlaceholder: () => undefined,
     });
@@ -127,9 +131,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when ? placeholder could not be resolved",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
       });
@@ -145,9 +148,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when resolved placeholder does not match tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => "org_456",
       });
@@ -163,9 +165,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows INSERT when resolved placeholder matches tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES (?, ?)",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => "org_123",
       });
@@ -177,9 +178,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "blocks INSERT when literal value does not match tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_456')",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
       });
@@ -195,9 +195,8 @@ t.test("checkContextForIdor", async (t) => {
   await t.test(
     "allows INSERT when literal value matches tenant ID",
     async () => {
-      const result = checkContextForIdor({
+      const result = check({
         sql: "INSERT INTO orders (product, tenant_id) VALUES ('Widget', 'org_123')",
-        context,
         dialect: sqlite,
         resolvePlaceholder: () => undefined,
       });
@@ -207,9 +206,8 @@ t.test("checkContextForIdor", async (t) => {
   );
 
   await t.test("cache is not reused across dialects", async () => {
-    const postgresResult = checkContextForIdor({
+    const postgresResult = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
-      context,
       dialect: postgres,
       resolvePlaceholder: () => "org_123",
     });
@@ -219,9 +217,8 @@ t.test("checkContextForIdor", async (t) => {
       "postgres: allowed when $1 resolves to tenant ID"
     );
 
-    const mysqlResult = checkContextForIdor({
+    const mysqlResult = check({
       sql: "SELECT * FROM orders WHERE tenant_id = $1",
-      context,
       dialect: mysql,
       resolvePlaceholder: () => "org_123",
     });
@@ -230,4 +227,63 @@ t.test("checkContextForIdor", async (t) => {
       "mysql: blocked because $1 is a literal, not a placeholder"
     );
   });
+
+  await t.test("blocks a request without a tenant", async () => {
+    const result = runWithContext(contextWithoutTenantId, () =>
+      checkContextForIdor({
+        sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      })
+    );
+
+    t.ok(result);
+    t.match(
+      result?.message,
+      "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+    );
+  });
+
+  await t.test(
+    "skips a query with no tenant outside a request by default",
+    async () => {
+      const result = checkContextForIdor({
+        sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks a query with no tenant outside a request when requireTenantId is enabled",
+    async () => {
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: [],
+        requireTenantId: true,
+      });
+
+      const result = checkContextForIdor({
+        sql: "SELECT * FROM orders WHERE tenant_id = 'org_123'",
+        dialect: sqlite,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+      );
+
+      // Restore the default (no enforcement) for any later tests.
+      agent.setIdorProtectionConfig({
+        tenantColumnName: "tenant_id",
+        excludedTables: [],
+        requireTenantId: false,
+      });
+    }
+  );
 });

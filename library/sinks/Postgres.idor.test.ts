@@ -69,6 +69,7 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
     agent.setIdorProtectionConfig({
       tenantColumnName: "tenant_id",
       excludedTables: ["migrations"],
+      requireTenantId: false,
     });
 
     await t.test("allows query with tenant filter", async () => {
@@ -114,7 +115,10 @@ t.test("IDOR protection for Postgres (pg)", async (t) => {
       });
 
       if (error instanceof Error) {
-        t.match(error.message, "setTenantId() was not called");
+        t.match(
+          error.message,
+          "Zen IDOR protection: setTenantId() was not called for this request (use runWithTenant(...) for background work). A tenant ID is required for every query."
+        );
       }
     });
 
