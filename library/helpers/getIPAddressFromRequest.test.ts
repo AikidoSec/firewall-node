@@ -4,6 +4,7 @@ import { getIPAddressFromRequest } from "./getIPAddressFromRequest";
 t.beforeEach(() => {
   delete process.env.AIKIDO_TRUST_PROXY;
   delete process.env.AIKIDO_CLIENT_IP_HEADER;
+  delete process.env.AIKIDO_TRUSTED_PROXY_COUNT;
 });
 
 t.test("no headers and no remote address", async (t) => {
@@ -272,7 +273,7 @@ t.test("x-forwarded-for with trust proxy and multiple IPs", async (t) => {
       },
       remoteAddress: "1.2.3.4",
     }),
-    "9.9.9.9"
+    "7.7.7.7"
   );
   t.same(
     getIPAddressFromRequest({
@@ -282,9 +283,34 @@ t.test("x-forwarded-for with trust proxy and multiple IPs", async (t) => {
       },
       remoteAddress: "df89:84af:85e0:c55f:960c:341a:2cc6:734d",
     }),
-    "a3ad:8f95:d2a8:454b:cf19:be6e:73c6:f880"
+    "791d:967e:428a:90b9:8f6f:4fcc:5d88:015d"
   );
 });
+
+t.test(
+  "x-forwarded-for spoofing: attacker prepends fake IP before trusted proxy",
+  async (t) => {
+    process.env.AIKIDO_TRUST_PROXY = "true";
+    t.same(
+      getIPAddressFromRequest({
+        headers: {
+          "x-forwarded-for": "1.2.3.4, 9.9.9.9",
+        },
+        remoteAddress: "127.0.0.1",
+      }),
+      "9.9.9.9"
+    );
+    t.same(
+      getIPAddressFromRequest({
+        headers: {
+          "x-forwarded-for": "5.5.5.5, 6.6.6.6, 9.9.9.9",
+        },
+        remoteAddress: "127.0.0.1",
+      }),
+      "9.9.9.9"
+    );
+  }
+);
 
 t.test("x-forwarded-for with trust proxy and many IPs", async (t) => {
   process.env.AIKIDO_TRUST_PROXY = "true";
@@ -371,3 +397,56 @@ t.test("get ip from different header", async (t) => {
     "5.6.7.8"
   );
 });
+
+t.test(
+  "AIKIDO_TRUSTED_PROXY_COUNT=2: CDN with public IP in front of nginx",
+  async (t) => {
+    process.env.AIKIDO_TRUST_PROXY = "true";
+    process.env.AIKIDO_TRUSTED_PROXY_COUNT = "2";
+    t.same(
+      getIPAddressFromRequest({
+        headers: {
+          "x-forwarded-for": "5.5.5.5, 2.2.2.2",
+        },
+        remoteAddress: "127.0.0.1",
+      }),
+      "5.5.5.5"
+    );
+    t.same(
+      getIPAddressFromRequest({
+        headers: {
+          "x-forwarded-for": "1.1.1.1, 5.5.5.5, 2.2.2.2",
+        },
+        remoteAddress: "127.0.0.1",
+      }),
+      "5.5.5.5"
+    );
+    t.same(
+      getIPAddressFromRequest({
+        headers: {
+          "x-forwarded-for": "5.5.5.5, 10.0.0.1, 2.2.2.2",
+        },
+        remoteAddress: "127.0.0.1",
+      }),
+      "5.5.5.5"
+    );
+  }
+);
+
+t.test(
+  "AIKIDO_TRUSTED_PROXY_COUNT: invalid values fall back to 1",
+  async (t) => {
+    process.env.AIKIDO_TRUST_PROXY = "true";
+    for (const val of ["0", "-1", "abc", "1.5"]) {
+      process.env.AIKIDO_TRUSTED_PROXY_COUNT = val;
+      t.same(
+        getIPAddressFromRequest({
+          headers: { "x-forwarded-for": "1.1.1.1, 9.9.9.9" },
+          remoteAddress: "127.0.0.1",
+        }),
+        "9.9.9.9",
+        `count="${val}" should behave like count=1`
+      );
+    }
+  }
+);

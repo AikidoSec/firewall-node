@@ -1,6 +1,7 @@
 import { isIP } from "net";
 import { isPrivateIP } from "../vulnerabilities/ssrf/isPrivateIP";
 import { trustProxy } from "./trustProxy";
+import { getTrustedProxyCount } from "./trustedProxyCount";
 
 export function getIPAddressFromRequest(req: {
   headers: Record<string, unknown>;
@@ -9,7 +10,10 @@ export function getIPAddressFromRequest(req: {
   if (req.headers) {
     const ipHeaderName = getIpHeaderName();
     if (typeof req.headers[ipHeaderName] === "string" && trustProxy()) {
-      const ipHeaderValue = getClientIpFromHeader(req.headers[ipHeaderName]);
+      const ipHeaderValue = getClientIpFromHeader(
+        req.headers[ipHeaderName],
+        getTrustedProxyCount()
+      );
 
       if (ipHeaderValue && isIP(ipHeaderValue)) {
         return ipHeaderValue;
@@ -31,7 +35,7 @@ function getIpHeaderName(): string {
   return "x-forwarded-for";
 }
 
-function getClientIpFromHeader(value: string) {
+function getClientIpFromHeader(value: string, trustedProxyCount: number) {
   const forwardedIps = value.split(",").map((e) => {
     const ip = e.trim();
 
@@ -67,10 +71,16 @@ function getClientIpFromHeader(value: string) {
     return ip;
   });
 
-  // When selecting an address from the X-Forwarded-For header,
-  // we should select the first valid IP address that is not a private IP address
-  for (let i = 0; i < forwardedIps.length; i++) {
-    if (isIP(forwardedIps[i]) && !isPrivateIP(forwardedIps[i])) {
+  // Walk right-to-left. Private IPs are always skipped. Each non-private IP we
+  // encounter is a trusted proxy; we skip (trustedProxyCount - 1) of them and
+  // return the next one as the real client IP.
+  let publicProxiesSkipped = 0;
+  for (let i = forwardedIps.length - 1; i >= 0; i--) {
+    if (!isIP(forwardedIps[i]) || isPrivateIP(forwardedIps[i])) {
+      continue;
+    }
+    publicProxiesSkipped++;
+    if (publicProxiesSkipped >= trustedProxyCount) {
       return forwardedIps[i];
     }
   }
