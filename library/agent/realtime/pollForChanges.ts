@@ -14,11 +14,13 @@ export function pollForChanges({
   token,
   logger,
   lastUpdatedAt,
+  realtimeURL,
 }: {
   onConfigUpdate: OnConfigUpdate;
   token: Token | undefined;
   logger: Logger;
   lastUpdatedAt: number;
+  realtimeURL: URL;
 }) {
   if (!token) {
     logger.log("No token provided, not polling for config updates");
@@ -32,7 +34,7 @@ export function pollForChanges({
   }
 
   interval = setInterval(() => {
-    check(token, onConfigUpdate).catch((error) => {
+    check(token, realtimeURL, onConfigUpdate).catch((error) => {
       logger.log(`Failed to check for config updates: ${error.message}`);
     });
   }, 60 * 1000);
@@ -40,8 +42,12 @@ export function pollForChanges({
   interval.unref();
 }
 
-async function check(token: Token, onConfigUpdate: OnConfigUpdate) {
-  const configLastUpdatedAt = await getConfigLastUpdatedAt(token);
+async function check(
+  token: Token,
+  realtimeURL: URL,
+  onConfigUpdate: OnConfigUpdate
+) {
+  const configLastUpdatedAt = await getConfigLastUpdatedAt(token, realtimeURL);
 
   if (
     typeof currentLastUpdatedAt === "number" &&

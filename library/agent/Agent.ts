@@ -15,8 +15,8 @@ import type {
 } from "./api/Event";
 import { Token } from "./api/Token";
 import { Kind } from "./Attack";
-import { Endpoint } from "./Config";
-import { pollForChanges } from "./realtime/pollForChanges";
+import { type Config, Endpoint } from "./Config";
+import { listenForConfigUpdates } from "./realtime/listenForConfigUpdates";
 import { Context } from "./Context";
 import { Hostnames } from "./Hostnames";
 import { InspectionStatistics } from "./InspectionStatistics";
@@ -37,6 +37,8 @@ import type { FetchListsAPI } from "./api/FetchListsAPI";
 import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
+import { pollForChanges } from "./realtime/pollForChanges";
+import { probeRealtimeURL } from "./realtime/probeRealtimeURL";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -451,17 +453,40 @@ export class Agent {
     }
   }
 
-  private startPollingForConfigChanges() {
+  private async startCheckingForConfigUpdates() {
+    if (!this.token) {
+      return;
+    }
+
+    const onConfigUpdate = (config: Config) => {
+      this.updateServiceConfig({ success: true, ...config });
+      this.updateBlockedLists().catch((error) => {
+        this.logger.log(`Failed to update blocked lists: ${error.message}`);
+      });
+    };
+
+    const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
+
+    const { pollingURL, realtimeReachable } = await probeRealtimeURL(
+      this.token,
+      this.logger
+    );
+
+    if (realtimeReachable) {
+      listenForConfigUpdates({
+        token: this.token,
+        logger: this.logger,
+        lastUpdatedAt,
+        onConfigUpdate,
+      });
+    }
+
     pollForChanges({
       token: this.token,
       logger: this.logger,
-      lastUpdatedAt: this.serviceConfig.getLastUpdatedAt(),
-      onConfigUpdate: (config) => {
-        this.updateServiceConfig({ success: true, ...config });
-        this.updateBlockedLists().catch((error) => {
-          this.logger.log(`Failed to update blocked lists: ${error.message}`);
-        });
-      },
+      lastUpdatedAt,
+      realtimeURL: pollingURL,
+      onConfigUpdate,
     });
   }
 
@@ -557,7 +582,7 @@ export class Agent {
     this.onStart()
       .then(() => {
         this.startHeartbeats();
-        this.startPollingForConfigChanges();
+        this.startCheckingForConfigUpdates();
       })
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);

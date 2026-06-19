@@ -6,6 +6,7 @@ import { LoggerForTesting } from "../agent/logger/LoggerForTesting";
 import { startTestAgent } from "../helpers/startTestAgent";
 import { getMajorNodeVersion } from "../helpers/getNodeVersion";
 import { Undici } from "./Undici";
+import { setTimeout } from "node:timers/promises";
 
 // Undici tests are split up because sockets are re-used for the same hostname
 // See Undici.tests.ts and Undici2.tests.ts
@@ -70,6 +71,11 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       const { request, fetch } = require(
         undiciPkgName
       ) as typeof import("undici-v6");
+
+      // Let the realtime probe resolve before we start asserting
+      await setTimeout(500);
+      agent.getHostnames().clear();
+      t.same(agent.getHostnames().asArray(), []);
 
       await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
