@@ -61,6 +61,25 @@ t.test("user input inside IN (...)", async () => {
   );
 });
 
+t.test("digits followed by a closing parenthesis", async () => {
+  isNotSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 2) AND a = 1",
+    "2)"
+  );
+  isNotSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 12) AND a = 1",
+    "12)"
+  );
+  isSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 2) AND a = 1",
+    "2) AND a = 1"
+  );
+  isSqlInjection(
+    "SELECT * FROM table WHERE (a = 1 OR b = 12) AND a = 1",
+    "12) AND a = 1"
+  );
+});
+
 t.test("It checks whether the string is safely escaped", async () => {
   isTokenizeError(
     `SELECT * FROM comments WHERE comment = 'I'm writting you'`,
