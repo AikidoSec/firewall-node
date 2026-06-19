@@ -129,6 +129,39 @@ t.test("checkContextForIdor", async (t) => {
   });
 
   await t.test(
+    "allows join where tenant column is filtered via column-to-column comparison",
+    async () => {
+      // The join ties orders.tenant_id to audits.tenant_id, so filtering one
+      // also restricts the other. Zen should resolve orders.tenant_id from the
+      // filter on audits.tenant_id and allow the query.
+      const result = check({
+        sql: "SELECT o.* FROM orders o JOIN audits a ON o.tenant_id = a.tenant_id WHERE a.tenant_id = 'org_123'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.equal(result, undefined);
+    }
+  );
+
+  await t.test(
+    "blocks join when column-to-column resolved tenant ID does not match",
+    async () => {
+      const result = check({
+        sql: "SELECT o.* FROM orders o JOIN audits a ON o.tenant_id = a.tenant_id WHERE a.tenant_id = 'org_456'",
+        dialect: postgres,
+        resolvePlaceholder: () => undefined,
+      });
+
+      t.ok(result);
+      t.match(
+        result?.message,
+        "filters 'tenant_id' with value 'org_456' but tenant ID is 'org_123'"
+      );
+    }
+  );
+
+  await t.test(
     "blocks INSERT when ? placeholder could not be resolved",
     async () => {
       const result = check({
