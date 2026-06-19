@@ -13,6 +13,7 @@ import { existsSync } from "node:fs";
 import { colorText } from "../helpers/colorText";
 import { warnBox } from "../helpers/warnBox";
 import { isMusl } from "../helpers/isMusl";
+import { isCodeGenerationFromStringsDisallowed } from "../helpers/isCodeGenerationFromStringsDisallowed";
 
 export class FunctionSink implements Wrapper {
   private inspectFunction(args: unknown[]): InterceptorResult {
@@ -104,6 +105,16 @@ export class FunctionSink implements Wrapper {
 
   wrap(_: Hooks) {
     if (envToBool(process.env.AIKIDO_DISABLE_CODE_GENERATION_HOOK)) {
+      return;
+    }
+
+    // If Node was started with --disallow-code-generation-from-strings, V8 already
+    // blocks every eval and new Function() call. We use the same V8 hook, so if we
+    // registered our callback it would override that and let eval run again for code
+    // that doesn't come from a request. So we do nothing and let Node keep blocking
+    // everything. No warning needed: we only block eval when the code comes from user
+    // input, and Node already blocks all of it, including those cases.
+    if (isCodeGenerationFromStringsDisallowed()) {
       return;
     }
 
