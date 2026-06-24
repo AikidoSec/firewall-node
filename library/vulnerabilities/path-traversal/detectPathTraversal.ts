@@ -29,13 +29,23 @@ export function detectPathTraversal(
     }
   }
 
-  if (userInput.length > filePath.length) {
+  // Normalize backslashes to forward slashes on both sides for cross-platform comparison.
+  // Attackers may send backslash payloads that the application normalizes to forward
+  // slashes before reaching the sink (filePath has '/', userInput still has '\').
+  const normalizedFilePath = filePath.includes("\\")
+    ? filePath.replaceAll("\\", "/")
+    : filePath;
+  const normalizedUserInput = userInput.includes("\\")
+    ? userInput.replaceAll("\\", "/")
+    : userInput;
+
+  if (normalizedUserInput.length > normalizedFilePath.length) {
     // We ignore cases where the user input is longer than the file path.
     // Because the user input can't be part of the file path.
     return false;
   }
 
-  if (!filePath.toLowerCase().includes(userInput.toLowerCase())) {
+  if (!normalizedFilePath.toLowerCase().includes(normalizedUserInput.toLowerCase())) {
     // We ignore cases where the user input is not part of the file path.
     return false;
   }

@@ -20,6 +20,42 @@ const unsafeContext = {
   },
 };
 
+t.test(
+  "it detects path traversal when attacker uses backslashes (POSIX bypass)",
+  async () => {
+    t.same(
+      checkContextForPathTraversal({
+        filename: "../../../../etc/hosts",
+        operation: "path.resolve",
+        context: {
+          cookies: {},
+          headers: {},
+          remoteAddress: "ip",
+          method: "GET",
+          url: "url",
+          query: {
+            file: "..\\..\\..\\..\\etc\\hosts",
+          },
+          body: {},
+          routeParams: {},
+          source: "express",
+          route: undefined,
+        },
+      }),
+      {
+        operation: "path.resolve",
+        kind: "path_traversal",
+        source: "query",
+        pathsToPayload: [".file"],
+        metadata: {
+          filename: "../../../../etc/hosts",
+        },
+        payload: "..\\..\\..\\..\\etc\\hosts",
+      }
+    );
+  }
+);
+
 t.test("it detects path traversal from route parameter", async () => {
   t.same(checkContextForPathTraversal(unsafeContext), {
     operation: "operation",
