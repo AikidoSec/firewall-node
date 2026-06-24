@@ -36,7 +36,7 @@ export type Context = {
   executedMiddleware?: boolean;
   rateLimitGroup?: string; // Used to apply rate limits to a group of users
   rateLimitedEndpoint?: Endpoint; // The route that was rate limited
-  tenantId?: string; // Used for IDOR protection - set via setTenantId()
+  tenantId?: string; // Used for IDOR protection - set via setTenantId() (runWithTenant() overrides this)
 };
 
 /**

@@ -1,6 +1,22 @@
 const { send, json } = require("micro");
 
 module.exports = async (req, res) => {
+  if (req.url === "/") {
+    return send(res, 200, {
+      message: "Hello world!",
+    });
+  }
+
+  if (req.url === "/image") {
+    return await handleImageRequest(req, res);
+  }
+
+  return send(res, 404, {
+    message: "Not Found",
+  });
+};
+
+const handleImageRequest = async (req, res) => {
   if (req.method !== "POST") {
     return send(res, 405, {
       message: "Method Not Allowed",

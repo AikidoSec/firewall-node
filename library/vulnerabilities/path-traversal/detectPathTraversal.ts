@@ -50,7 +50,7 @@ export function detectPathTraversal(
     return false;
   }
 
-  if (!filePath.includes(userInput)) {
+  if (!filePath.toLowerCase().includes(userInput.toLowerCase())) {
     // We ignore cases where the user input is not part of the file path.
     return false;
   }

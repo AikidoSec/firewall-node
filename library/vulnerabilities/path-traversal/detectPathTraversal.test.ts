@@ -275,3 +275,16 @@ t.test(
     );
   }
 );
+
+t.test(
+  "case-insensitive comparison detects traversal on case-insensitive filesystems",
+  async () => {
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/passwd"), true);
+    t.same(detectPathTraversal("/etc/passwd", "/ETC/PASSWD"), true);
+    t.same(
+      detectPathTraversal("/home/user/file.txt", "/HOME/USER/file.txt"),
+      true
+    );
+    t.same(detectPathTraversal("../test.txt", "../"), true);
+  }
+);

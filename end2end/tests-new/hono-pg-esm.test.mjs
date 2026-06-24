@@ -18,6 +18,8 @@ const port4 = await getRandomPort();
 const port5 = await getRandomPort();
 const port6 = await getRandomPort();
 const port7 = await getRandomPort();
+const port8 = await getRandomPort();
+const port9 = await getRandomPort();
 
 test("it blocks request in blocking mode", async () => {
   const server = spawn(
@@ -576,6 +578,91 @@ test("IDOR protection works", async () => {
     match(
       stderr,
       /Zen IDOR protection: INSERT on table 'cats_6_with_idor' sets 'user_id' to '1' but tenant ID is '2'/
+    );
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("runWithTenant applies IDOR protection to background work", async () => {
+  const server = spawn(
+    `node`,
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port8],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+        IDOR_BACKGROUND_TEST: "true",
+        IDOR_BACKGROUND_WITH_TENANT: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start and the background timer to fire
+    await timeout(3000);
+
+    // The timer runs a query for user_id 1 inside runWithTenant(2). There is no
+    // HTTP request, so the tenant comes from runWithTenant and Zen blocks the
+    // mismatch just like it would inside a request.
+    match(
+      stderr,
+      /Zen IDOR protection: query on table 'cats_6_with_idor' filters 'user_id' with value '1' but tenant ID is '2'/
+    );
+  } catch (err) {
+    fail(err);
+  } finally {
+    server.kill();
+  }
+});
+
+test("requireTenantId blocks background work that forgot runWithTenant", async () => {
+  const server = spawn(
+    `node`,
+    ["--require", "@aikidosec/firewall/instrument", "./app.js", port9],
+    {
+      cwd: pathToAppDir,
+      env: {
+        ...process.env,
+        AIKIDO_DEBUG: "true",
+        AIKIDO_BLOCK: "true",
+        IDOR_BACKGROUND_TEST: "true",
+        IDOR_REQUIRE_TENANT_ID: "true",
+      },
+    }
+  );
+
+  try {
+    server.on("error", (err) => {
+      fail(err.message);
+    });
+
+    let stderr = "";
+    server.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    // Wait for the server to start and the background timer to fire
+    await timeout(3000);
+
+    // The timer runs a query without runWithTenant, so there is no tenant. With
+    // requireTenantId on, Zen blocks it instead of letting it run unchecked.
+    match(
+      stderr,
+      /Zen IDOR protection: setTenantId\(\) was not called for this request \(use runWithTenant\(\.\.\.\) for background work\)\. A tenant ID is required for every query\./
     );
   } catch (err) {
     fail(err);
