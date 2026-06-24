@@ -117,8 +117,9 @@ export class Fetch implements Wrapper {
   // We'll set a global dispatcher that will allow us to inspect the resolved IPs (and thus preventing TOCTOU attacks)
   private patchGlobalDispatcher(agent: Agent) {
     const sym1 = Symbol.for("undici.globalDispatcher.1");
-    // Node.js v26+ introduced a second symbol where the real undici Agent lives.
-    // Symbol 1 becomes a Dispatcher1Wrapper (a compatibility shim)
+    // sym2 was introduced when undici v8 split the real Agent (sym2) from a legacy
+    // Dispatcher1Wrapper shim (sym1). In undici v7 after PR #5368, both symbols point
+    // to the same Agent with no wrapper.
     const sym2 = Symbol.for("undici.globalDispatcher.2");
 
     // @ts-expect-error Type is not defined
@@ -153,14 +154,23 @@ export class Fetch implements Wrapper {
       newAgent.dispatch = wrapDispatch(newAgent.dispatch, agent);
 
       if (dispatcher2) {
-        // Node.js v26+: replace the Agent at sym2 and wrap the Dispatcher1Wrapper at sym1.
         // @ts-expect-error Type is not defined
         globalThis[sym2] = newAgent;
-        const newWrapper = new dispatcher1.constructor(newAgent);
-        newWrapper.dispatch = wrapDispatch(newWrapper.dispatch, agent);
 
-        // @ts-expect-error Type is not defined
-        globalThis[sym1] = newWrapper;
+        if (dispatcher1.constructor.name === "Dispatcher1Wrapper") {
+          // undici v8 (Node.js v26+): sym1 holds a Dispatcher1Wrapper shim around the Agent.
+          const newWrapper = new dispatcher1.constructor(newAgent);
+          newWrapper.dispatch = wrapDispatch(newWrapper.dispatch, agent);
+          // @ts-expect-error Type is not defined
+          globalThis[sym1] = newWrapper;
+        } else {
+          // undici v7: PR #5368 (shipped in Node.js 24.17.0) changed setGlobalDispatcher to mirror
+          // the Agent directly to sym1 instead of wrapping it in Dispatcher1Wrapper.
+          // Creating a new agent would produce a broken dispatcher.
+
+          // @ts-expect-error Type is not defined
+          globalThis[sym1] = newAgent;
+        }
       } else {
         // Older Node.js: only sym1 exists and it is already an Agent.
         // @ts-expect-error Type is not defined
