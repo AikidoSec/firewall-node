@@ -39,6 +39,8 @@ import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
 import { probeRealtimeURL } from "./realtime/probeRealtimeURL";
+import { getPollingURL } from "./realtime/getPollingURL";
+import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
 
@@ -466,6 +468,17 @@ export class Agent {
     };
 
     const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
+
+    if (!isFeatureEnabled("sse")) {
+      pollForChanges({
+        token: this.token,
+        logger: this.logger,
+        lastUpdatedAt,
+        realtimeURL: getPollingURL(),
+        onConfigUpdate,
+      });
+      return;
+    }
 
     const { pollingURL, realtimeReachable } = await probeRealtimeURL(
       this.token,

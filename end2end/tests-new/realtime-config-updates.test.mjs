@@ -32,6 +32,7 @@ function spawnApp(token, port) {
         AIKIDO_DEBUG: "true",
         AIKIDO_DEBUG_SSE: "true",
         AIKIDO_BLOCK: "true",
+        AIKIDO_FEATURE_SSE: "true",
       },
     }
   );
