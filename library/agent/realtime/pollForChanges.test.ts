@@ -15,7 +15,6 @@ t.test("it does not start interval if no token", async (t) => {
     logger: logger,
     token: undefined,
     lastUpdatedAt: 0,
-    realtimeURL: new URL("https://runtime.aikido.dev"),
   });
 
   t.same(logger.getMessages(), [
@@ -69,7 +68,6 @@ t.test("it checks for config updates", async () => {
     logger: new LoggerNoop(),
     token: new Token("123"),
     lastUpdatedAt: 0,
-    realtimeURL: new URL("https://runtime.aikido.dev"),
   });
 
   t.same(configUpdates, []);
@@ -202,7 +200,6 @@ t.test("it deals with API throwing errors", async () => {
     logger: logger,
     token: new Token("123"),
     lastUpdatedAt: 0,
-    realtimeURL: new URL("https://runtime.aikido.dev"),
   });
 
   t.same(configUpdates, []);

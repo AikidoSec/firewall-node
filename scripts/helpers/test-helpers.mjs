@@ -31,7 +31,7 @@ export function throws(...args) {
   assert.fail("Missing expected exception");
 }
 
-export function match(actual, expected, ...rest) {
+export function match(actual, expected, message) {
   if (typeof expected === "string") {
     expected = new RegExp(RegExp.escape(expected));
   }
@@ -41,11 +41,11 @@ export function match(actual, expected, ...rest) {
       actual = String(actual);
     }
 
-    assert.match(actual, expected, ...rest);
+    assert.match(actual, expected, message);
     return;
   }
 
-  assert.partialDeepStrictEqual(actual, expected, ...rest);
+  assert.partialDeepStrictEqual(actual, expected, message);
 }
 
 function toPlainObject(value) {
