@@ -1,7 +1,9 @@
+import { getAPIURL } from "../getAPIURL";
+
 export function getRealtimeURL() {
   if (process.env.AIKIDO_REALTIME_ENDPOINT) {
     return new URL(process.env.AIKIDO_REALTIME_ENDPOINT);
   }
 
-  return new URL("https://zen.aikido.dev");
+  return getAPIURL();
 }

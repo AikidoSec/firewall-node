@@ -459,8 +459,6 @@ t.test(
     // After a minute, we'll see that the dashboard didn't receive any stats yet
     // And then send a heartbeat
     clock.tick(60 * 1000);
-    // Extra nextAsync to drain the fetch timeout from probeRealtimeURL
-    await clock.nextAsync();
     await clock.nextAsync();
     t.match(api.getEvents(), [
       {
@@ -528,7 +526,6 @@ t.test(
     // But the stats is still empty, so we won't send a heartbeat
     clock.tick(60 * 1000);
     await clock.nextAsync();
-    await clock.nextAsync();
     t.match(api.getEvents(), [
       {
         type: "started",
@@ -588,7 +585,6 @@ t.test("it sends heartbeat when reached max timings", async () => {
 
   // After 30 seconds, the first heartbeat should be sent
   clock.tick(30 * 1000);
-  await clock.nextAsync();
   await clock.nextAsync();
 
   t.match(api.getEvents(), [
@@ -737,7 +733,6 @@ t.test("unable to prevent prototype pollution", async () => {
   ]);
 
   clock.tick(1000 * 60 * 30);
-  await clock.nextAsync();
   await clock.nextAsync();
 
   t.same(api.getEvents().length, 2);

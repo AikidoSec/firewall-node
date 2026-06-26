@@ -38,7 +38,6 @@ import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
-import { probeRealtimeURL } from "./realtime/probeRealtimeURL";
 import { getPollingURL } from "./realtime/getPollingURL";
 import { isFeatureEnabled } from "../helpers/featureFlags";
 
@@ -455,7 +454,7 @@ export class Agent {
     }
   }
 
-  private async startCheckingForConfigUpdates() {
+  private startPollingForConfigChanges() {
     if (!this.token) {
       return;
     }
@@ -469,23 +468,7 @@ export class Agent {
 
     const lastUpdatedAt = this.serviceConfig.getLastUpdatedAt();
 
-    if (!isFeatureEnabled("sse")) {
-      pollForChanges({
-        token: this.token,
-        logger: this.logger,
-        lastUpdatedAt,
-        realtimeURL: getPollingURL(),
-        onConfigUpdate,
-      });
-      return;
-    }
-
-    const { pollingURL, realtimeReachable } = await probeRealtimeURL(
-      this.token,
-      this.logger
-    );
-
-    if (realtimeReachable) {
+    if (isFeatureEnabled("sse")) {
       listenForConfigUpdates({
         token: this.token,
         logger: this.logger,
@@ -498,7 +481,7 @@ export class Agent {
       token: this.token,
       logger: this.logger,
       lastUpdatedAt,
-      realtimeURL: pollingURL,
+      realtimeURL: getPollingURL(),
       onConfigUpdate,
     });
   }
@@ -595,7 +578,7 @@ export class Agent {
     this.onStart()
       .then(() => {
         this.startHeartbeats();
-        this.startCheckingForConfigUpdates();
+        this.startPollingForConfigChanges();
       })
       .catch((err) => {
         console.error(`Aikido: Failed to start agent: ${err.message}`);
