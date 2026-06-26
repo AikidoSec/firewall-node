@@ -77,6 +77,6 @@ t.test("cache is cleared by clearTrustProxyCache", async () => {
   clearTrustProxyCache();
   delete process.env.AIKIDO_TRUST_PROXY;
   const b = getTrustProxyConfig();
-  t.not(a, b);
+  t.ok(a !== b);
   t.equal((b as { type: "boolean"; value: boolean }).value, true);
 });
