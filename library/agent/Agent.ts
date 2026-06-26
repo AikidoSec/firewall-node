@@ -38,7 +38,7 @@ import { PendingEvents } from "./PendingEvents";
 import type { IdorProtectionConfig } from "./IdorProtectionConfig";
 import { warnIfTsxIsUsed } from "../helpers/warnIfTsxIsUsed";
 import { pollForChanges } from "./realtime/pollForChanges";
-import { getPollingURL } from "./realtime/getPollingURL";
+import { getRealtimeURL } from "./realtime/getRealtimeURL";
 import { isFeatureEnabled } from "../helpers/featureFlags";
 
 type WrappedPackage = { version: string; supported: boolean };
@@ -481,7 +481,7 @@ export class Agent {
       token: this.token,
       logger: this.logger,
       lastUpdatedAt,
-      realtimeURL: getPollingURL(),
+      realtimeURL: getRealtimeURL(),
       onConfigUpdate,
     });
   }
