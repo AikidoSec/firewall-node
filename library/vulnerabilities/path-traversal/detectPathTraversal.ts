@@ -45,7 +45,11 @@ export function detectPathTraversal(
     return false;
   }
 
-  if (!normalizedFilePath.toLowerCase().includes(normalizedUserInput.toLowerCase())) {
+  if (
+    !normalizedFilePath
+      .toLowerCase()
+      .includes(normalizedUserInput.toLowerCase())
+  ) {
     // We ignore cases where the user input is not part of the file path.
     return false;
   }
