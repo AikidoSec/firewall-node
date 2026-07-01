@@ -96,8 +96,7 @@ t.test("it does not block monitored IPs", (t) => {
       t.same(resp2.status, 200);
       t.same(await resp2.text(), JSON.stringify({ success: true }));
 
-      // Wait for the first heartbeat (sent after 30s) so the monitored IP
-      // matches are reported
+      // Wait on heartbeat
       await timeout(60 * 1000);
 
       const events = await fetch(`${testServerUrl}/api/runtime/events`, {
