@@ -31,6 +31,7 @@ export function transformCode(
         : pkgLoadFormat === "module"
           ? "injectedFunctions.mjs"
           : "injectedFunctions.ts";
+
       return result.replace(
         "@aikidosec/firewall/instrument/internals",
         join(__dirname, injectedFile)
