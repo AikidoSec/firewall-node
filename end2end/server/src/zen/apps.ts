@@ -6,7 +6,7 @@ export type App = {
   configUpdatedAt: number;
 };
 
-const apps: App[] = [];
+let apps: App[] = [];
 
 let id = 1;
 export function createApp(): string {
@@ -18,6 +18,10 @@ export function createApp(): string {
     configUpdatedAt: Date.now(),
   });
   return token;
+}
+
+export function removeApp(app: App): void {
+  apps = apps.filter((a) => a.id !== app.id);
 }
 
 export function getByToken(token: string): App | undefined {
