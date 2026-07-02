@@ -1,5 +1,5 @@
 require("dotenv").config();
-require("@aikidosec/firewall");
+const { track, setUser } = require("@aikidosec/firewall");
 const Sentry = require("@sentry/node");
 
 Sentry.init({
@@ -107,6 +107,30 @@ async function main(port) {
 
     res.status(200).send("Done");
   });
+
+  app.post(
+    "/login",
+    express.json(),
+    asyncHandler(async (req, res) => {
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res
+          .status(400)
+          .json({ error: "username and password required" });
+      }
+
+      // Hardcoded credentials for demo purposes
+      if (username === "admin" && password === "admin") {
+        setUser({ id: "admin", name: "Admin" });
+        track("login_success");
+        return res.json({ message: "Login successful" });
+      }
+
+      track("login_failure");
+      res.status(401).json({ error: "Invalid credentials" });
+    })
+  );
 
   // This route is for testing purposes only and uses internal APIs
   // Normal users should NOT rely on these internals as they may change without notice

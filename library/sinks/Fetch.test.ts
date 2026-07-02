@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "timers/promises";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -89,6 +90,9 @@ t.test(
 
     agent.start([new Fetch()]);
 
+    // Let the realtime probe resolve before we start asserting
+    await setTimeout(500);
+    agent.getHostnames().clear();
     t.same(agent.getHostnames().asArray(), []);
 
     await fetch("http://app.aikido.dev");

@@ -3,5 +3,5 @@ export function getRealtimeURL() {
     return new URL(process.env.AIKIDO_REALTIME_ENDPOINT);
   }
 
-  return new URL("https://runtime.aikido.dev");
+  return new URL("https://zen.aikido.dev");
 }

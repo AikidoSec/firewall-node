@@ -1,4 +1,5 @@
 import * as t from "tap";
+import { setTimeout } from "timers/promises";
 import { ReportingAPIForTesting } from "../agent/api/ReportingAPIForTesting";
 import { Token } from "../agent/api/Token";
 import { Context, runWithContext } from "../agent/Context";
@@ -70,6 +71,11 @@ export async function createUndiciTests(undiciPkgName: string, port: number) {
       const { request, fetch } = require(
         undiciPkgName
       ) as typeof import("undici-v6");
+
+      // Let the realtime probe resolve before we start asserting
+      await setTimeout(500);
+      agent.getHostnames().clear();
+      t.same(agent.getHostnames().asArray(), []);
 
       await request("https://ssrf-redirects.testssandbox.com");
       t.same(agent.getHostnames().asArray(), [
